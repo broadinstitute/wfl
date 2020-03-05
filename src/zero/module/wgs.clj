@@ -1,9 +1,10 @@
 (ns zero.module.wgs
-  "Reprocess Whole Genomes, whatever they are."
+  "Reprocess (External) Whole Genomes, whatever they are."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
+            [zero.environments :as env]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
@@ -37,7 +38,7 @@
          "The 4-argument command submits up to <max> .bam or .cram files"
          "from the <in> URL to the Cromwell in environment <env>."
          ""
-         (str/join \space ["Example: %1$s wgs wgs 9" in out])]
+         (str/join \space ["Example: %1$s wgs wgs-dev 42" in out])]
         (->> (str/join \newline))
         (format zero/the-name title))))
 
@@ -47,31 +48,44 @@
    :top     (str zero/dsde-pipelines
                  "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl")})
 
+(def cloud-copy-wdl
+  "The cloud copy utility WDL file."
+  {:top "wdl/CopyFilesFromCloudToCloud.wdl"})
+
+(def adapter-workflow-wdl
+  "The adapter WDL file."
+  {:release "ExternalWholeGenomeReprocessing_v1.2"
+   :top "wdl/ExternalWholeGenomeReprocessing.wdl"})
+
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
   {(keyword (str zero/the-name "-wgs"))
-   (wdl/workflow-name (:top workflow-wdl))})
+   (wdl/workflow-name (:top adapter-workflow-wdl))})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
 
-(def references
-  "HG38 reference, calling interval, and contamination files."
+(def per-sample
+  "The per-sample stuff for wgs."
   (let [fp   (str "single_sample/plumbing/bams/20k/NA12878_PLUMBING"
                   ".hg38.reference.fingerprint")
-        hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
+        storage "gs://broad-gotc-test-storage/"]
+    {:fingerprint_genotypes_file  (str storage fp ".vcf.gz")
+     :fingerprint_genotypes_index (str storage fp ".vcf.gz.tbi")}))
+
+(def references
+  "HG38 reference, calling interval, and contamination files."
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
         il   "wgs_calling_regions.hg38.interval_list"
-        p3   "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat"
-        test "gs://broad-gotc-test-storage/"]
+        p3   "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat"]
     (merge references/hg38-genome-references
+           per-sample
            {:calling_interval_list       (str hg38 il)
             :contamination_sites_bed     (str hg38 p3 ".bed")
             :contamination_sites_mu      (str hg38 p3 ".mu")
-            :contamination_sites_ud      (str hg38 p3 ".UD")
-            :fingerprint_genotypes_file  (str test fp ".vcf.gz")
-            :fingerprint_genotypes_index (str test fp ".vcf.gz.tbi")})))
+            :contamination_sites_ud      (str hg38 p3 ".UD")})))
 
 ;; Check https://github.com/broadinstitute/dsde-pipelines/blob/8a9a8a3cf9b66a38c7f1b4aaaa67bd9652e42650/tasks/UnmappedBamToAlignedBam.wdl#L149
 ;;
@@ -80,40 +94,48 @@
   (merge {:wgs_coverage_interval_list
           (str "gs://gcp-public-data--broad-references/"
                "hg38/v0/wgs_coverage_regions.hg38.interval_list")}
-         (-> {:haplotype_database_file
+         ;; uncomment to enable CheckFingerprint
+         #_(-> {:haplotype_database_file
               (str "gs://broad-references-private/hg38/v0/"
                    "Homo_sapiens_assembly38.haplotype_database.txt")}
-             (util/prefix-keys :WholeGenomeGermlineSingleSample))
+             (util/prefix-keys :WholeGenomeGermlineSingleSample)
+             (util/prefix-keys :WholeGenomeReprocessing)
+             (util/prefix-keys :WholeGenomeReprocessing))
          (-> {:disable_sanity_check true}
              (util/prefix-keys :CheckContamination)
              (util/prefix-keys :UnmappedBamToAlignedBam)
              (util/prefix-keys :UnmappedBamToAlignedBam)
              (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeGermlineSingleSample))))
+             (util/prefix-keys :WholeGenomeGermlineSingleSample)
+             (util/prefix-keys :WholeGenomeReprocessing)
+             (util/prefix-keys :WholeGenomeReprocessing))))
 
-(def genome-inputs
+(defn genome-inputs
+  [environment]
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
-  {:unmapped_bam_suffix ".unmapped.bam"
+  {:google_account_vault_path (get-in env/stuff [environment :vault_path_to_picard_account])
+   :vault_token_path (get-in env/stuff [environment :vault_token_path])
+   :unmapped_bam_suffix ".unmapped.bam"
    :papi_settings       {:agg_preemptible_tries 3
                          :preemptible_tries     3}})
 
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
-  [out-gs in-gs]
+  [environment out-gs in-gs]
   (let [[input-key base _] (all/bam-or-cram? in-gs)
         leaf (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
-        destination_cloud_path (str out-gs out-dir)
         inputs (-> (zipmap [:base_file_name :final_gvcf_base_name :sample_name]
                            (repeat leaf))
                    (assoc input-key in-gs)
+                   (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
-                   (merge genome-inputs
+                   (merge (genome-inputs environment)
                           hack-task-level-values))
-        {:keys [final_gvcf_base_name]} inputs
+        {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
     (all/throw-when-output-exists-already! output)
-    (util/prefix-keys inputs :WholeGenomeReprocessing)))
+    (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
 
 (defn active-objects
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
@@ -123,8 +145,8 @@
     (letfn [(active? [metadata]
               (let [url (-> metadata :id md :submittedFiles :inputs
                             (json/read-str :key-fn keyword)
-                            (some [:WholeGenomeReprocessing.input_bam
-                                   :WholeGenomeReprocessing.input_cram]))]
+                            (some [:ExternalWholeGenomeReprocessing.input_bam
+                                   :ExternalWholeGenomeReprocessing.input_cram]))]
                 (when url
                   (let [[bucket object] (gcs/parse-gs-url url)
                         [_ unsuffixed _] (all/bam-or-cram? object)
@@ -142,15 +164,15 @@
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
   ENVIRONMENT."
   [environment in-bucket out-gs object]
-  (let [path  (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+  (let [path  (wdl/hack-unpack-resources-hack (:top adapter-workflow-wdl))
         in-gs (gcs/gs-url in-bucket object)]
-    (cromwell/submit-workflow
-      environment
-      (io/file (:dir path) (path ".wdl"))
-      (io/file (:dir path) (path ".zip"))
-      (make-inputs out-gs in-gs)
-      (util/make-options environment)
-      cromwell-label-map)))
+    (prn (cromwell/submit-workflow
+               environment
+               (io/file (:dir path) (path ".wdl"))
+               (io/file (:dir path) (path ".zip"))
+               (make-inputs environment out-gs in-gs)
+               (util/make-options environment)
+               cromwell-label-map))))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
@@ -161,7 +183,8 @@
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
                 (when unsuffixed [unsuffixed suffix])))
             (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [done   (set/union (all/processed-crams (slashify out-gs))
+      (let [slashified-out-gs (slashify out-gs)
+            done   (set/union (all/processed-crams slashified-out-gs)
                               (active-objects environment in-gs))
             suffix (->> in-gs
                         gcs/parse-gs-url
@@ -173,7 +196,7 @@
                         (remove done)
                         (take max)
                         (map (fn [base] (str base (suffix base)))))]
-        (map (partial submit-workflow environment bucket out-gs) more)))))
+        (run! (partial submit-workflow environment bucket slashified-out-gs) more)))))
 
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
