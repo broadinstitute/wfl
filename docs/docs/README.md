@@ -31,26 +31,6 @@ many `dsde-pipelines.git` versions as there are workflow wdls.
 The `wfl` jar includes a manifest with at least that information in
 it, and a version command that returns it.
 
-## Role in Terra
-
-The Data Sciences Platform (DSP) is building a new system (around
-Terra) for storing and processing biological data. The system design
-includes a Data Repository where data is stored, and a Methods
-Repository that executably describes transformations on that data.
-
-In the new system, the DSP needs something to fulfill the role that
-Zamboni currently plays in our current infrastructure to support the
-Genomics Platform (GP).
-
-Zamboni watches various queues for messages describing new data and
-how to process it. Zamboni interprets those messages to dispatch
-work to workflow engines (running on the premises or in the loud)
-and monitors the progress of those workflows. The Zamboni web UI
-allows users to track the progress of workflows, and enables Ops
-engineers to debug problems and resume or restart failed workflows.
-Zamboni can run workflows on both a local Sun Grid Engine (SGE), and
-on Cromwell on premises and in the cloud.
-
 ## Capabilities
 
 When Workflow Launcher is on-premises or in the cloud, it can 
@@ -389,8 +369,7 @@ or any later version should be OK.
     things out on your own.
     
     Find a local Cursive user for guidance if you like IntelliJ.
-    [Jay Carey](mailto:jcarey@broadinstitute.org) and [Charley
-    Yan](mailto:yanc@broadinstitute.org) know how to use it. There
+    [Rex Wang](mailto:chengche@broadinstitute.org) and [Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it. There
     are [Cursive licenses
     here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
     There is also a
@@ -540,11 +519,7 @@ or any later version should be OK.
     
     Feel free to add, edit, or augment them as you see fit.
 
-6.  Documentation
-    
-    This file is written in markdown.
-
-8.  Exomes in the Cloud Resources
+6.  Exomes in the Cloud Resources
     
     From [Hybrid Selection in the Cloud
     V1](https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing)
