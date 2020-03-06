@@ -1,0 +1,898 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
+    
+    
+      
+        <title>WorkFlow Launcher's Role in Terra - Workflow Launcher</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.adb8469c.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#4caf50">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.86422ebf.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="green" data-md-color-accent="teal">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#workflow-launchers-role-in-terra" tabindex="0" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="Workflow Launcher" aria-label="Workflow Launcher" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              Workflow Launcher
+            </span>
+            <span class="md-header-nav__topic">
+              
+                WorkFlow Launcher's Role in Terra
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href=".." class="md-tabs__link">
+          Get Started
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../frontend/" class="md-tabs__link">
+          Frontend
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../server/" class="md-tabs__link">
+          Server
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="./" class="md-tabs__link md-tabs__link--active">
+          Readings
+        </a>
+      
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href=".." title="Workflow Launcher" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    Workflow Launcher
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Get Started
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Get Started
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href=".." title="Welcome to WorkFlow Launcher" class="md-nav__link">
+      Welcome to WorkFlow Launcher
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Frontend
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Frontend
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../frontend/" title="Frontend" class="md-nav__link">
+      Frontend
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Server
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Server
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../server/" title="Server" class="md-nav__link">
+      Server
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Readings
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Readings
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        WorkFlow Launcher's Role in Terra
+      </label>
+    
+    <a href="./" title="WorkFlow Launcher's Role in Terra" class="md-nav__link md-nav__link--active">
+      WorkFlow Launcher's Role in Terra
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    Summary
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history" class="md-nav__link">
+    History
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-role-of-wfl-in-terra" class="md-nav__link">
+    The role of WFL in Terra
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wfl-concepts" class="md-nav__link">
+    WFL Concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wfl-server" class="md-nav__link">
+    WFL server
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    Summary
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#history" class="md-nav__link">
+    History
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-role-of-wfl-in-terra" class="md-nav__link">
+    The role of WFL in Terra
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wfl-concepts" class="md-nav__link">
+    WFL Concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wfl-server" class="md-nav__link">
+    WFL server
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/terra.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="workflow-launchers-role-in-terra">WorkFlow Launcher's Role in Terra<a class="headerlink" href="#workflow-launchers-role-in-terra" title="Permanent link">&para;</a></h1>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>The Data Sciences Platform (DSP) is building a new system (around
+<a href="https://terra.bio/">Terra</a>) for storing and processing biological
+data. The system design includes a Data Repository where data is
+stored, and a Methods Repository that executably describes
+transformations on that data.</p>
+<p>In the new system, the DSP needs something to fulfill the role that
+Zamboni currently plays in DSP's current infrastructure to support
+the Genomics Platform (GP).</p>
+<p>Zamboni watches various queues for messages describing new data and
+how to process it. Zamboni interprets those messages to dispatch
+work to workflow engines (running on the premises or in the cloud)
+and monitors the progress of those workflows. The Zamboni web UI
+allows users to track the progress of workflows, and enables Ops
+engineers to debug problems and resume or restart failed workflows.
+Zamboni can run workflows on both a local Sun Grid Engine (SGE), and
+on Cromwell on premises and in the cloud.</p>
+<p>We think that WFL can fill the role of Zamboni in the new data
+storage and processing system that DSP is developing now.</p>
+<h2 id="history">History<a class="headerlink" href="#history" title="Permanent link">&para;</a></h2>
+<p>WFL began as a project to replace a Zamboni <em>starter</em>, with the old
+name "Zero". A <em>starter</em> is a Zamboni component that brokers messages
+among the queues that Zamboni watches. It interprets messages 
+queued from a Laboratory Information Management System (LIMS), 
+such as the Mercury web service, and demultiplexes them to other 
+Zamboni queues.</p>
+<p>Zero was later adapted to manage the reprocessing of the first batch
+of UK Biobank exomes. It has since been adapted to drive workflows
+for other projects at the Broad.</p>
+<p>Zero is unusual in that it usually runs as a stateless command line
+program without special system privilege, and interfaces with
+services running both on premises and in Google Cloud. It also
+manages a processing workload as a set of inputs mapped to outputs
+instead of tracking the progress of individual sample workflows.</p>
+<p>A Zero user need only specify a source of inputs, a workflow to run,
+an execution environment, and an output location. Then each time it
+is invoked, Zero ensures that workflows are started and retried as
+needed until an output exists for every input.</p>
+<p>Zero has recently been adapted again to deploy as a web service
+under Google App Engine (GAE) though most of the value of Zero is
+still not available to the server. And now it has the new name WFL.</p>
+<h2 id="the-role-of-wfl-in-terra">The role of WFL in Terra<a class="headerlink" href="#the-role-of-wfl-in-terra" title="Permanent link">&para;</a></h2>
+<p>Diagrams of the new DSP processing system show a WFL service
+subscribed to event streams from the Data Repository (DR), with
+interfaces to both the Data and the Method Repositories.</p>
+<p>The implication is that something notifies WFL of new data in the
+Data Repository and WFL determines how to process it somehow. WFL
+then looks up whatever is required from the Method Repository, calls
+on other services as necessary to process the data and writes the
+results back to the DR. There is also, presumably, a web UI to track
+and debug the workflows managed by WFL.</p>
+<p>Many details are yet to be worked out.</p>
+<h2 id="wfl-concepts">WFL Concepts<a class="headerlink" href="#wfl-concepts" title="Permanent link">&para;</a></h2>
+<p>WFL is designed around several novel concepts.</p>
+<ol>
+<li>
+<p>Manage workloads instead of workflows.</p>
+<p>This is the biggest difference between Zamboni and Zero (WFL). 
+Zamboni manages workflows whereas WFL manages <strong>workloads</strong>.</p>
+<p>Zamboni's unit of work is the <em>workflow</em>. Zamboni manages each
+workflow separately.</p>
+<p>A <em>workflow</em> is a transformation specified in WDL or Scala code
+that succeeds or fails to produce a result. The input to a
+workflow and its result may consist of multiple files, but they
+represent a single unit of work managed by a workflow engine
+such as Cromwell. Zamboni prepares a new workflow for each
+message it receives by packaging up the input and submitting it
+to a workflow engine. It then monitors that workflow and reports
+on its success or failure.</p>
+<p>WFL manages a <em>workload</em>, which indirectly comprises multiple
+workflows. Each workflow maps an input to some output, but WFL
+generally tracks only the inputs and outputs instead of the
+workflows themselves.</p>
+<p>Think of a workload as a set of inputs transformed via a
+workflow engine into a set of outputs. Call that set of outputs
+the <em>result set</em>. WFL generally does not care whether any
+individual workflow succeeds or fails. It merely considers all
+possible inputs specified by the workload, and looks for inputs
+whose outputs are missing from the result set. If some input
+lacks an output in the result set, WFL starts a new workflow to
+process that input.</p>
+<p>Note: This characterization is unfair to Zamboni. Zamboni also
+had to manage multiple workflows before the advent of Cromwell
+and still does when running workflows on SGE. But WFL can take
+advantage of Cromwell's job management to simplify its
+implementation.</p>
+</li>
+<li>
+<p>Specify inputs and outputs by general predicates.</p>
+<p>Each Zamboni message explicitly specifies an input to be
+processed. Zamboni then starts a workflow for that input and
+reports its status. Zamboni reports failure so a user can debug
+and manually <em>succeed</em>, reconsider, or restart the workflow. The
+output of a successful workflow is not Zamboni's concern.</p>
+<p>WFL finds inputs by applying a predicate specified by the user
+subject to some run-time constraint. Then WFL applies a
+function to each input to find how that input maps to the result
+set. Another predicate applied to the input, and its output in
+the result set, determines whether WFL will launch a workflow
+on that input.</p>
+<p>Those predicates and function can be anything expressed in a
+programming language. The run-time constraint is some strings
+passed on the command line.</p>
+</li>
+<li>
+<p>Minimize user input and decisions at run time.</p>
+<p>WFL gathers the predicates and mapping functions described
+above into a <em>module</em> that also knows how to generate everything
+a workflow engine needs to launch the workflow to process an
+input into a result output.</p>
+<p>That module name is one of a few run-time constraints specified
+by strings in a web form or on a command line. Further
+constraints are usually one or two of the following:</p>
+<div class="codehilite"><pre><span></span><code><span class="o">-</span> <span class="n">a</span> <span class="n">processing</span> <span class="nf">environment</span> <span class="p">(</span><span class="ss">`dev`</span> <span class="ss">`prod`</span> <span class="ss">`pharma5`</span><span class="p">),</span>
+<span class="o">-</span> <span class="n">a</span> <span class="n">file</span> <span class="n">system</span> <span class="nf">directory</span> <span class="p">(</span><span class="ss">`/seq/tng/tbl/`</span>
+<span class="ss">`file://home/tbl/`</span><span class="p">),</span>
+<span class="o">-</span> <span class="n">a</span> <span class="n">cloud</span> <span class="n">object</span> <span class="nf">prefix</span> <span class="p">(</span><span class="ss">`gs://bucket/folder/`</span>
+<span class="ss">`s3://bucket/`</span><span class="p">),</span>
+<span class="o">-</span> <span class="n">a</span> <span class="n">pathname</span> <span class="nf">suffix</span> <span class="p">(</span><span class="ss">`.cram`</span> <span class="ss">`.vcf`</span><span class="p">),</span>
+<span class="o">-</span> <span class="n">a</span> <span class="nf">spreadsheet</span> <span class="p">(</span><span class="k">or</span> <span class="n">JSON</span><span class="p">,</span> <span class="n">TSV</span><span class="p">,</span> <span class="n">CSV</span><span class="p">,</span> <span class="n">XML</span><span class="p">)</span> <span class="n">filename</span>
+<span class="o">-</span> <span class="k">or</span> <span class="n">a</span> <span class="n">count</span> <span class="k">to</span> <span class="k">limit</span> <span class="n">the</span> <span class="n">scope</span> <span class="n">of</span> <span class="n">a</span> <span class="n">predicate</span><span class="p">.</span>
+</code></pre></div>
+
+
+<p>The module interprets the other constraints, determines which
+processing environments are allowed, and parses any files named
+accordingly.</p>
+</li>
+<li>
+<p>Maintain provenance.</p>
+<p>WFL runs out of a single JARfile built entirely from sources
+pulled from Git repositories. WFL records the Git commit hashes
+in the JARfile and adds them to every Cromwell workflow it
+starts. WFL can also preserve the Cromwell metadata alongside
+any result files generated by the workflow.</p>
+</li>
+<li>
+<p>Run with minimal privilege.</p>
+<p>Zamboni runs as a service with system account credentials such
+as <code>picard</code>.</p>
+<p>WFL is designed to run as whoever invokes it, such as
+<code>tbl@broadinstitute.org</code>. WFL fetches the users credentials
+from the environment when invoked from the command line. WFL
+requires authentication when running as a server, and constructs
+a JSON Web Token (JWT) to authorize other services as needed.</p>
+</li>
+<li>
+<p>Limit dependencies.</p>
+<p>WFL depends on a Java runtime, <code>boot-clj</code> to manage
+dependencies, Google Cloud SDK to deploy to Google App Engine
+(GAE). Of course, it also pulls in numerous Clojure and Java
+libraries at build time, and sources WDL files from the
+<code>dsde-pipelines</code> repository. A programmer needs only clone the
+<code>wfl</code> Git repositories, and run <code>boot-clj</code>
+to bootstrap WFL from source. And <code>boot-clj</code> is a single file:
+its own installer.</p>
+<p>Similarly, <code>boot build</code> builds WFL, and <code>boot deploy</code> deploys
+it to GAE.</p>
+<p>WFL attempts to be self-describing and self-documenting. It
+includes monitoring and diagnostic modules for tracking workload
+progress and debugging failures.</p>
+</li>
+</ol>
+<h2 id="wfl-server">WFL server<a class="headerlink" href="#wfl-server" title="Permanent link">&para;</a></h2>
+<p>The WFL client is a command-line batch program that a person runs
+intermittently on a laptop or virtual machine (VM).</p>
+<p>We are working to port the client functions of WFL to a ubiquitous
+web service (WFL server) running in Google Cloud. That port
+requires we solve several problems.</p>
+<ol>
+<li>
+<p>State</p>
+<p>The WFL client is a stateless program that relies on consistent
+command line arguments to provide the constraints needed to
+drive the input discovery predicates and so on. Each user runs a
+separate process that lasts only as long as necessary to
+complete some stage of a workload.</p>
+<p>The WFL server is shared among all its users and runs
+continually. Therefore it requires some kind of data store (a
+database) to maintain the state of each workload across
+successive connections from web browsers.</p>
+<p>We intend to use the hosted Postgres service available to GAE
+applications for this. This work is already underway (GH-573).</p>
+</li>
+<li>
+<p>Authorization</p>
+<p>The WFL client assumes it runs in an authenticated context. It
+can pull credentials from the environment on every invocation
+that requires authorization to a service.</p>
+<p>The WFL server will also need to authorize services to run as
+some authenticated user, but cannot assume the credentials are
+always available, nor that there is a user present to provide
+them. WFL can already use OAuth2.0 to authenticate users
+against an identity provider and use the resulting credentials
+to build a JWT. It can also derive the bearer token required by
+most of our authorized services from a JWT.</p>
+<p>But WFL also needs some secure JWT store, so tokens are
+available to authorize services even when there is no active
+user connection. It also needs some mechanism to refresh tokens
+as they expire to support long-running workloads.</p>
+</li>
+<li>
+<p>Workload specification</p>
+<p>The user of a WFL service needs some way to specify a workload.
+A workload may be some set of inputs and the kind of workflow to
+run on them.</p>
+<p>A WFL client user now specifies a workload with a <em>module</em> name
+and a <em>constraint</em>. For example, <code>ukb pharma5 110000
+gs://broad-ukb/in/ gs://broad-ukb/out/</code> means find up to
+<code>110000</code> cloud objects with names prefixed with
+<code>gs://broad-ukb/in/</code>, process them in the Cromwell set up for
+<code>pharma5</code>, and store their outputs under <code>gs://broad-ukb/out/</code>
+somewhere.</p>
+<p>The <code>ukb</code> module knows how to find <code>.aligned.cram</code> files under
+the <code>gs://broad-ukb/in/</code> cloud path and set up the WDL and
+Cromwell dependencies and options necessary to reprocess them
+into <code>.cram</code> output files. The <code>ukb</code> module also knows how to
+find the Cromwell deployed to support <code>pharma5</code> workloads, how
+to authorize the user to that Cromwell, and how to read any
+supporting data from other services. And finally, the <code>ukb</code>
+module knows how to determine which inputs do not yet have
+outputs under the <code>gs://broad-ukb/out/</code> cloud path, and do not
+have workflows running in the <code>pharma5</code> Cromwell.</p>
+<p>In an ideal design, this workload specification would integrate
+conveniently with the Data Repository's subscription or
+<em>eventing</em> service. In any case though, WFL needs some
+interface through which a user can specify what needs to be
+done.</p>
+</li>
+<li>
+<p>Workload management</p>
+<p>Workloads need to be started, stopped, and monitored somehow.
+This implies that there is some way to find active or suspended
+workloads, and affordances for acting on them.</p>
+<p>Users need some way to monitor the progress of a workload, and
+to find and debug workloads encountering unacceptable workflow
+failures.</p>
+<p>Monitoring and diagnostic code already exists in various WFL
+modules, but there is no easy way to use them from a web
+browser.</p>
+</li>
+<li>
+<p>Service interface</p>
+<p>WFL should be useful to programs other than web browsers. It is
+easy to imagine Terra users wanting to query WFL for the status
+of workloads directly without buggy and tedious screen scraping.</p>
+<p>WFL should at least export a query endpoint for use by other
+reporting services as well as its own browser interface. It
+would be nice to provide a familiar JSON or GraphQL query syntax
+to other services.</p>
+</li>
+<li>
+<p>Browser interface</p>
+<p>A browser interface should require little in addition to WFL's
+service interface. Ideally, one should be able to adapt WFL to
+new workloads via a browser interface without requiring a
+redeployment.</p>
+</li>
+</ol>
+                
+                  
+                
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../server/" title="Server" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Server
+              </span>
+            </div>
+          </a>
+        
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs</a>
+      </div>
+      
+  <div class="md-footer-social">
+    <link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+    
+      <a href="https://github.com/broadinstitute/wfl" target="_blank" rel="noopener" title="github" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.c33a9706.js"></script>
+      
+      <script>app.initialize({version:"1.1",url:{base:".."}})</script>
+      
+    
+  </body>
+</html>
