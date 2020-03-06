@@ -9,7 +9,7 @@ theme:
    primary: green
    accent: teal
   feature:
-      tabs: true
+    tabs: true
 
   # name: null
   # custom_dir: theme
