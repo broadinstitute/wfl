@@ -1,21 +1,21 @@
-# Zero Server
+# WorkFlow Launcher Server
 
-We now have the basics of Zero
+We now have the basics of WorkFlow Launcher
 running as a server
 in Google App Engine (GAE).
 
 ## Deploy to Google App Engine
 
-To build and deploy Zero,
+To build and deploy WFL,
 run `./ops/deploy.sh`.
 
 It's Google Credentials page is here.
 
 https://console.developers.google.com/apis/credentials?project=broad-gotc-dev
 
-## Zero server features
+## WFL server features
 
-The Zero server doesn't do much now.
+The WFL server doesn't do much now.
 
 - It can configure its secrets and deploy itself.
 - It can authenticate to Google using OAuth2.
@@ -45,10 +45,10 @@ The following URIs work now.
 
  - Environments
    ([/api/v1/environments](https://zero-dot-broad-gotc-dev.appspot.com/api/v1/environments)) :
-   Environments returns Zero's environment tree as JSON when authorized.
+   Environments returns WFL's environment tree as JSON when authorized.
    Environments redirects to Status when unauthorized.
 
-## Starting Zero server for local development
+## Starting WFL server for local development
 
 Run `./ops/server.sh` from the command line.
 
@@ -60,4 +60,4 @@ will be reloaded into the running server.
 
 As its name implies,
 you should comment it out
-before deploying Zero.
+before deploying WFL.
