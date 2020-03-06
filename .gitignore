@@ -26,6 +26,9 @@
 node_modules/
 dist/
 
+# Doc site build artifact
+/docs/site
+
 # local env files
 .env.local
 .env.*.local
