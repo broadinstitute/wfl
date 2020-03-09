@@ -11,11 +11,12 @@
             [zero.wdl :as wdl]
             [zero.zero :as zero])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           (java.util.zip ZipOutputStream ZipEntry ZipFile)))
 
 (def environments-file
   "Path to the environments.clj file at build time."
-  {:release "bf621a8bb27be9433622777e489fcbb652161586"
+  {:release "5f0f556a69f1f7bc048b2f0820fb82e17db48d91"
    :top     (str zero/pipeline-config "zero/environments.clj")})
 
 (def dsde-pipelines-version
@@ -26,6 +27,10 @@
   [zero.module.ukb/workflow-wdl
    zero.module.wgs/workflow-wdl
    zero.module.xx/workflow-wdl])
+
+(def extra-workflow-wdls
+  "The extra workflow WDLs that Zero manages that should be written to versions."
+  [zero.module.wgs/adapter-workflow-wdl])
 
 (defn clone-repo
   "Clone the GIT repository at URL into DESTINATION."
@@ -60,6 +65,7 @@
              :dsde-pipelines  (:release dsde-pipelines-version)
              :pipeline-config (:release environments-file)
              (->> workflow-wdls
+                  (concat extra-workflow-wdls)
                   (map (juxt (comp wdl/workflow-name :top) :release))
                   (apply concat))))))
 
@@ -90,10 +96,11 @@
            "Application-Name" (str/capitalize zero/the-name))))
 
 (defn cromwellify-wdls-to-zip-hack
-  "Stage WDL files and dependencies in RESOURCES."
+  "Stage WDL files and dependencies from tmp/ into RESOURCES."
   [resources wdl version]
-  (util/shell-io! "git" "-C" zero/dsde-pipelines "checkout" version)
-  (let [path (wdl/cromwellify-wdl-resources-hack wdl)
+  (util/shell-io! "git" "-C" (str/join "/" ["tmp" zero/dsde-pipelines]) "checkout" version)
+  (let [wdl (str/join "/" ["tmp" wdl])
+        path (wdl/cromwellify-wdl-resources-hack wdl)
         [directory wdl zip] (wdl/cromwellify wdl)]
     (when directory
       (try (let [wf-wdl  (io/file resources (path ".wdl"))
@@ -103,27 +110,68 @@
              (.renameTo zip imports))
            (finally (util/delete-tree directory))))))
 
+(defn inject-wdls-into-zip!
+  "Inject WDLs into ZIP and produce a NEW-ZIP-NAME."
+  [zip new-zip-name & wdls]
+  (with-open [new-zip (ZipOutputStream. (io/output-stream new-zip-name))
+              old-zip (ZipFile. zip)]
+    ;; hack in WDLs
+    (doseq [wdl wdls]
+      (let [wdl (io/file wdl)]
+        (with-open [in (io/reader wdl)]
+          (.putNextEntry new-zip (ZipEntry. (.getName wdl)))
+          (io/copy in new-zip))))
+    ; hack in existing zip
+    (let [entries (enumeration-seq (.entries old-zip))]
+      (doseq [entry entries]
+        (let [in (.getInputStream old-zip entry)]
+          (.putNextEntry new-zip (ZipEntry. (.getName entry)))
+          (io/copy in new-zip))))
+    ; remove old zip
+    (io/delete-file (io/file zip))))
+
+
+(defn adapterize-wgs
+  "Inject wgs into the zip and wrap it with adapter wgs wdl, assuming wdl and zip are in
+  and the result zip and adapter wdl will be in RESOURCES."
+  [resources]
+  (let [wgs (:top zero.module.wgs/workflow-wdl)
+        adapter-wgs-src (:top zero.module.wgs/adapter-workflow-wdl)
+        cloud-copy-wdl-src  (:top zero.module.wgs/cloud-copy-wdl)
+        {wdl ".wdl" zip ".zip"} (wdl/cromwellify-wdl-resources-hack wgs)
+        {adapter-wdl-name ".wdl" adapter-zip-name ".zip"} (wdl/cromwellify-wdl-resources-hack adapter-wgs-src)
+        dest-in-resources (fn [x] (str/join "/" [resources x]))]
+    (io/copy (io/file adapter-wgs-src)
+             (io/file (dest-in-resources adapter-wdl-name)))
+    (inject-wdls-into-zip! (dest-in-resources zip)
+                           (dest-in-resources adapter-zip-name)
+                           (dest-in-resources wdl)
+                           cloud-copy-wdl-src)))
+
 ;; Hack: delete-tree is a hack.
 ;;
 (defn manage-version-and-resources
   "Stage any extra resources needed on the class path."
   [version resources]
-  (let [directory (io/file resources zero/the-name)
+  (let [tmp "tmp"
+        the-tmp-folder (fn [path] (str/join "/" [tmp path]))
+        directory (io/file resources zero/the-name)
         {:keys [top release]} environments-file
         clj (io/file directory (last (str/split top #"/")))
         hack (partial apply cromwellify-wdls-to-zip-hack resources)]
+    (io/make-parents (io/file (the-tmp-folder "anything")))
     (pprint version)
     (util/delete-tree directory)
-    (clone-repo zero/pipeline-config-url zero/pipeline-config)
-    (util/shell-io! "git" "-C" zero/pipeline-config "checkout" release)
+    (clone-repo zero/pipeline-config-url (the-tmp-folder zero/pipeline-config))
+    (util/shell-io! "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
     (io/make-parents clj)
-    (io/copy (io/file top) clj)
-    (clone-repo zero/dsde-pipelines-url zero/dsde-pipelines)
+    (io/copy (io/file (the-tmp-folder top)) clj)
+    (clone-repo zero/dsde-pipelines-url (the-tmp-folder zero/dsde-pipelines))
     (run! hack (map (juxt :top :release) workflow-wdls))
+    (adapterize-wgs resources)
     (hack-write-the-version-hack resources version)
     (spit "./build.txt" (-> version :build inc (str \newline)))
-    (util/delete-tree (io/file zero/dsde-pipelines)
-                      (io/file zero/pipeline-config))))
+    (util/delete-tree (io/file tmp))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "
@@ -141,9 +189,9 @@
        :handlers [{:url "/swagger/(.*\\.(png|html|js|map|css))$"
                    :static_files "swagger-ui/\\1"
                    :upload "swagger-ui/.*\\.(png|html|js|map|css)$"}
-                  {:url "/(.*\\.(js|css|png|jpg|ico|woff2|eot|ttf))$"
+                  {:url "/(.*\\.(js|css|png|jpg|ico|woff2|eot|ttf|map))$"
                    :static_files "dist/\\1"
-                   :upload "dist/.*\\.(js|css|png|jpg|ico|woff2|eot|ttf)$"}
+                   :upload "dist/.*\\.(js|css|png|jpg|ico|woff2|eot|ttf|map)$"}
                   {:url "/"
                    :static_files "dist/index.html"
                    :upload "dist/index.html"}

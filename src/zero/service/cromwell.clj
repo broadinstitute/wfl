@@ -183,12 +183,13 @@
    (status-counts (once/get-local-auth-header) environment params)))
 
 (defn make-workflow-labels
-  "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS."
+  "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS. Cannot be more than 255 chars."
   [environment wdl inputs]
   (letfn [(unprefix [[k v]] [(keyword (last (str/split (name k) #"\."))) v])
           (key-for [suffix] (keyword (str zero/the-name "-" (name suffix))))]
     (let [version (zero/get-the-version)
-          subset  (->> version keys (filter keyword?) (select-keys version))]
+          only-keep-keys [:version]
+          subset  (select-keys version only-keep-keys)]
       (merge
         {(key-for :version)     (json/write-str subset :escape-slash false)
          (key-for :wdl)         (last (str/split wdl #"/"))
