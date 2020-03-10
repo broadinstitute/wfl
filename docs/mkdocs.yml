@@ -1,0 +1,40 @@
+site_name: Workflow Launcher
+
+repo_url: https://github.com/broadinstitute/wfl
+
+theme:
+  name: material
+  include_search_page: false
+  palette:
+   primary: green
+   accent: teal
+  feature:
+    tabs: true
+
+  # name: null
+  # custom_dir: theme
+
+extra:
+  version: 2.0
+  social:
+    - type: 'github'
+      link: 'https://github.com/broadinstitute/wfl'
+
+nav:
+  - Get Started:
+    - README.md
+  - Frontend:
+    - Frontend: frontend.md
+  - Server:
+    - Server: server.md
+  - Readings:
+    - WorkFlow Launcher's Role in Terra: terra.md
+
+markdown_extensions:
+  - codehilite
+  - admonition
+  - pymdownx.superfences
+  - toc:
+      permalink: True
+  - markdown_include.include:
+      base_path: /

@@ -13,7 +13,7 @@
 /target
 /zero
 /zero.iml
-/boot-project.iml
+/wfl.iml
 /changelog.xml
 /changesets
 
@@ -25,6 +25,9 @@
 .DS_Store
 node_modules/
 dist/
+
+# Doc site build artifact
+/docs/site
 
 # local env files
 .env.local
