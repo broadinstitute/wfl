@@ -267,14 +267,14 @@ the services WFL talks to, and are named accordingly.
 
 | File         | Service                                   |
 | ------------ | ----------------------------------------- |
-| cromwell.clj | Cromwell workflow runner                   |
+| cromwell.clj | Cromwell workflow runner                  |
 | datarepo.clj | DSP DataRepo                              |
 | db.clj       | On-prem and Cloud SQL databases           |
 | gcs.clj      | Google Cloud Storage                      |
 | jms.clj      | Java Message Service queues               |
 | postgres.clj | Cloud SQL postgres databases              |
 | pubsub.clj   | Google Cloud Pub/Sub                      |
-| server.cl    | the WFL server itself                    |
+| server.cl    | the WFL server itself                     |
 | wdl.clj      | parse WDL and manage dependencies         |
 
 #### Test code
@@ -480,44 +480,6 @@ or any later version should be OK.
     ...
     tbl@wm97a-c2b ~/Broad/zero 1#
     ```
-
-5.  Rich Comments
-
-    Some Clojure source files have `(comment ...)` forms at the
-    bottom.
-
-    ``` example
-    tbl@wm97a-c2b ~/Broad/zero # tail ./src/zero/db.clj ./src/zero/main.clj
-    ==> ./src/zero/db.clj <==
-                  {:connection-uri (metrics-sql-url environment)}
-                  db-spec)
-                :user username :password password) sql)))
-
-    (comment
-      (query [:on-prem-picard :dev]
-              "select count (*) from picard.res_proj_agg_override")
-      (query [:cloud-metrics :dev]
-              "SELECT COUNT(*) FROM EXOME_METRICS")
-      )
-
-    ==> ./src/zero/main.clj <==
-      (-main "write-inputs")
-      (-main "write-inputs" "WF=ExomeGermlineSingleSample" "FGBN=FGBN" "S=S"
-              "REF=./reference.json" "CON_REF=./reference_contamination.json"
-              (str "UBAMS=" ubam))
-      (-main "write-inputs" "WF=ExomeGermlineSingleSample" "FGBN=FGBN" "S=S"
-              "REF=./reference.json" "CON_REF=./reference_contamination.json"
-              (str "UBAMS=" ubam) "O=./o.json")
-      (-main "run-starter" "ENV=dev" "VERBOSITY=fnord" "fnord")
-      (-main "run-starter" "EMAIL=tbl@broadinstitute.org")
-      )
-    tbl@wm97a-c2b ~/Broad/zero #
-    ```
-
-    They permit fast testing of code changes by storing expressions
-    that you can evaluate in your editor buffer.
-
-    Feel free to add, edit, or augment them as you see fit.
 
 6.  Exomes in the Cloud Resources
 
