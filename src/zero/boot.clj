@@ -121,13 +121,13 @@
         (with-open [in (io/reader wdl)]
           (.putNextEntry new-zip (ZipEntry. (.getName wdl)))
           (io/copy in new-zip))))
-    ; hack in existing zip
+    ;; hack in existing zip
     (let [entries (enumeration-seq (.entries old-zip))]
       (doseq [entry entries]
         (let [in (.getInputStream old-zip entry)]
           (.putNextEntry new-zip (ZipEntry. (.getName entry)))
           (io/copy in new-zip))))
-    ; remove old zip
+    ;; remove old zip
     (io/delete-file (io/file zip))))
 
 
