@@ -29,7 +29,7 @@
    zero.module.xx/workflow-wdl])
 
 (def extra-workflow-wdls
-  "The extra workflow WDLs that Zero manages that should be written to versions."
+  "More workflow WDLs that should be written to versions."
   [zero.module.wgs/adapter-workflow-wdl])
 
 (defn clone-repo
@@ -55,9 +55,12 @@
                               OffsetDateTime/parse
                               .toInstant
                               .toString
-                              .toLowerCase)]
+                              .toLowerCase)
+          version (if changes?
+                    (clean-version build-time)
+                    (clean-version commit-time-utc))]
       (apply array-map
-             :version         (if changes? (clean-version build-time) (clean-version commit-time-utc))
+             :version         version
              :time            build-time
              :build           (-> "build.txt" slurp str/trim Integer/parseInt)
              :user            (or (System/getenv "USER") zero/the-name)
@@ -98,7 +101,8 @@
 (defn cromwellify-wdls-to-zip-hack
   "Stage WDL files and dependencies from tmp/ into RESOURCES."
   [resources wdl version]
-  (util/shell-io! "git" "-C" (str/join "/" ["tmp" zero/dsde-pipelines]) "checkout" version)
+  (util/shell-io!
+    "git" "-C" (str/join "/" ["tmp" zero/dsde-pipelines]) "checkout" version)
   (let [wdl (str/join "/" ["tmp" wdl])
         path (wdl/cromwellify-wdl-resources-hack wdl)
         [directory wdl zip] (wdl/cromwellify wdl)]
@@ -132,21 +136,19 @@
 
 
 (defn adapterize-wgs
-  "Inject wgs into the zip and wrap it with adapter wgs wdl, assuming wdl and zip are in
-  and the result zip and adapter wdl will be in RESOURCES."
+  "Wrap the released wgs/workflow-wdl in wgs/cloud-copy-wdl and modify
+  the dependencies zip in RESOURCES to work with the new workflow."
   [resources]
-  (let [wgs (:top zero.module.wgs/workflow-wdl)
-        adapter-wgs-src (:top zero.module.wgs/adapter-workflow-wdl)
-        cloud-copy-wdl-src  (:top zero.module.wgs/cloud-copy-wdl)
-        {wdl ".wdl" zip ".zip"} (wdl/cromwellify-wdl-resources-hack wgs)
-        {adapter-wdl-name ".wdl" adapter-zip-name ".zip"} (wdl/cromwellify-wdl-resources-hack adapter-wgs-src)
-        dest-in-resources (fn [x] (str/join "/" [resources x]))]
-    (io/copy (io/file adapter-wgs-src)
-             (io/file (dest-in-resources adapter-wdl-name)))
-    (inject-wdls-into-zip! (dest-in-resources zip)
-                           (dest-in-resources adapter-zip-name)
-                           (dest-in-resources wdl)
-                           cloud-copy-wdl-src)))
+  (let [src-wgs (:top zero.module.wgs/workflow-wdl)
+        adapter (:top zero.module.wgs/adapter-workflow-wdl)
+        wgs     (wdl/cromwellify-wdl-resources-hack src-wgs)
+        adapted (wdl/cromwellify-wdl-resources-hack adapter)]
+    (letfn [(destination [leaf] (str/join "/" [resources leaf]))]
+      (io/copy (io/file adapter) (io/file (destination (adapted ".wdl"))))
+      (inject-wdls-into-zip! (destination (wgs ".zip"))
+                             (destination (adapted ".zip"))
+                             (destination (wgs ".wdl"))
+                             (:top zero.module.wgs/cloud-copy-wdl)))))
 
 ;; Hack: delete-tree is a hack.
 ;;
@@ -163,7 +165,8 @@
     (pprint version)
     (util/delete-tree directory)
     (clone-repo zero/pipeline-config-url (the-tmp-folder zero/pipeline-config))
-    (util/shell-io! "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
+    (util/shell-io!
+      "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
     (io/make-parents clj)
     (io/copy (io/file (the-tmp-folder top)) clj)
     (clone-repo zero/dsde-pipelines-url (the-tmp-folder zero/dsde-pipelines))
