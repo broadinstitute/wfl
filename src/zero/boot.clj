@@ -150,27 +150,26 @@
 (defn manage-version-and-resources
   "Stage any extra resources needed on the class path."
   [version resources]
-  (let [tmp "tmp"
-        the-tmp-folder (fn [path] (str/join "/" [tmp path]))
-        directory (io/file resources zero/the-name)
+  (let [directory (io/file resources zero/the-name)
         {:keys [top release]} environments-file
         clj (io/file directory (last (str/split top #"/")))
         hack (partial apply cromwellify-wdls-to-zip-hack resources)]
-    (letfn [(clone [url repo] (util/shell-io! "git" "clone" url repo))]
-      (io/make-parents (io/file (the-tmp-folder "anything")))
+    (letfn [(tmp [path] (str/join "/" ["tmp" path]))
+            (clone [url repo] (util/shell-io! "git" "clone" url repo))]
+      (io/make-parents (io/file (tmp "anything")))
       (pprint version)
       (util/delete-tree directory)
-      (clone zero/pipeline-config-url (the-tmp-folder zero/pipeline-config))
+      (clone zero/pipeline-config-url (tmp zero/pipeline-config))
       (util/shell-io!
-        "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
+        "git" "-C" (tmp zero/pipeline-config) "checkout" release)
       (io/make-parents clj)
-      (io/copy (io/file (the-tmp-folder top)) clj)
-      (clone zero/dsde-pipelines-url (the-tmp-folder zero/dsde-pipelines))
+      (io/copy (io/file (tmp top)) clj)
+      (clone zero/dsde-pipelines-url (tmp zero/dsde-pipelines))
       (run! hack (map (juxt :top :release) workflow-wdls))
       (adapterize-wgs resources)
       (hack-write-the-version-hack resources version)
       (spit "./build.txt" (-> version :build inc (str \newline)))
-      (util/delete-tree (io/file tmp)))))
+      (util/delete-tree (io/file "tmp")))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "

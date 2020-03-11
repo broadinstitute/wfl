@@ -23,7 +23,7 @@
   "git@github.com:broadinstitute/dsde-pipelines.git")
 
 (def pipeline-config
-  "Where is the environments file is."
+  "Where the environments file is."
   (str "pipeline-config-" (UUID/randomUUID) "/"))
 
 (def pipeline-config-url
