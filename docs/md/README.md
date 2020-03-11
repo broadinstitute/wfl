@@ -301,7 +301,7 @@ of `google-cloud-sdk` in your path to run `zero` or its jar
 successfully. I verified that `Google Cloud SDK 161.0.0` works. That
 or any later version should be OK.
 
-2.  Installation
+1.  Installation
 
     See [this link](https://github.com/boot-clj/boot#install) to
     install `boot-clj`.
@@ -339,7 +339,7 @@ or any later version should be OK.
     running and testing the project without a separate compilation
     step.
 
-3.  Hacking
+2.  Hacking
 
     Clojure development feels very different from Scala and Java
     development. It even differs markedly from development in other
@@ -370,7 +370,7 @@ or any later version should be OK.
     for the Zero project, but will add an executable symbolic link
     `zero` to conveniently execute the Clojure code as a script.
 
-4.  Testing
+3.  Testing
 
     If you've never run `boot` before, you may have to run it twice:
     first to bootstrap Clojure and `boot` itself, and again to
@@ -462,7 +462,7 @@ or any later version should be OK.
     tbl@wm97a-c2b ~/Broad/zero 1#
     ```
 
-6.  Exomes in the Cloud Resources
+4.  Exomes in the Cloud Resources
 
     From [Hybrid Selection in the Cloud
     V1](https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing)
