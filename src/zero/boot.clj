@@ -32,11 +32,6 @@
   "More workflow WDLs that should be written to versions."
   [zero.module.wgs/adapter-workflow-wdl])
 
-(defn clone-repo
-  "Clone the GIT repository at URL into DESTINATION."
-  [url destination]
-  (util/shell-io! "git" "clone" url destination))
-
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
@@ -161,20 +156,21 @@
         {:keys [top release]} environments-file
         clj (io/file directory (last (str/split top #"/")))
         hack (partial apply cromwellify-wdls-to-zip-hack resources)]
-    (io/make-parents (io/file (the-tmp-folder "anything")))
-    (pprint version)
-    (util/delete-tree directory)
-    (clone-repo zero/pipeline-config-url (the-tmp-folder zero/pipeline-config))
-    (util/shell-io!
-      "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
-    (io/make-parents clj)
-    (io/copy (io/file (the-tmp-folder top)) clj)
-    (clone-repo zero/dsde-pipelines-url (the-tmp-folder zero/dsde-pipelines))
-    (run! hack (map (juxt :top :release) workflow-wdls))
-    (adapterize-wgs resources)
-    (hack-write-the-version-hack resources version)
-    (spit "./build.txt" (-> version :build inc (str \newline)))
-    (util/delete-tree (io/file tmp))))
+    (letfn [(clone [url repo] (util/shell-io! "git" "clone" url repo))]
+      (io/make-parents (io/file (the-tmp-folder "anything")))
+      (pprint version)
+      (util/delete-tree directory)
+      (clone zero/pipeline-config-url (the-tmp-folder zero/pipeline-config))
+      (util/shell-io!
+        "git" "-C" (the-tmp-folder zero/pipeline-config) "checkout" release)
+      (io/make-parents clj)
+      (io/copy (io/file (the-tmp-folder top)) clj)
+      (clone zero/dsde-pipelines-url (the-tmp-folder zero/dsde-pipelines))
+      (run! hack (map (juxt :top :release) workflow-wdls))
+      (adapterize-wgs resources)
+      (hack-write-the-version-hack resources version)
+      (spit "./build.txt" (-> version :build inc (str \newline)))
+      (util/delete-tree (io/file tmp)))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "
