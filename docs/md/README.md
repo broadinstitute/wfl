@@ -11,7 +11,7 @@ communicates with other services as necessary to manage a workload.
 It can also be deployed to run as a service in the cloud.
 
 For more on Workflow Launcher's role in the Terra infrastructure see
-[Workflow Launcher's role in Terra (./docs/docs/terra.md)](./terra.md).
+[Workflow Launcher's role in Terra (./docs/md/terra.md)](./terra.md).
 
 ## Set up
 
@@ -92,7 +92,7 @@ The initial file structure looks like this.
 $ tree .
 .
 ├── LICENSE.txt
-├── README.md -> ./docs/docs/README.md
+├── README.md -> ./docs/md/README.md
 ├── boot.properties
 ├── build.boot
 ├── build.txt
@@ -103,7 +103,7 @@ $ tree .
 │           └── 01_db_schema.xml
 ├── deps.edn
 ├── docs
-│   ├── docs
+│   ├── md
 │   │   ├── README.md
 │   │   ├── frontend.md
 │   │   ├── server.md
@@ -116,7 +116,7 @@ $ tree .
 │   ├── deploy.sh
 │   ├── index.md
 │   ├── server.sh
-│   └── terra.md -> ./docs/docs/terra.md
+│   └── terra.md -> ./docs/md/terra.md
 ├── resources
 │   └── simplelogger.properties
 ├── src
@@ -162,7 +162,7 @@ $ tree .
 After cloning a new WFL repo, the top-level files are.
 
   - `./README.md` is this file, which is just a symlink to the actual doc
-    file under `docs/docs/`.
+    file under `docs/md/`.
 
   - `./boot.properties` overrides some defaults in `boot-clj`.
     (`boot.properties` is something like `build.properties` for
@@ -177,7 +177,7 @@ After cloning a new WFL repo, the top-level files are.
   - `./.github` holds Github related files, such as PR templates and
     Github Actions files.
 
-  - `./docs` holds database scheme migration changelog and changeset
+  - `./database` holds database scheme migration changelog and changeset
     files for liquibase.
 
   - `./docs` has ancillary documentation. It's compiled as a static doc
@@ -186,7 +186,7 @@ After cloning a new WFL repo, the top-level files are.
   - `./ops` is a directory of standard scripts to support
     operations. It includes scripts to deploy the server in
     Google App Engine, and to run it locally for easier
-    debugging. (See [./docs/docs/server.md](./server.md) for
+    debugging. (See [./docs/md/server.md](./server.md) for
     more information.)
 
   - `./resources` contains the `simplelogger` properties and
