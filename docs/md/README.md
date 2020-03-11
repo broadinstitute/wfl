@@ -301,25 +301,6 @@ of `google-cloud-sdk` in your path to run `zero` or its jar
 successfully. I verified that `Google Cloud SDK 161.0.0` works. That
 or any later version should be OK.
 
-1.  Cheatsheets
-
-    I find a cheatsheet handy when programming in Clojure. There are
-    a bunch. Bookmark or print one.
-
-      - <https://clojure.org/api/cheatsheet>
-      - <https://www.conj.io/> (… used to be called Grimoire …)
-      - <https://github.com/jafingerhut/clojure-cheatsheets/tree/master/pdf>
-      - <http://cljs.info/cheatsheet/> (ClojureScript)
-      - <https://github.com/jafingerhut/clojure-cheatsheets>
-        (sources)
-
-    These may also be handy.
-
-      - [Clojure Error
-        Messages](https://github.com/yogthos/clojure-error-message-catalog)
-      - ["Weird" Characters in
-        Clojure](https://clojure.org/guides/weird_characters)
-
 2.  Installation
 
     See [this link](https://github.com/boot-clj/boot#install) to
