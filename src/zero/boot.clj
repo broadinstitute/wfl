@@ -141,12 +141,12 @@
                    (dissoc clones :tmp)
                    {:release (mapv :release wdls)})]
     (pprint edn)
-    #_(try (util/delete-tree directory)
-           (stage-some-files tmp directory)
-           (run! (partial cromwellify-wdl tmp directory) wdls)
-           (adapterize-wgs directory)
-           (write-the-version-file directory edn)
-           (finally (util/delete-tree tmp)))
+    (try (util/delete-tree directory)
+         (stage-some-files tmp directory)
+         (run! (partial cromwellify-wdl tmp directory) wdls)
+         (adapterize-wgs directory)
+         (write-the-version-file directory edn)
+         (finally (util/delete-tree tmp)))
     (spit "./build.txt" (-> version :build inc (str \newline)))))
 
 (defn google-app-engine-configure
