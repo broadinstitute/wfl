@@ -72,10 +72,8 @@
   "Map valid values for :ENVIRONMENT to their doc strings."
   (zipmap (keys stuff) (map :doc (vals stuff))))
 
-;; Ignore all of that above and instead load from
+;; Ignore all of that above and instead load from the classpath.
 ;;
-;;     (:top zero.boot/environments-file)
+;; See zero.boot/stage-some-files for more.
 ;;
-;; See zero.boot/manage-version-and-resources for more.
-;;
-(load "environments")
+(load "/wfl/environments")
