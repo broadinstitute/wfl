@@ -49,8 +49,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "ExternalExomeReprocessing_v1.1"
-   :top (str zero/dsde-pipelines "pipelines/reprocessing/"
-             "external/exome/ExternalExomeReprocessing.wdl")})
+   :top "pipelines/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."

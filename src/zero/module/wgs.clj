@@ -45,22 +45,16 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "WholeGenomeReprocessing_v1.2"
-   :top     (str zero/dsde-pipelines
-                 "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl")})
-
-(def cloud-copy-wdl
-  "The cloud copy utility WDL file."
-  {:top "wdl/CopyFilesFromCloudToCloud.wdl"})
+   :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
 
 (def adapter-workflow-wdl
   "The adapter WDL file."
-  {:release "ExternalWholeGenomeReprocessing_v1.2"
-   :top "wdl/ExternalWholeGenomeReprocessing.wdl"})
+  "wdl/ExternalWholeGenomeReprocessing.wdl")
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
   {(keyword (str zero/the-name "-wgs"))
-   (wdl/workflow-name (:top adapter-workflow-wdl))})
+   (wdl/workflow-name adapter-workflow-wdl)})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
@@ -164,15 +158,15 @@
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
   ENVIRONMENT."
   [environment in-bucket out-gs object]
-  (let [path  (wdl/hack-unpack-resources-hack (:top adapter-workflow-wdl))
+  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)
         in-gs (gcs/gs-url in-bucket object)]
     (prn (cromwell/submit-workflow
-               environment
-               (io/file (:dir path) (path ".wdl"))
-               (io/file (:dir path) (path ".zip"))
-               (make-inputs environment out-gs in-gs)
-               (util/make-options environment)
-               cromwell-label-map))))
+           environment
+           (io/file (:dir path) (path ".wdl"))
+           (io/file (:dir path) (path ".zip"))
+           (make-inputs environment out-gs in-gs)
+           (util/make-options environment)
+           cromwell-label-map))))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."

@@ -65,23 +65,22 @@
 
   Call (util/delete-tree directory) at some point."
   [top]
+  (zero.debug/trace top)
   (try
     (let [[root-wf & imports] (collect-files top)
-          root-name           (.getName root-wf)
-          uuid                (str (UUID/randomUUID))
-          directory           (io/file uuid)
+          uuid                (UUID/randomUUID)
+          directory           (io/file (str "CROMWELLIFY-" uuid))
           zip                 (io/file directory (str uuid ".zip"))]
       (doseq [wdl imports] (cromwellify-file directory wdl))
       (letfn [(dependency? [f] (let [fname (.getName f)]
-                                 (and (not= root-name fname)
+                                 (and (not= (.getName root-wf) fname)
                                       (str/ends-with? fname ".wdl"))))]
         [directory
-         (cromwellify-file uuid root-wf)
-         (when (seq imports)
-           (->> directory
-                file-seq
-                (filter dependency?)
-                (apply util/zip-files zip)))]))
+         (cromwellify-file directory root-wf)
+         (when (seq imports) (->> directory
+                                  file-seq
+                                  (filter dependency?)
+                                  (apply util/zip-files zip)))]))
     (catch FileNotFoundException x
       (binding [*out* *err*]
         (println (format "%s: WARNING: %s" zero/the-name (.getMessage x)))))))

@@ -5,32 +5,18 @@
             [clojure.string :as str]
             [zero.environments :as env]
             [zero.main :as main]
+            [zero.module.ukb :as ukb]
+            [zero.module.wgs :as wgs]
+            [zero.module.xx :as xx]
             [zero.server :as server]
             [zero.service.postgres :as postgres]
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
   (:import [java.time OffsetDateTime]
+           [java.time.temporal ChronoUnit]
            [java.util UUID]
-           (java.util.zip ZipOutputStream ZipEntry ZipFile)))
-
-(def environments-file
-  "Path to the environments.clj file at build time."
-  {:release "5f0f556a69f1f7bc048b2f0820fb82e17db48d91"
-   :top     (str zero/pipeline-config "zero/environments.clj")})
-
-(def dsde-pipelines-version
-  {:release "b06bd3214b4be5cc9babf38f7679d0fb36968542"})
-
-(def workflow-wdls
-  "The workflow WDLs that Zero manages."
-  [zero.module.ukb/workflow-wdl
-   zero.module.wgs/workflow-wdl
-   zero.module.xx/workflow-wdl])
-
-(def extra-workflow-wdls
-  "More workflow WDLs that should be written to versions."
-  [zero.module.wgs/adapter-workflow-wdl])
+           [java.util.zip ZipEntry ZipFile ZipOutputStream]))
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
@@ -38,44 +24,32 @@
 (defn make-the-version
   "Make a map of version information."
   []
-  (letfn [(git [& more]
-            (apply util/shell! (into ["git" "rev-parse" "--verify"] more)))
-          (clean-version [timestamp]
-            (str/replace timestamp #"[^-a-z0-9]" "-"))]
-    (let [build-time (str (OffsetDateTime/now))
-          changes? (not-empty (util/shell! "git" "status" "-s"))
-          commit (git "HEAD")
-          commit-time (util/shell! "git" "show" "-s" "--format=%cI" commit)
-          commit-time-utc (-> commit-time
-                              OffsetDateTime/parse
-                              .toInstant
-                              .toString
-                              .toLowerCase)
-          version (if changes?
-                    (clean-version build-time)
-                    (clean-version commit-time-utc))]
-      (apply array-map
-             :version         version
-             :time            build-time
-             :build           (-> "build.txt" slurp str/trim Integer/parseInt)
-             :user            (or (System/getenv "USER") zero/the-name)
-             :zero            commit
-             :dsde-pipelines  (:release dsde-pipelines-version)
-             :pipeline-config (:release environments-file)
-             (->> workflow-wdls
-                  (concat extra-workflow-wdls)
-                  (map (juxt (comp wdl/workflow-name :top) :release))
-                  (apply concat))))))
+  (let [built     (-> (OffsetDateTime/now)
+                      (.truncatedTo ChronoUnit/SECONDS)
+                      .toInstant .toString)
+        commit    (util/shell! "git" "rev-parse" "HEAD")
+        committed (->> commit
+                       (util/shell! "git" "show" "-s" "--format=%cI")
+                       OffsetDateTime/parse .toInstant .toString)
+        clean?    (util/do-or-nil
+                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+    {:version   (-> (if clean? committed built)
+                    .toLowerCase
+                    (str/replace #"[^-a-z0-9]" "-"))
+     :commit    commit
+     :committed committed
+     :built     built
+     :build     (-> "build.txt" slurp str/trim Integer/parseInt)
+     :user      (or (System/getenv "USER") zero/the-name)}))
 
-(defn hack-write-the-version-hack
-  "Write THE-VERSION to the RESOURCES directory."
-  [resources the-version]
-  (let [zero (io/file resources zero/the-name)
-        file (io/file zero "version.edn")]
+(defn write-the-version-file
+  "Write VERSION.edn into the RESOURCES directory."
+  [resources version]
+  (let [file (io/file resources "version.edn")]
     (io/make-parents file)
     (with-open [out (io/writer file)]
       (binding [*out* out]
-        (pprint the-version)))))
+        (pprint version)))))
 
 (defn make-the-pom
   "Make the Project Object Model for this program from THE-VERSION."
@@ -93,83 +67,87 @@
                    ((apply juxt keywords) the-pom))
            "Application-Name" (str/capitalize zero/the-name))))
 
-(defn cromwellify-wdls-to-zip-hack
-  "Stage WDL files and dependencies from tmp/ into RESOURCES."
-  [resources wdl version]
-  (util/shell-io!
-    "git" "-C" (str/join "/" ["tmp" zero/dsde-pipelines]) "checkout" version)
-  (let [wdl (str/join "/" ["tmp" wdl])
-        path (wdl/cromwellify-wdl-resources-hack wdl)
-        [directory wdl zip] (wdl/cromwellify wdl)]
-    (when directory
-      (try (let [wf-wdl  (io/file resources (path ".wdl"))
-                 imports (io/file resources (path ".zip"))]
-             (io/make-parents imports)
-             (.renameTo wdl wf-wdl)
-             (.renameTo zip imports))
-           (finally (util/delete-tree directory))))))
+(defn clone-repos
+  "Return a map of zero/the-github-repos clones in a :tmp directory.
+   Delete the :tmp directory at some point."
+  []
+  (let [tmp (str "CLONE_" (UUID/randomUUID))]
+    (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone" url))]
+      (io/make-parents (io/file tmp "Who cares, really?"))
+      (run! clone (vals zero/the-github-repos)))
+    (into {:tmp tmp}
+          (for [repo (keys zero/the-github-repos)]
+            (let [dir (str/join "/" [tmp repo])]
+              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
-(defn inject-wdls-into-zip!
-  "Inject WDLs into ZIP and produce a NEW-ZIP-NAME."
-  [zip new-zip-name & wdls]
-  (with-open [new-zip (ZipOutputStream. (io/output-stream new-zip-name))
-              old-zip (ZipFile. zip)]
-    ;; hack in WDLs
-    (doseq [wdl wdls]
-      (let [wdl (io/file wdl)]
-        (with-open [in (io/reader wdl)]
-          (.putNextEntry new-zip (ZipEntry. (.getName wdl)))
-          (io/copy in new-zip))))
-    ;; hack in existing zip
-    (let [entries (enumeration-seq (.entries old-zip))]
-      (doseq [entry entries]
-        (let [in (.getInputStream old-zip entry)]
-          (.putNextEntry new-zip (ZipEntry. (.getName entry)))
-          (io/copy in new-zip))))
-    ;; remove old zip
-    (io/delete-file (io/file zip))))
+(defn cromwellify-wdl
+  "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
+  [clones resources {:keys [release top] :as wdl}]
+  (let [dp (str/join "/" [clones "dsde-pipelines"])]
+    (util/shell-io! "git" "-C" dp"checkout" release)
+    (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
+      (when directory
+        (try (let [out-wdl (.getPath (io/file resources (.getName in-wdl)))
+                   out-zip (str (util/unsuffix out-wdl ".wdl") ".zip")]
+               (io/make-parents out-zip)
+               (.renameTo in-wdl (io/file out-wdl))
+               (.renameTo in-zip (io/file out-zip)))
+             (finally (util/delete-tree directory)))))))
 
+(defn stage-some-files
+  "Stage some files from CLONES to RESOURCES."
+  [clones resources]
+  (letfn [(clone [repo file] (io/file (str/join "/" [clones repo]) file))
+          (stage [in]
+            (let [out (io/file resources (.getName in))]
+              (io/make-parents out)
+              (io/copy in out)))]
+    (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
+    (stage (clone "pipeline-config" "zero/environments.clj"))))
 
 (defn adapterize-wgs
-  "Wrap the released wgs/workflow-wdl in wgs/cloud-copy-wdl and modify
-  the dependencies zip in RESOURCES to work with the new workflow."
+  "Wrap the released WGS WDL in a new workflow that copy outputs and
+  stage the new .wdl and .zip files in RESOURCES."
   [resources]
-  (let [src-wgs (:top zero.module.wgs/workflow-wdl)
-        adapter (:top zero.module.wgs/adapter-workflow-wdl)
-        wgs     (wdl/cromwellify-wdl-resources-hack src-wgs)
-        adapted (wdl/cromwellify-wdl-resources-hack adapter)]
-    (letfn [(destination [leaf] (str/join "/" [resources leaf]))]
-      (io/copy (io/file adapter) (io/file (destination (adapted ".wdl"))))
-      (inject-wdls-into-zip! (destination (wgs ".zip"))
-                             (destination (adapted ".zip"))
-                             (destination (wgs ".wdl"))
-                             (:top zero.module.wgs/cloud-copy-wdl)))))
+  (letfn [(zipify [wdl] (str (util/unsuffix (.getPath wdl) ".wdl") ".zip"))]
+    (let [src-wgs (io/file (:top wgs/workflow-wdl))
+          wgs-wdl (io/file resources (.getName src-wgs))
+          adapter (io/file "wdl/ExternalWholeGenomeReprocessing.wdl")
+          adapted (io/file resources (.getName adapter))
+          in-zip  (io/file (zipify wgs-wdl))
+          out-zip (io/file (zipify adapted))
+          cffctc  (io/file resources "CopyFilesFromCloudToCloud.wdl")]
+      (io/copy adapter adapted)
+      (with-open [in  (ZipFile. in-zip)
+                  out (ZipOutputStream. (io/output-stream out-zip))]
+        (doseq [wdl [wgs-wdl cffctc]]
+          (with-open [r (io/reader wdl)]
+            (.putNextEntry out (ZipEntry. (.getName wdl)))
+            (io/copy r out)))
+        (doseq [wdl (enumeration-seq (.entries in))]
+          (with-open [r (.getInputStream in wdl)]
+            (.putNextEntry out (ZipEntry. (.getName wdl)))
+            (io/copy r out)))))))
 
-;; Hack: delete-tree is a hack.
+;; Hack: (delete-tree directory) is a hack.
 ;;
 (defn manage-version-and-resources
-  "Stage any extra resources needed on the class path."
+  "Use VERSION to stage any needed RESOURCES on the class path."
   [version resources]
-  (let [directory (io/file resources zero/the-name)
-        {:keys [top release]} environments-file
-        clj (io/file directory (last (str/split top #"/")))
-        hack (partial apply cromwellify-wdls-to-zip-hack resources)]
-    (letfn [(tmp [path] (str/join "/" ["tmp" path]))
-            (clone [url repo] (util/shell-io! "git" "clone" url repo))]
-      (io/make-parents (io/file (tmp "anything")))
-      (pprint version)
-      (util/delete-tree directory)
-      (clone zero/pipeline-config-url (tmp zero/pipeline-config))
-      (util/shell-io!
-        "git" "-C" (tmp zero/pipeline-config) "checkout" release)
-      (io/make-parents clj)
-      (io/copy (io/file (tmp top)) clj)
-      (clone zero/dsde-pipelines-url (tmp zero/dsde-pipelines))
-      (run! hack (map (juxt :top :release) workflow-wdls))
-      (adapterize-wgs resources)
-      (hack-write-the-version-hack resources version)
-      (spit "./build.txt" (-> version :build inc (str \newline)))
-      (util/delete-tree (io/file "tmp")))))
+  (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
+        {:keys [tmp] :as clones} (clone-repos)
+        directory (io/file resources zero/the-name)
+        edn (merge version
+                   (dissoc clones :tmp)
+                   {:release (mapv :release wdls)})]
+    (pprint edn)
+    #_(try (util/delete-tree directory)
+           (stage-some-files tmp directory)
+           (run! (partial cromwellify-wdl tmp directory) wdls)
+           (adapterize-wgs directory)
+           (write-the-version-file directory edn)
+           (finally (util/delete-tree tmp)))
+    (spit "./build.txt" (-> version :build inc (str \newline)))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "
