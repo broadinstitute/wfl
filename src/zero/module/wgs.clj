@@ -15,7 +15,8 @@
 
 (def description
   "Describe the purpose of this command."
-  (let [in "gs://broad-gotc-test-storage/single_sample/plumbing/truth/develop/20k/"
+  (let [in  (str "gs://broad-gotc-test-storage/single_sample/plumbing"
+                 "/truth/develop/20k/")
         out "gs://broad-gotc-dev-zero-test/wgs"
         title (str (str/capitalize zero/the-name) ":")]
     (-> [""
@@ -90,11 +91,11 @@
                "hg38/v0/wgs_coverage_regions.hg38.interval_list")}
          ;; uncomment to enable CheckFingerprint
          #_(-> {:haplotype_database_file
-              (str "gs://broad-references-private/hg38/v0/"
-                   "Homo_sapiens_assembly38.haplotype_database.txt")}
-             (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeReprocessing)
-             (util/prefix-keys :WholeGenomeReprocessing))
+                (str "gs://broad-references-private/hg38/v0/"
+                     "Homo_sapiens_assembly38.haplotype_database.txt")}
+               (util/prefix-keys :WholeGenomeGermlineSingleSample)
+               (util/prefix-keys :WholeGenomeReprocessing)
+               (util/prefix-keys :WholeGenomeReprocessing))
          (-> {:disable_sanity_check true}
              (util/prefix-keys :CheckContamination)
              (util/prefix-keys :UnmappedBamToAlignedBam)
@@ -107,7 +108,8 @@
 (defn genome-inputs
   [environment]
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
-  {:google_account_vault_path (get-in env/stuff [environment :vault_path_to_picard_account])
+  {:google_account_vault_path
+   (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
    :unmapped_bam_suffix ".unmapped.bam"
    :papi_settings       {:agg_preemptible_tries 3
@@ -135,12 +137,13 @@
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
   [environment in-gs-url]
   (prn (format "%s: querying Cromwell in %s" zero/the-name environment))
-  (let [md (partial cromwell/metadata environment)]
+  (let [input-keys [:ExternalWholeGenomeReprocessing.input_bam
+                    :ExternalWholeGenomeReprocessing.input_cram]
+        md (partial cromwell/metadata environment)]
     (letfn [(active? [metadata]
               (let [url (-> metadata :id md :submittedFiles :inputs
                             (json/read-str :key-fn keyword)
-                            (some [:ExternalWholeGenomeReprocessing.input_bam
-                                   :ExternalWholeGenomeReprocessing.input_cram]))]
+                            (some input-keys))]
                 (when url
                   (let [[bucket object] (gcs/parse-gs-url url)
                         [_ unsuffixed _] (all/bam-or-cram? object)
@@ -177,8 +180,8 @@
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
                 (when unsuffixed [unsuffixed suffix])))
             (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [slashified-out-gs (slashify out-gs)
-            done   (set/union (all/processed-crams slashified-out-gs)
+      (let [slashified (slashify out-gs)
+            done   (set/union (all/processed-crams slashified)
                               (active-objects environment in-gs))
             suffix (->> in-gs
                         gcs/parse-gs-url
@@ -190,7 +193,7 @@
                         (remove done)
                         (take max)
                         (map (fn [base] (str base (suffix base)))))]
-        (run! (partial submit-workflow environment bucket slashified-out-gs) more)))))
+        (run! (partial submit-workflow environment bucket slashified) more)))))
 
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
