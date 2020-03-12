@@ -65,7 +65,6 @@
 
   Call (util/delete-tree directory) at some point."
   [top]
-  (zero.debug/trace top)
   (try
     (let [[root-wf & imports] (collect-files top)
           uuid                (UUID/randomUUID)

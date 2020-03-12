@@ -296,7 +296,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn shell-io!
   "Run ARGS in a subprocess with inherited standard streams."
   [& args]
-  (clojure.pprint/pprint args)
   (let [exit (-> args ProcessBuilder. .inheritIO .start .waitFor)]
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s"

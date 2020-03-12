@@ -134,20 +134,22 @@
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
   [version resources]
-  (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
-        {:keys [tmp] :as clones} (clone-repos)
-        directory (io/file resources zero/the-name)
-        edn (merge version
-                   (dissoc clones :tmp)
-                   {:release (mapv :release wdls)})]
-    (pprint edn)
-    (try (util/delete-tree directory)
-         (stage-some-files tmp directory)
-         (run! (partial cromwellify-wdl tmp directory) wdls)
-         (adapterize-wgs directory)
-         (write-the-version-file directory edn)
-         (finally (util/delete-tree tmp)))
-    (spit "./build.txt" (-> version :build inc (str \newline)))))
+  (letfn [(frob [{:keys [release top] :as wdl}]
+            [(last (str/split top #"/")) release])]
+    (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
+          {:keys [tmp] :as clones} (clone-repos)
+          directory (io/file resources zero/the-name)
+          edn (merge version
+                     (dissoc clones :tmp)
+                     (into {} (map frob wdls)))]
+      (pprint edn)
+      (try (util/delete-tree directory)
+           (stage-some-files tmp directory)
+           (run! (partial cromwellify-wdl tmp directory) wdls)
+           (adapterize-wgs directory)
+           (write-the-version-file directory edn)
+           (finally (util/delete-tree (io/file tmp))))
+      (spit "./build.txt" (-> version :build inc (str \newline))))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "
