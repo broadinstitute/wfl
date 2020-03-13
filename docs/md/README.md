@@ -16,7 +16,7 @@ For more on Workflow Launcher's role in the Terra infrastructure see
 ## Set up
 
 Run `boot build` at the top of a `wfl.git` repo to build an
-uberjar. The resulting jar is in `./target/zero-*.jar` relative to
+uberjar. The resulting jar is in `./target/wfl-*.jar` relative to
 the `wfl.git` clone.
 
 With some start-up and performance penalty, you can also run
@@ -38,28 +38,23 @@ currently talk to the following services:
 
 | service                     | on premises | in cloud |
 | --------------------------- | ----------- | -------- |
-| Clio                        | x           | x        |
 | Cloud SQL                   | x           | x        |
 | Cromwell                    | x           | x        |
 | Google App Engine           | x           | x        |
 | Google Cloud Platform Admin | x           | x        |
 | Google Cloud Pub/Sub        | x           | x        |
 | Google Cloud Storage        | x           | x        |
-| JMS                         | x           |          |
-| Mercury                     | x           |          |
 | Oracle DB                   | x           |          |
-| SMTP (mail)                 | x           | x        |
 | Vault                       | x           | x        |
-| Zero                        |             | x        |
+| Wfl                         |             | x        |
 
-
-Workflow Launcher has a diagnostic mode, `dx`, which leverages
-Cromwell metadata to expose useful workflow information.
+Workflow Launcher has a diagnostic mode, `dx`,
+for debugging problems.
 
 Run `zero dx` to get a list of the diagnostics available.
 
 ```bash
-wm28d-f87:zero yanc$ java -jar ./target/zero-20190409-5.jar dx
+wm28d-f87:wfl yanc$ java -jar ./target/wfl-2020-03-13t17-29-12z.jar dx
 
 zero dx: tools to help debug workflow problems.
 
@@ -75,16 +70,12 @@ The <tool>s and their <arg>s are named here.
 ...
 Error: Must specify a dx <tool> to run.
 BTW: You ran: zero dx
-wm28d-f87:zero yanc$
+wm28d-f87:wfl yanc$
 ```
 
 ## Implementation
 
-### Frontend
-
 For frontend details, check [Frontend Section](./frontend.md)
-
-### Backend
 
 The initial file structure looks like this.
 
@@ -274,7 +265,7 @@ the services WFL talks to, and are named accordingly.
 | jms.clj      | Java Message Service queues               |
 | postgres.clj | Cloud SQL postgres databases              |
 | pubsub.clj   | Google Cloud Pub/Sub                      |
-| server.cl    | the WFL server itself                     |
+| server.clj   | the WFL server itself                     |
 | wdl.clj      | parse WDL and manage dependencies         |
 
 #### Test code
@@ -285,7 +276,6 @@ There are some unit tests under `./test/zero/`.
 | ------------------------- | ------------------------- |
 | gcs<sub>test</sub>.clj    | zero.gcs in gcs.clj       |
 | pubsub<sub>test</sub>.clj | zero.pubsub in pubsub.clj |
-
 
 #### Development
 
@@ -318,12 +308,12 @@ or any later version should be OK.
     then running this.
 
     ``` bash
-    zero # brew install boot-clj leiningen
+    wfl # brew install boot-clj leiningen
     ==> Using the sandbox
     ==> Downloading https://github.com/boot-clj/boot-bin/releases/download/2.5.2/boot
     🍺  /usr/local/Cellar/boot-clj/2.5.2: 3 files, 7.7K, built in 2 seconds
     ...
-    zero #
+    wfl #
     ```
 
     You can `brew install maven`, and `java` too if necessary.
@@ -367,7 +357,7 @@ or any later version should be OK.
     support `lein`, Cursive, and Calva users.
 
     Running `boot build` will not only build a fat jar (*uberjar*)
-    for the Zero project, but will add an executable symbolic link
+    for the WFL project, but will add an executable symbolic link
     `zero` to conveniently execute the Clojure code as a script.
 
 3.  Testing
@@ -395,28 +385,28 @@ or any later version should be OK.
     tbl@wm97a-c2b ~/Tmp # which boot
     /usr/local/bin/boot
     tbl@wm97a-c2b ~/Tmp # ls
-    tbl@wm97a-c2b ~/Tmp # git clone https://github.com/broadinstitute/zero.git
-    Cloning into 'zero'...
+    tbl@wm97a-c2b ~/Tmp # git clone https://github.com/broadinstitute/wfl.git
+    Cloning into 'wfl'...
     remote: Counting objects: 456, done.
     remote: Compressing objects: 100% (59/59), done.
     remote: Total 456 (delta 62), reused 98 (delta 44), pack-reused 337
     Receiving objects: 100% (456/456), 71.27 KiB | 663.00 KiB/s, done.
     Resolving deltas: 100% (214/214), done.
     tbl@wm97a-c2b ~/Tmp # ls
-    zero
-    tbl@wm97a-c2b ~/Tmp # cd ./zero
-    tbl@wm97a-c2b ~/Tmp/zero # ls
+    wfl
+    tbl@wm97a-c2b ~/Tmp # cd ./wfl
+    tbl@wm97a-c2b ~/Tmp/wfl # ls
     README.org      build.boot      src
-    tbl@wm97a-c2b ~/Tmp/zero # boot build
+    tbl@wm97a-c2b ~/Tmp/wfl # boot build
     Compiling 1/1 zero.main...
     Adding uberjar entries...
     Writing pom.xml and pom.properties...
-    Writing zero-20190409-5.jar...
+    Writing wfl-2020-03-13t17-29-12z.jar...
     Writing target dir(s)...
-    tbl@wm97a-c2b ~/Tmp/zero # ls
+    tbl@wm97a-c2b ~/Tmp/wfl # ls
     README.org      build.boot         project.clj
     src             target             zero
-    tbl@wm97a-c2b ~/Tmp/zero # ./zero starter
+    tbl@wm97a-c2b ~/Tmp/wfl # ./zero starter
     zero: Error: Must specify an environment.
     zero: The valid environments are:
       cromwellv36
@@ -439,27 +429,27 @@ or any later version should be OK.
             <to> ... are email addresses of recipients.
     zero: Error: Must specify an environment.
     BTW: You ran: zero starter
-    tbl@wm97a-c2b ~/Tmp/zero # ./zero starter dev $USER@broadinstitute.org
+    tbl@wm97a-c2b ~/Tmp/wfl # ./zero starter dev $USER@broadinstitute.org
     SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
     SLF4J: Defaulting to no-operation (NOP) logger implementation
     SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
     ... just inSANE spilling of debug logs ...
-    tbl@wm97a-c2b ~/Tmp/zero #
+    tbl@wm97a-c2b ~/Tmp/wfl #
     ```
 
     Of course, after `boot build`, you can also run WFL from its
     JAR file.
 
     ``` example
-    tbl@wm97a-c2b ~/Broad/zero # boot build
+    tbl@wm97a-c2b ~/Broad/wfl # boot build
     Compiling 1/1 zero.main...
     Adding uberjar entries...
     Writing pom.xml and pom.properties...
-    Writing zero-20190409-5.jar...
+    Writing wfl-2020-03-13t17-29-12z.jar...
     Writing target dir(s)...
-    tbl@wm97a-c2b ~/Broad/zero # java -jar ./target/zero-20190409-5.jar
+    tbl@wm97a-c2b ~/Broad/wfl # java -jar ./target/wfl-2020-03-13t17-29-12z.jar
     ...
-    tbl@wm97a-c2b ~/Broad/zero 1#
+    tbl@wm97a-c2b ~/Broad/wfl 1#
     ```
 
 4.  Exomes in the Cloud Resources
