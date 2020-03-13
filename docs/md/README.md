@@ -5,7 +5,7 @@
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
 is a workload manager.
 
-It runs as you, with your credentails, from your laptop, and
+It runs as you, with your credentials, from your laptop, and
 communicates with other services as necessary to manage a workload.
 
 It can also be deployed to run as a service in the cloud.
