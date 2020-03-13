@@ -82,7 +82,7 @@
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
-  [clones resources {:keys [release top] :as wdl}]
+  [clones resources {:keys [release top] :as _wdl}]
   (let [dp (str/join "/" [clones "dsde-pipelines"])]
     (util/shell-io! "git" "-C" dp"checkout" release)
     (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
@@ -134,7 +134,7 @@
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
   [version resources]
-  (letfn [(frob [{:keys [release top] :as wdl}]
+  (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
           {:keys [tmp] :as clones} (clone-repos)

@@ -8,7 +8,6 @@
             [zero.environments :as env]
             [zero.once :as once]
             [zero.util :as util]
-            [zero.wdl :as wdl]
             [zero.zero :as zero]))
 
 (def statuses

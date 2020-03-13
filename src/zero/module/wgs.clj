@@ -106,8 +106,8 @@
              (util/prefix-keys :WholeGenomeReprocessing))))
 
 (defn genome-inputs
-  [environment]
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
+  [environment]
   {:google_account_vault_path
    (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
