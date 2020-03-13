@@ -84,20 +84,15 @@
       (binding [*out* *err*]
         (println (format "%s: WARNING: %s" zero/the-name (.getMessage x)))))))
 
-(defn cromwellify-wdl-resources-hack
-  "Return map of suffixes to paths to JAR resources for WDL file."
-  [wdl]
-  (let [suffix [".wdl" ".zip"]
-        wf (workflow-name wdl)]
-    (zipmap suffix (map (partial str zero/the-name "/" wf) suffix))))
-
 ;; HACK: The (or ...) gets the resource name into the exception info.
 ;;
 (defn hack-unpack-resources-hack
   "Avoid 'URI is not hierarchical' reading resources from jar for WDL."
   [wdl]
-  (let [path (cromwellify-wdl-resources-hack wdl)
-        dir (io/file (System/getProperty "java.io.tmpdir"))]
+  (let [suffixes [".wdl" ".zip"]
+        make     (partial str zero/the-name "/" (workflow-name wdl))
+        path     (zipmap suffixes (map make suffixes))
+        dir      (io/file (System/getProperty "java.io.tmpdir"))]
     (doseq [resource (vals path)]
       (let [destination (io/file dir resource)]
         (io/make-parents destination)
