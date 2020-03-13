@@ -189,7 +189,7 @@
         project   (get-in env/stuff [env :server :project])
         version   (:version (zero/get-the-version))
         jar       (str zero/the-name "-" version ".jar")
-        directory (io/file (str "gae_" (UUID/randomUUID)))
+        directory (io/file (str "GAE_" (UUID/randomUUID)))
         yaml      (io/file directory "app.yaml")]
     (try
       (io/make-parents yaml)

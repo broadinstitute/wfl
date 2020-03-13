@@ -68,7 +68,7 @@
   (try
     (let [[root-wf & imports] (collect-files top)
           uuid                (UUID/randomUUID)
-          directory           (io/file (str "CROMWELLIFY-" uuid))
+          directory           (io/file (str "WDL_" uuid))
           zip                 (io/file directory (str uuid ".zip"))]
       (doseq [wdl imports] (cromwellify-file directory wdl))
       (letfn [(dependency? [f] (let [fname (.getName f)]
