@@ -54,8 +54,8 @@
 (defn make-the-pom
   "Make the Project Object Model for this program from THE-VERSION."
   [the-version]
-  {:description "Zero manages workflows."
-   :project     'org.broadinstitute/zero
+  {:description "WFL manages workflows."
+   :project     'org.broadinstitute/wfl
    :url         (zero/the-github-repos zero/the-name)
    :version     (:version the-version)})
 
