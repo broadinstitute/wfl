@@ -8,7 +8,6 @@
             [zero.environments :as env]
             [zero.once :as once]
             [zero.util :as util]
-            [zero.wdl :as wdl]
             [zero.zero :as zero]))
 
 (def statuses
@@ -183,17 +182,19 @@
    (status-counts (once/get-local-auth-header) environment params)))
 
 (defn make-workflow-labels
-  "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS. Cannot be more than 255 chars."
+  "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS."
   [environment wdl inputs]
   (letfn [(unprefix [[k v]] [(keyword (last (str/split (name k) #"\."))) v])
           (key-for [suffix] (keyword (str zero/the-name "-" (name suffix))))]
-    (let [version (zero/get-the-version)
-          only-keep-keys [:version]
-          subset  (select-keys version only-keep-keys)]
+    (let [the-version   (zero/get-the-version)
+          wdl-value     (last (str/split wdl #"/"))
+          version-value (-> the-version
+                            (select-keys [:commit :version])
+                            (json/write-str :escape-slash false))]
       (merge
-        {(key-for :version)     (json/write-str subset :escape-slash false)
-         (key-for :wdl)         (last (str/split wdl #"/"))
-         (key-for :wdl-version) (or (version (wdl/workflow-name wdl)) "default-version")}
+        {(key-for :version)     version-value
+         (key-for :wdl)         wdl-value
+         (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}
         (select-keys (into {} (map unprefix inputs))
                      (get-in env/stuff [environment :cromwell :labels]))))))
 

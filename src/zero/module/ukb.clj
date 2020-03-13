@@ -49,8 +49,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "8ed294ede7fe8ee7d15013de105b3458eb478339"
-   :top (str zero/dsde-pipelines
-             "pipelines/dna_seq/white_album/WhiteAlbumExomeReprocessing.wdl")})
+   :top "pipelines/dna_seq/white_album/WhiteAlbumExomeReprocessing.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."

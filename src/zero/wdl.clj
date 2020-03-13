@@ -67,39 +67,32 @@
   [top]
   (try
     (let [[root-wf & imports] (collect-files top)
-          root-name           (.getName root-wf)
-          uuid                (str (UUID/randomUUID))
-          directory           (io/file uuid)
+          uuid                (UUID/randomUUID)
+          directory           (io/file (str "WDL_" uuid))
           zip                 (io/file directory (str uuid ".zip"))]
       (doseq [wdl imports] (cromwellify-file directory wdl))
       (letfn [(dependency? [f] (let [fname (.getName f)]
-                                 (and (not= root-name fname)
+                                 (and (not= (.getName root-wf) fname)
                                       (str/ends-with? fname ".wdl"))))]
         [directory
-         (cromwellify-file uuid root-wf)
-         (when (seq imports)
-           (->> directory
-                file-seq
-                (filter dependency?)
-                (apply util/zip-files zip)))]))
+         (cromwellify-file directory root-wf)
+         (when (seq imports) (->> directory
+                                  file-seq
+                                  (filter dependency?)
+                                  (apply util/zip-files zip)))]))
     (catch FileNotFoundException x
       (binding [*out* *err*]
         (println (format "%s: WARNING: %s" zero/the-name (.getMessage x)))))))
-
-(defn cromwellify-wdl-resources-hack
-  "Return map of suffixes to paths to JAR resources for WDL file."
-  [wdl]
-  (let [suffix [".wdl" ".zip"]
-        wf (workflow-name wdl)]
-    (zipmap suffix (map (partial str zero/the-name "/" wf) suffix))))
 
 ;; HACK: The (or ...) gets the resource name into the exception info.
 ;;
 (defn hack-unpack-resources-hack
   "Avoid 'URI is not hierarchical' reading resources from jar for WDL."
   [wdl]
-  (let [path (cromwellify-wdl-resources-hack wdl)
-        dir (io/file (System/getProperty "java.io.tmpdir"))]
+  (let [suffixes [".wdl" ".zip"]
+        make     (partial str zero/the-name "/" (workflow-name wdl))
+        path     (zipmap suffixes (map make suffixes))
+        dir      (io/file (System/getProperty "java.io.tmpdir"))]
     (doseq [resource (vals path)]
       (let [destination (io/file dir resource)]
         (io/make-parents destination)

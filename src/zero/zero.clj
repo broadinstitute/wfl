@@ -8,31 +8,15 @@
 
 (def the-name
   "Use this name to refer to this program."
-  "zero")
+  "wfl")
 
 (def artifactId
   "The artifact ID for this program."
   'org.broadinstitute/zero)
 
-(def dsde-pipelines
-  "Where is the clone of the dsde-pipelines.git repo?"
-  (str "dsde-pipelines-" (UUID/randomUUID) "/"))
-
-(def dsde-pipelines-url
-  "Clone URL for the dsde-pipelines repo"
-  "git@github.com:broadinstitute/dsde-pipelines.git")
-
-(def pipeline-config
-  "Where is the environments file is."
-  (str "pipeline-config-" (UUID/randomUUID) "/"))
-
-(def pipeline-config-url
-  "Clone URL for the pipeline-config repo"
-  "git@github.com:broadinstitute/pipeline-config.git")
-
 (def the-github-repos
   "Map Zero source repo names to their URLs"
-  (let [repos ["zero" "dsde-pipelines"]
+  (let [repos ["wfl" "dsde-pipelines" "pipeline-config"]
         git   (partial str "https://github.com/broadinstitute/")]
     (zipmap repos (map git repos))))
 

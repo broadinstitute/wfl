@@ -15,7 +15,8 @@
 
 (def description
   "Describe the purpose of this command."
-  (let [in "gs://broad-gotc-test-storage/single_sample/plumbing/truth/develop/20k/"
+  (let [in  (str "gs://broad-gotc-test-storage/single_sample/plumbing"
+                 "/truth/develop/20k/")
         out "gs://broad-gotc-dev-zero-test/wgs"
         title (str (str/capitalize zero/the-name) ":")]
     (-> [""
@@ -45,22 +46,16 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "WholeGenomeReprocessing_v1.2"
-   :top     (str zero/dsde-pipelines
-                 "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl")})
-
-(def cloud-copy-wdl
-  "The cloud copy utility WDL file."
-  {:top "wdl/CopyFilesFromCloudToCloud.wdl"})
+   :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
 
 (def adapter-workflow-wdl
   "The adapter WDL file."
-  {:release "ExternalWholeGenomeReprocessing_v1.2"
-   :top "wdl/ExternalWholeGenomeReprocessing.wdl"})
+  "wdl/ExternalWholeGenomeReprocessing.wdl")
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
   {(keyword (str zero/the-name "-wgs"))
-   (wdl/workflow-name (:top adapter-workflow-wdl))})
+   (wdl/workflow-name adapter-workflow-wdl)})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
@@ -96,11 +91,11 @@
                "hg38/v0/wgs_coverage_regions.hg38.interval_list")}
          ;; uncomment to enable CheckFingerprint
          #_(-> {:haplotype_database_file
-              (str "gs://broad-references-private/hg38/v0/"
-                   "Homo_sapiens_assembly38.haplotype_database.txt")}
-             (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeReprocessing)
-             (util/prefix-keys :WholeGenomeReprocessing))
+                (str "gs://broad-references-private/hg38/v0/"
+                     "Homo_sapiens_assembly38.haplotype_database.txt")}
+               (util/prefix-keys :WholeGenomeGermlineSingleSample)
+               (util/prefix-keys :WholeGenomeReprocessing)
+               (util/prefix-keys :WholeGenomeReprocessing))
          (-> {:disable_sanity_check true}
              (util/prefix-keys :CheckContamination)
              (util/prefix-keys :UnmappedBamToAlignedBam)
@@ -111,9 +106,10 @@
              (util/prefix-keys :WholeGenomeReprocessing))))
 
 (defn genome-inputs
-  [environment]
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
-  {:google_account_vault_path (get-in env/stuff [environment :vault_path_to_picard_account])
+  [environment]
+  {:google_account_vault_path
+   (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
    :unmapped_bam_suffix ".unmapped.bam"
    :papi_settings       {:agg_preemptible_tries 3
@@ -141,12 +137,13 @@
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
   [environment in-gs-url]
   (prn (format "%s: querying Cromwell in %s" zero/the-name environment))
-  (let [md (partial cromwell/metadata environment)]
+  (let [input-keys [:ExternalWholeGenomeReprocessing.input_bam
+                    :ExternalWholeGenomeReprocessing.input_cram]
+        md (partial cromwell/metadata environment)]
     (letfn [(active? [metadata]
               (let [url (-> metadata :id md :submittedFiles :inputs
                             (json/read-str :key-fn keyword)
-                            (some [:ExternalWholeGenomeReprocessing.input_bam
-                                   :ExternalWholeGenomeReprocessing.input_cram]))]
+                            (some input-keys))]
                 (when url
                   (let [[bucket object] (gcs/parse-gs-url url)
                         [_ unsuffixed _] (all/bam-or-cram? object)
@@ -164,15 +161,15 @@
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
   ENVIRONMENT."
   [environment in-bucket out-gs object]
-  (let [path  (wdl/hack-unpack-resources-hack (:top adapter-workflow-wdl))
+  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)
         in-gs (gcs/gs-url in-bucket object)]
     (prn (cromwell/submit-workflow
-               environment
-               (io/file (:dir path) (path ".wdl"))
-               (io/file (:dir path) (path ".zip"))
-               (make-inputs environment out-gs in-gs)
-               (util/make-options environment)
-               cromwell-label-map))))
+           environment
+           (io/file (:dir path) (path ".wdl"))
+           (io/file (:dir path) (path ".zip"))
+           (make-inputs environment out-gs in-gs)
+           (util/make-options environment)
+           cromwell-label-map))))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
@@ -183,8 +180,8 @@
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
                 (when unsuffixed [unsuffixed suffix])))
             (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [slashified-out-gs (slashify out-gs)
-            done   (set/union (all/processed-crams slashified-out-gs)
+      (let [slashified (slashify out-gs)
+            done   (set/union (all/processed-crams slashified)
                               (active-objects environment in-gs))
             suffix (->> in-gs
                         gcs/parse-gs-url
@@ -196,7 +193,7 @@
                         (remove done)
                         (take max)
                         (map (fn [base] (str base (suffix base)))))]
-        (run! (partial submit-workflow environment bucket slashified-out-gs) more)))))
+        (run! (partial submit-workflow environment bucket slashified) more)))))
 
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
