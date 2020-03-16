@@ -28,6 +28,7 @@ nav:
   - Server:
     - Server: server.md
   - Readings:
+    - Development Process: dev-process.md
     - WorkFlow Launcher's Role in Terra: terra.md
 
 markdown_extensions:
