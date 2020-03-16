@@ -229,7 +229,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="terra/" class="md-tabs__link">
+        <a href="dev-process/" class="md-tabs__link">
           Readings
         </a>
       
@@ -355,13 +355,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#role-in-terra" class="md-nav__link">
-    Role in Terra
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#capabilities" class="md-nav__link">
     Capabilities
   </a>
@@ -371,21 +364,6 @@
         <li class="md-nav__item">
   <a href="#implementation" class="md-nav__link">
     Implementation
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#frontend" class="md-nav__link">
-    Frontend
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backend" class="md-nav__link">
-    Backend
   </a>
   
     <nav class="md-nav">
@@ -416,18 +394,6 @@
   <a href="#development" class="md-nav__link">
     Development
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cruft" class="md-nav__link">
-    Cruft
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -549,6 +515,18 @@
 
 
   <li class="md-nav__item">
+    <a href="dev-process/" title="Development Process" class="md-nav__link">
+      Development Process
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="terra/" title="WorkFlow Launcher's Role in Terra" class="md-nav__link">
       WorkFlow Launcher's Role in Terra
     </a>
@@ -602,13 +580,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#role-in-terra" class="md-nav__link">
-    Role in Terra
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#capabilities" class="md-nav__link">
     Capabilities
   </a>
@@ -618,21 +589,6 @@
         <li class="md-nav__item">
   <a href="#implementation" class="md-nav__link">
     Implementation
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#frontend" class="md-nav__link">
-    Frontend
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backend" class="md-nav__link">
-    Backend
   </a>
   
     <nav class="md-nav">
@@ -666,18 +622,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#cruft" class="md-nav__link">
-    Cruft
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -704,18 +648,18 @@
                 
                 <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a> 
+<p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a>
 is a workload manager.</p>
-<p>It runs as you, with your credentails, from your laptop, and
+<p>It runs as you, with your credentials, from your laptop, and
 communicates with other services as necessary to manage a workload.</p>
 <p>It can also be deployed to run as a service in the cloud.</p>
-<p>For more on Workflow Launcher's role in the Terra infrastructure see 
-<a href="terra/">Workflow Launcher's role in Terra (./docs/docs/terra.md)</a>.</p>
+<p>For more on Workflow Launcher's role in the Terra infrastructure see
+<a href="terra/">Workflow Launcher's role in Terra (./docs/md/terra.md)</a>.</p>
 <h2 id="set-up">Set up<a class="headerlink" href="#set-up" title="Permanent link">&para;</a></h2>
 <p>Run <code>boot build</code> at the top of a <code>wfl.git</code> repo to build an
-uberjar. The resulting jar is in <code>./target/zero-*.jar</code> relative to
+uberjar. The resulting jar is in <code>./target/wfl-*.jar</code> relative to
 the <code>wfl.git</code> clone.</p>
-<p>With some start-up and performance penalty, you can also run 
+<p>With some start-up and performance penalty, you can also run
 Workflow Launcher as a script. See below for details.</p>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
 <p>Workflow Launcher needs to manage its version and the versions of
@@ -723,24 +667,8 @@ Workflow Launcher as a script. See below for details.</p>
 many <code>dsde-pipelines.git</code> versions as there are workflow wdls.</p>
 <p>The <code>wfl</code> jar includes a manifest with at least that information in
 it, and a version command that returns it.</p>
-<h2 id="role-in-terra">Role in Terra<a class="headerlink" href="#role-in-terra" title="Permanent link">&para;</a></h2>
-<p>The Data Sciences Platform (DSP) is building a new system (around
-Terra) for storing and processing biological data. The system design
-includes a Data Repository where data is stored, and a Methods
-Repository that executably describes transformations on that data.</p>
-<p>In the new system, the DSP needs something to fulfill the role that
-Zamboni currently plays in our current infrastructure to support the
-Genomics Platform (GP).</p>
-<p>Zamboni watches various queues for messages describing new data and
-how to process it. Zamboni interprets those messages to dispatch
-work to workflow engines (running on the premises or in the loud)
-and monitors the progress of those workflows. The Zamboni web UI
-allows users to track the progress of workflows, and enables Ops
-engineers to debug problems and resume or restart failed workflows.
-Zamboni can run workflows on both a local Sun Grid Engine (SGE), and
-on Cromwell on premises and in the cloud.</p>
 <h2 id="capabilities">Capabilities<a class="headerlink" href="#capabilities" title="Permanent link">&para;</a></h2>
-<p>When Workflow Launcher is on-premises or in the cloud, it can 
+<p>When Workflow Launcher is on-premises or in the cloud, it can
 currently talk to the following services:</p>
 <table>
 <thead>
@@ -751,11 +679,6 @@ currently talk to the following services:</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>Clio</td>
-<td>x</td>
-<td>x</td>
-</tr>
 <tr>
 <td>Cloud SQL</td>
 <td>x</td>
@@ -787,24 +710,9 @@ currently talk to the following services:</p>
 <td>x</td>
 </tr>
 <tr>
-<td>JMS</td>
-<td>x</td>
-<td></td>
-</tr>
-<tr>
-<td>Mercury</td>
-<td>x</td>
-<td></td>
-</tr>
-<tr>
 <td>Oracle DB</td>
 <td>x</td>
 <td></td>
-</tr>
-<tr>
-<td>SMTP (mail)</td>
-<td>x</td>
-<td>x</td>
 </tr>
 <tr>
 <td>Vault</td>
@@ -812,16 +720,16 @@ currently talk to the following services:</p>
 <td>x</td>
 </tr>
 <tr>
-<td>Zero</td>
+<td>Wfl</td>
 <td></td>
 <td>x</td>
 </tr>
 </tbody>
 </table>
-<p>Workflow Launcher has a diagnostic mode, <code>dx</code>, which leverages
-Cromwell metadata to expose useful workflow information.</p>
+<p>Workflow Launcher has a diagnostic mode, <code>dx</code>,
+for debugging problems.</p>
 <p>Run <code>zero dx</code> to get a list of the diagnostics available.</p>
-<div class="codehilite"><pre><span></span><code>wm28d-f87:zero yanc$ java -jar ./target/zero-20190409-5.jar dx
+<div class="codehilite"><pre><span></span><code>wm28d-f87:wfl yanc$ java -jar ./target/wfl-2020-03-13t17-29-12z.jar dx
 
 zero dx: tools to <span class="nb">help</span> debug workflow problems.
 
@@ -837,18 +745,16 @@ The &lt;tool&gt;s and their &lt;arg&gt;s are named here.
 ...
 Error: Must specify a dx &lt;tool&gt; to run.
 BTW: You ran: zero dx
-wm28d-f87:zero yanc$
+wm28d-f87:wfl yanc$
 </code></pre></div>
 
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
-<h3 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h3>
 <p>For frontend details, check <a href="frontend/">Frontend Section</a></p>
-<h3 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h3>
 <p>The initial file structure looks like this.</p>
 <div class="codehilite"><pre><span></span><code>$ tree .
 .
 ├── LICENSE.txt
-├── README.md -&gt; ./docs/docs/README.md
+├── README.md -&gt; ./docs/md/README.md
 ├── boot.properties
 ├── build.boot
 ├── build.txt
@@ -859,7 +765,7 @@ wm28d-f87:zero yanc$
 │           └── 01_db_schema.xml
 ├── deps.edn
 ├── docs
-│   ├── docs
+│   ├── md
 │   │   ├── README.md
 │   │   ├── frontend.md
 │   │   ├── server.md
@@ -872,7 +778,7 @@ wm28d-f87:zero yanc$
 │   ├── deploy.sh
 │   ├── index.md
 │   ├── server.sh
-│   └── terra.md -&gt; ./docs/docs/terra.md
+│   └── terra.md -&gt; ./docs/md/terra.md
 ├── resources
 │   └── simplelogger.properties
 ├── src
@@ -918,7 +824,7 @@ wm28d-f87:zero yanc$
 <ul>
 <li>
 <p><code>./README.md</code> is this file, which is just a symlink to the actual doc
-    file under <code>docs/docs/</code>.</p>
+    file under <code>docs/md/</code>.</p>
 </li>
 <li>
 <p><code>./boot.properties</code> overrides some defaults in <code>boot-clj</code>.
@@ -938,7 +844,7 @@ wm28d-f87:zero yanc$
     Github Actions files.</p>
 </li>
 <li>
-<p><code>./docs</code> holds database scheme migration changelog and changeset
+<p><code>./database</code> holds database scheme migration changelog and changeset
     files for liquibase.</p>
 </li>
 <li>
@@ -949,7 +855,7 @@ wm28d-f87:zero yanc$
 <p><code>./ops</code> is a directory of standard scripts to support
     operations. It includes scripts to deploy the server in
     Google App Engine, and to run it locally for easier
-    debugging. (See <a href="server/">./docs/docs/server.md</a> for
+    debugging. (See <a href="server/">./docs/md/server.md</a> for
     more information.)</p>
 </li>
 <li>
@@ -1010,7 +916,7 @@ a workflow.</p>
 tools.</p>
 <p>The <code>once.clj</code> file defines some initialization functions mostly
 supporting authentication.</p>
-<p>The <code>api/handlers.clj</code> file defines the handler functions used by 
+<p>The <code>api/handlers.clj</code> file defines the handler functions used by
 server.</p>
 <p>The <code>api/routes.clj</code> file defines the routing strategy for server.</p>
 <p>Each of the other source files implement an interface to one of
@@ -1052,7 +958,7 @@ the services WFL talks to, and are named accordingly.</p>
 <td>Google Cloud Pub/Sub</td>
 </tr>
 <tr>
-<td>server.cl</td>
+<td>server.clj</td>
 <td>the WFL server itself</td>
 </tr>
 <tr>
@@ -1094,26 +1000,6 @@ successfully. I verified that <code>Google Cloud SDK 161.0.0</code> works. That
 or any later version should be OK.</p>
 <ol>
 <li>
-<p>Cheatsheets</p>
-<p>I find a cheatsheet handy when programming in Clojure. There are
-a bunch. Bookmark or print one.</p>
-<ul>
-<li><a href="https://clojure.org/api/cheatsheet">https://clojure.org/api/cheatsheet</a></li>
-<li><a href="https://www.conj.io/">https://www.conj.io/</a> (… used to be called Grimoire …)</li>
-<li><a href="https://github.com/jafingerhut/clojure-cheatsheets/tree/master/pdf">https://github.com/jafingerhut/clojure-cheatsheets/tree/master/pdf</a></li>
-<li><a href="http://cljs.info/cheatsheet/">http://cljs.info/cheatsheet/</a> (ClojureScript)</li>
-<li><a href="https://github.com/jafingerhut/clojure-cheatsheets">https://github.com/jafingerhut/clojure-cheatsheets</a>
-    (sources)</li>
-</ul>
-<p>These may also be handy.</p>
-<ul>
-<li><a href="https://github.com/yogthos/clojure-error-message-catalog">Clojure Error
-    Messages</a></li>
-<li><a href="https://clojure.org/guides/weird_characters">"Weird" Characters in
-    Clojure</a></li>
-</ul>
-</li>
-<li>
 <p>Installation</p>
 <p>See <a href="https://github.com/boot-clj/boot#install">this link</a> to
 install <code>boot-clj</code>.</p>
@@ -1125,12 +1011,12 @@ for "<a href="https://leiningen.org/">Leiningen</a>". You currently need
 plugin <a href="https://cursive-ide.com/">Cursive</a>.</p>
 <p>On MacOS, I suggest installing <a href="http://brew.sh/">Homebrew</a> and
 then running this.</p>
-<div class="codehilite"><pre><span></span><code>zero <span class="c1"># brew install boot-clj leiningen</span>
+<div class="codehilite"><pre><span></span><code>wfl <span class="c1"># brew install boot-clj leiningen</span>
 <span class="o">==</span>&gt; Using the <span class="nv">sandbox</span>
 <span class="o">==</span>&gt; Downloading https://github.com/boot-clj/boot-bin/releases/download/2.5.2/boot
 🍺  /usr/local/Cellar/boot-clj/2.5.2: <span class="m">3</span> files, <span class="m">7</span>.7K, built in <span class="m">2</span> seconds
 ...
-zero <span class="c1">#</span>
+wfl <span class="c1">#</span>
 </code></pre></div>
 
 <p>You can <code>brew install maven</code>, and <code>java</code> too if necessary.</p>
@@ -1153,8 +1039,7 @@ development. It even differs markedly from development in other
 development before you spend too much time trying to figure
 things out on your own.</p>
 <p>Find a local Cursive user for guidance if you like IntelliJ.
-<a href="mailto:jcarey@broadinstitute.org">Jay Carey</a> and <a href="mailto:yanc@broadinstitute.org">Charley
-Yan</a> know how to use it. There
+<a href="mailto:chengche@broadinstitute.org">Rex Wang</a> and <a href="mailto:sehsan@broadinstitute.org">Saman Ehsan</a> know how to use it. There
 are <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">Cursive licenses
 here</a>.
 There is also a
@@ -1168,7 +1053,7 @@ used to Emacs. (I can help if CIDER gives you trouble.)</p>
 <p>Every time <code>boot</code> runs, it generates a <code>project.clj</code> file to
 support <code>lein</code>, Cursive, and Calva users.</p>
 <p>Running <code>boot build</code> will not only build a fat jar (<em>uberjar</em>)
-for the Zero project, but will add an executable symbolic link
+for the WFL project, but will add an executable symbolic link
 <code>zero</code> to conveniently execute the Clojure code as a script.</p>
 </li>
 <li>
@@ -1190,28 +1075,28 @@ Warning: boot-clj <span class="m">2</span>.7.2 is already installed
 tbl@wm97a-c2b ~/Tmp <span class="c1"># which boot</span>
 /usr/local/bin/boot
 tbl@wm97a-c2b ~/Tmp <span class="c1"># ls</span>
-tbl@wm97a-c2b ~/Tmp <span class="c1"># git clone https://github.com/broadinstitute/zero.git</span>
-Cloning into <span class="s1">&#39;zero&#39;</span>...
+tbl@wm97a-c2b ~/Tmp <span class="c1"># git clone https://github.com/broadinstitute/wfl.git</span>
+Cloning into <span class="s1">&#39;wfl&#39;</span>...
 remote: Counting objects: <span class="m">456</span>, <span class="k">done</span>.
 remote: Compressing objects: <span class="m">100</span>% <span class="o">(</span><span class="m">59</span>/59<span class="o">)</span>, <span class="k">done</span>.
 remote: Total <span class="m">456</span> <span class="o">(</span>delta <span class="m">62</span><span class="o">)</span>, reused <span class="m">98</span> <span class="o">(</span>delta <span class="m">44</span><span class="o">)</span>, pack-reused <span class="m">337</span>
 Receiving objects: <span class="m">100</span>% <span class="o">(</span><span class="m">456</span>/456<span class="o">)</span>, <span class="m">71</span>.27 KiB <span class="p">|</span> <span class="m">663</span>.00 KiB/s, <span class="k">done</span>.
 Resolving deltas: <span class="m">100</span>% <span class="o">(</span><span class="m">214</span>/214<span class="o">)</span>, <span class="k">done</span>.
 tbl@wm97a-c2b ~/Tmp <span class="c1"># ls</span>
-zero
-tbl@wm97a-c2b ~/Tmp <span class="c1"># cd ./zero</span>
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1"># ls</span>
+wfl
+tbl@wm97a-c2b ~/Tmp <span class="c1"># cd ./wfl</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ls</span>
 README.org      build.boot      src
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1"># boot build</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># boot build</span>
 Compiling <span class="m">1</span>/1 zero.main...
 Adding uberjar entries...
 Writing pom.xml and pom.properties...
-Writing zero-20190409-5.jar...
+Writing wfl-2020-03-13t17-29-12z.jar...
 Writing target dir<span class="o">(</span>s<span class="o">)</span>...
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1"># ls</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ls</span>
 README.org      build.boot         project.clj
 src             target             zero
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1"># ./zero starter</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ./zero starter</span>
 zero: Error: Must specify an environment.
 zero: The valid environments are:
   cromwellv36
@@ -1234,66 +1119,27 @@ Where: &lt;env&gt; is the runtime environment.
         &lt;to&gt; ... are email addresses of recipients.
 zero: Error: Must specify an environment.
 BTW: You ran: zero starter
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1"># ./zero starter dev $USER@broadinstitute.org</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ./zero starter dev $USER@broadinstitute.org</span>
 SLF4J: Failed to load class <span class="s2">&quot;org.slf4j.impl.StaticLoggerBinder&quot;</span>.
 SLF4J: Defaulting to no-operation <span class="o">(</span>NOP<span class="o">)</span> logger implementation
 SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder <span class="k">for</span> further details.
 ... just inSANE spilling of debug logs ...
-tbl@wm97a-c2b ~/Tmp/zero <span class="c1">#</span>
+tbl@wm97a-c2b ~/Tmp/wfl <span class="c1">#</span>
 </code></pre></div>
 
 <p>Of course, after <code>boot build</code>, you can also run WFL from its
 JAR file.</p>
-<div class="codehilite"><pre><span></span><code><span class="err">tbl@wm97a-c2b ~/Broad/zero # boot build</span>
+<div class="codehilite"><pre><span></span><code><span class="err">tbl@wm97a-c2b ~/Broad/wfl # boot build</span>
 <span class="err">Compiling 1/1 zero.main...</span>
 <span class="err">Adding uberjar entries...</span>
 <span class="err">Writing pom.xml and pom.properties...</span>
-<span class="err">Writing zero-20190409-5.jar...</span>
+<span class="err">Writing wfl-2020-03-13t17-29-12z.jar...</span>
 <span class="err">Writing target dir(s)...</span>
-<span class="err">tbl@wm97a-c2b ~/Broad/zero # java -jar ./target/zero-20190409-5.jar</span>
+<span class="err">tbl@wm97a-c2b ~/Broad/wfl # java -jar ./target/wfl-2020-03-13t17-29-12z.jar</span>
 <span class="err">...</span>
-<span class="err">tbl@wm97a-c2b ~/Broad/zero 1#</span>
+<span class="err">tbl@wm97a-c2b ~/Broad/wfl 1#</span>
 </code></pre></div>
 
-</li>
-<li>
-<p>Rich Comments</p>
-<p>Some Clojure source files have <code>(comment ...)</code> forms at the
-bottom.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">tbl</span><span class="nv">@wm97a</span><span class="o">-</span><span class="n">c2b</span><span class="w"> </span><span class="o">~/</span><span class="n">Broad</span><span class="o">/</span><span class="n">zero</span><span class="w"> </span><span class="err">#</span><span class="w"> </span><span class="n">tail</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">zero</span><span class="o">/</span><span class="n">db</span><span class="p">.</span><span class="n">clj</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">zero</span><span class="o">/</span><span class="n">main</span><span class="p">.</span><span class="n">clj</span><span class="w"></span>
-<span class="o">==&gt;</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">zero</span><span class="o">/</span><span class="n">db</span><span class="p">.</span><span class="n">clj</span><span class="w"> </span><span class="o">&lt;==</span><span class="w"></span>
-<span class="w">              </span><span class="err">{:</span><span class="k">connection</span><span class="o">-</span><span class="n">uri</span><span class="w"> </span><span class="p">(</span><span class="n">metrics</span><span class="o">-</span><span class="k">sql</span><span class="o">-</span><span class="n">url</span><span class="w"> </span><span class="n">environment</span><span class="p">)</span><span class="err">}</span><span class="w"></span>
-<span class="w">              </span><span class="n">db</span><span class="o">-</span><span class="n">spec</span><span class="p">)</span><span class="w"></span>
-<span class="w">            </span><span class="err">:</span><span class="k">user</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="err">:</span><span class="n">password</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="w"> </span><span class="k">sql</span><span class="p">)))</span><span class="w"></span>
-
-<span class="p">(</span><span class="n">comment</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="n">query</span><span class="w"> </span><span class="o">[</span><span class="n">:on-prem-picard :dev</span><span class="o">]</span><span class="w"></span>
-<span class="w">          </span><span class="ss">&quot;select count (*) from picard.res_proj_agg_override&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="n">query</span><span class="w"> </span><span class="o">[</span><span class="n">:cloud-metrics :dev</span><span class="o">]</span><span class="w"></span>
-<span class="w">          </span><span class="ss">&quot;SELECT COUNT(*) FROM EXOME_METRICS&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">)</span><span class="w"></span>
-
-<span class="o">==&gt;</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">zero</span><span class="o">/</span><span class="n">main</span><span class="p">.</span><span class="n">clj</span><span class="w"> </span><span class="o">&lt;==</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="o">-</span><span class="n">main</span><span class="w"> </span><span class="ss">&quot;write-inputs&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="o">-</span><span class="n">main</span><span class="w"> </span><span class="ss">&quot;write-inputs&quot;</span><span class="w"> </span><span class="ss">&quot;WF=ExomeGermlineSingleSample&quot;</span><span class="w"> </span><span class="ss">&quot;FGBN=FGBN&quot;</span><span class="w"> </span><span class="ss">&quot;S=S&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="ss">&quot;REF=./reference.json&quot;</span><span class="w"> </span><span class="ss">&quot;CON_REF=./reference_contamination.json&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="p">(</span><span class="nf">str</span><span class="w"> </span><span class="ss">&quot;UBAMS=&quot;</span><span class="w"> </span><span class="n">ubam</span><span class="p">))</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="o">-</span><span class="n">main</span><span class="w"> </span><span class="ss">&quot;write-inputs&quot;</span><span class="w"> </span><span class="ss">&quot;WF=ExomeGermlineSingleSample&quot;</span><span class="w"> </span><span class="ss">&quot;FGBN=FGBN&quot;</span><span class="w"> </span><span class="ss">&quot;S=S&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="ss">&quot;REF=./reference.json&quot;</span><span class="w"> </span><span class="ss">&quot;CON_REF=./reference_contamination.json&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="p">(</span><span class="nf">str</span><span class="w"> </span><span class="ss">&quot;UBAMS=&quot;</span><span class="w"> </span><span class="n">ubam</span><span class="p">)</span><span class="w"> </span><span class="ss">&quot;O=./o.json&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="o">-</span><span class="n">main</span><span class="w"> </span><span class="ss">&quot;run-starter&quot;</span><span class="w"> </span><span class="ss">&quot;ENV=dev&quot;</span><span class="w"> </span><span class="ss">&quot;VERBOSITY=fnord&quot;</span><span class="w"> </span><span class="ss">&quot;fnord&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">(</span><span class="o">-</span><span class="n">main</span><span class="w"> </span><span class="ss">&quot;run-starter&quot;</span><span class="w"> </span><span class="ss">&quot;EMAIL=tbl@broadinstitute.org&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">)</span><span class="w"></span>
-<span class="n">tbl</span><span class="nv">@wm97a</span><span class="o">-</span><span class="n">c2b</span><span class="w"> </span><span class="o">~/</span><span class="n">Broad</span><span class="o">/</span><span class="n">zero</span><span class="w"> </span><span class="err">#</span><span class="w"></span>
-</code></pre></div>
-
-<p>They permit fast testing of code changes by storing expressions
-that you can evaluate in your editor buffer.</p>
-<p>Feel free to add, edit, or augment them as you see fit.</p>
-</li>
-<li>
-<p>Documentation</p>
-<p>This file is written in markdown.</p>
 </li>
 <li>
 <p>Exomes in the Cloud Resources</p>
@@ -1333,13 +1179,6 @@ V1</a></p>
 </ol>
 </li>
 </ol>
-<h4 id="cruft">Cruft<a class="headerlink" href="#cruft" title="Permanent link">&para;</a></h4>
-<p>There are some versioning notes in
-<code>gs://broad-pharma5-ukbb-outputs/README.txt</code> from early in the UK
-Biobank project.</p>
-<p>The <strong>Structural Variation</strong> project used <em>unreleased</em> WDL files
-from the <code>/tbl/mw_sv/</code> branch of
-<a href="https://github.com/broadinstitute/dsde-pipelines/tree/tbl/mw_sv">dsde-pipelines</a>.</p>
                 
                   
                 
