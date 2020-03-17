@@ -13,22 +13,31 @@
                logicalFilePath="20200316_ExternalWholeGenomeReprocessing.xml">
         <comment>
             Define the ExternalWholeGenomeReprocessing table schema.
+            The name of an instance of this type of table
+            appears in the 'workload.table' column.
+            There is a row in this table for every workflow
+            that is part of the workload named by this table.
         </comment>
         <rollback>
             I have no idea.
         </rollback>
         <sql>
-            ALTER TYPE wdl ADD VALUE 'ExternalWholeGenomeReprocessing'
+            ALTER TYPE workflow ADD VALUE 'ExternalWholeGenomeReprocessing'
+            <comment>
+                The 'workload.pipeline' column value
+                for tables of this kind.
+            </comment>
         </sql>
         <sql>
             CREATE TYPE ExternalWholeGenomeReprocessing AS (
-            id                     bigint,
-            base_file_name         text,
-            destination_cloud_path text,
-            final_gvcf_base_name   text,
-            input_cram             text,
-            sample_name            text,
-            unmapped_bam_suffix    text)
+            id                     bigint, -- unique to this table
+            base_file_name         text,   -- input to the workflow
+            cromwell               text,   -- the Cromwell metadata URL
+            destination_cloud_path text,   -- input to the workflow
+            final_gvcf_base_name   text,   -- input to the workflow
+            input_cram             text,   -- input to the workflow
+            sample_name            text,   -- input to the workflow
+            unmapped_bam_suffix    text)   -- input to the workflow
         </sql>
     </changeSet>
 </databaseChangeLog>
