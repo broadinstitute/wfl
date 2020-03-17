@@ -1,0 +1,42 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="tbl@broadinstitute.org"
+               dbms="postgresql"
+               id="20200315"
+               logicalFilePath="20200315_CreateWorkloadTable.xml">
+        <comment>
+            Define a new root workload table schema.
+        </comment>
+        <rollback>
+            I have no idea.
+        </rollback>
+        <sql>
+            CREATE TYPE wdl AS ENUM ()
+        </sql>
+        <createTable tableName="workload">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created" type="timestamptz"
+                    defaultValueComputed="now()"/>
+            <column name="started" type="timestamptz"/>
+            <column name="finished" type="timestamptz"/>
+            <column name="creator" type="text"/>
+            <column name="project" type="text"/>
+            <column name="pipeline" type="wdl">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cromwell" type="text"/>
+            <column name="input" type="text"/>
+            <column name="output" type="text"/>
+            <column name="table" type="text"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
