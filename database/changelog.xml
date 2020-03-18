@@ -11,5 +11,4 @@
     <include file="changesets/01_db_schema.xml"                               relativeToChangelogFile="true"/>
     <include file="changesets/20200314_DropWorkloadTable.xml"                 relativeToChangelogFile="true"/>
     <include file="changesets/20200315_CreateWorkloadTable.xml"               relativeToChangelogFile="true"/>
-    <include file="changesets/20200316_ExternalWholeGenomeReprocessing.xml"   relativeToChangelogFile="true"/>
 </databaseChangeLog>
