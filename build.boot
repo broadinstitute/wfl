@@ -51,8 +51,8 @@
 (require '[boot.lein])
 (boot.lein/generate)
 
-(when-not (.exists (clojure.java.io/file "./zero"))
-  (dosh "ln" "-s" "./build.boot" "./zero"))
+(when-not (.exists (clojure.java.io/file "./wfl"))
+  (dosh "ln" "-s" "./build.boot" "./wfl"))
 
 (require '[adzerk.boot-test :as boot-test])
 
