@@ -19,9 +19,6 @@
             and is named with the 'pipeline' column
             composed with the 'id' column of this table.
         </comment>
-        <rollback>
-            I have no idea.
-        </rollback>
         <sql>
             CREATE TYPE workflow AS ENUM ()
             <comment>

@@ -18,9 +18,6 @@
             There is a row in this table for every workflow
             that is part of the workload named by this table.
         </comment>
-        <rollback>
-            I have no idea.
-        </rollback>
         <sql>
             ALTER TYPE workflow ADD VALUE 'ExternalWholeGenomeReprocessing'
             <comment>
