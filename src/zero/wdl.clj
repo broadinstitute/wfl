@@ -90,7 +90,7 @@
   "Avoid 'URI is not hierarchical' reading resources from jar for WDL."
   [wdl]
   (let [suffixes [".wdl" ".zip"]
-        make     (partial str zero/the-name "/" (workflow-name wdl))
+        make     (partial str "zero/" (workflow-name wdl))
         path     (zipmap suffixes (map make suffixes))
         dir      (io/file (System/getProperty "java.io.tmpdir"))]
     (doseq [resource (vals path)]

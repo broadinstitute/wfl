@@ -138,11 +138,13 @@
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
           {:keys [tmp] :as clones} (clone-repos)
-          directory (io/file resources zero/the-name)
+          directory (io/file resources "zero")
           edn (merge version
                      (dissoc clones :tmp)
                      (into {} (map frob wdls)))]
       (pprint edn)
+      (util/shell-io! "npm" "install" "--prefix" "ui")
+      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (try (util/delete-tree directory)
            (stage-some-files tmp directory)
            (run! (partial cromwellify-wdl tmp directory) wdls)
@@ -196,10 +198,8 @@
       (util/copy-directory (io/file "target/swagger-ui") directory)
       (google-app-engine-configure env yaml jar)
       (io/copy (io/file (io/file "target") jar) (io/file directory jar))
-      (util/shell-io! "npm" "install" "--prefix" "ui")
-      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (util/copy-directory (io/file "ui/dist") directory)
-      (postgres/run-liquibase-migration env)
+      (postgres/run-liquibase env)
       (util/shell-io! "gcloud" "--quiet" "app" "deploy" (.getPath yaml)
                       (str "--project=" project) (str "--version=" version))
       (finally (util/delete-tree directory)))))

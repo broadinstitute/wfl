@@ -1,0 +1,121 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="tbl@broadinstitute.org"
+               dbms="postgresql"
+               id="20200315"
+               logicalFilePath="20200315_CreateWorkloadTable.xml">
+        <comment>
+            Define a new root workload table schema.
+            There is a row in this table for every workload.
+            The 'table' column here names another table.
+            That other table has the composite Postgres type 'workflow',
+            and is named with the 'pipeline' column
+            composed with the 'id' column of this table.
+        </comment>
+        <sql>
+            CREATE TYPE pipeline AS ENUM ()
+            <comment>
+                Add a new value for each new 'table' type.
+                This new value should go
+                in the 'pipeline' column
+                for workloads of this kind.
+                See 20200316_ExternalWholeGenomeReprocessing.xml
+                for an example.
+            </comment>
+        </sql>
+        <createTable tableName="workload">
+            <column name="id" type="bigint" autoIncrement="true"
+                    remarks="Unique in every row.
+                             Compose this with the value
+                             in the 'pipeline' column
+                             to get the value
+                             in the 'table' column below.">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="commit" type="text"
+                    remarks="The Git commit hash of WorkFlowLauncher
+                             that managed this workload.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamptz"
+                    defaultValueComputed="now()"
+                    remarks="When was the workload row created here?">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creator" type="text"
+                    remarks="Who created this workload?">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cromwell" type="text"
+                    remarks="The URL of the Cromwell instance
+                             running the workflows.
+                             Should be a common prefix
+                             of the 'cromwell' column
+                             in the 'table' table.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="finished" type="timestamptz"
+                    remarks="When was the workload finished?
+                             All workflows either succeeded
+                             or were abandoned by this time.">
+            </column>
+            <column name="input" type="text"
+                    remarks="Common prefix
+                             of the input URLs
+                             in 'table'.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="output" type="text"
+                    remarks="Common prefix
+                             of the output URLs
+                             in 'table'.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pipeline" type="pipeline"
+                    remarks="The root of the leaf name of the WDL file.
+                    Compose this value with the 'id'
+                    to get the 'table' column.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="project" type="text"
+                    remarks="Something to identify the project.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="release" type="text"
+                    remarks="The release tag of the WDL
+                    for workflows in this workload
+                    or the Git commit hash of the .wdl file
+                    if this WDL is not officially released.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started" type="timestamptz"
+                    remarks="When was the workload started?">
+            </column>
+            <column name="table" type="text"
+                    remarks="Name of the table of type 'pipeline'.
+                    Compose the 'pipeline' column value
+                    with the 'id' column value like this:
+                    'PIPELINE_ID'.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="text"
+                    remarks="The version of WorkFlowLauncher
+                    that managed this workload.">
+                <constraints nullable="false"/>
+            </column>
+            <column name="wdl" type="text"
+                    remarks="Some pathname to the actual .wdl file
+                    that defines workflows in this workload
+                    to aid with debugging.">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

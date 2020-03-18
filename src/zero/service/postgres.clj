@@ -54,7 +54,7 @@
   [environment schema table row]
   (jdbc/insert! (get-db-config environment schema) table row))
 
-(defn run-liquibase-migration
+(defn run-liquibase
   "Migrate the database schema using Liquibase."
   [env]
   (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
