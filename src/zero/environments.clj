@@ -76,4 +76,4 @@
 ;;
 ;; See zero.boot/stage-some-files for more.
 ;;
-(load "/wfl/environments")
+(load "environments")

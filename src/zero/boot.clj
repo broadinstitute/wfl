@@ -138,7 +138,7 @@
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
           {:keys [tmp] :as clones} (clone-repos)
-          directory (io/file resources zero/the-name)
+          directory (io/file resources "zero")
           edn (merge version
                      (dissoc clones :tmp)
                      (into {} (map frob wdls)))]
