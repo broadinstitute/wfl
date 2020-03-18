@@ -199,7 +199,7 @@
       (util/shell-io! "npm" "install" "--prefix" "ui")
       (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (util/copy-directory (io/file "ui/dist") directory)
-      (postgres/run-liquibase-migration env)
+      (postgres/run-liquibase env)
       (util/shell-io! "gcloud" "--quiet" "app" "deploy" (.getPath yaml)
                       (str "--project=" project) (str "--version=" version))
       (finally (util/delete-tree directory)))))

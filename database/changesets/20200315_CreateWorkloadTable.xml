@@ -20,7 +20,7 @@
             composed with the 'id' column of this table.
         </comment>
         <sql>
-            CREATE TYPE workflow AS ENUM ()
+            CREATE TYPE pipeline AS ENUM ()
             <comment>
                 Add a new value for each new 'table' type.
                 This new value should go
@@ -78,7 +78,7 @@
                              in 'table'.">
                 <constraints nullable="false"/>
             </column>
-            <column name="pipeline" type="workflow"
+            <column name="pipeline" type="pipeline"
                     remarks="The root of the leaf name of the WDL file.
                     Compose this value with the 'id'
                     to get the 'table' column.">
@@ -99,7 +99,7 @@
                     remarks="When was the workload started?">
             </column>
             <column name="table" type="text"
-                    remarks="Name of the table of type 'workflow'.
+                    remarks="Name of the table of type 'pipeline'.
                     Compose the 'pipeline' column value
                     with the 'id' column value like this:
                     'PIPELINE_ID'.">
@@ -112,7 +112,8 @@
             </column>
             <column name="wdl" type="text"
                     remarks="Some pathname to the actual .wdl file
-                    that defines workflows in this workload.">
+                    that defines workflows in this workload
+                    to aid with debugging.">
                 <constraints nullable="false"/>
             </column>
         </createTable>
