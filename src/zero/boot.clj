@@ -143,6 +143,8 @@
                      (dissoc clones :tmp)
                      (into {} (map frob wdls)))]
       (pprint edn)
+      (util/shell-io! "npm" "install" "--prefix" "ui")
+      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (try (util/delete-tree directory)
            (stage-some-files tmp directory)
            (run! (partial cromwellify-wdl tmp directory) wdls)
@@ -196,8 +198,6 @@
       (util/copy-directory (io/file "target/swagger-ui") directory)
       (google-app-engine-configure env yaml jar)
       (io/copy (io/file (io/file "target") jar) (io/file directory jar))
-      (util/shell-io! "npm" "install" "--prefix" "ui")
-      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (util/copy-directory (io/file "ui/dist") directory)
       (postgres/run-liquibase env)
       (util/shell-io! "gcloud" "--quiet" "app" "deploy" (.getPath yaml)
