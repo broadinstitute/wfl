@@ -63,14 +63,14 @@
                  (into-array
                    String
                    [(str "--url=" (cloud-db-url env instance-name db-name))
-                    (str "--changeLogFile=database/migration/changelog.xml")
+                    (str "--changeLogFile=database/changelog.xml")
                     (str "--username=" username)
                     (str "--password=" password)
                     "update"]))]
     (when-not (zero? status)
       (throw
         (Exception.
-          (format "Liquibase migration failed with: %s" status))))))
+          (format "Liquibase failed with: %s" status))))))
 
 (comment
   (query   :gotc-dev :zero-db "SELECT 3*5 AS result")

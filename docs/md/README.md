@@ -88,10 +88,9 @@ $ tree .
 ├── build.boot
 ├── build.txt
 ├── database
-│   └── migration
-│       ├── changelog.xml
-│       └── changesets
-│           └── 01_db_schema.xml
+│   ├── changelog.xml
+│   └── changesets
+│       └── 01_db_schema.xml
 ├── deps.edn
 ├── docs
 │   ├── md

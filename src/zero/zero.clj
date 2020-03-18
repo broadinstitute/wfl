@@ -52,7 +52,7 @@
 (defn get-the-version
   "Return version information from the JAR."
   []
-  (or (some-> (str/join "/" [the-name "version.edn"])
+  (or (some-> (str/join "/" ["zero" "version.edn"])
               io/resource
               slurp
               str/trim
