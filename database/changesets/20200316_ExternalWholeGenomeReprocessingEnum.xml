@@ -10,7 +10,8 @@
     <changeSet author="tbl@broadinstitute.org"
                dbms="postgresql"
                id="20200316"
-               logicalFilePath="20200316_ExternalWholeGenomeReprocessingEnum.xml">
+               logicalFilePath="20200316_ExternalWholeGenomeReprocessingEnum.xml"
+               runInTransaction="false">
         <comment>
             Define the ExternalWholeGenomeReprocessing pipeline enum.
         </comment>
