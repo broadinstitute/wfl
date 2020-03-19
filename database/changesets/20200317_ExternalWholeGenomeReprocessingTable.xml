@@ -9,8 +9,8 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="tbl@broadinstitute.org"
                dbms="postgresql"
-               id="20200316"
-               logicalFilePath="20200316_ExternalWholeGenomeReprocessing.xml">
+               id="20200317"
+               logicalFilePath="20200317_ExternalWholeGenomeReprocessingTable.xml">
         <comment>
             Define the ExternalWholeGenomeReprocessing table schema.
             The name of an instance of this type of table
@@ -18,13 +18,6 @@
             There is a row in this table for every workflow
             that is part of the workload named by this table.
         </comment>
-        <sql>
-            ALTER TYPE pipeline ADD VALUE 'ExternalWholeGenomeReprocessing'
-            <comment>
-                The 'workload.pipeline' column value
-                for tables of this kind.
-            </comment>
-        </sql>
         <sql>
             CREATE TYPE ExternalWholeGenomeReprocessing AS (
             id                     bigint,      -- unique to this table
