@@ -72,7 +72,9 @@
    Delete the :tmp directory at some point."
   []
   (let [tmp (str "CLONE_" (UUID/randomUUID))]
-    (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone" url))]
+    (letfn [(clone [url]
+              (util/shell-io! "git" "-C" tmp "clone"
+                              "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
       (run! clone (vals zero/the-github-repos)))
     (into {:tmp tmp}

@@ -8,7 +8,9 @@
                         http://www.liquibase.org/xml/ns/dbchangelog
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd"
     logicalFilePath="changelog.xml" >
-    <include file="changesets/01_db_schema.xml"                               relativeToChangelogFile="true"/>
-    <include file="changesets/20200314_DropWorkloadTable.xml"                 relativeToChangelogFile="true"/>
-    <include file="changesets/20200315_CreateWorkloadTable.xml"               relativeToChangelogFile="true"/>
+    <include file="changesets/01_db_schema.xml"                                  relativeToChangelogFile="true"/>
+    <include file="changesets/20200314_DropWorkloadTable.xml"                    relativeToChangelogFile="true"/>
+    <include file="changesets/20200315_CreateWorkloadTable.xml"                  relativeToChangelogFile="true"/>
+    <include file="changesets/20200316_ExternalWholeGenomeReprocessingEnum.xml"  relativeToChangelogFile="true"/>
+    <include file="changesets/20200317_ExternalWholeGenomeReprocessingTable.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
