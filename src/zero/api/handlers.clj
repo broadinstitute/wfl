@@ -55,7 +55,10 @@
         (if-let [jwt (some-> request :oauth2/access-tokens :google :id-token
                              decode-jwt valid?)]
           (handler (assoc request :jwt jwt))
-          (response/redirect landing-uri))))))
+          (-> (response/response {:message "Unauthorized"})
+              (response/header "WWW-Authenticate" "Bearer realm=API access")
+              (response/content-type "application/json")
+              (response/status 401)))))))
 
 (defn succeed
   "A successful response with BODY."
