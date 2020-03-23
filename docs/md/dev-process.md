@@ -46,7 +46,7 @@ Currently we always deploy the latest master to the development environment afte
 
     alternatively, you could use the following commands without switching branches:
     ```
-    git checkout rex/feature-branch-something
+    git checkout tbl/GH-666-feature-branch-something
     git fetch origin master
     git merge master
     ```
