@@ -55,7 +55,7 @@
         (if-let [jwt (some-> request :oauth2/access-tokens :google :id-token
                              decode-jwt valid?)]
           (handler (assoc request :jwt jwt))
-          (response/redirect landing-uri))))))
+          (response/status (response/response "") 401))))))
 
 (defn succeed
   "A successful response with BODY."
