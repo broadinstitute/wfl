@@ -40,7 +40,7 @@ Currently we always deploy the latest master to the development environment afte
     ```
     git checkout master
     git pull origin master
-    git checkout rex/feature-branch-something
+    git checkout tbl/GH-666-feature-branch-something
     git rebase master
     ```
 
@@ -53,7 +53,7 @@ Currently we always deploy the latest master to the development environment afte
 
 6. Push branch to Github in the early stage of your development (recommended):
     ```
-    git push --set-upstream origin rex/feature-branch-something
+    git push --set-upstream origin tbl/GH-666-feature-branch-something
     ```
 
 7. Create the pull request on Github UI. Be sure to fill out the PR description following the PR template instructions.
