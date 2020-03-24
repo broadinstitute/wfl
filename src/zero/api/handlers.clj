@@ -43,7 +43,7 @@
   "Add JWT to REQUEST when it contains a broadinstitute.org account.
   Otherwise redirect HANDLER to the LANDING-URI."
   [handler]
-  (let [{:keys [client-id landing-uri]} (:google oauth2-profiles)]
+  (let [{:keys [client-id]} (:google oauth2-profiles)]
     (fn [request]
       (letfn [(valid? [{:keys [payload] :as jwt}]
                 (let [{:keys [aud exp hd iss]} payload]
@@ -55,10 +55,17 @@
         (if-let [jwt (some-> request :oauth2/access-tokens :google :id-token
                              decode-jwt valid?)]
           (handler (assoc request :jwt jwt))
-          (-> (response/response {:message "Unauthorized"})
-              (response/header "WWW-Authenticate" "Bearer realm=API access")
-              (response/content-type "application/json")
-              (response/status 401)))))))
+          (if-let [bearer-token (some-> request
+                                        (response/get-header "authorization")
+                                        (str/split #" ")
+                                        last
+                                        decode-jwt
+                                        valid?)]
+            (handler (assoc request :jwt bearer-token))
+            (-> (response/response {:message "Unauthorized"})
+                (response/header "WWW-Authenticate" "Bearer realm=API access")
+                (response/content-type "application/json")
+                (response/status 401))))))))
 
 (defn succeed
   "A successful response with BODY."
