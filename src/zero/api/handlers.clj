@@ -64,6 +64,11 @@
             (response/content-type "application/json")
             (response/status 401))))))
 
+(defn fail
+  "A failure response with BODY."
+  [body]
+  (-> body response/bad-request (response/content-type "application/json")))
+
 (defn succeed
   "A successful response with BODY."
   [body]
@@ -109,10 +114,15 @@
                   first))))
 
 (defn submit-wgs
-  "Submit the workload described in REQUEST."
+  "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [environment input_path max output_path]} (:body parameters)
         env     (zero/throw-or-environment-keyword! environment)
         results (wgs/submit-some-workflows env (or max 1000)
                                            input_path output_path)]
     (succeed {:results results})))
+
+(defn submit-workload
+  "Submit the workload described in REQUEST."
+  [{:keys [parameters] :as _request}]
+  (fail {:results "results"}))
