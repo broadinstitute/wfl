@@ -59,7 +59,7 @@
                               last)))]
       (if-let [jwt (some-> request token decode-jwt valid?)]
         (handler (assoc request :jwt jwt))
-        (-> (response/response {:response "Unauthorized"})
+        (-> (response/response {:response {:message "Unauthorized"}})
             (response/header "WWW-Authenticate" "Bearer realm=API access")
             (response/content-type "application/json")
             (response/status 401))))))
