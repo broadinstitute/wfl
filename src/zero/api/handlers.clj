@@ -52,16 +52,13 @@
                        (= aud client-id)
                        (> exp (quot (System/currentTimeMillis) 1000))
                        jwt)))]
-        (if-let [jwt (some-> request :oauth2/access-tokens :google :id-token
-                             decode-jwt valid?)]
-          (handler (assoc request :jwt jwt))
-          (if-let [bearer-token (some-> request
-                                        (response/get-header "authorization")
-                                        (str/split #" ")
-                                        last
-                                        decode-jwt
-                                        valid?)]
-            (handler (assoc request :jwt bearer-token))
+        (let [oauth-token (some-> request :oauth2/access-tokens :google :id-token)
+              bearer-token (some-> request
+                                   (response/get-header "authorization")
+                                   (str/split #" ")
+                                   last)]
+          (if-let [valid-token (some-> (or oauth-token bearer-token) decode-jwt valid?)]
+            (handler (assoc request :jwt valid-token))
             (-> (response/response {:message "Unauthorized"})
                 (response/header "WWW-Authenticate" "Bearer realm=API access")
                 (response/content-type "application/json")
