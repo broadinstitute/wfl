@@ -46,22 +46,23 @@
   (fn [request]
     (letfn [(valid? [{:keys [payload] :as jwt}]
               (let [{:keys [aud exp hd iss]} payload]
-                (and (= hd  "broadinstitute.org")
+                (and (= hd "broadinstitute.org")
                      (= iss "https://accounts.google.com")
                      (= aud (get-in oauth2-profiles [:google :client-id]))
                      (> exp (quot (System/currentTimeMillis) 1000))
-                     jwt)))]
-      (let [oauth-token (some-> request :oauth2/access-tokens :google :id-token)
-            bearer-token (some-> request
-                                 (response/get-header "authorization")
-                                 (str/split #" ")
-                                 last)]
-        (if-let [valid-token (some-> (or oauth-token bearer-token) decode-jwt valid?)]
-          (handler (assoc request :jwt valid-token))
-          (-> (response/response {:message "Unauthorized"})
-              (response/header "WWW-Authenticate" "Bearer realm=API access")
-              (response/content-type "application/json")
-              (response/status 401)))))))
+                     jwt)))
+            (token [request]
+              (get-in request [:oauth2/access-tokens :google :id-token]
+                      (some-> request
+                              (response/get-header "authorization")
+                              (str/split #" ")
+                              last)))]
+      (if-let [jwt (some-> request token decode-jwt valid?)]
+        (handler (assoc request :jwt jwt))
+        (-> (response/response {:response "Unauthorized"})
+            (response/header "WWW-Authenticate" "Bearer realm=API access")
+            (response/content-type "application/json")
+            (response/status 401))))))
 
 (defn succeed
   "A successful response with BODY."
