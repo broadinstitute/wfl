@@ -86,7 +86,7 @@
    ["/api/v1/wgs"
     {:post {:summary    "Submit WGS Reprocessing workflows"
             :parameters {:body ::wgs-request}
-            :responses  {200 {:body {:results seq?}}}
+            :responses  {200 {:body {:results vector?}}}
             :handler    (handlers/authorize handlers/submit-wgs)}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
