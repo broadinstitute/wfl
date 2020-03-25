@@ -1,6 +1,7 @@
 (ns zero.util
   "Some utilities shared across this program."
-  (:require [clojure.data.json :as json]
+  (:require [clojure.data.csv :as csv]
+            [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
@@ -300,3 +301,16 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s"
                                  zero/the-name exit args))))))
+
+(defn map-csv
+  "Parse CSV file into maps of column names across rows.
+  Ignore empty rows or empty rows with weird \"\uFFFF\"
+  characters."
+  [csv]
+  (with-open [in (io/reader csv)]
+    (let [[header & rows] (csv/read-csv in)]
+      (doall (keep (fn [row] (when-not (or (= ["￿"] row)
+                                           (= [""] row)
+                                           (every? empty? row))
+                               (zipmap header row)))
+                   rows)))))

@@ -214,4 +214,4 @@
 
 (defn create-workload
   "Remember the WGS workflow specified by INPUTS."
-  [inputs])
+  [request])

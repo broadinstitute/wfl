@@ -5,8 +5,10 @@
             [clojure.string :as str]
             [clj-http.client :as http]
             [zero.environments :as env]
+            [zero.module.wgs :as wgs]
             [zero.once :as once]
-            [zero.util :as util])
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import [liquibase.integration.commandline Main]))
 
 (defn cloud-db-url
@@ -81,6 +83,32 @@
    (run-liquibase-update "jdbc:postgresql:postgres"
                          (util/getenv "USER" "postgres")
                          "password")))
+
+;; Works only with WGS now.
+;;
+(defn add-pipeline-table!
+  "Add a pipeline table for BODY to DB with SCHEMA in ENVIRONMENT."
+  [environment schema body]
+  (jdbc/with-db-transaction [db (get-db-config environment schema)]
+    (let [{:keys [commit version] :as the-version} (zero/get-the-version)
+          {:keys [creator cromwell input output pipeline project]} body
+          {:keys [release top]} wgs/workflow-wdl
+          row (jdbc/insert! db :workload {:commit   commit
+                                          :creator  creator
+                                          :cromwell cromwell
+                                          :input    input
+                                          :output   output
+                                          :pipeline pipeline
+                                          :project  project
+                                          :release  release
+                                          :version  version
+                                          :wdl      top})
+          table (str/join "." [pipeline (:id row)])]
+      (jdbc/update! db :workload {:table table})
+      (jdbc/db-do-commands
+        db (format "CREATE TABLE %s OF TYPE %s (PRIMARY KEY (id))"
+                   pipeline table))
+      (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
 
 (comment
   (query   :gotc-dev :zero-db "SELECT 3*5 AS result")

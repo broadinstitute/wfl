@@ -124,6 +124,6 @@
 
 (defn create-workload
   "Create the workload described in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (wgs/create-workload parameters)
+  [{:keys [body] :as request}]
+  (wgs/create-workload request)
   (fail {:results "results"}))
