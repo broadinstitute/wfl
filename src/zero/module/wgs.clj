@@ -163,13 +163,15 @@
   [environment in-bucket out-gs object]
   (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)
         in-gs (gcs/gs-url in-bucket object)]
-    (cromwell/submit-workflow
-           environment
-           (io/file (:dir path) (path ".wdl"))
-           (io/file (:dir path) (path ".zip"))
-           (make-inputs environment out-gs in-gs)
-           (util/make-options environment)
-           cromwell-label-map)))
+    (let [workflow-id (cromwell/submit-workflow
+                        environment
+                        (io/file (:dir path) (path ".wdl"))
+                        (io/file (:dir path) (path ".zip"))
+                        (make-inputs environment out-gs in-gs)
+                        (util/make-options environment)
+                        cromwell-label-map)]
+      (prn workflow-id)
+      workflow-id)))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
