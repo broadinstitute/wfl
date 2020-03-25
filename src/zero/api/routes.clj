@@ -20,19 +20,22 @@
 (s/def ::cromwell_instance string?)
 (s/def ::end               string?)
 (s/def ::environment       string?)
+(s/def ::input             string?)
 (s/def ::input_path        string?)
 (s/def ::max               string?)
+(s/def ::output            string?)
 (s/def ::output_path       string?)
-(s/def ::pipeline          string?)
+(s/def ::pipeline          #{"ExternalWholeGenomeReprocessing"})
 (s/def ::project_id        string?)
 (s/def ::start             string?)
+(s/def ::table             string?)
 (s/def ::workflow-request (s/keys :req-un [::environment ::start ::end]))
-(s/def ::workload-request (s/keys :req-un [::environment
-                                           ::project_id
+(s/def ::workload-request (s/keys :req-un [::cromwell
+                                           ::input
+                                           ::output
                                            ::pipeline
-                                           ::cromwell_instance
-                                           ::input_path
-                                           ::output_path]))
+                                           ::project
+                                           ::table]))
 (s/def ::wgs-request (s/keys :req-un [::environment
                                       ::max
                                       ::input_path

@@ -122,7 +122,8 @@
                                            input_path output_path)]
     (succeed {:results results})))
 
-(defn submit-workload
-  "Submit the workload described in REQUEST."
+(defn create-workload
+  "Create the workload described in REQUEST."
   [{:keys [parameters] :as _request}]
+  (wgs/create-workload parameters)
   (fail {:results "results"}))

@@ -211,3 +211,7 @@
     (catch Exception x
       (binding [*out* *err*] (println description))
       (throw x))))
+
+(defn create-workload
+  "Remember the WGS workflow specified by INPUTS."
+  [inputs])
