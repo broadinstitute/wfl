@@ -54,15 +54,13 @@
   [environment schema table row]
   (jdbc/insert! (get-db-config environment schema) table row))
 
-(defn run-liquibase
-  "Migrate the database schema using Liquibase."
-  [env]
-  (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
-        {:keys [username password]} (util/vault-secrets vault)
-        status (Main/run
+(defn run-liquibase-update
+  "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
+  [url username password]
+  (let [status (Main/run
                  (into-array
                    String
-                   [(str "--url=" (cloud-db-url env instance-name db-name))
+                   [(str "--url=" url)
                     (str "--changeLogFile=database/changelog.xml")
                     (str "--username=" username)
                     (str "--password=" password)
@@ -71,6 +69,18 @@
       (throw
         (Exception.
           (format "Liquibase failed with: %s" status))))))
+
+(defn run-liquibase
+  "Migrate the database schema for ENV using Liquibase."
+  ([env]
+   (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
+         {:keys [username password]} (util/vault-secrets vault)
+         url (cloud-db-url env instance-name db-name)]
+     (run-liquibase-update url username password)))
+  ([]
+   (run-liquibase-update "jdbc:postgresql:postgres"
+                         (util/getenv "USER" "postgres")
+                         "password")))
 
 (comment
   (query   :gotc-dev :zero-db "SELECT 3*5 AS result")
