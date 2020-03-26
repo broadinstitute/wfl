@@ -12,7 +12,7 @@
   (:import [liquibase.integration.commandline Main]))
 
 (defn cloud-db-url
-  "Return NIL or an URL for the CloudSQL instance containing DB-NAME."
+  "Return NIL or an URL for the CloudSQL INSTANCE-NAME with DB-NAME."
   [environment instance-name db-name]
   (if-let [gcp (get-in env/stuff [environment :google-cloud-project])]
     (letfn [(postgresql? [{:keys [instanceType name region]}]
@@ -33,7 +33,8 @@
           (json/read-str :key-fn keyword)
           :items
           (->> (keep postgresql?))
-          first))))
+          first))
+    "jdbc:postgresql:postgres"))
 
 (defn get-db-config
   "Get the config for the database in ENVIRONMENT SCHEMA."
@@ -111,8 +112,10 @@
       (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
 
 (comment
+  (get-db-config :gotc-dev :zero-db)
   (query   :gotc-dev :zero-db "SELECT 3*5 AS result")
   (query   :gotc-dev :zero-db "SELECT * FROM workload")
+  (query   :debug :zero-db "SELECT * FROM workload")
   (insert! :gotc-dev :zero-db
            "workload" {:project_id "UKB123"
                        :pipeline "WhiteAlbumExomeReprocessing"
