@@ -53,12 +53,12 @@
 (defn query
   "Query the database with SCHEMA in ENVIRONMENT with SQL."
   [environment schema sql]
-  (jdbc/query (zero-db-config environment schema) sql))
+  (jdbc/query (zero-db-config environment) sql))
 
 (defn insert!
   "Add ROW map to TABLE in the database with SCHEMA in ENVIRONMENT."
   [environment schema table row]
-  (jdbc/insert! (zero-db-config environment schema) table row))
+  (jdbc/insert! (zero-db-config environment) table row))
 
 (defn run-liquibase-update
   "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
@@ -93,7 +93,7 @@
 (defn add-pipeline-table!
   "Add a pipeline table for BODY to DB with SCHEMA in ENVIRONMENT."
   [environment schema body]
-  (jdbc/with-db-transaction [db (zero-db-config environment schema)]
+  (jdbc/with-db-transaction [db (zero-db-config environment)]
     (let [{:keys [commit version] :as the-version} (zero/get-the-version)
           {:keys [creator cromwell input output pipeline project]} body
           {:keys [release top]} wgs/workflow-wdl
@@ -113,6 +113,10 @@
         db (format "CREATE TABLE %s OF TYPE %s (PRIMARY KEY (id))"
                    pipeline table))
       (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
+
+(defn reset-debug-db
+  []
+  )
 
 (comment
   (zero-db-config :gotc-dev)
