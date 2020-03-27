@@ -115,7 +115,7 @@
       (jdbc/insert-multi! db load (util/map-csv (:workflows body))))))
 
 (defn reset-debug-db
-  "Drop everything managed by Liquibase from DB."
+  "Drop everything managed by Liquibase from the :debug DB."
   []
   (jdbc/with-db-transaction [db (zero-db-config :debug)]
     (let [wq (str/join " " ["SELECT 1 FROM pg_catalog.pg_tables"
@@ -135,6 +135,11 @@
     (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangeloglock")))
 
 (comment
+  (str/join " " ["liquibase" "--classpath=$(clojure" "-Spath)"
+                 "--url=jdbc:postgresql:postgres"
+                 "--changeLogFile=database/changelog.xml"
+                 "--username=$USER" "update"])
+  (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
   (reset-debug-db)
   (zero-db-config :gotc-dev)
   (zero-db-config :debug)
