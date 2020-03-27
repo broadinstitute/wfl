@@ -12,11 +12,7 @@
                id="20200317"
                logicalFilePath="20200317_ExternalWholeGenomeReprocessingTable.xml">
         <comment>
-            Define the ExternalWholeGenomeReprocessing table schema.
-            The name of an instance of this type of table
-            appears in the 'pipeline.table' column.
-            There is a row in this table for every workflow
-            that is part of the workload named by this table.
+            the ExternalWholeGenomeReprocessing table schema
         </comment>
         <sql>
             CREATE TYPE ExternalWholeGenomeReprocessing AS (
