@@ -11,21 +11,21 @@
             [zero.zero :as zero])
   (:import [liquibase.integration.commandline Main]))
 
-(defn cloud-db-url
-  "Return NIL or an URL for the CloudSQL INSTANCE-NAME with DB-NAME."
-  [environment instance-name db-name]
-  (if-let [gcp (get-in env/stuff [environment :google-cloud-project])]
+(defn zero-db-url
+  "Nil or an URL for the zero-postgresql service in ENVIRONMENT."
+  [environment]
+  (if-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
     (letfn [(postgresql? [{:keys [instanceType name region]}]
               (when (= [instanceType         name]
-                       ["CLOUD_SQL_INSTANCE" instance-name])
-                (str "jdbc:postgresql://google/" db-name "?useSSL=false"
+                       ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
+                (str "jdbc:postgresql://google/postgres?useSSL=false"
                      "&socketFactory="
                      "com.google.cloud.sql.postgres.SocketFactory"
                      "&cloudSqlInstance="
-                     (str/join ":" [gcp region name]))))]
+                     (str/join ":" [project region name]))))]
       (-> {:method :get
            :url (str "https://www.googleapis.com/sql/v1beta4/projects/"
-                     gcp "/instances")
+                     project "/instances")
            :headers (merge {"Content-Type" "application/json"}
                            (once/get-local-auth-header))}
           http/request
@@ -36,26 +36,29 @@
           first))
     "jdbc:postgresql:postgres"))
 
-(defn get-db-config
-  "Get the config for the database in ENVIRONMENT SCHEMA."
-  [environment schema]
-  (let [db-stuff (get-in env/stuff [environment schema])
-        {:keys [vault instance-name db-name]} db-stuff
+(defn zero-db-config
+  "Get the config for the zero database in ENVIRONMENT."
+  [environment]
+  (let [vault (get-in env/stuff [environment :server :vault])
         {:keys [password username]} (util/vault-secrets vault)]
-    (assoc db-stuff
-           :connection-uri (cloud-db-url environment instance-name db-name)
+    (assoc {:instance-name "zero-postgresql"
+            :db-name       "postgres"
+            :classname     "org.postgresql.Driver"
+            :subprotocol   "postgresql"
+            :vault         "secret/dsde/gotc/dev/zero"}
+           :connection-uri (zero-db-url environment)
            :user username
            :password password)))
 
 (defn query
   "Query the database with SCHEMA in ENVIRONMENT with SQL."
   [environment schema sql]
-  (jdbc/query (get-db-config environment schema) sql))
+  (jdbc/query (zero-db-config environment schema) sql))
 
 (defn insert!
   "Add ROW map to TABLE in the database with SCHEMA in ENVIRONMENT."
   [environment schema table row]
-  (jdbc/insert! (get-db-config environment schema) table row))
+  (jdbc/insert! (zero-db-config environment schema) table row))
 
 (defn run-liquibase-update
   "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
@@ -78,7 +81,7 @@
   ([env]
    (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
          {:keys [username password]} (util/vault-secrets vault)
-         url (cloud-db-url env instance-name db-name)]
+         url (zero-db-url env instance-name db-name)]
      (run-liquibase-update url username password)))
   ([]
    (run-liquibase-update "jdbc:postgresql:postgres"
@@ -90,7 +93,7 @@
 (defn add-pipeline-table!
   "Add a pipeline table for BODY to DB with SCHEMA in ENVIRONMENT."
   [environment schema body]
-  (jdbc/with-db-transaction [db (get-db-config environment schema)]
+  (jdbc/with-db-transaction [db (zero-db-config environment schema)]
     (let [{:keys [commit version] :as the-version} (zero/get-the-version)
           {:keys [creator cromwell input output pipeline project]} body
           {:keys [release top]} wgs/workflow-wdl
@@ -112,7 +115,8 @@
       (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
 
 (comment
-  (get-db-config :gotc-dev :zero-db)
+  (zero-db-config :gotc-dev)
+  (zero-db-config :debug)
   (query   :gotc-dev :zero-db "SELECT 3*5 AS result")
   (query   :gotc-dev :zero-db "SELECT * FROM workload")
   (query   :debug :zero-db "SELECT * FROM workload")
