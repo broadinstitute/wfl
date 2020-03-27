@@ -56,7 +56,7 @@
   (jdbc/query (zero-db-config environment) sql))
 
 (defn insert!
-  "Add ROW map to TABLE in the database with SCHEMA in ENVIRONMENT."
+  "Add ROW map to TABLE in the database in ENVIRONMENT."
   [environment table row]
   (jdbc/insert! (zero-db-config environment) table row))
 
@@ -91,8 +91,8 @@
 ;; Works only with WGS now.
 ;;
 (defn add-pipeline-table!
-  "Add a pipeline table for BODY to DB with SCHEMA in ENVIRONMENT."
-  [environment schema body]
+  "Add a pipeline table for BODY to DB in ENVIRONMENT."
+  [environment body]
   (jdbc/with-db-transaction [db (zero-db-config environment)]
     (let [{:keys [commit version] :as the-version} (zero/get-the-version)
           {:keys [creator cromwell input output pipeline project]} body
@@ -107,14 +107,35 @@
                                           :release  release
                                           :version  version
                                           :wdl      top})
-          table (str/join "." [pipeline (:id row)])]
-      (jdbc/update! db :workload {:table table})
+          work (str/join "." [pipeline (:id row)])]
+      (jdbc/update! db :workload {:load load})
       (jdbc/db-do-commands
         db (format "CREATE TABLE %s OF TYPE %s (PRIMARY KEY (id))"
-                   pipeline table))
-      (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
+                   pipeline load))
+      (jdbc/insert-multi! db load (util/map-csv (:workflows body))))))
+
+(defn reset-debug-db
+  "Drop everything managed by Liquibase from DB."
+  []
+  (jdbc/with-db-transaction [db (zero-db-config :debug)]
+    (let [wq (str/join " " ["SELECT 1 FROM pg_catalog.pg_tables"
+                            "WHERE tablename = 'workload'"])
+          tq (str/join " " ["SELECT 1 FROM pg_type"
+                            "WHERE typname = 'pipeline'"])
+          eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
+      (when (seq (jdbc/query db wq))
+        (doseq [load (jdbc/query db "SELECT load FROM workload")]
+          (jdbc/db-do-commands db (str "DROP TABLE " load)))
+        (jdbc/db-do-commands db "DROP TABLE workload"))
+      (when (seq (jdbc/query db tq))
+        (doseq [enum (jdbc/query db eq)]
+          (jdbc/db-do-commands db (str "DROP TYPE " (:unnest enum))))
+        (jdbc/db-do-commands db "DROP TYPE IF EXISTS pipeline")))
+    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangelog")
+    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangeloglock")))
 
 (comment
+  (reset-debug-db)
   (zero-db-config :gotc-dev)
   (zero-db-config :debug)
   (query   :gotc-dev "SELECT 3*5 AS result")
