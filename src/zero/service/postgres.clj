@@ -51,13 +51,13 @@
            :password password)))
 
 (defn query
-  "Query the database with SCHEMA in ENVIRONMENT with SQL."
-  [environment schema sql]
+  "Query the database in ENVIRONMENT with SQL."
+  [environment sql]
   (jdbc/query (zero-db-config environment) sql))
 
 (defn insert!
   "Add ROW map to TABLE in the database with SCHEMA in ENVIRONMENT."
-  [environment schema table row]
+  [environment table row]
   (jdbc/insert! (zero-db-config environment) table row))
 
 (defn run-liquibase-update
@@ -114,17 +114,13 @@
                    pipeline table))
       (jdbc/insert-multi! db table (util/map-csv (:workflows body))))))
 
-(defn reset-debug-db
-  []
-  )
-
 (comment
   (zero-db-config :gotc-dev)
   (zero-db-config :debug)
-  (query   :gotc-dev :zero-db "SELECT 3*5 AS result")
-  (query   :gotc-dev :zero-db "SELECT * FROM workload")
-  (query   :debug :zero-db "SELECT * FROM workload")
-  (insert! :gotc-dev :zero-db
+  (query   :gotc-dev "SELECT 3*5 AS result")
+  (query   :gotc-dev "SELECT * FROM workload")
+  (query   :debug "SELECT * FROM workload")
+  (insert! :debug
            "workload" {:project_id "UKB123"
                        :pipeline "WhiteAlbumExomeReprocessing"
                        :cromwell_instance "gotc-dev"
