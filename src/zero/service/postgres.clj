@@ -14,7 +14,7 @@
 (defn zero-db-url
   "Nil or an URL for the zero-postgresql service in ENVIRONMENT."
   [environment]
-  (if-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
+  (when-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
     (letfn [(postgresql? [{:keys [instanceType name region]}]
               (when (= [instanceType         name]
                        ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
@@ -33,8 +33,7 @@
           (json/read-str :key-fn keyword)
           :items
           (->> (keep postgresql?))
-          first))
-    "jdbc:postgresql:postgres"))
+          first))))
 
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
@@ -134,7 +133,7 @@
     (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangeloglock")))
 
 (comment
-  (str/join " " ["liquibase" "--classpath=$(clojure" "-Spath)"
+  (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
                  "--url=jdbc:postgresql:postgres"
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])

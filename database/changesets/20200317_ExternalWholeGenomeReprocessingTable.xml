@@ -19,7 +19,6 @@
             id                     bigint,      -- unique to this table
             base_file_name         text,        -- input to the workflow
             cromwell               text,        -- the Cromwell metadata URL
-            destination_cloud_path text,        -- input to the workflow
             final_gvcf_base_name   text,        -- input to the workflow
             input_cram             text,        -- input to the workflow
             sample_name            text,        -- input to the workflow
