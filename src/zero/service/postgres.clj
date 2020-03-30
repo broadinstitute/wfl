@@ -79,10 +79,9 @@
 (defn run-liquibase
   "Migrate the database schema for ENV using Liquibase."
   ([env]
-   (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
-         {:keys [username password]} (util/vault-secrets vault)
-         url (zero-db-url env instance-name db-name)]
-     (run-liquibase-update url username password)))
+   (let [{:keys [username password]} (-> env/stuff env :server :vault
+                                         util/vault-secrets)]
+     (run-liquibase-update (zero-db-url env) username password)))
   ([]
    (run-liquibase-update "jdbc:postgresql:postgres"
                          (util/getenv "USER" "postgres")
@@ -140,9 +139,10 @@
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
+  (run-liquibase)
   (reset-debug-db)
+  (run-liquibase :gotc-dev)
   (zero-db-config :gotc-dev)
-  (zero-db-config :debug)
   (query   :gotc-dev "SELECT 3*5 AS result")
   (query   :gotc-dev "SELECT * FROM workload")
   (query   :debug "SELECT * FROM workload")
