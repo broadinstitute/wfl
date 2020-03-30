@@ -16,15 +16,15 @@
         </comment>
         <sql>
             CREATE TYPE ExternalWholeGenomeReprocessing AS (
-            id                     bigint,      -- unique to this table
-            base_file_name         text,        -- input to the workflow
-            cromwell               text,        -- the Cromwell metadata URL
-            final_gvcf_base_name   text,        -- input to the workflow
-            input_cram             text,        -- input to the workflow
-            sample_name            text,        -- input to the workflow
-            status                 text,        -- Cromwell workflow status
-            unmapped_bam_suffix    text,        -- input to the workflow
-            updated                timestamptz) -- status update time
+            id                   bigint,      -- unique to this table
+            base_file_name       text,        -- input to the workflow
+            cromwell             text,        -- the Cromwell metadata URL
+            final_gvcf_base_name text,        -- input to the workflow
+            input_cram           text,        -- input to the workflow
+            sample_name          text,        -- input to the workflow
+            status               text,        -- Cromwell workflow status
+            unmapped_bam_suffix  text,        -- input to the workflow
+            updated              timestamptz) -- status update time
         </sql>
     </changeSet>
 </databaseChangeLog>
