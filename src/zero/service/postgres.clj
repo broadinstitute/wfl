@@ -113,17 +113,13 @@
                                        "WHERE id = %s"])
                         pipeline id)
           table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                        work pipeline)]
+                        work pipeline)
+          load  (map (fn [m id] (assoc m :id id))
+                     (-> body :load io/reader json/read)
+                     (rest (range)))]
       (jdbc/update! db :workload {:load work} ["id = ?" id])
       (jdbc/db-do-commands db [kind table])
-      (jdbc/insert-multi!
-        db work
-        [{:id                    23
-          "unmapped_bam_suffix"  ".unmapped.bam",
-          "sample_name"          "NA12878 PLUMBING",
-          "base_file_name"       "NA12878_PLUMBING",
-          "final_gvcf_base_name" "NA12878_PLUMBING",
-          "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]))))
+      (jdbc/insert-multi! db work load))))
 
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."
@@ -151,26 +147,11 @@
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
-  {:creator "tbl@broadinstitute.org"
-   :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-   :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-   :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
-   :pipeline "ExternalWholeGenomeReprocessing"
-   :project  "Testing with tbl"}
   (run-liquibase)
   (reset-debug-db)
   (run-liquibase :gotc-dev)
   (zero-db-config :gotc-dev)
-  (query   :gotc-dev "SELECT 3*5 AS result")
-  (query   :gotc-dev "SELECT * FROM workload")
-  (query   :debug "SELECT * FROM workload")
-  (insert! :debug
-           "workload" {:project_id "UKB123"
-                       :pipeline "WhiteAlbumExomeReprocessing"
-                       :cromwell_instance "gotc-dev"
-                       :input_path "gs://broad-gotc-dev-white-album/"
-                       :output_path "gs://gotc-us-testbucket2/"})
-  (util/map-csv "./wgs.csv")
+  (query :debug "SELECT * FROM workload")
   (def body
     {:creator "tbl@broadinstitute.org"
      :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
@@ -178,18 +159,14 @@
      :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
      :pipeline "ExternalWholeGenomeReprocessing"
      :project  "Testing with tbl"
-     :load [{"unmapped_bam_suffix"  ".unmapped.bam",
-             "sample_name"          "NA12878 PLUMBING",
-             "base_file_name"       "NA12878_PLUMBING",
-             "final_gvcf_base_name" "NA12878_PLUMBING",
-             "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]})
-  (def body
-    {:creator "tbl@broadinstitute.org"
-     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
-     :pipeline "ExternalWholeGenomeReprocessing"
-     :project  "Testing with tbl"
-     :load     (io/reader "./wgs.edn")})
+     :load (->> [{"unmapped_bam_suffix"  ".unmapped.bam",
+                  "sample_name"          "NA12878 PLUMBING",
+                  "base_file_name"       "NA12878_PLUMBING",
+                  "final_gvcf_base_name" "NA12878_PLUMBING",
+                  "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]
+                json/write-str
+                (map byte)
+                byte-array
+                io/input-stream)})
   (add-pipeline-table! :debug body)
   )
