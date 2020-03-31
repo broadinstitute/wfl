@@ -193,6 +193,18 @@
   ([file url]
    (apply download-file file (parse-gs-url url))))
 
+(defn create-object
+  "Create OBJECT in BUCKET"
+  ([bucket object headers]
+   (http/request {:method  :post
+                  :url     (str upload-url bucket "/o")
+                  :query-params {:name object}
+                  :headers headers}))
+  ([bucket object]
+   (create-object bucket object (once/get-local-auth-header)))
+  ([url]
+   (apply create-object (parse-gs-url url))))
+
 (defn delete-object
   "Delete URL or OBJECT from BUCKET"
   ([bucket object headers]

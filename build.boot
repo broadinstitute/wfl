@@ -24,6 +24,7 @@
     [org.clojure/data.zip                    "0.1.3"]
     [org.clojure/java.jdbc                   "0.7.8"]
     [amperity/vault-clj                      "0.5.1"]
+    [buddy/buddy-sign                        "3.1.0"]
     [clj-commons/clj-yaml                    "0.7.0"]
     [clj-http                                "3.7.0"]
     [clj-time                                "0.15.1"]
