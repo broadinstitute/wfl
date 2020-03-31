@@ -97,17 +97,16 @@
     (let [{:keys [commit version] :as the-version} (zero/get-the-version)
           {:keys [creator cromwell input output pipeline project]} body
           {:keys [release top]} wgs/workflow-wdl
-          row (first (jdbc/insert!
-                       db :workload {:commit   commit
-                                     :creator  creator
-                                     :cromwell cromwell
-                                     :input    input
-                                     :output   output
-                                     :project  project
-                                     :release  release
-                                     :version  version
-                                     :wdl      top}))
-          id    (:id row)
+          [{:keys [id]}] (jdbc/insert!
+                           db :workload {:commit   commit
+                                         :creator  creator
+                                         :cromwell cromwell
+                                         :input    input
+                                         :output   output
+                                         :project  project
+                                         :release  release
+                                         :version  version
+                                         :wdl      top})
           work  (format "%s_%09d" pipeline id)
           kind  (format (str/join " " ["UPDATE workload"
                                        "SET pipeline = '%s'::pipeline"
@@ -116,9 +115,15 @@
           table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                         work pipeline)]
       (jdbc/update! db :workload {:load work} ["id = ?" id])
-      (jdbc/db-do-commands db kind)
-      (jdbc/db-do-commands db table)
-      #_(jdbc/insert-multi! db work (util/map-csv (:load body))))))
+      (jdbc/db-do-commands db [kind table])
+      (jdbc/insert-multi!
+        db work
+        [{:id                    23
+          "unmapped_bam_suffix"  ".unmapped.bam",
+          "sample_name"          "NA12878 PLUMBING",
+          "base_file_name"       "NA12878_PLUMBING",
+          "final_gvcf_base_name" "NA12878_PLUMBING",
+          "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]))))
 
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."
