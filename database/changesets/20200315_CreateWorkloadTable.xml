@@ -61,7 +61,6 @@
             </column>
             <column name="load" type="text"
                     remarks="name of the table of type 'pipeline'">
-                <constraints nullable="false"/>
             </column>
             <column name="output" type="text"
                     remarks="common prefix of the output URLs in 'load'">
@@ -69,7 +68,6 @@
             </column>
             <column name="pipeline" type="pipeline"
                     remarks="root of the leaf name of the WDL file">
-                <constraints nullable="false"/>
             </column>
             <column name="project" type="text"
                     remarks="something to identify the project">

@@ -1,7 +1,8 @@
 (ns zero.service.postgres
   "Talk to the Postgres database."
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clj-http.client :as http]
             [zero.environments :as env]
@@ -12,9 +13,9 @@
   (:import [liquibase.integration.commandline Main]))
 
 (defn zero-db-url
-  "Nil or an URL for the zero-postgresql service in ENVIRONMENT."
+  "An URL for the zero-postgresql service in ENVIRONMENT."
   [environment]
-  (when-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
+  (if-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
     (letfn [(postgresql? [{:keys [instanceType name region]}]
               (when (= [instanceType         name]
                        ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
@@ -33,7 +34,8 @@
           (json/read-str :key-fn keyword)
           :items
           (->> (keep postgresql?))
-          first))))
+          first))
+    "jdbc:postgresql:postgres"))
 
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
@@ -95,22 +97,28 @@
     (let [{:keys [commit version] :as the-version} (zero/get-the-version)
           {:keys [creator cromwell input output pipeline project]} body
           {:keys [release top]} wgs/workflow-wdl
-          row (jdbc/insert! db :workload {:commit   commit
-                                          :creator  creator
-                                          :cromwell cromwell
-                                          :input    input
-                                          :output   output
-                                          :pipeline pipeline
-                                          :project  project
-                                          :release  release
-                                          :version  version
-                                          :wdl      top})
-          work (str/join "." [pipeline (:id row)])]
-      (jdbc/update! db :workload {:load load})
-      (jdbc/db-do-commands
-        db (format "CREATE TABLE %s OF TYPE %s (PRIMARY KEY (id))"
-                   pipeline load))
-      (jdbc/insert-multi! db load (util/map-csv (:workflows body))))))
+          row (first (jdbc/insert!
+                       db :workload {:commit   commit
+                                     :creator  creator
+                                     :cromwell cromwell
+                                     :input    input
+                                     :output   output
+                                     :project  project
+                                     :release  release
+                                     :version  version
+                                     :wdl      top}))
+          id    (:id row)
+          work  (format "%s_%09d" pipeline id)
+          kind  (format (str/join " " ["UPDATE workload"
+                                       "SET pipeline = '%s'::pipeline"
+                                       "WHERE id = %s"])
+                        pipeline id)
+          table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+                        work pipeline)]
+      (jdbc/update! db :workload {:load work} ["id = ?" id])
+      (jdbc/db-do-commands db kind)
+      (jdbc/db-do-commands db table)
+      #_(jdbc/insert-multi! db work (util/map-csv (:load body))))))
 
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."
@@ -122,7 +130,7 @@
                             "WHERE typname = 'pipeline'"])
           eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
       (when (seq (jdbc/query db wq))
-        (doseq [load (jdbc/query db "SELECT load FROM workload")]
+        (doseq [{:keys [load]} (jdbc/query db "SELECT load FROM workload")]
           (jdbc/db-do-commands db (str "DROP TABLE " load)))
         (jdbc/db-do-commands db "DROP TABLE workload"))
       (when (seq (jdbc/query db tq))
@@ -138,6 +146,12 @@
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
+  {:creator "tbl@broadinstitute.org"
+   :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
+   :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
+   :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
+   :pipeline "ExternalWholeGenomeReprocessing"
+   :project  "Testing with tbl"}
   (run-liquibase)
   (reset-debug-db)
   (run-liquibase :gotc-dev)
@@ -151,4 +165,26 @@
                        :cromwell_instance "gotc-dev"
                        :input_path "gs://broad-gotc-dev-white-album/"
                        :output_path "gs://gotc-us-testbucket2/"})
+  (util/map-csv "./wgs.csv")
+  (def body
+    {:creator "tbl@broadinstitute.org"
+     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
+     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
+     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
+     :pipeline "ExternalWholeGenomeReprocessing"
+     :project  "Testing with tbl"
+     :load [{"unmapped_bam_suffix"  ".unmapped.bam",
+             "sample_name"          "NA12878 PLUMBING",
+             "base_file_name"       "NA12878_PLUMBING",
+             "final_gvcf_base_name" "NA12878_PLUMBING",
+             "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]})
+  (def body
+    {:creator "tbl@broadinstitute.org"
+     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
+     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
+     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
+     :pipeline "ExternalWholeGenomeReprocessing"
+     :project  "Testing with tbl"
+     :load     (io/reader "./wgs.edn")})
+  (add-pipeline-table! :debug body)
   )
