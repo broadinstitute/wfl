@@ -52,4 +52,5 @@
         workflow-id (first workflow-results)
         status (:status (cromwell/wait-for-workflow-complete :wgs-dev workflow-id))]
     (println {:id workflow-id :status status})
+    (gcs/delete-object test-output-path)
     (System/exit (if (= status "Succeeded") 0 1))))
