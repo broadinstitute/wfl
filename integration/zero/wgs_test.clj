@@ -8,16 +8,20 @@
   (:import (java.util UUID)))
 
 (def wfl-url
+  "WFL server url"
   "http://localhost:3000")
 
 (defn tmp-output-path
+  "Temp directory for test outputs"
   [output-path]
   (str output-path (UUID/randomUUID) "/"))
 
 (def credentials-path
+  "Vault path for server credentials"
   (get-in (env/stuff :gotc-dev) [:server :vault]))
 
 (defn create-jwt
+  "Create a JWT to authenticate WFL API requests."
   []
   (let [{:keys [oauth2_client_id oauth2_client_secret]}
         (util/vault-secrets credentials-path)
@@ -32,18 +36,20 @@
     (jwt/sign payload oauth2_client_secret)))
 
 (defn start-wgs-workflow
-  [env max-string input-path output-path]
+  "Start MAX WGS workflows from INPUT-PATH to OUTPUT-PATH in ENV Cromwell."
+  [env max input-path output-path]
   (-> {:method       :post
        :url          (str wfl-url "/api/v1/wgs")
        :content-type :application/json
        :headers      {"Authorization" (str "Bearer " (create-jwt))}
        :body         (json/write-str {:environment env
-                                      :max         max-string
+                                      :max         max
                                       :input_path  input-path
                                       :output_path output-path})}
       cromwell/request-json :body :results))
 
 (defn -main
+  "Submit a WGS workflow to ENV Cromwell and check if it succeeds."
   [env max input-path output-path]
   (let [test-output-path (tmp-output-path output-path)]
     (gcs/create-object test-output-path)
