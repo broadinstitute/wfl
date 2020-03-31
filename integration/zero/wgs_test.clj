@@ -1,6 +1,6 @@
 (ns zero.wgs-test
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
+  (:require [clojure.data.json  :as json]
+            [clojure.string     :as str]
             [buddy.sign.jwt :as jwt]
             [zero.service.cromwell :as cromwell]
             [zero.environments :as env]
@@ -49,4 +49,5 @@
   (let [workflow-results (start-wgs-workflow "wgs-dev" "1" test-input-path test-output-path)
         workflow-id (first workflow-results)
         status (:status (cromwell/wait-for-workflow-complete :wgs-dev workflow-id))]
-    (print (str workflow-id "completed with status: " status))))
+    (println (str workflow-id ": " status))
+    (if (= status "Succeeded") (System/exit 0) (System/exit 1))))
