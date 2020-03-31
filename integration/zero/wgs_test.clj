@@ -51,5 +51,5 @@
   (let [workflow-results (start-wgs-workflow "wgs-dev" "1" test-input-path test-output-path)
         workflow-id (first workflow-results)
         status (:status (cromwell/wait-for-workflow-complete :wgs-dev workflow-id))]
-    (println (str workflow-id ": " status))
-    (if (= status "Succeeded") (System/exit 0) (System/exit 1))))
+    (println {:id workflow-id :status status})
+    (System/exit (if (= status "Succeeded") 0 1))))
