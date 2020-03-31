@@ -16,15 +16,16 @@
   [output-path]
   (str output-path (UUID/randomUUID) "/"))
 
-(def credentials-path
-  "Vault path for server credentials"
-  (get-in (env/stuff :gotc-dev) [:server :vault]))
+(defn credentials-path
+  [env]
+  "Vault path for ENV server credentials"
+  (get-in (env/stuff env) [:server :vault]))
 
 (defn create-jwt
   "Create a JWT to authenticate WFL API requests."
-  []
+  [env]
   (let [{:keys [oauth2_client_id oauth2_client_secret]}
-        (util/vault-secrets credentials-path)
+        (util/vault-secrets (credentials-path env))
         iat (quot (System/currentTimeMillis) 1000)
         exp (+ iat 3600000)
         payload {:hd    "broadinstitute.org"
@@ -41,7 +42,7 @@
   (-> {:method       :post
        :url          (str wfl-url "/api/v1/wgs")
        :content-type :application/json
-       :headers      {"Authorization" (str "Bearer " (create-jwt))}
+       :headers      {"Authorization" (str "Bearer " (create-jwt (keyword :gotc-dev)))}
        :body         (json/write-str {:environment env
                                       :max         max
                                       :input_path  input-path
@@ -56,11 +57,11 @@
     (let [workflow-results (start-wgs-workflow env max input-path test-output-path)
           workflow-id (first workflow-results)
           status (:status (cromwell/wait-for-workflow-complete (keyword env) workflow-id))]
-    (println {:id workflow-id :status status})
-    (gcs/delete-object test-output-path)
-    (System/exit (if (= status "Succeeded") 0 1)))))
+      (println {:id workflow-id :status status})
+      (gcs/delete-object test-output-path)
+      (System/exit (if (= status "Succeeded") 0 1)))))
 
-(comment (-main "wgs"
+(comment (-main "wgs-dev"
                 "1"
                 "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/"
                 "gs://broad-gotc-dev-zero-test/wgs-test-output/"))
