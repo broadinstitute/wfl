@@ -5,6 +5,13 @@
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
 is a workload manager.
 
+For example,
+a workload could be a set of WGS samples
+to be reprocessed in a given project/bucket,
+the workflow is the processing
+of an individual sample
+in that workload running WGS reprocessing.
+
 It runs as you, with your credentials, from your laptop, and
 communicates with other services as necessary to manage a workload.
 
