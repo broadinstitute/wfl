@@ -10,11 +10,9 @@
 (def wfl-url
   "http://localhost:3000")
 
-(def test-input-path
-  "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/")
-
-(def test-output-path
-  (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" (UUID/randomUUID) "/"))
+(defn tmp-output-path
+  [output-path]
+  (str output-path (UUID/randomUUID) "/"))
 
 (def credentials-path
   (get-in (env/stuff :gotc-dev) [:server :vault]))
@@ -46,11 +44,17 @@
       cromwell/request-json :body :results))
 
 (defn -main
-  [& args]
-  (gcs/create-object test-output-path)
-  (let [workflow-results (start-wgs-workflow "wgs-dev" "1" test-input-path test-output-path)
-        workflow-id (first workflow-results)
-        status (:status (cromwell/wait-for-workflow-complete :wgs-dev workflow-id))]
+  [env max input-path output-path]
+  (let [test-output-path (tmp-output-path output-path)]
+    (gcs/create-object test-output-path)
+    (let [workflow-results (start-wgs-workflow env max input-path test-output-path)
+          workflow-id (first workflow-results)
+          status (:status (cromwell/wait-for-workflow-complete (keyword env) workflow-id))]
     (println {:id workflow-id :status status})
     (gcs/delete-object test-output-path)
-    (System/exit (if (= status "Succeeded") 0 1))))
+    (System/exit (if (= status "Succeeded") 0 1)))))
+
+(comment (-main "wgs"
+                "1"
+                "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/"
+                "gs://broad-gotc-dev-zero-test/wgs-test-output/"))
