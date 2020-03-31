@@ -57,7 +57,7 @@
     (let [workflow-results (start-wgs-workflow env max input-path test-output-path)
           workflow-id (first workflow-results)
           status (:status (cromwell/wait-for-workflow-complete (keyword env) workflow-id))]
-      (println {:id workflow-id :status status})
+      (prn {workflow-id status})
       (gcs/delete-object test-output-path)
       (System/exit (if (= status "Succeeded") 0 1)))))
 
