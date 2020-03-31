@@ -1,10 +1,11 @@
 (ns zero.wgs-test
-  (:require [clojure.data.json  :as json]
-            [clojure.string     :as str]
+  (:require [clojure.data.json :as json]
             [buddy.sign.jwt :as jwt]
             [zero.service.cromwell :as cromwell]
             [zero.environments :as env]
-            [zero.util :as util]))
+            [zero.service.gcs :as gcs]
+            [zero.util :as util])
+  (:import (java.util UUID)))
 
 (def wfl-url
   "http://localhost:3000")
@@ -13,7 +14,7 @@
   "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/")
 
 (def test-output-path
-  "gs://broad-gotc-dev-zero-test/wgs-test-output/")
+  (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" (UUID/randomUUID) "/"))
 
 (def credentials-path
   (get-in (env/stuff :gotc-dev) [:server :vault]))
@@ -46,6 +47,7 @@
 
 (defn -main
   [& args]
+  (gcs/create-object test-output-path)
   (let [workflow-results (start-wgs-workflow "wgs-dev" "1" test-input-path test-output-path)
         workflow-id (first workflow-results)
         status (:status (cromwell/wait-for-workflow-complete :wgs-dev workflow-id))]
