@@ -6,7 +6,6 @@
             [clojure.string :as str]
             [clj-http.client :as http]
             [zero.environments :as env]
-            [zero.module.wgs :as wgs]
             [zero.once :as once]
             [zero.util :as util]
             [zero.zero :as zero])
@@ -88,39 +87,6 @@
                          (util/getenv "USER" "postgres")
                          "password")))
 
-;; Works only with WGS now.
-;;
-(defn add-pipeline-table!
-  "Add a pipeline table for BODY to DB in ENVIRONMENT."
-  [environment body]
-  (jdbc/with-db-transaction [db (zero-db-config environment)]
-    (let [{:keys [commit version] :as the-version} (zero/get-the-version)
-          {:keys [creator cromwell input output pipeline project]} body
-          {:keys [release top]} wgs/workflow-wdl
-          [{:keys [id]}] (jdbc/insert!
-                           db :workload {:commit   commit
-                                         :creator  creator
-                                         :cromwell cromwell
-                                         :input    input
-                                         :output   output
-                                         :project  project
-                                         :release  release
-                                         :version  version
-                                         :wdl      top})
-          work  (format "%s_%09d" pipeline id)
-          kind  (format (str/join " " ["UPDATE workload"
-                                       "SET pipeline = '%s'::pipeline"
-                                       "WHERE id = %s"])
-                        pipeline id)
-          table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                        work pipeline)
-          load  (map (fn [m id] (assoc m :id id))
-                     (-> body :load io/reader json/read)
-                     (rest (range)))]
-      (jdbc/update! db :workload {:load work} ["id = ?" id])
-      (jdbc/db-do-commands db [kind table])
-      (jdbc/insert-multi! db work load))))
-
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."
   []
@@ -152,21 +118,4 @@
   (run-liquibase :gotc-dev)
   (zero-db-config :gotc-dev)
   (query :debug "SELECT * FROM workload")
-  (def body
-    {:creator "tbl@broadinstitute.org"
-     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
-     :pipeline "ExternalWholeGenomeReprocessing"
-     :project  "Testing with tbl"
-     :load (->> [{"unmapped_bam_suffix"  ".unmapped.bam",
-                  "sample_name"          "NA12878 PLUMBING",
-                  "base_file_name"       "NA12878_PLUMBING",
-                  "final_gvcf_base_name" "NA12878_PLUMBING",
-                  "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]
-                json/write-str
-                (map byte)
-                byte-array
-                io/input-stream)})
-  (add-pipeline-table! :debug body)
   )
