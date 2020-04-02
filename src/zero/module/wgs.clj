@@ -215,12 +215,10 @@
       (throw x))))
 
 (defn add-wgs-workload!
-  "Add the WGS workload described by BODY to ENVIRONMENT."
-  [environment body]
-  (jdbc/with-db-transaction [db (postgres/zero-db-config environment)]
-    (let [{:keys [commit version] :as the-version} (zero/get-the-version)
-          {:keys [creator cromwell input output pipeline project]} body
-          {:keys [release top]}  workflow-wdl
+  "Add the WGS workload described by BODY to the database DB."
+  [db {:keys [creator cromwell input output pipeline project] :as body}]
+  (jdbc/with-db-transaction [db db]
+    (let [{:keys [commit version]} (zero/get-the-version)
           [{:keys [id]}] (jdbc/insert!
                            db :workload {:commit   commit
                                          :creator  creator
@@ -228,19 +226,17 @@
                                          :input    input
                                          :output   output
                                          :project  project
-                                         :release  release
+                                         :release  (:release workflow-wdl)
                                          :version  version
-                                         :wdl      top})
+                                         :wdl      (:top workflow-wdl)})
           work  (format "%s_%09d" pipeline id)
           kind  (format (str/join " " ["UPDATE workload"
                                        "SET pipeline = '%s'::pipeline"
-                                       "WHERE id = %s"])
-                        pipeline id)
+                                       "WHERE id = %s"]) pipeline id)
           table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                         work pipeline)
           load  (map (fn [m id] (assoc m :id id))
-                     (-> body :load io/reader json/read)
-                     (rest (range)))]
+                     (-> body :load io/reader json/read) (rest (range)))]
       (jdbc/update! db :workload {:load work} ["id = ?" id])
       (jdbc/db-do-commands db [kind table])
       (jdbc/insert-multi! db work load))))
@@ -248,7 +244,8 @@
 (defn create-workload
   "Remember the WGS workflow specified by REQUEST."
   [{:keys [body] :as request}]
-  (add-wgs-workload! body))
+  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
+    (add-wgs-workload! (postgres/zero-db-config environment) body)))
 
 (comment
   (def body

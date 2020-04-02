@@ -104,15 +104,6 @@
                          zero/throw-or-environment-keyword!
                          (postgres/query :zero-db "SELECT * FROM workload"))}))
 
-(defn create-workload
-  "Create the new workload described in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (let [body (:body parameters)
-        env (-> body :environment zero/throw-or-environment-keyword!)]
-    (succeed (->> (dissoc body :environment)
-                  (postgres/insert! env :zero-db "workload")
-                  first))))
-
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
@@ -122,8 +113,13 @@
                                            input_path output_path)]
     (succeed {:results results})))
 
+(defn create-fail
+  "Fail this request returning BODY as result."
+  [body]
+  (fail {:create-workload-failed body}))
+
 (defn create-workload
-  "Create the workload described in REQUEST."
+  "Create the workload described in BODY of REQUEST."
   [{:keys [body] :as request}]
-  (wgs/create-workload request)
-  (fail {:results "results"}))
+  (let [create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
+    ((create (:pipeline body) create-fail) body)))
