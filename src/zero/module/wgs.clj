@@ -13,7 +13,8 @@
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.util UUID]))
 
 (def description
   "Describe the purpose of this command."
@@ -227,6 +228,7 @@
                                          :output   output
                                          :project  project
                                          :release  (:release workflow-wdl)
+                                         :uuid     (UUID/randomUUID)
                                          :version  version
                                          :wdl      (:top workflow-wdl)})
           work  (format "%s_%09d" pipeline id)
@@ -264,5 +266,5 @@
                 (map byte)
                 byte-array
                 io/input-stream)})
-  (add-wgs-workload! :debug body)
+  (create-workload {:body body})
   )

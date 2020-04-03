@@ -17,7 +17,7 @@
 
 ;; Parameter definitions
 ;;
-(s/def ::cromwell_instance string?)
+(s/def ::cromwell          string?)
 (s/def ::end               string?)
 (s/def ::environment       string?)
 (s/def ::input             string?)
@@ -26,16 +26,16 @@
 (s/def ::output            string?)
 (s/def ::output_path       string?)
 (s/def ::pipeline          #{"ExternalWholeGenomeReprocessing"})
-(s/def ::project_id        string?)
+(s/def ::project           string?)
 (s/def ::start             string?)
-(s/def ::table             string?)
+(s/def ::load              string?)
 (s/def ::workflow-request (s/keys :req-un [::environment ::start ::end]))
 (s/def ::workload-request (s/keys :req-un [::cromwell
                                            ::input
                                            ::output
                                            ::pipeline
                                            ::project
-                                           ::table]))
+                                           ::load]))
 (s/def ::wgs-request (s/keys :req-un [::environment
                                       ::max
                                       ::input_path
@@ -90,8 +90,8 @@
    ["/api/v1/workload"
     {:post {:summary "Create a new workload"
             :parameters {:body ::workload-request}
-            :responses {200 {:body map?}}
-            :handler (handlers/authorize handlers/create-workload)}}]
+            :responses  {200 {:body map?}}
+            :handler    (handlers/authorize handlers/create-workload)}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")}
