@@ -120,6 +120,7 @@
 
 (defn create-workload
   "Create the workload described in BODY of REQUEST."
-  [{:keys [body] :as request}]
-  (let [create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
-    ((create (:pipeline body) create-fail) body)))
+  [{:keys [parameters] :as request}]
+  (let [{:keys [body]} parameters
+        create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
+    (succeed ((create (:pipeline body) create-fail) body))))

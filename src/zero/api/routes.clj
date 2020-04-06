@@ -58,7 +58,8 @@
 (s/def ::workflow-request     (s/keys :req-un [::end
                                                ::environment
                                                ::start]))
-(s/def ::workload-request     (s/keys :req-un [::cromwell
+(s/def ::workload-request     (s/keys :req-un [::creator
+                                               ::cromwell
                                                ::input
                                                ::load
                                                ::output
@@ -130,7 +131,7 @@
     {:post {:summary "Create a new workload"
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/create-workload)}}]
+            :handler    handlers/create-workload}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")}
@@ -159,3 +160,7 @@
                                              :url  "/swagger.json"
                                              :root "swagger-ui"
                                              :config {:jsonEditor false}}))))
+
+(comment
+  (s/conform ::workload-request zero.module.wgs/body)
+  )
