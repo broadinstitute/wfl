@@ -268,5 +268,6 @@
                  "base_file_name"       "NA12878_PLUMBING",
                  "final_gvcf_base_name" "NA12878_PLUMBING",
                  "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]})
+  (util/spit-json "./workload.json" body)
   (create-workload {:body body})
   )
