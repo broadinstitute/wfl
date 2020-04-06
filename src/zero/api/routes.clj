@@ -13,33 +13,57 @@
             [reitit.swagger-ui                  :as swagger-ui]
             [zero.api.handlers                  :as handlers]
             [zero.environments                  :as env]
-            [zero.zero                          :as zero]))
+            [zero.util                          :as util]
+            [zero.zero                          :as zero])
+  (:import [java.util UUID]))
 
-;; Parameter definitions
-;;
+(defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
+
+
+(s/def ::commit            (s/and string? (comp (partial == 40) count)))
+(s/def ::created           inst?)
+(s/def ::creator           string?)
 (s/def ::cromwell          string?)
 (s/def ::end               string?)
 (s/def ::environment       string?)
+(s/def ::id                pos-int?)
 (s/def ::input             string?)
 (s/def ::input_path        string?)
+(s/def ::load              string?)
 (s/def ::max               string?)
 (s/def ::output            string?)
 (s/def ::output_path       string?)
 (s/def ::pipeline          #{"ExternalWholeGenomeReprocessing"})
 (s/def ::project           string?)
+(s/def ::release           string?)
 (s/def ::start             string?)
-(s/def ::load              string?)
-(s/def ::workflow-request (s/keys :req-un [::environment ::start ::end]))
-(s/def ::workload-request (s/keys :req-un [::cromwell
-                                           ::input
-                                           ::output
-                                           ::pipeline
-                                           ::project
-                                           ::load]))
-(s/def ::wgs-request (s/keys :req-un [::environment
-                                      ::max
-                                      ::input_path
-                                      ::output_path]))
+(s/def ::uuid              (s/and string? uuid-string?))
+(s/def ::version           string?)
+(s/def ::wdl               string?)
+(s/def ::wgs-request       (s/keys :req-un [::environment
+                                            ::max
+                                            ::input_path
+                                            ::output_path]))
+(s/def ::workflow-request  (s/keys :req-un [::end
+                                            ::environment
+                                            ::start]))
+(s/def ::workload-request  (s/keys :req-un [::cromwell
+                                            ::input
+                                            ::output
+                                            ::pipeline
+                                            ::project
+                                            ::load]))
+(s/def ::workload-response (s/keys :req-un [::commit
+                                            ::created
+                                            ::creator
+                                            ::cromwell
+                                            ::id
+                                            ::input
+                                            ::output
+                                            ::project
+                                            ::release
+                                            ::uuid
+                                            ::version]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -90,7 +114,7 @@
    ["/api/v1/workload"
     {:post {:summary "Create a new workload"
             :parameters {:body ::workload-request}
-            :responses  {200 {:body map?}}
+            :responses  {200 {:body ::workload-response}}
             :handler    (handlers/authorize handlers/create-workload)}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
