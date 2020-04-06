@@ -221,17 +221,18 @@
   [db {:keys [creator cromwell input output pipeline project] :as body}]
   (jdbc/with-db-transaction [db db]
     (let [{:keys [commit version]} (zero/get-the-version)
-          [{:keys [id]}] (jdbc/insert!
-                           db :workload {:commit   commit
-                                         :creator  creator
-                                         :cromwell cromwell
-                                         :input    input
-                                         :output   output
-                                         :project  project
-                                         :release  (:release workflow-wdl)
-                                         :uuid     (UUID/randomUUID)
-                                         :version  version
-                                         :wdl      (:top workflow-wdl)})
+          [workload] (jdbc/insert!
+                       db :workload {:commit   commit
+                                     :creator  creator
+                                     :cromwell cromwell
+                                     :input    input
+                                     :output   output
+                                     :project  project
+                                     :release  (:release workflow-wdl)
+                                     :uuid     (UUID/randomUUID)
+                                     :version  version
+                                     :wdl      (:top workflow-wdl)})
+          {:keys [id uuid]} workload
           work  (format "%s_%09d" pipeline id)
           kind  (format (str/join " " ["UPDATE workload"
                                        "SET pipeline = '%s'::pipeline"
@@ -245,7 +246,8 @@
                      (:load body) (rest (range)))]
       (jdbc/update! db :workload {:load work} ["id = ?" id])
       (jdbc/db-do-commands db [kind table])
-      (jdbc/insert-multi! db work load))))
+      (jdbc/insert-multi! db work load)
+      (into {} (filter second workload)))))
 
 (defn create-workload
   "Remember the WGS workflow specified by REQUEST."
