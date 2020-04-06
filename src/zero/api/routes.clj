@@ -32,7 +32,7 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::load                 (s/* ::workflow))
+(s/def ::load                 (s/+ ::workflow))
 (s/def ::max                  string?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
@@ -60,11 +60,11 @@
                                                ::start]))
 (s/def ::workload-request     (s/keys :req-un [::cromwell
                                                ::input
+                                               ::load
                                                ::output
                                                ::pipeline
                                                ::project]))
 (s/def ::workload-response    (s/keys :opt-un [::finished
-                                               ::load
                                                ::pipeline
                                                ::started
                                                ::wdl]
