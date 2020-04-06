@@ -81,8 +81,8 @@
                     remarks="When was the workload started?">
             </column>
             <column name="uuid" type="text"
-                    remarks="UUID created with workload">
-                <constraints nullable="false"/>
+                    remarks="UUID created for workload">
+                <constraints nullable="false" unique="true"/>
             </column>
             <column name="version" type="text"
                     remarks="version of creating WFL">

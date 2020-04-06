@@ -14,7 +14,8 @@
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
-  (:import [java.util UUID]))
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def description
   "Describe the purpose of this command."
@@ -237,8 +238,11 @@
                                        "WHERE id = %s"]) pipeline id)
           table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                         work pipeline)
-          load  (map (fn [m id] (assoc m :id id))
-                     (-> body :load io/reader json/read) (rest (range)))]
+          now   (OffsetDateTime/now)
+          load  (map (fn [m id] (-> m
+                                    (assoc :id id)
+                                    (assoc :updated now)))
+                     (:load body) (rest (range)))]
       (jdbc/update! db :workload {:load work} ["id = ?" id])
       (jdbc/db-do-commands db [kind table])
       (jdbc/insert-multi! db work load))))
@@ -257,14 +261,10 @@
      :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
      :pipeline "ExternalWholeGenomeReprocessing"
      :project  "Testing with tbl"
-     :load (->> [{"unmapped_bam_suffix"  ".unmapped.bam",
-                  "sample_name"          "NA12878 PLUMBING",
-                  "base_file_name"       "NA12878_PLUMBING",
-                  "final_gvcf_base_name" "NA12878_PLUMBING",
-                  "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]
-                json/write-str
-                (map byte)
-                byte-array
-                io/input-stream)})
+     :load     [{"unmapped_bam_suffix"  ".unmapped.bam",
+                 "sample_name"          "NA12878 PLUMBING",
+                 "base_file_name"       "NA12878_PLUMBING",
+                 "final_gvcf_base_name" "NA12878_PLUMBING",
+                 "input_cram"           "develop/20k/NA12878_PLUMBING.cram"}]})
   (create-workload {:body body})
   )
