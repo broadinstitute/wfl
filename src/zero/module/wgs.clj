@@ -253,7 +253,7 @@
   "Remember the WGS workflow specified by BODY."
   [body]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (add-wgs-workload! (postgres/zero-db-config :debug) body)))
+    (add-wgs-workload! (postgres/zero-db-config environment) body)))
 
 (comment
   (str/join " " ["curl" "-X" "POST" "-H" "'Content-Type: application/json'"
@@ -276,7 +276,7 @@
   (str/join
     " " ["curl" "-X" "POST"
          "-H" "'Content-Type: application/json'"
-         "-H" "'Authorization: Bearer '$(gcloud auth print-access-token --format=json | jq -r .id_tokenb64)"
+         "-H" "'Authorization: Bearer '$(<./token.txt)"
          "--data-binary" "@./workload.json"
          "https://wfl-dot-broad-gotc-dev.appspot.com/api/v1/workload"])
   )
