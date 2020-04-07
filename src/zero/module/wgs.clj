@@ -273,4 +273,10 @@
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]})
   (util/spit-json "./workload.json" body)
   (create-workload {:body body})
+  (str/join
+    " " ["curl" "-X" "POST"
+         "-H" "'Content-Type: application/json'"
+         "-H" "'Authorization: Bearer '$(gcloud auth print-access-token --format=json | jq -r .id_tokenb64)"
+         "--data-binary" "@./workload.json"
+         "https://wfl-dot-broad-gotc-dev.appspot.com/api/v1/workload"])
   )
