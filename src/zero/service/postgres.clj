@@ -42,7 +42,7 @@
   (let [vault (get-in env/stuff [environment :server :vault])
         {:keys [password username]} (util/vault-secrets vault)]
     (assoc {:instance-name "zero-postgresql"
-            :db-name       "postgres"
+            :db-name       "wfl"
             :classname     "org.postgresql.Driver"
             :subprotocol   "postgresql"
             :vault         "secret/dsde/gotc/dev/zero"}

@@ -256,6 +256,9 @@
     (add-wgs-workload! (postgres/zero-db-config :debug) body)))
 
 (comment
+  (str/join " " ["curl" "-X" "POST" "-H" "'Content-Type: application/json'"
+                 "--data-binary" "@./workload.json"
+                 "http://localhost:3000/api/v1/workload"])
   (def body
     {:creator "tbl@broadinstitute.org"
      :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
