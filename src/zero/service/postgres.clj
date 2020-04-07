@@ -34,7 +34,7 @@
           :items
           (->> (keep postgresql?))
           first))
-    "jdbc:postgresql:postgres"))
+    "jdbc:postgresql:wfl"))
 
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
@@ -83,7 +83,7 @@
                                          util/vault-secrets)]
      (run-liquibase-update (zero-db-url env) username password)))
   ([]
-   (run-liquibase-update "jdbc:postgresql:postgres"
+   (run-liquibase-update (zero-db-url :debug)
                          (util/getenv "USER" "postgres")
                          "password")))
 
