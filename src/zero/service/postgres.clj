@@ -18,7 +18,7 @@
     (letfn [(postgresql? [{:keys [instanceType name region]}]
               (when (= [instanceType         name]
                        ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
-                (str "jdbc:postgresql://google/postgres?useSSL=false"
+                (str "jdbc:postgresql://google/wfl?useSSL=false"
                      "&socketFactory="
                      "com.google.cloud.sql.postgres.SocketFactory"
                      "&cloudSqlInstance="
@@ -109,7 +109,7 @@
 
 (comment
   (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
-                 "--url=jdbc:postgresql:postgres"
+                 "--url=jdbc:postgresql:wfl"
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
