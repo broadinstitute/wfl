@@ -60,9 +60,7 @@
   [handler]
   (defaults/wrap-defaults
     handler
-    (-> (if (util/getenv "GAE_INSTANCE")
-          defaults/secure-site-defaults
-          defaults/api-defaults)
+    (-> defaults/api-defaults
         (assoc :proxy true)
         (assoc-in [:session :cookie-attrs :same-site] :lax)
         (assoc-in [:session :store] cookie-store))))
