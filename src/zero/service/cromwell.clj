@@ -149,22 +149,24 @@
 
 (defn query
   "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
-  [environment params]
-  (let [form-params (merge {:pagesize 999} params)
-        request {:method       :post ;; :debug true :debug-body true
-                 :url          (str (api environment) "/query")
-                 :form-params  (cromwellify-json-form form-params)
-                 :content-type :application/json}]
-    (letfn [(each [page sofar]
-              (let [response (-> request
-                                 (update :form-params conj {:page (str page)})
-                                 (assoc :headers (once/get-local-auth-header))
-                                 request-json :body)
-                    {:keys [results totalResultsCount]} response
-                    total (+ sofar (count results))]
-                (lazy-cat results (when (< total totalResultsCount)
-                                    (each (inc page) total)))))]
-      (util/lazy-unchunk (each 1 0)))))
+  ([auth-header environment params]
+   (let [form-params (merge {:pagesize 999} params)
+         request     {:method       :post                   ;; :debug true :debug-body true
+                      :url          (str (api environment) "/query")
+                      :form-params  (cromwellify-json-form form-params)
+                      :content-type :application/json}]
+     (letfn [(each [page sofar]
+               (let [response (-> request
+                                  (update :form-params conj {:page (str page)})
+                                  (assoc :headers auth-header)
+                                  request-json :body)
+                     {:keys [results totalResultsCount]} response
+                     total    (+ sofar (count results))]
+                 (lazy-cat results (when (< total totalResultsCount)
+                                     (each (inc page) total)))))]
+       (util/lazy-unchunk (each 1 0)))))
+  ([environment params]
+   (query (once/get-local-auth-header) environment params)))
 
 ;; HACK: (into (array-map) ...) is egregious.
 ;;
