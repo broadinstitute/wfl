@@ -43,15 +43,12 @@
      :signature signature}))
 
 (defn authorize
-  "Add JWT to REQUEST when it contains a broadinstitute.org account.
-  Otherwise return a 401 Unauthorized response."
+  "Add JWT to REQUEST all the time. Will be deprecated soon."
   [handler]
   (fn [request]
     (letfn [(valid? [{:keys [payload] :as jwt}]
               (let [{:keys [aud exp hd iss]} payload]
-                (and (= hd "broadinstitute.org")
-                     (= iss "https://accounts.google.com")
-                     (= aud (get-in oauth2-profiles [:google :client-id]))
+                (and (= iss "https://accounts.google.com")
                      (> exp (quot (System/currentTimeMillis) 1000))
                      jwt)))
             (token [request]
@@ -62,7 +59,7 @@
                               last)))]
       (if-let [jwt (some-> request token decode-jwt valid?)]
         (handler (assoc request :jwt jwt))
-        (-> (response/response {:response {:message "Unauthorized"}})
+        (-> (response/response {:response {:message "Invalid or expired token provided!"}})
             (response/header "WWW-Authenticate" "Bearer realm=API access")
             (response/content-type "application/json")
             (response/status 401))))))
@@ -84,20 +81,22 @@
 
 (defn status-counts
   "Get status counts for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
+  [{:keys [parameters jwt] :as _request}]
   (let [environment (some :environment ((juxt :query :body) parameters))
-        env         (zero/throw-or-environment-keyword! environment)]
-    (succeed (cromwell/status-counts env {:includeSubworkflows false}))))
+        env         (zero/throw-or-environment-keyword! environment)
+        auth-header (util/bearer-token-header-for (env (deref once/the-cached-credentials-from-service-account)))]
+    (succeed (cromwell/status-counts auth-header env {:includeSubworkflows false}))))
 
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [body environment query]} parameters
         env   (zero/throw-or-environment-keyword! environment)
+        auth-header (util/bearer-token-header-for (env (deref once/the-cached-credentials-from-service-account)))
         start (some :start [query body])
         end   (some :end   [query body])
         query {:includeSubworkflows false :start start :end end}]
-    (succeed {:results (cromwell/query env query)})))
+    (succeed {:results (cromwell/query auth-header env query)})))
 
 (defn list-workloads
   "List workloads for environment in REQUEST."
