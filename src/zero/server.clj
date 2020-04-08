@@ -11,11 +11,12 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.reload :as reload]
             [ring.middleware.session.cookie :as cookie]
-            [zero.environments :as env]
-            [zero.util :as util]
-            [zero.zero :as zero]
             [zero.api.routes :as routes]
-            [zero.api.handlers :as handlers])
+            [zero.api.handlers :as handlers]
+            [zero.environments :as env]
+            [zero.service.postgres :as postgres]
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import (java.awt Desktop)
            (java.net URI)))
 
@@ -48,6 +49,7 @@
      "OAUTH2_CLIENT_ID"       oauth2_client_id
      "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
      "ZERO_POSTGRES_PASSWORD" password
+     "ZERO_POSTGRES_URL"      (postgres/zero-db-url env)
      "ZERO_POSTGRES_USERNAME" username}))
 
 (def cookie-store

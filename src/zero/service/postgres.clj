@@ -39,16 +39,20 @@
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
   [environment]
-  (let [{:strs [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME]} (util/getenv)
-        [password user] (if (and ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME)
-                          [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME]
-                          ["password" (util/getenv "USER" "postgres")])]
+  (let [{:strs [ZERO_POSTGRES_PASSWORD
+                ZERO_POSTGRES_URL
+                ZERO_POSTGRES_USERNAME]}
+        (util/getenv)
+        [password url user]
+        (if ZERO_POSTGRES_URL
+          [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_URL ZERO_POSTGRES_USERNAME]
+          ["password" "jdbc:postgresql:wfl" (util/getenv "USER" "postgres")])]
     (assoc {:instance-name "zero-postgresql"
             :db-name       "wfl"
             :classname     "org.postgresql.Driver"
             :subprotocol   "postgresql"
             :vault         "secret/dsde/gotc/dev/zero"}
-           :connection-uri (zero-db-url environment)
+           :connection-uri url
            :password       password
            :user           user)))
 
