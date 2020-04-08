@@ -14,41 +14,43 @@
 (defn zero-db-url
   "An URL for the zero-postgresql service in ENVIRONMENT."
   [environment]
-  (if-let [{:keys [project vault]} (get-in env/stuff [environment :server])]
-    (letfn [(postgresql? [{:keys [instanceType name region]}]
-              (when (= [instanceType         name]
-                       ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
-                (str "jdbc:postgresql://google/wfl?useSSL=false"
-                     "&socketFactory="
-                     "com.google.cloud.sql.postgres.SocketFactory"
-                     "&cloudSqlInstance="
-                     (str/join ":" [project region name]))))]
-      (-> {:method :get
-           :url (str "https://www.googleapis.com/sql/v1beta4/projects/"
-                     project "/instances")
-           :headers (merge {"Content-Type" "application/json"}
-                           (once/get-local-auth-header))}
-          http/request
-          :body
-          (json/read-str :key-fn keyword)
-          :items
-          (->> (keep postgresql?))
-          first))
-    "jdbc:postgresql:wfl"))
+  (let [project (get-in env/stuff [environment :server :project])
+        wfl (when project
+              (letfn [(postgresql? [{:keys [instanceType name region]}]
+                        (when (= [instanceType         name]
+                                 ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
+                          (str "//google/wfl?useSSL=false"
+                               "&socketFactory="
+                               "com.google.cloud.sql.postgres.SocketFactory"
+                               "&cloudSqlInstance="
+                               (str/join ":" [project region name]))))]
+                (-> {:method :get
+                     :url (str/join
+                            "/" ["https://www.googleapis.com/sql/v1beta4"
+                                 "projects" project "instances"])
+                     :headers (merge {"Content-Type" "application/json"}
+                                     (once/get-local-auth-header))}
+                    http/request :body
+                    (json/read-str :key-fn keyword) :items
+                    (->> (keep postgresql?))
+                    first)))]
+    (str/join ":" ["jdbc" "postgresql" (or wfl "wfl")])))
 
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
   [environment]
-  (let [vault (get-in env/stuff [environment :server :vault])
-        {:keys [password username]} (util/vault-secrets vault)]
+  (let [{:strs [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME]} (util/getenv)
+        [password user] (if (and ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME)
+                          [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_USERNAME]
+                          ["password" (util/getenv "USER" "postgres")])]
     (assoc {:instance-name "zero-postgresql"
             :db-name       "wfl"
             :classname     "org.postgresql.Driver"
             :subprotocol   "postgresql"
             :vault         "secret/dsde/gotc/dev/zero"}
            :connection-uri (zero-db-url environment)
-           :user username
-           :password password)))
+           :password       password
+           :user           user)))
 
 (defn query
   "Query the database in ENVIRONMENT with SQL."

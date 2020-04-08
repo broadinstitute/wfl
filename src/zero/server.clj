@@ -39,12 +39,16 @@
   "The process environment variables for ENV."
   [env]
   (let [environment (env env/stuff)
-        {:keys [cookie_secret oauth2_client_id oauth2_client_secret]}
+        {:keys [cookie_secret
+                oauth2_client_id oauth2_client_secret
+                password username]}
         (util/vault-secrets (get-in environment [:server :vault]))]
-    {"COOKIE_SECRET"        cookie_secret
-     "ENVIRONMENT"          (:name environment)
-     "OAUTH2_CLIENT_ID"     oauth2_client_id
-     "OAUTH2_CLIENT_SECRET" oauth2_client_secret}))
+    {"COOKIE_SECRET"          cookie_secret
+     "ENVIRONMENT"            (:name environment)
+     "OAUTH2_CLIENT_ID"       oauth2_client_id
+     "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
+     "ZERO_POSTGRES_PASSWORD" password
+     "ZERO_POSTGRES_USERNAME" username}))
 
 (def cookie-store
   "A session store for wrap-defaults."
