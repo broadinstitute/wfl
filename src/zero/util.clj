@@ -66,13 +66,8 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                       (doto .refreshIfExpired)
                       .getAccessToken
                       .getTokenValue)]
-    (when-not token
-      (let [lines ["%1$s: Cannot generate token from Google Credentials."
-                   "%1$s: Run 'gsutil auth list' to check your account."
-                   "%1$s: Run 'gsutil auth login' and try again."]
-            err (format (str/join \newline lines) zero/the-name)]
-        (throw (Exception. err))))
-    {"Authorization" (str "Bearer " token)}))
+    (when token
+      {"Authorization" (str "Bearer " token)})))
 
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."
