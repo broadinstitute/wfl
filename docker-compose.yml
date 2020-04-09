@@ -1,3 +1,5 @@
+# This file is purely designed for local development
+# and testing purposes.
 version: "3"
 services: 
   wfl-ui:
