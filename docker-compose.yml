@@ -13,11 +13,11 @@ services:
       - wfl-api
   wfl-api:
     container_name: workflow-launcher-api
-    environment: 
-      COOKIE_SECRET: ""
-      ENVIRONMENT: ""
-      OAUTH2_CLIENT_ID: ""
-      OAUTH2_CLIENT_SECRET: ""
+    # environment: 
+    #   COOKIE_SECRET: ""
+    #   ENVIRONMENT: ""
+    #   OAUTH2_CLIENT_ID: ""
+    #   OAUTH2_CLIENT_SECRET: ""
     build:
       context: .
       dockerfile: Dockerfile
