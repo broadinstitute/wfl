@@ -9,6 +9,7 @@ RUN npm run build
 # Production stage
 FROM nginx:1.16-alpine as production-stage
 LABEL maintainer="hornet@broadinsitute.org"
-COPY --from=build-stage /wfl_ui/dist /usr/share/nginx/html
+WORKDIR /wfl_ui
+COPY --from=build-stage /wfl_ui/dist ./dist
 EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
