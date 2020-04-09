@@ -33,7 +33,7 @@
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
 (s/def ::load                 (s/+ ::workflow))
-(s/def ::max                  string?)
+(s/def ::max                  pos-int?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
 (s/def ::pipeline             #{"ExternalWholeGenomeReprocessing"})

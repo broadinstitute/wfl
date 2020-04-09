@@ -179,9 +179,8 @@
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
-  [environment max-string in-gs out-gs]
-  (let [max    (util/is-non-negative! max-string)
-        bucket (all/readable! in-gs)]
+  [environment max in-gs out-gs]
+  (let [bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
                 (when unsuffixed [unsuffixed suffix])))
@@ -201,13 +200,19 @@
                         (map (fn [base] (str base (suffix base)))))]
         (mapv (partial submit-workflow environment bucket slashified) more)))))
 
+(defn submit-some-workflows-or-throw
+  "Submit up to MAX-STRING workflows from IN-GS to OUT-GS in ENVIRONMENT."
+  [environment max-string in-gs out-gs]
+  (let [max (util/is-non-negative! max-string)]
+    (submit-some-workflows environment max in-gs out-gs)))
+
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
   [& args]
   (try
     (let [env (zero/throw-or-environment-keyword! (first args))]
       (apply (case (count args)
-               4 submit-some-workflows
+               4 submit-some-workflows-or-throw
                3 (partial all/report-status cromwell-label)
                (throw (IllegalArgumentException.
                         "Must specify 3 or 4 arguments.")))

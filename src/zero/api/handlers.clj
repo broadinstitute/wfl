@@ -109,8 +109,7 @@
   [{:keys [parameters] :as _request}]
   (let [{:keys [environment input_path max output_path]} (:body parameters)
         env     (zero/throw-or-environment-keyword! environment)
-        results (wgs/submit-some-workflows env (or max 1000)
-                                           input_path output_path)]
+        results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
 
 (defn create-fail
