@@ -54,10 +54,9 @@
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
             :handler (handlers/success (zero/get-the-version))
-            :responses {200 {:body {(keyword zero/the-name) string?
-                                    :version string?
+            :responses {200 {:body {:version string?
                                     :build    pos-int?
-                                    :time    string?}}}
+                                    :built    string?}}}
             :swagger {:tags ["Information"]}}}]
    ["/api/v1/environments"
     {:get  {:summary "Get all of the environments the server knows"

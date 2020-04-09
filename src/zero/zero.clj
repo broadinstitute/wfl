@@ -58,3 +58,6 @@
               str/trim
               edn/read-string)
       {:version "SOME BOGUS VERSION"}))
+
+
+(get-the-version)
