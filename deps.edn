@@ -86,10 +86,10 @@
             :main-opts  ["-m" "uberdeps.uberjar"]}
 
   :integration
-  {:extra-paths ["integration", "resources"]
+  {:extra-paths ["integration" "resources"]
    :main-opts ["-m" "zero.wgs-test"]}
 
   :test-create-workload
-  {:extra-paths ["integration"]
-   :main-opts ["-m" "zero.test.create.workload"]}
+  {:extra-paths ["integration" "resources"]
+   :main-opts ["-m" "zero.create"]}
   }}

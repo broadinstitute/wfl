@@ -1,6 +1,7 @@
-(ns zero.test.create.workload
+(ns zero.create
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
+            [zero.debug :as debug]
             [zero.util :as util])
   (:import (java.util UUID)))
 
@@ -22,16 +23,14 @@
   [& args]
   (let [url   "http://localhost:3000/api/v1/workload"
         jwt   (util/create-jwt :gotc-dev)
-        tmp   (str/join "/" ["." (UUID/randomUUID)])
-        load  (io/file tmp "wgs.json")
-        token (io/file tmp "token.txt")]
+        load  (str/join "/" ["." (str (UUID/randomUUID) ".json")])
+        tmp   (io/file load)]
     (try
-      (io/make-parents token)
-      (spit token jwt)
-      (util/spit-json load request)
-      (util/shell-io! ["curl" "-X" "POST"
-                       "-H" "'Content-Type: application/json'"
-                       "-H" (format "'Authorization: Bearer '$(<%s)" token)
-                       "--data-binary" (format "@%s" load)
-                       url])
-      (finally (util/delete-tree tmp)))))
+      (io/make-parents tmp)
+      (util/spit-json tmp request)
+      (util/shell-io! "curl" "-X" "POST" #_"-v"
+                      "-H" "Content-Type: application/json"
+                      "-H" (format "Authorization: Bearer %s" jwt)
+                      "--data-binary" (format "@%s" load)
+                      url)
+      #_(finally (util/delete-tree tmp)))))

@@ -131,14 +131,14 @@
             :responses  {200 {:body {:results vector?}}}
             :handler    (handlers/authorize handlers/submit-wgs)}}]
    ["/api/v1/workload"
-    {:get {:summary "Get the workloads."
-           :parameters {:query ::uuid-query}
-           :responses  {200 {:body ::workload-responses}}
-           :handler    (handlers/authorize handlers/get-workload)}
-     :post {:summary "Create a new workload."
+    {:get  {:summary    "Get the workloads."
+            :parameters {:query ::uuid-query}
+            :responses  {200 {:body ::workload-responses}}
+            :handler    (handlers/authorize handlers/get-workload)}
+     :post {:summary    "Create a new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/post-workload)}}]
+            :handler    handlers/post-workload}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")}
