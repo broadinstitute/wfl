@@ -259,29 +259,3 @@
   [body]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
     (add-wgs-workload! (postgres/zero-db-config environment) body)))
-
-(comment
-  (str/join " " ["curl" "-X" "POST" "-H" "'Content-Type: application/json'"
-                 "--data-binary" "@./workload.json"
-                 "http://localhost:3000/api/v1/workload"])
-  (def body
-    {:creator "tbl@broadinstitute.org"
-     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
-     :pipeline "ExternalWholeGenomeReprocessing"
-     :project  "Testing with tbl"
-     :load     [{:unmapped_bam_suffix  ".unmapped.bam",
-                 :sample_name          "NA12878 PLUMBING",
-                 :base_file_name       "NA12878_PLUMBING",
-                 :final_gvcf_base_name "NA12878_PLUMBING",
-                 :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]})
-  (util/spit-json "./workload.json" body)
-  (create-workload {:body body})
-  (str/join
-    " " ["curl" "-X" "POST"
-         "-H" "'Content-Type: application/json'"
-         "-H" "'Authorization: Bearer '$(<./token.txt)"
-         "--data-binary" "@./workload.json"
-         "https://wfl-dot-broad-gotc-dev.appspot.com/api/v1/workload"])
-  )

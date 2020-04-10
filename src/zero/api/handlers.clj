@@ -1,6 +1,7 @@
 (ns zero.api.handlers
   "Define handlers for API endpoints"
   (:require [clojure.data.json     :as json]
+            [clojure.java.jdbc     :as jdbc]
             [clojure.string        :as str]
             [ring.util.response    :as response]
             [zero.module.wgs       :as wgs]
@@ -117,9 +118,19 @@
   [body]
   (fail {:create-workload-failed body}))
 
-(defn create-workload
+(defn post-workload
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (let [{:keys [body]} parameters
         create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
     (succeed ((create (:pipeline body) create-fail) body))))
+
+(defn get-workload
+  "List workloads or workload with UUID."
+  [request]
+  (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+         ["SELECT * FROM workload WHERE uuid = ?" uuid]
+         ["SELECT * FROM workload"])
+       (jdbc/query (postgres/zero-db-config :debug))
+       (map (fn [wl] (into {} (filter second wl))))
+       succeed))

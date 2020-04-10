@@ -44,6 +44,8 @@
 (s/def ::started              inst?)
 (s/def ::unmapped_bam_suffix  string?)
 (s/def ::uuid                 (s/and string? uuid-string?))
+(s/def ::uuid-query           (s/or :none empty?
+                                    :one  (s/keys :req-un [::uuid])))
 (s/def ::version              string?)
 (s/def ::wdl                  string?)
 (s/def ::wgs-request          (s/keys :req-un [::environment
@@ -80,6 +82,7 @@
                                                ::release
                                                ::uuid
                                                ::version]))
+(s/def ::workload-responses   (s/* ::workload-response))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -128,10 +131,14 @@
             :responses  {200 {:body {:results vector?}}}
             :handler    (handlers/authorize handlers/submit-wgs)}}]
    ["/api/v1/workload"
-    {:post {:summary "Create a new workload"
+    {:get {:summary "Get the workloads."
+           :parameters {:query ::uuid-query}
+           :responses  {200 {:body ::workload-responses}}
+           :handler    (handlers/authorize handlers/get-workload)}
+     :post {:summary "Create a new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/create-workload)}}]
+            :handler    (handlers/authorize handlers/post-workload)}}]
    ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")}
@@ -160,7 +167,3 @@
                                              :url  "/swagger.json"
                                              :root "swagger-ui"
                                              :config {:jsonEditor false}}))))
-
-(comment
-  (s/conform ::workload-request zero.module.wgs/body)
-  )
