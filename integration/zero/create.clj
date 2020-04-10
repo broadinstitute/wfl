@@ -33,4 +33,4 @@
                       "-H" (format "Authorization: Bearer %s" jwt)
                       "--data-binary" (format "@%s" load)
                       url)
-      #_(finally (util/delete-tree tmp)))))
+      (finally (util/delete-tree tmp)))))

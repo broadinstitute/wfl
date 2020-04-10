@@ -128,9 +128,10 @@
 (defn get-workload
   "List workloads or workload with UUID."
   [request]
-  (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-         ["SELECT * FROM workload WHERE uuid = ?" uuid]
-         ["SELECT * FROM workload"])
-       (jdbc/query (postgres/zero-db-config :debug))
-       (map (fn [wl] (into {} (filter second wl))))
-       succeed))
+  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
+    (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+           ["SELECT * FROM workload WHERE uuid = ?" uuid]
+           ["SELECT * FROM workload"])
+         (jdbc/query (postgres/zero-db-config environment))
+         (map (fn [wl] (into {} (filter second wl))))
+         succeed)))
