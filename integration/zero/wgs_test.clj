@@ -3,9 +3,7 @@
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [zero.service.cromwell :as cromwell]
-            [zero.environments :as env]
-            [zero.util :as util]
-            [zero.zero :as zero])
+            [zero.util :as util])
   (:import (java.util UUID)))
 
 (defn start-wgs-workflow
@@ -24,20 +22,15 @@
         cromwell/request-json :body :results)))
 
 (defn -main
-  "Submit up to MAX workflows from INPUT to OUTPUT in ENVIRONMENT."
-  [environment max input output]
-  (let [env     (zero/throw-or-environment-keyword! environment)
-        max-int (util/is-non-negative! max)
+  "Submit up to MAX workflows from INPUT to OUTPUT in ENV."
+  [& args]
+  (let [env     :wgs-dev
+        max     1
+        input   "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/"
+        output  "gs://broad-gotc-dev-zero-test/wgs-test-output/"
         wait    (partial cromwell/wait-for-workflow-complete env)
         unique  (str/join "/" [output (UUID/randomUUID)])
-        ids     (start-wgs-workflow env max-int input unique)
+        ids     (start-wgs-workflow env max input unique)
         results (zipmap ids (map (comp :status wait) ids))]
     (pprint results)
     (System/exit (if (every? #{"Succeeded"} (vals results)) 0 1))))
-
-(comment
-  (-main "wgs-dev"
-         "1"
-         "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m/"
-         "gs://broad-gotc-dev-zero-test/wgs-test-output/")
-  )
