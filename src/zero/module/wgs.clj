@@ -226,18 +226,17 @@
   [db {:keys [creator cromwell input output pipeline project] :as body}]
   (jdbc/with-db-transaction [db db]
     (let [{:keys [commit version]} (zero/get-the-version)
-          [workload] (jdbc/insert!
-                       db :workload {:commit   commit
-                                     :creator  creator
-                                     :cromwell cromwell
-                                     :input    input
-                                     :output   output
-                                     :project  project
-                                     :release  (:release workflow-wdl)
-                                     :uuid     (UUID/randomUUID)
-                                     :version  version
-                                     :wdl      (:top workflow-wdl)})
-          {:keys [id uuid]} workload
+          [{:keys [id uuid]}]
+          (jdbc/insert! db :workload {:commit   commit
+                                      :creator  creator
+                                      :cromwell cromwell
+                                      :input    input
+                                      :output   output
+                                      :project  project
+                                      :release  (:release workflow-wdl)
+                                      :uuid     (UUID/randomUUID)
+                                      :version  version
+                                      :wdl      (:top workflow-wdl)})
           work  (format "%s_%09d" pipeline id)
           kind  (format (str/join " " ["UPDATE workload"
                                        "SET pipeline = '%s'::pipeline"
@@ -252,10 +251,19 @@
       (jdbc/update! db :workload {:load work} ["id = ?" id])
       (jdbc/db-do-commands db [kind table])
       (jdbc/insert-multi! db work load)
-      (into {} (filter second workload)))))
+      uuid)))
 
 (defn create-workload
   "Remember the WGS workflow specified by BODY."
   [body]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (add-wgs-workload! (postgres/zero-db-config environment) body)))
+    (->> body
+         (add-wgs-workload! (postgres/zero-db-config environment))
+         zero.debug/trace
+         (conj ["SELECT * FROM workload WHERE uuid = ?"])
+         zero.debug/trace
+         (jdbc/query (postgres/zero-db-config environment))
+         zero.debug/trace
+         first
+         (filter second)
+         (into {}))))

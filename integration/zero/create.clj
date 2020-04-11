@@ -1,7 +1,7 @@
 (ns zero.create
-  (:require [clojure.java.io :as io]
+  (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as str]
-            [zero.debug :as debug]
             [zero.util :as util])
   (:import (java.util UUID)))
 
@@ -21,16 +21,25 @@
 
 (defn -main
   [& args]
-  (let [url   "http://localhost:3000/api/v1/workload"
-        jwt   (util/create-jwt :gotc-dev)
-        load  (str/join "/" ["." (str (UUID/randomUUID) ".json")])
-        tmp   (io/file load)]
+  (let [url    "http://localhost:3000/api/v1/workload"
+        tmp    (str "./" (UUID/randomUUID) ".json")
+        auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
+        noload (dissoc request :load)]
     (try
-      (io/make-parents tmp)
       (util/spit-json tmp request)
-      (util/shell-io! "curl" "-X" "POST" #_"-v"
-                      "-H" "Content-Type: application/json"
-                      "-H" (format "Authorization: Bearer %s" jwt)
-                      "--data-binary" (format "@%s" load)
-                      url)
-      (finally (util/delete-tree tmp)))))
+      (let [{:keys [id load pipeline uuid] :as response}
+            (json/read-str
+              (util/shell! "curl" "-H" auth
+                           "-H" "Content-Type: application/json"
+                           "--data-binary" (format "@%s" tmp) url)
+              :key-fn keyword)
+            [got]
+            (json/read-str
+              (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
+              :key-fn keyword)]
+        (assert (= noload (select-keys response (keys noload))))
+        (assert (str/starts-with? load pipeline))
+        (assert (str/ends-with?   load (str id)))
+        (assert (= got response)))
+      (finally (util/delete-tree (io/file tmp)))))
+  (System/exit 0))
