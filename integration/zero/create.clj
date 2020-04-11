@@ -5,6 +5,10 @@
             [zero.util :as util])
   (:import (java.util UUID)))
 
+(def server
+  "http://localhost:3000"
+  "https://wfl-dot-broad-gotc-dev.appspot.com")
+
 (def request
   (let [user (util/getenv "USER" "tbl")]
     {:creator  (str/join "@" [user "broadinstitute.org"])
@@ -21,7 +25,7 @@
 
 (defn -main
   [& args]
-  (let [url    "http://localhost:3000/api/v1/workload"
+  (let [url    (str server "/api/v1/workload")
         tmp    (str "./" (UUID/randomUUID) ".json")
         auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
         noload (dissoc request :load)]
