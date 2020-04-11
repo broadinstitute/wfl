@@ -283,6 +283,8 @@ There are some unit tests under `./test/zero/`.
 | gcs<sub>test</sub>.clj    | zero.gcs in gcs.clj       |
 | pubsub<sub>test</sub>.clj | zero.pubsub in pubsub.clj |
 
+Run them with `boot test`.
+
 There are also some integration tests under `./integration`.
 Run them using aliases defined in the `./deps.edn` file.
 
