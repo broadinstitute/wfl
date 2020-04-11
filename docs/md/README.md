@@ -283,6 +283,18 @@ There are some unit tests under `./test/zero/`.
 | gcs<sub>test</sub>.clj    | zero.gcs in gcs.clj       |
 | pubsub<sub>test</sub>.clj | zero.pubsub in pubsub.clj |
 
+There are also some integration tests under `./integration`.
+Run them using aliases defined in the `./deps.edn` file.
+
+```shell
+clojure -A:integration
+clojure -A:test-create-workload
+```
+
+With a little hacking,
+they can run against a local `./ops/server.sh`
+or a server deployed to Google App Engine.
+
 #### Development
 
 WFL is implemented in [Clojure](https://clojure.org) and uses a
