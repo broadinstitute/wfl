@@ -36,6 +36,9 @@
         (->> (str/join \newline))
         (format zero/the-name title))))
 
+;; Set "ZERO_POSTGRES_URL" to (postgres/zero-db-url :debug)
+;; to run the server against a local Postgres installation.
+;;
 (defn env_variables
   "The process environment variables for ENV."
   [env]

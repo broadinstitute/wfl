@@ -1,6 +1,7 @@
 (ns zero.create
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [zero.util :as util])
   (:import (java.util UUID)))
@@ -29,6 +30,7 @@
         tmp    (str "./" (UUID/randomUUID) ".json")
         auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
         noload (dissoc request :load)]
+    (pprint url)
     (try
       (util/spit-json tmp request)
       (let [{:keys [id load pipeline uuid] :as response}
@@ -41,6 +43,7 @@
             (json/read-str
               (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
               :key-fn keyword)]
+        (pprint got)
         (assert (= noload (select-keys response (keys noload))))
         (assert (str/starts-with? load pipeline))
         (assert (str/ends-with?   load (str id)))
