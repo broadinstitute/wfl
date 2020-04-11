@@ -1,7 +1,6 @@
 (ns zero.util
   "Some utilities shared across this program."
-  (:require [clojure.data.csv :as csv]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
