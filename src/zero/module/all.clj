@@ -101,8 +101,8 @@
         kind  (format (str/join " " ["UPDATE workload"
                                      "SET pipeline = '%s'::pipeline"
                                      "WHERE id = %s"]) pipeline id)
-        table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+        work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                       table pipeline)]
     (jdbc/update! tx :workload {:load table} ["id = ?" id])
-    (jdbc/db-do-commands tx [kind table])
+    (jdbc/db-do-commands tx [kind work])
     [uuid table]))

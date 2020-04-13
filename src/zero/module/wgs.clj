@@ -224,7 +224,7 @@
   "Add the workload described by BODY to the database DB."
   [db {:keys [load] :as body}]
   (jdbc/with-db-transaction [tx db]
-    (let [now         (OffsetDateTime/now)
+    (let [now          (OffsetDateTime/now)
           [uuid table] (all/add-workload-table! tx workflow-wdl body)]
       (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
         (jdbc/insert-multi! tx table (map idnow load (rest (range)))))
