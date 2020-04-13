@@ -107,7 +107,7 @@
     (let [config (clone "pipeline-config" "zero/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent config)
-                      "checkout" "tbl/GH-652-not-so-spike-spike")
+                      "checkout" "e44decd39db39725f79bddc42d944181d0621b1d")
       (stage config))))
 
 (defn adapterize-wgs
