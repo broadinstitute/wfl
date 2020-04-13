@@ -13,13 +13,12 @@
                logicalFilePath="20200316_ExternalWholeGenomeReprocessingEnum.xml"
                runInTransaction="false">
         <comment>
-            Define the ExternalWholeGenomeReprocessing pipeline enum.
+            the ExternalWholeGenomeReprocessing pipeline ENUM
         </comment>
         <sql>
             ALTER TYPE pipeline ADD VALUE 'ExternalWholeGenomeReprocessing'
             <comment>
-                The 'workload.pipeline' column value
-                for tables of this kind.
+                'workload.pipeline' column for tables of this kind
             </comment>
         </sql>
     </changeSet>

@@ -11,11 +11,12 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.reload :as reload]
             [ring.middleware.session.cookie :as cookie]
-            [zero.environments :as env]
-            [zero.util :as util]
-            [zero.zero :as zero]
             [zero.api.routes :as routes]
-            [zero.api.handlers :as handlers])
+            [zero.api.handlers :as handlers]
+            [zero.environments :as env]
+            [zero.service.postgres :as postgres]
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import (java.awt Desktop)
            (java.net URI)))
 
@@ -35,16 +36,25 @@
         (->> (str/join \newline))
         (format zero/the-name title))))
 
+;; Set "ZERO_POSTGRES_URL" to (postgres/zero-db-url :debug)
+;; to run the server against a local Postgres installation.
+;;
 (defn env_variables
   "The process environment variables for ENV."
   [env]
   (let [environment (env env/stuff)
-        {:keys [cookie_secret oauth2_client_id oauth2_client_secret]}
-        (util/vault-secrets (get-in environment [:server :vault]))]
-    {"COOKIE_SECRET"        cookie_secret
-     "ENVIRONMENT"          (:name environment)
-     "OAUTH2_CLIENT_ID"     oauth2_client_id
-     "OAUTH2_CLIENT_SECRET" oauth2_client_secret}))
+        {:keys [cookie_secret
+                oauth2_client_id oauth2_client_secret
+                password username]}
+        (util/vault-secrets (get-in environment [:server :vault]))
+        result {"COOKIE_SECRET"          cookie_secret
+                "ENVIRONMENT"            (:name environment)
+                "OAUTH2_CLIENT_ID"       oauth2_client_id
+                "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
+                "ZERO_POSTGRES_PASSWORD" password
+                "ZERO_POSTGRES_URL"      (postgres/zero-db-url env)
+                "ZERO_POSTGRES_USERNAME" username}]
+    (into {} (filter second result))))
 
 (def cookie-store
   "A session store for wrap-defaults."
@@ -60,9 +70,7 @@
   [handler]
   (defaults/wrap-defaults
     handler
-    (-> (if (util/getenv "GAE_INSTANCE")
-          defaults/secure-site-defaults
-          defaults/api-defaults)
+    (-> defaults/api-defaults
         (assoc :proxy true)
         (assoc-in [:session :cookie-attrs :same-site] :lax)
         (assoc-in [:session :store] cookie-store))))

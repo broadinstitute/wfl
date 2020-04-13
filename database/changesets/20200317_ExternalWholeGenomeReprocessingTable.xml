@@ -12,24 +12,19 @@
                id="20200317"
                logicalFilePath="20200317_ExternalWholeGenomeReprocessingTable.xml">
         <comment>
-            Define the ExternalWholeGenomeReprocessing table schema.
-            The name of an instance of this type of table
-            appears in the 'pipeline.table' column.
-            There is a row in this table for every workflow
-            that is part of the workload named by this table.
+            the ExternalWholeGenomeReprocessing table schema
         </comment>
         <sql>
             CREATE TYPE ExternalWholeGenomeReprocessing AS (
-            id                     bigint,      -- unique to this table
-            base_file_name         text,        -- input to the workflow
-            cromwell               text,        -- the Cromwell metadata URL
-            destination_cloud_path text,        -- input to the workflow
-            final_gvcf_base_name   text,        -- input to the workflow
-            input_cram             text,        -- input to the workflow
-            sample_name            text,        -- input to the workflow
-            status                 text,        -- Cromwell workflow status
-            unmapped_bam_suffix    text,        -- input to the workflow
-            updated                timestamptz) -- status update time
+            id                   bigint,      -- unique to this table
+            base_file_name       text,        -- input to the workflow
+            final_gvcf_base_name text,        -- input to the workflow
+            input_cram           text,        -- input to the workflow
+            sample_name          text,        -- input to the workflow
+            status               text,        -- Cromwell workflow status
+            unmapped_bam_suffix  text,        -- input to the workflow
+            updated              timestamptz, -- status update time
+            uuid                 text)        -- Cromwell workflow UUID
         </sql>
     </changeSet>
 </databaseChangeLog>

@@ -1,6 +1,7 @@
 (ns zero.api.handlers
   "Define handlers for API endpoints"
   (:require [clojure.data.json     :as json]
+            [clojure.java.jdbc     :as jdbc]
             [clojure.string        :as str]
             [ring.util.response    :as response]
             [zero.module.wgs       :as wgs]
@@ -64,6 +65,11 @@
             (response/content-type "application/json")
             (response/status 401))))))
 
+(defn fail
+  "A failure response with BODY."
+  [body]
+  (-> body response/bad-request (response/content-type "application/json")))
+
 (defn succeed
   "A successful response with BODY."
   [body]
@@ -99,20 +105,33 @@
                          zero/throw-or-environment-keyword!
                          (postgres/query :zero-db "SELECT * FROM workload"))}))
 
-(defn create-workload
-  "Create the new workload described in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (let [body (:body parameters)
-        env (-> body :environment zero/throw-or-environment-keyword!)]
-    (succeed (->> (dissoc body :environment)
-                  (postgres/insert! env :zero-db "workload")
-                  first))))
-
 (defn submit-wgs
-  "Submit the workload described in REQUEST."
+  "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [environment input_path max output_path]} (:body parameters)
         env     (zero/throw-or-environment-keyword! environment)
-        results (wgs/submit-some-workflows env (or max 1000)
-                                           input_path output_path)]
+        results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
+
+(defn create-fail
+  "Fail this request returning BODY as result."
+  [body]
+  (fail {:create-workload-failed body}))
+
+(defn post-workload
+  "Create the workload described in BODY of REQUEST."
+  [{:keys [parameters] :as request}]
+  (let [{:keys [body]} parameters
+        create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
+    (succeed ((create (:pipeline body) create-fail) body))))
+
+(defn get-workload
+  "List workloads or workload with UUID."
+  [request]
+  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
+    (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+           ["SELECT * FROM workload WHERE uuid = ?" uuid]
+           ["SELECT * FROM workload"])
+         (jdbc/query (postgres/zero-db-config environment))
+         (map (fn [wl] (into {} (filter second wl))))
+         succeed)))

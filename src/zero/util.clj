@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
+            [buddy.sign.jwt :as jwt]
             [clj-yaml.core :as yaml]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
@@ -300,3 +301,16 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s"
                                  zero/the-name exit args))))))
+
+(defn create-jwt
+  "Sign a JSON Web Token with OAuth secrets from environment ENV."
+  [env]
+  (let [{:keys [oauth2_client_id oauth2_client_secret]}
+        (vault-secrets (get-in env/stuff [env :server :vault]))
+        iat (quot (System/currentTimeMillis) 1000)]
+    (jwt/sign {:hd    "broadinstitute.org"
+               :iss   "https://accounts.google.com"
+               :aud   oauth2_client_id
+               :iat   iat
+               :exp   (+ iat 3600000)
+               :scope ["openid" "email"]} oauth2_client_secret)))

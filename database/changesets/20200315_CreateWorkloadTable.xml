@@ -14,39 +14,34 @@
         <comment>
             Define a new root workload table schema.
             There is a row in this table for every workload.
-            The 'table' column here names another table.
-            That other table has the composite Postgres type 'workflow',
+            The 'load' column here names another table.
+            That other table has the composite Postgres type 'pipeline',
             and is named with the 'pipeline' column
-            composed with the 'id' column of this table.
+            composed with the 'id' column of this table like this:
+            'PIPELINE_ID'
         </comment>
         <sql>
             CREATE TYPE pipeline AS ENUM ()
             <comment>
-                Add a new value for each new 'table' type.
-                This new value should go
-                in the 'pipeline' column
-                for workloads of this kind.
-                See 20200316_ExternalWholeGenomeReprocessing.xml
-                for an example.
+                Add a new value for each new 'load' type.
+                The 'pipeline' column for workloads of this kind.
             </comment>
+        </sql>
+        <sql>
+            COMMENT ON TYPE pipeline IS 'ADD VALUE for each new workload kind.'
         </sql>
         <createTable tableName="workload">
             <column name="id" type="bigint" autoIncrement="true"
-                    remarks="Unique in every row.
-                             Compose this with the value
-                             in the 'pipeline' column
-                             to get the value
-                             in the 'table' column below.">
+                    remarks="'pipeline'_'id' is in the 'load' column.">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="commit" type="text"
-                    remarks="The Git commit hash of WorkFlowLauncher
-                             that managed this workload.">
+                    remarks="Git commit of creating WFL">
                 <constraints nullable="false"/>
             </column>
             <column name="created" type="timestamptz"
                     defaultValueComputed="now()"
-                    remarks="When was the workload row created here?">
+                    remarks="When was this workload created?">
                 <constraints nullable="false"/>
             </column>
             <column name="creator" type="text"
@@ -54,66 +49,47 @@
                 <constraints nullable="false"/>
             </column>
             <column name="cromwell" type="text"
-                    remarks="The URL of the Cromwell instance
-                             running the workflows.
-                             Should be a common prefix
-                             of the 'cromwell' column
-                             in the 'table' table.">
+                    remarks="Cromwell URL running the workflows">
                 <constraints nullable="false"/>
             </column>
             <column name="finished" type="timestamptz"
-                    remarks="When was the workload finished?
-                             All workflows either succeeded
-                             or were abandoned by this time.">
+                    remarks="When was the workload finished?">
             </column>
             <column name="input" type="text"
-                    remarks="Common prefix
-                             of the input URLs
-                             in 'table'.">
+                    remarks="common prefix of the input URLs in 'load'">
                 <constraints nullable="false"/>
             </column>
+            <column name="load" type="text"
+                    remarks="name of the table of type 'pipeline'">
+            </column>
             <column name="output" type="text"
-                    remarks="Common prefix
-                             of the output URLs
-                             in 'table'.">
+                    remarks="common prefix of the output URLs in 'load'">
                 <constraints nullable="false"/>
             </column>
             <column name="pipeline" type="pipeline"
-                    remarks="The root of the leaf name of the WDL file.
-                    Compose this value with the 'id'
-                    to get the 'table' column.">
-                <constraints nullable="false"/>
+                    remarks="root of the leaf name of the WDL file">
             </column>
             <column name="project" type="text"
-                    remarks="Something to identify the project.">
+                    remarks="something to identify the project">
                 <constraints nullable="false"/>
             </column>
             <column name="release" type="text"
-                    remarks="The release tag of the WDL
-                    for workflows in this workload
-                    or the Git commit hash of the .wdl file
-                    if this WDL is not officially released.">
+                    remarks="WDL release tag or commit for this">
                 <constraints nullable="false"/>
             </column>
             <column name="started" type="timestamptz"
                     remarks="When was the workload started?">
             </column>
-            <column name="table" type="text"
-                    remarks="Name of the table of type 'pipeline'.
-                    Compose the 'pipeline' column value
-                    with the 'id' column value like this:
-                    'PIPELINE_ID'.">
-                <constraints nullable="false"/>
+            <column name="uuid" type="text"
+                    remarks="UUID created for workload">
+                <constraints nullable="false" unique="true"/>
             </column>
             <column name="version" type="text"
-                    remarks="The version of WorkFlowLauncher
-                    that managed this workload.">
+                    remarks="version of creating WFL">
                 <constraints nullable="false"/>
             </column>
             <column name="wdl" type="text"
-                    remarks="Some pathname to the actual .wdl file
-                    that defines workflows in this workload
-                    to aid with debugging.">
+                    remarks="debug path to the .wdl file for this">
                 <constraints nullable="false"/>
             </column>
         </createTable>

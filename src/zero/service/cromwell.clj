@@ -277,9 +277,14 @@
   [environment id]
   (work-around-cromwell-fail-bug 9 environment id)
   (loop [environment environment id id]
-    (let [now (status environment id)]
-      (if (and now (#{"Submitted" "Running"} now))
-        (do (util/sleep-seconds 15) (recur environment id))
+    (let [seconds 15
+          now (status environment id)]
+      (if (#{"Submitted" "Running"} now)
+        (do (binding [*out* *err*]
+              (println (format "%s: Sleeping %s seconds on status: %s"
+                               id seconds now)))
+            (util/sleep-seconds seconds)
+            (recur environment id))
         (metadata environment id)))))
 
 (defn abort

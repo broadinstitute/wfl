@@ -1,58 +1,70 @@
 (ns zero.service.postgres
   "Talk to the Postgres database."
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clj-http.client :as http]
             [zero.environments :as env]
             [zero.once :as once]
-            [zero.util :as util])
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import [liquibase.integration.commandline Main]))
 
-(defn cloud-db-url
-  "Return NIL or an URL for the CloudSQL instance containing DB-NAME."
-  [environment instance-name db-name]
-  (if-let [gcp (get-in env/stuff [environment :google-cloud-project])]
-    (letfn [(postgresql? [{:keys [instanceType name region]}]
-              (when (= [instanceType         name]
-                       ["CLOUD_SQL_INSTANCE" instance-name])
-                (str "jdbc:postgresql://google/" db-name "?useSSL=false"
-                     "&socketFactory="
-                     "com.google.cloud.sql.postgres.SocketFactory"
-                     "&cloudSqlInstance="
-                     (str/join ":" [gcp region name]))))]
-      (-> {:method :get
-           :url (str "https://www.googleapis.com/sql/v1beta4/projects/"
-                     gcp "/instances")
-           :headers (merge {"Content-Type" "application/json"}
-                           (once/get-local-auth-header))}
-          http/request
-          :body
-          (json/read-str :key-fn keyword)
-          :items
-          (->> (keep postgresql?))
-          first))))
+(defn zero-db-url
+  "An URL for the zero-postgresql service in ENVIRONMENT."
+  [environment]
+  (let [project (get-in env/stuff [environment :server :project])
+        wfl (when project
+              (letfn [(postgresql? [{:keys [instanceType name region]}]
+                        (when (= [instanceType         name]
+                                 ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
+                          (str "//google/wfl?useSSL=false"
+                               "&socketFactory="
+                               "com.google.cloud.sql.postgres.SocketFactory"
+                               "&cloudSqlInstance="
+                               (str/join ":" [project region name]))))]
+                (-> {:method :get
+                     :url (str/join
+                            "/" ["https://www.googleapis.com/sql/v1beta4"
+                                 "projects" project "instances"])
+                     :headers (merge {"Content-Type" "application/json"}
+                                     (once/get-local-auth-header))}
+                    http/request :body
+                    (json/read-str :key-fn keyword) :items
+                    (->> (keep postgresql?))
+                    first)))]
+    (str/join ":" ["jdbc" "postgresql" (or wfl "wfl")])))
 
-(defn get-db-config
-  "Get the config for the database in ENVIRONMENT SCHEMA."
-  [environment schema]
-  (let [db-stuff (get-in env/stuff [environment schema])
-        {:keys [vault instance-name db-name]} db-stuff
-        {:keys [password username]} (util/vault-secrets vault)]
-    (assoc db-stuff
-           :connection-uri (cloud-db-url environment instance-name db-name)
-           :user username
-           :password password)))
+(defn zero-db-config
+  "Get the config for the zero database in ENVIRONMENT."
+  [environment]
+  (let [{:strs [ZERO_POSTGRES_PASSWORD
+                ZERO_POSTGRES_URL
+                ZERO_POSTGRES_USERNAME]}
+        (util/getenv)
+        [password url user]
+        (if ZERO_POSTGRES_URL
+          [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_URL ZERO_POSTGRES_USERNAME]
+          ["password" "jdbc:postgresql:wfl" (util/getenv "USER" "postgres")])]
+    (assoc {:instance-name "zero-postgresql"
+            :db-name       "wfl"
+            :classname     "org.postgresql.Driver"
+            :subprotocol   "postgresql"
+            :vault         "secret/dsde/gotc/dev/zero"}
+           :connection-uri url
+           :password       password
+           :user           user)))
 
 (defn query
-  "Query the database with SCHEMA in ENVIRONMENT with SQL."
-  [environment schema sql]
-  (jdbc/query (get-db-config environment schema) sql))
+  "Query the database in ENVIRONMENT with SQL."
+  [environment sql]
+  (jdbc/query (zero-db-config environment) sql))
 
 (defn insert!
-  "Add ROW map to TABLE in the database with SCHEMA in ENVIRONMENT."
-  [environment schema table row]
-  (jdbc/insert! (get-db-config environment schema) table row))
+  "Add ROW map to TABLE in the database in ENVIRONMENT."
+  [environment table row]
+  (jdbc/insert! (zero-db-config environment) table row))
 
 (defn run-liquibase-update
   "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
@@ -73,22 +85,43 @@
 (defn run-liquibase
   "Migrate the database schema for ENV using Liquibase."
   ([env]
-   (let [{:keys [instance-name db-name vault]} (:zero-db (env env/stuff))
-         {:keys [username password]} (util/vault-secrets vault)
-         url (cloud-db-url env instance-name db-name)]
-     (run-liquibase-update url username password)))
+   (let [{:keys [username password]} (-> env/stuff env :server :vault
+                                         util/vault-secrets)]
+     (run-liquibase-update (zero-db-url env) username password)))
   ([]
-   (run-liquibase-update "jdbc:postgresql:postgres"
+   (run-liquibase-update (zero-db-url :debug)
                          (util/getenv "USER" "postgres")
                          "password")))
 
+(defn reset-debug-db
+  "Drop everything managed by Liquibase from the :debug DB."
+  []
+  (jdbc/with-db-transaction [db (zero-db-config :debug)]
+    (let [wq (str/join " " ["SELECT 1 FROM pg_catalog.pg_tables"
+                            "WHERE tablename = 'workload'"])
+          tq (str/join " " ["SELECT 1 FROM pg_type"
+                            "WHERE typname = 'pipeline'"])
+          eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
+      (when (seq (jdbc/query db wq))
+        (doseq [{:keys [load]} (jdbc/query db "SELECT load FROM workload")]
+          (jdbc/db-do-commands db (str "DROP TABLE " load)))
+        (jdbc/db-do-commands db "DROP TABLE workload"))
+      (when (seq (jdbc/query db tq))
+        (doseq [enum (jdbc/query db eq)]
+          (jdbc/db-do-commands db (str "DROP TYPE " (:unnest enum))))
+        (jdbc/db-do-commands db "DROP TYPE IF EXISTS pipeline")))
+    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangelog")
+    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangeloglock")))
+
 (comment
-  (query   :gotc-dev :zero-db "SELECT 3*5 AS result")
-  (query   :gotc-dev :zero-db "SELECT * FROM workload")
-  (insert! :gotc-dev :zero-db
-           "workload" {:project_id "UKB123"
-                       :pipeline "WhiteAlbumExomeReprocessing"
-                       :cromwell_instance "gotc-dev"
-                       :input_path "gs://broad-gotc-dev-white-album/"
-                       :output_path "gs://gotc-us-testbucket2/"})
+  (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
+                 "--url=jdbc:postgresql:wfl"
+                 "--changeLogFile=database/changelog.xml"
+                 "--username=$USER" "update"])
+  (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
+  (run-liquibase)
+  (reset-debug-db)
+  (run-liquibase :gotc-dev)
+  (zero-db-config :gotc-dev)
+  (query :debug "SELECT * FROM workload")
   )

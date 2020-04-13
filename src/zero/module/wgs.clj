@@ -2,16 +2,20 @@
   "Reprocess (External) Whole Genomes, whatever they are."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as str]
             [zero.environments :as env]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
+            [zero.service.postgres :as postgres]
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def description
   "Describe the purpose of this command."
@@ -175,9 +179,8 @@
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
-  [environment max-string in-gs out-gs]
-  (let [max    (util/is-non-negative! max-string)
-        bucket (all/readable! in-gs)]
+  [environment max in-gs out-gs]
+  (let [bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
                 (when unsuffixed [unsuffixed suffix])))
@@ -197,13 +200,19 @@
                         (map (fn [base] (str base (suffix base)))))]
         (mapv (partial submit-workflow environment bucket slashified) more)))))
 
+(defn submit-some-workflows-or-throw
+  "Submit up to MAX-STRING workflows from IN-GS to OUT-GS in ENVIRONMENT."
+  [environment max-string in-gs out-gs]
+  (let [max (util/is-non-negative! max-string)]
+    (submit-some-workflows environment max in-gs out-gs)))
+
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
   [& args]
   (try
     (let [env (zero/throw-or-environment-keyword! (first args))]
       (apply (case (count args)
-               4 submit-some-workflows
+               4 submit-some-workflows-or-throw
                3 (partial all/report-status cromwell-label)
                (throw (IllegalArgumentException.
                         "Must specify 3 or 4 arguments.")))
@@ -211,3 +220,50 @@
     (catch Exception x
       (binding [*out* *err*] (println description))
       (throw x))))
+
+(defn add-wgs-workload!
+  "Add the WGS workload described by BODY to the database DB."
+  [db {:keys [creator cromwell input output pipeline project] :as body}]
+  (jdbc/with-db-transaction [db db]
+    (let [{:keys [commit version]} (zero/get-the-version)
+          [{:keys [id uuid]}]
+          (jdbc/insert! db :workload {:commit   commit
+                                      :creator  creator
+                                      :cromwell cromwell
+                                      :input    input
+                                      :output   output
+                                      :project  project
+                                      :release  (:release workflow-wdl)
+                                      :uuid     (UUID/randomUUID)
+                                      :version  version
+                                      :wdl      (:top workflow-wdl)})
+          work  (format "%s_%09d" pipeline id)
+          kind  (format (str/join " " ["UPDATE workload"
+                                       "SET pipeline = '%s'::pipeline"
+                                       "WHERE id = %s"]) pipeline id)
+          table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+                        work pipeline)
+          now   (OffsetDateTime/now)
+          load  (map (fn [m id] (-> m
+                                    (assoc :id id)
+                                    (assoc :updated now)))
+                     (:load body) (rest (range)))]
+      (jdbc/update! db :workload {:load work} ["id = ?" id])
+      (jdbc/db-do-commands db [kind table])
+      (jdbc/insert-multi! db work load)
+      uuid)))
+
+(defn create-workload
+  "Remember the WGS workflow specified by BODY."
+  [body]
+  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
+    (->> body
+         (add-wgs-workload! (postgres/zero-db-config environment))
+         zero.debug/trace
+         (conj ["SELECT * FROM workload WHERE uuid = ?"])
+         zero.debug/trace
+         (jdbc/query (postgres/zero-db-config environment))
+         zero.debug/trace
+         first
+         (filter second)
+         (into {}))))
