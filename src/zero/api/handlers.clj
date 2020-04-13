@@ -114,18 +114,27 @@
         results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
 
-(defn create-fail
+(defn add-fail
   "Fail this request returning BODY as result."
   [body]
-  (fail {:create-workload-failed body}))
+  (fail {:add-workload-failed body}))
 
 (defn post-workload
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
-  (let [{:keys [body]} parameters
-        create {"AllOfUsArrays"                   aos/create-workload
-                "ExternalWholeGenomeReprocessing" wgs/create-workload}]
-    (succeed ((create (:pipeline body) create-fail) body))))
+  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
+        {:keys [body]} parameters
+        add {"AllOfUsArrays"                   aos/add-workload!
+             "ExternalWholeGenomeReprocessing" wgs/add-workload!}
+        add! (add (:pipeline body) add-fail)]
+    (->> body
+         (add! (postgres/zero-db-config environment))
+         (conj ["SELECT * FROM workload WHERE uuid = ?"])
+         (jdbc/query (postgres/zero-db-config environment))
+         first
+         (filter second)
+         (into {})
+         succeed)))
 
 (defn get-workload
   "List workloads or workload with UUID."

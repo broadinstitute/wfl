@@ -1,12 +1,11 @@
 (ns zero.module.aos
-  "Process Arrays for the All Of Us project."
-  (:require [zero.util :as util]))
+  "Process Arrays for the All Of Us project.")
 
-(defn create-workload
-  "Remember the workload specified by BODY."
-  [body]
-  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (->> body
-         first
-         (filter second)
-         (into {}))))
+
+(defn add-workload!
+  "Add the workload described by BODY to the database DB."
+  [db body]
+  (->> body
+       first
+       (filter second)
+       (into {})))

@@ -14,8 +14,7 @@
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:import [java.time OffsetDateTime]))
 
 (def description
   "Describe the purpose of this command."
@@ -221,44 +220,22 @@
       (binding [*out* *err*] (println description))
       (throw x))))
 
-(defn add-wgs-workload!
-  "Add the WGS workload described by BODY to the database DB."
-  [db {:keys [creator cromwell input output pipeline project] :as body}]
-  (jdbc/with-db-transaction [db db]
-    (let [{:keys [commit version]} (zero/get-the-version)
-          [{:keys [id uuid]}]
-          (jdbc/insert! db :workload {:commit   commit
-                                      :creator  creator
-                                      :cromwell cromwell
-                                      :input    input
-                                      :output   output
-                                      :project  project
-                                      :release  (:release workflow-wdl)
-                                      :uuid     (UUID/randomUUID)
-                                      :version  version
-                                      :wdl      (:top workflow-wdl)})
-          work  (format "%s_%09d" pipeline id)
-          kind  (format (str/join " " ["UPDATE workload"
-                                       "SET pipeline = '%s'::pipeline"
-                                       "WHERE id = %s"]) pipeline id)
-          table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                        work pipeline)
-          now   (OffsetDateTime/now)
-          load  (map (fn [m id] (-> m
-                                    (assoc :id id)
-                                    (assoc :updated now)))
-                     (:load body) (rest (range)))]
-      (jdbc/update! db :workload {:load work} ["id = ?" id])
-      (jdbc/db-do-commands db [kind table])
-      (jdbc/insert-multi! db work load)
+(defn add-workload!
+  "Add the workload described by BODY to the database DB."
+  [db {:keys [load] :as body}]
+  (jdbc/with-db-transaction [tx db]
+    (let [now         (OffsetDateTime/now)
+          [uuid table] (all/add-workload-table! tx workflow-wdl body)]
+      (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
+        (jdbc/insert-multi! tx table (map idnow load (rest (range)))))
       uuid)))
 
 (defn create-workload
-  "Remember the WGS workload specified by BODY."
+  "Remember the workload specified by BODY."
   [body]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
     (->> body
-         (add-wgs-workload! (postgres/zero-db-config environment))
+         (add-workload! (postgres/zero-db-config environment))
          (conj ["SELECT * FROM workload WHERE uuid = ?"])
          (jdbc/query (postgres/zero-db-config environment))
          first
