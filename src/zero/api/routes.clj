@@ -32,11 +32,13 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::load                 (s/+ ::workflow))
+(s/def ::load                 (s/or :aos (s/+ ::workflow-aos)
+                                    :wgs (s/+ ::workflow-wgs)))
 (s/def ::max                  pos-int?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
-(s/def ::pipeline             #{"ExternalWholeGenomeReprocessing"})
+(s/def ::pipeline             #{"AllOfUsArrays"
+                                "ExternalWholeGenomeReprocessing"})
 (s/def ::project              string?)
 (s/def ::release              string?)
 (s/def ::sample_name          string?)
@@ -52,7 +54,8 @@
                                                ::max
                                                ::input_path
                                                ::output_path]))
-(s/def ::workflow             (s/keys :opt-un [::base_file_name
+(s/def ::workflow-aos         (constantly true)) ; stub
+(s/def ::workflow-wgs         (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
                                                ::unmapped_bam_suffix]
                                       :req-un [::input_cram

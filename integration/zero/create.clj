@@ -7,8 +7,8 @@
   (:import (java.util UUID)))
 
 (def server
-  "http://localhost:3000"
-  "https://wfl-dot-broad-gotc-dev.appspot.com")
+  "https://wfl-dot-broad-gotc-dev.appspot.com"
+  "http://localhost:3000")
 
 (def request
   (let [user (util/getenv "USER" "tbl")]

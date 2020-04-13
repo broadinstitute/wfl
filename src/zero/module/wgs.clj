@@ -254,7 +254,7 @@
       uuid)))
 
 (defn create-workload
-  "Remember the WGS workflow specified by BODY."
+  "Remember the WGS workload specified by BODY."
   [body]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
     (->> body

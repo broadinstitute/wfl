@@ -4,6 +4,7 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.string        :as str]
             [ring.util.response    :as response]
+            [zero.module.aos       :as aos]
             [zero.module.wgs       :as wgs]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
@@ -122,7 +123,8 @@
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (let [{:keys [body]} parameters
-        create {"ExternalWholeGenomeReprocessing" wgs/create-workload}]
+        create {"AllOfUsArrays"                   aos/create-workload
+                "ExternalWholeGenomeReprocessing" wgs/create-workload}]
     (succeed ((create (:pipeline body) create-fail) body))))
 
 (defn get-workload
