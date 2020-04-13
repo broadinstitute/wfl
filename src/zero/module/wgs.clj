@@ -259,11 +259,8 @@
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
     (->> body
          (add-wgs-workload! (postgres/zero-db-config environment))
-         zero.debug/trace
          (conj ["SELECT * FROM workload WHERE uuid = ?"])
-         zero.debug/trace
          (jdbc/query (postgres/zero-db-config environment))
-         zero.debug/trace
          first
          (filter second)
          (into {}))))
