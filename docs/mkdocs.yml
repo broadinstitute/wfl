@@ -4,7 +4,6 @@ repo_url: https://github.com/broadinstitute/wfl
 
 theme:
   name: material
-  include_search_page: false
   palette:
    primary: green
    accent: teal
@@ -16,7 +15,7 @@ docs_dir: "md"
 extra:
   version: 2.0
   social:
-    - type: 'github'
+    - icon: fontawesome/brands/github-alt
       link: 'https://github.com/broadinstitute/wfl'
 
 nav:

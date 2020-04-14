@@ -1,5 +1,7 @@
 # Welcome to WorkFlow Launcher
 
+![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
+
 ## Overview
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
