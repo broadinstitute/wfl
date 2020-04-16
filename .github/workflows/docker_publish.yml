@@ -24,7 +24,8 @@ jobs:
     
     - name: Build WFL
       uses: DeLaGuardo/setup-clojure@2.0
-      run: boot build
+      
+    - run: boot build
 
 #     - name: Publish Docker
 #       uses: elgohr/Publish-Docker-Github-Action@2.14
