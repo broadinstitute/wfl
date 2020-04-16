@@ -146,3 +146,36 @@
          (jdbc/query (postgres/zero-db-config environment))
          (map (fn [wl] (into {} (filter second wl))))
          succeed)))
+
+(defn post-start
+  "Start the workloads with UUIDs in BODY of REQUEST."
+  [{:keys [parameters] :as request}]
+  (let [db    (-> "ENVIRONMENT"
+                  (util/getenv "debug")
+                  keyword
+                  postgres/zero-db-config)
+        start {"AllOfUsArrays"                   aos/start-workload!
+               "ExternalWholeGenomeReprocessing" wgs/start-workload!}]
+    (letfn [(q [[left right]] (fn [it] (str left it right)))
+            (start! [{:keys [pipeline] :as wl}] ((start pipeline) db wl))]
+      (->> parameters :body distinct
+           (map (q "''")) (str/join ",") ((q "()"))
+           (format "SELECT * FROM workload WHERE uuid in %s")
+           (jdbc/query db)
+           (map start!)
+           succeed))))
+
+(comment
+  (do (def uuids ["d7f86861-289c-4b3d-844c-9a0d3cb1db4f"
+                  "994f593f-b391-42a2-bb7d-945f007e99da"
+                  "ccf15e2b-788b-4bc9-8e11-1361480873c9"
+                  "3718dcb6-ea74-4f77-861e-0519bf2b0c6a"
+                  "5ccd690f-eb91-4d2b-a359-f81fd723de4e"
+                  "88107c7a-1f18-448a-87a4-5ea95b33fc3f"
+                  "871d60ab-268a-4d3e-9b78-88e52283d787"
+                  "b403dda2-f9f0-4e30-a95c-d3a907a68a51"])
+      (def body uuids)
+      (def parameters {:body body})
+      (def request {:parameters parameters}))
+  (post-start request)
+  )

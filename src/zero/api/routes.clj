@@ -48,6 +48,7 @@
 (s/def ::uuid                 (s/and string? uuid-string?))
 (s/def ::uuid-query           (s/or :none empty?
                                     :one  (s/keys :req-un [::uuid])))
+(s/def ::uuids                (s/* ::uuid))
 (s/def ::version              string?)
 (s/def ::wdl                  string?)
 (s/def ::wgs-request          (s/keys :req-un [::environment
@@ -141,7 +142,12 @@
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
             :handler    (handlers/authorize handlers/post-workload)}}]
-   ["/swagger/swagger.json"
+   ["/api/v1/start"
+    {:post {:summary    "Start workloads."
+            :parameters {:body ::uuids}
+            :responses  {200 {:body ::workload-responses}}
+            :handler    (handlers/authorize handlers/post-start)}}]
+   ["/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")
                             :version (str (:version (zero/get-the-version)))}

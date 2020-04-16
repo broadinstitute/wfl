@@ -8,3 +8,10 @@
        first
        (filter second)
        (into {})))
+
+(defn start-workload!
+  "Start the WORKLOAD in the database DB."
+  [db workload]
+  (->> workload
+       (filter second)
+       (into {})))

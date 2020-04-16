@@ -241,3 +241,9 @@
          first
          (filter second)
          (into {}))))
+
+(defn start-workload!
+  "Start the WORKLOAD in the database DB."
+  [db {:keys [load] :as workload}]
+  (let [workflows (jdbc/query db (format "SELECT * FROM %s" load))]
+    (assoc workload :workflows (vec workflows))))
