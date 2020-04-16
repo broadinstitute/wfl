@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Build and Publish Docker
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -21,13 +21,19 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+    
+    - name: Build WFL
+      uses: DeLaGuardo/setup-clojure@2.0
+      
+    - run: boot build
 
-    - name: Publish Docker
-      uses: elgohr/Publish-Docker-Github-Action@2.14
-      with:
-        # The name of the image you would like to push
-        name: broadinstitute/workflow-launcher-api
-        # The login username for the registry
-        username: "${{ secrets.dockerhub_username }}"
-        # The login password for the registry
-        password: "${{ secrets.dockerhub_password }}"
+
+#     - name: Publish Docker
+#       uses: elgohr/Publish-Docker-Github-Action@2.14
+#       with:
+#         # The name of the image you would like to push
+#         name: broadinstitute/workflow-launcher-api
+#         # The login username for the registry
+#         username: "${{ secrets.dockerhub_username }}"
+#         # The login password for the registry
+#         password: "${{ secrets.dockerhub_password }}"
