@@ -53,7 +53,9 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-xx"))
+  {(keyword (str zero/the-name "-project"))
+   "PO-17081"
+   (keyword (str zero/the-name "-xx"))
    (wdl/workflow-name (:top workflow-wdl))})
 
 (def cromwell-label
