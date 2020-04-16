@@ -24,6 +24,10 @@ jobs:
     
     - name: Build WFL
       uses: DeLaGuardo/setup-clojure@2.0
+      with:
+        leiningen: 2.9.1
+        boot-clj: 2.8.3
+        
       
     - run: boot build
 
