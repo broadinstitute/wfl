@@ -75,13 +75,15 @@
 
 (def baits-and-targets
   "Baits and targets inputs."
-  (let [public        "gs://gcp-public-data--broad-references/hg38/v0/"
-        bait_set_name "exome_evaluation_regions.v1"
-        interval_list (str public bait_set_name ".interval_list")
-        fasta         "gs://gnomad-exomes-to-reprocess/NYGC/qatari_wes/human_g1k_v37.fasta"]
+  (let [private              "gs://broad-references-private/"
+        bait_set_name        "whole_exome_illumina_coding_v1"
+        interval_list        (str private "HybSelOligos/" bait_set_name "/" bait_set_name ".Homo_sapiens_assembly38")
+        target_interval_list (str interval_list ".targets.interval_list")
+        bait_interval_list   (str interval_list ".baits.interval_list")
+        fasta                "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"]
     {:bait_set_name        bait_set_name
-     :bait_interval_list   interval_list
-     :target_interval_list interval_list
+     :bait_interval_list   bait_interval_list
+     :target_interval_list target_interval_list
      :cram_ref_fasta       fasta
      :cram_ref_fasta_index (str fasta ".fai")}))
 
