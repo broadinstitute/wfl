@@ -17,7 +17,7 @@
 (def the-github-repos
   "Map Zero source repo names to their URLs"
   (let [repos ["wfl" "dsde-pipelines" "pipeline-config"]
-        git   (partial str "https://github.com/broadinstitute/")]
+        git   #(str "git@github.com:broadinstitute/" % ".git")]
     (zipmap repos (map git repos))))
 
 (defn error-or-environment-keyword

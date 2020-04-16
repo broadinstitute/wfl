@@ -48,7 +48,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ExternalExomeReprocessing_v1.1"
+  {:release "tl_sort_sam_mem_bump_contam_dedup"
    :top "pipelines/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
 (def cromwell-label-map
@@ -80,7 +80,7 @@
         interval_list        (str private "HybSelOligos/" bait_set_name "/" bait_set_name ".Homo_sapiens_assembly38")
         target_interval_list (str interval_list ".targets.interval_list")
         bait_interval_list   (str interval_list ".baits.interval_list")
-        fasta                "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"]
+        fasta                "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.fasta"]
     {:bait_set_name        bait_set_name
      :bait_interval_list   bait_interval_list
      :target_interval_list target_interval_list
