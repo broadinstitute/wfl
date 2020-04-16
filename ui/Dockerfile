@@ -7,9 +7,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:1.16-alpine as production-stage
-LABEL maintainer="hornet@broadinsitute.org"
-WORKDIR /wfl_ui
+FROM broadinstitute/openidc-proxy:tcell as production-stage
+LABEL maintainer="hornet@broadinstitute.org"
+WORKDIR /app
 COPY --from=build-stage /wfl_ui/dist ./dist
-EXPOSE 80
-CMD [ "nginx", "-g", "daemon off;" ]
