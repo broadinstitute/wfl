@@ -22,14 +22,16 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     
-    - name: Build WFL
+    - name: Install Clojure tools
       uses: DeLaGuardo/setup-clojure@2.0
       with:
         leiningen: 2.9.1
         boot-clj: 2.8.3
+        tools-deps: 1.10.1.469
         
       
-    - run: boot build
+    - name: Build the WFL
+      run: boot build
 
 
 #     - name: Publish Docker
