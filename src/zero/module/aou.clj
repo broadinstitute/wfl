@@ -1,4 +1,4 @@
-(ns zero.module.aos
+(ns zero.module.aou
   "Process Arrays for the All Of Us project.")
 
 (defn add-workload!

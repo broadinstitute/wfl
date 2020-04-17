@@ -4,7 +4,7 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.string        :as str]
             [ring.util.response    :as response]
-            [zero.module.aos       :as aos]
+            [zero.module.aou       :as aou]
             [zero.module.wgs       :as wgs]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
@@ -124,7 +124,7 @@
   [{:keys [parameters] :as request}]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
         {:keys [body]} parameters
-        add {"AllOfUsArrays"                   aos/add-workload!
+        add {"AllOfUsArrays"                   aou/add-workload!
              "ExternalWholeGenomeReprocessing" wgs/add-workload!}
         add! (add (:pipeline body) add-fail)]
     (->> body
@@ -154,7 +154,7 @@
                   (util/getenv "debug")
                   keyword
                   postgres/zero-db-config)
-        start {"AllOfUsArrays"                   aos/start-workload!
+        start {"AllOfUsArrays"                   aou/start-workload!
                "ExternalWholeGenomeReprocessing" wgs/start-workload!}]
     (letfn [(q [[left right]] (fn [it] (str left it right)))
             (start! [{:keys [pipeline] :as wl}] ((start pipeline) db wl))]
