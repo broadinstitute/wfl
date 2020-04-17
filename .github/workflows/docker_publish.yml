@@ -26,6 +26,7 @@ jobs:
       run: |
         git config user.name "$GITHUB_ACTOR"
         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+        echo "GITHUB_ACTOR: $GITHUB_ACTOR"
         
     - name: Install Clojure tools
       uses: DeLaGuardo/setup-clojure@2.0
