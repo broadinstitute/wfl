@@ -173,7 +173,6 @@
                         (make-inputs environment out-gs in-gs)
                         (util/make-options environment)
                         cromwell-label-map)]
-      (prn workflow-id)
       workflow-id)))
 
 (defn submit-some-workflows
@@ -182,9 +181,8 @@
   (let [bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
-                (when unsuffixed [unsuffixed suffix])))
-            (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [slashified (slashify out-gs)
+                (when unsuffixed [unsuffixed suffix])))]
+      (let [slashified (all/slashify out-gs)
             done   (set/union (all/processed-crams slashified)
                               (active-objects environment in-gs))
             suffix (->> in-gs
@@ -196,8 +194,11 @@
                         keys
                         (remove done)
                         (take max)
-                        (map (fn [base] (str base (suffix base)))))]
-        (mapv (partial submit-workflow environment bucket slashified) more)))))
+                        (map (fn [base] (str base (suffix base)))))
+            submit (partial submit-workflow environment bucket slashified)
+            ids    (map submit more)]
+        (run! prn ids)
+        (vec ids)))))
 
 (defn submit-some-workflows-or-throw
   "Submit up to MAX-STRING workflows from IN-GS to OUT-GS in ENVIRONMENT."
@@ -242,8 +243,30 @@
          (filter second)
          (into {}))))
 
+(def cromwell->env
+  "Map Cromwell URL to a :wgs environment."
+  (delay
+    (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
+      (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
+
 (defn start-workload!
   "Start the WORKLOAD in the database DB."
-  [db {:keys [load] :as workload}]
-  (let [workflows (jdbc/query db (format "SELECT * FROM %s" load))]
-    (assoc workload :workflows (vec workflows))))
+  [db {:keys [cromwell input load output] :as workload}]
+  (let [env (@cromwell->env cromwell)
+        slashified (all/slashify input)
+        now (OffsetDateTime/now)]
+    (letfn [(submit! [{:keys [id input_cram uuid] :as _workflow}]
+              (if uuid [id uuid]
+                  (let [input  (str slashified input_cram)
+                        [uuid] (submit-some-workflows env 1 input output)]
+                    [id uuid])))
+            (update! [tx [id uuid]]
+              [tx [id uuid]]
+              (jdbc/update! tx load {:updated now
+                                     :uuid    uuid} ["id = ?" id]))]
+      (jdbc/with-db-transaction [tx db]
+        (->> load
+             (format "SELECT * FROM %s")
+             (jdbc/query db)
+             (map submit!)
+             (run! (partial update! tx)))))))

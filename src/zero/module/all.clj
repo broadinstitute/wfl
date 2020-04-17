@@ -106,3 +106,10 @@
     (jdbc/update! tx :workload {:load table} ["id = ?" id])
     (jdbc/db-do-commands tx [kind work])
     [uuid table]))
+
+(defn slashify
+  "Ensure URL ends in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    url
+    (str url "/")))
