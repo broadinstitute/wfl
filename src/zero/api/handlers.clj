@@ -6,6 +6,7 @@
             [ring.util.response    :as response]
             [zero.module.aou       :as aou]
             [zero.module.wgs       :as wgs]
+            [zero.module.wl        :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
             [zero.util             :as util]
@@ -14,9 +15,9 @@
 
 (def oauth2-profiles
   "OAuth2 profiles for the ring wrapper."
-  (let [id           "OAUTH2_CLIENT_ID"
-        secret       "OAUTH2_CLIENT_SECRET"
-        launch-uri   "/auth/google"]
+  (let [id         "OAUTH2_CLIENT_ID"
+        secret     "OAUTH2_CLIENT_SECRET"
+        launch-uri "/auth/google"]
     {:google {:access-token-uri "https://www.googleapis.com/oauth2/v4/token"
               :authorize-uri    "https://accounts.google.com/o/oauth2/v2/auth"
               :client-id        (util/getenv id id)
@@ -125,7 +126,7 @@
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
         {:keys [body]} parameters
         add {"AllOfUsArrays"                   aou/add-workload!
-             "ExternalWholeGenomeReprocessing" wgs/add-workload!}
+             "ExternalWholeGenomeReprocessing" wl/add-workload!}
         add! (add (:pipeline body) add-fail)]
     (->> body
          (add! (postgres/zero-db-config environment))
@@ -155,7 +156,7 @@
                   keyword
                   postgres/zero-db-config)
         start {"AllOfUsArrays"                   aou/start-workload!
-               "ExternalWholeGenomeReprocessing" wgs/start-workload!}]
+               "ExternalWholeGenomeReprocessing" wl/start-workload!}]
     (letfn [(q [[left right]] (fn [it] (str left it right)))
             (start! [{:keys [pipeline] :as wl}] ((start pipeline) db wl))]
       (->> parameters :body distinct
