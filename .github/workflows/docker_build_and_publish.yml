@@ -8,9 +8,11 @@ on:
   push:
     branches: 
       - master
+      - ra_master_docker_build_n_publish
   pull_request:
     branches: 
       - master
+      - ra_master_docker_build_n_publish
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
