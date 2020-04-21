@@ -71,7 +71,7 @@
   (let [env    (@cromwell->env cromwell)
         input  (all/slashify input)
         output (all/slashify output)
-        now (OffsetDateTime/now)]
+        now    (OffsetDateTime/now)]
     (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid
                       (first
@@ -81,9 +81,10 @@
               [tx [id uuid]]
               (jdbc/update! tx load {:updated now
                                      :uuid    uuid} ["id = ?" id]))]
-      (jdbc/with-db-transaction [tx db]
-        (->> load
-             (format "SELECT * FROM %s")
-             (jdbc/query db)
-             (map submit!)
-             (run! (partial update! tx)))))))
+      (util/do-or-nil
+        (jdbc/with-db-transaction [tx db]
+          (->> load
+               (format "SELECT * FROM %s")
+               (jdbc/query db)
+               (map submit!)
+               (run! (partial update! tx))))))))
