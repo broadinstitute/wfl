@@ -151,6 +151,7 @@
 (defn post-start
   "Start the workloads with UUIDs in BODY of REQUEST."
   [{:keys [parameters] :as request}]
+  (zero.debug/trace request)
   (let [db    (-> "ENVIRONMENT"
                   (util/getenv "debug")
                   keyword
@@ -163,7 +164,9 @@
            (map (q "''")) (str/join ",") ((q "()"))
            (format "SELECT * FROM workload WHERE uuid in %s")
            (jdbc/query db)
+           zero.debug/trace
            (map start!)
+           zero.debug/trace
            succeed))))
 
 (comment

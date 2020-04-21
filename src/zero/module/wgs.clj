@@ -133,7 +133,7 @@
                           hack-task-level-values))
         {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
-    (all/throw-when-output-exists-already! output)
+    #_(all/throw-when-output-exists-already! output)
     (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
 
 (defn active-objects
@@ -160,12 +160,10 @@
            (keep active?)
            set))))
 
-(defn submit-workflow
-  "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
-  ENVIRONMENT."
-  [environment in-bucket out-gs object]
-  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)
-        in-gs (gcs/gs-url in-bucket object)]
+(defn really-submit-one-workflow
+  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
+  [environment in-gs out-gs]
+  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
     (let [workflow-id (cromwell/submit-workflow
                         environment
                         (io/file (:dir path) (path ".wdl"))
@@ -174,6 +172,13 @@
                         (util/make-options environment)
                         cromwell-label-map)]
       workflow-id)))
+
+(defn submit-workflow
+  "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
+  ENVIRONMENT."
+  [environment in-bucket out-gs object]
+  (let [in-gs (gcs/gs-url in-bucket object)]
+    (really-submit-one-workflow environment in-gs out-gs)))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."

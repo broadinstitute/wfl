@@ -7,6 +7,7 @@
             [zero.module.all :as all]
             [zero.module.wgs :as wgs]
             [zero.service.cromwell :as cromwell]
+            [zero.service.gcs :as gcs]
             [zero.service.postgres :as postgres]
             [zero.service.gcs :as gcs]
             [zero.util :as util])
@@ -72,11 +73,14 @@
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
+    (zero.debug/trace env)
+    (zero.debug/trace input)
+    (zero.debug/trace output)
+    (zero.debug/trace now)
     (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
-              [id (or uuid
-                      (first
-                        (wgs/submit-some-workflows
-                          env 1 (str input input_cram) output)))])
+              [id (or #_uuid false
+                      (wgs/really-submit-one-workflow
+                        env (str input input_cram) output))])
             (update! [tx [id uuid]]
               [tx [id uuid]]
               (jdbc/update! tx load {:updated now
@@ -84,7 +88,11 @@
       (util/do-or-nil
         (jdbc/with-db-transaction [tx db]
           (->> load
+               zero.debug/trace
                (format "SELECT * FROM %s")
+               zero.debug/trace
                (jdbc/query db)
+               zero.debug/trace
                (map submit!)
+               zero.debug/trace
                (run! (partial update! tx))))))))
