@@ -1,0 +1,133 @@
+# Default values for wfl.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+revisionHistoryLimit: 1
+
+strategy:
+  maxSurge: 3
+  maxUnavailable: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+api:
+  name: workflow-launcher-api
+  image:
+    repository: broadinstitute/workflow-launcher-api
+    tag: latest
+    pullPolicy: IfNotPresent  
+  deployment:
+    containerPort: 80
+  resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+ui:
+  name: workflow-launcher-ui
+  image:
+    repository: broadinstitute/workflow-launcher-ui
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+  deployment:
+    containerPort: 80
+    livenessProbe:
+      scheme: HTTP
+      path: /status
+      port: 80
+      initialDelaySeconds: 45
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      scheme: HTTP
+      path: /status
+      port: 80
+      initialDelaySeconds: 45
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+  env:
+    SERVER_NAME: ""
+    LOG_LEVEL: info
+    AUTH_TYPE: AuthType None
+    AUTH_TYPE2: AuthType None
+    AUTH_REQUIRE: Require all granted
+    AUTH_REQUIRE2: Require all granted
+    PROXY_URL: ""  # first url path
+    PROXY_URL2: ""  # second url path
+    PROXY_PATH: ""  # first url path
+    PROXY_PATH2: ""  # second url path
+    ENABLE_STACKDRIVER: yes  # yamllint disable-line rule:truthy
+    ENABLE_REMOTEIP: yes  # yamllint disable-line rule:truthy
+    REMOTE_USER_CLAIM: sub
+    CALLBACK_URI: ""  # o2c.html
+    FILTER: ""  # filter
+    FILTER2: AddOutputFilterByType DEFLATE application/json text/plain text/html application/javascript application/x-javascript
+
+  resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+rbac:
+  # Specifies whether a psp should be created
+  create: false
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+ingress:
+  enabled: false
+  annotations:
+    globalStaticIpName: ""
+    ingressAllowHttp: false
+  servicePort: http
+  hosts:
+    - name: ""
+      paths: ["/*"]
+
+      ## Set this to true in order to enable TLS on the ingress record
+      tls: false
+
+      ## If TLS is set to true, you must declare what secret will store the key/certificate for TLS
+      secretName: ""
