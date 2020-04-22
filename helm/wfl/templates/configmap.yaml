@@ -15,6 +15,7 @@ data:
     LogFormat "%h %l %u \"%{OIDC_CLAIM_email}i\" \"%{X-App-ID}i\" [%{%FT%T}t.%{msec_frac}t%{%z}t] %D %X \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
     LogFormat "%{X-Forwarded-For}i %l %u \"%{OIDC_CLAIM_email}i\" \"%{X-App-ID}i\" [%{%FT%T}t.%{msec_frac}t%{%z}t] %D %X \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
     SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+
     CustomLog "/dev/stdout" combined env=!forwarded
     CustomLog "/dev/stdout" proxy env=forwarded
     LogLevel ${LOG_LEVEL}
@@ -28,90 +29,63 @@ data:
 
     OIDCOAuthTokenIntrospectionInterval 60
 
-    <VirtualHost _default_:${HTTPD_PORT}>
-        ErrorLog /dev/stdout
-        RewriteEngine On
-        RewriteCond  %{HTTP:X-Forwarded-Proto} !https
-        RewriteCond %{REQUEST_URI}  !^/engine/v1/(version|status) [NC]
-        RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI}
-
-        RewriteCond %{REQUEST_METHOD} OPTIONS
-        RewriteRule ^(.*)$ $1 [R=204,L]
+    <VirtualHost *:80>
 
         DocumentRoot /app/dist
 
-        <Directory "/app/dist">
-            AllowOverride All
-            Options -Indexes
-            Order allow,deny
-            Allow from all
+        # === API ===
+
+        # reverse proxy for /api/*
+        ProxyPass          /api    http://localhost:3000/api
+        ProxyPassReverse   /api    http://localhost:3000/api
+
+        <Proxy http://localhost:3000/api>
             Require all granted
+            Options None
+        </Proxy>
+
+        # reverse proxy for /status
+        ProxyPass          /status    http://localhost:3000/status
+        ProxyPassReverse   /status    http://localhost:3000/status
+
+        <Proxy http://localhost:3000/status>
+            Require all granted
+            Options None
+        </Proxy>
+
+        # reverse proxy for /version
+        ProxyPass          /version    http://localhost:3000/version
+        ProxyPassReverse   /version    http://localhost:3000/version
+
+        <Proxy http://localhost:3000/version>
+            Require all granted
+            Options None
+        </Proxy>
+
+        # reverse proxy for /swagger
+        # this does NOT work for /swagger.json yet
+        ProxyPass          /swagger    http://localhost:3000/swagger
+        ProxyPassReverse   /swagger    http://localhost:3000/swagger
+
+        <Proxy http://localhost:3000/swagger>
+            Require all granted
+            Options None
+        </Proxy>
+
+        # === UI ===
+        <Directory "/app/dist">
+            Require all granted
+            Options None
+
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteBase /
+                RewriteRule ^index\.html$ - [L]
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule . /index.html [L]
+            </IfModule>
         </Directory>
 
-        <Location ${PROXY_PATH}>
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            RewriteEngine On
-            RewriteCond %{REQUEST_METHOD} OPTIONS
-            RewriteRule ^(.*)$ $1 [R=204,L]
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
-
-            ProxyPass ${PROXY_URL}
-            ProxyPassReverse ${PROXY_URL}
-
-            ${FILTER}
-        </Location>
-
-        <Location ${PROXY_PATH2}>
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            RewriteEngine On
-            RewriteCond %{REQUEST_METHOD} OPTIONS
-            RewriteRule ^(.*)$ $1 [R=204,L]
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ${AUTH_TYPE2}
-            ${AUTH_LDAP_URL2}
-            ${AUTH_LDAP_GROUP_ATTR2}
-            ${AUTH_LDAP_BIND_DN2}
-            ${AUTH_LDAP_BIND_PASSWORD2}
-            ${AUTH_REQUIRE2}
-
-            ProxyPass ${PROXY_URL2}
-            ProxyPassReverse ${PROXY_URL2}
-
-            ${FILTER2}
-        </Location>
-
-        <Location ${CALLBACK_PATH}>
-            AuthType openid-connect
-            Require valid-user
-        </Location>
     </VirtualHost>
+
