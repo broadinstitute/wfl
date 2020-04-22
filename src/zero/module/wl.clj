@@ -19,6 +19,30 @@
     (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
+(defn really-update-status!
+  "Update the status of LOAD workflows in database DB for ENV."
+  [db env load]
+  (let [now (OffsetDateTime/now)]
+    (letfn [(status! [tx [id uuid]]
+              (when uuid
+                (jdbc/update! tx load {:status  (cromwell/status env uuid)
+                                       :updated now
+                                       :uuid    uuid} ["id = ?" id])))]
+      (jdbc/with-db-transaction [tx db]
+        (->> load
+             zero.debug/trace
+             (format "SELECT id, uuid FROM %s")
+             zero.debug/trace
+             (jdbc/query db)
+             zero.debug/trace
+             (run! (partial status! tx)))))))
+
+(defn update-status!
+  "Update statuses in WORKLOAD in the database DB."
+  [db {:keys [cromwell load] :as workload}]
+  (let [env (@cromwell->env cromwell)]
+    (really-update-status! db env load)))
+
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
   [db {:keys [load] :as body}]
@@ -73,16 +97,10 @@
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
-    (zero.debug/trace env)
-    (zero.debug/trace input)
-    (zero.debug/trace output)
-    (zero.debug/trace now)
     (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
-              [id (or #_uuid false
-                      (wgs/really-submit-one-workflow
-                        env (str input input_cram) output))])
+              [id (or uuid (wgs/really-submit-one-workflow
+                             env (str input input_cram) output))])
             (update! [tx [id uuid]]
-              [tx [id uuid]]
               (jdbc/update! tx load {:updated now
                                      :uuid    uuid} ["id = ?" id]))]
       (util/do-or-nil
