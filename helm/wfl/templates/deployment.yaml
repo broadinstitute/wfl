@@ -48,25 +48,11 @@ spec:
             containerPort: {{ .Values.ui.deployment.containerPort }}
             protocol: TCP
           livenessProbe:
-            httpGet:
-              scheme: {{ .Values.ui.deployment.livenessProbe.scheme }}
-              path: {{ .Values.ui.deployment.livenessProbe.path }}
-              port: {{ .Values.ui.deployment.livenessProbe.port }}
-            initialDelaySeconds: {{ .Values.ui.deployment.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.ui.deployment.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.ui.deployment.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.ui.deployment.livenessProbe.failureThreshold }}
+{{ toYaml .Values.ui.deployment.livenessProbe | indent 12 }}
           readinessProbe:
-            httpGet:
-              scheme: {{ .Values.ui.deployment.readinessProbe.scheme }}
-              path: {{ .Values.ui.deployment.readinessProbe.path }}
-              port: {{ .Values.ui.deployment.readinessProbe.port }}
-            initialDelaySeconds: {{ .Values.ui.deployment.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.ui.deployment.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.ui.deployment.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.ui.deployment.readinessProbe.failureThreshold }}
+{{ toYaml .Values.ui.deployment.readinessProbe | indent 12 }}
           resources:
-            {{- toYaml .Values.ui.resources | nindent 12 }}
+{{- toYaml .Values.ui.resources | nindent 12 }}
           env:
             - name: SERVER_NAME
               value: {{ .Values.ui.env.SERVER_NAME | quote }}
@@ -80,8 +66,8 @@ spec:
               value: {{ .Values.ui.env.AUTH_REQUIRE | quote }}
             - name: AUTH_REQUIRE2
               value: {{ .Values.ui.env.AUTH_REQUIRE2 | quote }}
-            - name: PROXY_URL
-              value: {{ .Values.ui.env.PROXY_URL | quote }}
+            - name: PROXY_URL_BASE
+              value: {{ .Values.ui.env.PROXY_URL_BASE | quote }}
             - name: PROXY_URL2
               value: {{ .Values.ui.env.PROXY_URL2 | quote }}
             - name: ENABLE_STACKDRIVER
@@ -96,10 +82,6 @@ spec:
               value: {{ .Values.ui.env.FILTER2 | quote }}
             - name: FILTER
               value: {{ .Values.ui.env.FILTER | quote }}
-            - name: PROXY_PATH
-              value: {{ .Values.ui.env.PROXY_PATH | quote }}
-            - name: PROXY_PATH2
-              value: {{ .Values.ui.env.PROXY_PATH2 | quote }}
           volumeMounts:
             - mountPath: /etc/apache2/sites-available/site.conf
               name: siteconf

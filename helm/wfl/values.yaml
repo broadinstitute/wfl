@@ -45,17 +45,17 @@ ui:
   deployment:
     containerPort: 80
     livenessProbe:
-      scheme: HTTP
-      path: /status
-      port: 80
+      tcpSocket:
+        port: 80
       initialDelaySeconds: 45
       periodSeconds: 10
       timeoutSeconds: 3
       failureThreshold: 3
     readinessProbe:
-      scheme: HTTP
-      path: /status
-      port: 80
+      httpGet:
+        scheme: HTTP
+        path: /status
+        port: 80
       initialDelaySeconds: 45
       periodSeconds: 10
       timeoutSeconds: 3
@@ -67,10 +67,8 @@ ui:
     AUTH_TYPE2: AuthType None
     AUTH_REQUIRE: Require all granted
     AUTH_REQUIRE2: Require all granted
-    PROXY_URL: ""  # first url path
-    PROXY_URL2: ""  # second url path
-    PROXY_PATH: /  # first url path
-    PROXY_PATH2: /api  # second url path
+    PROXY_URL_BASE: ""  # a base url path without slash e.g. http://localhost
+    PROXY_URL2: ""  # a full url path required auth, e.g. http://localhost/api
     ENABLE_STACKDRIVER: yes  # yamllint disable-line rule:truthy
     ENABLE_REMOTEIP: yes  # yamllint disable-line rule:truthy
     REMOTE_USER_CLAIM: sub
@@ -90,10 +88,6 @@ ui:
   #   cpu: 100m
   #   memory: 128Mi
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
 rbac:
   # Specifies whether a psp should be created
   create: false
@@ -101,9 +95,6 @@ rbac:
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name:
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -118,16 +109,6 @@ securityContext: {}
 
 ingress:
   enabled: false
-  annotations:
-    globalStaticIpName: ""
-    ingressAllowHttp: false
   servicePort: http
-  hosts:
-    - name: ""
-      paths: ["/*"]
-
-      ## Set this to true in order to enable TLS on the ingress record
-      tls: false
-
-      ## If TLS is set to true, you must declare what secret will store the key/certificate for TLS
-      secretName: ""
+  annotations: {}
+  tls: []

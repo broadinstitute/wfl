@@ -13,9 +13,10 @@ metadata:
   name: {{ $fullName }}
   labels:
     {{- include "wfl.labels" . | nindent 4 }}
+{{- with .Values.ingress.annotations }}
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.annotations.globalStaticIpName | quote }}
-    kubernetes.io/ingress.allow-http: {{ .Values.ingress.annotations.ingressAllowHttp | quote }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   rules:
   {{- range .Values.ingress.hosts }}
@@ -30,18 +31,9 @@ spec:
               servicePort: {{ $servicePort }}
         {{- end }}
   {{- end }}
+
+{{- if .Values.ingress.tls }}
   tls:
-  {{- range .Values.ingress.hosts }}
-  {{- if .tls }}
-    - hosts:
-    {{- if .tlsHosts }}
-      {{- range $host := .tlsHosts }}
-        - {{ $host }}
-      {{- end }}
-    {{- else }}
-        - {{ .name | quote }}
-    {{- end }}
-      secretName: {{ .secretName | quote }}
-  {{- end }}
-  {{- end }}
+{{ toYaml .Values.ingress.tls | indent 4 }}
+{{- end }}
 {{- end }}
