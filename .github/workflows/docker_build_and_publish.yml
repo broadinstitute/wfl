@@ -41,7 +41,7 @@ jobs:
           ${{ secrets.pipeline_config_deploy_key }}
           
     - name: Build the WFL
-      run: 
+      run: |
         ssh-add -l
         boot build
 
