@@ -37,12 +37,12 @@ jobs:
       uses:  webfactory/ssh-agent@v0.2.0
       with:
         ssh-private-key: |
-          ${{ secrets.pipeline_config_deploy_key }}
           ${{ secrets.dsde_pipelines_deploy_key }}
+          ${{ secrets.pipeline_config_deploy_key }}
           
-
     - name: Build the WFL
       run: 
+        ssh-add -l
         boot build
 
 
