@@ -54,34 +54,12 @@ spec:
           resources:
 {{- toYaml .Values.ui.resources | nindent 12 }}
           env:
-            - name: SERVER_NAME
-              value: {{ .Values.ui.env.SERVER_NAME | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.ui.env.LOG_LEVEL | quote }}
-            - name: AUTH_TYPE
-              value: {{ .Values.ui.env.AUTH_TYPE | quote }}
-            - name: AUTH_TYPE2
-              value: {{ .Values.ui.env.AUTH_TYPE2 | quote }}
-            - name: AUTH_REQUIRE
-              value: {{ .Values.ui.env.AUTH_REQUIRE | quote }}
-            - name: AUTH_REQUIRE2
-              value: {{ .Values.ui.env.AUTH_REQUIRE2 | quote }}
-            - name: PROXY_URL_BASE
-              value: {{ .Values.ui.env.PROXY_URL_BASE | quote }}
-            - name: PROXY_URL2
-              value: {{ .Values.ui.env.PROXY_URL2 | quote }}
-            - name: ENABLE_STACKDRIVER
-              value: {{ .Values.ui.env.ENABLE_STACKDRIVER | quote }}
-            - name: ENABLE_REMOTEIP
-              value: {{ .Values.ui.env.ENABLE_REMOTEIP | quote }}
-            - name: REMOTE_USER_CLAIM
-              value: {{ .Values.ui.env.REMOTE_USER_CLAIM | quote }}
-            - name: CALLBACK_URI
-              value: {{ .Values.ui.env.CALLBACK_URI | quote }}
-            - name: FILTER2
-              value: {{ .Values.ui.env.FILTER2 | quote }}
-            - name: FILTER
-              value: {{ .Values.ui.env.FILTER | quote }}
+          {{- if .Values.ui.env }}
+          {{- range $key, $value := .Values.ui.env }}
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
           volumeMounts:
             - mountPath: /etc/apache2/sites-available/site.conf
               name: siteconf
