@@ -18,6 +18,7 @@ data:
 
     CustomLog "/dev/stdout" combined env=!forwarded
     CustomLog "/dev/stdout" proxy env=forwarded
+    ErrorLog /dev/stdout
     LogLevel ${LOG_LEVEL}
 
     Header unset X-Frame-Options
@@ -28,8 +29,16 @@ data:
     LDAPCacheTTL ${LDAP_CACHE_TTL}
 
     OIDCOAuthTokenIntrospectionInterval 60
+    SSLProxyEngine on
 
-    <VirtualHost *:80>
+    <VirtualHost _default_:${HTTPD_PORT}>
+        RewriteEngine On
+        RewriteCond  %{HTTP:X-Forwarded-Proto} !https
+        RewriteCond %{REQUEST_URI}  !^/(status|version) [NC]
+        RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L]
+
+        RewriteCond %{REQUEST_METHOD} OPTIONS
+        RewriteRule ^(.*)$ $1 [R=204,L]
 
         DocumentRoot /app/dist
 
@@ -47,6 +56,10 @@ data:
             Order allow,deny
             Allow from all
 
+            # any directive which has the .htaccess 
+            # Context is allowed in .htaccess files.
+            AllowOverride All
+
             <IfModule mod_rewrite.c>
                 RewriteEngine On
                 RewriteBase /
@@ -59,42 +72,82 @@ data:
 
         # === API ===
 
-        # reverse proxy for /api/*
-        ProxyPass          /api    http://localhost:3000/api
-        ProxyPassReverse   /api    http://localhost:3000/api
+        # For those endpoints that does NOT require AUTH
+        <LocationMatch "/(status|version|swagger)">
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
+            RewriteEngine On
+            RewriteCond %{REQUEST_METHOD} OPTIONS
+            RewriteRule ^(.*)$ $1 [R=204,L]
 
-        <Proxy http://localhost:3000/api>
-            Require all granted
-            Options None
-        </Proxy>
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
 
-        # reverse proxy for /status
-        ProxyPass          /status    http://localhost:3000/status
-        ProxyPassReverse   /status    http://localhost:3000/status
+            ${AUTH_TYPE}
+            ${AUTH_LDAP_URL}
+            ${AUTH_LDAP_GROUP_ATTR}
+            ${AUTH_LDAP_BIND_DN}
+            ${AUTH_LDAP_BIND_PASSWORD}
+            ${AUTH_REQUIRE}
+            
+            # reverse proxy for /status
+            ProxyPass          /status    ${PROXY_URL}/status
+            ProxyPassReverse   /status    ${PROXY_URL}/status
 
-        <Proxy http://localhost:3000/status>
-            Require all granted
-            Options None
-        </Proxy>
+            # reverse proxy for /version
+            ProxyPass          /version    ${PROXY_URL}/version
+            ProxyPassReverse   /version    ${PROXY_URL}/version
 
-        # reverse proxy for /version
-        ProxyPass          /version    http://localhost:3000/version
-        ProxyPassReverse   /version    http://localhost:3000/version
+            # reverse proxy for /swagger
+            ProxyPass          /swagger    ${PROXY_URL}/swagger
+            ProxyPassReverse   /swagger    ${PROXY_URL}/swagger
 
-        <Proxy http://localhost:3000/version>
-            Require all granted
-            Options None
-        </Proxy>
+            ${FILTER}
+        </LoactionMatch>
 
-        # reverse proxy for /swagger
-        # this does NOT work for /swagger.json yet
-        ProxyPass          /swagger    http://localhost:3000/swagger
-        ProxyPassReverse   /swagger    http://localhost:3000/swagger
+        # For those endpoints that require AUTH
+        <Location "/api">
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
 
-        <Proxy http://localhost:3000/swagger>
-            Require all granted
-            Options None
-        </Proxy>
+            RewriteEngine On
+            RewriteCond %{REQUEST_METHOD} OPTIONS
+            RewriteRule ^(.*)$ $1 [R=204,L]
 
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE2}
+            ${AUTH_LDAP_URL2}
+            ${AUTH_LDAP_GROUP_ATTR2}
+            ${AUTH_LDAP_BIND_DN2}
+            ${AUTH_LDAP_BIND_PASSWORD2}
+            ${AUTH_REQUIRE2}
+
+            # reverse proxy for /api/*
+            ProxyPass          /api    ${PROXY_URL2}
+            ProxyPassReverse   /api    ${PROXY_URL2}
+
+            ${FILTER2}
+        </Loaction>
+
+        <Location ${CALLBACK_PATH}>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
     </VirtualHost>
 
