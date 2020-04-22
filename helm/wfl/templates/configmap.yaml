@@ -33,6 +33,24 @@ data:
 
         DocumentRoot /app/dist
 
+        # === UI ===
+        <Directory "/app/dist">
+            Require all granted
+
+            # Turn on directory listings for/app/dist
+            Options -Indexes
+            Allow from all
+
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteBase /app/dist
+                RewriteRule ^index\.html$ - [L]
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule . /index.html [L]
+            </IfModule>
+        </Directory>
+
         # === API ===
 
         # reverse proxy for /api/*
@@ -71,21 +89,6 @@ data:
             Require all granted
             Options None
         </Proxy>
-
-        # === UI ===
-        <Directory "/app/dist">
-            Require all granted
-            Options None
-
-            <IfModule mod_rewrite.c>
-                RewriteEngine On
-                RewriteBase /
-                RewriteRule ^index\.html$ - [L]
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteRule . /index.html [L]
-            </IfModule>
-        </Directory>
 
     </VirtualHost>
 
