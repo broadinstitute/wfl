@@ -41,8 +41,6 @@ jobs:
     - name: Build the WFL
       run: 
         boot build
-      env:
-        GITHUB_TOKEN: ${{ secrets.wfl_pat }}
 
 
 #     - name: Publish Docker
