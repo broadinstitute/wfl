@@ -39,11 +39,17 @@ data:
 
             # Turn on directory listings for/app/dist
             Options -Indexes
+
+            # Order allow,deny tells the web server that 
+            # the Allow rules are processed before the Deny rules. 
+            # If the client does not match the Allow rule or it 
+            # does match the Deny rule, then the client will be denied access.
+            Order allow,deny
             Allow from all
 
             <IfModule mod_rewrite.c>
                 RewriteEngine On
-                RewriteBase /app/dist
+                RewriteBase /
                 RewriteRule ^index\.html$ - [L]
                 RewriteCond %{REQUEST_FILENAME} !-f
                 RewriteCond %{REQUEST_FILENAME} !-d

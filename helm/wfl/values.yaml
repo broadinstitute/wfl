@@ -17,7 +17,7 @@ api:
   image:
     repository: broadinstitute/workflow-launcher-api
     tag: latest
-    pullPolicy: IfNotPresent  
+    pullPolicy: IfNotPresent
   deployment:
     containerPort: 80
   resources: {}
@@ -69,8 +69,8 @@ ui:
     AUTH_REQUIRE2: Require all granted
     PROXY_URL: ""  # first url path
     PROXY_URL2: ""  # second url path
-    PROXY_PATH: ""  # first url path
-    PROXY_PATH2: ""  # second url path
+    PROXY_PATH: /  # first url path
+    PROXY_PATH2: /api  # second url path
     ENABLE_STACKDRIVER: yes  # yamllint disable-line rule:truthy
     ENABLE_REMOTEIP: yes  # yamllint disable-line rule:truthy
     REMOTE_USER_CLAIM: sub

@@ -104,12 +104,6 @@ spec:
             - mountPath: /etc/apache2/sites-available/site.conf
               name: siteconf
               subPath: site.conf
-      
-      
-      
-      
-      
-      
       volumes:
         - name: siteconf
           configMap:
