@@ -142,8 +142,8 @@
   [request]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
     (letfn [(unnilify [m] (into {} (filter second m)))
-            (workflows [tx {:keys [load] :as workload}]
-              (->> load
+            (workflows [tx workload]
+              (->> workload :load
                    (format "SELECT * FROM %s")
                    (jdbc/query tx)
                    (map unnilify)
@@ -155,6 +155,7 @@
              (jdbc/query tx)
              (map unnilify)
              (map (partial workflows tx))
+             doall
              succeed)))))
 
 (defn post-start
