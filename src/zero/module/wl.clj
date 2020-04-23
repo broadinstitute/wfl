@@ -19,20 +19,22 @@
     (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
+(defn get-workflows-table
+  "return content of load table using transaction tx."
+  [tx load]
+  (jdbc/query tx (format "select * from %s" load)))
+
 (defn really-update-status!
-  "Update the status of LOAD workflows in transaction TX for ENV."
+  "update the status of load workflows in transaction tx for env."
   [tx env load]
   (let [now (OffsetDateTime/now)]
-    (letfn [(status! [id uuid]
+    (letfn [(status! [{:keys [id uuid] :as _workflow}]
               (when uuid
                 (jdbc/update! tx load {:status  (cromwell/status env uuid)
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
       (->> load
-           zero.debug/trace
-           (format "SELECT id, uuid FROM %s")
-           zero.debug/trace
-           (jdbc/query tx)
+           (get-workflows-table tx)
            zero.debug/trace
            (run! (partial status! tx))))))
 
@@ -102,15 +104,21 @@
                              env (str input input_cram) output))])
             (update! [tx [id uuid]]
               (jdbc/update! tx load {:updated now
-                                     :uuid    uuid} ["id = ?" id]))]
-      (util/do-or-nil
-        (jdbc/with-db-transaction [tx db]
-          (->> load
-               zero.debug/trace
-               (format "SELECT * FROM %s")
-               zero.debug/trace
-               (jdbc/query tx)
-               zero.debug/trace
-               (map submit!)
-               zero.debug/trace
-               (run! (partial update! tx))))))))
+                                     :uuid    uuid} ["id = ?" id])
+              [id uuid])
+            (status! [tx [id uuid]]
+              (when uuid
+                (jdbc/update! tx load {:status  (cromwell/status env uuid)
+                                       :updated now
+                                       :uuid    uuid} ["id = ?" id])))]
+      (jdbc/with-db-transaction [tx db]
+        (->> load
+             (get-workflows-table tx)
+             zero.debug/trace
+             (map submit!)
+             zero.debug/trace
+             (run! (partial update! tx))
+             zero.debug/trace
+             (run! (partial status! tx))
+             zero.debug/trace)
+        (zero.debug/trace (get-workflows-table tx load))))))
