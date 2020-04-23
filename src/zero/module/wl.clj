@@ -20,28 +20,28 @@
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
 (defn really-update-status!
-  "Update the status of LOAD workflows in database DB for ENV."
-  [db env load]
+  "Update the status of LOAD workflows in transaction TX for ENV."
+  [tx env load]
   (let [now (OffsetDateTime/now)]
-    (letfn [(status! [tx [id uuid]]
+    (letfn [(status! [id uuid]
               (when uuid
                 (jdbc/update! tx load {:status  (cromwell/status env uuid)
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
-      (jdbc/with-db-transaction [tx db]
-        (->> load
-             zero.debug/trace
-             (format "SELECT id, uuid FROM %s")
-             zero.debug/trace
-             (jdbc/query db)
-             zero.debug/trace
-             (run! (partial status! tx)))))))
+      (->> load
+           zero.debug/trace
+           (format "SELECT id, uuid FROM %s")
+           zero.debug/trace
+           (jdbc/query tx)
+           zero.debug/trace
+           (run! (partial status! tx))))))
 
 (defn update-status!
   "Update statuses in WORKLOAD in the database DB."
   [db {:keys [cromwell load] :as workload}]
   (let [env (@cromwell->env cromwell)]
-    (really-update-status! db env load)))
+    (jdbc/with-db-transaction [tx db]
+      (really-update-status! tx env load))))
 
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
@@ -109,7 +109,7 @@
                zero.debug/trace
                (format "SELECT * FROM %s")
                zero.debug/trace
-               (jdbc/query db)
+               (jdbc/query tx)
                zero.debug/trace
                (map submit!)
                zero.debug/trace
