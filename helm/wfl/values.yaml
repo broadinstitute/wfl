@@ -67,7 +67,7 @@ ui:
     AUTH_TYPE2: AuthType None
     AUTH_REQUIRE: Require all granted
     AUTH_REQUIRE2: Require all granted
-    PROXY_URL: ""  # a base url path without slash e.g. http://localhost
+    PROXY_URL: ""  # a base url path with slash e.g. http://localhost/
     PROXY_URL2: ""  # a full url path required auth, e.g. http://localhost/api
     ENABLE_STACKDRIVER: yes  # yamllint disable-line rule:truthy
     ENABLE_REMOTEIP: yes  # yamllint disable-line rule:truthy

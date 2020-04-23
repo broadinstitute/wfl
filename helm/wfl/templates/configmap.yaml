@@ -32,13 +32,13 @@ data:
     SSLProxyEngine on
 
     <VirtualHost _default_:${HTTPD_PORT}>
-        RewriteEngine On
-        RewriteCond  %{HTTP:X-Forwarded-Proto} !https
-        RewriteCond %{REQUEST_URI}  !^/(status|version) [NC]
-        RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L]
+        # RewriteEngine On
+        # RewriteCond  %{HTTP:X-Forwarded-Proto} !https
+        # RewriteCond %{REQUEST_URI}  !^/(status) [NC]
+        # RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L]
 
-        RewriteCond %{REQUEST_METHOD} OPTIONS
-        RewriteRule ^(.*)$ $1 [R=204,L]
+        # RewriteCond %{REQUEST_METHOD} OPTIONS
+        # RewriteRule ^(.*)$ $1 [R=204,L]
 
         DocumentRoot /app/dist
 
@@ -58,7 +58,8 @@ data:
 
             # any directive which has the .htaccess 
             # Context is allowed in .htaccess files.
-            AllowOverride All
+            
+            # AllowOverride All
 
             <IfModule mod_rewrite.c>
                 RewriteEngine On
@@ -73,47 +74,32 @@ data:
         # === API ===
 
         # For those endpoints that does NOT require AUTH
-        <LocationMatch "/(status|version|swagger)">
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-            RewriteEngine On
-            RewriteCond %{REQUEST_METHOD} OPTIONS
-            RewriteRule ^(.*)$ $1 [R=204,L]
+        <Location "/status">
+            # Header unset Access-Control-Allow-Origin
+            # Header always set Access-Control-Allow-Origin "*"
+            # Header unset Access-Control-Allow-Headers
+            # Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            # Header unset Access-Control-Allow-Methods
+            # Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            # Header unset Access-Control-Max-Age
+            # Header always set Access-Control-Max-Age 1728000
 
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
+            # ${AUTH_TYPE}
+            # ${AUTH_LDAP_URL}
+            # ${AUTH_LDAP_GROUP_ATTR}
+            # ${AUTH_LDAP_BIND_DN}
+            # ${AUTH_LDAP_BIND_PASSWORD}
+            # ${AUTH_REQUIRE}
             
             # reverse proxy for /status
             ProxyPass          ${PROXY_URL}
             ProxyPassReverse   ${PROXY_URL}
 
-            # reverse proxy for /version
-            ProxyPass          ${PROXY_URL}
-            ProxyPassReverse   ${PROXY_URL}
-
-            # reverse proxy for /swagger
-            ProxyPass          ${PROXY_URL}
-            ProxyPassReverse   ${PROXY_URL}
-
             ${FILTER}
-        </LocationMatch>
+        </Location>
 
         # For those endpoints that require AUTH
-        <Location "/api">
+        <Location /api>
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
@@ -122,10 +108,6 @@ data:
             Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
             Header unset Access-Control-Max-Age
             Header always set Access-Control-Max-Age 1728000
-
-            RewriteEngine On
-            RewriteCond %{REQUEST_METHOD} OPTIONS
-            RewriteRule ^(.*)$ $1 [R=204,L]
 
             <Limit OPTIONS>
                 Require all granted
