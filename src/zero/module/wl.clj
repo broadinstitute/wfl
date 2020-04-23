@@ -22,7 +22,7 @@
 (defn get-workflows-table
   "Return content of LOAD table using transaction TX."
   [tx load]
-  (jdbc/query tx (format "select * from %s" load)))
+  (jdbc/query tx (format "SELECT * FROM %s" load)))
 
 (defn really-update-status!
   "Update the status of LOAD workflows in transaction TX for ENV."
