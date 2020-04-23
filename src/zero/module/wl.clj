@@ -20,12 +20,12 @@
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
 (defn get-workflows-table
-  "return content of load table using transaction tx."
+  "Return content of LOAD table using transaction TX."
   [tx load]
   (jdbc/query tx (format "select * from %s" load)))
 
 (defn really-update-status!
-  "update the status of load workflows in transaction tx for env."
+  "Update the status of LOAD workflows in transaction TX for ENV."
   [tx env load]
   (let [now (OffsetDateTime/now)]
     (letfn [(status! [{:keys [id uuid] :as _workflow}]
@@ -103,22 +103,12 @@
               [id (or uuid (wgs/really-submit-one-workflow
                              env (str input input_cram) output))])
             (update! [tx [id uuid]]
-              (jdbc/update! tx load {:updated now
-                                     :uuid    uuid} ["id = ?" id])
-              [id uuid])
-            (status! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx load {:status  (cromwell/status env uuid)
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
       (jdbc/with-db-transaction [tx db]
-        (->> load
-             (get-workflows-table tx)
-             zero.debug/trace
-             (map submit!)
-             zero.debug/trace
-             (run! (partial update! tx))
-             zero.debug/trace
-             (run! (partial status! tx))
-             zero.debug/trace)
+        (let [workflows (get-workflows-table tx load)
+              ids-uuids (map submit! workflows)]
+          (run! (partial update! tx) ids-uuids))
         (zero.debug/trace (get-workflows-table tx load))))))
