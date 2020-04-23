@@ -153,9 +153,7 @@
                ["SELECT * FROM workload WHERE uuid = ?" uuid]
                ["SELECT * FROM workload"])
              (jdbc/query tx)
-             (map unnilify)
-             (map (partial workflows tx))
-             doall
+             (mapv (comp (partial workflows tx) unnilify))
              succeed)))))
 
 (defn post-start
