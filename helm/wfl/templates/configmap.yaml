@@ -58,8 +58,7 @@ data:
 
             # any directive which has the .htaccess 
             # Context is allowed in .htaccess files.
-            
-            # AllowOverride All
+            AllowOverride All
 
             <IfModule mod_rewrite.c>
                 RewriteEngine On
@@ -75,21 +74,25 @@ data:
 
         # For those endpoints that does NOT require AUTH
         <Location "/status">
-            # Header unset Access-Control-Allow-Origin
-            # Header always set Access-Control-Allow-Origin "*"
-            # Header unset Access-Control-Allow-Headers
-            # Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            # Header unset Access-Control-Allow-Methods
-            # Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            # Header unset Access-Control-Max-Age
-            # Header always set Access-Control-Max-Age 1728000
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
 
-            # ${AUTH_TYPE}
-            # ${AUTH_LDAP_URL}
-            # ${AUTH_LDAP_GROUP_ATTR}
-            # ${AUTH_LDAP_BIND_DN}
-            # ${AUTH_LDAP_BIND_PASSWORD}
-            # ${AUTH_REQUIRE}
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE}
+            ${AUTH_LDAP_URL}
+            ${AUTH_LDAP_GROUP_ATTR}
+            ${AUTH_LDAP_BIND_DN}
+            ${AUTH_LDAP_BIND_PASSWORD}
+            ${AUTH_REQUIRE}
             
             # reverse proxy for /status
             ProxyPass          ${PROXY_URL}
