@@ -37,8 +37,9 @@ data:
         # RewriteCond %{REQUEST_URI}  !^/(status) [NC]
         # RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L]
 
-        # RewriteCond %{REQUEST_METHOD} OPTIONS
-        # RewriteRule ^(.*)$ $1 [R=204,L]
+        # Perform a terminal redirect if the method is HTTP OPTIONS
+        RewriteCond %{REQUEST_METHOD} OPTIONS
+        RewriteRule ^(.*)$ $1 [R=204,L]
 
         DocumentRoot /app/dist
 
@@ -73,7 +74,7 @@ data:
         # === API ===
 
         # For those endpoints that does NOT require AUTH
-        <Location "/status">
+        <Location /status>
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
@@ -95,6 +96,62 @@ data:
             ${AUTH_REQUIRE}
             
             # reverse proxy for /status
+            ProxyPass          ${PROXY_URL}
+            ProxyPassReverse   ${PROXY_URL}
+
+            ${FILTER}
+        </Location>
+
+        <Location /version>
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
+
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE}
+            ${AUTH_LDAP_URL}
+            ${AUTH_LDAP_GROUP_ATTR}
+            ${AUTH_LDAP_BIND_DN}
+            ${AUTH_LDAP_BIND_PASSWORD}
+            ${AUTH_REQUIRE}
+            
+            # reverse proxy for /version
+            ProxyPass          ${PROXY_URL}
+            ProxyPassReverse   ${PROXY_URL}
+
+            ${FILTER}
+        </Location>
+
+        <Location /swagger>
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
+
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE}
+            ${AUTH_LDAP_URL}
+            ${AUTH_LDAP_GROUP_ATTR}
+            ${AUTH_LDAP_BIND_DN}
+            ${AUTH_LDAP_BIND_PASSWORD}
+            ${AUTH_REQUIRE}
+            
+            # reverse proxy for /swagger
             ProxyPass          ${PROXY_URL}
             ProxyPassReverse   ${PROXY_URL}
 
