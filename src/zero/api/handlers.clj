@@ -167,15 +167,13 @@
         start {"AllOfUsArrays"                   aou/start-workload!
                "ExternalWholeGenomeReprocessing" wl/start-workload!}]
     (letfn [(q [[left right]] (fn [it] (str left it right)))
-            (start! [{:keys [pipeline] :as wl}] ((start pipeline) db wl))]
+            (start! [{:keys [pipeline] :as workload}]
+              ((start pipeline) db workload))]
       (->> parameters :body distinct
            (map (q "''")) (str/join ",") ((q "()"))
            (format "SELECT * FROM workload WHERE uuid in %s")
            (jdbc/query db)
-           zero.debug/trace
-           (map start!)
-           zero.debug/trace
-           succeed))))
+           (run! start!)))))
 
 (comment
   (do (def uuids ["d7f86861-289c-4b3d-844c-9a0d3cb1db4f"
