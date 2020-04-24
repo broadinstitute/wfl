@@ -42,7 +42,19 @@ jobs:
           
     - name: Build the WFL
       run: |
-        ssh-add -l
+        echo ${{ secrets.dsde_pipelines_deploy_key }} >> ~/.ssh/dsde_pipelines_deploy_key
+        echo ${{ secrets.pipeline_config_deploy_key }} >> ~/.ssh/pipeline_config_deploy_key
+        cat <<EOF > ~/.ssh/config
+Host dsde-pipelines
+HostName github.com
+User git
+IdentityFile ~/.ssh/dsde_pipelines_deploy_key
+
+Host pipeline-config
+HostName github.com
+User git
+IdentityFile ~/.ssh/pipeline_config_deploy_key
+EOF
         boot build
 
 
