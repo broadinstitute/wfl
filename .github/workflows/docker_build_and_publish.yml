@@ -46,7 +46,20 @@ jobs:
         echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
         chmod 600 ~/.ssh/dsde_pipelines_deploy_key
         chmod 600 ~/.ssh/pipeline_config_deploy_key
+        echo """
+          Host dsde-pipelines
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/dsde_pipelines_deploy_key
+
+          Host pipeline-config
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/pipeline_config_deploy_key""" > ~/.ssh/config
         ls ~/.ssh
+        boot build
+
+
 
 
 #     - name: Publish Docker
