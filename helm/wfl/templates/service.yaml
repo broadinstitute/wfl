@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "wfl.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.ui.service.type }}
   ports:
     - port: {{ .Values.ui.service.port }}
       targetPort: http

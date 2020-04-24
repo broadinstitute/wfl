@@ -8,10 +8,6 @@ strategy:
   maxSurge: 3
   maxUnavailable: 1
 
-service:
-  type: ClusterIP
-  port: 80
-
 api:
   name: workflow-launcher-api
   image:
@@ -38,9 +34,8 @@ ui:
     repository: broadinstitute/workflow-launcher-ui
     tag: latest
     pullPolicy: IfNotPresent
-
   service:
-    type: ClusterIP
+    type: NodePort
     port: 80
   deployment:
     containerPort: 80

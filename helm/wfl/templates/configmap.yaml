@@ -32,10 +32,12 @@ data:
     SSLProxyEngine on
 
     <VirtualHost _default_:${HTTPD_PORT}>
-        # RewriteEngine On
-        # RewriteCond  %{HTTP:X-Forwarded-Proto} !https
-        # RewriteCond %{REQUEST_URI}  !^/(status) [NC]
-        # RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L]
+        RewriteEngine On
+        RewriteCond  %{HTTP:X-Forwarded-Proto} !https
+        RewriteCond %{REQUEST_URI}  !^/(status) [NC]
+
+        # NE|noescape for special cahracters
+        RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L,NE]
 
         # Perform a terminal redirect if the method is HTTP OPTIONS
         RewriteCond %{REQUEST_METHOD} OPTIONS
