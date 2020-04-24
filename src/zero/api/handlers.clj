@@ -137,43 +137,49 @@
          (into {})
          succeed)))
 
+(defn get-workload-for-uuid
+  "Use transaction TX to return workload with UUID."
+  [tx {:keys [uuid]}]
+  (letfn [(unnilify [m] (into {} (filter second m)))]
+    (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
+          workload (unnilify (first (jdbc/query tx select)))]
+      (assoc workload :workflows
+             (->> workload :load
+                  (format "SELECT * FROM %s")
+                  (jdbc/query tx)
+                  (mapv unnilify))))))
+
 (defn get-workload
-  "List workloads or workload with UUID in REQUEST."
+  "List all workloads or the workload with UUID in REQUEST."
   [request]
   (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (letfn [(unnilify [m] (into {} (filter second m)))
-            (workflows [tx workload]
-              (->> workload :load
-                   (format "SELECT * FROM %s")
-                   (jdbc/query tx)
-                   (map unnilify)
-                   (assoc workload :load)))]
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
-        (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-               ["SELECT * FROM workload WHERE uuid = ?" uuid]
-               ["SELECT * FROM workload"])
-             (jdbc/query tx)
-             (mapv (comp (partial workflows tx) unnilify))
-             succeed)))))
+    (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
+      (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+             [{:uuid uuid}]
+             (jdbc/query tx ["SELECT uuid FROM workload"]))
+           (mapv (partial get-workload-for-uuid tx))
+           succeed))))
 
 (defn post-start
-  "Start the workloads with UUIDs in BODY of REQUEST."
-  [{:keys [parameters] :as request}]
-  (zero.debug/trace request)
-  (let [db    (-> "ENVIRONMENT"
-                  (util/getenv "debug")
-                  keyword
-                  postgres/zero-db-config)
-        start {"AllOfUsArrays"                   aou/start-workload!
-               "ExternalWholeGenomeReprocessing" wl/start-workload!}]
+  "Start the workloads with UUIDs in REQUEST."
+  [request]
+  (let [start {"AllOfUsArrays"                   aou/start-workload!
+               "ExternalWholeGenomeReprocessing" wl/start-workload!}
+        env   (keyword (util/getenv "ENVIRONMENT" "debug"))
+        uuids (-> request :parameters :body distinct)]
     (letfn [(q [[left right]] (fn [it] (str left it right)))
-            (start! [{:keys [pipeline] :as workload}]
-              ((start pipeline) db workload))]
-      (->> parameters :body distinct
-           (map (q "''")) (str/join ",") ((q "()"))
-           (format "SELECT * FROM workload WHERE uuid in %s")
-           (jdbc/query db)
-           (run! start!)))))
+            (start! [tx {:keys [pipeline] :as workload}]
+              ((start pipeline) tx workload))]
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config env)]
+        (->> uuids
+             (map (q "''")) (str/join ",") ((q "()"))
+             (format "SELECT * FROM workload WHERE uuid in %s")
+             (jdbc/query tx)
+             (run! (partial start! tx)))
+        (->> uuids
+             (map (fn [uuid] {:uuid uuid}))
+             (mapv (partial get-workload-for-uuid tx))
+             succeed)))))
 
 (comment
   (do (def uuids ["d7f86861-289c-4b3d-844c-9a0d3cb1db4f"

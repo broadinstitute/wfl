@@ -148,7 +148,6 @@
                  :url          (str (api environment) "/query")
                  :form-params  (cromwellify-json-form form-params)
                  :content-type :application/json}]
-    (zero.debug/trace request)
     (letfn [(each [page sofar]
               (let [response (-> request
                                  (update :form-params conj {:page (str page)})
@@ -156,7 +155,6 @@
                                  request-json :body)
                     {:keys [results totalResultsCount]} response
                     total (+ sofar (count results))]
-                (zero.debug/trace response)
                 (lazy-cat results (when (< total totalResultsCount)
                                     (each (inc page) total)))))]
       (util/lazy-unchunk (each 1 0)))))

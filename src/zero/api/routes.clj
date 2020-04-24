@@ -13,6 +13,7 @@
             [reitit.swagger-ui                  :as swagger-ui]
             [zero.api.handlers                  :as handlers]
             [zero.environments                  :as env]
+            [zero.service.cromwell              :as cromwell]
             [zero.util                          :as util]
             [zero.zero                          :as zero])
   (:import [java.util UUID]))
@@ -32,8 +33,14 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::load                 (s/or :aos (s/+ ::workflow-aos)
-                                    :wgs (s/+ ::workflow-wgs)))
+(s/def ::load                 (s/or :aos (s/+ ::load-aos)
+                                    :wgs (s/+ ::load-wgs)))
+(s/def ::load-aos             (constantly true)) ; stub
+(s/def ::load-wgs             (s/keys :opt-un [::base_file_name
+                                               ::final_gvcf_base_name
+                                               ::unmapped_bam_suffix]
+                                      :req-un [::input_cram
+                                               ::sample_name]))
 (s/def ::max                  pos-int?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
@@ -44,7 +51,9 @@
 (s/def ::sample_name          string?)
 (s/def ::start                string?)
 (s/def ::started              inst?)
+(s/def ::status               (set cromwell/statuses))
 (s/def ::unmapped_bam_suffix  string?)
+(s/def ::updated              inst?)
 (s/def ::uuid                 (s/and string? uuid-string?))
 (s/def ::uuid-query           (s/or :none empty?
                                     :one  (s/keys :req-un [::uuid])))
@@ -58,12 +67,18 @@
 (s/def ::workflow-aos         (constantly true)) ; stub
 (s/def ::workflow-wgs         (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
-                                               ::unmapped_bam_suffix]
-                                      :req-un [::input_cram
+                                               ::status
+                                               ::unmapped_bam_suffix
+                                               ::updated
+                                               ::uuid]
+                                      :req-un [::id
+                                               ::input_cram
                                                ::sample_name]))
 (s/def ::workflow-request     (s/keys :req-un [::end
                                                ::environment
                                                ::start]))
+(s/def ::workflows            (s/or :aos (s/+ ::workflow-aos)
+                                    :wgs (s/+ ::workflow-wgs)))
 (s/def ::workload-request     (s/keys :req-un [::creator
                                                ::cromwell
                                                ::input
@@ -74,7 +89,8 @@
 (s/def ::workload-response    (s/keys :opt-un [::finished
                                                ::pipeline
                                                ::started
-                                               ::wdl]
+                                               ::wdl
+                                               ::workflows]
                                       :req-un [::commit
                                                ::created
                                                ::creator

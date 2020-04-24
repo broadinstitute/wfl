@@ -19,10 +19,10 @@
     (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
-(defn get-workflows-table
-  "Return content of LOAD table using transaction TX."
-  [tx load]
-  (jdbc/query tx (format "SELECT * FROM %s" load)))
+(defn get-table
+  "Return TABLE using transaction TX."
+  [tx table]
+  (jdbc/query tx (format "SELECT * FROM %s" table)))
 
 (defn really-update-status!
   "Update the status of LOAD workflows in transaction TX for ENV."
@@ -34,8 +34,7 @@
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
       (->> load
-           (get-workflows-table tx)
-           zero.debug/trace
+           (get-table tx)
            (run! (partial status! tx))))))
 
 (defn update-status!
@@ -92,9 +91,8 @@
     (or done? active?)))
 
 (defn start-workload!
-  "Start the WORKLOAD in the database DB."
-  [db {:keys [cromwell input load output] :as workload}]
-  (zero.debug/trace workload)
+  "Use transaction TX to start the WORKLOAD."
+  [tx {:keys [cromwell input load output] :as workload}]
   (let [env    (@cromwell->env cromwell)
         input  (all/slashify input)
         output (all/slashify output)
@@ -107,8 +105,6 @@
                 (jdbc/update! tx load {:status  (cromwell/status env uuid)
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
-      (jdbc/with-db-transaction [tx db]
-        (let [workflows (get-workflows-table tx load)
-              ids-uuids (map submit! workflows)]
-          (run! (partial update! tx) ids-uuids))
-        (zero.debug/trace (get-workflows-table tx load))))))
+      (let [workflows (get-table tx load)
+            ids-uuids (map submit! workflows)]
+        (run! (partial update! tx) ids-uuids)))))
