@@ -19,7 +19,7 @@
         _ (pprint get)
         got    (json/read-str (apply util/shell! get) :key-fn keyword)
         _ (pprint got)
-        uuids  (-> got #_first second :uuid vector json/write-str)
+        uuids  (-> got #_first second (select-keys [:uuid]) vector json/write-str)
         _ (pprint uuids)
         post   ["curl" "-H" auth "-H" "Content-Type: application/json"
                 "--data" uuids

@@ -102,9 +102,10 @@
                              env (str input input_cram) output))])
             (update! [tx [id uuid]]
               (when uuid
-                (jdbc/update! tx load {:status  (cromwell/status env uuid)
-                                       :updated now
-                                       :uuid    uuid} ["id = ?" id])))]
+                (when-let [status (util/do-or-nil (cromwell/status env uuid))]
+                  (jdbc/update! tx load {:status  status
+                                         :updated now
+                                         :uuid    uuid} ["id = ?" id]))))]
       (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
       (let [workflows (get-table tx load)
             ids-uuids (map submit! workflows)]

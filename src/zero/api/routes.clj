@@ -55,6 +55,8 @@
 (s/def ::unmapped_bam_suffix  string?)
 (s/def ::updated              inst?)
 (s/def ::uuid                 (s/and string? uuid-string?))
+(s/def ::uuid-kv              (s/keys :req-un [::uuid]))
+(s/def ::uuid-kvs             (s/* ::uuid-kv))
 (s/def ::uuid-query           (s/or :none empty?
                                     :one  (s/keys :req-un [::uuid])))
 (s/def ::uuids                (s/* ::uuid))
@@ -160,7 +162,7 @@
             :handler    (handlers/authorize handlers/post-workload)}}]
    ["/api/v1/start"
     {:post {:summary    "Start workloads."
-            :parameters {:body ::uuids}
+            :parameters {:body ::uuid-kvs}
             :responses  {200 {:body ::workload-responses}}
             :handler    (handlers/authorize handlers/post-start)}}]
    ["/swagger.json"
