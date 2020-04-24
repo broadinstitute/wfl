@@ -56,7 +56,7 @@ jobs:
           HostName github.com
           User git
           IdentityFile ~/.ssh/pipeline_config_deploy_key""" > ~/.ssh/config
-        ls ~/.ssh
+        cat ~/.ssh/config
         boot build
 
 
