@@ -92,7 +92,7 @@
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [cromwell input load output] :as workload}]
+  [tx {:keys [cromwell input load output uuid] :as workload}]
   (let [env    (@cromwell->env cromwell)
         input  (all/slashify input)
         output (all/slashify output)
@@ -105,6 +105,7 @@
                 (jdbc/update! tx load {:status  (cromwell/status env uuid)
                                        :updated now
                                        :uuid    uuid} ["id = ?" id])))]
+      (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
       (let [workflows (get-table tx load)
             ids-uuids (map submit! workflows)]
         (run! (partial update! tx) ids-uuids)))))
