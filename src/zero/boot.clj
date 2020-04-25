@@ -76,11 +76,19 @@
               (util/shell-io! "git" "-C" tmp "clone"
                               "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
-      (run! clone (vals zero/the-github-repos)))
+
+      (try
+        (run! clone (vals zero/the-github-repos))
+        (catch Exception e
+          (run! clone (vals zero/the-other-github-repos))
+          )))
+
     (into {:tmp tmp}
           (for [repo (keys zero/the-github-repos)]
             (let [dir (str/join "/" [tmp repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
+(comment
+  (clone-repos))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
