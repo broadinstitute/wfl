@@ -61,7 +61,7 @@
   HACK: Frob any BOGUS-KEY-CHARACTERS so maps can be keywordized."
   ([method thing environment id query-params]
    (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
-     (let [edn (-> {:method  method ;; :debug true :debug-body true
+     (let [edn (-> {:method  method     ; :debug true :debug-body true
                     :url     (str (api environment) "/" id "/" thing)
                     :headers (once/get-local-auth-header)}
                    (maybe :query-params query-params)
@@ -203,7 +203,7 @@
   server in ENVIRONMENT, and return the workflow ID."
   [environment parts]
   (letfn [(multipartify [[k v]] {:name (name k) :content v})]
-    (-> {:method    :post ;; :debug true :debug-body true
+    (-> {:method    :post               ; :debug true :debug-body true
          :url       (api environment)
          :headers   (once/get-local-auth-header)
          :multipart (map multipartify parts)}

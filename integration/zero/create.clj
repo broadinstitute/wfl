@@ -50,3 +50,12 @@
         (assert (= got response)))
       (finally (util/delete-tree (io/file tmp)))))
   (System/exit 0))
+
+(comment
+  (json/read-str
+    (util/shell!
+      "curl"
+      "-H" (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
+      (str server "/api/v1/workload"))
+    :key-fn keyword)
+  )

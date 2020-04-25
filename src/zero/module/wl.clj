@@ -19,30 +19,24 @@
     (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
       (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
 
-(defn get-table
-  "Return TABLE using transaction TX."
-  [tx table]
-  (jdbc/query tx (format "SELECT * FROM %s" table)))
+(defn maybe-update-workflow-status!
+  "Use TX to update the status of WORKFLOW in ENV."
+  [tx env {:keys [id uuid] :as _workflow}]
+  (letfn [(maybe [m k v] (if v (assoc m k v) m))]
+    (when uuid
+      (let [now    (OffsetDateTime/now)
+            status (util/do-or-nil (cromwell/status env uuid))]
+        (jdbc/update! tx load
+                      (maybe {:updated now :uuid uuid} :status status)
+                      ["id = ?" id])))))
 
-(defn really-update-status!
-  "Update the status of LOAD workflows in transaction TX for ENV."
-  [tx env load]
-  (let [now (OffsetDateTime/now)]
-    (letfn [(status! [{:keys [id uuid] :as _workflow}]
-              (when uuid
-                (jdbc/update! tx load {:status  (cromwell/status env uuid)
-                                       :updated now
-                                       :uuid    uuid} ["id = ?" id])))]
-      (->> load
-           (get-table tx)
-           (run! (partial status! tx))))))
-
-(defn update-status!
-  "Update statuses in WORKLOAD in the database DB."
-  [db {:keys [cromwell load] :as workload}]
+(defn update-workload!
+  "Use transaction TX to update WORKLOAD statuses."
+  [tx {:keys [cromwell load] :as workload}]
   (let [env (@cromwell->env cromwell)]
-    (jdbc/with-db-transaction [tx db]
-      (really-update-status! tx env load))))
+    (->> load
+         (postgres/get-table tx)
+         (run! (partial maybe-update-workflow-status! tx env)))))
 
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
@@ -97,16 +91,16 @@
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
-    (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
+    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
+    (letfn [(maybe [m k v] (if v (assoc m k v) m))
+            (submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid (wgs/really-submit-one-workflow
                              env (str input input_cram) output))])
             (update! [tx [id uuid]]
               (when uuid
-                (when-let [status (util/do-or-nil (cromwell/status env uuid))]
-                  (jdbc/update! tx load {:status  status
-                                         :updated now
-                                         :uuid    uuid} ["id = ?" id]))))]
-      (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
-      (let [workflows (get-table tx load)
+                (jdbc/update! tx load
+                              {:updated now :uuid uuid}
+                              ["id = ?" id])))]
+      (let [workflows (postgres/get-table tx load)
             ids-uuids (map submit! workflows)]
         (run! (partial update! tx) ids-uuids)))))

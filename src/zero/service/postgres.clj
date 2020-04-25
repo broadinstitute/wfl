@@ -9,7 +9,8 @@
             [zero.once :as once]
             [zero.util :as util]
             [zero.zero :as zero])
-  (:import [liquibase.integration.commandline Main]))
+  (:import [java.time OffsetDateTime]
+           [liquibase.integration.commandline Main]))
 
 (defn zero-db-url
   "An URL for the zero-postgresql service in ENVIRONMENT."
@@ -92,6 +93,55 @@
    (run-liquibase-update (zero-db-url :debug)
                          (util/getenv "USER" "postgres")
                          "password")))
+
+(defn get-table
+  "Return TABLE using transaction TX."
+  [tx table]
+  (jdbc/query tx (format "SELECT * FROM %s" table)))
+
+;; HACK: We don't have the workload environment here.
+;;
+(defn cromwell-status
+  "NIL or status of the workflow with UUID on CROMWELL."
+  [cromwell uuid]
+  (-> {:method  :get                    ; :debug true :debug-body true
+       :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+       :headers (once/get-local-auth-header)}
+      http/request :body json/read-str util/do-or-nil))
+
+(defn update-workflow-status!
+  "Use TX to update the status of WORKFLOW in LOAD table."
+  [tx cromwell load {:keys [id uuid] :as _workflow}]
+  (zero.debug/trace _workflow)
+  (letfn [(maybe [m k v] (if v (assoc m k v) m))]
+    (when uuid
+      (let [now    (OffsetDateTime/now)
+            status (cromwell-status cromwell uuid)]
+        (jdbc/update! tx load
+                      (maybe {:updated now :uuid uuid} :status status)
+                      ["id = ?" id])))))
+
+(defn update-workload!
+  "Use transaction TX to update workLOAD statuses from CROMWELL."
+  [tx cromwell load]
+  (zero.debug/trace [tx cromwell load])
+  (->> load
+       (get-table tx)
+       (run! (partial update-workflow-status! tx cromwell load))))
+
+(defn get-workload-for-uuid
+  "Use transaction TX to return workload with UUID."
+  [tx {:keys [uuid]}]
+  (letfn [(unnilify [m] (into {} (filter second m)))]
+    (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
+          {:keys [cromwell load] :as workload} (first (jdbc/query tx select))]
+      (zero.debug/trace workload)
+      (util/do-or-nil (update-workload! tx cromwell load))
+      (assoc workload :workflows
+             (->> load
+                  (format "SELECT * FROM %s")
+                  (jdbc/query tx)
+                  (mapv unnilify))))))
 
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."

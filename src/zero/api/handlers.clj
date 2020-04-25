@@ -137,18 +137,6 @@
          (into {})
          succeed)))
 
-(defn get-workload-for-uuid
-  "Use transaction TX to return workload with UUID."
-  [tx {:keys [uuid]}]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
-          workload (unnilify (first (jdbc/query tx select)))]
-      (assoc workload :workflows
-             (->> workload :load
-                  (format "SELECT * FROM %s")
-                  (jdbc/query tx)
-                  (mapv unnilify))))))
-
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
   [request]
@@ -157,14 +145,14 @@
       (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
              [{:uuid uuid}]
              (jdbc/query tx ["SELECT uuid FROM workload"]))
-           (mapv (partial get-workload-for-uuid tx))
+           (mapv (partial postgres/get-workload-for-uuid tx))
            succeed))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
   (let [start {"AllOfUsArrays"                   aou/start-workload!
-               "ExternalWholeGenomeReprocessing" wl/start-workload!}
+               "ExternalWholeGenomeReprocessing"  wl/start-workload!}
         env   (keyword (util/getenv "ENVIRONMENT" "debug"))
         uuids (-> request :parameters :body distinct)]
     (letfn [(q [[left right]] (fn [it] (str left it right)))
@@ -178,5 +166,5 @@
              (jdbc/query tx)
              (run! (partial start! tx)))
         (->> uuids
-             (mapv (partial get-workload-for-uuid tx))
+             (mapv (partial postgres/get-workload-for-uuid tx))
              succeed)))))

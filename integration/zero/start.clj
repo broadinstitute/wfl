@@ -14,12 +14,12 @@
 (defn -main
   [& args]
   (let [auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
-        get    ["curl" "-H" auth "-H" "Content-Type: application/json"
+        curl   ["curl" "-H" auth "-H" "Content-Type: application/json"
                 (str server "/api/v1/workload")]
-        _ (pprint get)
-        got    (json/read-str (apply util/shell! get) :key-fn keyword)
+        _ (pprint curl)
+        got    (json/read-str (apply util/shell! curl) :key-fn keyword)
         _ (pprint got)
-        uuids  (-> got #_first second (select-keys [:uuid]) vector json/write-str)
+        uuids  (-> got (get 2) (select-keys [:uuid]) vector json/write-str)
         _ (pprint uuids)
         post   ["curl" "-H" auth "-H" "Content-Type: application/json"
                 "--data" uuids
