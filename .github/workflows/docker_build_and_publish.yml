@@ -67,17 +67,16 @@ jobs:
           HostName github.com
           User git
           IdentityFile ~/.ssh/wfl_deploy_key""" > ~/.ssh/config
-        du -h ~/.ssh/dsde_pipelines_deploy_key
-        cat ~/.ssh/config
+
         boot build
 
 
-#     - name: Publish Docker
-#       uses: elgohr/Publish-Docker-Github-Action@2.14
-#       with:
-#         # The name of the image you would like to push
-#         name: broadinstitute/workflow-launcher-api
-#         # The login username for the registry
-#         username: "${{ secrets.dockerhub_username }}"
-#         # The login password for the registry
-#         password: "${{ secrets.dockerhub_password }}"
+     - name: Publish Docker
+       uses: elgohr/Publish-Docker-Github-Action@2.14
+       with:
+         # The name of the image you would like to push
+         name: broadinstitute/workflow-launcher-api
+         # The login username for the registry
+         username: "${{ secrets.dockerhub_username }}"
+         # The login password for the registry
+         password: "${{ secrets.dockerhub_password }}"
