@@ -43,7 +43,6 @@ jobs:
     - name: Build the WFL
       run: |
         mkdir -p ~/.ssh
-        ssh -T git@github.com
 
         echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
         echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
