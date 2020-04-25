@@ -44,8 +44,12 @@ jobs:
       run: |
         echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
         echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
+        echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
+
         chmod 600 ~/.ssh/dsde_pipelines_deploy_key
         chmod 600 ~/.ssh/pipeline_config_deploy_key
+        chmod 600 ~/.ssh/wfl_deploy_key
+
         echo """
           Host dsde-pipelines.github.com
           HostName github.com
@@ -60,7 +64,8 @@ jobs:
           Host wfl.github.com
           HostName github.com
           User git
-          IdentityFile ~/.ssh/wfl_deployment_key""" > ~/.ssh/config
+          IdentityFile ~/.ssh/wfl_deploy_key""" > ~/.ssh/config
+        du -h ~/.ssh/dsde_pipelines_deploy_key
         cat ~/.ssh/config
         boot build
 
