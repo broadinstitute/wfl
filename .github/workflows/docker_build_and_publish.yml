@@ -47,15 +47,20 @@ jobs:
         chmod 600 ~/.ssh/dsde_pipelines_deploy_key
         chmod 600 ~/.ssh/pipeline_config_deploy_key
         echo """
-          Host dsde-pipelines
+          Host dsde-pipelines.github.com
           HostName github.com
           User git
           IdentityFile ~/.ssh/dsde_pipelines_deploy_key
 
-          Host pipeline-config
+          Host pipeline-config.github.com
           HostName github.com
           User git
-          IdentityFile ~/.ssh/pipeline_config_deploy_key""" > ~/.ssh/config
+          IdentityFile ~/.ssh/pipeline_config_deploy_key
+
+          Host wfl.github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/wfl_deployment_key""" > ~/.ssh/config
         cat ~/.ssh/config
         boot build
 
