@@ -78,9 +78,9 @@
       (io/make-parents (io/file tmp "Who cares, really?"))
 
       (try
-        (run! clone (vals zero/the-github-repos))
+        (run! clone (vals zero/the-other-github-repos))
         (catch Exception e
-          (run! clone (vals zero/the-other-github-repos))
+          (run! clone (vals zero/the-github-repos))
           )))
 
     (into {:tmp tmp}
