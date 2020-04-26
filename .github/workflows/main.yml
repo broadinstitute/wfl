@@ -30,17 +30,17 @@ jobs:
       run: |
         action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
         merged=$(jq --raw-output .pull_request.merged "$GITHUB_EVENT_PATH")
-
         echo "DEBUG -> action: $action merged: $merged"
-
-
         ref=$(jq --raw-output .pull_request.head.ref "$GITHUB_EVENT_PATH")
         owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
         repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
-
-        echo "BRANCH_NAME=${ref}"
-        echo "GITHUB_SHA=${GITHUB_SHA}"
-        echo "BUILD VERSION=$(cat build.txt)"
-          
-          
-          
+        echo ::set-env name=BRANCH_NAME::${ref}
+    
+    - name: test that
+      run: |
+        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
+        then
+          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+        else
+          TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
+        fi
