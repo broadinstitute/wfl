@@ -32,7 +32,18 @@ jobs:
         leiningen: 2.9.1
         boot: 2.8.3
         tools-deps: 1.10.1.469
-          
+
+    - name: Get Branch Name
+      run: |
+        action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
+        merged=$(jq --raw-output .pull_request.merged "$GITHUB_EVENT_PATH")
+
+        ref=$(jq --raw-output .pull_request.head.ref "$GITHUB_EVENT_PATH")
+        owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
+        repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
+
+        echo ::set-env name=BRANCH_NAME::${ref}
+
     - name: Build the WFL
       run: |
         mkdir -p ~/.ssh
@@ -63,34 +74,25 @@ jobs:
 
         boot build
 
+        # build the tag to apply.
+        # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
+        # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
+        if [[ ${env.BRANCH_NAME} == "master" ]]
+        then
+          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+        else
+          TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
+        fi
+
         # build the api image
-        docker build . -t broadinstitute/workflow-launcher-api:${GITHUB_SHA}
+        docker build . -t broadinstitute/workflow-launcher-api:${TAG}
 
         # build the ui image
-        docker build ui/. -t broadinstitute/workflow-launcher-ui:${GITHUB_SHA}
+        docker build ui/. -t broadinstitute/workflow-launcher-ui:${TAG}
 
         docker login --username "${{ secrets.dockerhub_username }}" --password "${{ secrets.dockerhub_password }}"
 
-        docker push broadinstitute/workflow-launcher-api:${GITHUB_SHA}
+        docker push broadinstitute/workflow-launcher-api:${TAG}
 
-        docker push broadinstitute/workflow-launcher-ui:${GITHUB_SHA}
+        docker push broadinstitute/workflow-launcher-ui:${TAG}
 
-#    - name: Publish Docker
-#      uses: elgohr/Publish-Docker-Github-Action@2.14
-#      with:
-#        # The name of the image you would like to push
-#        name: broadinstitute/workflow-launcher-api:${GITHUB_SHA}
-#        # The login username for the registry
-#        username: "${{ secrets.dockerhub_username }}"
-#        # The login password for the registry
-#        password: "${{ secrets.dockerhub_password }}"
-#
-#    - name: Publish Docker
-#      uses: elgohr/Publish-Docker-Github-Action@2.14
-#      with:
-#        # The name of the image you would like to push
-#        name: broadinstitute/workflow-launcher-ui:${GITHUB_SHA}
-#        # The login username for the registry
-#        username: "${{ secrets.dockerhub_username }}"
-#        # The login password for the registry
-#        password: "${{ secrets.dockerhub_password }}"
