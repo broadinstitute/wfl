@@ -19,7 +19,6 @@
             newColumnName="items"
             oldColumnName="load"
             remarks="name of the table of type 'pipeline'"
-            schemaName="wfl"
             tableName="workload"/>
     </changeSet>
 </databaseChangeLog>
