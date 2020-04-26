@@ -77,7 +77,7 @@ jobs:
         # build the tag to apply.
         # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
         # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
-        if [[ ${env.BRANCH_NAME} == "master" ]]
+        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
         then
           TAG="$(cat build.txt)-${GITHUB_SHA::8}"
         else
