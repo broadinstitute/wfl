@@ -28,7 +28,7 @@ jobs:
 
     - name: test this
       run: |
-        echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}"
+        echo "BRANCH_NAME=${GITHUB_REF}"
         echo "GITHUB_SHA=${GITHUB_SHA}"
         echo "BUILD VERSION=$(cat build.txt)"
           
