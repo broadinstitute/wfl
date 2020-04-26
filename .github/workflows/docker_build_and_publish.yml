@@ -47,6 +47,14 @@ jobs:
 
     - name: Build the WFL
       run: |
+        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
+        then
+        TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+        else
+        TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
+        fi
+
+        echo "TAG IS = ${TAG}"
 #        mkdir -p ~/.ssh
 #
 #        echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
@@ -78,15 +86,13 @@ jobs:
 #        # build the tag to apply.
 #        # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
 #        # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
-        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
-        then
-          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
-        else
-          TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
-        fi
-
-        echo "TAG IS = ${TAG}"
-
+#        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
+#        then
+#          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+#        else
+#          TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
+#        fi
+#
 #        # build the api image
 #        docker build . -t broadinstitute/workflow-launcher-api:${TAG}
 #
