@@ -28,8 +28,8 @@ jobs:
 
     - name: test this
       run: |
-        BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-        echo "BRANCH_NAME=${BRANCH_NAME}"
+        echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+        echo "BRANCH_NAME=${{ steps.vars.outputs.short_ref }}"
         echo "GITHUB_SHA=${GITHUB_SHA}"
         echo "BUILD VERSION=$(cat build.txt)"
           
