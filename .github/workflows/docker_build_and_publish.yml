@@ -31,17 +31,6 @@ jobs:
       shell: bash
       run: echo "##[set-output name=BRANCH_NAME;]$(echo ${GITHUB_REF#refs/heads/})"
 
-#      |
-#        action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
-#        merged=$(jq --raw-output .pull_request.merged "$GITHUB_EVENT_PATH")
-#
-#        echo "DEBUG -> action: $action merged: $merged"
-#
-#        ref=$(jq --raw-output .pull_request.head.ref "$GITHUB_EVENT_PATH")
-#        owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
-#        repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
-#        echo ::set-output name=BRANCH_NAME::${ref}
-
     - name: Install Clojure tools
       uses: DeLaGuardo/setup-clojure@2.0
       with:
@@ -51,61 +40,53 @@ jobs:
 
     - name: Build the WFL
       run: |
+        mkdir -p ~/.ssh
+
+        echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
+        echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
+        echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
+
+        chmod 600 ~/.ssh/dsde_pipelines_deploy_key
+        chmod 600 ~/.ssh/pipeline_config_deploy_key
+        chmod 600 ~/.ssh/wfl_deploy_key
+
+        echo """
+          Host dsde-pipelines.github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/dsde_pipelines_deploy_key
+
+          Host pipeline-config.github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/pipeline_config_deploy_key
+
+          Host wfl.github.com
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/wfl_deploy_key""" > ~/.ssh/config
+
+        boot build
+
+        # build the tag to apply.
+        # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
+        # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
         if [[ ${{ steps.get_branch.outputs.BRANCH_NAME }} == "master" ]]
         then
-        TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
         else
-        TAG="${{ steps.get_branch.outputs.BRANCH_NAME }}-${GITHUB_SHA::8}"
+          TAG="${{ steps.get_branch.outputs.BRANCH_NAME }}-${GITHUB_SHA::8}"
         fi
 
-        echo "TAG IS = ${TAG}"
-#        mkdir -p ~/.ssh
-#
-#        echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
-#        echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
-#        echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
-#
-#        chmod 600 ~/.ssh/dsde_pipelines_deploy_key
-#        chmod 600 ~/.ssh/pipeline_config_deploy_key
-#        chmod 600 ~/.ssh/wfl_deploy_key
-#
-#        echo """
-#          Host dsde-pipelines.github.com
-#          HostName github.com
-#          User git
-#          IdentityFile ~/.ssh/dsde_pipelines_deploy_key
-#
-#          Host pipeline-config.github.com
-#          HostName github.com
-#          User git
-#          IdentityFile ~/.ssh/pipeline_config_deploy_key
-#
-#          Host wfl.github.com
-#          HostName github.com
-#          User git
-#          IdentityFile ~/.ssh/wfl_deploy_key""" > ~/.ssh/config
-#
-#        boot build
-#
-#        # build the tag to apply.
-#        # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
-#        # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
-#        if [[ ${{ env.BRANCH_NAME }} == "master" ]]
-#        then
-#          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
-#        else
-#          TAG="${{ env.BRANCH_NAME }}-${GITHUB_SHA::8}"
-#        fi
-#
-#        # build the api image
-#        docker build . -t broadinstitute/workflow-launcher-api:${TAG}
-#
-#        # build the ui image
-#        docker build ui/. -t broadinstitute/workflow-launcher-ui:${TAG}
-#
-#        docker login --username "${{ secrets.dockerhub_username }}" --password "${{ secrets.dockerhub_password }}"
-#
-#        docker push broadinstitute/workflow-launcher-api:${TAG}
-#
-#        docker push broadinstitute/workflow-launcher-ui:${TAG}
+        # build the api image
+        docker build . -t broadinstitute/workflow-launcher-api:${TAG}
+
+        # build the ui image
+        docker build ui/. -t broadinstitute/workflow-launcher-ui:${TAG}
+
+        docker login --username "${{ secrets.dockerhub_username }}" --password "${{ secrets.dockerhub_password }}"
+
+        docker push broadinstitute/workflow-launcher-api:${TAG}
+
+        docker push broadinstitute/workflow-launcher-ui:${TAG}
 
