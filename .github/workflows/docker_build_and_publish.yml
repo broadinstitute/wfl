@@ -38,10 +38,11 @@ jobs:
         action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
         merged=$(jq --raw-output .pull_request.merged "$GITHUB_EVENT_PATH")
 
+        echo "DEBUG -> action: $action merged: $merged"
+
         ref=$(jq --raw-output .pull_request.head.ref "$GITHUB_EVENT_PATH")
         owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
         repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
-
         echo ::set-env name=BRANCH_NAME::${ref}
 
     - name: Build the WFL
