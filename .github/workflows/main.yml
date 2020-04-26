@@ -24,13 +24,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
-        
-      - name: test this
-        run:|
-          echo "BRANCH_NAME=${BRANCH_NAME}"
-          echo "GITHUB_SHA=${GITHUB_SHA}"
-          echo "BUILD VERSION=$(cat build.txt)"
+    - uses: actions/checkout@v2
+
+    - name: test this
+      run: |
+        echo "BRANCH_NAME=${BRANCH_NAME}"
+        echo "GITHUB_SHA=${GITHUB_SHA}"
+        echo "BUILD VERSION=$(cat build.txt)"
           
           
           
