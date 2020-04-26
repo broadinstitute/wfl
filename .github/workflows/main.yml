@@ -28,8 +28,22 @@ jobs:
 
     - name: test this
       run: |
-        echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-        echo "BRANCH_NAME=${{ steps.vars.outputs.short_ref }}"
+        action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
+        merged=$(jq --raw-output .pull_request.merged "$GITHUB_EVENT_PATH")
+
+        echo "DEBUG -> action: $action merged: $merged"
+
+
+        ref=$(jq --raw-output .pull_request.head.ref "$GITHUB_EVENT_PATH")
+        owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
+        repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
+
+
+        echo ::set-env name=BRANCH_NAME::${ref}
+    
+    - name: test that
+      run: |
+        echo "BRANCH_NAME=${{ env.BRANCH_NAME }}"
         echo "GITHUB_SHA=${GITHUB_SHA}"
         echo "BUILD VERSION=$(cat build.txt)"
           
