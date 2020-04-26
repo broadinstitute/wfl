@@ -38,12 +38,7 @@ jobs:
         owner=$(jq --raw-output .pull_request.head.repo.owner.login "$GITHUB_EVENT_PATH")
         repo=$(jq --raw-output .pull_request.head.repo.name "$GITHUB_EVENT_PATH")
 
-
-        echo ::set-env name=BRANCH_NAME::${ref}
-    
-    - name: test that
-      run: |
-        echo "BRANCH_NAME=${{ env.BRANCH_NAME }}"
+        echo "BRANCH_NAME=${ref}"
         echo "GITHUB_SHA=${GITHUB_SHA}"
         echo "BUILD VERSION=$(cat build.txt)"
           
