@@ -33,10 +33,10 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::load                 (s/or :aos (s/+ ::load-aos)
-                                    :wgs (s/+ ::load-wgs)))
-(s/def ::load-aos             (constantly true)) ; stub
-(s/def ::load-wgs             (s/keys :opt-un [::base_file_name
+(s/def ::items                (s/or :aos (s/+ ::items-aos)
+                                    :wgs (s/+ ::items-wgs)))
+(s/def ::items-aos            (constantly true)) ; stub
+(s/def ::items-wgs            (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
                                                ::unmapped_bam_suffix]
                                       :req-un [::input_cram
@@ -84,7 +84,7 @@
 (s/def ::workload-request     (s/keys :req-un [::creator
                                                ::cromwell
                                                ::input
-                                               ::load
+                                               ::items
                                                ::output
                                                ::pipeline
                                                ::project]))

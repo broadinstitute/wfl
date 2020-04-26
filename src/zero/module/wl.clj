@@ -21,31 +21,31 @@
 
 (defn maybe-update-workflow-status!
   "Use TX to update the status of WORKFLOW in ENV."
-  [tx env {:keys [id uuid] :as _workflow}]
+  [tx env items {:keys [id uuid] :as _workflow}]
   (letfn [(maybe [m k v] (if v (assoc m k v) m))]
     (when uuid
       (let [now    (OffsetDateTime/now)
             status (util/do-or-nil (cromwell/status env uuid))]
-        (jdbc/update! tx load
+        (jdbc/update! tx items
                       (maybe {:updated now :uuid uuid} :status status)
                       ["id = ?" id])))))
 
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
-  [tx {:keys [cromwell load] :as workload}]
+  [tx {:keys [cromwell items] :as workload}]
   (let [env (@cromwell->env cromwell)]
-    (->> load
+    (->> items
          (postgres/get-table tx)
-         (run! (partial maybe-update-workflow-status! tx env)))))
+         (run! (partial maybe-update-workflow-status! tx env items)))))
 
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
-  [db {:keys [load] :as body}]
+  [db {:keys [items] :as body}]
   (jdbc/with-db-transaction [tx db]
     (let [now          (OffsetDateTime/now)
           [uuid table] (all/add-workload-table! tx wgs/workflow-wdl body)]
       (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
-        (jdbc/insert-multi! tx table (map idnow load (rest (range)))))
+        (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
       uuid)))
 
 (defn create-workload
@@ -86,7 +86,7 @@
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [cromwell input load output uuid] :as workload}]
+  [tx {:keys [cromwell input items output uuid] :as workload}]
   (let [env    (@cromwell->env cromwell)
         input  (all/slashify input)
         output (all/slashify output)
@@ -98,9 +98,9 @@
                              env (str input input_cram) output))])
             (update! [tx [id uuid]]
               (when uuid
-                (jdbc/update! tx load
+                (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (let [workflows (postgres/get-table tx load)
+      (let [workflows (postgres/get-table tx items)
             ids-uuids (map submit! workflows)]
         (run! (partial update! tx) ids-uuids)))))

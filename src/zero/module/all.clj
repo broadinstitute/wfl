@@ -103,7 +103,7 @@
                                      "WHERE id = %s"]) pipeline id)
         work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                       table pipeline)]
-    (jdbc/update! tx :workload {:load table} ["id = ?" id])
+    (jdbc/update! tx :workload {:item table} ["id = ?" id])
     (jdbc/db-do-commands tx [kind work])
     [uuid table]))
 

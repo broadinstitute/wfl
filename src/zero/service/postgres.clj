@@ -110,35 +110,35 @@
       http/request :body json/read-str util/do-or-nil))
 
 (defn update-workflow-status!
-  "Use TX to update the status of WORKFLOW in LOAD table."
-  [tx cromwell load {:keys [id uuid] :as _workflow}]
+  "Use TX to update the status of WORKFLOW in ITEMS table."
+  [tx cromwell items {:keys [id uuid] :as _workflow}]
   (zero.debug/trace _workflow)
   (letfn [(maybe [m k v] (if v (assoc m k v) m))]
     (when uuid
       (let [now    (OffsetDateTime/now)
             status (cromwell-status cromwell uuid)]
-        (jdbc/update! tx load
+        (jdbc/update! tx items
                       (maybe {:updated now :uuid uuid} :status status)
                       ["id = ?" id])))))
 
 (defn update-workload!
-  "Use transaction TX to update workLOAD statuses from CROMWELL."
-  [tx cromwell load]
-  (zero.debug/trace [tx cromwell load])
-  (->> load
+  "Use transaction TX to update workload ITEMS statuses from CROMWELL."
+  [tx cromwell items]
+  (zero.debug/trace [tx cromwell items])
+  (->> items
        (get-table tx)
-       (run! (partial update-workflow-status! tx cromwell load))))
+       (run! (partial update-workflow-status! tx cromwell items))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
   [tx {:keys [uuid]}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
-          {:keys [cromwell load] :as workload} (first (jdbc/query tx select))]
+          {:keys [cromwell items] :as workload} (first (jdbc/query tx select))]
       (zero.debug/trace workload)
-      (util/do-or-nil (update-workload! tx cromwell load))
+      (util/do-or-nil (update-workload! tx cromwell items))
       (assoc workload :workflows
-             (->> load
+             (->> items
                   (format "SELECT * FROM %s")
                   (jdbc/query tx)
                   (mapv unnilify))))))
@@ -153,8 +153,8 @@
                             "WHERE typname = 'pipeline'"])
           eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
       (when (seq (jdbc/query db wq))
-        (doseq [{:keys [load]} (jdbc/query db "SELECT load FROM workload")]
-          (jdbc/db-do-commands db (str "DROP TABLE " load)))
+        (doseq [{:keys [items]} (jdbc/query db "SELECT items FROM workload")]
+          (jdbc/db-do-commands db (str "DROP TABLE " items)))
         (jdbc/db-do-commands db "DROP TABLE workload"))
       (when (seq (jdbc/query db tq))
         (doseq [enum (jdbc/query db eq)]
