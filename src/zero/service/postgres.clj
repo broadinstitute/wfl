@@ -135,13 +135,13 @@
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
           {:keys [cromwell items] :as workload} (first (jdbc/query tx select))]
-      (zero.debug/trace workload)
       (util/do-or-nil (update-workload! tx cromwell items))
-      (assoc workload :workflows
-             (->> items
-                  (format "SELECT * FROM %s")
-                  (jdbc/query tx)
-                  (mapv unnilify))))))
+      (-> workload
+          (assoc :workflows (->> items
+                                 (format "SELECT * FROM %s")
+                                 (jdbc/query tx)
+                                 (mapv unnilify)))
+          unnilify))))
 
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."

@@ -18,7 +18,7 @@
      :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
      :pipeline "ExternalWholeGenomeReprocessing"
      :project  (format "Testing with %s." user)
-     :load     [{:unmapped_bam_suffix  ".unmapped.bam",
+     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
                  :sample_name          "NA12878 PLUMBING",
                  :base_file_name       "NA12878_PLUMBING",
                  :final_gvcf_base_name "NA12878_PLUMBING",
@@ -26,14 +26,14 @@
 
 (defn -main
   [& args]
-  (let [url    (str server "/api/v1/workload")
-        tmp    (str "./" (UUID/randomUUID) ".json")
-        auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
-        noload (dissoc request :load)]
+  (let [url      (str server "/api/v1/workload")
+        tmp      (str "./" (UUID/randomUUID) ".json")
+        auth     (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
+        no-items (dissoc request :items)]
     (pprint url)
     (try
       (util/spit-json tmp request)
-      (let [{:keys [id load pipeline uuid] :as response}
+      (let [{:keys [id items pipeline uuid] :as response}
             (json/read-str
               (util/shell! "curl" "-H" auth
                            "-H" "Content-Type: application/json"
@@ -44,9 +44,9 @@
               (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
               :key-fn keyword)]
         (pprint got)
-        (assert (= noload (select-keys response (keys noload))))
-        (assert (str/starts-with? load pipeline))
-        (assert (str/ends-with?   load (str id)))
+        (assert (= no-items (select-keys response (keys no-items))))
+        (assert (str/starts-with? items pipeline))
+        (assert (str/ends-with?   items (str id)))
         (assert (= got response)))
       (finally (util/delete-tree (io/file tmp)))))
   (System/exit 0))
