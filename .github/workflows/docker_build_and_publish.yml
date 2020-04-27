@@ -78,11 +78,17 @@ jobs:
         # build the tag to apply.
         # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
         # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
+
+        WFL_JAR_PATH="target/wfl-*.jar"
+        WFL_BASE="$(echo $WFL_JAR_PATH | sed 's=.*/==;s/\.[^.]*$//')"
+        WFL_VERSION="${WFL_BASE#*-}"
+        echo $WFL_VERSION
+
         if [[ ${{ steps.get_branch.outputs.BRANCH_NAME }} == "master" ]]
         then
-          TAG="$(cat build.txt)-${GITHUB_SHA::8}"
+          TAG="${WFL_VERSION}-${GITHUB_SHA::8}"
         else
-          TAG="${{ steps.get_branch.outputs.BRANCH_NAME }}-${GITHUB_SHA::8}"
+          TAG="${{ steps.get_branch.outputs.BRANCH_NAME }}-${WFL_VERSION}-${GITHUB_SHA::8}"
         fi
 
         # build the api image
