@@ -123,20 +123,19 @@
 (defn post-workload
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
-  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
-        {:keys [body]} parameters
-        add {"AllOfUsArrays"                   aou/add-workload!
-             "ExternalWholeGenomeReprocessing" wl/add-workload!}
-        add! (add (:pipeline body) add-fail)]
-    (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
-      (->> body
-           (add! tx)
-           (conj ["SELECT * FROM workload WHERE uuid = ?"])
-           (jdbc/query tx)
-           first
-           (filter second)
-           (into {})
-           succeed))))
+  (letfn [(unnilify [m] (into {} (filter second m)))]
+    (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
+          {:keys [body]} parameters
+          add {"AllOfUsArrays"                   aou/add-workload!
+               "ExternalWholeGenomeReprocessing" wl/add-workload!}
+          add! (add (:pipeline body) add-fail)]
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
+        (->> body
+             (add! tx)
+             :uuid
+             (conj ["SELECT * FROM workload WHERE uuid = ?"])
+             (jdbc/query tx)
+             first unnilify succeed)))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."

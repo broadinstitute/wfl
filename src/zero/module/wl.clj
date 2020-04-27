@@ -45,7 +45,7 @@
         [uuid table] (all/add-workload-table! tx wgs/workflow-wdl body)]
     (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
       (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
-    uuid))
+    {:uuid uuid}))
 
 (defn create-workload
   "Remember the workload specified by BODY."
