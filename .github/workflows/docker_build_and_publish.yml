@@ -29,7 +29,7 @@ jobs:
     - name: Get Branch Name
       id: get_branch
       shell: bash
-      run: echo "##[set-output name=BRANCH_NAME;]$(echo ${GITHUB_REF#refs/heads/})"
+      run: echo "##[set-output name=BRANCH_NAME;]$(echo ${GITHUB_HEAD_REF#refs/heads/})"
 
     - name: Install Clojure tools
       uses: DeLaGuardo/setup-clojure@2.0
