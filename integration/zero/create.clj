@@ -43,15 +43,17 @@
             (json/read-str
               (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
               :key-fn keyword)]
-        (pprint got)
+        (pprint [:got got])
         (assert (= no-items (select-keys response (keys no-items))))
         (assert (str/starts-with? items pipeline))
         (assert (str/ends-with?   items (str id)))
-        (assert (= got response)))
+        (assert (= (select-keys got (keys response)) response))
+        (assert (:workflows got)))
       (finally (util/delete-tree (io/file tmp)))))
   (System/exit 0))
 
 (comment
+  (-main)
   (json/read-str
     (util/shell!
       "curl"

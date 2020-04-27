@@ -128,14 +128,15 @@
         add {"AllOfUsArrays"                   aou/add-workload!
              "ExternalWholeGenomeReprocessing" wl/add-workload!}
         add! (add (:pipeline body) add-fail)]
-    (->> body
-         (add! (postgres/zero-db-config environment))
-         (conj ["SELECT * FROM workload WHERE uuid = ?"])
-         (jdbc/query (postgres/zero-db-config environment))
-         first
-         (filter second)
-         (into {})
-         succeed)))
+    (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
+      (->> body
+           (add! tx)
+           (conj ["SELECT * FROM workload WHERE uuid = ?"])
+           (jdbc/query tx)
+           first
+           (filter second)
+           (into {})
+           succeed))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."

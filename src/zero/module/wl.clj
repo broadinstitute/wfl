@@ -39,14 +39,13 @@
          (run! (partial maybe-update-workflow-status! tx env items)))))
 
 (defn add-workload!
-  "Add the workload described by BODY to the database DB."
-  [db {:keys [items] :as body}]
-  (jdbc/with-db-transaction [tx db]
-    (let [now          (OffsetDateTime/now)
-          [uuid table] (all/add-workload-table! tx wgs/workflow-wdl body)]
-      (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
-        (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
-      uuid)))
+  "Use transaction TX to add the workload described by BODY."
+  [tx {:keys [items] :as body}]
+  (let [now          (OffsetDateTime/now)
+        [uuid table] (all/add-workload-table! tx wgs/workflow-wdl body)]
+    (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
+      (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
+    uuid))
 
 (defn create-workload
   "Remember the workload specified by BODY."
