@@ -9,7 +9,6 @@ on:
   push:
     branches: 
       - master
-      - ra_master_docker_build_n_publish
   pull_request:
     branches: 
       - master
