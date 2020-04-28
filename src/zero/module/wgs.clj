@@ -163,15 +163,14 @@
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
   [environment in-gs out-gs]
-  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
-    (let [workflow-id (cromwell/submit-workflow
-                        environment
-                        (io/file (:dir path) (path ".wdl"))
-                        (io/file (:dir path) (path ".zip"))
-                        (make-inputs environment out-gs in-gs)
-                        (util/make-options environment)
-                        cromwell-label-map)]
-      workflow-id)))
+  (let [path (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
+    (cromwell/submit-workflow
+      environment
+      (io/file (:dir path) (path ".wdl"))
+      (io/file (:dir path) (path ".zip"))
+      (make-inputs environment out-gs in-gs)
+      (util/make-options environment)
+      cromwell-label-map)))
 
 (defn submit-workflow
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
