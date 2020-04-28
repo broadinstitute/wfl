@@ -7,6 +7,7 @@
             [clj-http.client :as http]
             [zero.environments :as env]
             [zero.once :as once]
+            [zero.service.cromwell :as cromwell]
             [zero.util :as util]
             [zero.zero :as zero])
   (:import [java.time OffsetDateTime]
@@ -124,11 +125,16 @@
                       ["id = ?" id])))))
 
 (defn update-workload!
-  "Use transaction TX to update workload ITEMS statuses from CROMWELL."
-  [tx cromwell items]
+  "Use transaction TX to update WORKLOAD statuses."
+  [tx {:keys [cromwell id items] :as workload}]
   (->> items
        (get-table tx)
-       (run! (partial update-workflow-status! tx cromwell items))))
+       (run! (partial update-workflow-status! tx cromwell items)))
+  (let [finished? (set (conj cromwell/final-statuses "skipped"))]
+    (when (every? (comp finished? :status) (get-table tx items))
+      (jdbc/update! tx :workload
+                    {:finished (OffsetDateTime/now)}
+                    ["id = ?" id]))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
@@ -136,7 +142,7 @@
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
           {:keys [cromwell items] :as workload} (first (jdbc/query tx select))]
-      (util/do-or-nil (update-workload! tx cromwell items))
+      (util/do-or-nil (update-workload! tx workload))
       (-> workload
           (assoc :workflows (->> items
                                  (format "SELECT * FROM %s")

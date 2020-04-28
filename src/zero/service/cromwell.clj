@@ -10,15 +10,22 @@
             [zero.util :as util]
             [zero.zero :as zero]))
 
-(def statuses
-  "The statuses a Cromwell workflow can have."
+(def final-statuses
+  "The final statuses a Cromwell workflow can have."
   ["Aborted"
-   "Aborting"
    "Failed"
+   "Succeeded"])
+
+(def active-statuses
+  "The statuses an active Cromwell workflow can have."
+  ["Aborting"
    "On Hold"
    "Running"
-   "Submitted"
-   "Succeeded"])
+   "Submitted"])
+
+(def statuses
+  "All the statuses a Cromwell workflow can have."
+  (into active-statuses final-statuses))
 
 (defn url
   "URL for GotC Cromwell in ENVIRONMENT."
