@@ -18,7 +18,7 @@ version: 0.2.0
 
 home: https://github.com/broadinstitute/wfl
 appVersion: 0.2.0
-
+# test comment
 keywords:
 - clojure
 - cloud
