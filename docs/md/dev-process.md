@@ -1,12 +1,25 @@
 # Development Process
 
-This is a development process we are tying to standardize within the team, and encourage ourselves to follow in most cases.
+This is a development process
+we are tying to standardize
+within the team,
+and encourage ourselves
+to follow in most cases.
 
 ## Summary
 
-We always make feature branches from `master`, make pull requests, ask for reviews and merge back to `master` on Github. 
+We always make feature branches from `master`,
+make pull requests,
+ask for reviews
+and merge back to `master` on Github.
 
-Currently we always deploy the latest master to the development environment after merge, but in the future, we might need to cut off releases on master and deployed the released versions to the server only. It's not decided yet.
+Currently we always deploy the latest master
+to the development environment after merge,
+but in the future we might need
+to cut off releases on master
+and deploy the released versions
+to the server only.
+It's not decided yet.
 
 ## Steps
 
@@ -22,7 +35,7 @@ Currently we always deploy the latest master to the development environment afte
     ```
 
 3. Create a feature branch
-    
+
     _It is highly recommend that you follow the naming convention
     shown below so JIRA could pick up the branch and link it
     to our JIRA board._
@@ -62,11 +75,11 @@ Currently we always deploy the latest master to the development environment afte
 
     - If the PR is ready for review, click `Create pull request`.
 
-8. Look for a reviewer in the team. 
+8. Look for a reviewer in the team.
 
 9. Address reviewer comments with more commits.
 
-10. Receive approval from reviewers. 
+10. Receive approval from reviewers.
 
 11. Make sure build the backend code at least once with:
     ```
@@ -81,11 +94,11 @@ Currently we always deploy the latest master to the development environment afte
     git pull origin master
     boot deploy
     ```
-    
+
     you might need to login to vault and google by the following commands before you want to deploy:
     ```
     vault auth -method=github token=$(cat ~/.github-token)
     gcloud auth login
     ```
 
-    **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!** 
+    **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!**
