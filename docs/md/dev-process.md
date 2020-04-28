@@ -102,3 +102,72 @@ It's not decided yet.
     ```
 
     **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!**
+
+## Tips
+
+Here are some tips for WFL development.
+
+### migrating a database
+
+To change WFL's Postgres database schema,
+add a changeset XML file
+in the `database/changesets` directory.
+Name the file for a recent or the current date
+followed by something describing the change.
+That will ensure that the changesets
+list in the order in which they apply.
+Note that the `id` and `logicalFilePath` attributes
+are derived from the changeset's file name.
+Then add the changeset file
+to the `database/changlog.xml` file.
+
+Test the changes against a local _scratch database_.
+See the next section for suggestions.
+
+### hacking a scratch database
+
+Some of this advice might help
+when testing Liquibase migration
+or other changes
+that affect WFL's Postgres database.
+
+Set `"ZERO_POSTGRES_URL"`
+to `(postgres/zero-db-url :debug)`
+in `zero.server/env_variables`
+to redirect the WFL server's database
+to a local Postgres server.
+With that hack in place,
+running `./ops/server.sh`
+(or however you launch a local WFL server)
+will connect the server to a local Postgres.
+
+Now any changes to WFL state
+will affect only your local database.
+That includes running Liquibase,
+so don't forget to reset `:debug` to `env`
+before deploying your changes
+after merging a PR.
+
+There is also a "Rich comment"
+at the end of `zero.service.postgres`
+with some useful hacks for debugging
+Postgres and Liquibase operations
+during development.
+The 0-arity `zero.service.postgres/run-liquibase` function
+runs the standard liquibase scripts
+against the local `:debug` database.
+Similarly,
+`zero.service.postgres/reset-debug-db`
+resets the local `:debug` Postgres server
+to its initial state --
+before running Liquibase or SQL
+against the database.
+
+### integration tests
+
+We implement integration tests
+under the `integration/zero` directory.
+
+They are triggered via `deps.edn` aliases.
+See examples in the `deps.edn` file
+in the top-level directory of the repository.

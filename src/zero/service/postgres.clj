@@ -178,7 +178,4 @@
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
   (run-liquibase)
   (reset-debug-db)
-  (run-liquibase :gotc-dev)
-  (zero-db-config :gotc-dev)
-  (query :debug "SELECT * FROM workload")
   )
