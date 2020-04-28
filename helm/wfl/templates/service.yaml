@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wfl.fullname" . }}
+  labels:
+    {{- include "wfl.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.ui.service.type }}
+  ports:
+    - port: {{ .Values.ui.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: wfl-ui
+  selector:
+    {{- include "wfl.selectorLabels" . | nindent 4 }}

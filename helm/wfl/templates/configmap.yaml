@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wfl.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "wfl.labels" . | nindent 4 }}
+data:
+  siteconf: |-
+    ServerAdmin ${SERVER_ADMIN}
+    ServerName ${SERVER_NAME}
+    ServerTokens ProductOnly
+    TraceEnable off
+
+    LogFormat "%h %l %u \"%{OIDC_CLAIM_email}i\" \"%{X-App-ID}i\" [%{%FT%T}t.%{msec_frac}t%{%z}t] %D %X \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+    LogFormat "%{X-Forwarded-For}i %l %u \"%{OIDC_CLAIM_email}i\" \"%{X-App-ID}i\" [%{%FT%T}t.%{msec_frac}t%{%z}t] %D %X \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
+    SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+
+    CustomLog "/dev/stdout" combined env=!forwarded
+    CustomLog "/dev/stdout" proxy env=forwarded
+    ErrorLog /dev/stdout
+    LogLevel ${LOG_LEVEL}
+
+    Header unset X-Frame-Options
+    Header always set X-Frame-Options SAMEORIGIN
+
+    ProxyTimeout ${PROXY_TIMEOUT}
+
+    LDAPCacheTTL ${LDAP_CACHE_TTL}
+
+    OIDCOAuthTokenIntrospectionInterval 60
+    SSLProxyEngine on
+
+    <VirtualHost _default_:${HTTPD_PORT}>
+        RewriteEngine On
+        RewriteCond  %{HTTP:X-Forwarded-Proto} !https
+        RewriteCond %{REQUEST_URI}  !^/(status) [NC]
+
+        # NE|noescape for special cahracters
+        RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L,NE]
+
+        # Perform a terminal redirect if the method is HTTP OPTIONS
+        RewriteCond %{REQUEST_METHOD} OPTIONS
+        RewriteRule ^(.*)$ $1 [R=204,L]
+
+        DocumentRoot /app/dist
+
+        # === UI ===
+        <Directory "/app/dist">
+            Require all granted
+
+            # Turn on directory listings for/app/dist
+            Options -Indexes
+
+            # Order allow,deny tells the web server that 
+            # the Allow rules are processed before the Deny rules. 
+            # If the client does not match the Allow rule or it 
+            # does match the Deny rule, then the client will be denied access.
+            Order allow,deny
+            Allow from all
+
+            # any directive which has the .htaccess 
+            # Context is allowed in .htaccess files.
+            AllowOverride All
+
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteBase /
+                RewriteRule ^index\.html$ - [L]
+                RewriteRule !^/swagger/index\.html$ - [L]
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule . /index.html [L]
+            </IfModule>
+        </Directory>
+
+        # === API ===
+
+        # For those endpoints that does NOT require AUTH
+        # reverse proxy for /status and /version
+        ProxyPassMatch          ^/(status|version) ${PROXY_URL}/$1
+        ProxyPassReverse        ^/(status|version) ${PROXY_URL}/$1
+
+        # reverse proxy for /swagger
+        ProxyPass               /swagger ${PROXY_URL}/swagger
+        ProxyPassReverse        /swagger ${PROXY_URL}/swagger
+
+        <LocationMatch "/(status|version|swagger)">
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
+
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE}
+            ${AUTH_LDAP_URL}
+            ${AUTH_LDAP_GROUP_ATTR}
+            ${AUTH_LDAP_BIND_DN}
+            ${AUTH_LDAP_BIND_PASSWORD}
+            ${AUTH_REQUIRE}
+
+            ${FILTER}
+        </LocationMatch>
+
+        # For those endpoints that require AUTH
+        <Location /api>
+            Header unset Access-Control-Allow-Origin
+            Header always set Access-Control-Allow-Origin "*"
+            Header unset Access-Control-Allow-Headers
+            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
+            Header unset Access-Control-Allow-Methods
+            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
+            Header unset Access-Control-Max-Age
+            Header always set Access-Control-Max-Age 1728000
+
+            <Limit OPTIONS>
+                Require all granted
+            </Limit>
+
+            ${AUTH_TYPE2}
+            ${AUTH_LDAP_URL2}
+            ${AUTH_LDAP_GROUP_ATTR2}
+            ${AUTH_LDAP_BIND_DN2}
+            ${AUTH_LDAP_BIND_PASSWORD2}
+            ${AUTH_REQUIRE2}
+
+            # reverse proxy for /api/*
+            ProxyPass          ${PROXY_URL2}
+            ProxyPassReverse   ${PROXY_URL2}
+
+            ${FILTER2}
+        </Location>
+
+        <Location ${CALLBACK_PATH}>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+    </VirtualHost>
+

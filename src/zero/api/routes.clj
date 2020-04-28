@@ -138,9 +138,10 @@
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
             :handler    (handlers/authorize handlers/post-workload)}}]
-   ["/swagger.json"
+   ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
-           :swagger {:info {:title (str zero/the-name "-API")}
+           :swagger {:info {:title (str zero/the-name "-API")
+                            :version (str (:version (zero/get-the-version)))}
                      :basePath "/"} ;; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
@@ -163,6 +164,6 @@
                            multipart/multipart-middleware]}})
     (ring/routes
       (swagger-ui/create-swagger-ui-handler {:path "/swagger"
-                                             :url  "/swagger.json"
+                                             :url  "/swagger/swagger.json"
                                              :root "swagger-ui"
                                              :config {:jsonEditor false}}))))

@@ -1,0 +1,15 @@
+{{- if .Values.rbac.create -}}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: "{{ include "wfl.fullname" . }}-use-pod-security-policy-role"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "wfl.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs: ["use"]
+    resourceNames:
+      - "{{ include "wfl.fullname" . }}-pod-running-policy"
+  {{- end }}

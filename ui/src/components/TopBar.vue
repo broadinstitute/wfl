@@ -52,7 +52,7 @@ export default {
     return {
       status: { status: "N/A" },
       auth_link: "/auth/google",
-      swagger_link: "/swagger"
+      swagger_link: "/swagger/index.html"
     };
   },
   methods: {
