@@ -28,22 +28,22 @@
 
 (defn -main
   [& args]
-  (let [url      (str server "/api/v1/workload")
-        tmp      (str "./" (UUID/randomUUID) ".json")
+  (let [tmp      (str "./" (UUID/randomUUID) ".json")
         auth     (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
         no-items (dissoc workload :items)]
-    (pprint url)
     (try
       (util/spit-json tmp workload)
       (let [{:keys [id items pipeline uuid] :as response}
             (json/read-str
               (util/shell! "curl" "-H" auth
                            "-H" "Content-Type: application/json"
-                           "--data-binary" (format "@%s" tmp) url)
+                           "--data-binary" (format "@%s" tmp)
+                           (str server "/api/v1/create"))
               :key-fn keyword)
             [got]
             (json/read-str
-              (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
+              (util/shell! "curl" "-H" auth
+                           (str server "/api/v1/workload?uuid=" uuid))
               :key-fn keyword)]
         (pprint [:got got])
         (assert (= no-items (select-keys response (keys no-items))))

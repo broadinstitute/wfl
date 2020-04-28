@@ -120,7 +120,7 @@
   [body]
   (fail {:add-workload-failed body}))
 
-(defn post-workload
+(defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (letfn [(unnilify [m] (into {} (filter second m)))]

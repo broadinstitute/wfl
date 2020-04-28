@@ -155,11 +155,12 @@
     {:get  {:summary    "Get the workloads."
             :parameters {:query ::uuid-query}
             :responses  {200 {:body ::workload-responses}}
-            :handler    (handlers/authorize handlers/get-workload)}
-     :post {:summary    "Create a new workload."
+            :handler    (handlers/authorize handlers/get-workload)}}]
+   ["/api/v1/create"
+    {:post {:summary    "Create a new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/post-workload)}}]
+            :handler    (handlers/authorize handlers/post-create)}}]
    ["/api/v1/start"
     {:post {:summary    "Start workloads."
             :parameters {:body ::uuid-kvs}
