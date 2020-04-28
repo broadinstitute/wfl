@@ -6,6 +6,11 @@ on:
       - master
     paths:
       - helm/**
+  pull_request:
+    branches:
+      - master
+    paths:
+      - helm/**
 
 jobs:
   release:
