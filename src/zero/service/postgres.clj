@@ -117,7 +117,8 @@
   (letfn [(maybe [m k v] (if v (assoc m k v) m))]
     (when uuid
       (let [now    (OffsetDateTime/now)
-            status (cromwell-status cromwell uuid)]
+            status (if (util/uuid-nil? uuid) "skipped"
+                       (cromwell-status cromwell uuid))]
         (jdbc/update! tx items
                       (maybe {:updated now :uuid uuid} :status status)
                       ["id = ?" id])))))

@@ -87,13 +87,14 @@
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
-    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
+    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(maybe [m k v] (if v (assoc m k v) m))
             (submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid
-                      (skip-workflow? env workload workflow)
-                      (wgs/really-submit-one-workflow
-                        env (str input input_cram) output))])
+                      (if (skip-workflow? env workload workflow)
+                        util/uuid-nil
+                        (wgs/really-submit-one-workflow
+                          env (str input input_cram) output)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
