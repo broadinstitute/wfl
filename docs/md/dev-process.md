@@ -179,7 +179,8 @@ Similarly,
 resets the local `:debug` Postgres server
 to its initial state --
 before running Liquibase or SQL
-against the database.
+against a shared database
+in `gotc-dev` or *gasp* production.
 
 ### integration tests
 
