@@ -140,7 +140,8 @@
             :handler    (handlers/authorize handlers/post-workload)}}]
    ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
-           :swagger {:info {:title (str zero/the-name "-API")}
+           :swagger {:info {:title (str zero/the-name "-API")
+                            :version (str (:version (zero/get-the-version)))}
                      :basePath "/"} ;; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
