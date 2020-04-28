@@ -124,6 +124,24 @@ to the `database/changlog.xml` file.
 Test the changes against a local _scratch database_.
 See the next section for suggestions.
 
+### debugging JDBC SQL
+
+Something seems to swallow SQL exceptions
+raised by Postgres and the JDBC library.
+Wrap suspect `clojure.java.jdbc` calls
+in `zero.util/do-or-nil` to ensure
+that any exceptions show up
+in the server logs.
+
+### debugging API specs
+
+If an API references an undefined spec,
+HTTP requests and responses might silently fail
+or the Swagger page will fail to render.
+Check the `clojure.spec.alpha/def`s
+in `zero.api.routes` for typos
+before tearing your hair out.
+
 ### hacking a scratch database
 
 Some of this advice might help
