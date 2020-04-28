@@ -166,7 +166,7 @@
             :parameters {:body ::uuid-kvs}
             :responses  {200 {:body ::workload-responses}}
             :handler    (handlers/authorize handlers/post-start)}}]
-   ["/swagger.json"
+   ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")
                             :version (str (:version (zero/get-the-version)))}
