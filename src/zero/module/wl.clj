@@ -60,28 +60,25 @@
          (into {}))))
 
 (defn skip-workflow?
+  "True when WORKFLOW in WORKLOAD in ENV is done or active."
   [env
    {:keys [input output] :as workload}
    {:keys [input_cram]   :as workflow}]
-  (let [in-gs   (str (all/slashify input)  input_cram)
-        out-gs  (str (all/slashify output) input_cram)
-        done?   (->> out-gs
-                     gcs/parse-gs-url
-                     (apply gcs/list-objects)
-                     util/do-or-nil
-                     seq)
-        active? (->> {:label wgs/cromwell-label
-                      :status ["On Hold" "Running" "Submitted"]}
-                     (cromwell/query env)
-                     (map :id)
-                     (map (partial cromwell/metadata env))
-                     (map :submittedFiles)
-                     (map :inputs)
-                     (map (fn [it] (json/read-str it :key-fn keyword)))
-                     (map :ExternalWholeGenomeReprocessing.input_cram)
-                     (keep #{in-gs})
-                     seq)]
-    (or done? active?)))
+  (let [in-gs  (str (all/slashify input)  input_cram)
+        out-gs (str (all/slashify output) input_cram)]
+    (or (->> out-gs gcs/parse-gs-url
+             (apply gcs/list-objects)
+             util/do-or-nil seq)        ; done?
+        (->> {:label  wgs/cromwell-label
+              :status ["On Hold" "Running" "Submitted"]}
+             (cromwell/query env)
+             (map (comp :ExternalWholeGenomeReprocessing.input_cram
+                        (fn [it] (json/read-str it :key-fn keyword))
+                        :inputs :submittedFiles
+                        (partial cromwell/metadata env)
+                        :id))
+             (keep #{in-gs})
+             seq))))                    ; active?
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
@@ -93,8 +90,10 @@
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid] )
     (letfn [(maybe [m k v] (if v (assoc m k v) m))
             (submit! [{:keys [id input_cram uuid] :as workflow}]
-              [id (or uuid (wgs/really-submit-one-workflow
-                             env (str input input_cram) output))])
+              [id (or uuid
+                      (skip-workflow? env workload workflow)
+                      (wgs/really-submit-one-workflow
+                        env (str input input_cram) output))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items

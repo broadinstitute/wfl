@@ -10,12 +10,14 @@
   "https://wfl-dot-broad-gotc-dev.appspot.com"
   "http://localhost:3000")
 
-(def request
-  (let [user (util/getenv "USER" "tbl")]
+(def workload
+  "Define a workload to start."
+  (let [user (util/getenv "USER" "tbl")
+        path "/single_sample/plumbing/truth"]
     {:creator  (str/join "@" [user "broadinstitute.org"])
      :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
+     :input    (str "gs://broad-gotc-test-storage" path)
+     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
      :pipeline "ExternalWholeGenomeReprocessing"
      :project  (format "Testing with %s." user)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
@@ -29,10 +31,10 @@
   (let [url      (str server "/api/v1/workload")
         tmp      (str "./" (UUID/randomUUID) ".json")
         auth     (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
-        no-items (dissoc request :items)]
+        no-items (dissoc workload :items)]
     (pprint url)
     (try
-      (util/spit-json tmp request)
+      (util/spit-json tmp workload)
       (let [{:keys [id items pipeline uuid] :as response}
             (json/read-str
               (util/shell! "curl" "-H" auth
@@ -51,13 +53,3 @@
         (assert (:workflows got)))
       (finally (util/delete-tree (io/file tmp)))))
   (System/exit 0))
-
-(comment
-  (-main)
-  (json/read-str
-    (util/shell!
-      "curl"
-      "-H" (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
-      (str server "/api/v1/workload"))
-    :key-fn keyword)
-  )
