@@ -102,17 +102,18 @@
 ;; HACK: We don't have the workload environment here.
 ;;
 (defn cromwell-status
-  "NIL or status of the workflow with UUID on CROMWELL."
+  "NIL or the status of the workflow with UUID on CROMWELL."
   [cromwell uuid]
   (-> {:method  :get                    ; :debug true :debug-body true
        :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
        :headers (once/get-local-auth-header)}
-      http/request :body json/read-str util/do-or-nil))
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :status util/do-or-nil))
 
 (defn update-workflow-status!
   "Use TX to update the status of WORKFLOW in ITEMS table."
   [tx cromwell items {:keys [id uuid] :as _workflow}]
-  (zero.debug/trace _workflow)
   (letfn [(maybe [m k v] (if v (assoc m k v) m))]
     (when uuid
       (let [now    (OffsetDateTime/now)
@@ -124,7 +125,6 @@
 (defn update-workload!
   "Use transaction TX to update workload ITEMS statuses from CROMWELL."
   [tx cromwell items]
-  (zero.debug/trace [tx cromwell items])
   (->> items
        (get-table tx)
        (run! (partial update-workflow-status! tx cromwell items))))
