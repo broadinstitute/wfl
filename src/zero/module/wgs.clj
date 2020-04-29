@@ -133,7 +133,7 @@
                           hack-task-level-values))
         {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
-    #_(all/throw-when-output-exists-already! output)
+    (all/throw-when-output-exists-already! output)
     (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
 
 (defn active-objects
