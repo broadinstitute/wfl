@@ -52,7 +52,7 @@
                 "OAUTH2_CLIENT_ID"       oauth2_client_id
                 "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
                 "ZERO_POSTGRES_PASSWORD" password
-                "ZERO_POSTGRES_URL"      (postgres/zero-db-url :debug)
+                "ZERO_POSTGRES_URL"      (postgres/zero-db-url env)
                 "ZERO_POSTGRES_USERNAME" username}]
     (into {} (filter second result))))
 
