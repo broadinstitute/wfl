@@ -107,6 +107,11 @@ It's not decided yet.
 
 Here are some tips for WFL development.
 
+Some of this advice might help
+when testing Liquibase migration
+or other changes
+that affect WFL's Postgres database.
+
 ### migrating a database
 
 To change WFL's Postgres database schema,
@@ -144,10 +149,20 @@ before tearing your hair out.
 
 ### hacking a scratch database
 
-Some of this advice might help
-when testing Liquibase migration
-or other changes
-that affect WFL's Postgres database.
+You can test against a local Postgres
+before running Liquibase or SQL
+against a shared database
+in `gotc-dev` or *gasp* production.
+
+First install Postgres locally.
+
+``` shell
+brew install postgresql@11
+```
+
+You need version 11 because that
+is what Google's hosted service supports,
+and there are differences in the SQL syntax.
 
 Set `"ZERO_POSTGRES_URL"`
 to `(postgres/zero-db-url :debug)`
@@ -166,6 +181,8 @@ so don't forget to reset `:debug` to `env`
 before deploying your changes
 after merging a PR.
 
+### Rich comment in `zero.service.postgres`
+
 There is also a "Rich comment"
 at the end of `zero.service.postgres`
 with some useful hacks for debugging
@@ -177,10 +194,12 @@ against the local `:debug` database.
 Similarly,
 `zero.service.postgres/reset-debug-db`
 resets the local `:debug` Postgres server
-to its initial state --
-before running Liquibase or SQL
-against a shared database
-in `gotc-dev` or *gasp* production.
+to its initial state.
+
+Do *not* run something like `reset-debug-db`
+against a Postgres server
+deployed in the cloud
+or with an actual _environment_ set.
 
 ### integration tests
 
