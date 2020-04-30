@@ -49,7 +49,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "WholeGenomeReprocessing_v1.2"
+  {:release "tl_sort_sam_mem_bump_contam_dedup"
    :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
 
 (def adapter-workflow-wdl
