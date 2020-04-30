@@ -58,7 +58,9 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-wgs"))
+  {(keyword (str zero/the-name "-wgs-po-ticket"))
+   "PO-25045"
+   (keyword (str zero/the-name "-wgs"))
    (wdl/workflow-name adapter-workflow-wdl)})
 
 (def cromwell-label
