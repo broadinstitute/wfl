@@ -7,9 +7,11 @@
             [clj-http.client :as http]
             [zero.environments :as env]
             [zero.once :as once]
+            [zero.service.cromwell :as cromwell]
             [zero.util :as util]
             [zero.zero :as zero])
-  (:import [liquibase.integration.commandline Main]))
+  (:import [java.time OffsetDateTime]
+           [liquibase.integration.commandline Main]))
 
 (defn zero-db-url
   "An URL for the zero-postgresql service in ENVIRONMENT."
@@ -93,6 +95,61 @@
                          (util/getenv "USER" "postgres")
                          "password")))
 
+(defn get-table
+  "Return TABLE using transaction TX."
+  [tx table]
+  (jdbc/query tx (format "SELECT * FROM %s" table)))
+
+;; HACK: We don't have the workload environment here.
+;;
+(defn cromwell-status
+  "NIL or the status of the workflow with UUID on CROMWELL."
+  [cromwell uuid]
+  (-> {:method  :get                    ; :debug true :debug-body true
+       :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+       :headers (once/get-local-auth-header)}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :status util/do-or-nil))
+
+(defn update-workflow-status!
+  "Use TX to update the status of WORKFLOW in ITEMS table."
+  [tx cromwell items {:keys [id uuid] :as _workflow}]
+  (letfn [(maybe [m k v] (if v (assoc m k v) m))]
+    (when uuid
+      (let [now    (OffsetDateTime/now)
+            status (if (util/uuid-nil? uuid) "skipped"
+                       (cromwell-status cromwell uuid))]
+        (jdbc/update! tx items
+                      (maybe {:updated now :uuid uuid} :status status)
+                      ["id = ?" id])))))
+
+(defn update-workload!
+  "Use transaction TX to update WORKLOAD statuses."
+  [tx {:keys [cromwell id items] :as workload}]
+  (->> items
+       (get-table tx)
+       (run! (partial update-workflow-status! tx cromwell items)))
+  (let [finished? (set (conj cromwell/final-statuses "skipped"))]
+    (when (every? (comp finished? :status) (get-table tx items))
+      (jdbc/update! tx :workload
+                    {:finished (OffsetDateTime/now)}
+                    ["id = ?" id]))))
+
+(defn get-workload-for-uuid
+  "Use transaction TX to return workload with UUID."
+  [tx {:keys [uuid]}]
+  (letfn [(unnilify [m] (into {} (filter second m)))]
+    (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
+          {:keys [cromwell items] :as workload} (first (jdbc/query tx select))]
+      (util/do-or-nil (update-workload! tx workload))
+      (-> workload
+          (assoc :workflows (->> items
+                                 (format "SELECT * FROM %s")
+                                 (jdbc/query tx)
+                                 (mapv unnilify)))
+          unnilify))))
+
 (defn reset-debug-db
   "Drop everything managed by Liquibase from the :debug DB."
   []
@@ -103,8 +160,8 @@
                             "WHERE typname = 'pipeline'"])
           eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
       (when (seq (jdbc/query db wq))
-        (doseq [{:keys [load]} (jdbc/query db "SELECT load FROM workload")]
-          (jdbc/db-do-commands db (str "DROP TABLE " load)))
+        (doseq [{:keys [items]} (jdbc/query db "SELECT items FROM workload")]
+          (jdbc/db-do-commands db (str "DROP TABLE " items)))
         (jdbc/db-do-commands db "DROP TABLE workload"))
       (when (seq (jdbc/query db tq))
         (doseq [enum (jdbc/query db eq)]
@@ -121,7 +178,4 @@
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
   (run-liquibase)
   (reset-debug-db)
-  (run-liquibase :gotc-dev)
-  (zero-db-config :gotc-dev)
-  (query :debug "SELECT * FROM workload")
   )

@@ -14,8 +14,7 @@
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:import [java.time OffsetDateTime]))
 
 (def description
   "Describe the purpose of this command."
@@ -161,21 +160,24 @@
            (keep active?)
            set))))
 
+(defn really-submit-one-workflow
+  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
+  [environment in-gs out-gs]
+  (let [path (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
+    (cromwell/submit-workflow
+      environment
+      (io/file (:dir path) (path ".wdl"))
+      (io/file (:dir path) (path ".zip"))
+      (make-inputs environment out-gs in-gs)
+      (util/make-options environment)
+      cromwell-label-map)))
+
 (defn submit-workflow
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
   ENVIRONMENT."
   [environment in-bucket out-gs object]
-  (let [path  (wdl/hack-unpack-resources-hack adapter-workflow-wdl)
-        in-gs (gcs/gs-url in-bucket object)]
-    (let [workflow-id (cromwell/submit-workflow
-                        environment
-                        (io/file (:dir path) (path ".wdl"))
-                        (io/file (:dir path) (path ".zip"))
-                        (make-inputs environment out-gs in-gs)
-                        (util/make-options environment)
-                        cromwell-label-map)]
-      (prn workflow-id)
-      workflow-id)))
+  (let [in-gs (gcs/gs-url in-bucket object)]
+    (really-submit-one-workflow environment in-gs out-gs)))
 
 (defn submit-some-workflows
   "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
@@ -183,9 +185,8 @@
   (let [bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
-                (when unsuffixed [unsuffixed suffix])))
-            (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [slashified (slashify out-gs)
+                (when unsuffixed [unsuffixed suffix])))]
+      (let [slashified (all/slashify out-gs)
             done   (set/union (all/processed-crams slashified)
                               (active-objects environment in-gs))
             suffix (->> in-gs
@@ -197,8 +198,11 @@
                         keys
                         (remove done)
                         (take max)
-                        (map (fn [base] (str base (suffix base)))))]
-        (mapv (partial submit-workflow environment bucket slashified) more)))))
+                        (map (fn [base] (str base (suffix base)))))
+            submit (partial submit-workflow environment bucket slashified)
+            ids    (map submit more)]
+        (run! prn ids)
+        (vec ids)))))
 
 (defn submit-some-workflows-or-throw
   "Submit up to MAX-STRING workflows from IN-GS to OUT-GS in ENVIRONMENT."
@@ -220,47 +224,3 @@
     (catch Exception x
       (binding [*out* *err*] (println description))
       (throw x))))
-
-(defn add-wgs-workload!
-  "Add the WGS workload described by BODY to the database DB."
-  [db {:keys [creator cromwell input output pipeline project] :as body}]
-  (jdbc/with-db-transaction [db db]
-    (let [{:keys [commit version]} (zero/get-the-version)
-          [{:keys [id uuid]}]
-          (jdbc/insert! db :workload {:commit   commit
-                                      :creator  creator
-                                      :cromwell cromwell
-                                      :input    input
-                                      :output   output
-                                      :project  project
-                                      :release  (:release workflow-wdl)
-                                      :uuid     (UUID/randomUUID)
-                                      :version  version
-                                      :wdl      (:top workflow-wdl)})
-          work  (format "%s_%09d" pipeline id)
-          kind  (format (str/join " " ["UPDATE workload"
-                                       "SET pipeline = '%s'::pipeline"
-                                       "WHERE id = %s"]) pipeline id)
-          table (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                        work pipeline)
-          now   (OffsetDateTime/now)
-          load  (map (fn [m id] (-> m
-                                    (assoc :id id)
-                                    (assoc :updated now)))
-                     (:load body) (rest (range)))]
-      (jdbc/update! db :workload {:load work} ["id = ?" id])
-      (jdbc/db-do-commands db [kind table])
-      (jdbc/insert-multi! db work load)
-      uuid)))
-
-(defn create-workload
-  "Remember the WGS workflow specified by BODY."
-  [body]
-  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (->> body
-         (add-wgs-workload! (postgres/zero-db-config environment))
-         (conj ["SELECT * FROM workload WHERE uuid = ?"])
-         (jdbc/query (postgres/zero-db-config environment))
-         first
-         (filter second)
-         (into {}))))

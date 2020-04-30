@@ -7,18 +7,20 @@
   (:import (java.util UUID)))
 
 (def server
-  "http://localhost:3000"
-  "https://wfl-dot-broad-gotc-dev.appspot.com")
+  "https://wfl-dot-broad-gotc-dev.appspot.com"
+  "http://localhost:3000")
 
-(def request
-  (let [user (util/getenv "USER" "tbl")]
+(def workload
+  "Define a workload to start."
+  (let [user (util/getenv "USER" "tbl")
+        path "/single_sample/plumbing/truth"]
     {:creator  (str/join "@" [user "broadinstitute.org"])
      :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    "gs://broad-gotc-test-storage/single_sample/plumbing/truth"
-     :output   "gs://broad-gotc-dev-zero-test/wgs-test-output"
+     :input    (str "gs://broad-gotc-test-storage" path)
+     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
      :pipeline "ExternalWholeGenomeReprocessing"
      :project  (format "Testing with %s." user)
-     :load     [{:unmapped_bam_suffix  ".unmapped.bam",
+     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
                  :sample_name          "NA12878 PLUMBING",
                  :base_file_name       "NA12878_PLUMBING",
                  :final_gvcf_base_name "NA12878_PLUMBING",
@@ -26,27 +28,28 @@
 
 (defn -main
   [& args]
-  (let [url    (str server "/api/v1/workload")
-        tmp    (str "./" (UUID/randomUUID) ".json")
-        auth   (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
-        noload (dissoc request :load)]
-    (pprint url)
+  (let [tmp      (str "./" (UUID/randomUUID) ".json")
+        auth     (str "Authorization: Bearer " (util/create-jwt :gotc-dev))
+        no-items (dissoc workload :items)]
     (try
-      (util/spit-json tmp request)
-      (let [{:keys [id load pipeline uuid] :as response}
+      (util/spit-json tmp workload)
+      (let [{:keys [id items pipeline uuid] :as response}
             (json/read-str
               (util/shell! "curl" "-H" auth
                            "-H" "Content-Type: application/json"
-                           "--data-binary" (format "@%s" tmp) url)
+                           "--data-binary" (format "@%s" tmp)
+                           (str server "/api/v1/create"))
               :key-fn keyword)
             [got]
             (json/read-str
-              (util/shell! "curl" "-H" auth (str url "?uuid=" uuid))
+              (util/shell! "curl" "-H" auth
+                           (str server "/api/v1/workload?uuid=" uuid))
               :key-fn keyword)]
-        (pprint got)
-        (assert (= noload (select-keys response (keys noload))))
-        (assert (str/starts-with? load pipeline))
-        (assert (str/ends-with?   load (str id)))
-        (assert (= got response)))
+        (pprint [:got got])
+        (assert (= no-items (select-keys response (keys no-items))))
+        (assert (str/starts-with? items pipeline))
+        (assert (str/ends-with?   items (str id)))
+        (assert (= (select-keys got (keys response)) response))
+        (assert (:workflows got)))
       (finally (util/delete-tree (io/file tmp)))))
   (System/exit 0))

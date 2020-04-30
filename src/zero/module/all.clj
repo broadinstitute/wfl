@@ -1,11 +1,13 @@
 (ns zero.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
             [zero.util :as util]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.util UUID]))
 
 (defn throw-when-output-exists-already!
   "Throw when GS-OUTPUT-URL output exists already."
@@ -78,3 +80,36 @@
   [label environment in-gs out-gs]
   (pprint (workflow-status environment label))
   (pprint (count-files in-gs out-gs)))
+
+(defn add-workload-table!
+  "Return UUID and TABLE for WORKFLOW-WDL in BODY under transaction TX."
+  [tx {:keys [release top] :as workflow-wdl} body]
+  (let [{:keys [creator cromwell input output pipeline project]} body
+        {:keys [commit version]} (zero/get-the-version)
+        [{:keys [id uuid]}]
+        (jdbc/insert! tx :workload {:commit   commit
+                                    :creator  creator
+                                    :cromwell cromwell
+                                    :input    input
+                                    :output   output
+                                    :project  project
+                                    :release  release
+                                    :uuid     (UUID/randomUUID)
+                                    :version  version
+                                    :wdl      top})
+        table (format "%s_%09d" pipeline id)
+        kind  (format (str/join " " ["UPDATE workload"
+                                     "SET pipeline = '%s'::pipeline"
+                                     "WHERE id = %s"]) pipeline id)
+        work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+                      table pipeline)]
+    (jdbc/update! tx :workload {:items table} ["id = ?" id])
+    (jdbc/db-do-commands tx [kind work])
+    [uuid table]))
+
+(defn slashify
+  "Ensure URL ends in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    url
+    (str url "/")))

@@ -10,15 +10,22 @@
             [zero.util :as util]
             [zero.zero :as zero]))
 
-(def statuses
-  "The statuses a Cromwell workflow can have."
+(def final-statuses
+  "The final statuses a Cromwell workflow can have."
   ["Aborted"
-   "Aborting"
    "Failed"
+   "Succeeded"])
+
+(def active-statuses
+  "The statuses an active Cromwell workflow can have."
+  ["Aborting"
    "On Hold"
    "Running"
-   "Submitted"
-   "Succeeded"])
+   "Submitted"])
+
+(def statuses
+  "All the statuses a Cromwell workflow can have."
+  (into active-statuses final-statuses))
 
 (defn url
   "URL for GotC Cromwell in ENVIRONMENT."
@@ -61,7 +68,7 @@
   HACK: Frob any BOGUS-KEY-CHARACTERS so maps can be keywordized."
   ([method thing environment id query-params]
    (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
-     (let [edn (-> {:method  method ;; :debug true :debug-body true
+     (let [edn (-> {:method  method     ; :debug true :debug-body true
                     :url     (str (api environment) "/" id "/" thing)
                     :headers (once/get-local-auth-header)}
                    (maybe :query-params query-params)
@@ -203,7 +210,7 @@
   server in ENVIRONMENT, and return the workflow ID."
   [environment parts]
   (letfn [(multipartify [[k v]] {:name (name k) :content v})]
-    (-> {:method    :post ;; :debug true :debug-body true
+    (-> {:method    :post               ; :debug true :debug-body true
          :url       (api environment)
          :headers   (once/get-local-auth-header)
          :multipart (map multipartify parts)}

@@ -14,7 +14,7 @@
            [java.io File Writer]
            [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
-           [java.util ArrayList Collections Random]
+           [java.util ArrayList Collections Random UUID]
            [java.util.zip ZipOutputStream ZipEntry]))
 
 vault.client.http/http-client           ; Keep :clint eastwood quiet.
@@ -314,3 +314,13 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                :iat   iat
                :exp   (+ iat 3600000)
                :scope ["openid" "email"]} oauth2_client_secret)))
+
+(def uuid-nil
+  "The nil UUID."
+  (UUID/fromString "00000000-0000-0000-0000-000000000000"))
+
+(defn uuid-nil?
+  "True when UUID is UUID-NIL or its string representation."
+  [uuid]
+  (or (= uuid uuid-nil)
+      (= uuid (str uuid-nil))))

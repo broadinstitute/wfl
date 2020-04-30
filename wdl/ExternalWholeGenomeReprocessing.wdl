@@ -91,7 +91,8 @@ workflow ExternalWholeGenomeReprocessing {
       vault_token_path = vault_token_path,
       destination_cloud_path = destination_cloud_path,
       google_account_vault_path = google_account_vault_path,
-      contamination = WholeGenomeReprocessing.contamination
+      contamination = WholeGenomeReprocessing.contamination,
+      base_file_name = base_file_name
   }
 
   output {

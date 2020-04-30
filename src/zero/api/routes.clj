@@ -13,6 +13,7 @@
             [reitit.swagger-ui                  :as swagger-ui]
             [zero.api.handlers                  :as handlers]
             [zero.environments                  :as env]
+            [zero.service.cromwell              :as cromwell]
             [zero.util                          :as util]
             [zero.zero                          :as zero])
   (:import [java.util UUID]))
@@ -32,45 +33,66 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::load                 (s/+ ::workflow))
+(s/def ::items                (s/or :aos (s/+ ::items-aos)
+                                    :wgs (s/+ ::items-wgs)))
+(s/def ::items-aos            (constantly true)) ; stub
+(s/def ::items-wgs            (s/keys :opt-un [::base_file_name
+                                               ::final_gvcf_base_name
+                                               ::unmapped_bam_suffix]
+                                      :req-un [::input_cram
+                                               ::sample_name]))
 (s/def ::max                  pos-int?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
-(s/def ::pipeline             #{"ExternalWholeGenomeReprocessing"})
+(s/def ::pipeline             #{"AllOfUsArrays"
+                                "ExternalWholeGenomeReprocessing"})
 (s/def ::project              string?)
 (s/def ::release              string?)
 (s/def ::sample_name          string?)
 (s/def ::start                string?)
 (s/def ::started              inst?)
+(s/def ::status               (set cromwell/statuses))
 (s/def ::unmapped_bam_suffix  string?)
+(s/def ::updated              inst?)
 (s/def ::uuid                 (s/and string? uuid-string?))
+(s/def ::uuid-kv              (s/keys :req-un [::uuid]))
+(s/def ::uuid-kvs             (s/* ::uuid-kv))
 (s/def ::uuid-query           (s/or :none empty?
                                     :one  (s/keys :req-un [::uuid])))
+(s/def ::uuids                (s/* ::uuid))
 (s/def ::version              string?)
 (s/def ::wdl                  string?)
 (s/def ::wgs-request          (s/keys :req-un [::environment
                                                ::max
                                                ::input_path
                                                ::output_path]))
-(s/def ::workflow             (s/keys :opt-un [::base_file_name
+(s/def ::workflow-aos         (constantly true)) ; stub
+(s/def ::workflow-wgs         (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
-                                               ::unmapped_bam_suffix]
-                                      :req-un [::input_cram
+                                               ::status
+                                               ::unmapped_bam_suffix
+                                               ::updated
+                                               ::uuid]
+                                      :req-un [::id
+                                               ::input_cram
                                                ::sample_name]))
 (s/def ::workflow-request     (s/keys :req-un [::end
                                                ::environment
                                                ::start]))
+(s/def ::workflows            (s/or :aos (s/+ ::workflow-aos)
+                                    :wgs (s/+ ::workflow-wgs)))
 (s/def ::workload-request     (s/keys :req-un [::creator
                                                ::cromwell
                                                ::input
-                                               ::load
+                                               ::items
                                                ::output
                                                ::pipeline
                                                ::project]))
 (s/def ::workload-response    (s/keys :opt-un [::finished
                                                ::pipeline
                                                ::started
-                                               ::wdl]
+                                               ::wdl
+                                               ::workflows]
                                       :req-un [::commit
                                                ::created
                                                ::creator
@@ -133,11 +155,17 @@
     {:get  {:summary    "Get the workloads."
             :parameters {:query ::uuid-query}
             :responses  {200 {:body ::workload-responses}}
-            :handler    (handlers/authorize handlers/get-workload)}
-     :post {:summary    "Create a new workload."
+            :handler    (handlers/authorize handlers/get-workload)}}]
+   ["/api/v1/create"
+    {:post {:summary    "Create a new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/post-workload)}}]
+            :handler    (handlers/authorize handlers/post-create)}}]
+   ["/api/v1/start"
+    {:post {:summary    "Start workloads."
+            :parameters {:body ::uuid-kvs}
+            :responses  {200 {:body ::workload-responses}}
+            :handler    (handlers/authorize handlers/post-start)}}]
    ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")

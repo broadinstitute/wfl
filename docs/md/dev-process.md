@@ -1,12 +1,25 @@
 # Development Process
 
-This is a development process we are tying to standardize within the team, and encourage ourselves to follow in most cases.
+This is a development process
+we are tying to standardize
+within the team,
+and encourage ourselves
+to follow in most cases.
 
 ## Summary
 
-We always make feature branches from `master`, make pull requests, ask for reviews and merge back to `master` on Github. 
+We always make feature branches from `master`,
+make pull requests,
+ask for reviews
+and merge back to `master` on Github.
 
-Currently we always deploy the latest master to the development environment after merge, but in the future, we might need to cut off releases on master and deployed the released versions to the server only. It's not decided yet.
+Currently we always deploy the latest master
+to the development environment after merge,
+but in the future we might need
+to cut off releases on master
+and deploy the released versions
+to the server only.
+It's not decided yet.
 
 ## Steps
 
@@ -22,7 +35,7 @@ Currently we always deploy the latest master to the development environment afte
     ```
 
 3. Create a feature branch
-    
+
     _It is highly recommend that you follow the naming convention
     shown below so JIRA could pick up the branch and link it
     to our JIRA board._
@@ -62,11 +75,11 @@ Currently we always deploy the latest master to the development environment afte
 
     - If the PR is ready for review, click `Create pull request`.
 
-8. Look for a reviewer in the team. 
+8. Look for a reviewer in the team.
 
 9. Address reviewer comments with more commits.
 
-10. Receive approval from reviewers. 
+10. Receive approval from reviewers.
 
 11. Make sure build the backend code at least once with:
     ```
@@ -81,11 +94,118 @@ Currently we always deploy the latest master to the development environment afte
     git pull origin master
     boot deploy
     ```
-    
+
     you might need to login to vault and google by the following commands before you want to deploy:
     ```
     vault auth -method=github token=$(cat ~/.github-token)
     gcloud auth login
     ```
 
-    **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!** 
+    **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!**
+
+## Tips
+
+Here are some tips for WFL development.
+
+Some of this advice might help
+when testing Liquibase migration
+or other changes
+that affect WFL's Postgres database.
+
+### migrating a database
+
+To change WFL's Postgres database schema,
+add a changeset XML file
+in the `database/changesets` directory.
+Name the file for a recent or the current date
+followed by something describing the change.
+That will ensure that the changesets
+list in the order in which they apply.
+Note that the `id` and `logicalFilePath` attributes
+are derived from the changeset's file name.
+Then add the changeset file
+to the `database/changlog.xml` file.
+
+Test the changes against a local _scratch database_.
+See the next section for suggestions.
+
+### debugging JDBC SQL
+
+Something seems to swallow SQL exceptions
+raised by Postgres and the JDBC library.
+Wrap suspect `clojure.java.jdbc` calls
+in `zero.util/do-or-nil` to ensure
+that any exceptions show up
+in the server logs.
+
+### debugging API specs
+
+If an API references an undefined spec,
+HTTP requests and responses might silently fail
+or the Swagger page will fail to render.
+Check the `clojure.spec.alpha/def`s
+in `zero.api.routes` for typos
+before tearing your hair out.
+
+### hacking a scratch database
+
+You can test against a local Postgres
+before running Liquibase or SQL
+against a shared database
+in `gotc-dev` or *gasp* production.
+
+First install Postgres locally.
+
+``` shell
+brew install postgresql@11
+```
+
+You need version 11 because that
+is what Google's hosted service supports,
+and there are differences in the SQL syntax.
+
+Set `"ZERO_POSTGRES_URL"`
+to `(postgres/zero-db-url :debug)`
+in `zero.server/env_variables`
+to redirect the WFL server's database
+to a local Postgres server.
+With that hack in place,
+running `./ops/server.sh`
+(or however you launch a local WFL server)
+will connect the server to a local Postgres.
+
+Now any changes to WFL state
+will affect only your local database.
+That includes running Liquibase,
+so don't forget to reset `:debug` to `env`
+before deploying your changes
+after merging a PR.
+
+### Rich comment in `zero.service.postgres`
+
+There is also a "Rich comment"
+at the end of `zero.service.postgres`
+with some useful hacks for debugging
+Postgres and Liquibase operations
+during development.
+The 0-arity `zero.service.postgres/run-liquibase` function
+runs the standard liquibase scripts
+against the local `:debug` database.
+Similarly,
+`zero.service.postgres/reset-debug-db`
+resets the local `:debug` Postgres server
+to its initial state.
+
+Do *not* run something like `reset-debug-db`
+against a Postgres server
+deployed in the cloud
+or with an actual _environment_ set.
+
+### integration tests
+
+We implement integration tests
+under the `integration/zero` directory.
+
+They are triggered via `deps.edn` aliases.
+See examples in the `deps.edn` file
+in the top-level directory of the repository.
