@@ -83,20 +83,18 @@
   "Get status counts for environment in REQUEST."
   [{:keys [parameters jwt] :as _request}]
   (let [environment (some :environment ((juxt :query :body) parameters))
-        env         (zero/throw-or-environment-keyword! environment)
-        auth-header (util/bearer-token-header-for (env (deref once/the-cached-credentials-from-service-account)))]
-    (succeed (cromwell/status-counts auth-header env {:includeSubworkflows false}))))
+        env         (zero/throw-or-environment-keyword! environment)]
+    (succeed (cromwell/status-counts env {:includeSubworkflows false}))))
 
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [body environment query]} parameters
         env   (zero/throw-or-environment-keyword! environment)
-        auth-header (util/bearer-token-header-for (env (deref once/the-cached-credentials-from-service-account)))
         start (some :start [query body])
         end   (some :end   [query body])
         query {:includeSubworkflows false :start start :end end}]
-    (succeed {:results (cromwell/query auth-header env query)})))
+    (succeed {:results (cromwell/query env query)})))
 
 (defn list-workloads
   "List workloads for environment in REQUEST."

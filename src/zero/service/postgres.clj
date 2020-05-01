@@ -31,7 +31,7 @@
                             "/" ["https://www.googleapis.com/sql/v1beta4"
                                  "projects" project "instances"])
                      :headers (merge {"Content-Type" "application/json"}
-                                     (once/get-local-auth-header))}
+                                     (once/get-auth-header!))}
                     http/request :body
                     (json/read-str :key-fn keyword) :items
                     (->> (keep postgresql?))
@@ -107,7 +107,7 @@
   [cromwell uuid]
   (-> {:method  :get                    ; :debug true :debug-body true
        :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-       :headers (once/get-local-auth-header)}
+       :headers (once/get-auth-header!)}
       http/request :body
       (json/read-str :key-fn keyword)
       :status util/do-or-nil))

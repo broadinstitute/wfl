@@ -70,7 +70,7 @@
    (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
      (let [edn (-> {:method  method     ; :debug true :debug-body true
                     :url     (str (api environment) "/" id "/" thing)
-                    :headers (once/get-local-auth-header)}
+                    :headers (once/get-auth-header!)}
                    (maybe :query-params query-params)
                    http/request :body json/read-str)
            bad (filter (partial some bogus-key-characters) (util/keys-in edn))
@@ -149,46 +149,42 @@
 
 (defn query
   "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
-  ([auth-header environment params]
-   (let [form-params (merge {:pagesize 999} params)
-         request     {:method       :post                   ;; :debug true :debug-body true
-                      :url          (str (api environment) "/query")
-                      :form-params  (cromwellify-json-form form-params)
-                      :content-type :application/json}]
-     (letfn [(each [page sofar]
-               (let [response (-> request
-                                  (update :form-params conj {:page (str page)})
-                                  (assoc :headers auth-header)
-                                  request-json :body)
-                     {:keys [results totalResultsCount]} response
-                     total    (+ sofar (count results))]
-                 (lazy-cat results (when (< total totalResultsCount)
-                                     (each (inc page) total)))))]
-       (util/lazy-unchunk (each 1 0)))))
-  ([environment params]
-   (query (once/get-local-auth-header) environment params)))
+  [environment params]
+  (let [form-params (merge {:pagesize 999} params)
+        request     {:method       :post                   ;; :debug true :debug-body true
+                     :url          (str (api environment) "/query")
+                     :form-params  (cromwellify-json-form form-params)
+                     :content-type :application/json}]
+    (letfn [(each [page sofar]
+              (let [response (-> request
+                                 (update :form-params conj {:page (str page)})
+                                 (assoc :headers (once/get-auth-header!))
+                                 request-json :body)
+                    {:keys [results totalResultsCount]} response
+                    total    (+ sofar (count results))]
+                (lazy-cat results (when (< total totalResultsCount)
+                                    (each (inc page) total)))))]
+      (util/lazy-unchunk (each 1 0)))))
 
 ;; HACK: (into (array-map) ...) is egregious.
 ;;
 (defn status-counts
   "Map status to workflow counts on Cromwell in ENVIRONMENT with PARAMS
   map and AUTH-HEADER."
-  ([auth-header environment params]
-   (letfn [(each [status]
-             (let [form-params (-> {:pagesize 1 :status status}
-                                   (merge params)
-                                   cromwellify-json-form)]
-               [status (-> {:method       :post ;; :debug true :debug-body true
-                            :url          (str (api environment) "/query")
-                            :form-params  form-params
-                            :content-type :application/json
-                            :headers      auth-header}
-                           request-json :body :totalResultsCount)]))]
-     (let [counts (into (array-map) (map each statuses))
-           total  (apply + (map counts statuses))]
-       (into counts [[:total total]]))))
-  ([environment params]
-   (status-counts (once/get-local-auth-header) environment params)))
+  [environment params]
+  (letfn [(each [status]
+            (let [form-params (-> {:pagesize 1 :status status}
+                                  (merge params)
+                                  cromwellify-json-form)]
+              [status (-> {:method       :post ;; :debug true :debug-body true
+                           :url          (str (api environment) "/query")
+                           :form-params  form-params
+                           :content-type :application/json
+                           :headers      (once/get-auth-header!)}
+                          request-json :body :totalResultsCount)]))]
+    (let [counts (into (array-map) (map each statuses))
+          total  (apply + (map counts statuses))]
+      (into counts [[:total total]]))))
 
 (defn make-workflow-labels
   "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS."
@@ -214,7 +210,7 @@
   (letfn [(multipartify [[k v]] {:name (name k) :content v})]
     (-> {:method    :post               ; :debug true :debug-body true
          :url       (api environment)
-         :headers   (once/get-local-auth-header)
+         :headers   (once/get-auth-header!)
          :multipart (map multipartify parts)}
         request-json #_debug/dump :body :id)))
 
