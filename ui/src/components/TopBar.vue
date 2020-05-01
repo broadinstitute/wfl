@@ -56,14 +56,20 @@ export default {
   },
   computed: {
     isAuthenticated: function() {
-        return this.$store.getters['auth/authenticated'];
+      return this.$store.getters['auth/authToken'];
+    }
+  },
+  watch: {
+    isAuthenticated() {
+      this.$router.push('/login');
     }
   },
   methods: {
     logout() {
-       window.gapi.auth2.getAuthInstance().signOut().then(user => {
-         this.$store.dispatch('auth/updateUser', user);
-       });
+      window.gapi.auth2.getAuthInstance().signOut().then(user => {
+        this.$store.dispatch('auth/updateUser', user);
+        sessionStorage.clear();
+      });
     },
     getStatus() {
       axios.get("/status").then(response => (this.status = response.data));
