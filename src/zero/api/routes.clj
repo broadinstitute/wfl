@@ -121,10 +121,13 @@
             :swagger {:tags ["Information"]}}}]
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
-            :handler (handlers/success (zero/get-the-version))
-            :responses {200 {:body {:version string?
-                                    :build    pos-int?
-                                    :built    string?}}}
+            :handler (handlers/success (let [versions (zero/get-the-version)
+                                             pipeline-versions-keys (keep (fn [x] (when (string? x) x)) 
+                                                                          (keys versions))]
+                                         {:pipeline-versions (select-keys versions pipeline-versions-keys)
+                                          :version (apply dissoc versions pipeline-versions-keys)}))
+            :responses {200 {:body {:version map?
+                                    :pipeline-versions map?}}}
             :swagger {:tags ["Information"]}}}]
    ["/api/v1/environments"
     {:get  {:summary "Get all of the environments the server knows"
