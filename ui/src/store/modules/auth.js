@@ -24,6 +24,7 @@ const mutations = {
     if (user && user.isSignedIn()) {
         state.authenticated = true;
         state.authToken = user.getAuthResponse(true).access_token;
+
     } else {
         state.authenticated = false;
         state.authToken = null;

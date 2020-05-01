@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import createPersistedState from 'vuex-persistedstate'
 import sidebar from './modules/sidebar'
 import auth from './modules/auth'
 
@@ -10,8 +11,11 @@ const debug = process.env.NODE_ENV !== 'production'
 const store = new Vuex.Store({
     modules: {
         sidebar,
-        auth
+        auth,
     },
+    plugins: [createPersistedState({
+        storage: window.sessionStorage,
+    })],
     strict: debug,
 })
 
