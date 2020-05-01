@@ -60,7 +60,12 @@ export default {
   data() {
     return {
       versions: {
-        note: "Fetching information..."
+        "version": {
+          note: "Fetching information..."
+        },
+        "pipeline-versions": {
+          note: "Fetching information..."
+        }
       }
     };
   },
