@@ -33,7 +33,7 @@
 (defn new-credentials-from-service-account
   "Generate scoped GoogleCredentials from a service account FILE."
   [^String file]
-  (when-not (nil? file)
+  (when file
     (let [scopes ["email" "profile" "openid"]
           credentials (GoogleCredentials/fromStream (FileInputStream. file))]
       (.createScoped credentials scopes))))
