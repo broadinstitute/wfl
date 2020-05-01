@@ -47,7 +47,8 @@
                 oauth2_client_id oauth2_client_secret
                 password username]}
         (util/vault-secrets (get-in environment [:server :vault]))
-        result {"COOKIE_SECRET"          cookie_secret
+        result {"WFL_LIVE_SERVER_MODE"   true
+                "COOKIE_SECRET"          cookie_secret
                 "ENVIRONMENT"            (:name environment)
                 "OAUTH2_CLIENT_ID"       oauth2_client_id
                 "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
