@@ -28,7 +28,7 @@
 
 (defn status-counts
   "Get status counts for environment in REQUEST."
-  [{:keys [parameters jwt] :as _request}]
+  [{:keys [parameters] :as _request}]
   (let [environment (some :environment ((juxt :query :body) parameters))
         env         (zero/throw-or-environment-keyword! environment)]
     (succeed (cromwell/status-counts env {:includeSubworkflows false}))))
