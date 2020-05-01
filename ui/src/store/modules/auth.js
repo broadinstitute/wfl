@@ -5,7 +5,12 @@ const state = {
 
 const getters = {
   authenticated: (state) => state.authenticated,
-  authToken: (state) => state.authToken
+  authToken: (state) => state.authToken,
+  authHeaders: (state) => {
+    if(state.authToken) {
+      return { Authorization: `Bearer ${state.authToken} `}
+    }
+  }
 }
 
 const actions = {
@@ -19,6 +24,10 @@ const mutations = {
     if (user && user.isSignedIn()) {
         state.authenticated = true;
         state.authToken = user.getAuthResponse(true).access_token;
+    } else {
+        state.authenticated = false;
+        state.authToken = null;
+        state.authHeaders = {};
     }
   }
 }
