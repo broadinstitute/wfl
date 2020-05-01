@@ -44,7 +44,7 @@
         {:keys [cookie_secret
                 password username]}
         (util/vault-secrets (get-in environment [:server :vault]))
-        result {"WFL_LIVE_SERVER_MODE"   true
+        result {"WFL_LIVE_SERVER_MODE"   "true"
                 "COOKIE_SECRET"          cookie_secret
                 "ENVIRONMENT"            (:name environment)
                 "ZERO_POSTGRES_PASSWORD" password
