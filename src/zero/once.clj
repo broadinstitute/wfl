@@ -2,7 +2,8 @@
   "Low-level vars to define exactly once and auth related junk."
   (:require [clojure.data.json  :as json]
             [zero.util          :as util]
-            [zero.environments  :as env])
+            [zero.environments  :as env]
+            [zero.zero          :as zero])
   (:import [com.google.auth.oauth2 UserCredentials]
            [java.net URI]
            (java.io FileInputStream)
@@ -29,12 +30,6 @@
 ;;
 (defonce the-cached-credentials (delay (new-user-credentials)))
 
-(defn get-local-auth-header
-  "Return a valid auth header, refresh the access token
-  under the hood if necessary."
-  []
-  (util/bearer-token-header-for @the-cached-credentials))
-
 (defn new-credentials-from-service-account
   "Generate scoped GoogleCredentials from a service account FILE."
   [^String file]
@@ -60,11 +55,24 @@
 (defonce the-cached-credentials-from-service-account
          (delay (update-map-vals new-credentials-from-service-account (service-account-per-env))))
 
+(defn get-auth-header!
+  "Return a valid auth header. Refresh and generate the access
+   token with gcloud command if invoked from command line,
+   generate the access token from service account if invoked
+   from a live server."
+  []
+  (if (System/getenv "WFL_LIVE_SERVER_MODE")
+    (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
+      (util/bearer-token-header-for (env @the-cached-credentials-from-service-account)))
+    (util/bearer-token-header-for @the-cached-credentials)))
+
+(comment
+  (get-auth-header))
+
 (comment
   (some-> (:xx @the-cached-credentials-from-service-account)
           .refreshAccessToken
           .getTokenValue)
   (let [envs {:wgs-dev "some-test-service-account.json"
               :xx      "some-test-service-account.json"}]
-    (update-map-vals new-credentials-from-service-account envs))
-  )
+    (update-map-vals new-credentials-from-service-account envs)))
