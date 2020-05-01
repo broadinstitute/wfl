@@ -56,7 +56,7 @@ export default {
   },
   computed: {
     isAuthenticated: function() {
-      return this.$store.getters['auth/authToken'];
+      return this.$store.getters['auth/authenticated'];
     }
   },
   watch: {

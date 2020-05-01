@@ -54,7 +54,7 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
     const isPublic = to.matched.some(record => record.meta.public);
-    const loggedIn = store.getters['auth/authToken'];
+    const loggedIn = store.getters['auth/authenticated'];
 
     if (!isPublic && !loggedIn) {
         return next({ name: 'login' })

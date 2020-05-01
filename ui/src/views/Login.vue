@@ -14,7 +14,7 @@ export default {
   },
   computed: {
      isAuthenticated() {
-        return this.$store.getters['auth/authToken'];
+        return this.$store.getters['auth/authenticated'];
      }
   },
   watch: {
