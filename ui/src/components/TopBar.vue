@@ -28,7 +28,6 @@
             <v-row justify="end" align="center">
             <v-btn class="mr-2"  text >Status: {{ status.status }}</v-btn>
             <v-btn class="mr-2"  outlined v-bind:href="swagger_link">Swagger API</v-btn>
-            <v-btn outlined v-bind:href="auth_link">Login with Google</v-btn>
             </v-row>
           </v-col>
         </v-row>
@@ -51,7 +50,6 @@ export default {
   data() {
     return {
       status: { status: "N/A" },
-      auth_link: "/auth/google",
       swagger_link: "/swagger/index.html"
     };
   },

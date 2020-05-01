@@ -11,7 +11,7 @@
             <v-card-title>System Information</v-card-title>
             <v-card-subtitle>The build info about the system</v-card-subtitle>
             <v-card-text>
-              <b> System Build Hash </b>: {{ versions.version.commit}}
+              <b> System Commit Hash </b>: {{ versions.version.commit}}
               <v-divider></v-divider>
               <b> System Commit Time </b>: {{ versions.version.committed}}
               <v-divider></v-divider>
