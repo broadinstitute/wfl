@@ -109,10 +109,7 @@
 
 (def endpoints
   "Endpoints exported by the server."
-  [["/auth/google"
-    {:get {:no-doc true
-           :handler (constantly "This route is handled by wrap-oauth2!")}}]
-   ["/"
+  [["/"
     {:get  {:no-doc true
             :handler (handlers/success {:status "OK"})}}]
    ["/status"
@@ -135,17 +132,17 @@
     {:get  {:summary "Get all of the environments the server knows"
             :parameters nil
             :responses {200 {:body map?}}
-            :handler (handlers/authorize (handlers/success env/stuff))}}]
+            :handler (handlers/success env/stuff)}}]
    ["/api/v1/workflows"
     {:post {:summary    "Query for workflows"
             :parameters {:body ::workflow-request}
             :responses {200 {:body {:results seq?}}}
-            :handler    (handlers/authorize handlers/query-workflows)}}]
+            :handler    handlers/query-workflows}}]
    ["/api/v1/statuscounts"
     {:get  {:summary "Get the status counts info for a given environment"
             :parameters {:query {:environment string?}}
             :responses {200 {:body {:total pos-int?}}}
-            :handler (handlers/authorize handlers/status-counts)}}]
+            :handler handlers/status-counts}}]
    ["/api/v1/workloads"
     {:get {:summary "Get all workloads for a given environment"
            :parameters {:query {:environment string?}}
@@ -155,22 +152,22 @@
     {:post {:summary    "Submit WGS Reprocessing workflows"
             :parameters {:body ::wgs-request}
             :responses  {200 {:body {:results vector?}}}
-            :handler    (handlers/authorize handlers/submit-wgs)}}]
+            :handler    handlers/submit-wgs}}]
    ["/api/v1/workload"
     {:get  {:summary    "Get the workloads."
             :parameters {:query ::uuid-query}
             :responses  {200 {:body ::workload-responses}}
-            :handler    (handlers/authorize handlers/get-workload)}}]
+            :handler    handlers/get-workload}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
-            :handler    (handlers/authorize handlers/post-create)}}]
+            :handler    handlers/post-create}}]
    ["/api/v1/start"
     {:post {:summary    "Start workloads."
             :parameters {:body ::uuid-kvs}
             :responses  {200 {:body ::workload-responses}}
-            :handler    (handlers/authorize handlers/post-start)}}]
+            :handler    handlers/post-start}}]
    ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")
