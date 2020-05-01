@@ -7,18 +7,10 @@
 <script>
 export default {
   name: "login",
-  created() {
-    window.gapi.load('auth2', initAuth);
-         function initAuth() {
-           window.gapi.auth2.init({
-             client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
-           });
-         }
-  },
   mounted() {
-     if (this.isAuthenticated) {
-        this.$router.push('/');
-     }
+    if(this.isAuthenticated()) {
+      this.$router.push('/');
+    }
   },
   computed: {
      isAuthenticated() {
