@@ -1,6 +1,7 @@
 (ns zero.api.routes
   "Define routes for API endpoints"
   (:require [clojure.spec.alpha                 :as s]
+            [clojure.string                     :as str]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -122,7 +123,8 @@
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
             :handler (handlers/success (let [versions (zero/get-the-version)
-                                             pipeline-versions-keys (keep (fn [x] (when (string? x) x)) 
+                                             pipeline-versions-keys (keep (fn [x] (when (and (string? x) 
+                                                                                             (str/ends-with? x ".wdl")) x)) 
                                                                           (keys versions))]
                                          {:pipeline-versions (select-keys versions pipeline-versions-keys)
                                           :version (apply dissoc versions pipeline-versions-keys)}))
