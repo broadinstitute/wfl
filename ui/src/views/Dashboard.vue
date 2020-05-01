@@ -1,7 +1,7 @@
 <template>
   <v-container class="dashboard">
     <v-container fluid fill-width>
-      <h1 id="main-header">Welcome to Zero Server!</h1>
+      <h1 id="main-header">Welcome to WorkFlow Launcher Server!</h1>
     </v-container>
 
     <v-container fluid fill-width>
@@ -11,13 +11,15 @@
             <v-card-title>System Information</v-card-title>
             <v-card-subtitle>The build info about the system</v-card-subtitle>
             <v-card-text>
-              System Build Hash: {{ versions.zero}}
+              <b> System Commit Hash </b>: {{ versions.version.commit}}
               <v-divider></v-divider>
-              System Build Time: {{ versions.time}}
+              <b> System Commit Time </b>: {{ versions.version.committed}}
               <v-divider></v-divider>
-              System Version: {{ versions.version}}
+              <b> System Build Time </b>: {{ versions.version.built}}
               <v-divider></v-divider>
-              System User: {{ versions.user}}
+              <b> System Version </b>: {{ versions.version.version}}
+              <v-divider></v-divider>
+              <b> Latest Built by </b>: {{ versions.version.user}}
               <v-divider></v-divider>
             </v-card-text>
             <v-card-actions>
@@ -32,15 +34,12 @@
             <v-card-title>Pipelines Information</v-card-title>
             <v-card-subtitle>The version info about the supported pipelines</v-card-subtitle>
             <v-card-text>
-              ExternalExomeReprocessing: {{ versions["ExternalExomeReprocessing"]}}
-              <v-divider></v-divider>
-              dsde-pipelines: {{ versions["dsde-pipelines"]}}
-              <v-divider></v-divider>
-              WhiteAlbumExomeReprocessing: {{ versions["WhiteAlbumExomeReprocessing"]}}
-              <v-divider></v-divider>
-              Module00a: {{ versions["Module00a"]}}
-              <v-divider></v-divider>
+              <div v-for='(item, key, index) in versions["pipeline-versions"]' v-bind:key="index">
+                <b> {{ key }} </b>: {{ item }}
+                <v-divider></v-divider>
+              </div>
             </v-card-text>
+
             <v-card-actions>
               <v-btn text>Learn More</v-btn>
             </v-card-actions>

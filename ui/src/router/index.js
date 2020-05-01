@@ -14,25 +14,25 @@ const routes = [
     path: '/query',
     name: 'query',
     // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
+    // this generates a separate chunk (query.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/Query.vue')
+    component: () => import(/* webpackChunkName: "query" */ '../views/Query.vue')
   },
   {
     path: '/workload',
     name: 'workload',
     // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
+    // this generates a separate chunk (workload.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/Workload.vue')
+    component: () => import(/* webpackChunkName: "workload" */ '../views/Workload.vue')
   },
   {
     path: '/modules',
     name: 'modules',
     // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
+    // this generates a separate chunk (modules.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/Modules.vue')
+    component: () => import(/* webpackChunkName: "modules" */ '../views/Modules.vue')
   }
 ]
 
