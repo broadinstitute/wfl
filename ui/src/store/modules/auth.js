@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const state = {
   authenticated: false,
   authToken: null
@@ -9,8 +11,15 @@ const getters = {
 }
 
 const actions = {
-  updateUser({ commit }, user) {
-    commit('updateUser', user);
+  login({ commit }, user) {
+    const token = user.getAuthResponse(true).access_token
+    axios.defaults.headers.common.authentication = `Bearer ${token}`
+    commit('updateUser', user)
+  },
+  logout({ commit }, user) {
+    axios.defaults.headers.common.authentication = ""
+    commit('updateUser', user)
+    sessionStorage.clear()
   }
 }
 
@@ -22,7 +31,6 @@ const mutations = {
     } else {
         state.authenticated = false;
         state.authToken = null;
-        state.authHeaders = {};
     }
   }
 }

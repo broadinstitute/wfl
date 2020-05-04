@@ -67,8 +67,7 @@ export default {
   methods: {
     logout() {
       window.gapi.auth2.getAuthInstance().signOut().then(user => {
-        this.$store.dispatch('auth/updateUser', user);
-        sessionStorage.clear();
+        this.$store.dispatch('auth/logout', user);
       });
     },
     getStatus() {

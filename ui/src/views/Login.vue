@@ -15,7 +15,7 @@ export default {
   methods: {
        login() {
             window.gapi.auth2.getAuthInstance().signIn().then(user => {
-                this.$store.dispatch('auth/updateUser', user).then(() => this.$router.push('/'));
+                this.$store.dispatch('auth/login', user).then(() => this.$router.push('/'));
             });
        }
   }

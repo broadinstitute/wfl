@@ -20,7 +20,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
 
@@ -42,7 +41,6 @@ export default {
         client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
       });
     }
-    axios.defaults.headers.common.authentication = `Bearer ${this.$store.getters['auth/authToken']}`
   }
 };
 </script>
