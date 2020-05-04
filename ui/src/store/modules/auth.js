@@ -5,12 +5,7 @@ const state = {
 
 const getters = {
   authenticated: (state) => state.authenticated,
-  authToken: (state) => state.authToken,
-  authHeaders: (state) => {
-    if(state.authToken) {
-      return { Authorization: `Bearer ${state.authToken} `}
-    }
-  }
+  authToken: (state) => state.authToken
 }
 
 const actions = {
