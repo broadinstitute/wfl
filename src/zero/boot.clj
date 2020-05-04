@@ -112,7 +112,7 @@
             (let [out (io/file resources (.getName in))]
               (io/make-parents out)
               (io/copy in out)))]
-    (let [config (clone "pipeline-config" "zero/environments.clj")]
+    (let [config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent config)
                       "checkout" "858172fe2d1ab7f7d1dafd7dc2fd6ee7950cb7b0")
