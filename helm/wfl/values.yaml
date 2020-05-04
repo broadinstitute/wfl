@@ -110,6 +110,7 @@ securityContext: {}
 
 ingress:
   enabled: false
-  servicePort: http
+  servicePort: wfl-ui
   annotations: {}
+  hosts: []
   tls: []
