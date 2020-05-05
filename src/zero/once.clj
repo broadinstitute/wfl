@@ -38,22 +38,17 @@
           credentials (GoogleCredentials/fromStream (FileInputStream. file))]
       (.createScoped credentials scopes))))
 
-(defn service-account-per-env
-  "Map of environment to service account path."
-  []
-  (letfn [(get-sa [environment] {(keyword environment)
-                                 (get-in env/stuff [(keyword environment) :project-service-account])})]
-    (into {} (map get-sa env/registered-envs))))
-
-(defn update-map-vals
-  "Map F over every value of M, with the keys remain the same."
-  [f m]
-  (reduce-kv (fn [m k v] (assoc m k (f v))) {} m))
+(defn service-account-for-env
+  "Ge the path to service account for ENVIRONMENT."
+  [environment]
+  (get-in env/stuff [environment :cromwell :wfl-service-account]))
 
 ;; The re-usable environment:credentials-object map for token generation and refreshing
 ;;
 (defonce the-cached-credentials-from-service-account
-         (delay (update-map-vals new-credentials-from-service-account (service-account-per-env))))
+         (delay
+           (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
+             (new-credentials-from-service-account (service-account-for-env env)))))
 
 (defn get-auth-header!
   "Return a valid auth header. Refresh and generate the access
@@ -61,18 +56,22 @@
    generate the access token from service account if invoked
    from a live server."
   []
-  (if (System/getenv "WFL_LIVE_SERVER_MODE")
-    (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
-      (util/bearer-token-header-for (env @the-cached-credentials-from-service-account)))
+  (if (and (System/getenv "WFL_LIVE_SERVER_MODE") (System/getenv "ENVIRONMENT"))
+    (util/bearer-token-header-for @the-cached-credentials-from-service-account)
     (util/bearer-token-header-for @the-cached-credentials)))
 
 (comment
-  (get-auth-header))
+  (util/bearer-token-header-for @the-cached-credentials-from-service-account)
+  (get-auth-header!))
 
 (comment
   (some-> (:xx @the-cached-credentials-from-service-account)
           .refreshAccessToken
           .getTokenValue)
+  (defn update-map-vals
+    "Map F over every value of M, with the keys remain the same."
+    [f m]
+    (reduce-kv (fn [m k v] (assoc m k (f v))) {} m))
   (let [envs {:wgs-dev "some-test-service-account.json"
               :xx      "some-test-service-account.json"}]
     (update-map-vals new-credentials-from-service-account envs)))
