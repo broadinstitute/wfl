@@ -1,8 +1,8 @@
 1. Get the Workflow Launcher URL by running these commands:
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
-  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.name }}
+  https://{{ $host.name }}
 {{- end }}
 {{- end }}
 
-2. Please note the channges to ingress will take up to ~15 minutes to take effect on the cloud.
+2. Please note the changes to ingress will take up to ~15 minutes to take effect on the cloud.
