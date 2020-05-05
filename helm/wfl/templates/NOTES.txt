@@ -1,7 +1,7 @@
 1. Get the Workflow Launcher URL by running these commands:
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
-  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.name }}{{ . }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.name }}
 {{- end }}
 {{- end }}
 

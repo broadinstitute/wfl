@@ -28,7 +28,7 @@ api:
     enabled: false
     volumeMountPath: /etc/service_accounts/wfl_service_account.json
     secretsgeneric:
-      serivceAccountCredentialFilePath: ""  # full absolute path to the secret file
+      serivceAccountCredentialFileJSON: ""
 
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
