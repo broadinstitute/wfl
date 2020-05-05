@@ -19,10 +19,6 @@ spec:
       labels:
         {{- include "wfl.selectorLabels" . | nindent 8 }}
     spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
       serviceAccountName: {{ include "wfl.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -32,12 +28,23 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
           imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          env:
+          {{- if .Values.api.env }}
+          {{- range $key, $value := .Values.api.env }}
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
           ports:
           - name: http
             containerPort: {{ .Values.api.deployment.containerPort }}
             protocol: TCP
           resources:
             {{- toYaml .Values.api.resources | nindent 12 }}
+          volumeMounts:
+            - name: service-account
+              mountPath: {{ .Values.api.secrets.volumeMountPath }}
+              subPath: service-account.json
         - name: {{ .Values.ui.name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -71,15 +78,9 @@ spec:
             items:
               - key: siteconf
                 path: site.conf
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+        - name: service-account
+          secret:
+            secretName: {{ template "wfl.fullname" . }}
+            items:
+              - key: service-account
+                path: service-account.json

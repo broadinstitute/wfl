@@ -1,5 +1,5 @@
 (ns zero.server
-  "An HTTP server with OAuth2 authentication."
+  "An HTTP API server."
   (:require [clojure.pprint :refer [pprint]]
             [clojure.stacktrace :refer [print-throwable]]
             [clojure.string :as str]
@@ -7,12 +7,10 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.defaults :as defaults]
             [ring.middleware.json :refer [wrap-json-response]]
-            [ring.middleware.oauth2 :as oauth2]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.reload :as reload]
             [ring.middleware.session.cookie :as cookie]
             [zero.api.routes :as routes]
-            [zero.api.handlers :as handlers]
             [zero.environments :as env]
             [zero.service.postgres :as postgres]
             [zero.util :as util]
@@ -44,13 +42,11 @@
   [env]
   (let [environment (env env/stuff)
         {:keys [cookie_secret
-                oauth2_client_id oauth2_client_secret
                 password username]}
         (util/vault-secrets (get-in environment [:server :vault]))
-        result {"COOKIE_SECRET"          cookie_secret
+        result {"WFL_LIVE_SERVER_MODE"   "true"
+                "COOKIE_SECRET"          cookie_secret
                 "ENVIRONMENT"            (:name environment)
-                "OAUTH2_CLIENT_ID"       oauth2_client_id
-                "OAUTH2_CLIENT_SECRET"   oauth2_client_secret
                 "ZERO_POSTGRES_PASSWORD" password
                 "ZERO_POSTGRES_URL"      (postgres/zero-db-url env)
                 "ZERO_POSTGRES_USERNAME" username}]
@@ -61,10 +57,6 @@
   (cookie/cookie-store
     {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
      :readers (merge *data-readers* tc/data-readers)}))
-
-(defn wrap-oauth2
-  [handler]
-  (oauth2/wrap-oauth2 handler handlers/oauth2-profiles))
 
 (defn wrap-defaults
   [handler]
@@ -96,7 +88,6 @@
   (-> routes/routes
       wrap-reload-for-development-only
       wrap-params
-      wrap-oauth2
       wrap-defaults
       wrap-internal-error
       (wrap-json-response {:pretty true})))

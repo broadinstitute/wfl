@@ -68,6 +68,10 @@
                             (->> (assoc m kw)))))]
     (reduce make {} ["development" "production"])))
 
+(def registered-envs
+  "Register a list of the available ENVIRONMENT names here."
+  ["development", "production"])
+
 (def environments
   "Map valid values for :ENVIRONMENT to their doc strings."
   (zipmap (keys stuff) (map :doc (vals stuff))))

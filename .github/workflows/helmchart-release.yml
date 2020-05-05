@@ -1,12 +1,8 @@
 name: Helm Charts Release
 
+# NOTE: this workflow does NOT work for PR commits!
 on:
   push:
-    branches:
-      - master
-    paths:
-      - helm/**
-  pull_request:
     branches:
       - master
     paths:

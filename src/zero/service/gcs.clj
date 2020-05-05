@@ -61,7 +61,7 @@
          :url          (str bucket-url bucket "/iam")
          ;; :query-params {:project project :prefix prefix}
          :content-type :application/json
-         :headers      (once/get-local-auth-header)}
+         :headers      (once/get-auth-header!)}
         http/request
         :body
         (json/read-str :key-fn keyword))))
@@ -73,7 +73,7 @@
         :url          bucket-url
         :query-params {:project project :prefix prefix}
         :content-type :application/json
-        :headers      (once/get-local-auth-header)}
+        :headers      (once/get-auth-header!)}
        http/request
        :body
        (json/read-str :key-fn keyword)
@@ -90,7 +90,7 @@
                    (-> {:method       :get
                         :url          (str bucket-url bucket "/o")
                         :content-type :application/json
-                        :headers      (once/get-local-auth-header)
+                        :headers      (once/get-auth-header!)
                         :query-params {:prefix prefix
                                        :maxResults 999
                                        :pageToken pageToken}}
@@ -136,7 +136,7 @@
        :body
        (json/read-str :key-fn keyword)))
   ([project location class name]
-   (make-bucket project location class name (once/get-local-auth-header))))
+   (make-bucket project location class name (once/get-auth-header!))))
 
 (defn delete-bucket
   "Throw or delete the bucket in PROJECT named NAME."
@@ -157,7 +157,7 @@
          http/request
          deleted-this-time?)))
   ([name]
-   (delete-bucket name (once/get-local-auth-header))))
+   (delete-bucket name (once/get-auth-header!))))
 
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
@@ -174,7 +174,7 @@
          :body
          (json/read-str :key-fn keyword))))
   ([file bucket object]
-   (upload-file file bucket object (once/get-local-auth-header)))
+   (upload-file file bucket object (once/get-auth-header!)))
   ([file url]
    (apply upload-file file (parse-gs-url url))))
 
@@ -185,7 +185,7 @@
      (-> {:method       :get ;; :debug true :debug-body true
           :url          (bucket-object-url bucket object)
           :query-params {:alt "media"}
-          :headers      (once/get-local-auth-header)
+          :headers      (once/get-auth-header!)
           :as           :stream}
          http/request
          :body
@@ -201,7 +201,7 @@
                   :query-params {:name object}
                   :headers headers}))
   ([bucket object]
-   (create-object bucket object (once/get-local-auth-header)))
+   (create-object bucket object (once/get-auth-header!)))
   ([url]
    (apply create-object (parse-gs-url url))))
 
@@ -212,7 +212,7 @@
                   :url     (bucket-object-url bucket object)
                   :headers headers}))
   ([bucket object]
-   (delete-object bucket object (once/get-local-auth-header)))
+   (delete-object bucket object (once/get-auth-header!)))
   ([url]
    (apply delete-object (parse-gs-url url))))
 
@@ -226,7 +226,7 @@
        :body
        (json/read-str :key-fn keyword)))
   ([bucket object]
-   (object-meta bucket object "" (once/get-local-auth-header)))
+   (object-meta bucket object "" (once/get-auth-header!)))
   ([url]
    (apply object-meta (parse-gs-url url))))
 
@@ -242,7 +242,7 @@
        :body
        (json/read-str :key-fn keyword)))
   ([metadata bucket object]
-   (patch-object! metadata bucket object (once/get-local-auth-header)))
+   (patch-object! metadata bucket object (once/get-auth-header!)))
   ([metadata url]
    (apply patch-object! metadata (parse-gs-url url))))
 
@@ -254,7 +254,7 @@
          destination (str/replace-first durl storage-url "")]
      (-> {:method  :post ;; :debug true :debug-body true
           :url     (str surl "/rewriteTo/" destination)
-          :headers (once/get-local-auth-header)}
+          :headers (once/get-auth-header!)}
          http/request
          :body
          (json/read-str :key-fn keyword))))
@@ -273,4 +273,4 @@
                      :acl (partial cons acl-entry))]
      (patch-object! acl bucket object headers)))
   ([email bucket object]
-   (add-object-reader email bucket object (once/get-local-auth-header))))
+   (add-object-reader email bucket object (once/get-auth-header!))))
