@@ -20,6 +20,11 @@ const actions = {
     axios.defaults.headers.common.authentication = ""
     commit('updateUser', user)
     sessionStorage.clear()
+  },
+  refreshToken({ commit }, user) {
+    const token = user.reloadAuthResponse().access_token
+    axios.defaults.headers.common.authentication = `Bearer ${token}`
+    commit('updateUser', user)
   }
 }
 
