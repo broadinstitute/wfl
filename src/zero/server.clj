@@ -52,13 +52,6 @@
                 "ZERO_POSTGRES_USERNAME" username}]
     (into {} (filter second result))))
 
-(defn env_variables_on_server
-  "The process environment variables for ENV on a deployed server."
-  []
-  (let [env    (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))
-        result {"ZERO_POSTGRES_URL" (postgres/zero-db-url env)}]
-    (into {} (filter second result))))
-
 (def cookie-store
   "A session store for wrap-defaults."
   (cookie/cookie-store
@@ -125,7 +118,6 @@
         (pprint cmd)
         (println (.waitFor (.start builder))))
     1 (let [port {:port (util/is-non-negative! (first args))}]
-        (doseq [[k v] (env_variables_on_server)] (.put environ k v))
         (pprint [zero/the-name port])
         (jetty/run-jetty app port))
     (throw (IllegalArgumentException. "Must specify 1 or 2 arguments."))))
