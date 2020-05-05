@@ -59,15 +59,10 @@ export default {
       return this.$store.getters['auth/authenticated'];
     }
   },
-  watch: {
-    isAuthenticated() {
-      this.$router.push('/login');
-    }
-  },
   methods: {
     logout() {
       window.gapi.auth2.getAuthInstance().signOut().then(user => {
-        this.$store.dispatch('auth/logout', user);
+        this.$store.dispatch('auth/logout', user).then(() => this.$router.push('/login'));
       });
     },
     getStatus() {
