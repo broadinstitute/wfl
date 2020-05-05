@@ -16,12 +16,19 @@ api:
     pullPolicy: IfNotPresent
   deployment:
     containerPort: 80
+  env:
+    ENVIRONMENT: "wgs-dev"
+    WFL_LIVE_SERVER_MODE: "true"
+    COOKIE_SECRET: ""
+    ZERO_POSTGRES_PASSWORD: ""
+    ZERO_POSTGRES_USERNAME: ""
+
   resources: {}
   secrets:
     enabled: false
     volumeMountPath: /etc/service_accounts/wfl_service_account.json
     secretsgeneric:
-      serivceAccountCredentialFileJson: |-
+      serivceAccountCredentialFilePath: ""  # full absolute path to the secret file
 
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
