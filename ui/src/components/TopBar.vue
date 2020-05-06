@@ -27,7 +27,7 @@
           <v-col cols="5">
             <v-row justify="end" align="center">
             <v-btn class="mr-2"  text >Status: {{ status.status }}</v-btn>
-            <v-btn class="mr-2"  outlined v-bind:href="swagger_link">Swagger API</v-btn>
+            <v-btn class="mr-2"  outlined v-if="isAuthenticated" v-bind:href="swagger_link">Swagger API</v-btn>
             <v-btn outlined v-if="isAuthenticated" v-on:click="logout">Logout</v-btn>
             </v-row>
           </v-col>
@@ -62,7 +62,12 @@ export default {
   methods: {
     logout() {
       window.gapi.auth2.getAuthInstance().signOut().then(user => {
-        this.$store.dispatch('auth/logout', user).then(() => this.$router.push('/login'));
+        this.$store.dispatch('auth/logout', user).then(() => {
+          if(this.$store.getters['sidebar/getSideBar'] === true) {
+            this.toggleSideBar()
+          }
+          this.$router.push('/login')
+        });
       });
     },
     getStatus() {
