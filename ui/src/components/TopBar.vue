@@ -5,9 +5,9 @@
         <v-row justify="space-around" align="center">
           <v-col cols="5">
             <v-toolbar-title>
-              <v-app-bar-nav-icon class="mr-2" @click.stop="toggleSideBar"></v-app-bar-nav-icon>
+              <v-app-bar-nav-icon v-if="isAuthenticated" class="mr-2" @click.stop="toggleSideBar"></v-app-bar-nav-icon>
 
-              <v-btn class="mr-2" icon @click.stop="toggleSideBar">
+              <v-btn class="mr-2" icon>
                 <v-avatar>
                   <v-img
                     src="../assets/logo.png"
@@ -28,6 +28,7 @@
             <v-row justify="end" align="center">
             <v-btn class="mr-2"  text >Status: {{ status.status }}</v-btn>
             <v-btn class="mr-2"  outlined v-bind:href="swagger_link">Swagger API</v-btn>
+            <v-btn outlined v-if="isAuthenticated" v-on:click="logout">Logout</v-btn>
             </v-row>
           </v-col>
         </v-row>
@@ -53,7 +54,17 @@ export default {
       swagger_link: "/swagger/index.html"
     };
   },
+  computed: {
+    isAuthenticated: function() {
+      return this.$store.getters['auth/authenticated'];
+    }
+  },
   methods: {
+    logout() {
+      window.gapi.auth2.getAuthInstance().signOut().then(user => {
+        this.$store.dispatch('auth/logout', user).then(() => this.$router.push('/login'));
+      });
+    },
     getStatus() {
       axios.get("/status").then(response => (this.status = response.data));
     },

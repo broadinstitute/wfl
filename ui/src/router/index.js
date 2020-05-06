@@ -1,6 +1,8 @@
 import Vue from 'vue'
+import store from '../store'
 import VueRouter from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
+import Login from '../views/Login.vue'
 
 Vue.use(VueRouter)
 
@@ -9,6 +11,14 @@ const routes = [
     path: '/',
     name: 'dashboard',
     component: Dashboard
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
+    meta: {
+        public: true
+    }
   },
   {
     path: '/query',
@@ -40,5 +50,18 @@ const router = new VueRouter({
   mode: 'history',
   routes
 })
+
+
+router.beforeEach((to, from, next) => {
+    const isPublic = to.matched.some(record => record.meta.public);
+    const loggedIn = store.getters['auth/authenticated'];
+
+    if (!isPublic && !loggedIn) {
+        return next({ name: 'login' })
+    }
+
+    next()
+})
+
 
 export default router

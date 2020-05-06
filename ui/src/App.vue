@@ -34,11 +34,21 @@ export default {
       modules: [{ text: "loading..." }]
     };
   },
-
   created: function() {
-  },
-
-  mounted: function() {}
+    const store = this.$store
+    window.gapi.load('auth2', initAuth);
+    function initAuth() {
+      window.gapi.auth2.init({
+        client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
+      }).then(()=> {
+        window.gapi.auth2.getAuthInstance().currentUser.listen((user) => {
+            if(user.isSignedIn()) {
+              store.dispatch('auth/login', user)
+            }
+        })
+      });
+    }
+  }
 };
 </script>
 
