@@ -20,7 +20,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
 
@@ -41,19 +40,14 @@ export default {
     function initAuth() {
       window.gapi.auth2.init({
         client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
+      }).then(()=> {
+        window.gapi.auth2.getAuthInstance().currentUser.listen((user) => {
+            if(user.isSignedIn()) {
+              store.dispatch('auth/login', user)
+            }
+        })
       });
     }
-    axios.interceptors.response.use(null, (error) => {
-      const unauthorized = (error.response && error.response.status === 401)
-      if(unauthorized && error.config && !error.config.__isRetryRequest) {
-        const user = window.gapi.auth2.getAuthInstance().currentUser.get()
-        store.dispatch('auth/refreshToken', user).then(() => {
-          error.config.__isRetryRequest = true
-          return axios.request(error.config);
-        })
-       }
-       return Promise.reject(error);
-    });
   }
 };
 </script>
