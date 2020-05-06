@@ -13,11 +13,11 @@ const getters = {
 const actions = {
   login({ commit }, user) {
     const token = user.getAuthResponse(true).access_token
-    axios.defaults.headers.common.authentication = `Bearer ${token}`
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`
     commit('updateUser', user)
   },
   logout({ commit }, user) {
-    axios.defaults.headers.common.authentication = ""
+    axios.defaults.headers.common.Authorization = ""
     commit('updateUser', user)
     sessionStorage.clear()
   }
