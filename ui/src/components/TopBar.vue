@@ -62,7 +62,12 @@ export default {
   methods: {
     logout() {
       window.gapi.auth2.getAuthInstance().signOut().then(user => {
-        this.$store.dispatch('auth/logout', user).then(() => this.$router.push('/login'));
+        this.$store.dispatch('auth/logout', user).then(() => {
+          if(this.$store.getters['sidebar/getSideBar'] === true) {
+            this.toggleSideBar()
+          }
+          this.$router.push('/login')
+        });
       });
     },
     getStatus() {
