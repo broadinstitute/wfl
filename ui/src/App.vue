@@ -53,7 +53,7 @@ export default {
       const unauthorized = (error.response && error.response.status === 401)
       if(unauthorized && error.config) {
         if(this.$store.getters['sidebar/getSideBar'] === true) {
-          this.toggleSideBar()
+          this.$store.dispatch('sidebar/toggleSideBar')
         }
         this.$router.push('/error')
       }
