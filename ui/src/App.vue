@@ -20,6 +20,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
 
@@ -48,6 +49,16 @@ export default {
         })
       });
     }
+    axios.interceptors.response.use(null, (error) => {
+      const unauthorized = (error.response && error.response.status === 401)
+      if(unauthorized && error.config) {
+        if(this.$store.getters['sidebar/getSideBar'] === true) {
+          this.toggleSideBar()
+        }
+        this.$router.push('/error')
+      }
+      return Promise.reject(error);
+    });
   }
 };
 </script>
