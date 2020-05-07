@@ -5,12 +5,10 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [buddy.sign.jwt :as jwt]
-            [clj-http.client :as http]
             [clj-yaml.core :as yaml]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [zero.environments :as env]
-            [zero.once :as once]
             [zero.zero :as zero])
   (:import [com.google.auth.oauth2 GoogleCredentials]
            [java.io File Writer]
@@ -326,13 +324,3 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [uuid]
   (or (= uuid uuid-nil)
       (= uuid (str uuid-nil))))
-
-(defn userinfo
-  "Nil or the userinfo from Google."
-  []
-  (-> {:method  :get                    ; :debug true :debug-body true
-       :url     "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"
-       :headers (once/get-auth-header!)}
-      http/request :body
-      (json/read-str :key-fn keyword)
-      do-or-nil))
