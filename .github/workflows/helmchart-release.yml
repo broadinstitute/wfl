@@ -1,6 +1,5 @@
 name: Helm Charts Release
 
-# NOTE: this workflow does NOT work for PR commits!
 on:
   push:
     branches:
@@ -17,14 +16,44 @@ jobs:
       with:
         persist-credentials: false
         fetch-depth: '2'
+
     - name: Configure Git
       run: |
         git config user.name "$GITHUB_ACTOR"
         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-    - name: Run chart-releaser
-      uses: broadinstitute/chart-releaser-action@master
+
+    # Get secret from vault
+    - name: RetrieveToken
+      id: Token
       env:
-        CR_TOKEN: "${{ secrets.CR_TOKEN }}"
+        ROLE_ID: ${{ secrets.ROLE_ID }}
+        SECRET_ID: ${{ secrets.SECRET_ID }}
+        VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      run: |
+        # get vault token using role-id and secret-id
+        VAULT_TOKEN=$(curl \
+            --request POST \
+            --data "{\"role_id\":\"${ROLE_ID}\",\"secret_id\":\"${SECRET_ID}\"}" \
+            ${VAULT_ADDR}/v1/auth/approle/login | jq -r .auth.client_token)
+        if [ -z "${VAULT_TOKEN}" ] ; then
+           echo "Vault authentication failed!"
+           exit 1
+        fi
+        echo ::add-mask::${VAULT_TOKEN}
+        echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
+        # use vault token to read secret - api access token
+        CR_TOKEN=$(curl --silent \
+             -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+             ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/dsde-jenkins/api-access-token \
+             | jq .data.token | tr -d \")
+        if [ -z "${CR_TOKEN}" ] ; then
+           echo "Retrieval of api access token failed"
+           exit 1
+        fi
+        echo ::add-mask::${CR_TOKEN}
+        echo ::set-env name=CR_TOKEN::${CR_TOKEN}
+    - name: Runchart-releaser
+      uses: broadinstitute/chart-releaser-action@v1.0.0-rc.4
       with:
         charts_dir: "helm"
         charts_repo: "gotc-helm-repo"
