@@ -15,7 +15,7 @@
     
     
       
-        <title>Frontend - Workflow Launcher</title>
+        <title>Deployment with Kubernetes - Workflow Launcher</title>
       
     
     
@@ -56,7 +56,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#workflow-launcher-ui" class="md-skip">
+        <a href="#deployment-of-workflow-launcher" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Frontend
+              Deployment with Kubernetes
             
           </span>
         </div>
@@ -224,10 +224,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Deployment
@@ -249,11 +251,87 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../deployment/" title="Deployment with Kubernetes" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Deployment with Kubernetes
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Deployment with Kubernetes" class="md-nav__link md-nav__link--active">
       Deployment with Kubernetes
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#make-a-deployment" class="md-nav__link">
+    Make a deployment
+  </a>
+  
+    <nav class="md-nav" aria-label="Make a deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-kubernetes" class="md-nav__link">
+    Setup Kubernetes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setup-helm" class="md-nav__link">
+    Setup Helm
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    Deployment
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-the-deployment-locally" class="md-nav__link">
+    Testing the deployment locally
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -266,12 +344,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
       Frontend
@@ -293,142 +369,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Frontend
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
-      </label>
-    
-    <a href="./" title="Frontend" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../frontend/" title="Frontend" class="md-nav__link">
       Frontend
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#structure" class="md-nav__link">
-    Structure
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-setup" class="md-nav__link">
-    Project setup
-  </a>
-  
-    <nav class="md-nav" aria-label="Project setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#install-dependencies" class="md-nav__link">
-    Install dependencies
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compiles-and-hot-reloads-for-development" class="md-nav__link">
-    Compiles and hot-reloads for development
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compiles-and-minifies-for-production" class="md-nav__link">
-    Compiles and minifies for production
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lints-and-fixes-files" class="md-nav__link">
-    Lints and fixes files
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    Development
-  </a>
-  
-    <nav class="md-nav" aria-label="Development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#styles" class="md-nav__link">
-    Styles
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-new-components-or-views" class="md-nav__link">
-    Add new components or views
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui-states" class="md-nav__link">
-    UI states
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#single-page-routing" class="md-nav__link">
-    Single Page Routing
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#more-refernces" class="md-nav__link">
-    More refernces
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -559,44 +504,30 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#structure" class="md-nav__link">
-    Structure
+  <a href="#make-a-deployment" class="md-nav__link">
+    Make a deployment
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-setup" class="md-nav__link">
-    Project setup
-  </a>
-  
-    <nav class="md-nav" aria-label="Project setup">
+    <nav class="md-nav" aria-label="Make a deployment">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#install-dependencies" class="md-nav__link">
-    Install dependencies
+  <a href="#setup-kubernetes" class="md-nav__link">
+    Setup Kubernetes
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#compiles-and-hot-reloads-for-development" class="md-nav__link">
-    Compiles and hot-reloads for development
+  <a href="#setup-helm" class="md-nav__link">
+    Setup Helm
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#compiles-and-minifies-for-production" class="md-nav__link">
-    Compiles and minifies for production
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lints-and-fixes-files" class="md-nav__link">
-    Lints and fixes files
+  <a href="#deployment" class="md-nav__link">
+    Deployment
   </a>
   
 </li>
@@ -607,49 +538,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    Development
-  </a>
-  
-    <nav class="md-nav" aria-label="Development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#styles" class="md-nav__link">
-    Styles
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add-new-components-or-views" class="md-nav__link">
-    Add new components or views
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui-states" class="md-nav__link">
-    UI states
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#single-page-routing" class="md-nav__link">
-    Single Page Routing
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#more-refernces" class="md-nav__link">
-    More refernces
+  <a href="#testing-the-deployment-locally" class="md-nav__link">
+    Testing the deployment locally
   </a>
   
 </li>
@@ -666,7 +556,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/frontend.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/deployment.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -674,102 +564,72 @@
                   
                 
                 
-                <h1 id="workflow-launcher-ui">Workflow Launcher UI<a class="headerlink" href="#workflow-launcher-ui" title="Permanent link">&para;</a></h1>
-<p>This is the front-end interface of the Workflow Launcher. It is a VueJS based
-SPA (Single-Page Application) that works as an ordinary client of the
-Workflow Launcher Server. You could find its position in the following Diagram:</p>
-<p><img alt="Workflow Launcher Tech Arch" src="https://www.lucidchart.com/publicSegments/view/07076782-0aea-4c3b-b999-6bc413f4250a/image.png" /></p>
-<h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>ui
-├── README.md
-├── babel.config.js
-├── dist/
-├── node_modules/
-├── package-lock.json
-├── package.json
-├── public/
-├── src/
-│   ├── App.vue
-│   ├── assets/
-│   ├── components/
-│   ├── main.js
-│   ├── plugins/
-│   ├── router/
-│   ├── store/
-│   └── views/
-└── vue.config.js
-</code></pre></div>
-
-<p>In the above structure:</p>
+                <h1 id="deployment-of-workflow-launcher">Deployment of WorkFlow Launcher<a class="headerlink" href="#deployment-of-workflow-launcher" title="Permanent link">&para;</a></h1>
+<h2 id="make-a-deployment">Make a deployment<a class="headerlink" href="#make-a-deployment" title="Permanent link">&para;</a></h2>
+<p>The WorkFlow Launcher is currently running on a Kubernetes cluster, and the deployment is managed by <a href="https://helm.sh/docs/intro/install/">Helm</a>. In order to make a deployment or upgrade the current deployment manually, you have to make the following preparations:</p>
+<h3 id="setup-kubernetes">Setup Kubernetes<a class="headerlink" href="#setup-kubernetes" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>dist/</code> folder hosts the built target of the application.</li>
-<li><code>node_modules/</code> hosts the installed JS dependencies and libraries. They are ignored by git.</li>
-<li><code>public/</code> hosts the template static index HTML file that will be injected.</li>
-<li><code>package-*.json</code> files hold various metadata relevant to the project. This file is used to give information to npm that allows it to identify the project as well as handle the project's dependencies.</li>
-<li><code>src/</code> folder hosts the source code of the UI application:<ul>
-<li><code>App.vue</code> is the main Vue component and it glues all other components together.</li>
-<li><code>components/</code> hosts all reusable Vue components.</li>
-<li><code>main.js</code> helps inject some project-wide tools and plugins such as <code>vue-router</code> or <code>vuetify</code> and make them available to all sub components.</li>
-<li><code>plugins/</code> holds plugin components' settgins files.</li>
-<li><code>router</code> contains files that register the internal routing table for UI.</li>
-<li><code>store/</code> hosts state files and functions that used by <code>vuex</code>.</li>
-<li><code>views/</code> holds different views or "pages" for the single-page application. The views consume the re-usable components here.</li>
+<li>Make sure you have the <code>kubectl</code> command available, while in the Broad network or using the VPN, run a command like the following to setup the connection to the desired cluster:
+    <div class="highlight"><pre><span></span><code>gcloud container clusters get-credentials gotc-dev-shared-us-central1-a --zone us-central1-a --project broad-gotc-dev
+</code></pre></div></li>
+<li>Run <code>kubectl config get-contexts</code> to make sure you are connected to the right cluster.</li>
+<li>Later you could run <code>kubectl config use-context $CONTEXT_NAME</code> to switch (back) to other contexts.</li>
 </ul>
+<h3 id="setup-helm">Setup Helm<a class="headerlink" href="#setup-helm" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Install Helm, please follow the Helm instructions or simply try <code>brew install helm</code>, assuming you have <a href="https://brew.sh/">HomeBrew</a> installed on your macOS.</li>
+<li>
+<p>Run:
+    <div class="highlight"><pre><span></span><code>helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
+</code></pre></div>
+    to add gotc’s Helm repo to your Helm. Note <code>gotc-charts</code> is just an alias, you could give it any name you want. </p>
 </li>
-<li><code>vue.config.js</code> contains settings for the Vue applicationm, such as the proxy table for local development.</li>
+<li>
+<p>Run:
+    <div class="highlight"><pre><span></span><code>helm repo update
+</code></pre></div>
+    to make the local cached charts update-to-date to the remote repo and also run:</p>
+<p><div class="highlight"><pre><span></span><code>helm repo list
+</code></pre></div>
+to check the list of repo you have connected to anytime you want.</p>
+</li>
+<li>
+<p>In the Broad network or on VPN and your <code>kubectl</code> is setup to connect to the right cluster,  run:
+    <div class="highlight"><pre><span></span><code>helm list
+</code></pre></div>
+    to check the current deployments that are managed by Helm.</p>
+</li>
 </ul>
-<h2 id="project-setup">Project setup<a class="headerlink" href="#project-setup" title="Permanent link">&para;</a></h2>
-<p><strong> Note: for any of the following commands that uses <code>npm</code>, if you prefer to run from the root
-directory of the WFL repo instead of running from within <code>zero/ui</code>, please be sure to append <code>--prefix=ui</code>
-to the npm command you run. </strong></p>
-<h3 id="install-dependencies">Install dependencies<a class="headerlink" href="#install-dependencies" title="Permanent link">&para;</a></h3>
-<p>When you first clone the repo, run:
-<div class="highlight"><pre><span></span><code>npm install
+<h3 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h3>
+<p>Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of <a href="https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm">these YML files</a>, with your modifications to some specific values in it. </p>
+<p><strong>Note:</strong> some of the values in these YML files contain credentials or sensitive information, so <strong>DO NOT</strong> checkout them into your version control system or make them public!!!</p>
+<p>Now with Helm and the custom values YML files, you could run for instance:</p>
+<p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
-to install the necessary dependencies.</p>
-<h3 id="compiles-and-hot-reloads-for-development">Compiles and hot-reloads for development<a class="headerlink" href="#compiles-and-hot-reloads-for-development" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run serve
-</code></pre></div>
-
-<h3 id="compiles-and-minifies-for-production">Compiles and minifies for production<a class="headerlink" href="#compiles-and-minifies-for-production" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run build
-</code></pre></div>
-
-<h3 id="lints-and-fixes-files">Lints and fixes files<a class="headerlink" href="#lints-and-fixes-files" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run lint
-</code></pre></div>
-
-<h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
-<p><em>It makes your life easier if you start the local server while developing on the ui, since you could preview the live changes in your browser.</em></p>
-<h3 id="styles">Styles<a class="headerlink" href="#styles" title="Permanent link">&para;</a></h3>
-<p>This project follows and uses Material Design, especilly the Vue implementation of Material Design framework: Vuetify. Please check <a href="https://vuetifyjs.com/en/">their docs</a> before adding anything to the front-end.</p>
-<h3 id="add-new-components-or-views">Add new components or views<a class="headerlink" href="#add-new-components-or-views" title="Permanent link">&para;</a></h3>
-<p>The development process is pretty straightforward as the above structure diagram shows. Usually you just need to create a new re-usable component under <code>ui/src/components</code>, which follows the Vue file format:</p>
-<div class="highlight"><pre><span></span><code>&lt;template&gt;
-&lt;!-- your HTML and template code --&gt;
-&lt;/template&gt;
-
-&lt;script&gt;
-// your JavaScript code following Vue-
-// component standards
-&lt;/script&gt;
-
-&lt;style&gt;
-/* your CSS styles */
-&lt;/style&gt;
-</code></pre></div>
-
-<p>You could either put the component you created in the <code>App.vue</code> directly, or use it in the views under <code>views/</code>. Note the views files are also components, except they are designed to be specific not reusable.</p>
-<h3 id="ui-states">UI states<a class="headerlink" href="#ui-states" title="Permanent link">&para;</a></h3>
-<p>Sometimes it's inevitable to store some states for components of UI to better control their behaviors, the state files should be added to <code>store/modules/</code> and get registered in <code>store/index.js</code>.</p>
-<h3 id="single-page-routing">Single Page Routing<a class="headerlink" href="#single-page-routing" title="Permanent link">&para;</a></h3>
-<p>The SPA application is achieved by an internal routing in UI. This is controlled by the routing tables in <code>router/</code>.</p>
-<h2 id="more-refernces">More refernces<a class="headerlink" href="#more-refernces" title="Permanent link">&para;</a></h2>
+where:</p>
 <ul>
-<li>VueJS: https://vuejs.org/v2/guide/</li>
-<li>Vuetify: https://vuetifyjs.com/en/</li>
-<li>Vue-router: https://router.vuejs.org/</li>
+<li><code>gotc-dev</code> is the name of the deployment </li>
+<li><code>gotc-charts/authproxy</code> is following <code>chart-repo-alias/chartname</code></li>
+<li><code>custom-authvals.yaml</code> is the path to your custom values YML file</li>
 </ul>
+<p>to make a new deployment or
+<div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+</code></pre></div>
+To update an existing deployment without re-creating all of the resources which could slow down the process.</p>
+<p>You could run <code>kubectl get pods</code> to check the readiness of your deployments, <code>kubectl logs $POD_NAME $POD_APPLICATION_NAME</code> to view the logs.</p>
+<h2 id="testing-the-deployment-locally">Testing the deployment locally<a class="headerlink" href="#testing-the-deployment-locally" title="Permanent link">&para;</a></h2>
+<p>Similar to the above process, but in addition to the above preparations, you also have to:</p>
+<ul>
+<li>Make sure you have a relatively new version of Docker client installed, which has Docker -&gt; Preferences -&gt; Kubernetes -&gt; Enable Kubernetes. Turn on that options and restart your Docker client.</li>
+<li>Run <code>kubectl config use-context $CONTEXT_NAME</code> to the Docker-built-in Kubernetes context, usually it should be called something like <code>docker-for-mac</code>.</li>
+</ul>
+<p>Similar to how you have setup the Helm charts, you could run:</p>
+<p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+</code></pre></div>
+Or 
+<div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+</code></pre></div>
+To install or upgrade the deployments on your local cluster. One thing to note is that you <strong>CANNOT</strong> create an <code>ingress</code> resource locally, so it’s important to <code>disable</code> the ingress creation in your custom values YML files.</p>
                 
               
               
@@ -788,7 +648,7 @@ to install the necessary dependencies.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../deployment/" title="Deployment with Kubernetes" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href=".." title="Welcome to WorkFlow Launcher" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -797,19 +657,19 @@ to install the necessary dependencies.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Deployment with Kubernetes
+                Welcome to WorkFlow Launcher
               </div>
             </div>
           </a>
         
         
-          <a href="../server/" title="Server" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../frontend/" title="Frontend" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Server
+                Frontend
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
