@@ -17,21 +17,24 @@ The WorkFlow Launcher is currently running on a Kubernetes cluster, and the depl
     ```bash
     helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
     ```
-To add gotc’s Helm repo to your Helm. Note `gotc-charts` is just an alias, you could give it any name you want. 
+    to add gotc’s Helm repo to your Helm. Note `gotc-charts` is just an alias, you could give it any name you want. 
+
 - Run:
     ```bash
     helm repo update
     ```
-To make the local cached charts update-to-date to the remote repo and also run:
+    to make the local cached charts update-to-date to the remote repo and also run:
+
     ```bash
     helm repo list
     ```
-To check the list of repo you have connected to anytime you want.
+    to check the list of repo you have connected to anytime you want.
+
 - In the Broad network or on VPN and your `kubectl` is setup to connect to the right cluster,  run:
     ```bash
     helm list
     ```
-To check the current deployments that are managed by Helm.
+    to check the current deployments that are managed by Helm.
 
 ### Deployment
 Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of [these YML files](https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm), with your modifications to some specific values in it. 
