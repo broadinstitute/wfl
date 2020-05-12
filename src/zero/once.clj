@@ -43,12 +43,13 @@
   [environment]
   (get-in env/stuff [environment :cromwell :wfl-service-account]))
 
-;; The re-usable environment:credentials-object map for token generation and refreshing
+;; The re-usable environment:credentials-object map for token
+;; generation and refreshing.
 ;;
 (defonce the-cached-credentials-from-service-account
-         (delay
-           (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
-             (new-credentials-from-service-account (service-account-for-env env)))))
+  (delay
+    (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
+      (new-credentials-from-service-account (service-account-for-env env)))))
 
 (defn get-auth-header!
   "Return a valid auth header. Refresh and generate the access
@@ -62,9 +63,7 @@
 
 (comment
   (util/bearer-token-header-for @the-cached-credentials-from-service-account)
-  (get-auth-header!))
-
-(comment
+  (get-auth-header!)
   (some-> (:xx @the-cached-credentials-from-service-account)
           .refreshAccessToken
           .getTokenValue)
@@ -74,4 +73,5 @@
     (reduce-kv (fn [m k v] (assoc m k (f v))) {} m))
   (let [envs {:wgs-dev "some-test-service-account.json"
               :xx      "some-test-service-account.json"}]
-    (update-map-vals new-credentials-from-service-account envs)))
+    (update-map-vals new-credentials-from-service-account envs))
+  )
