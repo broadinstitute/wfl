@@ -17,7 +17,7 @@ The WorkFlow Launcher is currently running on a Kubernetes cluster, and the depl
     ```bash
     helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
     ```
-    to add gotc’s Helm repo to your Helm. Note `gotc-charts` is just an alias, you could give it any name you want. 
+    to add gotc’s Helm repo to your Helm. Note `gotc-charts` is just an alias, you could give it any name you want.
 
 - Run:
     ```bash
@@ -37,7 +37,7 @@ The WorkFlow Launcher is currently running on a Kubernetes cluster, and the depl
     to check the current deployments that are managed by Helm.
 
 ### Deployment
-Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of [these YML files](https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm), with your modifications to some specific values in it. 
+Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of [these YML files](https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm), with your modifications to some specific values in it.
 
 **Note:** some of the values in these YML files contain credentials or sensitive information, so **DO NOT** checkout them into your version control system or make them public!!!
 
@@ -48,7 +48,7 @@ helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
 where:
 
-- `gotc-dev` is the name of the deployment 
+- `gotc-dev` is the name of the deployment
 - `gotc-charts/authproxy` is following `chart-repo-alias/chartname`
 - `custom-authvals.yaml` is the path to your custom values YML file
 
@@ -71,7 +71,7 @@ Similar to how you have setup the Helm charts, you could run:
 ```bash
 helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
-Or 
+Or
 ```bash
 helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
