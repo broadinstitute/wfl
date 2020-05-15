@@ -2,7 +2,7 @@
   <v-app id="app">
     <SideBar v-bind:modules="modules" />
 
-    <TopBar v-bind:title="'Zero Server'" />
+    <TopBar v-bind:title="'WorkFlow Launcher'" />
 
     <v-content>
       <v-container fluid fill-width>
@@ -20,9 +20,9 @@
 </template>
 
 <script>
+import axios from "axios";
 import TopBar from "./components/TopBar.vue";
 import SideBar from "./components/SideBar.vue";
-import axios from "axios";
 
 export default {
   name: "app",
@@ -35,33 +35,31 @@ export default {
       modules: [{ text: "loading..." }]
     };
   },
-  methods: {
-    getEnvironments() {
-      axios.get("/api/v1/environments").then(response => {
-        if (
-          response.status == 200 &&
-          response.headers["content-type"] === "application/json"
-        ) {
-          this.environments = response.data;
-
-          // for the modules
-          let tempData = Object.keys(response.data);
-          let tempModules = [];
-          tempData.forEach(module => {
-            tempModules.push({ text: module });
-          });
-
-          this.modules = tempModules;
-        }
+  created: function() {
+    const store = this.$store
+    window.gapi.load('auth2', initAuth);
+    function initAuth() {
+      window.gapi.auth2.init({
+        client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
+      }).then(()=> {
+        window.gapi.auth2.getAuthInstance().currentUser.listen((user) => {
+            if(user.isSignedIn()) {
+              store.dispatch('auth/login', user)
+            }
+        })
       });
     }
-  },
-
-  created: function() {
-    this.getEnvironments();
-  },
-
-  mounted: function() {}
+    axios.interceptors.response.use(null, (error) => {
+      const unauthorized = (error.response && error.response.status === 401)
+      if(unauthorized && error.config) {
+        if(this.$store.getters['sidebar/getSideBar'] === true) {
+          this.$store.dispatch('sidebar/toggleSideBar')
+        }
+        this.$router.push('/error')
+      }
+      return Promise.reject(error);
+    });
+  }
 };
 </script>
 

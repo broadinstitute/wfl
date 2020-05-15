@@ -21,6 +21,8 @@ extra:
 nav:
   - Get Started:
     - README.md
+  - Deployment:
+    - Deployment with Kubernetes: deployment.md
   - Frontend:
     - Frontend: frontend.md
   - Server:

@@ -91,4 +91,8 @@
   :test-create-workload
   {:extra-paths ["integration" "resources"]
    :main-opts ["-m" "zero.create"]}
+
+  :test-start-workload
+  {:extra-paths ["integration" "resources"]
+   :main-opts ["-m" "zero.start"]}
   }}

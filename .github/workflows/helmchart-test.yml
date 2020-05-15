@@ -1,0 +1,38 @@
+name: Helm Charts Test
+
+on:
+  pull_request:
+    branches: 
+      - master
+    paths:
+      - helm/**
+    
+jobs:
+  helm-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Fetch history
+      run: git fetch --prune --unshallow
+
+    - name: Run chart-testing (Helm lint)
+      id: lint
+      uses: helm/chart-testing-action@v1.0.0-rc.2
+      with:
+        command: lint
+        config: ct.yaml
+    # The auto-generated names don't work for ct install
+    # We will have to figure out a way to make sure generated
+    # names don't have hyphen, otherwise we cannot run ct install
+    # - name: Spin up a Kind cluster for testing
+    #   uses: helm/kind-action@v1.0.0-alpha.3
+    #   # Only build a Kind cluster if there are chart changes to test.
+    #   if: steps.lint.outputs.changed == 'true'
+    
+    # - name: Run chart-testing (install)
+    #   uses: helm/chart-testing-action@v1.0.0-rc.1
+    #   with:
+    #     command: install
+

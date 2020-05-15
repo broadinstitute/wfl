@@ -60,7 +60,7 @@
   (-> {:method       :get
        :url          (topic-url project "")
        :content-type :application/json
-       :headers      (once/get-local-auth-header)}
+       :headers      (once/get-auth-header!)}
       http/request
       :body
       (json/read-str :key-fn keyword)
@@ -73,7 +73,7 @@
   (-> {:method       :put
        :url          (topic-url project topic)
        :content-type :application/json
-       :headers      (once/get-local-auth-header)}
+       :headers      (once/get-auth-header!)}
       http/request
       :body
       (json/read-str :key-fn keyword)))
@@ -91,7 +91,7 @@
                   throw)))]
     (-> {:method            :delete
          :url               (topic-url project topic)
-         :headers           (once/get-local-auth-header)
+         :headers           (once/get-auth-header!)
          :throw-exceptions? false}
         http/request
         deleted-this-time?)))
@@ -102,7 +102,7 @@
   (-> {:method       :get
        :url          (subscription-url project "")
        :content-type :application/json
-       :headers      (once/get-local-auth-header)}
+       :headers      (once/get-auth-header!)}
       http/request
       :body
       (json/read-str :key-fn keyword)))
@@ -113,7 +113,7 @@
   {:method       :put
    :url          (subscription-url project subscription)
    :content-type :application/json
-   :headers      (once/get-local-auth-header)
+   :headers      (once/get-auth-header!)
    :body         {:topic (topic-name project topic)}})
 
 (defn subscribe
@@ -148,7 +148,7 @@
                   throw)))]
     (-> {:method            :delete
          :url               (subscription-url project subscription)
-         :headers           (once/get-local-auth-header)
+         :headers           (once/get-auth-header!)
          :throw-exceptions? false}
         http/request
         deleted-this-time?)))
@@ -166,7 +166,7 @@
                            :attributes attributes})]
     (-> {:method  :post
          :url     (str api-url (topic-name project topic) :publish)
-         :headers (once/get-local-auth-header)
+         :headers (once/get-auth-header!)
          :body    (json/write-str {:messages (map wrap messages)})}
         http/request
         :body
@@ -186,7 +186,7 @@
           (unwrap [m] (update-in m [:message :data] decode))]
     (-> {:method  :post
          :url     (str api-url (subscription-name project subscription) :pull)
-         :headers (once/get-local-auth-header)
+         :headers (once/get-auth-header!)
          :body    (json/write-str {:returnImmediately true :maxMessages 23})}
         http/request
         :body

@@ -174,10 +174,9 @@
     (letfn [(cram? [{:keys [name]}]
               (when (str/ends-with? name ".cram")
                 (util/unsuffix name ".cram")))
-            (slashify [url] (if (str/ends-with? url "/") url (str url "/")))
             (hold! [cram]
               (hold-cram environment in-bucket out-bucket cram))]
-      (let [done (set/union (all/processed-crams (slashify out-gs))
+      (let [done (set/union (all/processed-crams (all/slashify out-gs))
                             (active-crams environment in-gs))]
         (->> in-gs
              gcs/parse-gs-url

@@ -153,9 +153,8 @@
         bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
               (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
-                (when unsuffixed [unsuffixed suffix])))
-            (slashify [url] (if (str/ends-with? url "/") url (str url "/")))]
-      (let [done   (set/union (all/processed-crams (slashify out-gs))
+                (when unsuffixed [unsuffixed suffix])))]
+      (let [done   (set/union (all/processed-crams (all/slashify out-gs))
                               (active-objects environment in-gs))
             suffix (->> in-gs
                         gcs/parse-gs-url

@@ -293,6 +293,7 @@ Run them using aliases defined in the `./deps.edn` file.
 ```shell
 clojure -A:integration
 clojure -A:test-create-workload
+clojure -A:test-start-workload
 ```
 
 With a little hacking,

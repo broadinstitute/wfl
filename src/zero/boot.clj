@@ -112,10 +112,10 @@
             (let [out (io/file resources (.getName in))]
               (io/make-parents out)
               (io/copy in out)))]
-    (let [config (clone "pipeline-config" "zero/environments.clj")]
+    (let [config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent config)
-                      "checkout" "e44decd39db39725f79bddc42d944181d0621b1d")
+                      "checkout" "5ba20b48d1251bcc9e4066017e8a8c078b386f55")
       (stage config))))
 
 (defn adapterize-wgs

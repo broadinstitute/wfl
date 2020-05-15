@@ -13,4 +13,5 @@
     <include file="changesets/20200315_CreateWorkloadTable.xml"                  relativeToChangelogFile="true"/>
     <include file="changesets/20200316_ExternalWholeGenomeReprocessingEnum.xml"  relativeToChangelogFile="true"/>
     <include file="changesets/20200317_ExternalWholeGenomeReprocessingTable.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/20200424_RenameLoadColumnToItems.xml"              relativeToChangelogFile="true"/>
 </databaseChangeLog>
