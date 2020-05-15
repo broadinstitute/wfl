@@ -34,7 +34,7 @@
         (->> (str/join \newline))
         (format zero/the-name title))))
 
-;; Set "ZERO_POSTGRES_URL" to (postgres/zero-db-url :debug)
+;; Set "ZERO_POSTGRES_URL" to "jdbc:postgresql:wfl"
 ;; to run the server against a local Postgres installation.
 ;;
 (defn env_variables
@@ -42,13 +42,13 @@
   [env]
   (let [environment (env env/stuff)
         {:keys [cookie_secret
-                password username]}
+                password postgres_url username]}
         (util/vault-secrets (get-in environment [:server :vault]))
         result {"WFL_LIVE_SERVER_MODE"   "true"
                 "COOKIE_SECRET"          cookie_secret
                 "ENVIRONMENT"            (:name environment)
                 "ZERO_POSTGRES_PASSWORD" password
-                "ZERO_POSTGRES_URL"      (postgres/zero-db-url env)
+                "ZERO_POSTGRES_URL"      postgres_url
                 "ZERO_POSTGRES_USERNAME" username}]
     (into {} (filter second result))))
 

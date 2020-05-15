@@ -48,7 +48,7 @@
 ;;
 (defonce the-cached-credentials-from-service-account
   (delay
-    (let [env   (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
+    (let [env (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
       (new-credentials-from-service-account (service-account-for-env env)))))
 
 (defn get-auth-header!

@@ -13,31 +13,6 @@
   (:import [java.time OffsetDateTime]
            [liquibase.integration.commandline Main]))
 
-(defn zero-db-url
-  "An URL for the zero-postgresql service in ENVIRONMENT."
-  [environment]
-  (let [project (get-in env/stuff [environment :server :project])
-        wfl (when project
-              (letfn [(postgresql? [{:keys [instanceType name region]}]
-                        (when (= [instanceType         name]
-                                 ["CLOUD_SQL_INSTANCE" "zero-postgresql"])
-                          (str "//google/wfl?useSSL=false"
-                               "&socketFactory="
-                               "com.google.cloud.sql.postgres.SocketFactory"
-                               "&cloudSqlInstance="
-                               (str/join ":" [project region name]))))]
-                (-> {:method :get
-                     :url (str/join
-                            "/" ["https://www.googleapis.com/sql/v1beta4"
-                                 "projects" project "instances"])
-                     :headers (merge {"Content-Type" "application/json"}
-                                     (once/get-auth-header!))}
-                    http/request :body
-                    (json/read-str :key-fn keyword) :items
-                    (->> (keep postgresql?))
-                    first)))]
-    (str/join ":" ["jdbc" "postgresql" (or wfl "wfl")])))
-
 (defn zero-db-config
   "Get the config for the zero database in ENVIRONMENT."
   [environment]
@@ -87,13 +62,12 @@
 (defn run-liquibase
   "Migrate the database schema for ENV using Liquibase."
   ([env]
-   (let [{:keys [username password]} (-> env/stuff env :server :vault
-                                         util/vault-secrets)]
-     (run-liquibase-update (zero-db-url env) username password)))
+   (let [{:keys [username password postgres_url]}
+         (-> env/stuff env :server :vault util/vault-secrets)]
+     (run-liquibase-update postgres_url username password)))
   ([]
-   (run-liquibase-update (zero-db-url :debug)
-                         (util/getenv "USER" "postgres")
-                         "password")))
+   (run-liquibase-update
+     "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
 (defn get-table
   "Return TABLE using transaction TX."
