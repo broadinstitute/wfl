@@ -48,7 +48,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "WholeGenomeReprocessing_v1.2"
+  {:release "ns_po-26024_custom_changes"
    :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
 
 (def adapter-workflow-wdl
@@ -57,7 +57,9 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-wgs"))
+  {(keyword (str zero/the-name "-wgs-po-ticket"))
+   "PO-26024"
+   (keyword (str zero/the-name "-wgs"))
    (wdl/workflow-name adapter-workflow-wdl)})
 
 (def cromwell-label
