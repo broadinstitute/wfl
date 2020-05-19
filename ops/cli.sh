@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/bin/bash
+
+set -e
 
 # print with style
 # all available styles:
@@ -38,6 +40,7 @@ function check_availability {
 
     hash "$some_command" 2>/dev/null || { 
         print_style >&2 "error" "${some_command} is required but not found! Aborting..."; 
+        print_style "info" "${INSTALL_MSG}"
         exit 1; 
     }
 }
@@ -52,7 +55,7 @@ function line {
 function render_helm_values {
     local CTMPL_FILE=$1
 
-    docker run -i \
+    docker run -ti \
                --rm \
                -v "$(pwd)":/working \
                -v "${HOME}"/.vault-token:/root/.vault-token \
@@ -65,7 +68,7 @@ function setup_and_update_helm_charts {
     local CHART_REPO_ALIAS=${1:-gotc-charts}
 
     # give the charts an alias "gotc-charts"
-    helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
+    helm repo add "${CHART_REPO_ALIAS}" https://broadinstitute.github.io/gotc-helm-repo/
 
     # attempt to fetch updates for the charts
     helm repo update
@@ -79,18 +82,59 @@ function deploy_helm_charts {
     local CHART_REPO_ALIAS=$2
     local CHART_NAME=$3
     local RENDERED_VALUES=$4
+    local LOCAL=$5
 
-    # upgrade a Helm deployment, if it does not exist
-    # yet, install it
-    helm upgrade "${DEPLOYMENT_NAME}" "${CHART_REPO_ALIAS}/${CHART_NAME}" -f "${RENDERED_VALUES}" --install
-
+    if [ -z "${LOCAL}" ]; 
+    then
+        # upgrade a Helm deployment, if it does not exist yet, install it
+        helm upgrade "${DEPLOYMENT_NAME}" "${CHART_REPO_ALIAS}/${CHART_NAME}" -f "${RENDERED_VALUES}" --install
+    else
+        # upgrade a Helm deployment, if it does not exist yet, install it
+        # also turn off the generation of ingress for local testing
+        helm upgrade "${DEPLOYMENT_NAME}" "${CHART_REPO_ALIAS}/${CHART_NAME}" -f "${RENDERED_VALUES}" --set ingress.enabled=false --install
+    fi
+   
     # list deployments
     helm list
 }
 
 function deploy_to_local {
-    local 
-    # nothing yet
+    check_availability helm
+    check_availability kubectl
+    check_availability minikube
+    
+    line "-"
+
+    # start a minikube local cluster
+    # won't be an issue if there's already running one
+    minikube start
+
+    line "-"
+
+    # render values for Helm
+    # render_helm_values "wfl-values.yaml.ctmpl"
+
+    line "-"
+
+    # setup helm and charts
+    setup_and_update_helm_charts "gotc-charts"
+
+    line "-"
+
+    # deploy the helm charts
+    deploy_helm_charts "gotc-dev" "gotc-charts" "wfl" "wfl-values.yaml" "true"
+
+    line "-"
+
+    # it takes 5-10 seconds helm to spin up the pod 
+    sleep 10
+    POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name")
+    print_style "success" "Deployment on local minikube cluster is set up with pod ${POD_NAME}!"
+
+    # forward the pod port to host port 18982, hope it's not taken yet
+    HOST_PORT="18982"
+    print_style "success" "You could access http://localhost:${HOST_PORT} to view it in browser"
+    sudo kubectl port-forward "${POD_NAME}" "${HOST_PORT}":80
 }
 
 function deploy_wfl_to_cloud {
@@ -116,18 +160,28 @@ Available commands:
 
 local       |-> Deploy WFL on local Minikube for testing
 
-            usage: local \${} \${}
+            usage: local
             example: render values.yaml.ctmpl
 
-deploy      |-> Deploy WFL to Cloud GKE
+deploy      |-> Deploy WFL to Cloud GKE (VPN required)
 
-            usage: deploy \${} \${}
+            usage: deploy
             example: render values.yaml.ctmpl
 
 render      |-> Just render ctmpl files
 
-            usage: render \${} \${}
+            usage: render \${YOUR_CTMPL_FILE}
             example: render values.yaml.ctmpl
+"""
+
+export INSTALL_MSG="""
+
+To install:
+
+kubectl     |-> Follow https://cloud.google.com/sdk/install
+minikube    |-> Follow https://minikube.sigs.k8s.io/docs/start/ or 'brew install minikube' and then 'brew link minikube'
+helm        |-> Follow https://helm.sh/docs/intro/install/ or 'brew install helm'
+vault       |-> Follow https://broadinstitute.atlassian.net/wiki/spaces/DO/pages/113874856/Vault
 """
 
 COMMAND=${1}
@@ -139,13 +193,13 @@ then
 # local command
 elif [ "${COMMAND}" == "local" ];
 then
-    print_style "info" "local"
+    print_style "info" "Mode: local"
     deploy_to_local
 
 # deploy command
 elif [ "${COMMAND}" == "deploy" ];
 then
-    print_style "info" "deploy"
+    print_style "info" "Mode: deploy"
     deploy_wfl_to_cloud
 
 # render command
