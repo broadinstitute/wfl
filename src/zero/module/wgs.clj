@@ -57,7 +57,9 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-wgs"))
+  {(keyword (str zero/the-name "-wgs-po-ticket"))
+   "PO-26024"
+   (keyword (str zero/the-name "-wgs"))
    (wdl/workflow-name adapter-workflow-wdl)})
 
 (def cromwell-label
@@ -124,8 +126,11 @@
   (let [[input-key base _] (all/bam-or-cram? in-gs)
         leaf (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
+        fasta "gs://fc-405a2f8b-b23e-4bc6-8b72-1a233249ee90/GRCh38_full_analysis_set_plus_decoy_hla.fa"
         inputs (-> (zipmap [:base_file_name :final_gvcf_base_name :sample_name]
                            (repeat leaf))
+                   (assoc :cram_ref_fasta       fasta
+                          :cram_ref_fasta_index (str fasta ".fai"))
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
