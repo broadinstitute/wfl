@@ -94,7 +94,7 @@
   (let [suffixes [".wdl" ".zip"]
         make     (partial str "zero/" (workflow-name wdl))
         path     (zipmap suffixes (map make suffixes))
-        dir      (Files/createTempDirectory "wfl" (into-array FileAttribute nil))]
+        dir      (.toFile (Files/createTempDirectory "wfl" (into-array FileAttribute nil)))]
     (doseq [resource (vals path)]
       (let [destination (io/file dir resource)]
         (io/make-parents destination)
