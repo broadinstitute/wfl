@@ -44,11 +44,10 @@
         {:keys [cookie_secret
                 password postgres_url username]}
         (util/vault-secrets (get-in environment [:server :vault]))
-        result {"WFL_LIVE_SERVER_MODE"   "true"
-                "COOKIE_SECRET"          cookie_secret
+        result {"COOKIE_SECRET"          cookie_secret
                 "ENVIRONMENT"            (:name environment)
                 "ZERO_POSTGRES_PASSWORD" password
-                "ZERO_POSTGRES_URL"      postgres_url
+                "ZERO_POSTGRES_URL"      "jdbc:postgresql:wfl"
                 "ZERO_POSTGRES_USERNAME" username}]
     (into {} (filter second result))))
 

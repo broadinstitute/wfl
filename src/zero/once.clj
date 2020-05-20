@@ -38,18 +38,18 @@
           credentials (GoogleCredentials/fromStream (FileInputStream. file))]
       (.createScoped credentials scopes))))
 
-(defn service-account-for-env
-  "Ge the path to service account for ENVIRONMENT."
+(defn service-account-for-cromwell
+  "Get the path to service account for the Cromwell in ENVIRONMENT."
   [environment]
-  (get-in env/stuff [environment :cromwell :wfl-service-account]))
+  (get-in env/stuff [environment :cromwell :service-account]))
 
 ;; The re-usable environment:credentials-object map for token
 ;; generation and refreshing.
 ;;
-(defonce the-cached-credentials-from-service-account
+(defonce the-cached-service-account-credentials
   (delay
     (let [env (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
-      (new-credentials-from-service-account (service-account-for-env env)))))
+      (new-credentials-from-service-account (service-account-for-cromwell env)))))
 
 (defn get-auth-header!
   "Return a valid auth header. Refresh and generate the access
@@ -57,14 +57,14 @@
    generate the access token from service account if invoked
    from a live server."
   []
-  (if (and (System/getenv "WFL_LIVE_SERVER_MODE") (System/getenv "ENVIRONMENT"))
-    (util/bearer-token-header-for @the-cached-credentials-from-service-account)
+  (if (System/getenv "ENVIRONMENT")
+    (util/bearer-token-header-for @the-cached-service-account-credentials)
     (util/bearer-token-header-for @the-cached-credentials)))
 
 (comment
-  (util/bearer-token-header-for @the-cached-credentials-from-service-account)
+  (util/bearer-token-header-for @the-cached-service-account-credentials)
   (get-auth-header!)
-  (some-> (:xx @the-cached-credentials-from-service-account)
+  (some-> (:xx @the-cached-service-account-credentials)
           .refreshAccessToken
           .getTokenValue)
   (defn update-map-vals

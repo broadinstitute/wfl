@@ -44,8 +44,8 @@
         result (io/file directory (.getName (io/file wdl)))]
     (when (.exists result)
       (throw (IllegalArgumentException.
-              (format "%s: Two WDL files have the same leaf name: %s"
-                      zero/the-name result))))
+               (format "%s: Two WDL files have the same leaf name: %s"
+                       zero/the-name result))))
     (io/make-parents result)
     (with-open [out (io/writer result)
                 in  (io/reader (io/file wdl))]
