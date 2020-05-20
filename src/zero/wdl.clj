@@ -5,6 +5,8 @@
             [zero.util :as util]
             [zero.zero :as zero])
   (:import [java.io File FileNotFoundException]
+           [java.nio.file Files]
+           [java.nio.file.attribute FileAttribute]
            [java.util UUID]))
 
 (defn workflow-name
@@ -92,8 +94,7 @@
   (let [suffixes [".wdl" ".zip"]
         make     (partial str "zero/" (workflow-name wdl))
         path     (zipmap suffixes (map make suffixes))
-        dir      (io/file (System/getProperty "java.io.tmpdir"))]
-    (util/delete-tree dir)
+        dir      (.toFile (Files/createTempDirectory "wfl" (into-array FileAttribute nil)))]
     (doseq [resource (vals path)]
       (let [destination (io/file dir resource)]
         (io/make-parents destination)
