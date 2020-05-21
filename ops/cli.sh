@@ -2,216 +2,160 @@
 
 set -e
 
-# print with style
-# all available styles:
-# info | error | success | warn | debug
-function print_style {
-    if [ "$1" == "info" ];
-    then
-        # print gray
-        printf '\e[1;90m%-6s\e[m\n' "$2"
-    elif [ "$1" == "error" ];
-    then
-         # print red
-        printf '\e[1;91m%-6s\e[m\n' "$2"
-    elif [ "$1" == "success" ];
-    then
-        # print green
-        printf '\e[1;92m%-6s\e[m\n' "$2"
-    elif [ "$1" == "warn" ];
-    then
-        # print yellow
-        printf '\e[1;93m%-6s\e[m\n' "$2"
-    elif [ "$1" == "debug" ];
-    then
-        if [ "${DEBUG}" == "true" ];
-        then
-            # print gray
-            printf '\e[1;90m%-6s\e[m\n' "$2"
-        fi
-    else
-        printf "%s\n" "$1"
-    fi
-}
-
-# check if the command is available in the shell
-function check_availability {
-    local some_command=$1
-
-    hash "$some_command" 2>/dev/null || { 
-        print_style >&2 "error" "${some_command} is required but not found! Aborting..."; 
-        print_style "info" "${INSTALL_MSG}"
-        exit 1; 
-    }
-}
-
-# draw a line of char
-function line {
-    local char=${1:-"-"}
-    printf %"$(tput cols)"s |tr " " "${char}"
-}
-
-# render Helm values
-function render_helm_values {
-    local CTMPL_FILE=$1
-
-    docker run -ti \
-               --rm \
-               -v "$(pwd)":/working \
-               -v "${HOME}"/.vault-token:/root/.vault-token \
-               broadinstitute/dsde-toolbox:dev \
-               /usr/local/bin/render-ctmpls.sh \
-               -k "${CTMPL_FILE}"
-}
-
-function setup_and_update_helm_charts {
-    local CHART_REPO_ALIAS=${1:-gotc-charts}
-
-    # give the charts an alias "gotc-charts"
-    helm repo add "${CHART_REPO_ALIAS}" https://broadinstitute.github.io/gotc-helm-repo/
-
-    # attempt to fetch updates for the charts
-    helm repo update
-
-    # list available charts
-    helm repo list
-}
-
-function deploy_helm_charts {
-    local DEPLOYMENT_NAME=$1
-    local CHART_REPO_ALIAS=$2
-    local CHART_NAME=$3
-    local RENDERED_VALUES=$4
-    local LOCAL=$5
-
-    if [ -z "${LOCAL}" ]; 
-    then
-        # upgrade a Helm deployment, if it does not exist yet, install it
-        helm upgrade "${DEPLOYMENT_NAME}" "${CHART_REPO_ALIAS}/${CHART_NAME}" -f "${RENDERED_VALUES}" --install
-    else
-        # upgrade a Helm deployment, if it does not exist yet, install it
-        # also turn off the generation of ingress for local testing
-        helm upgrade "${DEPLOYMENT_NAME}" "${CHART_REPO_ALIAS}/${CHART_NAME}" -f "${RENDERED_VALUES}" --set ingress.enabled=false --install
-    fi
-   
-    # list deployments
-    helm list
-}
-
-function deploy_to_local {
-    check_availability helm
-    check_availability kubectl
-    check_availability minikube
-    
-    line "-"
-
-    # start a minikube local cluster
-    # won't be an issue if there's already running one
-    minikube start
-
-    line "-"
-
-    # render values for Helm
-    # render_helm_values "wfl-values.yaml.ctmpl"
-
-    line "-"
-
-    # setup helm and charts
-    setup_and_update_helm_charts "gotc-charts"
-
-    line "-"
-
-    # deploy the helm charts
-    deploy_helm_charts "gotc-dev" "gotc-charts" "wfl" "wfl-values.yaml" "true"
-
-    line "-"
-
-    # it takes 5-10 seconds helm to spin up the pod 
-    sleep 10
-    POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name")
-    print_style "success" "Deployment on local minikube cluster is set up with pod ${POD_NAME}!"
-
-    # forward the pod port to host port 18982, hope it's not taken yet
-    HOST_PORT="18982"
-    print_style "success" "You could access http://localhost:${HOST_PORT} to view it in browser"
-    sudo kubectl port-forward "${POD_NAME}" "${HOST_PORT}":80
-}
-
-function deploy_wfl_to_cloud {
-     check_availability helm
-     check_availability kubectl
-     
-     # switch to gotc-dev shared cluster
-     kubectl config use-context gke_broad-gotc-dev_us-central1-a_gotc-dev-shared-us-central1-a
-     
-     # render values for Helm
-     render_helm_values "wfl-values.yaml.ctmpl"
-
-     # setup helm and charts
-     setup_and_update_helm_charts "gotc-charts"
-
-     # deploy the helm charts
-     deploy_helm_charts "gotc-dev" "gotc-charts" "wfl" "wfl-values.yaml"
-}
-
-# Main function part
-export HELP_MSG="""
-Available commands:
-
+declare -r HELP_MSG="Available commands:
 local       |-> Deploy WFL on local Minikube for testing
-
             usage: local
             example: render values.yaml.ctmpl
-
 deploy      |-> Deploy WFL to Cloud GKE (VPN required)
-
             usage: deploy
             example: render values.yaml.ctmpl
-
 render      |-> Just render ctmpl files
-
             usage: render \${YOUR_CTMPL_FILE}
             example: render values.yaml.ctmpl
-"""
+"
 
-export INSTALL_MSG="""
-
+declare -r INSTALL_MSG="
 To install:
 
 kubectl     |-> Follow https://cloud.google.com/sdk/install
 minikube    |-> Follow https://minikube.sigs.k8s.io/docs/start/ or 'brew install minikube' and then 'brew link minikube'
 helm        |-> Follow https://helm.sh/docs/intro/install/ or 'brew install helm'
 vault       |-> Follow https://broadinstitute.atlassian.net/wiki/spaces/DO/pages/113874856/Vault
-"""
+"
 
-COMMAND=${1}
+info    () {     printf '\e[1;90m%-6s\e[m\n' "$*"; } # gray
+error   () { >&2 printf '\e[1;91m%-6s\e[m\n' "$*"; } # red
+success () {     printf '\e[1;92m%-6s\e[m\n' "$*"; } # green
+warn    () {     printf '\e[1;93m%-6s\e[m\n' "$*"; } # yellow
+debug   () {                                         # gray
+    test "$DEBUG" = true && printf '\e[1;90m%-6s\e[m\n' "$*"
+}
 
-if [ -z "${COMMAND}" ]; 
-then
-    print_style "info" "${HELP_MSG}"
+# Draw a line of - across the width of the terminal.
+#
+line () { printf "%.$(tput cols)d\n" 0 | tr 0 -; }
 
-# local command
-elif [ "${COMMAND}" == "local" ];
-then
-    print_style "info" "Mode: local"
-    deploy_to_local
 
-# deploy command
-elif [ "${COMMAND}" == "deploy" ];
-then
-    print_style "info" "Mode: deploy"
-    deploy_wfl_to_cloud
+# OK when each CMD is on the PATH.
+#
+function is_available () {
+    local cmd ok=ok
+    for cmd in "$@"
+    do
+        if 2>/dev/null hash "$cmd"
+        then
+            : OK, we have "$cmd"
+        else
+            unset ok
+            error "$cmd" is required but not found!
+            info "${INSTALL_MSG}"
+        fi
+    done
+    test "$ok"
+}
 
-# render command
-elif [ "${COMMAND}" == "render" ];
-then
-    CTMPL_FILE=${2}
-    if [ -z "${CTMPL_FILE}" ]; 
+# Wait at least 10 seconds for a result from "@".
+#
+wait_for_result () {
+    local n result
+    for n in 0 1 2 3 4 5 6 7 8 9
+    do
+        sleep 1
+        result=$("$@")
+        test "$result" && echo "$result" && break
+    done
+    test "$result"
+}
+
+# Render Helm values to CTMPL_FILE.
+#
+function run_render () {
+    local -r ctmpl_file=$1
+    if test "$ctmpl_file"
     then
-        print_style "error" "A valid path to ctmpl file is required!"
-        print_style "info" "${HELP_MSG}"
+        info Rendering "$ctmpl_file" for you...
+        docker run -i \
+               --rm \
+               -v "$(pwd)":/working \
+               -v "$HOME"/.vault-token:/root/.vault-token \
+               broadinstitute/dsde-toolbox:dev \
+               /usr/local/bin/render-ctmpls.sh \
+               -k "$ctmpl_file"
     else
-        print_style "info" "Rendering ${CTMPL_FILE} for you..."
-        render_helm_values "${CTMPL_FILE}"
+        error A valid path to ctmpl file is required!
+        info "$HELP_MSG"
     fi
-fi
+}
+
+function setup_and_update_helm_charts () {
+    local -r repo=${1:-gotc-charts}
+    helm repo add "$repo" https://broadinstitute.github.io/gotc-helm-repo/
+    helm repo update
+    helm repo list
+}
+
+# Install or upgrade DEPLOYMENT, then list.
+# Enable ingress when when INGRESS is set.
+#
+function deploy_helm_charts () {
+    local -r deployment=$1 repo=$2 chart=$3 rendered=$4 ingress=$5
+    local -a upgrade=(helm upgrade "$deployment" "$repo/$chart"
+                      -f "$rendered" --install)
+    test "$ingress" || upgrade+=(--set ingress.enabled=false)
+    "${upgrade[@]}"
+    helm list
+}
+
+# Deploy on the gotc-dev shared cluster.
+#
+function run_deploy () {
+    local -r ctx=gke_broad-gotc-dev_us-central1-a_gotc-dev-shared-us-central1-a
+    kubectl config use-context $ctx
+    run_render wfl-values.yaml.ctmpl
+    setup_and_update_helm_charts gotc-charts
+    deploy_helm_charts gotc-dev gotc-charts wfl wfl-values.yaml ingress
+}
+
+# Deploy to a local minikube and forward the pod to PORT.
+#
+function run_local () {
+    local -r port=18982
+    local -ar getpods=(kubectl get pods --no-headers
+                       -o custom-columns=:metadata.name)
+    line
+    # minikube start is not idempotent, kill
+    # all previous ones for the sake of your
+    # laptop's safety
+    minikube stop
+    line
+    minikube start
+    line
+    # render values for Helm
+    # render_helm_values "wfl-values.yaml.ctmpl"
+    line
+    setup_and_update_helm_charts gotc-charts
+    line
+    deploy_helm_charts gotc-dev gotc-charts wfl wfl-values.yaml
+    line
+    local -r pod=$(wait_for_result "${getpods[@]}")
+    success Deployed "$pod" to a local minikube cluster.
+    success Browse http://localhost:$port to view it.
+    sudo kubectl port-forward "$pod" $port:80
+}
+
+function main () {
+    local -r command=$1 ; shift || true
+    local -r run="run_$command"
+    is_available docker helm kubectl minikube sudo || exit 1
+    if 1>&2 >/dev/null type "$run"
+    then
+        info "${command}" "$@"
+        $run "$@"
+    else
+        test "$command" && error Unknown command: "$command"
+        info "$HELP_MSG"
+        exit 1
+    fi
+}
+
+main "$@"
