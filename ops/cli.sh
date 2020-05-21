@@ -127,23 +127,36 @@ function run_local () {
     # all previous ones for the sake of your
     # laptop's safety
     minikube stop
+
     line
     minikube start
+
     line
     # download the ctmpl
     curl -o \
          wfl-values.yaml.ctmpl \
          https://raw.githubusercontent.com/broadinstitute/gotc-deploy/master/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
+    
     line
     # render values for Helm
-    render_helm_values "wfl-values.yaml.ctmpl"
+    run_render "wfl-values.yaml.ctmpl"
+
     line
     setup_and_update_helm_charts gotc-charts
+
     line
     deploy_helm_charts gotc-dev gotc-charts wfl wfl-values.yaml
+
     line
     local -r pod=$(wait_for_result "${getpods[@]}")
     success Deployed "$pod" to a local minikube cluster.
+
+    line
+    # cleanup
+    [ ! -e "wfl-values.yaml.ctmpl" ] || rm "wfl-values.yaml.ctmpl"
+    [ ! -e "wfl-values.yaml" ] || rm "wfl-values.yaml"
+
+    line
     success Browse http://localhost:$port to view it.
     sudo kubectl port-forward "$pod" $port:80
 }
