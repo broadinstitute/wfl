@@ -45,3 +45,10 @@
         ids (testtools/start-wgs-workflow workflow)
         results  (zipmap ids (map (comp :status wait) ids))]
     (is (every? #{"Succeeded"} (vals results)))))
+
+(deftest test-exec-workload
+  "Verify that the `exec` endpoint creates and starts a workload"
+  (let [uuids-before (get-existing-workload-uuids)
+        {:keys [uuid started]} (testtools/exec-workload testtools/wgs-workload)]
+    (is (not (contains? uuids-before uuid)) "The new workload uuid was not unique")
+    (is started "The workload wasn't started")))

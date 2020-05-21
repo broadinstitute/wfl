@@ -112,3 +112,8 @@
         (->> uuids
              (mapv (partial postgres/get-workload-for-uuid tx))
              succeed)))))
+
+(def post-exec
+  "Create and start workload described in BODY of REQUEST"
+  (letfn [(mk-request [response] {:parameters {:body [(:body response)]}})]
+    (comp first post-start mk-request post-create)))

@@ -81,6 +81,18 @@
                        :body         payload})]
     (parse-json-string (:body response))))
 
+(defn exec-workload
+  "Create and start workload defined by WORKLOAD"
+  [workload]
+  (let [auth-header (once/get-auth-header!)
+        payload     (json/write-str workload)
+        response    (client/post (str server "/api/v1/exec")
+                      {:headers      auth-header
+                       :content-type :json
+                       :accept       :json
+                       :body         payload})]
+    (parse-json-string (:body response))))
+
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 (def git-email (delay (util/shell! "git" "config" "user.email")))
 
