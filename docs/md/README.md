@@ -287,18 +287,21 @@ There are some unit tests under `./test/zero/`.
 
 Run them with `boot test`.
 
-There are also some integration tests under `./integration`.
-Run them using aliases defined in the `./deps.edn` file.
+There are some integration tests under `integration`. These are not yet
+automated so we suggest running them locally before submitting.
+To run the integration tests, you'll need a `wfl` server running locally:
+
+```shell
+./ops/server.sh
+```
+
+Then run the tests via the aliases defined in `deps.edn` file.
 
 ```shell
 clojure -A:integration
-clojure -A:test-create-workload
-clojure -A:test-start-workload
 ```
 
-With a little hacking,
-they can run against a local `./ops/server.sh`
-or a server deployed to Google App Engine.
+See the [development guide](/docs/md/dev-process.md#Tips) for more information.
 
 #### Development
 
