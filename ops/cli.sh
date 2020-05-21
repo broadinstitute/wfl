@@ -130,8 +130,13 @@ function run_local () {
     line
     minikube start
     line
+    # download the ctmpl
+    curl -o \
+         wfl-values.yaml.ctmpl \
+         https://raw.githubusercontent.com/broadinstitute/gotc-deploy/master/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
+    line
     # render values for Helm
-    # render_helm_values "wfl-values.yaml.ctmpl"
+    render_helm_values "wfl-values.yaml.ctmpl"
     line
     setup_and_update_helm_charts gotc-charts
     line
@@ -146,7 +151,7 @@ function run_local () {
 function main () {
     local -r command=$1 ; shift || true
     local -r run="run_$command"
-    is_available docker helm kubectl minikube sudo || exit 1
+    is_available docker helm kubectl minikube sudo curl || exit 1
     if 1>&2 >/dev/null type "$run"
     then
         info "${command}" "$@"
