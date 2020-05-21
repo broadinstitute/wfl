@@ -39,7 +39,7 @@
   (comp first get-pending-workloads))
 
 (defn first-pending-workload-or
-  "Query the v1 api for the first pending workload or evaluate the function
+  "Query the v1 api for the first pending workload or evaluate the ALTERNATIVE
   if no pending workload exists"
   [alternative]
   (let [workload (first-pending-workload)]
@@ -70,10 +70,10 @@
     (parse-json-string (:body response))))
 
 (defn start-wgs-workflow
-  "Submit a WGS Reprocessing workflow"
-  [workflow-description]
+  "Submit the WGS Reprocessing WORKFLOW"
+  [workflow]
   (let [auth-header (once/get-auth-header!)
-        payload     (json/write-str workflow-description :escape-slash false)
+        payload     (json/write-str workflow :escape-slash false)
         response    (client/post (str server "/api/v1/wgs")
                       {:headers      auth-header
                        :content-type :json

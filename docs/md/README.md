@@ -301,7 +301,8 @@ Then run the tests via the aliases defined in `deps.edn` file.
 clojure -A:integration
 ```
 
-See the [development guide](/docs/md/dev-process.md#Tips) for more information.
+See the [development guide](/docs/md/dev-process.md#Integration Tests) for more 
+information.
 
 #### Development
 

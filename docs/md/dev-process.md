@@ -201,11 +201,20 @@ against a Postgres server
 deployed in the cloud
 or with an actual _environment_ set.
 
-### integration tests
+### Integration Tests
 
-We implement integration tests
-under the `integration/zero` directory.
+We implement integration tests under the `integration/` directory and use the
+[kaocha](https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme) test
+runner. Test suites use a `-test` namespace suffix. You can pass extra command
+line arguments to `kaocha`. For example, to run a specific test point: 
 
-They are triggered via `deps.edn` aliases.
-See examples in the `deps.edn` file
-in the top-level directory of the repository.
+```shell
+clojure -A:integration --focus my.integration-test/test-foo-works
+```
+
+You can see the full list of options with the following:
+
+```shell
+clojure -A:integration --help
+```
+
