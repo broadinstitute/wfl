@@ -48,19 +48,15 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "WholeGenomeReprocessing_v1.2"
-   :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
-
-(def adapter-workflow-wdl
-  "The adapter WDL file."
-  "wdl/ExternalWholeGenomeReprocessing.wdl")
+  {:release "tl_external_wgs_reprocessing"
+   :top     "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
   {(keyword (str zero/the-name "-wgs-po-ticket"))
    "PO-26024"
    (keyword (str zero/the-name "-wgs"))
-   (wdl/workflow-name adapter-workflow-wdl)})
+   (wdl/workflow-name (:top workflow-wdl))})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
@@ -114,7 +110,7 @@
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   {:google_account_vault_path
-   (get-in env/stuff [environment :vault_path_to_picard_account])
+                        (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
    :unmapped_bam_suffix ".unmapped.bam"
    :papi_settings       {:agg_preemptible_tries 3
@@ -126,11 +122,8 @@
   (let [[input-key base _] (all/bam-or-cram? in-gs)
         leaf (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
-        fasta "gs://fc-405a2f8b-b23e-4bc6-8b72-1a233249ee90/GRCh38_full_analysis_set_plus_decoy_hla.fa"
         inputs (-> (zipmap [:base_file_name :final_gvcf_base_name :sample_name]
                            (repeat leaf))
-                   (assoc :cram_ref_fasta       fasta
-                          :cram_ref_fasta_index (str fasta ".fai"))
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
@@ -168,7 +161,7 @@
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
   [environment in-gs out-gs]
-  (let [path (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
+  (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
       (io/file (:dir path) (path ".wdl"))
