@@ -118,30 +118,6 @@
                       "checkout" "5ba20b48d1251bcc9e4066017e8a8c078b386f55")
       (stage config))))
 
-(defn adapterize-wgs
-  "Wrap the released WGS WDL in a new workflow that copy outputs and
-  stage the new .wdl and .zip files in RESOURCES."
-  [resources]
-  (letfn [(zipify [wdl] (str (util/unsuffix (.getPath wdl) ".wdl") ".zip"))]
-    (let [src-wgs (io/file (:top wgs/workflow-wdl))
-          wgs-wdl (io/file resources (.getName src-wgs))
-          adapter (io/file "wdl/ExternalWholeGenomeReprocessing.wdl")
-          adapted (io/file resources (.getName adapter))
-          in-zip  (io/file (zipify wgs-wdl))
-          out-zip (io/file (zipify adapted))
-          cffctc  (io/file resources "CopyFilesFromCloudToCloud.wdl")]
-      (io/copy adapter adapted)
-      (with-open [in  (ZipFile. in-zip)
-                  out (ZipOutputStream. (io/output-stream out-zip))]
-        (doseq [wdl [wgs-wdl cffctc]]
-          (with-open [r (io/reader wdl)]
-            (.putNextEntry out (ZipEntry. (.getName wdl)))
-            (io/copy r out)))
-        (doseq [wdl (enumeration-seq (.entries in))]
-          (with-open [r (.getInputStream in wdl)]
-            (.putNextEntry out (ZipEntry. (.getName wdl)))
-            (io/copy r out)))))))
-
 ;; Hack: (delete-tree directory) is a hack.
 ;;
 (defn manage-version-and-resources
@@ -161,7 +137,6 @@
       (try (util/delete-tree directory)
            (stage-some-files tmp directory)
            (run! (partial cromwellify-wdl tmp directory) wdls)
-           (adapterize-wgs directory)
            (write-the-version-file directory edn)
            (finally (util/delete-tree (io/file tmp))))
       (spit "./build.txt" (-> version :build inc (str \newline))))))
