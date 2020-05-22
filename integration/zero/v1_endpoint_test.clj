@@ -1,5 +1,5 @@
 (ns zero.v1-endpoint-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [zero.testtools :as testtools]
             [clojure.string :as str]
             [zero.service.cromwell :as cromwell])
@@ -10,7 +10,7 @@
   (partial into #{} (map :uuid (testtools/get-workloads))))
 
 (deftest test-create-workload
-  "Verify that the `create` endpoint creates new workload"
+;;  Verify that the `create` endpoint creates new workload
   (let [uuids-before (get-existing-workload-uuids)
         no-items     (dissoc testtools/wgs-workload :items)
         {:keys [id items pipeline uuid] :as response} (mk-workload)]
@@ -25,7 +25,7 @@
       (is (:workflows got)))))
 
 (deftest test-start-workload
-  "Verify that the `start` endpoint starts a workload"
+;;  Verify that the `start` endpoint starts a workload
   (let [unstarted (testtools/first-pending-workload-or mk-workload)
         response  (testtools/start-workload unstarted)
         status    (testtools/get-workload-status (:uuid response))]
@@ -35,7 +35,7 @@
     (is (every? :status (:workflows status)))))
 
 (deftest test-start-wgs-workflow
-  "Submit up to MAX workflows from INPUT to OUTPUT in ENV."
+;; Submit up to MAX workflows from INPUT to OUTPUT in ENV.
   (let [env      :wgs-dev
         wait     (partial cromwell/wait-for-workflow-complete env)
         workflow {:environment env
@@ -47,7 +47,7 @@
     (is (every? #{"Succeeded"} (vals results)))))
 
 (deftest test-exec-workload
-  "Verify that the `exec` endpoint creates and starts a workload"
+;; Verify that the `exec` endpoint creates and starts a workload
   (let [uuids-before (get-existing-workload-uuids)
         {:keys [uuid started]} (testtools/exec-workload testtools/wgs-workload)]
     (is (not (contains? uuids-before uuid)) "The new workload uuid was not unique")
