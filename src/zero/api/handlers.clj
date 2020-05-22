@@ -115,5 +115,6 @@
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"
-  (letfn [(mk-request [response] {:parameters {:body [(:body response)]}})]
-    (comp first post-start mk-request post-create)))
+  (let [pack   (fn [response] {:parameters {:body [(:body response)]}})
+        unpack (comp first :body)]
+    (comp succeed unpack post-start pack post-create)))
