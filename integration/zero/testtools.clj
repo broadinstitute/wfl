@@ -67,7 +67,7 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (parse-json-string (:body response))))
+    (first (parse-json-string (:body response)))))
 
 (defn start-wgs-workflow
   "Submit the WGS Reprocessing WORKFLOW"
