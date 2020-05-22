@@ -169,7 +169,7 @@
             :responses  {200 {:body ::workload-responses}}
             :handler    handlers/post-start}}]
    ["/api/v1/exec"
-    {:post {:summary    "Create and start new workload (no review)."
+    {:post {:summary    "Create and start new workload."
             :parameters {:body ::workload-request}
             :responses  {200 {:body ::workload-response}}
             :handler    handlers/post-exec}}]
