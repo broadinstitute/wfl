@@ -168,6 +168,11 @@
             :parameters {:body ::uuid-kvs}
             :responses  {200 {:body ::workload-responses}}
             :handler    handlers/post-start}}]
+   ["/api/v1/exec"
+    {:post {:summary    "Create and start new workload (no review)."
+            :parameters {:body ::workload-request}
+            :responses  {200 {:body ::workload-response}}
+            :handler    handlers/post-exec}}]
    ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")
