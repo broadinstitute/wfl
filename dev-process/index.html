@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1, mkdocs-material-5.1.6">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.2">
     
     
       
@@ -19,9 +19,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.4b9ffd7b.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.a2408e81.min.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/palette.b79bcd20.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a46bcfb3.min.css">
       
       
         
@@ -48,7 +48,8 @@
   
     
     
-    <body dir="ltr" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
@@ -472,7 +473,7 @@
         
           <li class="md-nav__item">
   <a href="#integration-tests" class="md-nav__link">
-    integration tests
+    Integration Tests
   </a>
   
 </li>
@@ -590,7 +591,7 @@
         
           <li class="md-nav__item">
   <a href="#integration-tests" class="md-nav__link">
-    integration tests
+    Integration Tests
   </a>
   
 </li>
@@ -802,12 +803,17 @@ to its initial state.</p>
 against a Postgres server
 deployed in the cloud
 or with an actual <em>environment</em> set.</p>
-<h3 id="integration-tests">integration tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
-<p>We implement integration tests
-under the <code>integration/zero</code> directory.</p>
-<p>They are triggered via <code>deps.edn</code> aliases.
-See examples in the <code>deps.edn</code> file
-in the top-level directory of the repository.</p>
+<h3 id="integration-tests">Integration Tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
+<p>We implement integration tests under the <code>integration/</code> directory and use the
+<a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
+runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
+line arguments to <code>kaocha</code>. For example, to run a specific test point: </p>
+<div class="highlight"><pre><span></span><code>clojure -A:integration --focus my.integration-test/test-foo-works
+</code></pre></div>
+
+<p>You can see the full list of options with the following:</p>
+<div class="highlight"><pre><span></span><code>clojure -A:integration --help
+</code></pre></div>
                 
               
               
@@ -887,15 +893,15 @@ in the top-level directory of the repository.</p>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.a0c4167b.min.js"></script>
-      <script src="../assets/javascripts/bundle.fb26dd1d.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.37585f48.min.js"
+            worker: "../assets/javascripts/worker/search.27c6a5e6.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
