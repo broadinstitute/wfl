@@ -206,7 +206,7 @@ or with an actual _environment_ set.
 We implement tests under the `test/` root directory and use the
 [kaocha](https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme) test
 runner. Test suites use a `-test` namespace suffix. You can pass extra command
-line arguments to `kaocha`. For example, to run a specific test point: 
+line arguments to `kaocha`. For example, to run a specific test point:
 
 ```shell
 clojure -A:test --focus my.integration-test/test-foo-works
@@ -217,4 +217,3 @@ You can see the full list of options with the following:
 ```shell
 clojure -A:integration --help
 ```
-
