@@ -109,7 +109,9 @@
 (defn genome-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
-  {:google_account_vault_path
+  {:cram_ref_fasta "gs://fc-405a2f8b-b23e-4bc6-8b72-1a233249ee90/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+   :cram_ref_fasta_index "gs://fc-405a2f8b-b23e-4bc6-8b72-1a233249ee90/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai"
+   :google_account_vault_path
                         (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
    :unmapped_bam_suffix ".unmapped.bam"
