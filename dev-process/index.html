@@ -472,8 +472,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    Integration Tests
+  <a href="#test" class="md-nav__link">
+    Test
   </a>
   
 </li>
@@ -590,8 +590,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    Integration Tests
+  <a href="#test" class="md-nav__link">
+    Test
   </a>
   
 </li>
@@ -803,12 +803,12 @@ to its initial state.</p>
 against a Postgres server
 deployed in the cloud
 or with an actual <em>environment</em> set.</p>
-<h3 id="integration-tests">Integration Tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
-<p>We implement integration tests under the <code>integration/</code> directory and use the
+<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h3>
+<p>We implement tests under the <code>test/</code> root directory and use the
 <a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
 runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
 line arguments to <code>kaocha</code>. For example, to run a specific test point: </p>
-<div class="highlight"><pre><span></span><code>clojure -A:integration --focus my.integration-test/test-foo-works
+<div class="highlight"><pre><span></span><code>clojure -A:test --focus my.integration-test/test-foo-works
 </code></pre></div>
 
 <p>You can see the full list of options with the following:</p>

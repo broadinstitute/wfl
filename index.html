@@ -792,10 +792,12 @@ wm28d-f87:wfl yanc$
 │       ├── wdl.clj
 │       └── zero.clj
 ├── <span class="nb">test</span>
-│   └── zero
-│       ├── datarepo_test.clj
-│       ├── gcs_test.clj
-│       └── pubsub_test.clj
+│   ├── integration
+│   │   └── zero
+│   │       └── integration <span class="nb">test</span> files
+│   └── unit
+│   │   └── zero
+│           └── unit <span class="nb">test</span> files
 ├── ui/
 └── wfl.iml
 </code></pre></div>
@@ -949,34 +951,15 @@ the services WFL talks to, and are named accordingly.</p>
 </tbody>
 </table>
 <h4 id="test-code">Test code<a class="headerlink" href="#test-code" title="Permanent link">&para;</a></h4>
-<p>There are some unit tests under <code>./test/zero/</code>.</p>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Test the namespace</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>gcs<sub>test</sub>.clj</td>
-<td>zero.gcs in gcs.clj</td>
-</tr>
-<tr>
-<td>pubsub<sub>test</sub>.clj</td>
-<td>zero.pubsub in pubsub.clj</td>
-</tr>
-</tbody>
-</table>
-<p>Run them with <code>boot test</code>.</p>
-<p>There are some integration tests under <code>integration</code>. These are not yet
-automated so we suggest running them locally before submitting.
-To run the integration tests, you'll need a <code>wfl</code> server running locally:</p>
-<div class="highlight"><pre><span></span><code>./ops/server.sh
+<p>Test code lives under the project <code>test/</code> root. At present, <code>wfl</code> has two kinds
+of test, <code>unit</code> and <code>integration</code>. These can be run via the <code>deps.edn</code>,
+optionally specifying the kind:</p>
+<div class="highlight"><pre><span></span><code>clojure -A:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="o">]</span>
 </code></pre></div>
 
-<p>Then run the tests via the aliases defined in <code>deps.edn</code> file.</p>
-<div class="highlight"><pre><span></span><code>clojure -A:integration
+<p>Note that the integration tests currently require a little more configuration
+before they can be run, namely, they require a <code>wfl</code> server running locally: </p>
+<div class="highlight"><pre><span></span><code>./ops/server.sh
 </code></pre></div>
 
 <p>See the <a href="/docs/md/dev-process.md#Integration Tests">development guide</a> for more 
