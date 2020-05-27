@@ -36,13 +36,13 @@
 
 (deftest test-start-wgs-workflow
   (testing "The `wgs` endpoint starts a new workflow."
-    (let [env      :wgs-dev
+    (let [env      :gotc-dev
           wait     (partial cromwell/wait-for-workflow-complete env)
           workflow {:environment env
                     :max         1
                     :input_path  "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m"
                     :output_path (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" (UUID/randomUUID))}
-          ids      (testtools/start-wgs-workflow workflow)
+          ids      (:results (testtools/start-wgs-workflow workflow))
           results  (zipmap ids (map (comp :status wait) ids))]
       (is (every? #{"Succeeded"} (vals results))))))
 
