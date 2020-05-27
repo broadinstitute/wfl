@@ -148,10 +148,12 @@ $ tree .
 │       ├── wdl.clj
 │       └── zero.clj
 ├── test
-│   └── zero
-│       ├── datarepo_test.clj
-│       ├── gcs_test.clj
-│       └── pubsub_test.clj
+│   ├── integration
+│   │   └── zero
+│   │       └── integration test files
+│   └── unit
+│   │   └── zero
+│           └── unit test files
 ├── ui/
 └── wfl.iml
 ```
@@ -278,27 +280,19 @@ the services WFL talks to, and are named accordingly.
 
 #### Test code
 
-There are some unit tests under `./test/zero/`.
+Test code lives under the project `test/` root. At present, `wfl` has two kinds
+of test, `unit` and `integration`. These can be run via the `deps.edn`,
+optionally specifying the kind:
+ 
+```shell
+clojure -A:test [unit|integration]
+```
 
-| File                      | Test the namespace        |
-| ------------------------- | ------------------------- |
-| gcs<sub>test</sub>.clj    | zero.gcs in gcs.clj       |
-| pubsub<sub>test</sub>.clj | zero.pubsub in pubsub.clj |
-
-Run them with `boot test`.
-
-There are some integration tests under `integration`. These are not yet
-automated so we suggest running them locally before submitting.
-To run the integration tests, you'll need a `wfl` server running locally:
+Note that the integration tests currently require a little more configuration
+before they can be run, namely, they require a `wfl` server running locally: 
 
 ```shell
 ./ops/server.sh
-```
-
-Then run the tests via the aliases defined in `deps.edn` file.
-
-```shell
-clojure -A:integration
 ```
 
 See the [development guide](/docs/md/dev-process.md#Integration Tests) for more 

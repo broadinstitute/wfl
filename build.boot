@@ -89,12 +89,6 @@
   (zero.boot/google-app-engine-deploy
     (or (first *args*) "gotc-dev")))
 
-(deftask test
-  "Add directory to :source-paths so BOOT-TEST/TEST can find it."
-  []
-  (merge-env! :source-paths #{"test"})
-  (adzerk.boot-test/test))
-
 (defn -main
   "Run this."
   [& args]
