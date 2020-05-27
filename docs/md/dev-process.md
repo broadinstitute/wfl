@@ -201,15 +201,15 @@ against a Postgres server
 deployed in the cloud
 or with an actual _environment_ set.
 
-### Integration Tests
+### Test
 
-We implement integration tests under the `integration/` directory and use the
+We implement tests under the `test/` root directory and use the
 [kaocha](https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme) test
 runner. Test suites use a `-test` namespace suffix. You can pass extra command
 line arguments to `kaocha`. For example, to run a specific test point: 
 
 ```shell
-clojure -A:integration --focus my.integration-test/test-foo-works
+clojure -A:test --focus my.integration-test/test-foo-works
 ```
 
 You can see the full list of options with the following:
