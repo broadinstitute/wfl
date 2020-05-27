@@ -50,7 +50,7 @@
  {:clint
   {:extra-deps  {jonase/eastwood {:mvn/version "0.3.6"}
                  venantius/yagni {:mvn/version "0.1.7"}}
-   :extra-paths ["test"]
+   :extra-paths ["test/integration" "test/unit"]
    :main-opts   ["-m" "eastwood.lint"
                  {:add-linters  #{#_:keyword-typos
                                   :non-clojure-file
@@ -61,7 +61,7 @@
                                   :unused-private-vars}
                   :cwd          "."
                   :source-paths #{"src"}
-                  :test-paths   #{"test"}}]}
+                  :test-paths   #{"test/integration" "test/unit"}}]}
 
   :kondo
   {:extra-deps {clj-kondo {:mvn/version "2020.02.28-1"}}
