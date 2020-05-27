@@ -75,11 +75,9 @@
   {:main-opts   ["-m" "zero.main"]}
 
   :test
-  {:extra-deps  {com.cognitect/test-runner
-                 {:git/url "https://github.com/cognitect-labs/test-runner"
-                  :sha     "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
-   :extra-paths ["test"]
-   :main-opts   ["-m" "cognitect.test-runner"]}
+  {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.629"}}
+   :extra-paths ["resources", "test"]
+   :main-opts   ["-m" "kaocha.runner" "unittest"]}
 
   :uberjar {:extra-deps {uberdeps {:mvn/version "0.1.4"}}
             :main-opts  ["-m" "uberdeps.uberjar"]}
@@ -87,5 +85,5 @@
   :integration
   {:extra-paths ["resources", "integration"]
    :extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.629"}}
-   :main-opts   ["-m" "kaocha.runner"]}
+   :main-opts   ["-m" "kaocha.runner" "integration"]}
   }}
