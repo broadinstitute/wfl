@@ -1,24 +1,16 @@
 #kaocha/v1
-    {:tests [{;; Every suite must have an :id
-              :id :integration
-
-              ;; Directories containing files under test. This is used to
-              ;; watch for changes, and when doing code coverage analysis
-              ;; through Cloverage. These directories are *not* automatically
-              ;; added to the classpath.
-              :source-paths ["src", "resources", "database"]
-
-              ;; Directories containing tests. These will automatically be
-              ;; added to the classpath when running this suite.
-              :test-paths ["integration"]
-
-              ;; Regex strings to determine whether a namespace contains
-              ;; tests. (use strings, not actual regexes, due to a limitation of Aero)
-              :ns-patterns ["-test$"]}]
+    {:tests [{:id           :unittest
+              :source-paths ["src", "resources"]
+              :test-paths   ["test"]
+              :ns-patterns  ["-test$"]}
+             {:id           :integration
+              :source-paths ["src", "resources"]
+              :test-paths   ["integration"]
+              :ns-patterns  ["-test$"]}]
 
      :plugins [
                :kaocha.plugin/print-invocations
-;               :kaocha.plugin/profiling
+;;               :kaocha.plugin/profiling
                ]
 
      ;; Colorize output (use ANSI escape sequences).
@@ -33,12 +25,12 @@
      ;; will make sure are loaded. When providing a vector of symbols, or pointing
      ;; at a var containing a vector, then kaocha will call all referenced functions
      ;; for reporting.
-;     :reporter    kaocha.report/documentation
+;;     :reporter    kaocha.report/documentation
 
      ;; Enable/disable output capturing.
      :capture-output? true
 
      ;; Plugin specific configuration. Show the 10 slowest tests of each type, rather
      ;; than only 3.
-;     :kaocha.plugin.profiling/count 3
+;;     :kaocha.plugin.profiling/count 3
 }
