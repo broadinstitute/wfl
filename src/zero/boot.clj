@@ -112,11 +112,11 @@
             (let [out (io/file resources (.getName in))]
               (io/make-parents out)
               (io/copy in out)))]
-    (let [config (clone "pipeline-config" "wfl/environments.clj")]
+    (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
-      (util/shell-io! "git" "-C" (.getParent config)
-                      "checkout" "8717f1393322b213479765d2dc4b4451b49ce674")
-      (stage config))))
+      (util/shell-io! "git" "-C" (.getParent pipeline-config)
+                      "checkout" "8d2db1b83be73e2309e560cff6d31d3c7e3e7c32")
+      (stage pipeline-config))))
 
 (defn adapterize-wgs
   "Wrap the released WGS WDL in a new workflow that copy outputs and
