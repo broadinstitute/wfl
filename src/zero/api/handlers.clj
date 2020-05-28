@@ -40,7 +40,7 @@
   (let [{:keys [body environment query]} parameters
         env   (zero/throw-or-environment-keyword! environment)
         start (some :start [query body])
-        end   (some :end   [query body])
+        end   (some :end [query body])
         query {:includeSubworkflows false :start start :end end}]
     (succeed {:results (cromwell/query env query)})))
 
@@ -48,9 +48,9 @@
   "List workloads for environment in REQUEST."
   [{:keys [parameters] :as _request}]
   (succeed {:results (-> parameters
-                         :query :environment
-                         zero/throw-or-environment-keyword!
-                         (postgres/query :zero-db "SELECT * FROM workload"))}))
+                       :query :environment
+                       zero/throw-or-environment-keyword!
+                       (postgres/query :zero-db "SELECT * FROM workload"))}))
 
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
@@ -65,23 +65,19 @@
   [body]
   (fail {:add-workload-failed body}))
 
-(defn mk-type-dispatch
-  "Dispatch on the type to the entry in the vtable, if one exists"
-  [type vtable]
-  (fn [tx body]
-    (apply (vtable (type body) add-fail) [tx body])))
+(defmulti add-workload! (fn [_ body] (:pipeline body)))
+(defmethod add-workload! :default [_ body] (add-fail body))
+(defmethod add-workload! aou/pipeline [& xs] (apply aou/add-workload! xs))
+(defmethod add-workload! wl/pipeline [& xs] (apply wl/add-workload! xs))
+(defmethod add-workload! testing/pipeline
+  [& xs] (apply testing/add-workload! xs))
 
-(def add-workload!
-  ""
-  (mk-type-dispatch :pipeline {aou/pipeline     aou/add-workload!
-                               testing/pipeline testing/add-workload!
-                               wl/pipeline      wl/add-workload!}))
-
-(def start-workload!
-  ""
-  (mk-type-dispatch :pipeline {aou/pipeline     aou/start-workload!
-                               testing/pipeline testing/start-workload!
-                               wl/pipeline      wl/start-workload!}))
+(defmulti start-workload! (fn [_ body] (:pipeline body)))
+(defmethod start-workload! :default [_ body] (add-fail body))
+(defmethod start-workload! aou/pipeline [& xs] (apply aou/start-workload! xs))
+(defmethod start-workload! wl/pipeline [& xs] (apply wl/start-workload! xs))
+(defmethod start-workload! testing/pipeline
+  [& xs] (apply testing/start-workload! xs))
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."
@@ -91,11 +87,11 @@
           {:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
         (->> body
-             (add-workload! tx)
-             :uuid
-             (conj ["SELECT * FROM workload WHERE uuid = ?"])
-             (jdbc/query tx)
-             first unnilify succeed)))))
+          (add-workload! tx)
+          :uuid
+          (conj ["SELECT * FROM workload WHERE uuid = ?"])
+          (jdbc/query tx)
+          first unnilify succeed)))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."

@@ -1,23 +1,16 @@
 (ns zero.module.testing
   "A dummy module for mocking a cromwell instance.")
 
-(def pipeline "TestPipeline")
+(def pipeline "testing")
 
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
   [tx workload])
 
-(defn add-workload!
+(def add-workload!
   "Add the workload described by BODY to the database DB."
-  [tx body]
-  (->> body
-    first
-    (filter second)
-    (into {})))
+  (fn [_ x] x))
 
-(defn start-workload!
+(def start-workload!
   "Start the WORKLOAD in the database DB."
-  [tx workload]
-  (->> workload
-    (filter second)
-    (into {})))
+  (fn [_ x] x))
