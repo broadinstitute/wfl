@@ -111,12 +111,13 @@
 (defn genome-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
-  {:google_account_vault_path
-   (get-in env/stuff [environment :vault_path_to_picard_account])
-   :vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :unmapped_bam_suffix ".unmapped.bam"
-   :papi_settings       {:agg_preemptible_tries 3
-                         :preemptible_tries     3}})
+  (let [{:keys [vault_path_to_picard_account vault_token_path]}
+        (env/stuff environment)]
+    {:google_account_vault_path vault_path_to_picard_account
+     :vault_token_path vault_token_path
+     :unmapped_bam_suffix ".unmapped.bam"
+     :papi_settings       {:agg_preemptible_tries 3
+                           :preemptible_tries     3}}))
 
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."

@@ -9,7 +9,7 @@
 
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
-  [db body]
+  [tx body]
   (->> body
        first
        (filter second)
@@ -17,7 +17,7 @@
 
 (defn start-workload!
   "Start the WORKLOAD in the database DB."
-  [db workload]
+  [tx workload]
   (->> workload
        (filter second)
        (into {})))
