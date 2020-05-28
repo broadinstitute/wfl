@@ -50,7 +50,7 @@
     :service-account "datarepo-service-account.iam.gserviceaccount.com"}})
 
 (def stuff
-  "Map ENVIRONMENT and so on to vault paths and JDBC URLs and so on."
+  "Map ENVIRONMENT and so on to vault paths, URLs and so on."
   (letfn [(make [m e] (let [kw  (keyword e)
                             var (resolve (symbol e))]
                         (-> (var-get var)

@@ -8,7 +8,8 @@
             [zero.service.gcs :as gcs]
             [zero.service.postgres :as postgres]
             [zero.service.gcs :as gcs]
-            [zero.util :as util])
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -49,11 +50,11 @@
 (defn create-workload
   "Remember the workload specified by BODY."
   [body]
-  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
+  (let [db (postgres/zero-db-config)]
     (->> body
-         (add-workload! (postgres/zero-db-config environment))
+         (add-workload! db)
          (conj ["SELECT * FROM workload WHERE uuid = ?"])
-         (jdbc/query (postgres/zero-db-config environment))
+         (jdbc/query db)
          first
          (filter second)
          (into {}))))

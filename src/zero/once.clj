@@ -41,7 +41,7 @@
    from a live server."
   []
   (util/bearer-token-header-for
-    (if-let [environment (System/getenv "ENVIRONMENT")]
+    (if-let [environment (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
       (let [env  (zero/throw-or-environment-keyword! environment)
             path (get-in env/stuff [env :cromwell :service-account])]
         (service-account-credentials path))

@@ -14,24 +14,21 @@
            [liquibase.integration.commandline Main]))
 
 (defn zero-db-config
-  "Get the config for the zero database in ENVIRONMENT."
-  [environment]
-  (let [{:strs [ZERO_POSTGRES_PASSWORD
+  "Get the database configuration."
+  []
+  (let [{:strs [USER
+                ZERO_DEPLOY_ENVIRONMENT
+                ZERO_POSTGRES_PASSWORD
                 ZERO_POSTGRES_URL
-                ZERO_POSTGRES_USERNAME]}
-        (util/getenv)
-        [password url user]
-        (if ZERO_POSTGRES_URL
-          [ZERO_POSTGRES_PASSWORD ZERO_POSTGRES_URL ZERO_POSTGRES_USERNAME]
-          ["password" "jdbc:postgresql:wfl" (util/getenv "USER" "postgres")])]
+                ZERO_POSTGRES_USERNAME]} (util/getenv)]
     (assoc {:instance-name "zero-postgresql"
             :db-name       "wfl"
             :classname     "org.postgresql.Driver"
             :subprotocol   "postgresql"
             :vault         "secret/dsde/gotc/dev/zero"}
-           :connection-uri url
-           :password       password
-           :user           user)))
+           :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
+           :password       (or ZERO_POSTGRES_PASSWORD "password")
+           :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
 
 (defn query
   "Query the database in ENVIRONMENT with SQL."

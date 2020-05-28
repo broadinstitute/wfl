@@ -78,9 +78,8 @@
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
-    (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
-          {:keys [body]} parameters]
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
+    (let [{:keys [body]} parameters
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> body
           (add-workload! tx)
           :uuid
@@ -91,21 +90,21 @@
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
   [request]
-  (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))]
-    (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
-      (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-             [{:uuid uuid}]
-             (jdbc/query tx ["SELECT uuid FROM workload"]))
-        (mapv (partial postgres/get-workload-for-uuid tx))
-        succeed))))
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+    (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+           [{:uuid uuid}]
+           (jdbc/query tx ["SELECT uuid FROM workload"]))
+         (mapv (partial postgres/get-workload-for-uuid tx))
+         succeed)))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (let [env   (keyword (util/getenv "ENVIRONMENT" "debug"))
-        uuids (-> request :parameters :body distinct)]
-    (letfn [(q [[left right]] (fn [it] (str left it right)))]
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config env)]
+  (let [uuids (-> request :parameters :body distinct)]
+    (letfn [(q [[left right]] (fn [it] (str left it right)))
+            (start! [tx {:keys [pipeline] :as workload}]
+              ((start pipeline) tx workload))]
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> uuids
           (map :uuid)
           (map (q "''")) (str/join ",") ((q "()"))

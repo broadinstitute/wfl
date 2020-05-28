@@ -34,21 +34,17 @@
         (->> (str/join \newline))
         (format zero/the-name title))))
 
-;; Set "ZERO_POSTGRES_URL" to "jdbc:postgresql:wfl"
-;; to run the server against a local Postgres installation.
-;;
 (defn env_variables
   "The process environment variables for ENV."
   [env]
   (let [environment (env env/stuff)
-        {:keys [cookie_secret
-                password postgres_url username]}
+        {:keys [cookie_secret password postgres_url username]}
         (util/vault-secrets (get-in environment [:server :vault]))
-        result {"COOKIE_SECRET"          cookie_secret
-                "ENVIRONMENT"            (:name environment)
-                "ZERO_POSTGRES_PASSWORD" password
-                "ZERO_POSTGRES_URL"      "jdbc:postgresql:wfl"
-                "ZERO_POSTGRES_USERNAME" username}]
+        result {"COOKIE_SECRET"           cookie_secret
+                "ZERO_DEPLOY_ENVIRONMENT" (:name environment)
+                "ZERO_POSTGRES_PASSWORD"  password
+                "ZERO_POSTGRES_URL"       "jdbc:postgresql:wfl"
+                "ZERO_POSTGRES_USERNAME"  username}]
     (into {} (filter second result))))
 
 (def cookie-store
@@ -107,8 +103,8 @@
   [& args]
   (pprint (into ["Run:" zero/the-name "server"] args))
   (case (count args)
-    2 (let [[environment port] args
-            env (zero/throw-or-environment-keyword! environment)
+    2 (let [[zero_deploy_environment port] args
+            env (zero/throw-or-environment-keyword! zero_deploy_environment)
             cmd [(str "./" zero/the-name) "server" port]
             builder (-> cmd ProcessBuilder. .inheritIO)
             environ (.environment builder)]
