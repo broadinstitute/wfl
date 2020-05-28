@@ -24,8 +24,7 @@
     (assoc {:instance-name "zero-postgresql"
             :db-name       "wfl"
             :classname     "org.postgresql.Driver"
-            :subprotocol   "postgresql"
-            :vault         "secret/dsde/gotc/dev/zero"}
+            :subprotocol   "postgresql"}
            :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
            :password       (or ZERO_POSTGRES_PASSWORD "password")
            :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
