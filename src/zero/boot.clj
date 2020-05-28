@@ -39,7 +39,6 @@
      :commit    commit
      :committed committed
      :built     built
-     :build     (-> "build.txt" slurp str/trim Integer/parseInt)
      :user      (or (System/getenv "USER") zero/the-name)}))
 
 (defn write-the-version-file
@@ -163,8 +162,7 @@
            (run! (partial cromwellify-wdl tmp directory) wdls)
            (adapterize-wgs directory)
            (write-the-version-file directory edn)
-           (finally (util/delete-tree (io/file tmp))))
-      (spit "./build.txt" (-> version :build inc (str \newline))))))
+           (finally (util/delete-tree (io/file tmp)))))))
 
 (defn google-app-engine-configure
   "Write a GAE configuration for JAR in ENV to FILE. "
