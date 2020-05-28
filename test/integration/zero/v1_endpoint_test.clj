@@ -36,7 +36,7 @@
 
 (deftest test-start-wgs-workflow
   (testing "The `wgs` endpoint starts a new workflow."
-    (let [env      :gotc-dev
+    (let [env      :wgs-dev
           wait     (partial cromwell/wait-for-workflow-complete env)
           workflow {:environment env
                     :max         1
