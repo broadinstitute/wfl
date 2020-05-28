@@ -30,16 +30,6 @@
            :password       (or ZERO_POSTGRES_PASSWORD "password")
            :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
 
-(defn query
-  "Query the database in ENVIRONMENT with SQL."
-  [environment sql]
-  (jdbc/query (zero-db-config environment) sql))
-
-(defn insert!
-  "Add ROW map to TABLE in the database in ENVIRONMENT."
-  [environment table row]
-  (jdbc/insert! (zero-db-config environment) table row))
-
 (defn run-liquibase-update
   "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
   [url username password]
