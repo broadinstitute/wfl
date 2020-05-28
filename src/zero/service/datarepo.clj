@@ -24,7 +24,7 @@
                         "Please sign in with %s.")
                    description))
   (util/shell-io! "gcloud" "auth" "login")
-  (util/bearer-token-header-for (once/new-user-credentials)))
+  (util/bearer-token-header-for (once/user-credentials)))
 
 (defonce data-repo-headers
          (delay (collect-specific-header-for

@@ -11,7 +11,7 @@
 
 ;; https://developers.google.com/identity/protocols/OAuth2InstalledApp#refresh
 ;;
-(defn new-user-credentials
+(defn user-credentials
   "NIL or new UserCredentials for call. "
   []
   (when-let [out (->> ["gcloud" "auth" "print-access-token" "--format=json"]
@@ -26,11 +26,7 @@
                   (.setRefreshToken refresh_token)
                   (.setTokenServerUri (new URI token_uri))))))))
 
-;; The re-usable credentials object for token generation
-;;
-(defonce the-cached-credentials (delay (new-user-credentials)))
-
-(defn new-credentials-from-service-account
+(defn service-account-credentials
   "Generate scoped GoogleCredentials from a service account FILE."
   [^String file]
   (when file
@@ -38,40 +34,15 @@
           credentials (GoogleCredentials/fromStream (FileInputStream. file))]
       (.createScoped credentials scopes))))
 
-(defn service-account-for-cromwell
-  "Get the path to service account for the Cromwell in ENVIRONMENT."
-  [environment]
-  (get-in env/stuff [environment :cromwell :service-account]))
-
-;; The re-usable environment:credentials-object map for token
-;; generation and refreshing.
-;;
-(defonce the-cached-service-account-credentials
-  (delay
-    (let [env (zero/throw-or-environment-keyword! (System/getenv "ENVIRONMENT"))]
-      (new-credentials-from-service-account (service-account-for-cromwell env)))))
-
 (defn get-auth-header!
   "Return a valid auth header. Refresh and generate the access
    token with gcloud command if invoked from command line,
    generate the access token from service account if invoked
    from a live server."
   []
-  (if (System/getenv "ENVIRONMENT")
-    (util/bearer-token-header-for @the-cached-service-account-credentials)
-    (util/bearer-token-header-for @the-cached-credentials)))
-
-(comment
-  (util/bearer-token-header-for @the-cached-service-account-credentials)
-  (get-auth-header!)
-  (some-> (:xx @the-cached-service-account-credentials)
-          .refreshAccessToken
-          .getTokenValue)
-  (defn update-map-vals
-    "Map F over every value of M, with the keys remain the same."
-    [f m]
-    (reduce-kv (fn [m k v] (assoc m k (f v))) {} m))
-  (let [envs {:wgs-dev "some-test-service-account.json"
-              :xx      "some-test-service-account.json"}]
-    (update-map-vals new-credentials-from-service-account envs))
-  )
+  (util/bearer-token-header-for
+    (if-let [environment (System/getenv "ENVIRONMENT")]
+      (let [env  (zero/throw-or-environment-keyword! environment)
+            path (get-in env/stuff [env :cromwell :service-account])]
+        (service-account-credentials path))
+      (user-credentials))))
