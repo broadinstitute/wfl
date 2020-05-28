@@ -13,6 +13,8 @@
             [zero.util :as util])
   (:import [java.time OffsetDateTime]))
 
+(def pipeline "ExternalWholeGenomeReprocessing")
+
 (def cromwell->env
   "Map Cromwell URL to a :wgs environment."
   (delay

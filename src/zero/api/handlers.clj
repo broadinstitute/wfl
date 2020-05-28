@@ -1,15 +1,16 @@
 (ns zero.api.handlers
   "Define handlers for API endpoints"
-  (:require [clojure.java.jdbc     :as jdbc]
-            [clojure.string        :as str]
-            [ring.util.response    :as response]
-            [zero.module.aou       :as aou]
-            [zero.module.wgs       :as wgs]
-            [zero.module.wl        :as wl]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
+            [ring.util.response :as response]
+            [zero.module.aou :as aou]
+            [zero.module.testing :as testing]
+            [zero.module.wgs :as wgs]
+            [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util             :as util]
-            [zero.zero             :as zero]))
+            [zero.util :as util]
+            [zero.zero :as zero]))
 
 (defn fail
   "A failure response with BODY."
@@ -64,18 +65,33 @@
   [body]
   (fail {:add-workload-failed body}))
 
+(defn mk-type-dispatch
+  "Dispatch on the type to the entry in the vtable, if one exists"
+  [type vtable]
+  (fn [tx body]
+    (apply (vtable (type body) add-fail) [tx body])))
+
+(def add-workload!
+  ""
+  (mk-type-dispatch :pipeline {aou/pipeline     aou/add-workload!
+                               testing/pipeline testing/add-workload!
+                               wl/pipeline      wl/add-workload!}))
+
+(def start-workload!
+  ""
+  (mk-type-dispatch :pipeline {aou/pipeline     aou/start-workload!
+                               testing/pipeline testing/start-workload!
+                               wl/pipeline      wl/start-workload!}))
+
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
-          {:keys [body]} parameters
-          add {"AllOfUsArrays"                   aou/add-workload!
-               "ExternalWholeGenomeReprocessing" wl/add-workload!}
-          add! (add (:pipeline body) add-fail)]
+          {:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
         (->> body
-             (add! tx)
+             (add-workload! tx)
              :uuid
              (conj ["SELECT * FROM workload WHERE uuid = ?"])
              (jdbc/query tx)
@@ -89,29 +105,25 @@
       (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
              [{:uuid uuid}]
              (jdbc/query tx ["SELECT uuid FROM workload"]))
-           (mapv (partial postgres/get-workload-for-uuid tx))
-           succeed))))
+        (mapv (partial postgres/get-workload-for-uuid tx))
+        succeed))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (let [start {"AllOfUsArrays"                   aou/start-workload!
-               "ExternalWholeGenomeReprocessing"  wl/start-workload!}
-        env   (keyword (util/getenv "ENVIRONMENT" "debug"))
+  (let [env   (keyword (util/getenv "ENVIRONMENT" "debug"))
         uuids (-> request :parameters :body distinct)]
-    (letfn [(q [[left right]] (fn [it] (str left it right)))
-            (start! [tx {:keys [pipeline] :as workload}]
-              ((start pipeline) tx workload))]
+    (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config env)]
         (->> uuids
-             (map :uuid)
-             (map (q "''")) (str/join ",") ((q "()"))
-             (format "SELECT * FROM workload WHERE uuid in %s")
-             (jdbc/query tx)
-             (run! (partial start! tx)))
+          (map :uuid)
+          (map (q "''")) (str/join ",") ((q "()"))
+          (format "SELECT * FROM workload WHERE uuid in %s")
+          (jdbc/query tx)
+          (run! (partial start-workload! tx)))
         (->> uuids
-             (mapv (partial postgres/get-workload-for-uuid tx))
-             succeed)))))
+          (mapv (partial postgres/get-workload-for-uuid tx))
+          succeed)))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"

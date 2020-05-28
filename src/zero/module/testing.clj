@@ -1,7 +1,7 @@
-(ns zero.module.aou
-  "Process Arrays for the All Of Us project.")
+(ns zero.module.testing
+  "A dummy module for mocking a cromwell instance.")
 
-(def pipeline "AllOfUsArrays")
+(def pipeline "TestPipeline")
 
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
@@ -9,15 +9,15 @@
 
 (defn add-workload!
   "Add the workload described by BODY to the database DB."
-  [db body]
+  [tx body]
   (->> body
-       first
-       (filter second)
-       (into {})))
+    first
+    (filter second)
+    (into {})))
 
 (defn start-workload!
   "Start the WORKLOAD in the database DB."
-  [db workload]
+  [tx workload]
   (->> workload
-       (filter second)
-       (into {})))
+    (filter second)
+    (into {})))
