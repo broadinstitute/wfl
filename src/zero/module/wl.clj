@@ -50,11 +50,11 @@
 (defn create-workload
   "Remember the workload specified by BODY."
   [body]
-  (let [db (postgres/zero-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
     (->> body
-         (add-workload! db)
+         (add-workload! tx)
          (conj ["SELECT * FROM workload WHERE uuid = ?"])
-         (jdbc/query db)
+         (jdbc/query tx)
          first
          (filter second)
          (into {}))))

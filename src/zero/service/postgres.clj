@@ -111,26 +111,6 @@
                                  (mapv unnilify)))
           unnilify))))
 
-(defn reset-debug-db
-  "Drop everything managed by Liquibase from the :debug DB."
-  []
-  (jdbc/with-db-transaction [db (zero-db-config :debug)]
-    (let [wq (str/join " " ["SELECT 1 FROM pg_catalog.pg_tables"
-                            "WHERE tablename = 'workload'"])
-          tq (str/join " " ["SELECT 1 FROM pg_type"
-                            "WHERE typname = 'pipeline'"])
-          eq "SELECT UNNEST(ENUM_RANGE(NULL::pipeline))"]
-      (when (seq (jdbc/query db wq))
-        (doseq [{:keys [items]} (jdbc/query db "SELECT items FROM workload")]
-          (jdbc/db-do-commands db (str "DROP TABLE " items)))
-        (jdbc/db-do-commands db "DROP TABLE workload"))
-      (when (seq (jdbc/query db tq))
-        (doseq [enum (jdbc/query db eq)]
-          (jdbc/db-do-commands db (str "DROP TYPE " (:unnest enum))))
-        (jdbc/db-do-commands db "DROP TYPE IF EXISTS pipeline")))
-    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangelog")
-    (jdbc/db-do-commands db "DROP TABLE IF EXISTS databasechangeloglock")))
-
 (comment
   (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
                  "--url=jdbc:postgresql:wfl"
@@ -138,5 +118,4 @@
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
   (run-liquibase)
-  (reset-debug-db)
   )
