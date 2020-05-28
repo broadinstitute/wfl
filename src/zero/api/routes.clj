@@ -143,11 +143,6 @@
             :parameters {:query {:environment string?}}
             :responses {200 {:body {:total pos-int?}}}
             :handler handlers/status-counts}}]
-   ["/api/v1/workloads"
-    {:get {:summary "Get all workloads for a given environment"
-           :parameters {:query {:environment string?}}
-           :responses {200 {:body {:results seq?}}}
-           :handler handlers/list-workloads}}]
    ["/api/v1/wgs"
     {:post {:summary    "Submit WGS Reprocessing workflows"
             :parameters {:body ::wgs-request}
