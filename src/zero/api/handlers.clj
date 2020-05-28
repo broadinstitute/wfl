@@ -43,14 +43,6 @@
         query {:includeSubworkflows false :start start :end end}]
     (succeed {:results (cromwell/query env query)})))
 
-(defn list-workloads
-  "List workloads for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (succeed {:results (-> parameters
-                         :query :environment
-                         zero/throw-or-environment-keyword!
-                         (postgres/query :zero-db "SELECT * FROM workload"))}))
-
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
