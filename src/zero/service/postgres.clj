@@ -17,7 +17,6 @@
   "Get the database configuration."
   []
   (let [{:strs [USER
-                ZERO_DEPLOY_ENVIRONMENT
                 ZERO_POSTGRES_PASSWORD
                 ZERO_POSTGRES_URL
                 ZERO_POSTGRES_USERNAME]} (util/getenv)]
