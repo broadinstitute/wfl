@@ -4,7 +4,6 @@
             [clojure.string :as str]
             [ring.util.response :as response]
             [zero.module.aou :as aou]
-            [zero.module.testing :as testing]
             [zero.module.wgs :as wgs]
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
@@ -74,13 +73,11 @@
 (defoverload add-workload! :default on-unknown-pipeline)
 (defoverload add-workload! aou/pipeline aou/add-workload!)
 (defoverload add-workload! wl/pipeline wl/add-workload!)
-(defoverload add-workload! testing/pipeline testing/add-workload!)
 
 (defmulti start-workload! (fn [_ body] (:pipeline body)))
 (defoverload start-workload! :default on-unknown-pipeline)
 (defoverload start-workload! aou/pipeline aou/start-workload!)
 (defoverload start-workload! wl/pipeline wl/start-workload!)
-(defoverload start-workload! testing/pipeline testing/start-workload!)
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."

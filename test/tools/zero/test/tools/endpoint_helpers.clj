@@ -1,8 +1,10 @@
 (ns zero.test.tools.endpoint-helpers
   (:require [clj-http.client :as client]
+            [clojure.data.json :as json]
+            [zero.module.wl :as wl]
             [zero.once :as once]
             [zero.util :as util]
-            [clojure.data.json :as json]))
+            [zero.test.tools.stub-module :as stub]))
 
 (def server
   "https://workflow-launcher.gotc-dev.broadinstitute.org"
@@ -103,10 +105,21 @@
      :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
      :input    (str "gs://broad-gotc-test-storage" path)
      :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
-     :pipeline "ExternalWholeGenomeReprocessing"
+     :pipeline wl/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
                  :sample_name          "NA12878 PLUMBING",
                  :base_file_name       "NA12878_PLUMBING",
                  :final_gvcf_base_name "NA12878_PLUMBING",
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
+
+(def stub-workload
+  "A dummy workload used for testing cromwell auth"
+  (let [path "/single_sample/plumbing/truth"]
+    {:creator  @git-email
+     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
+     :input    (str "gs://broad-gotc-test-storage" path)
+     :output   (str "gs://broad-gotc-dev-zero-test/stub-test-output" path)
+     :pipeline stub/pipeline
+     :project  (format "(Test) %s" @git-branch)
+     :items    []}))
