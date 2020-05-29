@@ -87,32 +87,10 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-;; https://stackoverflow.com/a/18509384/7247312
-;;
-(defn open-in-default-browser
-  "Open a new browser (window or tab) viewing the document at this `uri`."
-  [uri]
-  (if (Desktop/isDesktopSupported)
-    (let [desktop (Desktop/getDesktop)]
-      (.browse desktop (URI. uri)))
-    (let [rt (Runtime/getRuntime)]
-      (.exec rt (str "xdg-open " uri)))))
-
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
   (pprint (into ["Run:" zero/the-name "server"] args))
-  (case (count args)
-    2 (let [[zero_deploy_environment port] args
-            env (zero/throw-or-environment-keyword! zero_deploy_environment)
-            cmd [(str "./" zero/the-name) "server" port]
-            builder (-> cmd ProcessBuilder. .inheritIO)
-            environ (.environment builder)]
-        (open-in-default-browser "http://localhost:8080")
-        (doseq [[k v] (env_variables env)] (.put environ k v))
-        (pprint cmd)
-        (println (.waitFor (.start builder))))
-    1 (let [port {:port (util/is-non-negative! (first args))}]
-        (pprint [zero/the-name port])
-        (jetty/run-jetty app port))
-    (throw (IllegalArgumentException. "Must specify 1 or 2 arguments."))))
+  (let [port {:port (util/is-non-negative! (first args))}]
+    (pprint [zero/the-name port])
+    (jetty/run-jetty app port)))
