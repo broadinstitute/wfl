@@ -27,12 +27,12 @@
   (util/bearer-token-header-for (once/user-credentials)))
 
 (defonce data-repo-headers
-         (delay (collect-specific-header-for
-            "an account that can make requests to the Data Repo")))
+  (delay (collect-specific-header-for
+           "an account that can make requests to the Data Repo")))
 
 (defonce gcs-headers
-         (delay (collect-specific-header-for
-            "an account that can make requests to your gcs bucket")))
+  (delay (collect-specific-header-for
+           "an account that can make requests to your gcs bucket")))
 
 (defn thing-ingest
   "Request some ingest into the Data Repository. Returns job id for polling."
