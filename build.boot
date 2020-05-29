@@ -45,7 +45,7 @@
     [ring/ring-json                          "0.5.0"]
     [com.google.cloud.sql/postgres-socket-factory            "1.0.15"]
     [com.google.cloud.sql/jdbc-socket-factory-core           "1.0.15"]
-    [com.google.auth/google-auth-library-oauth2-http         "0.15.0"]
+    [com.google.auth/google-auth-library-oauth2-http         "0.20.0"]
     [adzerk/boot-test                  "1.2.0"   :scope "test"]
     [onetom/boot-lein-generate         "0.1.3"   :scope "test"]])
 

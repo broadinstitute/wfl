@@ -30,7 +30,7 @@
   "Generate scoped GoogleCredentials from a service account FILE."
   [^String file]
   (when file
-    (let [scopes ["email" "openid" "profile"]
+    (let [scopes ["cloud-platform" "email" "openid" "profile"]
           credentials (GoogleCredentials/fromStream (FileInputStream. file))]
       (.createScoped credentials scopes))))
 

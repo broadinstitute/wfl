@@ -10,4 +10,9 @@ npm run serve --prefix=ui -- --port 8080 &
 
 "${WFL:-.}/../wfl" server 3000 &
 
+declare OPEN=open
+test CharlesDarwin = Charles$(uname) || OPEN=xdg-open
+
+$OPEN http://localhost:8080/
+
 wait
