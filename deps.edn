@@ -50,7 +50,7 @@
  {:clint
   {:extra-deps  {jonase/eastwood {:mvn/version "0.3.6"}
                  venantius/yagni {:mvn/version "0.1.7"}}
-   :extra-paths ["test/integration" "test/unit"]
+   :extra-paths ["test/integration" "test/unit" "test/tools"]
    :main-opts   ["-m" "eastwood.lint"
                  {:add-linters  #{#_:keyword-typos
                                   :non-clojure-file

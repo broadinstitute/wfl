@@ -1,6 +1,6 @@
-(ns zero.v1-endpoint-test
+(ns zero.test.v1-endpoint-test
   (:require [clojure.test :refer [deftest testing is]]
-            [zero.testtools :as testtools]
+            [zero.test.tools.endpoint-helpers :as testtools]
             [clojure.string :as str]
             [zero.service.cromwell :as cromwell])
   (:import (java.util UUID)))

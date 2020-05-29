@@ -1,4 +1,4 @@
-(ns zero.gcs-test
+(ns zero.test.gcs-test
   "Test the Google Cloud Storage namespace."
   (:require [clojure.java.io  :as io]
             [clojure.string   :as str]

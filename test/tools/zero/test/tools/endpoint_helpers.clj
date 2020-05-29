@@ -1,4 +1,4 @@
-(ns zero.testtools
+(ns zero.test.tools.endpoint-helpers
   (:require [clj-http.client :as client]
             [zero.once :as once]
             [zero.util :as util]

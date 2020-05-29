@@ -1,10 +1,10 @@
 #kaocha/v1
     {:tests [{:id           :integration
-              :source-paths ["src", "resources"]
+              :source-paths ["src", "resources", "test/tools"]
               :test-paths   ["test/integration"]
               :ns-patterns  ["-test$"]}
              {:id           :unit
-              :source-paths ["src", "resources"]
+              :source-paths ["src", "resources", "test/tools"]
               :test-paths   ["test/unit"]
               :ns-patterns  ["-test$"]}]
 
