@@ -60,24 +60,27 @@
         results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
 
-(defn add-fail
+(defn on-unknown-pipeline
   "Fail this request returning BODY as result."
-  [body]
+  [_ body]
   (fail {:add-workload-failed body}))
 
+(defmacro defoverload
+  "Register a method IMPL to MULTIFUN using DISPATCH_VAL"
+  [multifn dispatch-val impl]
+  `(defmethod ~multifn ~dispatch-val [& xs#] (apply ~impl xs#)))
+
 (defmulti add-workload! (fn [_ body] (:pipeline body)))
-(defmethod add-workload! :default [_ body] (add-fail body))
-(defmethod add-workload! aou/pipeline [& xs] (apply aou/add-workload! xs))
-(defmethod add-workload! wl/pipeline [& xs] (apply wl/add-workload! xs))
-(defmethod add-workload! testing/pipeline
-  [& xs] (apply testing/add-workload! xs))
+(defoverload add-workload! :default on-unknown-pipeline)
+(defoverload add-workload! aou/pipeline aou/add-workload!)
+(defoverload add-workload! wl/pipeline wl/add-workload!)
+(defoverload add-workload! testing/pipeline testing/add-workload!)
 
 (defmulti start-workload! (fn [_ body] (:pipeline body)))
-(defmethod start-workload! :default [_ body] (add-fail body))
-(defmethod start-workload! aou/pipeline [& xs] (apply aou/start-workload! xs))
-(defmethod start-workload! wl/pipeline [& xs] (apply wl/start-workload! xs))
-(defmethod start-workload! testing/pipeline
-  [& xs] (apply testing/start-workload! xs))
+(defoverload start-workload! :default on-unknown-pipeline)
+(defoverload start-workload! aou/pipeline aou/start-workload!)
+(defoverload start-workload! wl/pipeline wl/start-workload!)
+(defoverload start-workload! testing/pipeline testing/start-workload!)
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."
