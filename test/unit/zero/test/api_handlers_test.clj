@@ -1,16 +1,14 @@
 (ns zero.test.api-handlers-test
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
-            [zero.api.handlers :refer [add-workload! start-workload!]]))
+            [zero.api.handlers :refer [add-workload! start-workload!]]
+            [zero.test.tools.fixtures :refer [method-overload-fixture]]))
 
 (def dummy-pipeline "unittest")
+(defn dummy-handler [_ x] x)
 
-(defn use-dummy-method-overloads [run-test]
-  (let [fs [add-workload! start-workload!]]
-    (doseq [f fs] (defmethod f dummy-pipeline [_ x] x))
-    (run-test)
-    (doseq [f fs] (remove-method f dummy-pipeline))))
-
-(use-fixtures :once use-dummy-method-overloads)
+(use-fixtures :once
+  (method-overload-fixture add-workload! dummy-pipeline dummy-handler)
+  (method-overload-fixture start-workload! dummy-pipeline dummy-handler))
 
 (deftest test-add-workload!
   (testing "add-workload! pipeline entry points are correctly called"

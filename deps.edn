@@ -76,7 +76,7 @@
 
   :test
   {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.629"}}
-   :extra-paths ["resources", "test"]
+   :extra-paths ["resources", "test/tools"]
    :main-opts   ["-m" "kaocha.runner"]}
 
   :uberjar {:extra-deps {uberdeps {:mvn/version "0.1.4"}}
