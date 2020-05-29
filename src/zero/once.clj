@@ -8,22 +8,19 @@
   (:import [com.google.auth.oauth2 GoogleCredentials UserCredentials]
            [java.net URI]))
 
-;; https://developers.google.com/identity/protocols/OAuth2InstalledApp#refresh
+;; This is evil.
 ;;
 (defn user-credentials
-  "NIL or new UserCredentials for call. "
+  "NIL or new UserCredentials for caller. "
   []
-  (when-let [out (->> ["gcloud" "auth" "print-access-token" "--format=json"]
-                      (apply util/shell!)
-                      util/do-or-nil)]
-    (let [{:strs [client_id client_secret refresh_token token_uri]}
-          (json/read-str out)]
-      (when (and client_id client_secret refresh_token token_uri)
-        (.build (doto (UserCredentials/newBuilder)
-                  (.setClientId client_id)
-                  (.setClientSecret client_secret)
-                  (.setRefreshToken refresh_token)
-                  (.setTokenServerUri (new URI token_uri))))))))
+  (some-> ["gcloud" "info" "--format=json"]
+          (->> (apply util/shell!))
+          (json/read-str :key-fn keyword)
+          :config :paths :global_config_dir
+          (str "/" "application_default_credentials.json")
+          io/input-stream
+          UserCredentials/fromStream
+          util/do-or-nil))
 
 (defn service-account-credentials
   "Google service account credentials from FILE."
