@@ -1,13 +1,12 @@
 (ns zero.once
   "Low-level vars to define exactly once and auth related junk."
-  (:require [clojure.data.json  :as json]
-            [zero.util          :as util]
-            [zero.environments  :as env]
-            [zero.zero          :as zero])
-  (:import [com.google.auth.oauth2 UserCredentials]
-           [java.net URI]
-           (java.io FileInputStream)
-           (com.google.auth.oauth2 GoogleCredentials)))
+  (:require [clojure.data.json :as json]
+            [clojure.java.io   :as io]
+            [zero.environments :as env]
+            [zero.util         :as util]
+            [zero.zero         :as zero])
+  (:import [com.google.auth.oauth2 GoogleCredentials UserCredentials]
+           [java.net URI]))
 
 ;; https://developers.google.com/identity/protocols/OAuth2InstalledApp#refresh
 ;;
@@ -27,12 +26,11 @@
                   (.setTokenServerUri (new URI token_uri))))))))
 
 (defn service-account-credentials
-  "Generate scoped GoogleCredentials from a service account FILE."
+  "Google service account credentials from FILE."
   [^String file]
-  (when file
-    (let [scopes ["cloud-platform" "email" "openid" "profile"]
-          credentials (GoogleCredentials/fromStream (FileInputStream. file))]
-      (.createScoped credentials scopes))))
+  (-> file io/input-stream
+      GoogleCredentials/fromStream
+      (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])))
 
 (defn get-auth-header!
   "Return a valid auth header. Refresh and generate the access
