@@ -13,7 +13,7 @@
             [zero.util :as util])
   (:import [java.time OffsetDateTime]))
 
-(def pipeline "testing")
+(def pipeline "StubWorkload")
 (def workflow-wdl
   {:release "stub-v1.0"
    :top     "test/tools/resources/stub.wdl"})

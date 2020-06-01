@@ -13,4 +13,4 @@
 (deftest test-create-workload
   (testing "creating a stub workload"
     (let [response (post-create {:parameters {:body testtools/stub-workload}})]
-      (is (= 200 (:status (response)))))))
+      (is (= 200 (:status response))))))
