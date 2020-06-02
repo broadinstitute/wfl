@@ -57,11 +57,11 @@
   "Return IamPolicy response for URL."
   [url]
   (let [[bucket _] (parse-gs-url url)]
-    (-> {:method       :get ;; :debug true :debug-body true
+    (-> {:method       :get             ; :debug true :debug-body true
          :url          (str bucket-url bucket "/iam")
          ;; :query-params {:project project :prefix prefix}
          :content-type :application/json
-         :headers      (once/get-auth-header!)}
+         :headers      (once/get-service-auth-header :google)}
         http/request
         :body
         (json/read-str :key-fn keyword))))
@@ -69,11 +69,11 @@
 (defn list-buckets
   "The buckets in PROJECT named with optional PREFIX."
   ([project prefix]
-   (-> {:method       :get ;; :debug true :debug-body true
+   (-> {:method       :get              ; :debug true :debug-body true
         :url          bucket-url
         :query-params {:project project :prefix prefix}
         :content-type :application/json
-        :headers      (once/get-auth-header!)}
+        :headers      (once/get-service-auth-header :google)}
        http/request
        :body
        (json/read-str :key-fn keyword)
@@ -90,7 +90,7 @@
                    (-> {:method       :get
                         :url          (str bucket-url bucket "/o")
                         :content-type :application/json
-                        :headers      (once/get-auth-header!)
+                        :headers      (once/get-service-auth-header :google)
                         :query-params {:prefix prefix
                                        :maxResults 999
                                        :pageToken pageToken}}
@@ -116,65 +116,58 @@
 
 (defn make-bucket
   "Make a storageClass CLASS bucket in PROJECT named NAME at LOCATION."
-  ([project location class name headers]
-   (when-not (s/valid? ::bucket-name name)
-     (throw
-       (IllegalArgumentException.
-         (format "Bad GCS bucket name: %s\nSee %s\n%s"
-                 name
-                 "https://cloud.google.com/storage/docs/naming#requirements"
-                 (s/explain-str ::bucket-name name)))))
-   (-> {:method       :post ;; :debug true :debug-body true
-        :url          bucket-url
-        :query-params {:project project}
-        :content-type :application/json
-        :headers      headers
-        :form-params  {:name         name
-                       :location     location
-                       :storageClass class}}
-       http/request
-       :body
-       (json/read-str :key-fn keyword)))
-  ([project location class name]
-   (make-bucket project location class name (once/get-auth-header!))))
+  [project location class name]
+  (when-not (s/valid? ::bucket-name name)
+    (throw
+      (IllegalArgumentException.
+        (format "Bad GCS bucket name: %s\nSee %s\n%s" name
+                "https://cloud.google.com/storage/docs/naming#requirements"
+                (s/explain-str ::bucket-name name)))))
+  (-> {:method       :post              ; :debug true :debug-body true
+       :url          bucket-url
+       :query-params {:project project}
+       :content-type :application/json
+       :headers      (once/get-service-auth-header :google)
+       :form-params  {:name         name
+                      :location     location
+                      :storageClass class}}
+      http/request
+      :body
+      (json/read-str :key-fn keyword)))
 
 (defn delete-bucket
   "Throw or delete the bucket in PROJECT named NAME."
-  ([name headers]
-   (letfn [(deleted-this-time? [response]
-             (case (:status response)
-               204 true
-               404 false
-               (-> 'delete-bucket
-                   (list name)
-                   pr-str
-                   (ex-info response)
-                   throw)))]
-     (-> {:method            :delete ;; :debug true :debug-body true
-          :url               (str bucket-url name)
-          :headers           headers
-          :throw-exceptions? false}
-         http/request
-         deleted-this-time?)))
-  ([name]
-   (delete-bucket name (once/get-auth-header!))))
+  [name]
+  (letfn [(deleted-this-time? [{:keys [status] :as response}]
+            (case status
+              204 true
+              404 false
+              (-> 'delete-bucket
+                  (list name)
+                  pr-str
+                  (ex-info response)
+                  throw)))]
+    (-> {:method            :delete     ; :debug true :debug-body true
+         :url               (str bucket-url name)
+         :headers           (once/get-service-auth-header :google)
+         :throw-exceptions? false}
+        http/request
+        deleted-this-time?)))
 
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
-  ([file bucket object headers]
+  ([file bucket object]
    (let [body (io/file file)]
-     (-> {:method       :post ;; :debug true :debug-body true
+     (-> {:method       :post           ; :debug true :debug-body true
           :url          (str upload-url bucket "/o")
           :query-params {:uploadType "media"
                          :name       object}
           :content-type (.detect (new Tika) body)
-          :headers      headers
+          :headers      (once/get-service-auth-header :google)
           :body         body}
          http/request
          :body
          (json/read-str :key-fn keyword))))
-  ([file bucket object]
-   (upload-file file bucket object (once/get-auth-header!)))
   ([file url]
    (apply upload-file file (parse-gs-url url))))
 
@@ -182,10 +175,10 @@
   "Download URL or OBJECT from BUCKET to FILE."
   ([file bucket object]
    (with-open [out (io/output-stream file)]
-     (-> {:method       :get ;; :debug true :debug-body true
+     (-> {:method       :get            ; :debug true :debug-body true
           :url          (bucket-object-url bucket object)
           :query-params {:alt "media"}
-          :headers      (once/get-auth-header!)
+          :headers      (once/get-service-auth-header :google)
           :as           :stream}
          http/request
          :body
@@ -195,54 +188,46 @@
 
 (defn create-object
   "Create OBJECT in BUCKET"
-  ([bucket object headers]
+  ([bucket object]
    (http/request {:method  :post
                   :url     (str upload-url bucket "/o")
                   :query-params {:name object}
-                  :headers headers}))
-  ([bucket object]
-   (create-object bucket object (once/get-auth-header!)))
+                  :headers (once/get-service-auth-header :google)}))
   ([url]
    (apply create-object (parse-gs-url url))))
 
 (defn delete-object
-  "Delete URL or OBJECT from BUCKET"
-  ([bucket object headers]
-   (http/request {:method  :delete ;; :debug true :debug-body true
-                  :url     (bucket-object-url bucket object)
-                  :headers headers}))
+  "Delete URL or OBJECT from BUCKET."
   ([bucket object]
-   (delete-object bucket object (once/get-auth-header!)))
+   (http/request {:method  :delete      ; :debug true :debug-body true
+                  :url     (bucket-object-url bucket object)
+                  :headers (once/get-service-auth-header :google)}))
   ([url]
    (apply delete-object (parse-gs-url url))))
 
 (defn object-meta
   "Get metadata on URL or OBJECT in BUCKET."
-  ([bucket object params headers]
-   (-> {:method       :get ;; :debug true :debug-body true
+  ([bucket object params]
+   (-> {:method       :get              ; :debug true :debug-body true
         :url          (str (bucket-object-url bucket object) params)
-        :headers      headers}
+        :headers      (once/get-service-auth-header :google)}
        http/request
        :body
        (json/read-str :key-fn keyword)))
-  ([bucket object]
-   (object-meta bucket object "" (once/get-auth-header!)))
   ([url]
    (apply object-meta (parse-gs-url url))))
 
 (defn patch-object!
   "Patch the METADATA on URL or OBJECT in BUCKET."
-  ([metadata bucket object headers]
-   (-> {:method       :patch ;; :debug true :debug-body true
+  ([metadata bucket object]
+   (-> {:method       :patch            ; :debug true :debug-body true
         :url          (bucket-object-url bucket object)
         :content-type :application/json
-        :headers      headers
+        :headers      (once/get-service-auth-header :google)
         :body         (json/write-str metadata)}
        http/request
        :body
        (json/read-str :key-fn keyword)))
-  ([metadata bucket object]
-   (patch-object! metadata bucket object (once/get-auth-header!)))
   ([metadata url]
    (apply patch-object! metadata (parse-gs-url url))))
 
@@ -250,9 +235,9 @@
   "Copy SRC-URL to DEST-URL or SOBJ in SBUCKET to DOBJ in DBUCKET."
   ([src-url dest-url]
    (let [destination (str/replace-first dest-url storage-url "")]
-     (-> {:method  :post ;; :debug true :debug-body true
+     (-> {:method  :post                ; :debug true :debug-body true
           :url     (str src-url "/rewriteTo/" destination)
-          :headers (once/get-auth-header!)}
+          :headers (once/get-service-auth-header :google)}
          http/request :body
          (json/read-str :key-fn keyword))))
   ([sbucket sobject dbucket dobject]
@@ -262,12 +247,11 @@
 
 (defn add-object-reader
   "Add USER as a reader on OBJECT in BUCKET in gcs"
-  ([email bucket object headers]
-   (let [acl-entry {:entity (str "user-" email)
-                    :role   "READER"
-                    :email  email}
-         acl (update (object-meta bucket object "?projection=full" headers)
-                     :acl (partial cons acl-entry))]
-     (patch-object! acl bucket object headers)))
-  ([email bucket object]
-   (add-object-reader email bucket object (once/get-auth-header!))))
+  [email bucket object]
+  (let [acl       (partial cons {:entity (str "user-" email)
+                                 :role   "READER"
+                                 :email  email})
+        auth      (once/get-service-auth-header :google)
+        meta      (object-meta bucket object "?projection=full")
+        acl-entry (update meta :acl acl)]
+    (patch-object! acl-entry bucket object auth)))

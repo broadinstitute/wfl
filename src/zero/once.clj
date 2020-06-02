@@ -41,3 +41,11 @@
             path (get-in env/stuff [env :cromwell :service-account])]
         (service-account-credentials path))
       (user-credentials))))
+
+(defn get-service-auth-header
+  "Nil or an 'Authorization: Bearer <token>' header for SERVICE."
+  [service]
+  (when-let [environment "debug" #_(System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
+    (let [env  (zero/throw-or-environment-keyword! environment)]
+      (when-let [path (get-in env/stuff [env service :service-account])]
+        (util/bearer-token-header-for (service-account-credentials path))))))

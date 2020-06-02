@@ -26,25 +26,15 @@
   (util/shell-io! "gcloud" "auth" "login")
   (util/bearer-token-header-for (once/user-credentials)))
 
-(defonce data-repo-headers
-  (delay (collect-specific-header-for
-           "an account that can make requests to the Data Repo")))
-
-(defonce gcs-headers
-  (delay (collect-specific-header-for
-           "an account that can make requests to your gcs bucket")))
-
 (defn thing-ingest
   "Request some ingest into the Data Repository. Returns job id for polling."
   [environment dataset-id thing body]
   (let [url     (format "%s/datasets/%s/%s" (api environment) dataset-id thing)
-        request {:method  :post
-                 ;; :debug true :debug-body true
-                 ;; :throw-exceptions false
-                 :url     url
+        request {:method  :post         ; :debug true :debug-body true
+                 :url     url           ; :throw-exceptions false
                  :body    body
                  :content-type :application/json
-                 :headers @data-repo-headers}]
+                 :headers (once/get-service-auth-header :data-repo)}]
     (-> (http/request request)
         :body
         (json/read-str :key-fn keyword)
@@ -78,16 +68,15 @@
   "Get result of a successful job; returns json model specific to job type"
   [environment job-id]
   (let [url (format "%s/jobs/%s/result" (api environment) job-id)
-        request {:method :get
-                 ;; :debug true :debug-body true
+        request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers @data-repo-headers
+                 :headers (once/get-service-auth-header :data-repo)
                  :throw-exceptions false}
         response (http/request request)
         body (-> response
                  :body
                  (json/read-str :key-fn keyword))]
-    (if (#{200} (:status response))
+    (if (= 200 (:status response))
       body
       (throw (HttpException. (json/write-str body))))))
 
@@ -95,10 +84,9 @@
   "Poll job for completion, retrieve result if and when it is ready"
   [environment job-id]
   (let [url (format "%s/jobs/%s" (api environment) job-id)
-        request {:method :get
-                 ;; :debug true :debug-body true
+        request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers @data-repo-headers}
+                 :headers (once/get-service-auth-header :data-repo)}
         status (-> (http/request request)
                    :body
                    (json/read-str :key-fn keyword)
