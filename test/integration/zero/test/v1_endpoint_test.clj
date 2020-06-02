@@ -7,7 +7,7 @@
 
 (def mk-workload (partial testtools/create-workload testtools/wgs-workload))
 (def get-existing-workload-uuids
-  (partial into #{} (map :uuid (testtools/get-workloads))))
+  (comp set (partial map :uuid) testtools/get-workloads))
 
 (deftest test-create-workload
   (testing "The `create` endpoint creates new workload"
