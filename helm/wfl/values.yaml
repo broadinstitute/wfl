@@ -83,6 +83,7 @@ ui:
     CALLBACK_URI: ""  # o2c.html
     FILTER: ""  # filter
     FILTER2: AddOutputFilterByType DEFLATE application/json text/plain text/html application/javascript application/x-javascript
+    USE_HTTPS: "true"
 
   resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
