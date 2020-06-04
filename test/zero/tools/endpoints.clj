@@ -2,7 +2,6 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [clojure.string :refer [join]]
-            [zero.module.wl :as wl]
             [zero.once :as once]))
 
 (def server
@@ -93,21 +92,3 @@
                        :accept       :json
                        :body         payload})]
     (parse-json-string (:body response))))
-
-(def git-branch (delay (shell! "git" "branch" "--show-current")))
-(def git-email (delay (shell! "git" "config" "user.email")))
-
-(def wl-workload
-  "A whole genome sequencing workload used for testing."
-  (let [path "/single_sample/plumbing/truth"]
-    {:creator  @git-email
-     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    (str "gs://broad-gotc-test-storage" path)
-     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
-     :pipeline wl/pipeline
-     :project  (format "(Test) %s" @git-branch)
-     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
-                 :sample_name          "NA12878 PLUMBING",
-                 :base_file_name       "NA12878_PLUMBING",
-                 :final_gvcf_base_name "NA12878_PLUMBING",
-                 :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))

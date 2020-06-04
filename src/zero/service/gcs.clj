@@ -12,7 +12,7 @@
 
 (def api-url
   "The Google Cloud API URL."
-  "https://www.googleapis.com/")
+  "https://storage.googleapis.com/")
 
 (def storage-url
   "The Google Cloud URL for storage operations."
@@ -161,7 +161,7 @@
 
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
-  ([file bucket object headers]
+          ([file bucket object headers]
    (let [body (io/file file)]
      (-> {:method       :post ;; :debug true :debug-body true
           :url          (str upload-url bucket "/o")
@@ -198,7 +198,8 @@
   ([bucket object headers]
    (http/request {:method  :post
                   :url     (str upload-url bucket "/o")
-                  :query-params {:name object}
+                  :query-params {:uploadType "media"
+                                 :name object}
                   :headers headers}))
   ([bucket object]
    (create-object bucket object (once/get-auth-header!)))
