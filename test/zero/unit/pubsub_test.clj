@@ -1,4 +1,4 @@
-(ns zero.pubsub-test
+(ns zero.unit.pubsub-test
   "Test the Google Cloud Storage namespace."
   (:require [clojure.string      :as str]
             [clojure.test        :refer [deftest is testing]]

@@ -148,11 +148,14 @@ $ tree .
 │       ├── wdl.clj
 │       └── zero.clj
 ├── test
-│   ├── integration
-│   │   └── zero
-│   │       └── integration test files
-│   └── unit
-│   │   └── zero
+│   └── zero
+│       ├── integration
+│       │   └── integration test files
+│       ├── resources
+│       │   └── test resource files
+│       ├── tools
+│       │   └── test tooling files
+│       └── unit
 │           └── unit test files
 ├── ui/
 └── wfl.iml
@@ -196,7 +199,8 @@ After cloning a new WFL repo, the top-level files are.
 
   - `./src/zero` contains the Workflow Launcher source code.
 
-  - `./test/zero` contains some unit tests.
+  - `./test` contains a mixture of unit and integration tests
+    and supplementary test tooling.
 
 After building and working with WFL a while, you may notice a
 couple of other top-level files and directories.
@@ -295,7 +299,7 @@ before they can be run, namely, they require a `wfl` server running locally:
 ./ops/server.sh
 ```
 
-See the [development guide](/docs/md/dev-process.md#Integration Tests) for more 
+See the [development guide](/docs/md/dev-process.md#Integration\ Tests) for more 
 information.
 
 #### Development

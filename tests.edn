@@ -1,12 +1,12 @@
 #kaocha/v1
     {:tests [{:id           :integration
               :source-paths ["src", "resources"]
-              :test-paths   ["test/integration"]
-              :ns-patterns  ["-test$"]}
+              :test-paths   ["test"]
+              :ns-patterns  ["zero\\.integration\\..*-test$"]}
              {:id           :unit
               :source-paths ["src", "resources"]
-              :test-paths   ["test/unit"]
-              :ns-patterns  ["-test$"]}]
+              :test-paths   ["test"]
+              :ns-patterns  ["zero\\.unit\\..*-test$"]}]
 
      :plugins [
                :kaocha.plugin/print-invocations

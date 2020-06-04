@@ -4,7 +4,7 @@
   "central" {:url "https://repo1.maven.org/maven2/"}
   "clojars" {:url "https://clojars.org/repo"}}
 
- :paths ["src"]
+ :paths ["src", "resources"]
 
  :deps
 
@@ -50,7 +50,7 @@
  {:clint
   {:extra-deps  {jonase/eastwood {:mvn/version "0.3.6"}
                  venantius/yagni {:mvn/version "0.1.7"}}
-   :extra-paths ["test/integration" "test/unit"]
+   :extra-paths ["test"]
    :main-opts   ["-m" "eastwood.lint"
                  {:add-linters  #{#_:keyword-typos
                                   :non-clojure-file
@@ -61,7 +61,7 @@
                                   :unused-private-vars}
                   :cwd          "."
                   :source-paths #{"src"}
-                  :test-paths   #{"test/integration" "test/unit"}}]}
+                  :test-paths   #{"test"}}]}
 
   :kondo
   {:extra-deps {clj-kondo {:mvn/version "2020.02.28-1"}}
@@ -75,8 +75,8 @@
   {:main-opts   ["-m" "zero.main"]}
 
   :test
-  {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.629"}}
-   :extra-paths ["resources", "test"]
+  {:extra-deps  {lambdaisland/kaocha    {:mvn/version "1.0.629"}}
+   :extra-paths ["test"]
    :main-opts   ["-m" "kaocha.runner"]}
 
   :uberjar {:extra-deps {uberdeps {:mvn/version "0.1.4"}}
