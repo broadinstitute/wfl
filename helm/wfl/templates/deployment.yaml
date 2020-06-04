@@ -54,10 +54,12 @@ spec:
           - name: http
             containerPort: {{ .Values.ui.deployment.containerPort }}
             protocol: TCP
+{{- if .Values.ui.env.USE_HTTPS }}
           livenessProbe:
 {{ toYaml .Values.ui.deployment.livenessProbe | indent 12 }}
           readinessProbe:
 {{ toYaml .Values.ui.deployment.readinessProbe | indent 12 }}
+{{- end }}
           resources:
 {{- toYaml .Values.ui.resources | nindent 12 }}
           env:
