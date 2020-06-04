@@ -29,17 +29,14 @@
       GoogleCredentials/fromStream
       (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])))
 
-(defn get-auth-header!
-  "Return a valid auth header. Refresh and generate the access
-   token with gcloud command if invoked from command line,
-   generate the access token from service account if invoked
-   from a live server."
-  []
+(defn get-auth-header
+  "Nil or a valid auth header for talking to SERVICE."
+  [service]
   (util/bearer-token-header-for
     (if-let [environment (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
-      (let [env  (zero/throw-or-environment-keyword! environment)
-            path (get-in env/stuff [env :cromwell :service-account])]
-        (service-account-credentials path))
+      (let [env  (zero/throw-or-environment-keyword! environment)]
+        (when-let [path (get-in env/stuff [env service :service-account])]
+          (service-account-credentials path)))
       (user-credentials))))
 
 (defn get-service-auth-header
