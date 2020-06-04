@@ -73,6 +73,10 @@ spec:
             - mountPath: /etc/apache2/sites-available/site.conf
               name: siteconf
               subPath: site.conf
+          volumeMounts:
+            - mountPath: /etc/apache2/override.sh
+              name: override
+              subPath: override.sh
       volumes:
         - name: siteconf
           configMap:
@@ -80,6 +84,12 @@ spec:
             items:
               - key: siteconf
                 path: site.conf
+        - name: override
+          configMap:
+            name: {{ template "wfl.fullname" . }}
+            items:
+              - key: override
+                path: override.sh
         - name: service-account
           secret:
             secretName: {{ template "wfl.fullname" . }}
