@@ -45,8 +45,9 @@
 (s/def ::max                  pos-int?)
 (s/def ::output               string?)
 (s/def ::output_path          string?)
-(s/def ::pipeline             #{"AllOfUsArrays"
-                                "ExternalWholeGenomeReprocessing"})
+(s/def ::pipeline             #{zero.module.aou/pipeline
+                                zero.module.wl/pipeline
+                                zero.module.copyfile/pipeline})
 (s/def ::project              string?)
 (s/def ::release              string?)
 (s/def ::sample_name          string?)
