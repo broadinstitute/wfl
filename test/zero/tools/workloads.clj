@@ -1,6 +1,5 @@
 (ns zero.tools.workloads
-  (:require [clojure.string :refer [join]]
-            [zero.module.wl :as wl]
+  (:require [zero.module.wl :as wl]
             [zero.util :refer [shell!]]
             [zero.module.copyfile :as cp]))
 

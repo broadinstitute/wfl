@@ -1,7 +1,6 @@
 (ns zero.tools.endpoints
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
-            [clojure.string :refer [join]]
             [zero.once :as once]))
 
 (def server
