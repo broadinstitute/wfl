@@ -136,8 +136,7 @@ class CLI:
     @staticmethod
     def _is_available(*commands: list):
         for cmd in commands:
-            code = subprocess.call(["hash", cmd])
-            if code != 0:
+            if not shutil.which(cmd):
                 print(
                     dye_msg_with_color(
                         f"=> {cmd} is missing in PATH, please check and install!",
