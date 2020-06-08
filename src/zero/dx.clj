@@ -379,7 +379,7 @@
   []
   (-> {:method  :get                    ; :debug true :debug-body true
        :url     "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"
-       :headers (once/get-auth-header!)}
+       :headers (once/get-auth-header)}
       http/request :body
       (json/read-str :key-fn keyword)
       util/do-or-nil pprint))

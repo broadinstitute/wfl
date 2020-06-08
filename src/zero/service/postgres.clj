@@ -66,7 +66,7 @@
   [cromwell uuid]
   (-> {:method  :get                    ; :debug true :debug-body true
        :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-       :headers (once/get-auth-header!)}
+       :headers (once/get-auth-header)}
       http/request :body
       (json/read-str :key-fn keyword)
       :status util/do-or-nil))

@@ -126,7 +126,7 @@
 
 (defn make-bucket
   "Make a storageClass CLASS bucket in PROJECT named BUCKET at LOCATION."
-  [project location class bucket]
+  [project bucket location class]
   (valid-bucket-name-or-throw! bucket)
   (-> {:method       :post              ; :debug true :debug-body true
        :url          bucket-url
@@ -254,10 +254,9 @@
   (let [acl       (partial cons {:entity (str "user-" email)
                                  :role   "READER"
                                  :email  email})
-        auth      (once/get-auth-header :google)
         meta      (object-meta bucket object "?projection=full")
         acl-entry (update meta :acl acl)]
-    (patch-object! acl-entry bucket object auth)))
+    (patch-object! acl-entry bucket object)))
 
 (defn patch-bucket!
   "Patch BUCKET in PROJECT with METADATA."

@@ -70,7 +70,7 @@
    (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
      (let [edn (-> {:method  method     ; :debug true :debug-body true
                     :url     (str (api environment) "/" id "/" thing)
-                    :headers (once/get-auth-header!)}
+                    :headers (once/get-auth-header)}
                    (maybe :query-params query-params)
                    http/request :body json/read-str)
            bad (filter (partial some bogus-key-characters) (util/keys-in edn))
@@ -158,7 +158,7 @@
     (letfn [(each [page sofar]
               (let [response (-> request
                                  (update :form-params conj {:page (str page)})
-                                 (assoc :headers (once/get-auth-header!))
+                                 (assoc :headers (once/get-auth-header))
                                  request-json :body)
                     {:keys [results totalResultsCount]} response
                     total    (+ sofar (count results))]
@@ -180,7 +180,7 @@
                            :url          (str (api environment) "/query")
                            :form-params  form-params
                            :content-type :application/json
-                           :headers      (once/get-auth-header!)}
+                           :headers      (once/get-auth-header)}
                           request-json :body :totalResultsCount)]))]
     (let [counts (into (array-map) (map each statuses))
           total  (apply + (map counts statuses))]
@@ -210,7 +210,7 @@
   (letfn [(multipartify [[k v]] {:name (name k) :content v})]
     (-> {:method    :post               ; :debug true :debug-body true
          :url       (api environment)
-         :headers   (once/get-auth-header!)
+         :headers   (once/get-auth-header)
          :multipart (map multipartify parts)}
         request-json #_debug/dump :body :id)))
 

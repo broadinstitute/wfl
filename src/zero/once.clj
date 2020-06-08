@@ -33,7 +33,7 @@
   "Nil or a valid auth header for talking to SERVICE."
   [service]
   (util/bearer-token-header-for
-    (if-let [environment (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
+    (if-let [environment (zero.debug/trace (System/getenv "ZERO_DEPLOY_ENVIRONMENT"))]
       (let [env  (zero/throw-or-environment-keyword! environment)]
         (when-let [path (get-in env/stuff [env service :service-account])]
           (service-account-credentials path)))
@@ -45,4 +45,5 @@
   (when-let [environment "debug" #_(System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
     (let [env  (zero/throw-or-environment-keyword! environment)]
       (when-let [path (get-in env/stuff [env service :service-account])]
+        (zero.debug/trace path)
         (util/bearer-token-header-for (service-account-credentials path))))))
