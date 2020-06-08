@@ -75,7 +75,7 @@
   {:main-opts   ["-m" "zero.main"]}
 
   :test
-  {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.629"}}
+  {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.632"}}
    :extra-paths ["resources" "test"]
    :main-opts   ["-m" "kaocha.runner"]}
 
