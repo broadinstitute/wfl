@@ -41,7 +41,7 @@
   (testing "delivery succceeds"
     (let [vcf (str bucket ".vcf")
           table (str bucket ".tabular.json")
-          gcs-auth-header (once/get-auth-header :google)
+          gcs-auth-header (once/get-service-account-header)
           vcf-url (gcs/gs-url bucket vcf)
           ingest-file (partial datarepo/file-ingest :gotc-dev dataset profile)]
       (letfn [(stage [file content]

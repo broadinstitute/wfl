@@ -34,7 +34,7 @@
                  :url     url           ; :throw-exceptions false
                  :body    body
                  :content-type :application/json
-                 :headers (once/get-service-auth-header :data-repo)}]
+                 :headers (once/get-service-account-header)}]
     (-> (http/request request)
         :body
         (json/read-str :key-fn keyword)
@@ -70,7 +70,7 @@
   (let [url (format "%s/jobs/%s/result" (api environment) job-id)
         request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers (once/get-service-auth-header :data-repo)
+                 :headers (once/get-service-account-header)
                  :throw-exceptions false}
         response (http/request request)
         body (-> response
@@ -86,7 +86,7 @@
   (let [url (format "%s/jobs/%s" (api environment) job-id)
         request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers (once/get-service-auth-header :data-repo)}
+                 :headers (once/get-service-account-header)}
         status (-> (http/request request)
                    :body
                    (json/read-str :key-fn keyword)

@@ -61,7 +61,7 @@
          :url          (str bucket-url bucket "/iam")
          ;; :query-params {:project project :prefix prefix}
          :content-type :application/json
-         :headers      (once/get-auth-header :google)}
+         :headers      (once/get-auth-header)}
         http/request
         :body
         (json/read-str :key-fn keyword))))
@@ -73,7 +73,7 @@
         :url          bucket-url
         :query-params {:project project :prefix prefix}
         :content-type :application/json
-        :headers      (once/get-auth-header :google)}
+        :headers      (once/get-auth-header)}
        http/request
        :body
        (json/read-str :key-fn keyword)
@@ -90,7 +90,7 @@
                    (-> {:method       :get
                         :url          (str bucket-url bucket "/o")
                         :content-type :application/json
-                        :headers      (once/get-auth-header :google)
+                        :headers      (once/get-auth-header)
                         :query-params {:prefix prefix
                                        :maxResults 999
                                        :pageToken pageToken}}
@@ -132,7 +132,7 @@
        :url          bucket-url
        :query-params {:project project}
        :content-type :application/json
-       :headers      (once/get-auth-header :google)
+       :headers      (once/get-auth-header)
        :form-params  {:name         bucket
                       :location     location
                       :storageClass class}}
@@ -152,7 +152,7 @@
                   throw)))]
     (-> {:method            :delete     ; :debug true :debug-body true
          :url               (str bucket-url name)
-         :headers           (once/get-auth-header :google)
+         :headers           (once/get-auth-header)
          :throw-exceptions? false}
         http/request
         deleted-this-time?)))
@@ -166,7 +166,7 @@
           :query-params {:uploadType "media"
                          :name       object}
           :content-type (.detect (new Tika) body)
-          :headers      (once/get-auth-header :google)
+          :headers      (once/get-auth-header)
           :body         body}
          http/request
          :body
@@ -181,7 +181,7 @@
      (-> {:method       :get            ; :debug true :debug-body true
           :url          (bucket-object-url bucket object)
           :query-params {:alt "media"}
-          :headers      (once/get-auth-header :google)
+          :headers      (once/get-auth-header)
           :as           :stream}
          http/request
          :body
@@ -195,7 +195,7 @@
    (http/request {:method  :post
                   :url     (str upload-url bucket "/o")
                   :query-params {:name object}
-                  :headers (once/get-auth-header :google)}))
+                  :headers (once/get-auth-header)}))
   ([url]
    (apply create-object (parse-gs-url url))))
 
@@ -204,7 +204,7 @@
   ([bucket object]
    (http/request {:method  :delete      ; :debug true :debug-body true
                   :url     (bucket-object-url bucket object)
-                  :headers (once/get-auth-header :google)}))
+                  :headers (once/get-auth-header)}))
   ([url]
    (apply delete-object (parse-gs-url url))))
 
@@ -213,7 +213,7 @@
   ([bucket object params]
    (-> {:method       :get              ; :debug true :debug-body true
         :url          (str (bucket-object-url bucket object) params)
-        :headers      (once/get-auth-header :google)}
+        :headers      (once/get-auth-header)}
        http/request
        :body
        (json/read-str :key-fn keyword)))
@@ -226,7 +226,7 @@
    (-> {:method       :patch            ; :debug true :debug-body true
         :url          (bucket-object-url bucket object)
         :content-type :application/json
-        :headers      (once/get-auth-header :google)
+        :headers      (once/get-auth-header)
         :body         (json/write-str metadata)}
        http/request
        :body
@@ -240,7 +240,7 @@
    (let [destination (str/replace-first dest-url storage-url "")]
      (-> {:method  :post                ; :debug true :debug-body true
           :url     (str src-url "/rewriteTo/" destination)
-          :headers (once/get-auth-header :google)}
+          :headers (once/get-auth-header)}
          http/request :body
          (json/read-str :key-fn keyword))))
   ([sbucket sobject dbucket dobject]
@@ -271,6 +271,6 @@
       (-> {:method       :patch         ; :debug true :debug-body true
            :url          (:selfLink (first buckets))
            :content-type :application/json
-           :headers      (once/get-auth-header :google)
+           :headers      (once/get-auth-header)
            :body         (json/write-str metadata)}
           http/request :body (json/read-str :key-fn keyword)))))

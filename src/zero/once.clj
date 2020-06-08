@@ -30,20 +30,20 @@
       (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])))
 
 (defn get-auth-header
-  "Nil or a valid auth header for talking to SERVICE."
-  [service]
+  "Nil or a valid auth header."
+  []
   (util/bearer-token-header-for
-    (if-let [environment (zero.debug/trace (System/getenv "ZERO_DEPLOY_ENVIRONMENT"))]
+    (if-let [environment (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
       (let [env  (zero/throw-or-environment-keyword! environment)]
-        (when-let [path (get-in env/stuff [env service :service-account])]
+        (when-let [path (get-in env/stuff [env :server :service-account])]
           (service-account-credentials path)))
       (user-credentials))))
 
-(defn get-service-auth-header
-  "Nil or an 'Authorization: Bearer <token>' header for SERVICE."
-  [service]
+(defn get-service-account-header
+  "Nil or an 'Authorization: Bearer <token>' header."
+  []
   (when-let [environment "debug" #_(System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
     (let [env  (zero/throw-or-environment-keyword! environment)]
-      (when-let [path (get-in env/stuff [env service :service-account])]
+      (when-let [path (get-in env/stuff [env :server :service-account])]
         (zero.debug/trace path)
         (util/bearer-token-header-for (service-account-credentials path))))))
