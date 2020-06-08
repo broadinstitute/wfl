@@ -24,25 +24,26 @@
 (defn service-account-credentials
   "Google service account credentials from FILE."
   [^String file]
-  (-> file io/input-stream
-      GoogleCredentials/fromStream
-      (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])))
+  (let [scopes ["https://www.googleapis.com/auth/cloud-platform"]]
+    (-> file io/input-stream
+        GoogleCredentials/fromStream
+        (.createScoped scopes))))
 
 (defn get-auth-header
   "Nil or a valid auth header."
   []
   (util/bearer-token-header-for
-    (if-let [environment (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
+    (if-let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT")]
       (let [env  (zero/throw-or-environment-keyword! environment)]
         (when-let [path (get-in env/stuff [env :server :service-account])]
           (service-account-credentials path)))
       (user-credentials))))
 
 (defn get-service-account-header
-  "Nil or an 'Authorization: Bearer <token>' header."
+  "Nil or an auth header with service account credentials."
   []
-  (when-let [environment "debug" #_(System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
-    (let [env  (zero/throw-or-environment-keyword! environment)]
-      (when-let [path (get-in env/stuff [env :server :service-account])]
-        (zero.debug/trace path)
-        (util/bearer-token-header-for (service-account-credentials path))))))
+  (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
+        env  (zero/throw-or-environment-keyword! environment)]
+    (when-let [path (get-in env/stuff [env :server :service-account])]
+      (zero.debug/trace path)
+      (util/bearer-token-header-for (service-account-credentials path)))))
