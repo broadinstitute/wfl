@@ -1,12 +1,11 @@
 (ns zero.once
-  "Low-level vars to define exactly once and auth related junk."
+  "Manage some credentials."
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
             [zero.environments :as env]
             [zero.util         :as util]
             [zero.zero         :as zero])
-  (:import [com.google.auth.oauth2 GoogleCredentials UserCredentials]
-           [java.net URI]))
+  (:import [com.google.auth.oauth2 GoogleCredentials UserCredentials]))
 
 ;; This is evil.
 ;;
