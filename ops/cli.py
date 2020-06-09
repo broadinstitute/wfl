@@ -250,9 +250,14 @@ class CLI:
                 Path(f"./{dir_name}/{file_name}"),
             )
             CLI._render_ctmpl(ctmpl_file=str(Path(f"./{dir_name}/{file_name}")))
-
             CLI._helm_deploy_wfl(values=str(Path(f"./{dir_name}/wfl-values.yaml")))
 
+        print(
+            dye_msg_with_color(
+                msg=f"[✔] Deployment is done!",
+                color="green",
+            )
+        )
 
 if __name__ == "__main__":
     c = CLI()
