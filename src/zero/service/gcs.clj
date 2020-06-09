@@ -161,7 +161,7 @@
 
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
-          ([file bucket object headers]
+  ([file bucket object headers]
    (let [body (io/file file)]
      (-> {:method       :post ;; :debug true :debug-body true
           :url          (str upload-url bucket "/o")
@@ -198,8 +198,7 @@
   ([bucket object headers]
    (http/request {:method  :post
                   :url     (str upload-url bucket "/o")
-                  :query-params {:uploadType "media"
-                                 :name object}
+                  :query-params {:name object}
                   :headers headers}))
   ([bucket object]
    (create-object bucket object (once/get-auth-header!)))
