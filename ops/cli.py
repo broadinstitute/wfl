@@ -118,7 +118,7 @@ class CLI:
         )
         print(
             dye_msg_with_color(
-                msg=f"=> Cloned gotc-deploy repo to {dest}", color="green"
+                msg=f"[✔] Cloned gotc-deploy repo to {dest}", color="green"
             )
         )
         return 0
@@ -132,6 +132,11 @@ class CLI:
             )
         )
         COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
+        print(
+                dye_msg_with_color(
+                    msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}", color="green"
+                )
+            )
         return subprocess.call(COMMAND, shell=True)
 
     @staticmethod
@@ -150,6 +155,11 @@ class CLI:
         print(dye_msg_with_color(msg=f"=> Setting up Helm charts", color="blue"))
         HELM_ADD = f"helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/;"
         HELM_REPO = f"helm repo update;"
+        print(
+                dye_msg_with_color(
+                    msg=f"[✔] Set up Helm charts", color="green"
+                )
+            )
         return subprocess.call(HELM_ADD + HELM_REPO, shell=True)
 
     @staticmethod
@@ -179,7 +189,7 @@ class CLI:
             code3 = subprocess.call(KUBE_SET_NAMESPACE, shell=True)
             print(
                 dye_msg_with_color(
-                    msg=f"=> Set up namespace to {namespace}", color="green"
+                    msg=f"[✔] Set up namespace to {namespace}", color="green"
                 )
             )
         return any([code1, code2, code3])
@@ -196,7 +206,7 @@ class CLI:
         HELM_UPGRADE = f"helm upgrade wfl-k8s gotc-charts/wfl -f {values} --install"
         print(
             dye_msg_with_color(
-                msg=f"=> WFL is deployed, run `kubectl get pods` to see details",
+                msg=f"[✔] WFL is deployed, run `kubectl get pods` to see details",
                 color="green",
             )
         )
