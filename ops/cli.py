@@ -124,19 +124,26 @@ class CLI:
         return 0
 
     @staticmethod
-    def _render_ctmpl(ctmpl_file: str) -> int:
+    def _render_ctmpl(ctmpl_file: str, **kwargs) -> int:
         """Render a ctmpl file."""
         print(
             dye_msg_with_color(
                 msg=f"=> Rendering ctmpl file {ctmpl_file}", color="blue"
             )
         )
-        COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
+        envs = ""
+        if kwargs:
+            for k, v in kwargs.items():
+                envs += f"-e {k}={v} "
+            print(dye_msg_with_color(msg=f"=> Feeding variables: {envs}", color="blue"))
+            COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token {envs} broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
+        else:
+            COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
         print(
-                dye_msg_with_color(
-                    msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}", color="green"
-                )
+            dye_msg_with_color(
+                msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}", color="green"
             )
+        )
         return subprocess.call(COMMAND, shell=True)
 
     @staticmethod
@@ -155,11 +162,7 @@ class CLI:
         print(dye_msg_with_color(msg=f"=> Setting up Helm charts", color="blue"))
         HELM_ADD = f"helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/;"
         HELM_REPO = f"helm repo update;"
-        print(
-                dye_msg_with_color(
-                    msg=f"[✔] Set up Helm charts", color="green"
-                )
-            )
+        print(dye_msg_with_color(msg=f"[✔] Set up Helm charts", color="green"))
         return subprocess.call(HELM_ADD + HELM_REPO, shell=True)
 
     @staticmethod
@@ -225,6 +228,13 @@ class CLI:
             help="Environment to deploy to",
         )
         parser.add_argument(
+            "-v",
+            "--version",
+            dest="version",
+            default="latest",
+            help="Which version of WFL to deploy, i.e. a WFL version string or [latest] by default",
+        )
+        parser.add_argument(
             "-n",
             "--namespace",
             dest="namespace",
@@ -249,15 +259,14 @@ class CLI:
                 str(Path(f"./{dir_name}/gotc-deploy/deploy/gotc-dev/helm/{file_name}")),
                 Path(f"./{dir_name}/{file_name}"),
             )
-            CLI._render_ctmpl(ctmpl_file=str(Path(f"./{dir_name}/{file_name}")))
+            CLI._render_ctmpl(
+                ctmpl_file=str(Path(f"./{dir_name}/{file_name}")),
+                WFL_VERSION=args.version,
+            )
             CLI._helm_deploy_wfl(values=str(Path(f"./{dir_name}/wfl-values.yaml")))
 
-        print(
-            dye_msg_with_color(
-                msg=f"[✔] Deployment is done!",
-                color="green",
-            )
-        )
+        print(dye_msg_with_color(msg=f"[✔] Deployment is done!", color="green",))
+
 
 if __name__ == "__main__":
     c = CLI()
