@@ -1,10 +1,12 @@
 (ns zero.service.datarepo
   "Do stuff in the data repo"
   (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clj-http.client :as http]
             [zero.environments :as env]
             [zero.once :as once]
-            [zero.util :as util])
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import [org.apache.http HttpException]))
 
 (defn dr-url
@@ -17,14 +19,27 @@
   [environment]
   (str (dr-url environment) "/api/repository/v1"))
 
-(defn collect-specific-header-for
-  "Request user log in to gcloud account with specific abilities"
-  [description]
-  (println (format (str "Google is about to request authorization.\n"
-                        "Please sign in with %s.")
-                   description))
-  (util/shell-io! "gcloud" "auth" "login")
-  (util/bearer-token-header-for (once/user-credentials)))
+(defn get-data-repo-header
+  "An Authorization header for the Data Repo."
+  []
+  (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
+        env (zero/throw-or-environment-keyword! environment)
+        iam "https://iamcredentials.googleapis.com/v1/projects/"
+        path (get-in env/stuff [env :server :service-account])
+        json (json/read (io/reader path) :key-fn keyword)
+        email (get-in env/stuff [env :data-repo :ingest-service-account])
+        email (:client_email json)
+        url (str iam "-/serviceAccounts/" email ":generateAccessToken")
+        scope ["https://www.googleapis.com/auth/userinfo.email"
+               "https://www.googleapis.com/auth/userinfo.profile"]
+        token (-> {:method :post        ; :debug true :debug-body true
+                   :url (zero.debug/trace url)
+                   :headers (once/get-auth-header)
+                   :body (json/write-str {:scope scope})}
+                  http/request :body
+                  (json/read-str :key-fn keyword)
+                  :accessToken)]
+    {"Authorization" (str "Bearer" \space token)}))
 
 (defn thing-ingest
   "Request some ingest into the Data Repository. Returns job id for polling."
@@ -34,7 +49,7 @@
                  :url     url           ; :throw-exceptions false
                  :body    body
                  :content-type :application/json
-                 :headers (once/get-service-account-header)}]
+                 :headers (get-data-repo-header)}]
     (-> (http/request request)
         :body
         (json/read-str :key-fn keyword)

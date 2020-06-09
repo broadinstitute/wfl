@@ -43,14 +43,12 @@
           table (str bucket ".tabular.json")
           gcs-auth-header (once/get-service-account-header)
           vcf-url (gcs/gs-url bucket vcf)
-          ingest-file (partial datarepo/file-ingest :gotc-dev dataset profile)]
+          ingest-file (partial datarepo/file-ingest :gotc-dev dataset profile)
+          drsa (get-in env/stuff [:debug :data-repo :service-account])]
       (letfn [(stage [file content]
                 (spit file content)
                 (gcs/upload-file file bucket file)
-                (gcs/add-object-reader
-                  (get-in env/stuff
-                          [:gotc-dev :data-repo :ingest-service-account])
-                  bucket file))
+                (gcs/add-object-reader drsa bucket file))
               (ingest [path vdest]
                 (let [job (ingest-file path vdest)]
                   (:fileId (datarepo/poll-job :gotc-dev job))))
