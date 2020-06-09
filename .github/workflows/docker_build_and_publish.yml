@@ -85,14 +85,15 @@ jobs:
         fi
 
         # build the api image
-        docker build . -t broadinstitute/workflow-launcher-api:${TAG}
+        docker build . -t broadinstitute/workflow-launcher-api:${TAG} -t broadinstitute/workflow-launcher-api:latest
 
         # build the ui image
-        docker build ui/. -t broadinstitute/workflow-launcher-ui:${TAG}
+        docker build ui/. -t broadinstitute/workflow-launcher-ui:${TAG} -t broadinstitute/workflow-launcher-ui:latest
 
         docker login --username "${{ secrets.dockerhub_username }}" --password "${{ secrets.dockerhub_password }}"
 
         docker push broadinstitute/workflow-launcher-api:${TAG}
+        docker push broadinstitute/workflow-launcher-api:latest
 
         docker push broadinstitute/workflow-launcher-ui:${TAG}
-
+        docker push broadinstitute/workflow-launcher-ui:latest
