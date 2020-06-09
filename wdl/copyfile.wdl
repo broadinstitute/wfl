@@ -11,7 +11,7 @@ task apply {
     GSUTIL=$(
         search=$(which gsutil);
         default="/usr/local/google-cloud-sdk/bin/gsutil";
-        if [ -z $search ]; then echo $default; else echo $search; fi
+        if [ -z "$search" ]; then echo "$default"; else echo "$search"; fi
     )
 
     $GSUTIL cp -L cp.log ~{source} ~{destination}
@@ -28,8 +28,8 @@ task apply {
 
 workflow copyfile {
   input {
-    File src
-    File dst
+    String src
+    String dst
   }
 
   call apply {

@@ -4,7 +4,7 @@
             [zero.tools.fixtures :refer [with-temporary-gcs-folder]]
             [zero.tools.workloads :as workloads]
             [clojure.string :as str]
-            [zero.service.cromwell :as cromwell]
+            [zero.service.cromwell :refer [wait-for-workflow-complete]]
             [clojure.string :as string]
             [zero.service.gcs :as gcs]
             [zero.module.copyfile :as cp])
@@ -13,7 +13,7 @@
 (def mk-workload (partial endpoints/create-workload workloads/wl-workload))
 (def get-existing-workload-uuids
   (comp set (partial map :uuid) endpoints/get-workloads))
-(defn fullfile [& segments] (string/join "/" segments))
+(defn- fullfile [& segments] (string/join "/" segments))
 
 (deftest test-create-workload
   (testing "The `create` endpoint creates new workload"
@@ -43,13 +43,13 @@
 (deftest test-start-wgs-workflow
   (testing "The `wgs` endpoint starts a new workflow."
     (let [env      :wgs-dev
-          wait     (partial cromwell/wait-for-workflow-complete env)
+          await     (partial wait-for-workflow-complete env)
           workflow {:environment env
                     :max         1
                     :input_path  "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m"
                     :output_path (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" (UUID/randomUUID))}
           ids      (:results (endpoints/start-wgs-workflow workflow))
-          results  (zipmap ids (map (comp :status wait) ids))]
+          results  (zipmap ids (map (comp :status await) ids))]
       (is (every? #{"Succeeded"} (vals results))))))
 
 (deftest test-exec-workload
@@ -66,7 +66,11 @@
       (->
         (fullfile "test" "zero" "resources" "copy-me.txt")
         (gcs/upload-file src))
-      (let [workload (workloads/mk-copyfile-workload src dst)
-            result (endpoints/exec-workload workload)]
-        (is (= (:pipeline result) cp/pipeline))
-        (is (:started result))))))
+      (let [workload  (workloads/mk-copyfile-workload src dst)
+            await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)
+            submitted (endpoints/exec-workload workload)]
+        (is (= (:pipeline submitted) cp/pipeline))
+        (is (:started submitted))
+        (let [result (-> submitted :workflows first await)]
+          (is (= "Succeeded" (:status result)))
+          (is (gcs/object-meta dst) "The file was not copied!"))))))

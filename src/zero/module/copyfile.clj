@@ -1,12 +1,12 @@
 (ns zero.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.io :as io]
+            [clojure.java.jdbc :as jdbc]
+            [zero.environments :as env]
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util :as util]
-            [clojure.java.io :as io]
-            [zero.environments :as env])
+            [zero.util :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
@@ -24,13 +24,13 @@
     first))
 
 (defn- submit-workflow
-  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
-  [environment out-gs]
+  "Submit INPUTS to be processed in ENVIRONMENT."
+  [environment inputs]
   (cromwell/submit-workflow
     environment
-    (io/file (:dir (:top workflow-wdl)))
+    (io/file (:top workflow-wdl))
     nil
-    []
+    inputs
     (util/make-options environment)
     {}))
 
@@ -45,17 +45,17 @@
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [cromwell output items uuid]}]
-  (let [env    (get-environment-for-cromwell cromwell)
-        output (all/slashify output)
-        now    (OffsetDateTime/now)]
+  [tx {:keys [cromwell items uuid]}]
+  (let [env (get-environment-for-cromwell cromwell)
+        now (OffsetDateTime/now)]
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
-    (letfn [(submit! [{:keys [id uuid]}]
-              [id (or uuid (submit-workflow env output))])
+    (letfn [(inputs [src dst] {:copyfile.src src :copyfile.dst dst})
+            (submit! [{:keys [id uuid src dst]}]
+                [id (or uuid (submit-workflow env (inputs src dst)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
                   {:updated now :uuid uuid}
                   ["id = ?" id])))]
-      (let [workflows (postgres/get-table tx items)]
-        (run! (comp (partial update! tx) submit!) workflows)))))
+      (let [workflow (postgres/get-table tx items)]
+        (run! (comp (partial update! tx) submit!) workflow)))))
