@@ -2,7 +2,6 @@
   "A dummy module for smoke testing wfl/cromwell auth."
   (:require [clojure.java.io :as io]
             [clojure.java.jdbc :as jdbc]
-            [zero.environments :as env]
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
@@ -14,14 +13,6 @@
 (def workflow-wdl
   {:release "copyfile-v1.0"
    :top     "wdl/copyfile.wdl"})
-
-(defn- get-environment-for-cromwell
-  "Loop up environment from Cromwell URL."
-  [url]
-  (->> env/stuff
-    (filter (fn [[_ values]] (= url ((comp :url :cromwell) values))))
-    keys
-    first))
 
 (defn- submit-workflow
   "Submit INPUTS to be processed in ENVIRONMENT."
@@ -47,7 +38,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell items uuid]}]
-  (let [env (get-environment-for-cromwell cromwell)
+  (let [env (all/get-cromwell-environment cromwell)
         now (OffsetDateTime/now)]
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(submit! [{:keys [id uuid] :as workflow}]

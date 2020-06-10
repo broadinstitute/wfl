@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
+            [zero.environments :as env]
             [zero.util :as util]
             [zero.zero :as zero])
   (:import [java.util UUID]))
@@ -113,3 +114,19 @@
   (if (str/ends-with? url "/")
     url
     (str url "/")))
+
+(defn- get-possible-cromwell-environments
+  [url]
+  (->> env/stuff
+    (filter #(= url (-> % second :cromwell :url)))
+    keys))
+
+(defn get-cromwell-environment
+  "Loop up environment from Cromwell URL."
+  ([environment-keys url]
+   (->> (get-possible-cromwell-environments url)
+     (filter #(contains? environment-keys %))
+     first))
+  ([url]
+   (->> (get-possible-cromwell-environments url)
+     first)))

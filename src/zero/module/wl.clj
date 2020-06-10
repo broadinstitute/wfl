@@ -2,8 +2,6 @@
   "Reprocess Whole Genomes in workloads."
   (:require [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
-            [zero.environments :as env]
             [zero.module.all :as all]
             [zero.module.wgs :as wgs]
             [zero.service.cromwell :as cromwell]
@@ -15,11 +13,10 @@
 
 (def pipeline "ExternalWholeGenomeReprocessing")
 
-(def cromwell->env
+(def get-cromwell-wgs-environment
   "Map Cromwell URL to a :wgs environment."
-  (delay
-    (let [envs (select-keys env/stuff [:wgs-dev :wgs-prod :wgs-staging])]
-      (zipmap (map (comp :url :cromwell) (vals envs)) (keys envs)))))
+  (let [environments #{:wgs-dev :wgs-prod :wgs-staging}]
+    (partial all/get-cromwell-environment environments)))
 
 (defn maybe-update-workflow-status!
   "Use TX to update the status of WORKFLOW in ENV."
@@ -35,7 +32,7 @@
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
   [tx {:keys [cromwell items] :as workload}]
-  (let [env (@cromwell->env cromwell)]
+  (let [env (@get-cromwell-wgs-environment cromwell)]
     (->> items
          (postgres/get-table tx)
          (run! (partial maybe-update-workflow-status! tx env items)))))
@@ -85,7 +82,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell input items output uuid] :as workload}]
-  (let [env    (@cromwell->env cromwell)
+  (let [env    (get-cromwell-wgs-environment cromwell)
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
