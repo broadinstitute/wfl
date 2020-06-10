@@ -11,12 +11,8 @@
             [ring.middleware.reload :as reload]
             [ring.middleware.session.cookie :as cookie]
             [zero.api.routes :as routes]
-            [zero.environments :as env]
-            [zero.service.postgres :as postgres]
             [zero.util :as util]
-            [zero.zero :as zero])
-  (:import (java.awt Desktop)
-           (java.net URI)))
+            [zero.zero :as zero]))
 
 (def description
   "The purpose of this command."

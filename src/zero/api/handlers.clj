@@ -9,7 +9,6 @@
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util :as util]
             [zero.zero :as zero]))
 
 (defn fail
@@ -75,10 +74,10 @@
 (defoverload start-workload! wl/pipeline wl/start-workload!)
 
 (defn post-create
-  "Create the workload described in BODY of REQUEST."
-  [{:keys [parameters] :as request}]
+  "Create the workload described in BODY of _REQUEST."
+  [{:keys [parameters] :as _request}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
-    (let [{:keys [body]} parameters
+    (let [{:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> body
           (add-workload! tx)
@@ -101,9 +100,7 @@
   "Start the workloads with UUIDs in REQUEST."
   [request]
   (let [uuids (-> request :parameters :body distinct)]
-    (letfn [(q [[left right]] (fn [it] (str left it right)))
-            (start! [tx {:keys [pipeline] :as workload}]
-              ((start pipeline) tx workload))]
+    (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> uuids
           (map :uuid)

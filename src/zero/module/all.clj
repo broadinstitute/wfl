@@ -83,8 +83,8 @@
   (pprint (count-files in-gs out-gs)))
 
 (defn add-workload-table!
-  "Return UUID and TABLE for WORKFLOW-WDL in BODY under transaction TX."
-  [tx {:keys [release top] :as workflow-wdl} body]
+  "Return UUID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
+  [tx {:keys [release top] :as _workflow-wdl} body]
   (let [{:keys [creator cromwell input output pipeline project]} body
         {:keys [commit version]} (zero/get-the-version)
         [{:keys [id uuid]}]
@@ -103,7 +103,7 @@
                                      "SET pipeline = '%s'::pipeline"
                                      "WHERE id = %s"]) pipeline id)
         work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                      table pipeline)]
+                table pipeline)]
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
     (jdbc/db-do-commands tx [kind work])
     [uuid table]))

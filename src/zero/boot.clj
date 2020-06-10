@@ -3,13 +3,10 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [zero.environments :as env]
             [zero.main :as main]
             [zero.module.ukb :as ukb]
             [zero.module.wgs :as wgs]
             [zero.module.xx :as xx]
-            [zero.server :as server]
-            [zero.service.postgres :as postgres]
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
@@ -76,7 +73,7 @@
       (io/make-parents (io/file tmp "Who cares, really?"))
       (try
         (run! clone (vals zero/the-github-repos))
-        (catch Exception e
+        (catch Exception _
           (run! clone (vals zero/the-other-github-repos)))))
     (into {:tmp tmp}
       (for [repo (keys zero/the-github-repos)]

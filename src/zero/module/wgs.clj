@@ -2,19 +2,16 @@
   "Reprocess (External) Whole Genomes, whatever they are."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as str]
             [zero.environments :as env]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
-            [zero.service.postgres :as postgres]
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero])
-  (:import [java.time OffsetDateTime]))
+            [zero.zero :as zero]))
 
 (def description
   "Describe the purpose of this command."

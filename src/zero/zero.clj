@@ -3,8 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [zero.environments :as env])
-  (:import [java.util UUID]))
+            [zero.environments :as env]))
 
 (def the-name
   "Use this name to refer to this program."
