@@ -37,7 +37,7 @@
                      {:lifecycle {:rule [{:action    {:type "Delete"}
                                           :condition {:age 1}}]}}))
 
-(deftest test-run
+(deftest delivery
   (testing "delivery succceeds"
     (let [vcf (str bucket ".vcf")
           table (str bucket ".tabular.json")
