@@ -45,5 +45,4 @@
   (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
         env  (zero/throw-or-environment-keyword! environment)]
     (when-let [path (get-in env/stuff [env :server :service-account])]
-      (zero.debug/trace path)
       (util/bearer-token-header-for (service-account-credentials path)))))

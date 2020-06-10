@@ -41,7 +41,6 @@
   (testing "delivery succceeds"
     (let [vcf (str bucket ".vcf")
           table (str bucket ".tabular.json")
-          gcs-auth-header (once/get-service-account-header)
           vcf-url (gcs/gs-url bucket vcf)
           ingest-file (partial datarepo/file-ingest :gotc-dev dataset profile)
           drsa (get-in env/stuff [:debug :data-repo :service-account])]
@@ -53,14 +52,14 @@
                 (let [job (ingest-file path vdest)]
                   (:fileId (datarepo/poll-job :gotc-dev job))))
               (cleanup []
-                (gcs/delete-object bucket vcf gcs-auth-header)
-                (gcs/delete-object bucket (str vcf ".tbi") gcs-auth-header)
-                (gcs/delete-object bucket table gcs-auth-header)
-                (gcs/delete-bucket bucket gcs-auth-header)
+                (gcs/delete-object bucket vcf)
+                (gcs/delete-object bucket (str vcf ".tbi"))
+                (gcs/delete-object bucket table)
+                (gcs/delete-bucket bucket)
                 (io/delete-file vcf)
                 (io/delete-file (str vcf ".tbi"))
                 (io/delete-file table))]
-        (zero.debug/trace (make-day-bucket))
+        (make-day-bucket)
         (stage vcf "bogus vcf content")
         (stage (str vcf ".tbi") "bogus index content")
         (stage table (json/write-str

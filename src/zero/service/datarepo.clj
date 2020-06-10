@@ -33,9 +33,9 @@
         scope ["https://www.googleapis.com/auth/userinfo.email"
                "https://www.googleapis.com/auth/userinfo.profile"]
         token (-> {:method :post        ; :debug true :debug-body true
-                   :url (zero.debug/trace url)
+                   :url     url
                    :headers (once/get-auth-header)
-                   :body (json/write-str {:scope scope})}
+                   :body    (json/write-str {:scope scope})}
                   http/request :body
                   (json/read-str :key-fn keyword)
                   :accessToken)]
@@ -75,7 +75,6 @@
                               :load_tag              "string"
                               :max_bad_records       0
                               :path                  path
-                              :strategy              "upsert"
                               :table                 table})]
     (thing-ingest environment dataset-id "ingest" body)))
 
@@ -85,7 +84,7 @@
   (let [url (format "%s/jobs/%s/result" (api environment) job-id)
         request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers (once/get-service-account-header)
+                 :headers (get-data-repo-header)
                  :throw-exceptions false}
         response (http/request request)
         body (-> response
@@ -101,7 +100,7 @@
   (let [url (format "%s/jobs/%s" (api environment) job-id)
         request {:method :get           ; :debug true :debug-body true
                  :url url
-                 :headers (once/get-service-account-header)}
+                 :headers (get-data-repo-header)}
         status (-> (http/request request)
                    :body
                    (json/read-str :key-fn keyword)
