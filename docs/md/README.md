@@ -299,7 +299,7 @@ before they can be run, namely, they require a `wfl` server running locally:
 ./ops/server.sh
 ```
 
-See the [development guide](/docs/md/dev-process.md#Integration\ Tests) for more 
+See the [development guide](/docs/md/dev-process.md#Test) for more 
 information.
 
 #### Development
