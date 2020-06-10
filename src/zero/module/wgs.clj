@@ -48,7 +48,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ns_po-26024_custom_changes"
+  {:release "tl_weird_external_bams"
    :top     "pipelines/reprocessing/wgs/WholeGenomeReprocessing.wdl"})
 
 (def adapter-workflow-wdl
