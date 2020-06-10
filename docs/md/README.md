@@ -20,12 +20,12 @@ communicates with other services as necessary to manage a workload.
 It can also be deployed to run as a service in the cloud.
 
 For more on Workflow Launcher's role in the Terra infrastructure see
-[Workflow Launcher's role in Terra (./docs/md/terra.md)](./terra.md).
+[Workflow Launcher's role in Terra](/docs/md/terra.md).
 
 ## Set up
 
 Run `boot build` at the top of a `wfl.git` repo to build an
-uberjar. The resulting jar is in `./target/wfl-*.jar` relative to
+uberjar. The resulting jar is in `target/wfl-*.jar` relative to
 the `wfl.git` clone.
 
 With some start-up and performance penalty, you can also run
@@ -84,131 +84,53 @@ wm28d-f87:wfl yanc$
 
 ## Implementation
 
-For frontend details, check [Frontend Section](./frontend.md)
-
-The initial file structure looks like this.
-
-```bash
-$ tree .
-.
-├── LICENSE.txt
-├── README.md -> ./docs/md/README.md
-├── boot.properties
-├── build.boot
-├── build.txt
-├── database
-│   ├── changelog.xml
-│   └── changesets
-│       └── 01_db_schema.xml
-├── deps.edn
-├── docs
-│   ├── md
-│   │   ├── README.md
-│   │   ├── frontend.md
-│   │   ├── server.md
-│   │   ├── terra.md
-│   │   └── terra.org
-│   ├── mkdocs.yml
-│   └── requirements.txt
-├── ops
-│   ├── README.org
-│   ├── deploy.sh
-│   ├── index.md
-│   ├── server.sh
-│   └── terra.md -> ./docs/md/terra.md
-├── resources
-│   └── simplelogger.properties
-├── src
-│   └── zero
-│       ├── api
-│       │   ├── handlers.clj
-│       │   └── routes.clj
-│       ├── boot.clj
-│       ├── debug.clj
-│       ├── dx.clj
-│       ├── environments.clj
-│       ├── main.clj
-│       ├── metadata.clj
-│       ├── module
-│       │   ├── all.clj
-│       │   ├── ukb.clj
-│       │   ├── wgs.clj
-│       │   └── xx.clj
-│       ├── once.clj
-│       ├── references.clj
-│       ├── server.clj
-│       ├── server_debug.clj
-│       ├── service
-│       │   ├── cromwell.clj
-│       │   ├── datarepo.clj
-│       │   ├── gcs.clj
-│       │   ├── postgres.clj
-│       │   └── pubsub.clj
-│       ├── util.clj
-│       ├── wdl.clj
-│       └── zero.clj
-├── test
-│   └── zero
-│       ├── integration
-│       │   └── integration test files
-│       ├── resources
-│       │   └── test resource files
-│       ├── tools
-│       │   └── test tooling files
-│       └── unit
-│           └── unit test files
-├── ui/
-└── wfl.iml
-```
+For frontend details, check [Frontend Section](/docs/md/frontend.md)
 
 #### Top-level files
 
 After cloning a new WFL repo, the top-level files are.
 
-  - `./README.md` is this file, which is just a symlink to the actual doc
+  - `README.md` is this file, which is just a symlink to the actual doc
     file under `docs/md/`.
 
-  - `./boot.properties` overrides some defaults in `boot-clj`.
+  - `boot.properties` overrides some defaults in `boot-clj`.
     (`boot.properties` is something like `build.properties` for
     `sbt`.)
 
-  - `./build.boot` is a Clojure script to bootstrap WFL with
+  - `build.boot` is a Clojure script to bootstrap WFL with
     `boot-clj`.
 
-  - `./build.txt` holds a monotonically increasing integer for
+  - `build.txt` holds a monotonically increasing integer for
     build versioning.
 
-  - `./.github` holds Github related files, such as PR templates and
-    Github Actions files.
-
-  - `./database` holds database scheme migration changelog and changeset
+  - `database/` holds database scheme migration changelog and changeset
     files for liquibase.
 
-  - `./docs` has ancillary documentation. It's compiled as a static doc
+  - `docs/` has ancillary documentation. It's compiled as a static doc
     website.
 
-  - `./ops` is a directory of standard scripts to support
+  - `ops/` is a directory of standard scripts to support
     operations. It includes scripts to deploy the server in
     Google App Engine, and to run it locally for easier
-    debugging. (See [./docs/md/server.md](./server.md) for
+    debugging. (See [server.md](/docs/md/server.md) for
     more information.)
 
-  - `./resources` contains the `simplelogger` properties and
+  - `resources/` contains the `simplelogger` properties and
     files staged from other repositories that need to be on the
     Java classpath when running from the `.jar` file.
 
-  - `./src/zero` contains the Workflow Launcher source code.
+  - `src/` contains the Workflow Launcher source code.
 
-  - `./test` contains a mixture of unit and integration tests
+  - `test/` contains a mixture of unit and integration tests
     and supplementary test tooling.
 
 After building and working with WFL a while, you may notice a
 couple of other top-level files and directories.
 
-  - `./project.clj` is a `lein` project file to support
+  - `project.clj` is a `lein` project file to support
     IntelliJ.
 
-  - `./zero` is a link to `build.boot` that runs WFL as a
+  - `zero` is a link to `build.boot` that runs WFL as a
     script.
 
 Run `boot build` at least once after cloning the repo to make
@@ -216,7 +138,7 @@ sure all the necessary files are in place.
 
 #### Source code
 
-The Clojure source code is in the `./src/zero` directory.
+The Clojure source code is in the `src/` directory.
 
 The entry point for the WFL executable is the `-main` function
 in `main.clj`. It takes the command line arguments as strings,
@@ -234,7 +156,7 @@ easier development and debugging.
 The `debug.clj` file defines some macros useful when debugging
 or logging.
 
-The `util.clj` file contains a few function and macros used in
+The `util.clj` file contains a few functions and macros used in
 WFL that are not specific to its function.
 
 The `environments.clj` file defines configuration parameters for
@@ -287,19 +209,19 @@ the services WFL talks to, and are named accordingly.
 Test code lives under the project `test/` root. At present, `wfl` has two kinds
 of test, `unit` and `integration`. These can be run via the `deps.edn`,
 optionally specifying the kind:
- 
+
 ```shell
 clojure -A:test [unit|integration]
 ```
 
 Note that the integration tests currently require a little more configuration
-before they can be run, namely, they require a `wfl` server running locally: 
+before they can be run, namely, they require a `wfl` server running locally:
 
 ```shell
 ./ops/server.sh
 ```
 
-See the [development guide](/docs/md/dev-process.md#Test) for more 
+See the [development guide](/docs/md/dev-process.md#Test) for more
 information.
 
 #### Development
@@ -316,189 +238,109 @@ of `google-cloud-sdk` in your path to run `zero` or its jar
 successfully. I verified that `Google Cloud SDK 161.0.0` works. That
 or any later version should be OK.
 
-1.  Installation
+#####  Installation
 
-    See [this link](https://github.com/boot-clj/boot#install) to
-    install `boot-clj`.
+See [this link](https://github.com/boot-clj/boot#install) to
+install `boot-clj`.
 
-    Running `boot` is enough to "install" Clojure.
+Running `boot` is enough to "install" Clojure.
 
-    There is another tool like `boot` named `lein`, which is short
-    for "[Leiningen](https://leiningen.org/)". You currently need
-    `lein` to develop with
-    [IntelliJ](https://www.jetbrains.com/idea/) using its Clojure
-    plugin [Cursive](https://cursive-ide.com/).
+The `build.boot` file is equivalent to the `build.sbt` file for
+SBT in Scala projects. It specified project dependencies and the
+build and release pipeline. It also functions as a script for
+running and testing the project without a separate compilation
+step.
 
-    On MacOS, I suggest installing [Homebrew](http://brew.sh/) and
-    then running this.
+There is another tool like `boot` named `lein`, which is short
+for "[Leiningen](https://leiningen.org/)". You currently need
+`lein` to develop with
+[IntelliJ](https://www.jetbrains.com/idea/) using its Clojure
+plugin [Cursive](https://cursive-ide.com/).
 
-    ``` bash
-    wfl # brew install boot-clj leiningen
-    ==> Using the sandbox
-    ==> Downloading https://github.com/boot-clj/boot-bin/releases/download/2.5.2/boot
-    🍺  /usr/local/Cellar/boot-clj/2.5.2: 3 files, 7.7K, built in 2 seconds
-    ...
-    wfl #
-    ```
+###### MacOS
+On MacOS, I suggest installing [Homebrew](http://brew.sh/) and
+then running this.
 
-    You can `brew install maven`, and `java` too if necessary.
+``` bash
+# brew install boot-clj leiningen
+```
 
-    There are `boot-clj` and `lein` distributions for all the common
-    OS platforms. Each tool is just a file. Copy them into your
-    `PATH`, run them once to bootstrap them, and you're done. (The
-    first run of each tool downloads dependencies and so on.)
+You can `brew install maven`, and `java` too if necessary.
 
-    The `build.boot` file is equivalent to the `build.sbt` file for
-    SBT in Scala projects. It specified project dependencies and the
-    build and release pipeline. It also functions as a script for
-    running and testing the project without a separate compilation
-    step.
+###### Arch Linux
+install [clojure](https://www.archlinux.org/packages/?name=clojure) and
+[leiningen](https://www.archlinux.org/packages/?name=leiningen)
+from the official repositories.
+Install [boot](https://aur.archlinux.org/packages/boot/) and
+[google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
+from the AUR.
 
-2.  Hacking
+#####  Hacking
 
-    Clojure development feels very different from Scala and Java
-    development. It even differs markedly from development in other
-    *dynamic languages* such as Python or Ruby.
+Clojure development feels very different from Scala and Java
+development. It even differs markedly from development in other
+*dynamic languages* such as Python or Ruby.
 
-    Get a demonstration from someone familiar with Clojure
-    development before you spend too much time trying to figure
-    things out on your own.
+Get a demonstration from someone familiar with Clojure
+development before you spend too much time trying to figure
+things out on your own.
 
-    Find a local Cursive user for guidance if you like IntelliJ.
-    [Rex Wang](mailto:chengche@broadinstitute.org) and [Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it. There
-    are [Cursive licenses
-    here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
-    There is also a
-    [Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
-    plugin for [Visual Studio Code](https://code.visualstudio.com/).
+Find a local Cursive user for guidance if you like IntelliJ.
+[Rex Wang](mailto:chengche@broadinstitute.org) and
+[Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it.
+Cursive licences are available
+[here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
+There is also a
+[Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
+plugin for [Visual Studio Code](https://code.visualstudio.com/).
 
-    I hack Clojure in Emacs using
-    [CIDER](https://cider.readthedocs.io/) and
-    [nREPL](https://github.com/clojure/tools.nrepl). CIDER is not
-    trivial to set up, but not *especially* difficult if you are
-    used to Emacs. (I can help if CIDER gives you trouble.)
+I hack Clojure in Emacs using
+[CIDER](https://cider.readthedocs.io/) and
+[nREPL](https://github.com/clojure/tools.nrepl). CIDER is not
+trivial to set up, but not *especially* difficult if you are
+used to Emacs. (I can help if CIDER gives you trouble.)
 
-    Every time `boot` runs, it generates a `project.clj` file to
-    support `lein`, Cursive, and Calva users.
+Every time `boot` runs, it generates a `project.clj` file to
+support `lein`, Cursive, and Calva users.
 
-    Running `boot build` will not only build a fat jar (*uberjar*)
-    for the WFL project, but will add an executable symbolic link
-    `zero` to conveniently execute the Clojure code as a script.
+Running `boot build` will not only build a fat jar (*uberjar*)
+for the WFL project, but will add an executable symbolic link
+`zero` to conveniently execute the Clojure code as a script.
 
-3.  Testing
+####  Testing
 
-    If you've never run `boot` before, you may have to run it twice:
-    first to bootstrap Clojure and `boot` itself, and again to
-    download their and WFL's dependencies.
+If you've never run `boot` before, you may have to run it twice:
+first to bootstrap Clojure and `boot` itself, and again to
+download their and WFL's dependencies.
 
-    The first `boot build` run will create a `./zero` link to the
-    `build.boot` file
+The first `boot build` run will create a `./wfl` link to the
+`build.boot` file
 
-    ```bash
-    ./zero starter dev $USER@broadinstitute.org
-    ```
+```bash
+./wfl starter dev $USER@broadinstitute.org
+```
 
-    You should eventually receive an humongous email from
-    `zero@broadinstitute.org` containing evidence of Zero's
-    adventures.
+You should eventually receive an humongous email from
+`wfl@broadinstitute.org` containing evidence of Zero's
+adventures.
 
-    The result should look something like this.
+Of course, after `boot build`, you can also run WFL from its
+JAR file.
 
-    ```bash
-    tbl@wm97a-c2b ~/Tmp # brew install boot-clj
-    Warning: boot-clj 2.7.2 is already installed
-    tbl@wm97a-c2b ~/Tmp # which boot
-    /usr/local/bin/boot
-    tbl@wm97a-c2b ~/Tmp # ls
-    tbl@wm97a-c2b ~/Tmp # git clone https://github.com/broadinstitute/wfl.git
-    Cloning into 'wfl'...
-    remote: Counting objects: 456, done.
-    remote: Compressing objects: 100% (59/59), done.
-    remote: Total 456 (delta 62), reused 98 (delta 44), pack-reused 337
-    Receiving objects: 100% (456/456), 71.27 KiB | 663.00 KiB/s, done.
-    Resolving deltas: 100% (214/214), done.
-    tbl@wm97a-c2b ~/Tmp # ls
-    wfl
-    tbl@wm97a-c2b ~/Tmp # cd ./wfl
-    tbl@wm97a-c2b ~/Tmp/wfl # ls
-    README.org      build.boot      src
-    tbl@wm97a-c2b ~/Tmp/wfl # boot build
-    Compiling 1/1 zero.main...
-    Adding uberjar entries...
-    Writing pom.xml and pom.properties...
-    Writing wfl-2020-03-13t17-29-12z.jar...
-    Writing target dir(s)...
-    tbl@wm97a-c2b ~/Tmp/wfl # ls
-    README.org      build.boot         project.clj
-    src             target             zero
-    tbl@wm97a-c2b ~/Tmp/wfl # ./zero starter
-    zero: Error: Must specify an environment.
-    zero: The valid environments are:
-      cromwellv36
-        Test Cromwell v36 for PAPIv2 requester pays
-      cromwellv38
-        Test Cromwell v38 for PAPIv2 requester pays
-      dev
-        Development
-      hca
-        HCA/DCP Lira and Falcon for the Mint team
-      pharma5
-        Pharma5 WhiteAlbum UK Biobank, UKB, whatever for ukb.clj
-      prod
-        Production (gotc-prod)
-      staging
-        Staging
-    Zero: zero Email a report from all systems.
-    Usage: zero starter <env> [<to> ...]
-    Where: <env> is the runtime environment.
-            <to> ... are email addresses of recipients.
-    zero: Error: Must specify an environment.
-    BTW: You ran: zero starter
-    tbl@wm97a-c2b ~/Tmp/wfl # ./zero starter dev $USER@broadinstitute.org
-    SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
-    SLF4J: Defaulting to no-operation (NOP) logger implementation
-    SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
-    ... just inSANE spilling of debug logs ...
-    tbl@wm97a-c2b ~/Tmp/wfl #
-    ```
+####  Exomes in the Cloud Resources
 
-    Of course, after `boot build`, you can also run WFL from its
-    JAR file.
+From [Hybrid Selection in the Cloud V1](https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing)
 
-    ``` example
-    tbl@wm97a-c2b ~/Broad/wfl # boot build
-    Compiling 1/1 zero.main...
-    Adding uberjar entries...
-    Writing pom.xml and pom.properties...
-    Writing wfl-2020-03-13t17-29-12z.jar...
-    Writing target dir(s)...
-    tbl@wm97a-c2b ~/Broad/wfl # java -jar ./target/wfl-2020-03-13t17-29-12z.jar
-    ...
-    tbl@wm97a-c2b ~/Broad/wfl 1#
-    ```
+1.  Clients
+  - [Google Cloud Storage Client Library (Java)](https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java)
+  - [Google Cloud Client Library for Java](https://googlecloudplatform.github.io/google-cloud-java/0.30.0/index.html)
 
-4.  Exomes in the Cloud Resources
+2.  Diagrams
+  - [Zamboni Overview](https://confluence.broadinstitute.org/download/attachments/39552724/ZamboniOverview.pdf)
 
-    From [Hybrid Selection in the Cloud
-    V1](https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing)
-
-    1.  Clients
-
-          - [Google Cloud Storage Client Library
-            (Java)](https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java)
-
-          - [Google Cloud Client Library for
-            Java](https://googlecloudplatform.github.io/google-cloud-java/0.30.0/index.html)
-
-    2.  Diagrams
-
-          - [Zamboni
-            Overview](https://confluence.broadinstitute.org/download/attachments/39552724/ZamboniOverview.pdf)
-
-    3.  Sources
-
-          - /Users/tbl/Broad/zamboni/Client/src/scala/org/broadinstitute/zamboni/client/lightning/clp/Lightning.scala
-          - /Users/tbl/Broad/picard-private/src/java/edu/mit/broad/picard/lightning
-          - /Users/tbl/Broad/gppipeline-devtools/release<sub>client</sub>
-          - /Users/tbl/Broad/gppipeline-devtools/starter<sub>control</sub>
-          - /picard02:/seq/pipeline/gppipeline-devtools/current/defs/prod.defs
+3.  Sources
+  - /Users/tbl/Broad/zamboni/Client/src/scala/org/broadinstitute/zamboni/client/lightning/clp/Lightning.scala
+  - /Users/tbl/Broad/picard-private/src/java/edu/mit/broad/picard/lightning
+  - /Users/tbl/Broad/gppipeline-devtools/release<sub>client</sub>
+  - /Users/tbl/Broad/gppipeline-devtools/starter<sub>control</sub>
+  - /picard02:/seq/pipeline/gppipeline-devtools/current/defs/prod.defs
