@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="ehigham@broadinstitute.org"
+               dbms="postgresql"
+               id="20200601"
+               logicalFilePath="20200601_CopyfileTable.xml">
+        <comment>
+            workload schema used for testing
+        </comment>
+        <sql>
+            CREATE TYPE copyfile AS (
+                id                   bigint,      -- unique to this table
+                dst                  text,        -- Destination file to create
+                src                  text,        -- Source file to be copied
+                status               text,        -- Cromwell workflow status
+                updated              timestamptz, -- status update time
+                uuid                 text         -- Cromwell workflow UUID
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>

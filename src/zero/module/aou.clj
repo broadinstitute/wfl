@@ -1,6 +1,8 @@
 (ns zero.module.aou
   "Process Arrays for the All Of Us project.")
 
+(def pipeline "AllOfUsArrays")
+
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
   [tx workload])

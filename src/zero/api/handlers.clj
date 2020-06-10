@@ -1,15 +1,16 @@
 (ns zero.api.handlers
   "Define handlers for API endpoints"
-  (:require [clojure.java.jdbc     :as jdbc]
-            [clojure.string        :as str]
-            [ring.util.response    :as response]
-            [zero.module.aou       :as aou]
-            [zero.module.wgs       :as wgs]
-            [zero.module.wl        :as wl]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :as str]
+            [ring.util.response :as response]
+            [zero.module.aou :as aou]
+            [zero.module.copyfile :as cp]
+            [zero.module.wgs :as wgs]
+            [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util             :as util]
-            [zero.zero             :as zero]))
+            [zero.util :as util]
+            [zero.zero :as zero]))
 
 (defn fail
   "A failure response with BODY."
@@ -39,7 +40,7 @@
   (let [{:keys [body environment query]} parameters
         env   (zero/throw-or-environment-keyword! environment)
         start (some :start [query body])
-        end   (some :end   [query body])
+        end   (some :end [query body])
         query {:includeSubworkflows false :start start :end end}]
     (succeed {:results (cromwell/query env query)})))
 
@@ -51,27 +52,41 @@
         results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
 
-(defn add-fail
+(defn on-unknown-pipeline
   "Fail this request returning BODY as result."
-  [body]
+  [_ body]
   (fail {:add-workload-failed body}))
+
+(defmacro defoverload
+  "Register a method IMPL to MULTIFUN using DISPATCH_VAL"
+  [multifn dispatch-val impl]
+  `(defmethod ~multifn ~dispatch-val [& xs#] (apply ~impl xs#)))
+
+(defmulti add-workload! (fn [_ body] (:pipeline body)))
+(defoverload add-workload! :default on-unknown-pipeline)
+(defoverload add-workload! aou/pipeline aou/add-workload!)
+(defoverload add-workload! cp/pipeline cp/add-workload!)
+(defoverload add-workload! wl/pipeline wl/add-workload!)
+
+(defmulti start-workload! (fn [_ body] (:pipeline body)))
+(defoverload start-workload! :default on-unknown-pipeline)
+(defoverload start-workload! aou/pipeline aou/start-workload!)
+(defoverload start-workload! cp/pipeline cp/start-workload!)
+(defoverload start-workload! wl/pipeline wl/start-workload!)
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [environment (keyword (util/getenv "ENVIRONMENT" "debug"))
-          {:keys [body]} parameters
-          add {"AllOfUsArrays"                   aou/add-workload!
-               "ExternalWholeGenomeReprocessing" wl/add-workload!}
-          add! (add (:pipeline body) add-fail)]
+          {:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config environment)]
         (->> body
-             (add! tx)
-             :uuid
-             (conj ["SELECT * FROM workload WHERE uuid = ?"])
-             (jdbc/query tx)
-             first unnilify succeed)))))
+          (add-workload! tx)
+          :uuid
+          (conj ["SELECT * FROM workload WHERE uuid = ?"])
+          (jdbc/query tx)
+          first unnilify succeed)))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
@@ -81,29 +96,25 @@
       (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
              [{:uuid uuid}]
              (jdbc/query tx ["SELECT uuid FROM workload"]))
-           (mapv (partial postgres/get-workload-for-uuid tx))
-           succeed))))
+        (mapv (partial postgres/get-workload-for-uuid tx))
+        succeed))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (let [start {"AllOfUsArrays"                   aou/start-workload!
-               "ExternalWholeGenomeReprocessing"  wl/start-workload!}
-        env   (keyword (util/getenv "ENVIRONMENT" "debug"))
+  (let [env   (keyword (util/getenv "ENVIRONMENT" "debug"))
         uuids (-> request :parameters :body distinct)]
-    (letfn [(q [[left right]] (fn [it] (str left it right)))
-            (start! [tx {:keys [pipeline] :as workload}]
-              ((start pipeline) tx workload))]
+    (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config env)]
         (->> uuids
-             (map :uuid)
-             (map (q "''")) (str/join ",") ((q "()"))
-             (format "SELECT * FROM workload WHERE uuid in %s")
-             (jdbc/query tx)
-             (run! (partial start! tx)))
+          (map :uuid)
+          (map (q "''")) (str/join ",") ((q "()"))
+          (format "SELECT * FROM workload WHERE uuid in %s")
+          (jdbc/query tx)
+          (run! (partial start-workload! tx)))
         (->> uuids
-             (mapv (partial postgres/get-workload-for-uuid tx))
-             succeed)))))
+          (mapv (partial postgres/get-workload-for-uuid tx))
+          succeed)))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"

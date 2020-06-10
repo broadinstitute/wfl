@@ -238,21 +238,21 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn make-options
   "Make options to run the workflow in ENVIRONMENT."
   [environment]
-  (letfn [(maybe [m k v] (if-let [kv (k v)] (assoc m k kv) m))]
+  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
     (let [gcr    "us.gcr.io"
           repo   "broad-gotc-prod"
           image  "genomes-in-the-cloud:2.4.1-1540490856"
-          {:keys [cromwell google_projects jes_gcs_roots noAddress]}
+          {:keys [cromwell google_projects jes_gcs_roots] :as values}
           (env/stuff environment)]
-      (-> {:backend           "PAPIv2"
-           :google_project    (rand-nth google_projects)
-           :jes_gcs_root      (rand-nth jes_gcs_roots)
-           :read_from_cache   true
-           :write_to_cache    true
+      (-> {:backend         "PAPIv2"
+           :google_project  (rand-nth google_projects)
+           :jes_gcs_root    (rand-nth jes_gcs_roots)
+           :read_from_cache true
+           :write_to_cache  true
            :default_runtime_attributes
-           {:docker    (str/join "/" [gcr repo image])
-            :noAddress noAddress
-            :zones     google-cloud-zones}}
+           (-> {:docker (str/join "/" [gcr repo image])
+                :zones  google-cloud-zones}
+                (maybe :noAddress values))}
           (maybe :monitoring_script cromwell)))))
 
 (defn is-non-negative!

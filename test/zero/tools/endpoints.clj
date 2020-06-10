@@ -1,8 +1,7 @@
-(ns zero.testtools
+(ns zero.tools.endpoints
   (:require [clj-http.client :as client]
-            [zero.once :as once]
-            [zero.util :as util]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [zero.once :as once]))
 
 (def server
   "https://workflow-launcher.gotc-dev.broadinstitute.org"
@@ -92,21 +91,3 @@
                        :accept       :json
                        :body         payload})]
     (parse-json-string (:body response))))
-
-(def git-branch (delay (util/shell! "git" "branch" "--show-current")))
-(def git-email (delay (util/shell! "git" "config" "user.email")))
-
-(def wgs-workload
-  "A whole genome sequencing workload used for testing."
-  (let [path "/single_sample/plumbing/truth"]
-    {:creator  @git-email
-     :cromwell "https://cromwell.gotc-dev.broadinstitute.org"
-     :input    (str "gs://broad-gotc-test-storage" path)
-     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
-     :pipeline "ExternalWholeGenomeReprocessing"
-     :project  (format "(Test) %s" @git-branch)
-     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
-                 :sample_name          "NA12878 PLUMBING",
-                 :base_file_name       "NA12878_PLUMBING",
-                 :final_gvcf_base_name "NA12878_PLUMBING",
-                 :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
