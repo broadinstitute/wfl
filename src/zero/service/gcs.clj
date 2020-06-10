@@ -12,7 +12,7 @@
 
 (def api-url
   "The Google Cloud API URL."
-  "https://storage.googleapis.com/")
+  "https://www.googleapis.com/")
 
 (def storage-url
   "The Google Cloud URL for storage operations."
