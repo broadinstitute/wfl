@@ -6,7 +6,7 @@
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util :as util])
+            [zero.util :refer [prefix-keys make-options]])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
@@ -25,14 +25,15 @@
 
 (defn- submit-workflow
   "Submit INPUTS to be processed in ENVIRONMENT."
-  [environment inputs]
-  (cromwell/submit-workflow
-    environment
-    (io/file (:top workflow-wdl))
-    nil
-    inputs
-    (util/make-options environment)
-    {}))
+  [environment workflow]
+  (let [mk-inputs #(-> % (select-keys [:src :dst]) (prefix-keys pipeline))]
+    (cromwell/submit-workflow
+      environment
+      (io/file (:top workflow-wdl))
+      nil
+      (mk-inputs workflow)
+      (make-options environment)
+      {})))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -49,9 +50,8 @@
   (let [env (get-environment-for-cromwell cromwell)
         now (OffsetDateTime/now)]
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
-    (letfn [(inputs [src dst] {:copyfile.src src :copyfile.dst dst})
-            (submit! [{:keys [id uuid src dst]}]
-                [id (or uuid (submit-workflow env (inputs src dst)))])
+    (letfn [(submit! [{:keys [id uuid] :as workflow}]
+              [id (or uuid (submit-workflow env workflow))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
