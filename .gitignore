@@ -1,7 +1,6 @@
 /.classpath
 /.cpcache/
 /.eastwood
-/.idea/
 /.java-version
 /.lein-*
 /.nrepl-port
@@ -12,8 +11,6 @@
 /project.clj
 /target
 /wfl
-/zero.iml
-/wfl.iml
 /changelog.xml
 /changesets
 
@@ -37,3 +34,8 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Intellij + Cursive Files
+.idea/
+boot-project.iml
+wfl.iml
