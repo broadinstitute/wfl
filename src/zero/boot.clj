@@ -71,23 +71,17 @@
    Delete the :tmp directory at some point."
   []
   (let [tmp (str "CLONE_" (UUID/randomUUID))]
-    (letfn [(clone [url]
-              (util/shell-io! "git" "-C" tmp "clone"
-                              "--config" "advice.detachedHead=false" url))]
+    (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
+                           "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
-
       (try
-        (run! clone (vals zero/the-other-github-repos))
+        (run! clone (vals zero/the-github-repos))
         (catch Exception e
-          (run! clone (vals zero/the-github-repos))
-          )))
-
+          (run! clone (vals zero/the-other-github-repos)))))
     (into {:tmp tmp}
-          (for [repo (keys zero/the-github-repos)]
-            (let [dir (str/join "/" [tmp repo])]
-              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
-(comment
-  (clone-repos))
+      (for [repo (keys zero/the-github-repos)]
+        (let [dir (str/join "/" [tmp repo])]
+          [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
@@ -152,8 +146,8 @@
           {:keys [tmp] :as clones} (clone-repos)
           directory (io/file resources "zero")
           edn (merge version
-                     (dissoc clones :tmp)
-                     (into {} (map frob wdls)))]
+                (dissoc clones :tmp)
+                (into {} (map frob wdls)))]
       (pprint edn)
       (util/shell-io! "npm" "install" "--prefix" "ui")
       (util/shell-io! "npm" "run" "build" "--prefix" "ui")
@@ -163,57 +157,6 @@
            (adapterize-wgs directory)
            (write-the-version-file directory edn)
            (finally (util/delete-tree (io/file tmp)))))))
-
-(defn google-app-engine-configure
-  "Write a GAE configuration for JAR in ENV to FILE. "
-  [env file jar]
-  (let [cmd ["java" "-Xmx${GAE_MEMORY_MB}m" "-jar" jar "server" "${PORT}"]]
-    (util/spit-yaml
-      file
-      {:env_variables     (server/env_variables env)
-       :service           zero/the-name
-       :runtime           :java11
-       :entrypoint        (str/join \space cmd)
-       :instance_class    :F2
-       :automatic_scaling {:max_concurrent_requests 20
-                           :min_instances            2}
-       :handlers [{:url "/swagger/(.*\\.(png|html|js|map|css))$"
-                   :static_files "swagger-ui/\\1"
-                   :upload "swagger-ui/.*\\.(png|html|js|map|css)$"}
-                  {:url "/(.*\\.(js|css|png|jpg|ico|woff2|eot|ttf|map))$"
-                   :static_files "dist/\\1"
-                   :upload "dist/.*\\.(js|css|png|jpg|ico|woff2|eot|ttf|map)$"}
-                  {:url "/"
-                   :static_files "dist/index.html"
-                   :upload "dist/index.html"}
-                  {:url "/.*"
-                   :script :auto
-                   :secure :always}]}
-      jar ""
-      "https://cloud.google.com/appengine/docs/standard/java11/config/appref"
-      (str "https://medium.com/@Leejjon_net/"
-           "migrate-a-jersey-based-micro-service-to-java-11-"
-           "and-deploy-to-app-engine-7ba41a835992"))))
-
-(defn google-app-engine-deploy
-  "Deploy to Google App Engine in ENVIRONMENT."
-  [environment]
-  (let [env       (zero/throw-or-environment-keyword! environment)
-        project   (get-in env/stuff [env :server :project])
-        version   (:version (zero/get-the-version))
-        jar       (str zero/the-name "-" version ".jar")
-        directory (io/file (str "GAE_" (UUID/randomUUID)))
-        yaml      (io/file directory "app.yaml")]
-    (try
-      (io/make-parents yaml)
-      (util/copy-directory (io/file "target/swagger-ui") directory)
-      (google-app-engine-configure env yaml jar)
-      (io/copy (io/file (io/file "target") jar) (io/file directory jar))
-      (util/copy-directory (io/file "ui/dist") directory)
-      (postgres/run-liquibase env)
-      (util/shell-io! "gcloud" "--quiet" "app" "deploy" (.getPath yaml)
-                      (str "--project=" project) (str "--version=" version))
-      (finally (util/delete-tree directory)))))
 
 (defn main
   "Run this with ARGS."

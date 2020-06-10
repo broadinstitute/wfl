@@ -77,17 +77,11 @@
   "Build this."
   []
   (comp (manage-version-and-resources)
-        (pom)
-        (aot :namespace '#{zero.main})
-        (uber)
-        (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
-        (target)))
-
-(deftask deploy
-  "Deploy this to Google App Engine in ENVIRONMENT."
-  []
-  (zero.boot/google-app-engine-deploy
-    (or (first *args*) "gotc-dev")))
+    (pom)
+    (aot :namespace '#{zero.main})
+    (uber)
+    (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
+    (target)))
 
 (defn -main
   "Run this."

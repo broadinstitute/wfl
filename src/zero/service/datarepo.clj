@@ -26,9 +26,7 @@
         env (zero/throw-or-environment-keyword! environment)
         iam "https://iamcredentials.googleapis.com/v1/projects/"
         path (get-in env/stuff [env :server :service-account])
-        json (json/read (io/reader path) :key-fn keyword)
-        email (get-in env/stuff [env :data-repo :ingest-service-account])
-        email (:client_email json)
+        email (-> path io/reader (json/read :key-fn keyword) :client_email)
         url (str iam "-/serviceAccounts/" email ":generateAccessToken")
         scope ["https://www.googleapis.com/auth/userinfo.email"
                "https://www.googleapis.com/auth/userinfo.profile"]
@@ -36,80 +34,75 @@
                    :url     url
                    :headers (once/get-auth-header)
                    :body    (json/write-str {:scope scope})}
-                  http/request :body
-                  (json/read-str :key-fn keyword)
-                  :accessToken)]
+                http/request :body
+                (json/read-str :key-fn keyword)
+                :accessToken)]
     {"Authorization" (str "Bearer" \space token)}))
 
 (defn thing-ingest
-  "Request some ingest into the Data Repository. Returns job id for polling."
+  "Ingest THING to DATASET-ID according to BODY in ENVIRONMENT."
   [environment dataset-id thing body]
-  (let [url     (format "%s/datasets/%s/%s" (api environment) dataset-id thing)
-        request {:method  :post         ; :debug true :debug-body true
-                 :url     url           ; :throw-exceptions false
-                 :body    body
-                 :content-type :application/json
-                 :headers (get-data-repo-header)}]
-    (-> (http/request request)
-        :body
-        (json/read-str :key-fn keyword)
-        :id)))
+  (let [url (format "%s/datasets/%s/%s" (api environment) dataset-id thing)]
+    (-> {:method       :post            ; :debug true :debug-body true
+         :url          url              ; :throw-exceptions false
+         :content-type :application/json
+         :headers      (get-data-repo-header)
+         :body         body}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :id)))
 
 (defn file-ingest
-  "Request file ingest in the Data Repository. Returns job id for polling."
+  "Ingest SRC file as VDEST in ENVIRONMENT using DATASET-ID and PROFILE-ID."
   [environment dataset-id profile-id src vdest]
-  (let [description "something derived from file name + extension?"
-        body (json/write-str {:description description
-                              :profileId   profile-id
-                              :source_path src
-                              ;;will receive error when polling job if not unique
-                              :target_path vdest
-                              :mime_type   "text/plain"})]
-    (thing-ingest environment dataset-id "files" body)))
+  (->> {:description "derived from file name + extension?"
+        :profileId   profile-id
+        :source_path src
+        :target_path vdest
+        :mime_type   "text/plain"}
+    json/write-str
+    (thing-ingest environment dataset-id "files")))
 
 (defn tabular-ingest
-  "Request tabular ingest in Data Repository. Returns job id for polling."
+  "Ingest TABLE at PATH to DATASET-ID in ENVIRONMENT and return the job ID."
   [environment dataset-id path table]
-  (let [body (json/write-str {:format                "json"
-                              :ignore_unknown_values true
-                              :load_tag              "string"
-                              :max_bad_records       0
-                              :path                  path
-                              :table                 table})]
-    (thing-ingest environment dataset-id "ingest" body)))
+  (->> {:format                "json"
+        :ignore_unknown_values true
+        :load_tag              "string"
+        :max_bad_records       0
+        :path                  path
+        :table                 table}
+    json/write-str
+    (thing-ingest environment dataset-id "ingest")))
 
 (defn get-job-result
-  "Get result of a successful job; returns json model specific to job type"
+  "Get result for JOB-ID in ENVIRONMENT."
   [environment job-id]
-  (let [url (format "%s/jobs/%s/result" (api environment) job-id)
-        request {:method :get           ; :debug true :debug-body true
-                 :url url
-                 :headers (get-data-repo-header)
-                 :throw-exceptions false}
-        response (http/request request)
-        body (-> response
-                 :body
-                 (json/read-str :key-fn keyword))]
-    (if (= 200 (:status response))
-      body
-      (throw (HttpException. (json/write-str body))))))
+  (let [{:keys [body status]}
+        (http/request
+          {:method :get                 ; :debug true :debug-body true
+           :url (format "%s/jobs/%s/result" (api environment) job-id)
+           :headers (get-data-repo-header)
+           :throw-exceptions false})]
+    (if (== 200 status)
+      (json/read-str body :key-fn keyword)
+      (throw (HttpException. body)))))
 
 (defn poll-job
-  "Poll job for completion, retrieve result if and when it is ready"
+  "Return result for JOB-ID in ENVIRONMENT when it stops running."
   [environment job-id]
-  (let [url (format "%s/jobs/%s" (api environment) job-id)
-        request {:method :get           ; :debug true :debug-body true
-                 :url url
+  (letfn [(running? []
+            (-> {:method :get ; :debug true :debug-body true
+                 :url (format "%s/jobs/%s" (api environment) job-id)
                  :headers (get-data-repo-header)}
-        status (-> (http/request request)
-                   :body
-                   (json/read-str :key-fn keyword)
-                   :job_status)]
-    (if (#{"running"} status)
-      (do (Thread/sleep 10000)
-          (poll-job environment job-id))
-      ;; On job failure, this will return 400 and an error message.
-      (get-job-result environment job-id))))
+              http/request :body
+              (json/read-str :key-fn keyword)
+              :job_status
+              #{"running"}))]
+    (when (running?)
+      (Thread/sleep 10000)
+      (poll-job environment job-id))
+    (get-job-result environment job-id)))
 
 (comment
   (def successful-file-ingest-response

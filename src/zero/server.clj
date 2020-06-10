@@ -31,21 +31,8 @@
          "       <port> is a port number to listen on."
          ""
          (str/join \space ["Example: %1$s server" env port])]
-        (->> (str/join \newline))
-        (format zero/the-name title))))
-
-(defn env_variables
-  "The process environment variables for ENV."
-  [env]
-  (let [environment (env env/stuff)
-        {:keys [cookie_secret password postgres_url username]}
-        (util/vault-secrets (get-in environment [:server :vault]))
-        result {"COOKIE_SECRET"           cookie_secret
-                "ZERO_DEPLOY_ENVIRONMENT" (:name environment)
-                "ZERO_POSTGRES_PASSWORD"  password
-                "ZERO_POSTGRES_URL"       "jdbc:postgresql:wfl"
-                "ZERO_POSTGRES_USERNAME"  username}]
-    (into {} (filter second result))))
+      (->> (str/join \newline))
+      (format zero/the-name title))))
 
 (def cookie-store
   "A session store for wrap-defaults."

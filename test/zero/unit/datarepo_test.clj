@@ -3,13 +3,9 @@
             [clojure.java.io       :as io]
             [clojure.string        :as str]
             [clojure.test          :refer [deftest is testing]]
-            [clj-http.client       :as http]
-            [zero.debug]
             [zero.environments     :as env]
-            [zero.once             :as once]
             [zero.service.datarepo :as datarepo]
-            [zero.service.gcs      :as gcs]
-            [zero.util             :as util])
+            [zero.service.gcs      :as gcs])
   (:import (java.util UUID)))
 
 ;; UUIDs known to the Data Repo.

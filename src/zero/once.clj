@@ -13,24 +13,24 @@
   "NIL or new UserCredentials for caller. "
   []
   (some-> ["gcloud" "info" "--format=json"]
-          (->> (apply util/shell!))
-          (json/read-str :key-fn keyword)
-          :config :paths :global_config_dir
-          (str "/" "application_default_credentials.json")
-          io/input-stream
-          UserCredentials/fromStream
-          util/do-or-nil))
+    (->> (apply util/shell!))
+    (json/read-str :key-fn keyword)
+    :config :paths :global_config_dir
+    (str "/" "application_default_credentials.json")
+    io/input-stream
+    UserCredentials/fromStream
+    util/do-or-nil))
 
 (defn service-account-credentials
   "Google service account credentials from FILE."
   [^String file]
   (let [scopes ["https://www.googleapis.com/auth/cloud-platform"]]
     (-> file io/input-stream
-        GoogleCredentials/fromStream
-        (.createScoped scopes))))
+      GoogleCredentials/fromStream
+      (.createScoped scopes))))
 
 (defn get-auth-header
-  "Nil or a valid auth header."
+  "An valid auth header valid in the ZERO_DEPLOY_ENVIRONMENT."
   []
   (util/bearer-token-header-for
     (if-let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT")]

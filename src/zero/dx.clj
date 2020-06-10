@@ -8,8 +8,8 @@
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
-            [zero.service.cromwell :as cromwell]
             [zero.once :as once]
+            [zero.service.cromwell :as cromwell]
             [zero.util :as util]
             [zero.zero :as zero]))
 

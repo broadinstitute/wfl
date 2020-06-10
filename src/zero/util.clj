@@ -68,7 +68,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                 .getTokenValue)]
     (when-not token
       (let [lines ["%1$s: Cannot generate token from Google Credentials."
-                   "%1$s: Run 'gcloud auth list' to check your account if running locally"
+                   "%1$s: Run 'gcloud auth list' to check your account."
                    "%1$s: Try to login if running on a server."]
             err (format (str/join \newline lines) zero/the-name)]
         (throw (Exception. err))))
@@ -252,9 +252,9 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
            :read_from_cache   true
            :write_to_cache    true
            :default_runtime_attributes
-           (-> {:docker (str/join "/" [gcr repo image])
-                :zones  google-cloud-zones}
-             (maybe :noAddress values))}
+           {:docker    (str/join "/" [gcr repo image])
+            :noAddress noAddress
+            :zones     google-cloud-zones}}
         (maybe :monitoring_script cromwell)))))
 
 (defn is-non-negative!
