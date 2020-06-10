@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.2">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.3">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.a2408e81.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.6e35a1a6.min.css">
       
         <link rel="stylesheet" href="assets/stylesheets/palette.a46bcfb3.min.css">
       
@@ -308,6 +308,60 @@
     Development
   </a>
   
+    <nav class="md-nav" aria-label="Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos" class="md-nav__link">
+    MacOS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arch-linux" class="md-nav__link">
+    Arch Linux
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hacking" class="md-nav__link">
+    Hacking
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    Testing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exomes-in-the-cloud-resources" class="md-nav__link">
+    Exomes in the Cloud Resources
+  </a>
+  
 </li>
         
       </ul>
@@ -594,6 +648,60 @@
     Development
   </a>
   
+    <nav class="md-nav" aria-label="Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos" class="md-nav__link">
+    MacOS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arch-linux" class="md-nav__link">
+    Arch Linux
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hacking" class="md-nav__link">
+    Hacking
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    Testing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exomes-in-the-cloud-resources" class="md-nav__link">
+    Exomes in the Cloud Resources
+  </a>
+  
 </li>
         
       </ul>
@@ -636,10 +744,10 @@ in that workload running WGS reprocessing.</p>
 communicates with other services as necessary to manage a workload.</p>
 <p>It can also be deployed to run as a service in the cloud.</p>
 <p>For more on Workflow Launcher's role in the Terra infrastructure see
-<a href="terra/">Workflow Launcher's role in Terra (./docs/md/terra.md)</a>.</p>
+<a href="/docs/md/terra.md">Workflow Launcher's role in Terra</a>.</p>
 <h2 id="set-up">Set up<a class="headerlink" href="#set-up" title="Permanent link">&para;</a></h2>
 <p>Run <code>boot build</code> at the top of a <code>wfl.git</code> repo to build an
-uberjar. The resulting jar is in <code>./target/wfl-*.jar</code> relative to
+uberjar. The resulting jar is in <code>target/wfl-*.jar</code> relative to
 the <code>wfl.git</code> clone.</p>
 <p>With some start-up and performance penalty, you can also run
 Workflow Launcher as a script. See below for details.</p>
@@ -731,144 +839,71 @@ wm28d-f87:wfl yanc$
 </code></pre></div>
 
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
-<p>For frontend details, check <a href="frontend/">Frontend Section</a></p>
-<p>The initial file structure looks like this.</p>
-<div class="highlight"><pre><span></span><code>$ tree .
-.
-├── LICENSE.txt
-├── README.md -&gt; ./docs/md/README.md
-├── boot.properties
-├── build.boot
-├── build.txt
-├── database
-│   ├── changelog.xml
-│   └── changesets
-│       └── 01_db_schema.xml
-├── deps.edn
-├── docs
-│   ├── md
-│   │   ├── README.md
-│   │   ├── frontend.md
-│   │   ├── server.md
-│   │   ├── terra.md
-│   │   └── terra.org
-│   ├── mkdocs.yml
-│   └── requirements.txt
-├── ops
-│   ├── README.org
-│   ├── deploy.sh
-│   ├── index.md
-│   ├── server.sh
-│   └── terra.md -&gt; ./docs/md/terra.md
-├── resources
-│   └── simplelogger.properties
-├── src
-│   └── zero
-│       ├── api
-│       │   ├── handlers.clj
-│       │   └── routes.clj
-│       ├── boot.clj
-│       ├── debug.clj
-│       ├── dx.clj
-│       ├── environments.clj
-│       ├── main.clj
-│       ├── metadata.clj
-│       ├── module
-│       │   ├── all.clj
-│       │   ├── ukb.clj
-│       │   ├── wgs.clj
-│       │   └── xx.clj
-│       ├── once.clj
-│       ├── references.clj
-│       ├── server.clj
-│       ├── server_debug.clj
-│       ├── service
-│       │   ├── cromwell.clj
-│       │   ├── datarepo.clj
-│       │   ├── gcs.clj
-│       │   ├── postgres.clj
-│       │   └── pubsub.clj
-│       ├── util.clj
-│       ├── wdl.clj
-│       └── zero.clj
-├── <span class="nb">test</span>
-│   ├── integration
-│   │   └── zero
-│   │       └── integration <span class="nb">test</span> files
-│   └── unit
-│   │   └── zero
-│           └── unit <span class="nb">test</span> files
-├── ui/
-└── wfl.iml
-</code></pre></div>
-
+<p>For frontend details, check <a href="/docs/md/frontend.md">Frontend Section</a></p>
 <h4 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h4>
 <p>After cloning a new WFL repo, the top-level files are.</p>
 <ul>
 <li>
-<p><code>./README.md</code> is this file, which is just a symlink to the actual doc
+<p><code>README.md</code> is this file, which is just a symlink to the actual doc
     file under <code>docs/md/</code>.</p>
 </li>
 <li>
-<p><code>./boot.properties</code> overrides some defaults in <code>boot-clj</code>.
+<p><code>boot.properties</code> overrides some defaults in <code>boot-clj</code>.
     (<code>boot.properties</code> is something like <code>build.properties</code> for
     <code>sbt</code>.)</p>
 </li>
 <li>
-<p><code>./build.boot</code> is a Clojure script to bootstrap WFL with
+<p><code>build.boot</code> is a Clojure script to bootstrap WFL with
     <code>boot-clj</code>.</p>
 </li>
 <li>
-<p><code>./build.txt</code> holds a monotonically increasing integer for
+<p><code>build.txt</code> holds a monotonically increasing integer for
     build versioning.</p>
 </li>
 <li>
-<p><code>./.github</code> holds Github related files, such as PR templates and
-    Github Actions files.</p>
-</li>
-<li>
-<p><code>./database</code> holds database scheme migration changelog and changeset
+<p><code>database/</code> holds database scheme migration changelog and changeset
     files for liquibase.</p>
 </li>
 <li>
-<p><code>./docs</code> has ancillary documentation. It's compiled as a static doc
+<p><code>docs/</code> has ancillary documentation. It's compiled as a static doc
     website.</p>
 </li>
 <li>
-<p><code>./ops</code> is a directory of standard scripts to support
+<p><code>ops/</code> is a directory of standard scripts to support
     operations. It includes scripts to deploy the server in
     Google App Engine, and to run it locally for easier
-    debugging. (See <a href="server/">./docs/md/server.md</a> for
+    debugging. (See <a href="/docs/md/server.md">server.md</a> for
     more information.)</p>
 </li>
 <li>
-<p><code>./resources</code> contains the <code>simplelogger</code> properties and
+<p><code>resources/</code> contains the <code>simplelogger</code> properties and
     files staged from other repositories that need to be on the
     Java classpath when running from the <code>.jar</code> file.</p>
 </li>
 <li>
-<p><code>./src/zero</code> contains the Workflow Launcher source code.</p>
+<p><code>src/</code> contains the Workflow Launcher source code.</p>
 </li>
 <li>
-<p><code>./test/zero</code> contains some unit tests.</p>
+<p><code>test/</code> contains a mixture of unit and integration tests
+    and supplementary test tooling.</p>
 </li>
 </ul>
 <p>After building and working with WFL a while, you may notice a
 couple of other top-level files and directories.</p>
 <ul>
 <li>
-<p><code>./project.clj</code> is a <code>lein</code> project file to support
+<p><code>project.clj</code> is a <code>lein</code> project file to support
     IntelliJ.</p>
 </li>
 <li>
-<p><code>./zero</code> is a link to <code>build.boot</code> that runs WFL as a
+<p><code>zero</code> is a link to <code>build.boot</code> that runs WFL as a
     script.</p>
 </li>
 </ul>
 <p>Run <code>boot build</code> at least once after cloning the repo to make
 sure all the necessary files are in place.</p>
 <h4 id="source-code">Source code<a class="headerlink" href="#source-code" title="Permanent link">&para;</a></h4>
-<p>The Clojure source code is in the <code>./src/zero</code> directory.</p>
+<p>The Clojure source code is in the <code>src/</code> directory.</p>
 <p>The entry point for the WFL executable is the <code>-main</code> function
 in <code>main.clj</code>. It takes the command line arguments as strings,
 validates the arguments, then launches the appropriate process.</p>
@@ -880,7 +915,7 @@ server.</p>
 easier development and debugging.</p>
 <p>The <code>debug.clj</code> file defines some macros useful when debugging
 or logging.</p>
-<p>The <code>util.clj</code> file contains a few function and macros used in
+<p>The <code>util.clj</code> file contains a few functions and macros used in
 WFL that are not specific to its function.</p>
 <p>The <code>environments.clj</code> file defines configuration parameters for
 different execution contexts. It's a placeholder in this repo
@@ -958,11 +993,11 @@ optionally specifying the kind:</p>
 </code></pre></div>
 
 <p>Note that the integration tests currently require a little more configuration
-before they can be run, namely, they require a <code>wfl</code> server running locally: </p>
+before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
 <div class="highlight"><pre><span></span><code>./ops/server.sh
 </code></pre></div>
 
-<p>See the <a href="/docs/md/dev-process.md#Integration Tests">development guide</a> for more 
+<p>See the <a href="/docs/md/dev-process.md#Test">development guide</a> for more
 information.</p>
 <h4 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h4>
 <p>WFL is implemented in <a href="https://clojure.org">Clojure</a> and uses a
@@ -975,40 +1010,35 @@ need to be authenticated to Google Cloud and have a recent version
 of <code>google-cloud-sdk</code> in your path to run <code>zero</code> or its jar
 successfully. I verified that <code>Google Cloud SDK 161.0.0</code> works. That
 or any later version should be OK.</p>
-<ol>
-<li>
-<p>Installation</p>
+<h5 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h5>
 <p>See <a href="https://github.com/boot-clj/boot#install">this link</a> to
 install <code>boot-clj</code>.</p>
 <p>Running <code>boot</code> is enough to "install" Clojure.</p>
-<p>There is another tool like <code>boot</code> named <code>lein</code>, which is short
-for "<a href="https://leiningen.org/">Leiningen</a>". You currently need
-<code>lein</code> to develop with
-<a href="https://www.jetbrains.com/idea/">IntelliJ</a> using its Clojure
-plugin <a href="https://cursive-ide.com/">Cursive</a>.</p>
-<p>On MacOS, I suggest installing <a href="http://brew.sh/">Homebrew</a> and
-then running this.</p>
-<div class="highlight"><pre><span></span><code>wfl <span class="c1"># brew install boot-clj leiningen</span>
-<span class="o">==</span>&gt; Using the <span class="nv">sandbox</span>
-<span class="o">==</span>&gt; Downloading https://github.com/boot-clj/boot-bin/releases/download/2.5.2/boot
-🍺  /usr/local/Cellar/boot-clj/2.5.2: <span class="m">3</span> files, <span class="m">7</span>.7K, built in <span class="m">2</span> seconds
-...
-wfl <span class="c1">#</span>
-</code></pre></div>
-
-<p>You can <code>brew install maven</code>, and <code>java</code> too if necessary.</p>
-<p>There are <code>boot-clj</code> and <code>lein</code> distributions for all the common
-OS platforms. Each tool is just a file. Copy them into your
-<code>PATH</code>, run them once to bootstrap them, and you're done. (The
-first run of each tool downloads dependencies and so on.)</p>
 <p>The <code>build.boot</code> file is equivalent to the <code>build.sbt</code> file for
 SBT in Scala projects. It specified project dependencies and the
 build and release pipeline. It also functions as a script for
 running and testing the project without a separate compilation
 step.</p>
-</li>
-<li>
-<p>Hacking</p>
+<p>There is another tool like <code>boot</code> named <code>lein</code>, which is short
+for "<a href="https://leiningen.org/">Leiningen</a>". You currently need
+<code>lein</code> to develop with
+<a href="https://www.jetbrains.com/idea/">IntelliJ</a> using its Clojure
+plugin <a href="https://cursive-ide.com/">Cursive</a>.</p>
+<h6 id="macos">MacOS<a class="headerlink" href="#macos" title="Permanent link">&para;</a></h6>
+<p>On MacOS, I suggest installing <a href="http://brew.sh/">Homebrew</a> and
+then running this.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># brew install boot-clj leiningen</span>
+</code></pre></div>
+
+<p>You can <code>brew install maven</code>, and <code>java</code> too if necessary.</p>
+<h6 id="arch-linux">Arch Linux<a class="headerlink" href="#arch-linux" title="Permanent link">&para;</a></h6>
+<p>install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a> and
+<a href="https://www.archlinux.org/packages/?name=leiningen">leiningen</a>
+from the official repositories.
+Install <a href="https://aur.archlinux.org/packages/boot/">boot</a> and
+<a href="https://aur.archlinux.org/packages/google-cloud-sdk">google-cloud-sdk</a>
+from the AUR.</p>
+<h5 id="hacking">Hacking<a class="headerlink" href="#hacking" title="Permanent link">&para;</a></h5>
 <p>Clojure development feels very different from Scala and Java
 development. It even differs markedly from development in other
 <em>dynamic languages</em> such as Python or Ruby.</p>
@@ -1016,9 +1046,10 @@ development. It even differs markedly from development in other
 development before you spend too much time trying to figure
 things out on your own.</p>
 <p>Find a local Cursive user for guidance if you like IntelliJ.
-<a href="mailto:chengche@broadinstitute.org">Rex Wang</a> and <a href="mailto:sehsan@broadinstitute.org">Saman Ehsan</a> know how to use it. There
-are <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">Cursive licenses
-here</a>.
+<a href="mailto:chengche@broadinstitute.org">Rex Wang</a> and
+<a href="mailto:sehsan@broadinstitute.org">Saman Ehsan</a> know how to use it.
+Cursive licences are available
+<a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
 There is also a
 <a href="https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva">Calva</a>
 plugin for <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
@@ -1032,129 +1063,42 @@ support <code>lein</code>, Cursive, and Calva users.</p>
 <p>Running <code>boot build</code> will not only build a fat jar (<em>uberjar</em>)
 for the WFL project, but will add an executable symbolic link
 <code>zero</code> to conveniently execute the Clojure code as a script.</p>
-</li>
-<li>
-<p>Testing</p>
+<h4 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h4>
 <p>If you've never run <code>boot</code> before, you may have to run it twice:
 first to bootstrap Clojure and <code>boot</code> itself, and again to
 download their and WFL's dependencies.</p>
-<p>The first <code>boot build</code> run will create a <code>./zero</code> link to the
+<p>The first <code>boot build</code> run will create a <code>./wfl</code> link to the
 <code>build.boot</code> file</p>
-<div class="highlight"><pre><span></span><code>./zero starter dev <span class="nv">$USER</span>@broadinstitute.org
+<div class="highlight"><pre><span></span><code>./wfl starter dev <span class="nv">$USER</span>@broadinstitute.org
 </code></pre></div>
 
 <p>You should eventually receive an humongous email from
-<code>zero@broadinstitute.org</code> containing evidence of Zero's
+<code>wfl@broadinstitute.org</code> containing evidence of Zero's
 adventures.</p>
-<p>The result should look something like this.</p>
-<div class="highlight"><pre><span></span><code>tbl@wm97a-c2b ~/Tmp <span class="c1"># brew install boot-clj</span>
-Warning: boot-clj <span class="m">2</span>.7.2 is already installed
-tbl@wm97a-c2b ~/Tmp <span class="c1"># which boot</span>
-/usr/local/bin/boot
-tbl@wm97a-c2b ~/Tmp <span class="c1"># ls</span>
-tbl@wm97a-c2b ~/Tmp <span class="c1"># git clone https://github.com/broadinstitute/wfl.git</span>
-Cloning into <span class="s1">&#39;wfl&#39;</span>...
-remote: Counting objects: <span class="m">456</span>, <span class="k">done</span>.
-remote: Compressing objects: <span class="m">100</span>% <span class="o">(</span><span class="m">59</span>/59<span class="o">)</span>, <span class="k">done</span>.
-remote: Total <span class="m">456</span> <span class="o">(</span>delta <span class="m">62</span><span class="o">)</span>, reused <span class="m">98</span> <span class="o">(</span>delta <span class="m">44</span><span class="o">)</span>, pack-reused <span class="m">337</span>
-Receiving objects: <span class="m">100</span>% <span class="o">(</span><span class="m">456</span>/456<span class="o">)</span>, <span class="m">71</span>.27 KiB <span class="p">|</span> <span class="m">663</span>.00 KiB/s, <span class="k">done</span>.
-Resolving deltas: <span class="m">100</span>% <span class="o">(</span><span class="m">214</span>/214<span class="o">)</span>, <span class="k">done</span>.
-tbl@wm97a-c2b ~/Tmp <span class="c1"># ls</span>
-wfl
-tbl@wm97a-c2b ~/Tmp <span class="c1"># cd ./wfl</span>
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ls</span>
-README.org      build.boot      src
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># boot build</span>
-Compiling <span class="m">1</span>/1 zero.main...
-Adding uberjar entries...
-Writing pom.xml and pom.properties...
-Writing wfl-2020-03-13t17-29-12z.jar...
-Writing target dir<span class="o">(</span>s<span class="o">)</span>...
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ls</span>
-README.org      build.boot         project.clj
-src             target             zero
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ./zero starter</span>
-zero: Error: Must specify an environment.
-zero: The valid environments are:
-  cromwellv36
-    Test Cromwell v36 <span class="k">for</span> PAPIv2 requester pays
-  cromwellv38
-    Test Cromwell v38 <span class="k">for</span> PAPIv2 requester pays
-  dev
-    Development
-  hca
-    HCA/DCP Lira and Falcon <span class="k">for</span> the Mint team
-  pharma5
-    Pharma5 WhiteAlbum UK Biobank, UKB, whatever <span class="k">for</span> ukb.clj
-  prod
-    Production <span class="o">(</span>gotc-prod<span class="o">)</span>
-  staging
-    Staging
-Zero: zero Email a report from all systems.
-Usage: zero starter &lt;env&gt; <span class="o">[</span>&lt;to&gt; ...<span class="o">]</span>
-Where: &lt;env&gt; is the runtime environment.
-        &lt;to&gt; ... are email addresses of recipients.
-zero: Error: Must specify an environment.
-BTW: You ran: zero starter
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1"># ./zero starter dev $USER@broadinstitute.org</span>
-SLF4J: Failed to load class <span class="s2">&quot;org.slf4j.impl.StaticLoggerBinder&quot;</span>.
-SLF4J: Defaulting to no-operation <span class="o">(</span>NOP<span class="o">)</span> logger implementation
-SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder <span class="k">for</span> further details.
-... just inSANE spilling of debug logs ...
-tbl@wm97a-c2b ~/Tmp/wfl <span class="c1">#</span>
-</code></pre></div>
-
 <p>Of course, after <code>boot build</code>, you can also run WFL from its
 JAR file.</p>
-<div class="highlight"><pre><span></span><code>tbl@wm97a-c2b ~/Broad/wfl # boot build
-Compiling 1/1 zero.main...
-Adding uberjar entries...
-Writing pom.xml and pom.properties...
-Writing wfl-2020-03-13t17-29-12z.jar...
-Writing target dir(s)...
-tbl@wm97a-c2b ~/Broad/wfl # java -jar ./target/wfl-2020-03-13t17-29-12z.jar
-...
-tbl@wm97a-c2b ~/Broad/wfl 1#
-</code></pre></div>
-
-</li>
-<li>
-<p>Exomes in the Cloud Resources</p>
-<p>From <a href="https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing">Hybrid Selection in the Cloud
-V1</a></p>
+<h4 id="exomes-in-the-cloud-resources">Exomes in the Cloud Resources<a class="headerlink" href="#exomes-in-the-cloud-resources" title="Permanent link">&para;</a></h4>
+<p>From <a href="https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing">Hybrid Selection in the Cloud V1</a></p>
 <ol>
+<li>Clients</li>
+<li><a href="https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java">Google Cloud Storage Client Library (Java)</a></li>
 <li>
-<p>Clients</p>
-<ul>
-<li>
-<p><a href="https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java">Google Cloud Storage Client Library
-    (Java)</a></p>
-</li>
-<li>
-<p><a href="https://googlecloudplatform.github.io/google-cloud-java/0.30.0/index.html">Google Cloud Client Library for
-    Java</a></p>
-</li>
-</ul>
+<p><a href="https://googlecloudplatform.github.io/google-cloud-java/0.30.0/index.html">Google Cloud Client Library for Java</a></p>
 </li>
 <li>
 <p>Diagrams</p>
-<ul>
-<li><a href="https://confluence.broadinstitute.org/download/attachments/39552724/ZamboniOverview.pdf">Zamboni
-    Overview</a></li>
-</ul>
+</li>
+<li>
+<p><a href="https://confluence.broadinstitute.org/download/attachments/39552724/ZamboniOverview.pdf">Zamboni Overview</a></p>
 </li>
 <li>
 <p>Sources</p>
-<ul>
+</li>
 <li>/Users/tbl/Broad/zamboni/Client/src/scala/org/broadinstitute/zamboni/client/lightning/clp/Lightning.scala</li>
 <li>/Users/tbl/Broad/picard-private/src/java/edu/mit/broad/picard/lightning</li>
 <li>/Users/tbl/Broad/gppipeline-devtools/release<sub>client</sub></li>
 <li>/Users/tbl/Broad/gppipeline-devtools/starter<sub>control</sub></li>
 <li>/picard02:/seq/pipeline/gppipeline-devtools/current/defs/prod.defs</li>
-</ul>
-</li>
-</ol>
-</li>
 </ol>
                 
               
@@ -1222,14 +1166,14 @@ V1</a></p>
     </div>
     
       <script src="assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="assets/javascripts/bundle.a45f732b.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: ".",
           features: [],
           search: Object.assign({
-            worker: "assets/javascripts/worker/search.27c6a5e6.min.js"
+            worker: "assets/javascripts/worker/search.c03f0417.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
