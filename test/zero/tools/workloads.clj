@@ -22,7 +22,7 @@
                  :final_gvcf_base_name "NA12878_PLUMBING",
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
 
-(defn mk-copyfile-workload
+(defn make-copyfile-workload
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:creator  @git-email

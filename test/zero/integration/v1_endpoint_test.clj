@@ -10,7 +10,7 @@
             [zero.module.copyfile :as cp])
   (:import (java.util UUID)))
 
-(def mk-workload (partial endpoints/create-workload workloads/wl-workload))
+(def make-workload (partial endpoints/create-workload workloads/wl-workload))
 (def get-existing-workload-uuids
   (comp set (partial map :uuid) endpoints/get-workloads))
 (defn- fullfile [& segments] (string/join "/" segments))
@@ -19,7 +19,7 @@
   (testing "The `create` endpoint creates new workload"
     (let [uuids-before (get-existing-workload-uuids)
           no-items     (dissoc workloads/wl-workload :items)
-          {:keys [id items pipeline uuid] :as response} (mk-workload)]
+          {:keys [id items pipeline uuid] :as response} (make-workload)]
       (is uuid "Workloads should have been assigned a uuid")
       (is (not (contains? uuids-before uuid)) "The new workflow uuid was not unique")
       (is (not (:started response)) "The workload should not have been started")
@@ -32,7 +32,7 @@
 
 (deftest test-start-workload
   (testing "The `start` endpoint starts an existing workload"
-    (let [unstarted (endpoints/first-pending-workload-or mk-workload)
+    (let [unstarted (endpoints/first-pending-workload-or make-workload)
           response  (endpoints/start-workload unstarted)
           status    (endpoints/get-workload-status (:uuid response))]
       (is (:uuid unstarted) "Workloads should have been assigned a uuid")
@@ -66,7 +66,7 @@
       (->
         (fullfile "test" "zero" "resources" "copy-me.txt")
         (gcs/upload-file src))
-      (let [workload  (workloads/mk-copyfile-workload src dst)
+      (let [workload  (workloads/make-copyfile-workload src dst)
             await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)
             submitted (endpoints/exec-workload workload)]
         (is (= (:pipeline submitted) cp/pipeline))

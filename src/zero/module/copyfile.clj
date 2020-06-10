@@ -26,12 +26,12 @@
 (defn- submit-workflow
   "Submit INPUTS to be processed in ENVIRONMENT."
   [environment workflow]
-  (let [mk-inputs #(-> % (select-keys [:src :dst]) (prefix-keys pipeline))]
+  (let [make-inputs #(-> % (select-keys [:src :dst]) (prefix-keys pipeline))]
     (cromwell/submit-workflow
       environment
       (io/file (:top workflow-wdl))
       nil
-      (mk-inputs workflow)
+      (make-inputs workflow)
       (make-options environment)
       {})))
 
