@@ -59,21 +59,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                  msg   (format (str/join \newline lines) zero/the-name error)]
              (println msg))))))
 
-(defn bearer-token-header-for
-  "Return a valid bearer token for the GoogleCredentials CREDENTIAL."
-  [^GoogleCredentials credentials]
-  (let [token (some-> credentials
-                (doto .refreshIfExpired)
-                .getAccessToken
-                .getTokenValue)]
-    (when-not token
-      (let [lines ["%1$s: Cannot generate token from Google Credentials."
-                   "%1$s: Run 'gcloud auth list' to check your account."
-                   "%1$s: Try to login if running on a server."]
-            err (format (str/join \newline lines) zero/the-name)]
-        (throw (Exception. err))))
-    {"Authorization" (str "Bearer " token)}))
-
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."
   [string prefix]

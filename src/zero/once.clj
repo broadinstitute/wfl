@@ -2,48 +2,43 @@
   "Manage some credentials."
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
+            [clojure.string    :as str]
             [zero.debug]
             [zero.environments :as env]
             [zero.util         :as util]
             [zero.zero         :as zero])
-  (:import [com.google.auth.oauth2 ServiceAccountCredentials UserCredentials]))
+  (:import [com.google.auth.oauth2 ServiceAccountCredentials]))
 
-;; This is evil.
-;;
-(defn user-credentials
-  "NIL or new UserCredentials for caller. "
-  []
-  (some-> ["gcloud" "info" "--format=json"]
-    (->> (apply util/shell!))
-    (json/read-str :key-fn keyword)
-    :config :paths :global_config_dir
-    (str "/" "application_default_credentials.json")
-    io/input-stream
-    UserCredentials/fromStream
-    util/do-or-nil))
+(defn authorization-header-with-bearer-token
+  "An Authorization header with a Bearer TOKEN."
+  [token]
+  {"Authorization" (str/join \space ["Bearer" token])})
 
-(defn service-account-credentials
-  "Google service account credentials from FILE."
-  [^String file]
-  (let [scopes ["https://www.googleapis.com/auth/cloud-platform"]]
-    (-> file io/input-stream
-      ServiceAccountCredentials/fromStream
-      (.createScoped scopes))))
+(defn service-account-token
+  "Throw or return a bearer token for the service account SA."
+  [{:keys [file vault] :as sa}]
+  (-> (cond file  (io/file file)
+            vault (-> vault util/vault-secrets json/write-str .getBytes)
+            :else (throw (IllegalArgumentException. (pr-str sa))))
+    io/input-stream ServiceAccountCredentials/fromStream
+    (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])
+    .refreshAccessToken .getTokenValue))
 
 (defn get-auth-header
-  "An valid auth header valid in the ZERO_DEPLOY_ENVIRONMENT."
+  "An Authorization header with a Bearer token."
   []
-  (util/bearer-token-header-for
+  (authorization-header-with-bearer-token
     (if-let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT")]
-      (let [env  (zero/throw-or-environment-keyword! environment)]
-        (when-let [path (get-in env/stuff [env :server :service-account])]
-          (service-account-credentials path)))
-      (user-credentials))))
+      (let [env (zero/throw-or-environment-keyword! environment)
+            sa (get-in env/stuff [env :server :service-account])]
+        (service-account-token sa))
+      (util/shell! "gcloud" "auth" "print-access-token"))))
 
 (defn get-service-account-header
-  "Nil or an auth header with service account credentials."
+  "An Authorization header with service account Bearer token"
   []
-  (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
-        env  (zero/throw-or-environment-keyword! environment)]
-    (when-let [path (get-in env/stuff [env :server :service-account])]
-      (util/bearer-token-header-for (service-account-credentials path)))))
+  (authorization-header-with-bearer-token
+    (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
+          env (zero/throw-or-environment-keyword! environment)
+          sa (get-in env/stuff [env :server :service-account])]
+      (service-account-token sa))))
