@@ -4,7 +4,7 @@ declare -r WFL=${0%/*}
 
 trap 'kill 0' EXIT
 
-export ZERO_DEPLOY_ENVIRONMENT=debug
+test "$1" && export ZERO_DEPLOY_ENVIRONMENT="$1"
 
 npm run serve --prefix=ui -- --port 8080 &
 
