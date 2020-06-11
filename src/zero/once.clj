@@ -2,10 +2,11 @@
   "Manage some credentials."
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
+            [zero.debug]
             [zero.environments :as env]
             [zero.util         :as util]
             [zero.zero         :as zero])
-  (:import [com.google.auth.oauth2 GoogleCredentials UserCredentials]))
+  (:import [com.google.auth.oauth2 ServiceAccountCredentials UserCredentials]))
 
 ;; This is evil.
 ;;
@@ -26,7 +27,7 @@
   [^String file]
   (let [scopes ["https://www.googleapis.com/auth/cloud-platform"]]
     (-> file io/input-stream
-      GoogleCredentials/fromStream
+      ServiceAccountCredentials/fromStream
       (.createScoped scopes))))
 
 (defn get-auth-header
