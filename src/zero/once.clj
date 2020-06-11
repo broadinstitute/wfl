@@ -1,13 +1,12 @@
 (ns zero.once
-  "Manage some credentials."
+  "Manage credentials."
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
             [clojure.string    :as str]
-            [zero.debug]
             [zero.environments :as env]
             [zero.util         :as util]
             [zero.zero         :as zero])
-  (:import [com.google.auth.oauth2 ServiceAccountCredentials]))
+  (:import [com.google.auth.oauth2 GoogleCredentials ServiceAccountCredentials]))
 
 (defn authorization-header-with-bearer-token
   "An Authorization header with a Bearer TOKEN."
@@ -20,8 +19,10 @@
   (-> (cond file  (io/file file)
             vault (-> vault util/vault-secrets json/write-str .getBytes)
             :else (throw (IllegalArgumentException. (pr-str sa))))
-    io/input-stream ServiceAccountCredentials/fromStream
-    (.createScoped ["https://www.googleapis.com/auth/cloud-platform"])
+    io/input-stream GoogleCredentials/fromStream
+    (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
+                    "https://www.googleapis.com/auth/userinfo.email"
+                    "https://www.googleapis.com/auth/userinfo.profile"])
     .refreshAccessToken .getTokenValue))
 
 (defn get-auth-header
