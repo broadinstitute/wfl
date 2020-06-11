@@ -1,5 +1,5 @@
 (ns zero.service.datarepo
-  "Do stuff in the data repo"
+  "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clj-http.client :as http]
@@ -19,26 +19,6 @@
   [environment]
   (str (dr-url environment) "/api/repository/v1"))
 
-(defn get-data-repo-header
-  "An Authorization header for the Data Repo."
-  []
-  (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")
-        env (zero/throw-or-environment-keyword! environment)
-        iam "https://iamcredentials.googleapis.com/v1/projects/"
-        path (get-in env/stuff [env :server :service-account])
-        email (-> path io/reader (json/read :key-fn keyword) :client_email)
-        url (str iam "-/serviceAccounts/" email ":generateAccessToken")
-        scope ["https://www.googleapis.com/auth/userinfo.email"
-               "https://www.googleapis.com/auth/userinfo.profile"]
-        token (-> {:method :post        ; :debug true :debug-body true
-                   :url     url
-                   :headers (once/get-auth-header)
-                   :body    (json/write-str {:scope scope})}
-                http/request :body
-                (json/read-str :key-fn keyword)
-                :accessToken)]
-    {"Authorization" (str "Bearer" \space token)}))
-
 (defn thing-ingest
   "Ingest THING to DATASET-ID according to BODY in ENVIRONMENT."
   [environment dataset-id thing body]
@@ -46,7 +26,7 @@
     (-> {:method       :post            ; :debug true :debug-body true
          :url          url              ; :throw-exceptions false
          :content-type :application/json
-         :headers      (get-data-repo-header)
+         :headers      (once/get-service-account-header)
          :body         body}
       http/request :body
       (json/read-str :key-fn keyword)
@@ -82,7 +62,7 @@
         (http/request
           {:method :get                 ; :debug true :debug-body true
            :url (format "%s/jobs/%s/result" (api environment) job-id)
-           :headers (get-data-repo-header)
+           :headers (once/get-service-account-header)
            :throw-exceptions false})]
     (if (== 200 status)
       (json/read-str body :key-fn keyword)
@@ -94,7 +74,7 @@
   (letfn [(running? []
             (-> {:method :get ; :debug true :debug-body true
                  :url (format "%s/jobs/%s" (api environment) job-id)
-                 :headers (get-data-repo-header)}
+                 :headers (once/get-service-account-header)}
               http/request :body
               (json/read-str :key-fn keyword)
               :job_status

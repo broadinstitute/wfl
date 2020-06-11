@@ -35,7 +35,7 @@
       (util/shell! "gcloud" "auth" "print-access-token"))))
 
 (defn get-service-account-header
-  "An Authorization header with service account Bearer token"
+  "An Authorization header with service account Bearer token."
   []
   (authorization-header-with-bearer-token
     (let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT" "debug")

@@ -17,8 +17,8 @@
   "Run in this project."
   "broad-gotc-dev-storage")
 
-(defonce unique
-  #_"A string likely to be unique."
+(def unique
+  "A string likely to be unique."
   (str/replace (str (UUID/randomUUID)) "-" ""))
 
 (def bucket
