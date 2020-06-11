@@ -253,9 +253,9 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
            :write_to_cache    true
            :default_runtime_attributes
            {:docker    (str/join "/" [gcr repo image])
-            :noAddress noAddress
             :zones     google-cloud-zones}}
-        (maybe :monitoring_script cromwell)))))
+        (maybe :monitoring_script cromwell)
+        (maybe :noAddress noAddress)))))
 
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
