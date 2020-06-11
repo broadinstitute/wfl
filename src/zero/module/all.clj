@@ -115,18 +115,12 @@
     url
     (str url "/")))
 
-(defn- get-possible-cromwell-environments
-  [url]
-  (->> env/stuff
-    (filter #(= url (-> % second :cromwell :url)))
-    keys))
-
-(defn get-cromwell-environment
-  "Loop up environment from Cromwell URL."
-  ([environment-keys url]
-   (->> (get-possible-cromwell-environments url)
-     (filter #(contains? environment-keys %))
-     first))
+(defn cromwell-environments
+  "Keywords from the set of ENVIRONMENTS with Cromwell URL."
   ([url]
-   (->> (get-possible-cromwell-environments url)
-     first)))
+   (->> env/stuff
+     (filter #(-> % second :cromwell :url #{url}))
+     keys))
+  ([environments url]
+   (->> url cromwell-environments
+     (filter environments))))

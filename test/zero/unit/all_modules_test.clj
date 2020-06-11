@@ -1,13 +1,14 @@
 (ns zero.unit.all-modules-test
   (:require [clojure.test :refer [deftest testing is]]
+            [zero.environments :as env]
             [zero.module.all :as all]))
 
-(deftest test-get-cromwell-environment
-  (let [url (get-in zero.environments/gotc-dev [:cromwell :url])]
+(deftest test-cromwell-environments
+  (let [url (get-in env/gotc-dev [:cromwell :url])]
     (testing "get a cromwell env from all possible envs"
-      (is (= :gotc-dev (all/get-cromwell-environment url))))
+      (is (some #{:gotc-dev} (all/cromwell-environments url))))
     (testing "get a cromwell env from a set of possible envs"
-      (let [allowable-envs #{:wgs-dev :wgs-prod :wgs-staging}]
-        (is (= :wgs-dev (all/get-cromwell-environment allowable-envs url)))))
+      (is (some #{:wgs-dev} (all/cromwell-environments
+                              #{:wgs-dev :wgs-prod :wgs-staging} url))))
     (testing "unknown url"
-      (is (nil? (all/get-cromwell-environment "https://no.such.cromwell/"))))))
+      (is (nil? (all/cromwell-environments "https://no.such.cromwell/"))))))

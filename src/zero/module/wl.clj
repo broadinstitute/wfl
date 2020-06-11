@@ -14,8 +14,8 @@
 
 (def get-cromwell-wgs-environment
   "Map Cromwell URL to a :wgs environment."
-  (let [environments #{:wgs-dev :wgs-prod :wgs-staging}]
-    (partial all/get-cromwell-environment environments)))
+  (comp first (partial all/cromwell-environments
+                #{:wgs-dev :wgs-prod :wgs-staging})))
 
 (defn maybe-update-workflow-status!
   "Use TX to update the status of WORKFLOW in ENV."
@@ -25,8 +25,8 @@
       (let [now    (OffsetDateTime/now)
             status (util/do-or-nil (cromwell/status env uuid))]
         (jdbc/update! tx items
-                      (maybe {:updated now :uuid uuid} :status status)
-                      ["id = ?" id])))))
+          (maybe {:updated now :uuid uuid} :status status)
+          ["id = ?" id])))))
 
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."

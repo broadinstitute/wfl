@@ -38,7 +38,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell items uuid]}]
-  (let [env (all/get-cromwell-environment cromwell)
+  (let [env (first (all/cromwell-environments cromwell))
         now (OffsetDateTime/now)]
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(submit! [{:keys [id uuid] :as workflow}]
