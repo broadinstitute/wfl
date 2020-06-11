@@ -108,9 +108,9 @@
 (defn genome-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
-  (let [{:keys [vault_path_to_picard_account vault_token_path]}
+  (let [{:keys [google_account_vault_path vault_token_path]}
         (env/stuff environment)]
-    {:google_account_vault_path vault_path_to_picard_account
+    {:google_account_vault_path google_account_vault_path
      :vault_token_path vault_token_path
      :unmapped_bam_suffix ".unmapped.bam"
      :papi_settings       {:agg_preemptible_tries 3
