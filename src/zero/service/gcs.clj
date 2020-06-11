@@ -213,7 +213,8 @@
      :body
      (json/read-str :key-fn keyword)))
   ([url]
-   (apply object-meta (parse-gs-url url))))
+   (let [[bucket object] (parse-gs-url url)]
+     (object-meta bucket object ""))))
 
 (defn patch-object!
   "Patch the METADATA on URL or OBJECT in BUCKET."
