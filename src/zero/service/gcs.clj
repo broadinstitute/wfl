@@ -245,13 +245,15 @@
 
 (defn add-object-reader
   "Add USER as a reader on OBJECT in BUCKET in gcs"
-  [email bucket object]
-  (let [acl       (partial cons {:entity (str "user-" email)
-                                 :role   "READER"
-                                 :email  email})
-        meta      (object-meta bucket object "?projection=full")
-        acl-entry (update meta :acl acl)]
-    (patch-object! acl-entry bucket object)))
+  ([email bucket object]
+   (let [acl       (partial cons {:entity (str "user-" email)
+                                  :role   "READER"
+                                  :email  email})
+         meta      (object-meta bucket object "?projection=full")
+         acl-entry (update meta :acl acl)]
+     (patch-object! acl-entry bucket object)))
+  ([email url]
+   (apply add-object-reader email (parse-gs-url url))))
 
 (defn patch-bucket!
   "Patch BUCKET in PROJECT with METADATA."
