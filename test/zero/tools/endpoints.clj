@@ -1,11 +1,13 @@
 (ns zero.tools.endpoints
-  (:require [clj-http.client :as client]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
+            [clj-http.client :as client]
             [zero.once :as once]))
 
 (def server
-  "https://workflow-launcher.gotc-dev.broadinstitute.org"
-  "http://localhost:8080")
+  "The WFL server URL to test."
+  (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
+    "https://workflow-launcher.gotc-dev.broadinstitute.org"
+    "http://localhost:8080"))
 
 (defn parse-json-string
   "Parse the json string STR into a keyword-string map"
@@ -36,13 +38,6 @@
 (def first-pending-workload
   "Query the v1 api for first workload that has not been started"
   (comp first get-pending-workloads))
-
-(defn first-pending-workload-or
-  "Query the v1 api for the first pending workload or evaluate the ALTERNATIVE
-  if no pending workload exists"
-  [alternative]
-  (let [workload (first-pending-workload)]
-    (if workload workload (alternative))))
 
 (defn create-workload
   "Create workload defined by WORKLOAD"
