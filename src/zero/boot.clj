@@ -51,7 +51,7 @@
   "Make the Project Object Model for this program from THE-VERSION."
   [the-version]
   {:description "WFL manages workflows."
-   :project     'org.broadinstitute/wfl
+   :project     zero/artifactId
    :url         (zero/the-github-repos zero/the-name)
    :version     (:version the-version)})
 

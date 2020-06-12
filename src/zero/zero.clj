@@ -11,7 +11,7 @@
 
 (def artifactId
   "The artifact ID for this program."
-  'org.broadinstitute/zero)
+  'org.broadinstitute/wfl)
 
 (def the-github-repos
   "Map Zero source repo names to their URLs"
