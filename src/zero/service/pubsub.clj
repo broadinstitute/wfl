@@ -120,15 +120,15 @@
   "Subscribe to TOPIC in PROJECT with the name SUBSCRIPTION.
   Push delivery to the pushEndpoint URL when specified."
   ([request]
-   (-> request
-       (update-in [:body] json/write-str)
-       http/request
-       :body
-       (json/read-str :key-fn keyword)))
+   (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))]
+     (-> request
+       (update-in [:body] jsonify)
+       http/request :body
+       (json/read-str :key-fn keyword))))
   ([request pushEndpoint]
    (subscribe (assoc-in request
-                        [:body :pushConfig]
-                        {:pushEndpoint pushEndpoint})))
+                [:body :pushConfig]
+                {:pushEndpoint pushEndpoint})))
   ([project topic subscription]
    (subscribe (subscribe-request project topic subscription)))
   ([project topic subscription pushEndpoint]
@@ -158,38 +158,37 @@
 (defn publish
   "Publish the MESSAGES to TOPIC in PROJECT and return their messageIds."
   [project topic & messages]
-  (letfn [(encode [data] (->> data
-                              json/write-str
-                              .getBytes
-                              (.encodeToString (Base64/getEncoder))))
+  (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))
+          (encode [data] (->> data
+                           jsonify
+                           .getBytes
+                           (.encodeToString (Base64/getEncoder))))
           (wrap [message] {:data       (encode message)
                            :attributes attributes})]
     (-> {:method  :post
          :url     (str api-url (topic-name project topic) :publish)
          :headers (once/get-auth-header)
-         :body    (json/write-str {:messages (map wrap messages)})}
-        http/request
-        :body
-        (json/read-str :key-fn keyword)
-        :messageIds)))
+         :body    (jsonify {:messages (map wrap messages)})}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :messageIds)))
 
 ;; The :returnImmediately and :maxMessages are just illustrative.
 ;;
 (defn pull
   "Return any MESSAGES from SUBSCRIPTION in PROJECT."
   [project subscription]
-  (letfn [(ednify [data] (json/read-str data :key-fn keyword))
+  (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))
+          (ednify [json] (json/read-str json :key-fn keyword))
           (decode [data] (->> data
-                              (.decode (Base64/getDecoder))
-                              String.
-                              ednify))
+                           (.decode (Base64/getDecoder))
+                           String. ednify))
           (unwrap [m] (update-in m [:message :data] decode))]
     (-> {:method  :post
          :url     (str api-url (subscription-name project subscription) :pull)
          :headers (once/get-auth-header)
-         :body    (json/write-str {:returnImmediately true :maxMessages 23})}
-        http/request
-        :body
-        (json/read-str :key-fn keyword)
-        :receivedMessages
-        (->> (map unwrap)))))
+         :body    (jsonify {:returnImmediately true :maxMessages 23})}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :receivedMessages
+      (->> (map unwrap)))))

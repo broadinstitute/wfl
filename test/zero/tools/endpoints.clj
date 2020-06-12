@@ -43,7 +43,7 @@
   "Create workload defined by WORKLOAD"
   [workload]
   (let [auth-header (once/get-auth-header)
-        payload     (json/write-str workload)
+        payload     (json/write-str workload :escape-slash false)
         response    (client/post (str server "/api/v1/create")
                       {:headers      auth-header
                        :content-type :json
@@ -55,7 +55,7 @@
   "Start processing WORKLOAD. WORKLOAD must be known to the server."
   [workload]
   (let [auth-header (once/get-auth-header)
-        payload     (json/write-str [workload])
+        payload     (json/write-str [workload] :escape-slash false)
         response    (client/post (str server "/api/v1/start")
                       {:headers      auth-header
                        :content-type :json
@@ -79,7 +79,7 @@
   "Create and start workload defined by WORKLOAD"
   [workload]
   (let [auth-header (once/get-auth-header)
-        payload     (json/write-str workload)
+        payload     (json/write-str workload :escape-slash false)
         response    (client/post (str server "/api/v1/exec")
                       {:headers      auth-header
                        :content-type :json

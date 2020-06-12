@@ -35,25 +35,25 @@
 (defn file-ingest
   "Ingest SRC file as VDEST in ENVIRONMENT using DATASET-ID and PROFILE-ID."
   [environment dataset-id profile-id src vdest]
-  (->> {:description "derived from file name + extension?"
-        :profileId   profile-id
-        :source_path src
-        :target_path vdest
-        :mime_type   "text/plain"}
-    json/write-str
-    (thing-ingest environment dataset-id "files")))
+  (-> {:description "derived from file name + extension?"
+       :profileId   profile-id
+       :source_path src
+       :target_path vdest
+       :mime_type   "text/plain"}
+    (json/write-str :escape-slash false)
+    (->> (thing-ingest environment dataset-id "files"))))
 
 (defn tabular-ingest
   "Ingest TABLE at PATH to DATASET-ID in ENVIRONMENT and return the job ID."
   [environment dataset-id path table]
-  (->> {:format                "json"
-        :ignore_unknown_values true
-        :load_tag              "string"
-        :max_bad_records       0
-        :path                  path
-        :table                 table}
-    json/write-str
-    (thing-ingest environment dataset-id "ingest")))
+  (-> {:format                "json"
+       :ignore_unknown_values true
+       :load_tag              "string"
+       :max_bad_records       0
+       :path                  path
+       :table                 table}
+    (json/write-str :escape-slash false)
+    (->> (thing-ingest environment dataset-id "ingest"))))
 
 (defn get-job-result
   "Get result for JOB-ID in ENVIRONMENT."

@@ -23,13 +23,14 @@
 (defn- service-account-credentials
   "Throw or return credentials for the service account SA."
   [{:keys [file vault] :as sa}]
-  (-> (cond file  (io/file file)
-            vault (-> vault util/vault-secrets json/write-str .getBytes)
-            :else (throw (IllegalArgumentException. (pr-str sa))))
-    io/input-stream GoogleCredentials/fromStream
-    (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
-                    "https://www.googleapis.com/auth/userinfo.email"
-                    "https://www.googleapis.com/auth/userinfo.profile"])))
+  (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))]
+    (-> (cond file  (io/file file)
+              vault (-> vault util/vault-secrets jsonify .getBytes)
+              :else (throw (IllegalArgumentException. (pr-str sa))))
+      io/input-stream GoogleCredentials/fromStream
+      (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
+                      "https://www.googleapis.com/auth/userinfo.email"
+                      "https://www.googleapis.com/auth/userinfo.profile"]))))
 
 (defn- service-account-token
   "Throw or return a bearer token for the service account SA."

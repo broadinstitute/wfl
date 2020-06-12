@@ -61,7 +61,8 @@
         (stage table (json/write-str
                        {:id        bucket
                         :vcf       (ingest vcf-url vcf)
-                        :vcf_index (ingest vcf-url (str vcf ".tbi"))}))
+                        :vcf_index (ingest vcf-url (str vcf ".tbi"))}
+                       :escape-slash false))
         (let [table-url (gcs/gs-url bucket table)
               job (datarepo/tabular-ingest :gotc-dev dataset table-url "sample")
               {:keys [bad_row_count row_count]} (datarepo/poll-job :gotc-dev job)]

@@ -223,7 +223,7 @@
         :url          (bucket-object-url bucket object)
         :content-type :application/json
         :headers      (once/get-auth-header)
-        :body         (json/write-str metadata)}
+        :body         (json/write-str metadata :escape-slash false)}
      http/request :body
      (json/read-str :key-fn keyword)))
   ([metadata url]
@@ -269,5 +269,5 @@
            :url          (:selfLink (first buckets))
            :content-type :application/json
            :headers      (once/get-auth-header)
-           :body         (json/write-str metadata)}
+           :body         (json/write-str metadata :escape-slash false)}
         http/request :body (json/read-str :key-fn keyword)))))
