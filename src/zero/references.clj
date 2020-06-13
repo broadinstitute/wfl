@@ -51,3 +51,12 @@
      :known_indels_sites_vcfs    [(hg gold ".vcf.gz")
                                   (hg hsa  ".known_indels.vcf.gz")]
      :reference_fasta             reference_fasta}))
+
+(def hg19-arrays-references
+  "HG19 reference files for arrays processing."
+  {:ref_fasta                   "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.fasta"
+   :ref_fasta_index             "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.fasta.fai"
+   :ref_dict                    "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.dict"
+   :dbSNP_vcf                   "gs://gcp-public-data--broad-references/hg19/v0/dbsnp_138.b37.vcf.gz"
+   :dbSNP_vcf_index             "gs://gcp-public-data--broad-references/hg19/v0/dbsnp_138.b37.vcf.gz.tbi"}
+  )
