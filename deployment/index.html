@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.3">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.3.0">
     
     
       
@@ -51,6 +51,7 @@
     
     <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
   
+    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -583,7 +584,7 @@
 <p>Run:
     <div class="highlight"><pre><span></span><code>helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
 </code></pre></div>
-    to add gotc’s Helm repo to your Helm. Note <code>gotc-charts</code> is just an alias, you could give it any name you want. </p>
+    to add gotc’s Helm repo to your Helm. Note <code>gotc-charts</code> is just an alias, you could give it any name you want.</p>
 </li>
 <li>
 <p>Run:
@@ -602,14 +603,14 @@ to check the list of repo you have connected to anytime you want.</p>
 </li>
 </ul>
 <h3 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h3>
-<p>Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of <a href="https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm">these YML files</a>, with your modifications to some specific values in it. </p>
+<p>Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of <a href="https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm">these YML files</a>, with your modifications to some specific values in it.</p>
 <p><strong>Note:</strong> some of the values in these YML files contain credentials or sensitive information, so <strong>DO NOT</strong> checkout them into your version control system or make them public!!!</p>
 <p>Now with Helm and the custom values YML files, you could run for instance:</p>
 <p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
 where:</p>
 <ul>
-<li><code>gotc-dev</code> is the name of the deployment </li>
+<li><code>gotc-dev</code> is the name of the deployment</li>
 <li><code>gotc-charts/authproxy</code> is following <code>chart-repo-alias/chartname</code></li>
 <li><code>custom-authvals.yaml</code> is the path to your custom values YML file</li>
 </ul>
@@ -627,7 +628,7 @@ To update an existing deployment without re-creating all of the resources which 
 <p>Similar to how you have setup the Helm charts, you could run:</p>
 <p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
-Or 
+Or
 <div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
 To install or upgrade the deployments on your local cluster. One thing to note is that you <strong>CANNOT</strong> create an <code>ingress</code> resource locally, so it’s important to <code>disable</code> the ingress creation in your custom values YML files.</p>
@@ -711,14 +712,14 @@ To install or upgrade the deployments on your local cluster. One thing to note i
     </div>
     
       <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.a45f732b.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/bundle.a14cc5fd.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.c03f0417.min.js"
+            worker: "../assets/javascripts/worker/search.7a2ea5ba.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
