@@ -1,8 +1,10 @@
 (ns zero.unit.pubsub-test
   "Test the Google Cloud Storage namespace."
-  (:require [clojure.string      :as str]
+  (:require [clojure.java.io     :as io]
+            [clojure.string      :as str]
             [clojure.test        :refer [deftest is testing]]
-            [zero.service.pubsub :as pubsub])
+            [zero.service.pubsub :as pubsub]
+            [zero.service.gcs    :as gcs])
   (:import [java.util UUID]))
 
 (def project
@@ -76,3 +78,30 @@
     (finally
       (pubsub/unsubscribe project subscription)
       (pubsub/delete-topic project topic))))
+
+(def notification-bucket
+  "A GCS bucket that publishes to a PubSub topic on file upload events."
+  "test-storage-notifications")
+
+(def notification-subscription
+  "The subscription to the PubSub topic that the notification-bucket publishes to."
+  "test-storage-notification-subscription")
+
+(deftest bucket-notification-test
+  (try
+    (spit "test.txt" "testing")
+    (gcs/upload-file "./test.txt" notification-bucket "test.txt")
+    (testing "pull"
+      (let [result (pubsub/pull project notification-subscription)
+            data (get-in (first result) [:message :data])]
+        (is (= (:name data) "test.txt"))
+        (is (= (:bucket data) notification-bucket))
+        (testing "acknowledge"
+          (let [ack-ids (map :ackId result)
+                ack-result (pubsub/acknowledge project notification-subscription ack-ids)
+                pull-result (pubsub/pull project notification-subscription)]
+            (is (= ack-result {}))
+            (is (= (count pull-result) 0))))))
+     (finally
+      (gcs/delete-object notification-bucket "test.txt")
+      (io/delete-file "test.txt"))))
