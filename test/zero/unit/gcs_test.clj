@@ -8,7 +8,7 @@
 
 (def project
   "Test in this Google Cloud project."
-  "broad-gotc-dev")
+  "broad-gotc-dev-storage")
 
 (def blame
   "Who is to blame?"
