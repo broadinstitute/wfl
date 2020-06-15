@@ -32,14 +32,14 @@
           output-dir (clojure.string/join "/" (pop url-parts))
           metadata-file (str output-file "_" end-time ".metadata.json")]
       (println (str  "Saving metadata to " metadata-file))
-      (spit metadata-file (json/write-str  metadata))
+      (spit metadata-file (json/write-str metadata :escape-slash false))
       (if (:destination_cloud_path inputs)
         (gcs/upload-file
           metadata-file
           (str (:destination_cloud_path inputs) "/" metadata-file))
         (gcs/upload-file metadata-file (str output-dir "/" metadata-file))))
     (str "Skipping workflow " (:id metadata)
-         " - no valid output destination\n")))
+      " - no valid output destination\n")))
 
 
 (defn get-workflow-metadata-by-output

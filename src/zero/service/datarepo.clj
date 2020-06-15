@@ -1,10 +1,12 @@
 (ns zero.service.datarepo
-  "Do stuff in the data repo"
+  "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clj-http.client :as http]
             [zero.environments :as env]
             [zero.once :as once]
-            [zero.util :as util])
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:import [org.apache.http HttpException]))
 
 (defn dr-url
@@ -17,97 +19,70 @@
   [environment]
   (str (dr-url environment) "/api/repository/v1"))
 
-(defn collect-specific-header-for
-  "Request user log in to gcloud account with specific abilities"
-  [description]
-  (println (format (str "Google is about to request authorization.\n"
-                        "Please sign in with %s.")
-                   description))
-  (util/shell-io! "gcloud" "auth" "login")
-  (util/bearer-token-header-for (once/new-user-credentials)))
-
-(defonce data-repo-headers
-         (delay (collect-specific-header-for
-            "an account that can make requests to the Data Repo")))
-
-(defonce gcs-headers
-         (delay (collect-specific-header-for
-            "an account that can make requests to your gcs bucket")))
-
 (defn thing-ingest
-  "Request some ingest into the Data Repository. Returns job id for polling."
+  "Ingest THING to DATASET-ID according to BODY in ENVIRONMENT."
   [environment dataset-id thing body]
-  (let [url     (format "%s/datasets/%s/%s" (api environment) dataset-id thing)
-        request {:method  :post
-                 ;; :debug true :debug-body true
-                 ;; :throw-exceptions false
-                 :url     url
-                 :body    body
-                 :content-type :application/json
-                 :headers @data-repo-headers}]
-    (-> (http/request request)
-        :body
-        (json/read-str :key-fn keyword)
-        :id)))
+  (let [url (format "%s/datasets/%s/%s" (api environment) dataset-id thing)]
+    (-> {:method       :post            ; :debug true :debug-body true
+         :url          url              ; :throw-exceptions false
+         :content-type :application/json
+         :headers      (once/get-service-account-header)
+         :body         body}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :id)))
 
 (defn file-ingest
-  "Request file ingest in the Data Repository. Returns job id for polling."
+  "Ingest SRC file as VDEST in ENVIRONMENT using DATASET-ID and PROFILE-ID."
   [environment dataset-id profile-id src vdest]
-  (let [description "something derived from file name + extension?"
-        body (json/write-str {:description description
-                              :profileId   profile-id
-                              :source_path src
-                              ;;will receive error when polling job if not unique
-                              :target_path vdest
-                              :mime_type   "text/plain"})]
-    (thing-ingest environment dataset-id "files" body)))
+  (-> {:description "derived from file name + extension?"
+       :profileId   profile-id
+       :source_path src
+       :target_path vdest
+       :mime_type   "text/plain"}
+    (json/write-str :escape-slash false)
+    (->> (thing-ingest environment dataset-id "files"))))
 
 (defn tabular-ingest
-  "Request tabular ingest in Data Repository. Returns job id for polling."
+  "Ingest TABLE at PATH to DATASET-ID in ENVIRONMENT and return the job ID."
   [environment dataset-id path table]
-  (let [body (json/write-str {:format                "json"
-                              :ignore_unknown_values true
-                              :load_tag              "string"
-                              :max_bad_records       0
-                              :path                  path
-                              :strategy              "upsert"
-                              :table                 table})]
-    (thing-ingest environment dataset-id "ingest" body)))
+  (-> {:format                "json"
+       :ignore_unknown_values true
+       :load_tag              "string"
+       :max_bad_records       0
+       :path                  path
+       :table                 table}
+    (json/write-str :escape-slash false)
+    (->> (thing-ingest environment dataset-id "ingest"))))
 
 (defn get-job-result
-  "Get result of a successful job; returns json model specific to job type"
+  "Get result for JOB-ID in ENVIRONMENT."
   [environment job-id]
-  (let [url (format "%s/jobs/%s/result" (api environment) job-id)
-        request {:method :get
-                 ;; :debug true :debug-body true
-                 :url url
-                 :headers @data-repo-headers
-                 :throw-exceptions false}
-        response (http/request request)
-        body (-> response
-                 :body
-                 (json/read-str :key-fn keyword))]
-    (if (#{200} (:status response))
-      body
-      (throw (HttpException. (json/write-str body))))))
+  (let [{:keys [body status]}
+        (http/request
+          {:method :get                 ; :debug true :debug-body true
+           :url (format "%s/jobs/%s/result" (api environment) job-id)
+           :headers (once/get-service-account-header)
+           :throw-exceptions false})]
+    (if (== 200 status)
+      (json/read-str body :key-fn keyword)
+      (throw (HttpException. body)))))
 
 (defn poll-job
-  "Poll job for completion, retrieve result if and when it is ready"
+  "Return result for JOB-ID in ENVIRONMENT when it stops running."
   [environment job-id]
-  (let [url (format "%s/jobs/%s" (api environment) job-id)
-        request {:method :get
-                 ;; :debug true :debug-body true
-                 :url url
-                 :headers @data-repo-headers}
-        status (-> (http/request request)
-                   :body
-                   (json/read-str :key-fn keyword)
-                   :job_status)]
-    (if (#{"running"} status)
-      (do (Thread/sleep 10000)
-          (poll-job environment job-id))
-      ;; On job failure, this will return 400 and an error message.
-      (get-job-result environment job-id))))
+  (letfn [(running? []
+            (-> {:method :get ; :debug true :debug-body true
+                 :url (format "%s/jobs/%s" (api environment) job-id)
+                 :headers (once/get-service-account-header)}
+              http/request :body
+              (json/read-str :key-fn keyword)
+              :job_status
+              #{"running"}))]
+    (when (running?)
+      (Thread/sleep 10000)
+      (poll-job environment job-id))
+    (get-job-result environment job-id)))
 
 (comment
   (def successful-file-ingest-response

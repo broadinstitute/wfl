@@ -1,19 +1,18 @@
 (ns zero.integration.v1-endpoint-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is]]
+            [zero.module.copyfile :as cp]
+            [zero.service.cromwell :refer [wait-for-workflow-complete]]
+            [zero.service.gcs :as gcs]
             [zero.tools.endpoints :as endpoints]
             [zero.tools.fixtures :refer [with-temporary-gcs-folder]]
-            [zero.tools.workloads :as workloads]
-            [clojure.string :as str]
-            [zero.service.cromwell :refer [wait-for-workflow-complete]]
-            [clojure.string :as string]
-            [zero.service.gcs :as gcs]
-            [zero.module.copyfile :as cp])
+            [zero.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
 (def make-workload (partial endpoints/create-workload workloads/wl-workload))
+
 (def get-existing-workload-uuids
   (comp set (partial map :uuid) endpoints/get-workloads))
-(defn- fullfile [& segments] (string/join "/" segments))
 
 (deftest test-create-workload
   (testing "The `create` endpoint creates new workload"
@@ -32,7 +31,7 @@
 
 (deftest test-start-workload
   (testing "The `start` endpoint starts an existing workload"
-    (let [unstarted (endpoints/first-pending-workload-or make-workload)
+    (let [unstarted (or (endpoints/first-pending-workload) make-workload)
           response  (endpoints/start-workload unstarted)
           status    (endpoints/get-workload-status (:uuid response))]
       (is (:uuid unstarted) "Workloads should have been assigned a uuid")
@@ -61,10 +60,10 @@
 
 (deftest test-copyfile-workload
   (with-temporary-gcs-folder uri
-    (let [src (string/join [uri "input.txt"])
-          dst (string/join [uri "output.txt"])]
+    (let [src (str/join [uri "input.txt"])
+          dst (str/join [uri "output.txt"])]
       (->
-        (fullfile "test" "zero" "resources" "copy-me.txt")
+        (str/join "/" ["test" "zero" "resources" "copy-me.txt"])
         (gcs/upload-file src))
       (let [workload  (workloads/make-copyfile-workload src dst)
             await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)

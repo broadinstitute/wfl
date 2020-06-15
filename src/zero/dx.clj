@@ -7,6 +7,8 @@
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [clj-http.client :as http]
+            [zero.once :as once]
             [zero.service.cromwell :as cromwell]
             [zero.util :as util]
             [zero.zero :as zero]))
@@ -372,6 +374,16 @@
     (letfn [(show! [id] (prn (str/join "/" [api id "timing"])))]
       (run! show! ids))))
 
+(defn google-userinfo
+  "Nil or your OAuth2 'userinfo' from Google."
+  []
+  (-> {:method  :get                    ; :debug true :debug-body true
+       :url     "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"
+       :headers (once/get-auth-header)}
+      http/request :body
+      (json/read-str :key-fn keyword)
+      util/do-or-nil pprint))
+
 (def commands
   "Map diagnostic names to functions."
   (let [names ["abort"
@@ -382,6 +394,7 @@
                "event-timing"
                "failed-tasks"
                "failed-workflows"
+               "google-userinfo"
                "input-failures"
                "json-diff"
                "json-edn"

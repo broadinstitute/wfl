@@ -1,6 +1,5 @@
 (ns zero.tools.fixtures
-  (:require [clojure.string :refer [join]]
-            [zero.service.gcs :as gcs])
+  (:require [zero.service.gcs :as gcs])
   (:import (java.util UUID)))
 
 (defn method-overload-fixture
@@ -26,7 +25,7 @@
       ;; <- temporary folder deleted
   "
   [uri & body]
-  `(let [name# (join ["wfl-test-" (UUID/randomUUID) "/"])
+  `(let [name# (str "wfl-test-" (UUID/randomUUID) "/")
          ~uri (gcs/gs-url gcs-test-bucket name#)]
      (try ~@body
           (finally

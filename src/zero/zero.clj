@@ -3,8 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [zero.environments :as env])
-  (:import [java.util UUID]))
+            [zero.environments :as env]))
 
 (def the-name
   "Use this name to refer to this program."
@@ -12,7 +11,7 @@
 
 (def artifactId
   "The artifact ID for this program."
-  'org.broadinstitute/zero)
+  'org.broadinstitute/wfl)
 
 (def the-github-repos
   "Map Zero source repo names to their URLs"
