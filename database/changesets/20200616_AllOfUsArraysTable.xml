@@ -26,7 +26,7 @@
                 sample_alias                text,        -- input to the workflow
                 sample_lsid                 text,        -- input to the workflow
                 updated                     timestamptz, -- status update time
-                uuid                        text,        -- Cromwell workflow UUID
+                uuid                        text         -- Cromwell workflow UUID
             )
         </sql>
     </changeSet>
