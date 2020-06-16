@@ -192,3 +192,14 @@
       (json/read-str :key-fn keyword)
       :receivedMessages
       (->> (map unwrap)))))
+
+(defn acknowledge
+  "Acknowledge messages from SUBSCRIPTION in PROJECT given their ACK-IDS"
+  [project subscription ack-ids]
+  (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))]
+    (-> {:method  :post
+       :url     (str api-url (subscription-name project subscription) :acknowledge)
+       :headers (once/get-auth-header)
+       :body    (jsonify {:ackIds ack-ids})}
+      http/request :body
+      (json/read-str :key-fn keyword))))
