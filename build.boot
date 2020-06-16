@@ -45,7 +45,7 @@
     [ring/ring-json                          "0.5.0"]
     [com.google.cloud.sql/postgres-socket-factory            "1.0.15"]
     [com.google.cloud.sql/jdbc-socket-factory-core           "1.0.15"]
-    [com.google.auth/google-auth-library-oauth2-http         "0.15.0"]
+    [com.google.auth/google-auth-library-oauth2-http         "0.20.0"]
     [adzerk/boot-test                  "1.2.0"   :scope "test"]
     [onetom/boot-lein-generate         "0.1.3"   :scope "test"]])
 
@@ -77,17 +77,11 @@
   "Build this."
   []
   (comp (manage-version-and-resources)
-        (pom)
-        (aot :namespace '#{zero.main})
-        (uber)
-        (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
-        (target)))
-
-(deftask deploy
-  "Deploy this to Google App Engine in ENVIRONMENT."
-  []
-  (zero.boot/google-app-engine-deploy
-    (or (first *args*) "gotc-dev")))
+    (pom)
+    (aot :namespace '#{zero.main})
+    (uber)
+    (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
+    (target)))
 
 (defn -main
   "Run this."

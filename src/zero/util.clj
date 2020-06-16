@@ -59,21 +59,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                  msg   (format (str/join \newline lines) zero/the-name error)]
              (println msg))))))
 
-(defn bearer-token-header-for
-  "Return a valid bearer token for the GoogleCredentials CREDENTIAL."
-  [^GoogleCredentials credentials]
-  (let [token (some-> credentials
-                      (doto .refreshIfExpired)
-                      .getAccessToken
-                      .getTokenValue)]
-    (when-not token
-      (let [lines ["%1$s: Cannot generate token from Google Credentials."
-                   "%1$s: Run 'gsutil auth list' to check your account if running locally"
-                   "%1$s: Try to login if running on a server."]
-            err (format (str/join \newline lines) zero/the-name)]
-        (throw (Exception. err))))
-    {"Authorization" (str "Bearer " token)}))
-
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."
   [string prefix]
@@ -132,7 +117,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (lazy-seq
     (when (seq coll)
       (cons (first coll)
-            (lazy-unchunk (rest coll))))))
+        (lazy-unchunk (rest coll))))))
 
 (defn keys-in
   "Return all keys used in any maps in TREE."
@@ -140,9 +125,9 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (letfn [(follow? [node]
             (or (map? node) (vector? node) (set? node) (list? node)))]
     (reduce into #{}
-            (remove nil?
-                    (map (fn [node] (when (map? node) (keys node)))
-                         (tree-seq follow? identity tree))))))
+      (remove nil?
+        (map (fn [node] (when (map? node) (keys node)))
+          (tree-seq follow? identity tree))))))
 
 (defn fmap
   "Map the function F over the values in map M."
@@ -153,40 +138,42 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "The number of minutes from START to END."
   [start end]
   (. ChronoUnit/MINUTES between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+    (OffsetDateTime/parse start)
+    (OffsetDateTime/parse end)))
 
 (defn seconds-between
   "The number of seconds from START to END."
   [start end]
   (. ChronoUnit/SECONDS between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+    (OffsetDateTime/parse start)
+    (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."
   [commands]
   (let [indent (str/join (repeat 4 \space))]
     (apply concat
-           (for [[n f] (sort-by first commands)]
-             (let [{:keys [arglists doc]} (meta f)
-                   command (apply pr-str (first arglists))]
-               [(str/join " " [" " n command]) (str indent doc)])))))
+      (for [[n f] (sort-by first commands)]
+        (let [{:keys [arglists doc]} (meta f)
+              command (apply pr-str (first arglists))]
+          [(str/join " " [" " n command]) (str indent doc)])))))
 
 (defn prefix-keys
   "Prefix all keys in map M with P."
   [m p]
   (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
-          (vals m)))
+    (vals m)))
 
 (defn exome-inputs
   "Exome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
-  {:unmapped_bam_suffix ".unmapped.bam"
-   :google_account_vault_path (get-in env/stuff [environment :vault_path_to_picard_account])
-   :vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :papi_settings {:agg_preemptible_tries 3
-                   :preemptible_tries     3}})
+  (let [{:keys [google_account_vault_path vault_token_path]}
+        (env/stuff environment)]
+    {:unmapped_bam_suffix ".unmapped.bam"
+     :google_account_vault_path google_account_vault_path
+     :vault_token_path vault_token_path
+     :papi_settings {:agg_preemptible_tries 3
+                     :preemptible_tries     3}}))
 
 (def gatk-docker-inputs
   "This is silly."
@@ -195,12 +182,12 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
         br   (prefix-keys gatk :BaseRecalibrator)
         gbr  (prefix-keys gatk :GatherBqsrReports)]
     (-> (merge ab br gbr)
-        (prefix-keys :UnmappedBamToAlignedBam)
-        (prefix-keys :UnmappedBamToAlignedBam)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeReprocessing)
-        (prefix-keys :ExomeReprocessing))))
+      (prefix-keys :UnmappedBamToAlignedBam)
+      (prefix-keys :UnmappedBamToAlignedBam)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeReprocessing)
+      (prefix-keys :ExomeReprocessing))))
 
 (def gc_bias_metrics-inputs
   "This is silly too."
@@ -208,11 +195,11 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
         cam  (prefix-keys bias :CollectAggregationMetrics)
         qm   (prefix-keys bias :CollectReadgroupBamQualityMetrics)]
     (-> (merge cam qm)
-        (prefix-keys :AggregatedBamQC.AggregatedBamQC)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeReprocessing)
-        (prefix-keys :ExomeReprocessing))))
+      (prefix-keys :AggregatedBamQC.AggregatedBamQC)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeReprocessing)
+      (prefix-keys :ExomeReprocessing))))
 
 (defn seeded-shuffle
   "Randomize COLL consistently."
@@ -231,29 +218,29 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
           "us-east4"    "abc"
           "us-west1"    "abc"
           #_#_ "us-west2"  "abc"}
-         (mapcat spray)
-         seeded-shuffle
-         (str/join " "))))
+      (mapcat spray)
+      seeded-shuffle
+      (str/join " "))))
 
 (defn make-options
   "Make options to run the workflow in ENVIRONMENT."
   [environment]
-  (letfn [(maybe [m k v] (if-let [kv (k v)] (assoc m k kv) m))]
+  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
     (let [gcr    "us.gcr.io"
           repo   "broad-gotc-prod"
           image  "genomes-in-the-cloud:2.4.1-1540490856"
-          {:keys [cromwell google_projects jes_gcs_roots noAddress]}
-          (env/stuff environment)]
+          {:keys [cromwell google]} (env/stuff environment)
+          {:keys [projects jes_roots noAddress]} google]
       (-> {:backend           "PAPIv2"
-           :google_project    (rand-nth google_projects)
-           :jes_gcs_root      (rand-nth jes_gcs_roots)
+           :google_project    (rand-nth projects)
+           :jes_gcs_root      (rand-nth jes_roots)
            :read_from_cache   true
            :write_to_cache    true
            :default_runtime_attributes
            {:docker    (str/join "/" [gcr repo image])
-            :noAddress noAddress
             :zones     google-cloud-zones}}
-          (maybe :monitoring_script cromwell)))))
+        (maybe :monitoring_script cromwell)
+        (maybe :noAddress noAddress)))))
 
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
@@ -262,7 +249,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
     (when-not (nat-int? result)
       (throw (IllegalArgumentException.
                (format "%s must be a non-negative integer"
-                       (if (nil? result) "" (format " (%s)" result))))))
+                 (if (nil? result) "" (format " (%s)" result))))))
     result))
 
 (defonce the-system-environment (delay (into {} (System/getenv))))
@@ -282,7 +269,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (let [header (if (empty? comments) ""
                    (str "# " (str/join "\n# " comments) "\n\n"))
         yaml (yaml/generate-string content
-                                   :dumper-options {:flow-style :block})]
+               :dumper-options {:flow-style :block})]
     (spit file (str header yaml))))
 
 (defn shell!
@@ -291,7 +278,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (let [{:keys [exit err out]} (apply shell/sh args)]
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s : %s"
-                                 zero/the-name exit args err))))
+                           zero/the-name exit args err))))
     (str/trim out)))
 
 (defn shell-io!
@@ -300,7 +287,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (let [exit (-> args ProcessBuilder. .inheritIO .start .waitFor)]
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s"
-                                 zero/the-name exit args))))))
+                           zero/the-name exit args))))))
 
 (defn create-jwt
   "Sign a JSON Web Token with OAuth secrets from environment ENV."
@@ -323,4 +310,4 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "True when UUID is UUID-NIL or its string representation."
   [uuid]
   (or (= uuid uuid-nil)
-      (= uuid (str uuid-nil))))
+    (= uuid (str uuid-nil))))

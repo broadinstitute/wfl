@@ -7,7 +7,7 @@ name: Build and Publish Docker
 # events but only for the master branch
 on:
   push:
-    branches: 
+    branches:
       - master
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -69,8 +69,6 @@ jobs:
         boot build
 
         # build the tag to apply.
-        # If this is built from a branch then use the format {BRANCH}-{(short) GITHUB_SHA}
-        # else use the format {Build (defined in build.txt)}-{(short) GITHUB_SHA}
 
         WFL_JAR_PATH="target/wfl-*.jar"
         WFL_BASE="$(echo $WFL_JAR_PATH | sed 's=.*/==;s/\.[^.]*$//')"

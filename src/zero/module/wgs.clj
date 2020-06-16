@@ -2,19 +2,16 @@
   "Reprocess (External) Whole Genomes, whatever they are."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as str]
             [zero.environments :as env]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
-            [zero.service.postgres :as postgres]
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero])
-  (:import [java.time OffsetDateTime]))
+            [zero.zero :as zero]))
 
 (def description
   "Describe the purpose of this command."
@@ -111,12 +108,13 @@
 (defn genome-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
-  {:google_account_vault_path
-   (get-in env/stuff [environment :vault_path_to_picard_account])
-   :vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :unmapped_bam_suffix ".unmapped.bam"
-   :papi_settings       {:agg_preemptible_tries 3
-                         :preemptible_tries     3}})
+  (let [{:keys [google_account_vault_path vault_token_path]}
+        (env/stuff environment)]
+    {:google_account_vault_path google_account_vault_path
+     :vault_token_path vault_token_path
+     :unmapped_bam_suffix ".unmapped.bam"
+     :papi_settings       {:agg_preemptible_tries 3
+                           :preemptible_tries     3}}))
 
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."

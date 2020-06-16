@@ -17,9 +17,9 @@ api:
   deployment:
     containerPort: 80
   env:
-    ENVIRONMENT: "wgs-dev"
-    WFL_LIVE_SERVER_MODE: "true"
     COOKIE_SECRET: ""
+    WFL_LIVE_SERVER_MODE: "true"
+    ZERO_DEPLOY_ENVIRONMENT: "wgs-dev"
     ZERO_POSTGRES_PASSWORD: ""
     ZERO_POSTGRES_USERNAME: ""
 

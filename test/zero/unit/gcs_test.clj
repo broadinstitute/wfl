@@ -1,4 +1,4 @@
-(ns zero.gcs-test
+(ns zero.unit.gcs-test
   "Test the Google Cloud Storage namespace."
   (:require [clojure.java.io  :as io]
             [clojure.string   :as str]
@@ -8,7 +8,7 @@
 
 (def project
   "Test in this Google Cloud project."
-  "broad-gotc-dev")
+  "broad-gotc-dev-storage")
 
 (def blame
   "Who is to blame?"
@@ -26,9 +26,10 @@
   "Make some unique GCS bucket names for testing."
   (mapv (fn [n] (str prefix n)) (range 2)))
 
-(def make-bucket
-  "Curry gcs/make-bucket for convenience."
-  (partial gcs/make-bucket project "US" "STANDARD"))
+(defn make-bucket
+  "Make a bucket named BUCKET."
+  [bucket]
+  (gcs/make-bucket project bucket "US" "STANDARD"))
 
 (deftest gs-url-test
   (testing "URL utilities"

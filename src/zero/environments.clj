@@ -19,18 +19,13 @@
 
 (def development
   "Some development environment."
-  {:google_projects ["a-development-project" "another-development-project"]
-   :jes_gcs_roots   ["gs://cromwell-execution-path"]
-   :noAddress       false
-   :cromwell
-   {:url    "https://my-development-cromwell.example.com"
+  {:cromwell
+   {:url "https://my-development-cromwell.example.com"
     :labels cromwell-label-keys}
-   :zero-db
-   {:db-name       "postgres"
-    :classname     "org.postgresql.Driver"
-    :instance-name "zero-postgresql"
-    :subprotocol   "postgresql"
-    :vault         "path/to/database/secrets/username/and/password"}
+   :google
+   {:jes_roots ["gs://cromwell-execution-path"]
+    :noAddress false
+    :projects ["a-development-project" "another-development-project"]}
    :server
    {:project "development"
     :vault   "path/to/server/secrets"}
@@ -40,18 +35,13 @@
 
 (def production
   "Some production environment."
-  {:google_projects ["a-production-project" "another-production-project"]
-   :jes_gcs_roots   ["gs://cromwell-execution-path"]
-   :noAddress       false
-   :cromwell
+  {:cromwell
    {:url    "https://my-production-cromwell.example.com"
     :labels cromwell-label-keys}
-   :zero-db
-   {:classname     "org.postgresql.Driver"
-    :db-name       "postgres"
-    :instance-name "zero-postgresql"
-    :subprotocol   "postgresql"
-    :vault         "path/to/database/secrets/username/and/password"}
+   :google
+   {:jes_roots   ["gs://cromwell-execution-path"]
+    :noAddress       false
+    :projects ["a-production-project" "another-production-project"]}
    :server
    {:project "production"
     :vault   "path/to/server/secrets"}
@@ -60,17 +50,13 @@
     :service-account "datarepo-service-account.iam.gserviceaccount.com"}})
 
 (def stuff
-  "Map ENVIRONMENT and so on to vault paths and JDBC URLs and so on."
+  "Map ENVIRONMENT and so on to vault paths, URLs and so on."
   (letfn [(make [m e] (let [kw  (keyword e)
                             var (resolve (symbol e))]
                         (-> (var-get var)
                             (assoc :doc (:doc (meta var)) :keyword kw :name e)
                             (->> (assoc m kw)))))]
     (reduce make {} ["development" "production"])))
-
-(def registered-envs
-  "Register a list of the available ENVIRONMENT names here."
-  ["development", "production"])
 
 (def environments
   "Map valid values for :ENVIRONMENT to their doc strings."

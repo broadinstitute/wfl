@@ -52,14 +52,14 @@ data:
             # Turn on directory listings for/app/dist
             Options -Indexes
 
-            # Order allow,deny tells the web server that 
-            # the Allow rules are processed before the Deny rules. 
-            # If the client does not match the Allow rule or it 
+            # Order allow,deny tells the web server that
+            # the Allow rules are processed before the Deny rules.
+            # If the client does not match the Allow rule or it
             # does match the Deny rule, then the client will be denied access.
             Order allow,deny
             Allow from all
 
-            # any directive which has the .htaccess 
+            # any directive which has the .htaccess
             # Context is allowed in .htaccess files.
             AllowOverride All
 
@@ -143,4 +143,3 @@ data:
             Require valid-user
         </Location>
     </VirtualHost>
-
