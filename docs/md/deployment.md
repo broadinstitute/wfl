@@ -61,7 +61,44 @@ you have to make the following preparations:
   ```
   to check the current deployments that are managed by Helm.
 
-### Deployment
+### Build
+
+Build a new WFL jar it you want one.
+
+```bash
+boot build
+```
+
+Note the `:version` string.
+Run this if you forget it.
+A WFL version string looks like this `2020-06-17t17-16-50z`
+
+``` bash
+java -jar ./target/wfl-*.jar version
+```
+
+### Dockerize
+
+Compose a new docker image if you want one.
+
+```bash
+docker build .
+```
+
+Note the image ID after the `Successfully built` message.
+
+An image ID looks like this `7fda69c99ba0`.
+
+Tag the image with the WFL `:version` string and the image ID.
+
+The `docker tag` command might look like this,
+for example.
+
+``` bash
+docker tag 7fda69c99ba0 wfl-2020-06-17t17-16-50z-7fda69c99ba0
+```
+
+### Deploy
 
 Once you have finished the above preparations,
 you could take a look at your custom values for the deployment.
