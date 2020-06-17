@@ -131,20 +131,18 @@ class CLI:
                 msg=f"=> Rendering ctmpl file {ctmpl_file}", color="blue"
             )
         )
-        envs = ""
+        envs = " "
         if kwargs:
             for k, v in kwargs.items():
                 envs += f"-e {k}={v} "
             print(dye_msg_with_color(msg=f"=> Feeding variables: {envs}", color="blue"))
-            COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token {envs} broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
-        else:
-            COMMAND = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
+        command = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token{envs}broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
         print(
             dye_msg_with_color(
                 msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}", color="green"
             )
         )
-        return subprocess.call(COMMAND, shell=True)
+        return subprocess.call(command, shell=True)
 
     @staticmethod
     def _is_available(*commands: list):
@@ -159,10 +157,10 @@ class CLI:
 
     @staticmethod
     def _set_up_helm() -> int:
-        print(dye_msg_with_color(msg=f"=> Setting up Helm charts", color="blue"))
-        HELM_ADD = f"helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/;"
-        HELM_REPO = f"helm repo update;"
-        print(dye_msg_with_color(msg=f"[✔] Set up Helm charts", color="green"))
+        print(dye_msg_with_color(msg="=> Setting up Helm charts", color="blue"))
+        HELM_ADD = "helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/;"
+        HELM_REPO = "helm repo update;"
+        print(dye_msg_with_color(msg="[✔] Set up Helm charts", color="green"))
         return subprocess.call(HELM_ADD + HELM_REPO, shell=True)
 
     @staticmethod
@@ -179,7 +177,7 @@ class CLI:
 
         print(
             dye_msg_with_color(
-                msg=f"=> Setting up Kubernetes cluster context", color="blue"
+                msg="=> Setting up Kubernetes cluster context", color="blue"
             )
         )
         CTX = f"gke_broad-gotc-{environment}_us-central1-a_gotc-{environment}-shared-us-central1-a"
@@ -202,14 +200,14 @@ class CLI:
         """Use Helm to deploy WFL to K8S."""
         print(
             dye_msg_with_color(
-                msg=f"=> Deploying to K8S cluster with Helm (this requires VPN)",
+                msg="=> Deploying to K8S cluster with Helm (this requires VPN)",
                 color="blue",
             )
         )
         HELM_UPGRADE = f"helm upgrade wfl-k8s gotc-charts/wfl -f {values} --install"
         print(
             dye_msg_with_color(
-                msg=f"[✔] WFL is deployed, run `kubectl get pods` to see details",
+                msg="[✔] WFL is deployed, run `kubectl get pods` to see details",
                 color="green",
             )
         )
