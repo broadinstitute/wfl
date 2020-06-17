@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""WFL Deployment Script 
+"""WFL Deployment Script
 @rex
 
 requirements: pip3 install gitpython
@@ -265,7 +265,7 @@ class CLI:
             )
             CLI._helm_deploy_wfl(values=str(Path(f"./{dir_name}/wfl-values.yaml")))
 
-        print(dye_msg_with_color(msg=f"[✔] Deployment is done!", color="green",))
+        print(dye_msg_with_color(msg="[✔] Deployment is done!", color="green",))
 
 
 if __name__ == "__main__":
