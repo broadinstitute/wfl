@@ -34,9 +34,9 @@
 (s/def ::input                string?)
 (s/def ::input_cram           string?)
 (s/def ::input_path           string?)
-(s/def ::items                (s/or :aos (s/+ ::items-aos)
+(s/def ::items                (s/or :aou (s/+ ::items-aou)
                                     :wgs (s/+ ::items-wgs)))
-(s/def ::items-aos            (constantly true)) ; stub
+(s/def ::items-aou            (constantly true)) ; stub
 (s/def ::items-wgs            (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
                                                ::unmapped_bam_suffix]
@@ -66,7 +66,7 @@
                                                ::max
                                                ::input_path
                                                ::output_path]))
-(s/def ::workflow-aos         (constantly true)) ; stub
+(s/def ::workflow-aou         (constantly true)) ; stub
 (s/def ::workflow-wgs         (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
                                                ::status
@@ -79,7 +79,7 @@
 (s/def ::workflow-request     (s/keys :req-un [::end
                                                ::environment
                                                ::start]))
-(s/def ::workflows            (s/or :aos (s/+ ::workflow-aos)
+(s/def ::workflows            (s/or :aou (s/+ ::workflow-aou)
                                     :wgs (s/+ ::workflow-wgs)))
 (s/def ::workload-request     (s/keys :req-un [::creator
                                                ::cromwell
