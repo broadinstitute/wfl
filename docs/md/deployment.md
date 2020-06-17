@@ -14,9 +14,10 @@ you have to make the following preparations:
   run a command like the following
   to set up the connection to the desired cluster:
 
-    ```bash
-    gcloud container clusters get-credentials gotc-dev-shared-us-central1-a --zone us-central1-a --project broad-gotc-dev
-    ```
+  ```bash
+  gcloud container clusters get-credentials gotc-dev-shared-us-central1-a --zone us-central1-a --project broad-gotc-dev
+  ```
+
 - Run `kubectl config get-contexts` to make sure you are connected
   to the right cluster.
 
@@ -32,30 +33,33 @@ you have to make the following preparations:
   installed on your macOS.
 
 - Run:
-    ```bash
-    helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
-    ```
-    to add gotc’s Helm repo to your Helm.
-    Note `gotc-charts` is just an alias, you could give it any name you want.
+
+  ```bash
+  helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
+  ```
+  to add gotc’s Helm repo to your Helm.
+  Note `gotc-charts` is just an alias, you could give it any name you want.
 
 - Run:
-    ```bash
-    helm repo update
-    ```
-    to make the local cached charts update-to-date
-    to the remote repo and also run:
 
-    ```bash
-    helm repo list
-    ```
-    to check the list of repo you have connected to anytime you want.
+  ```bash
+  helm repo update
+  ```
+  to make the local cached charts update-to-date
+  to the remote repo and also run:
+
+  ```bash
+  helm repo list
+  ```
+  to check the list of repo you have connected to anytime you want.
 
 - In the Broad network or on VPN and your `kubectl`
   is setup to connect to the right cluster,  run:
-    ```bash
-    helm list
-    ```
-    to check the current deployments that are managed by Helm.
+
+  ```bash
+  helm list
+  ```
+  to check the current deployments that are managed by Helm.
 
 ### Deployment
 
@@ -84,9 +88,11 @@ where:
 - `custom-authvals.yaml` is the path to your custom values YML file
 
 to make a new deployment or
+
 ```bash
 helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
+
 To update an existing deployment
 without re-creating all of the resources
 which could slow down the process.
@@ -114,10 +120,13 @@ Similar to how you have setup the Helm charts, you could run:
 ```bash
 helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
+
 Or
+
 ```bash
 helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 ```
+
 To install or upgrade the deployments on your local cluster.
 One thing to note is that you **CANNOT** create
 an `ingress` resource locally,
