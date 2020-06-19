@@ -160,7 +160,7 @@ class CLI:
                             '-v "$HOME"/.vault-token:/root/.vault-token',
                             f'{envs}',
                             'broadinstitute/dsde-toolbox:dev',
-                            '/usr/local/bin/render-ctmpls.sh -w /working -k',
+                            '/usr/local/bin/render-ctmpls.sh -k',
                             f'"{ctmpl_file}"'])
         print(
             dye_msg_with_color(
