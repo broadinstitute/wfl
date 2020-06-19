@@ -93,13 +93,15 @@ class CLI:
         return msg
 
     @staticmethod
-    def _subprocess_call(command):
+    def _subprocess_call(command: str):
         """Run COMMAND in a subprocess."""
         print(f"Running: {command}")
         return subprocess.check_call(command, shell=True)
 
     @staticmethod
-    def _subprocess_call_unchecked_because_who_cares_if_it_fails(command):
+    def _subprocess_call_unchecked_because_who_cares_if_it_fails(
+            command: str
+    ):
         """Run COMMAND in a subprocess and who cares whether it fails!"""
         print(f"Running: {command}")
         return subprocess.call(command, shell=True)
@@ -154,7 +156,6 @@ class CLI:
                     msg=f"=> Feeding variables: {envs}", color="blue"
                 )
             )
-        CLI._subprocess_call('pwd')
         command = " ".join(['docker run -i --rm -v "$(pwd)":/working',
                             '-v "$HOME"/.vault-token:/root/.vault-token',
                             f'{envs}',
