@@ -15,7 +15,9 @@ you have to make the following preparations:
   to set up the connection to the desired cluster:
 
   ```bash
-  gcloud container clusters get-credentials gotc-dev-shared-us-central1-a --zone us-central1-a --project broad-gotc-dev
+  gcloud container clusters get-credentials \
+    gotc-dev-shared-us-central1-a --zone us-central1-a \
+    --project broad-gotc-dev
   ```
 
 - Run `kubectl config get-contexts` to make sure you are connected
