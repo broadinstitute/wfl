@@ -109,6 +109,8 @@ git clone https://github.com/broadinstitute/gotc-deploy.git
 
 ### Render the chart
 
+Render the `wfl-values.yaml` file.
+
 ``` bash
 docker run -i --rm -v "$(pwd)":/working \
   -v "$HOME"/.vault-token:/root/.vault-token \
@@ -118,19 +120,20 @@ docker run -i --rm -v "$(pwd)":/working \
   -k ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
 ```
 
-### Deploy
-
-Once you have finished the above preparations,
-you could take a look at your custom values for the deployment.
-Look at `./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml`
+**Note:**
+That command always fails,
+so look at `./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml`
 and verify that the values
 substituted into the template are correct.
 
 **Note:**
 Some of the values in these YML files
 contain credentials or sensitive information,
-so **DO NOT** check them out
-into your version control system or make them public!!!
+so **DO NOT** check them in
+to your version control system
+or make them public!!!
+
+### Deploy
 
 Now with Helm and the custom values YML files,
 you could run for instance:
