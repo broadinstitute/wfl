@@ -30,7 +30,7 @@ you have to make the following preparations:
   please follow the Helm instructions
   or simply try `brew install helm`,
   assuming you have [HomeBrew](https://brew.sh/)
-  installed on your macOS.
+  installed on your MacOS.
 
 - Run:
 
@@ -123,7 +123,7 @@ docker run -i --rm -v "$(pwd)":/working \
 **Note:**
 That command always fails,
 so look at `./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml`
-and verify that the values
+to verify that the values
 substituted into the template are correct.
 
 **Note:**
@@ -135,31 +135,35 @@ or make them public!!!
 
 ### Deploy
 
-Now with Helm and the custom values YML files,
-you could run for instance:
+Run this to upgrade a deployment release.
 
 ```bash
-helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
-```
-where:
-
-- `gotc-dev` is the name of the deployment
-- `gotc-charts/authproxy` is following `chart-repo-alias/chartname`
-- `custom-authvals.yaml` is the path to your custom values YML file
-
-to make a new deployment or
-
-```bash
-helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+helm upgrade wfl-k8s gotc-charts/wfl --install \
+  -f ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml
 ```
 
-To update an existing deployment
-without re-creating all of the resources
-which could slow down the process.
+That doesn't recreate ingress resources and so on,
+but it will `--install` everything necessary
+if a release is not deployed already.
 
-You could run `kubectl get pods`
-to check the readiness of your deployments,
-`kubectl logs $POD_NAME $POD_APPLICATION_NAME` to view the logs.
+Run `kubectl get pods` to review your deployments.
+
+``` bash
+# kubectl get pods
+NAME                                              READY STATUS  AGE
+cromwell-auth-gotc-dev-authproxy-6f76598bb4-snpp6 1/1   Running 11d
+hjf-test-authproxy-78758bbb6b-7lnfg               2/2   Running 42d
+wfl-k8s-6948f6566d-2bdcp                          2/2   Running 2d5h
+#
+```
+
+Run `kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-api`
+to view the logs for the WFL-API server.
+
+Run `kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-ui`
+to view the logs for the WFL-UI front end.
+
+[//]: # (tbl stopped fixing stuff here.)
 
 ## Testing the deployment locally
 
