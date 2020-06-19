@@ -18,8 +18,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import uuid
-
 
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
@@ -70,9 +68,7 @@ class CLI:
         parser = argparse.ArgumentParser(
             description="Deploy the workflow-launcher-api.", usage=self._usage()
         )
-        parser.add_argument("command", help="command from the above list to run")
-
-        # Print help if no command provided
+        parser.add_argument("command", help="command from above to run")
         if len(sys.argv[1:2]) == 0:
             parser.print_help()
             exit(1)
@@ -102,6 +98,12 @@ class CLI:
         print(f"Running: {command}")
         return subprocess.check_call(command, shell=True)
 
+    @staticmethod
+    def _subprocess_call_unchecked_because_who_cares_if_it_fails(command):
+        """Run COMMAND in a subprocess and who cares whether it fails!"""
+        print(f"Running: {command}")
+        return subprocess.call(command, shell=True)
+
     @register
     def render(self, arguments: list) -> int:
         """Render a CTMPL file."""
@@ -120,13 +122,13 @@ class CLI:
         print(
             dye_msg_with_color(
                 msg=f"=> Cloning gotc-deploy repo to {dest}, branch: {branch}",
-                color="blue",
+                color="blue"
             )
         )
         git.Repo.clone_from(
             url="git@github.com:broadinstitute/gotc-deploy.git",
             to_path=dest,
-            branch=branch,
+            branch=branch
         )
         print(
             dye_msg_with_color(
@@ -152,11 +154,12 @@ class CLI:
                     msg=f"=> Feeding variables: {envs}", color="blue"
                 )
             )
+        CLI._subprocess_call('pwd')
         command = " ".join(['docker run -i --rm -v "$(pwd)":/working',
                             '-v "$HOME"/.vault-token:/root/.vault-token',
                             f'{envs}',
                             'broadinstitute/dsde-toolbox:dev',
-                            '/usr/local/bin/render-ctmpls.sh -k',
+                            '/usr/local/bin/render-ctmpls.sh -w /working -k',
                             f'"{ctmpl_file}"'])
         print(
             dye_msg_with_color(
@@ -164,7 +167,7 @@ class CLI:
                 color="green"
             )
         )
-        return CLI._subprocess_call(command)
+        CLI._subprocess_call_unchecked_because_who_cares_if_it_fails(command)
 
     @staticmethod
     def _is_available(*commands: list):
@@ -173,14 +176,15 @@ class CLI:
                 print(
                     dye_msg_with_color(
                         f"=> {cmd} is not in PATH. Please install it!",
-                        color="red",
+                        color="red"
                     )
                 )
 
     @staticmethod
     def _set_up_helm() -> int:
         print(dye_msg_with_color(msg="=> Setting up Helm charts", color="blue"))
-        ADD = "helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/"
+        ADD = " ".join(["helm repo add gotc-charts",
+                        "https://broadinstitute.github.io/gotc-helm-repo/"])
         REPO = "helm repo update"
         print(dye_msg_with_color(msg="[✔] Set up Helm charts", color="green"))
         CLI._subprocess_call(ADD)
@@ -188,29 +192,34 @@ class CLI:
 
     @staticmethod
     def _set_up_k8s(environment: str = "dev", namespace: str = "") -> int:
-        """Connect to K8S cluster and setup namespace with gcloud and kubectl."""
+        """Connect to K8S cluster and set up namespace."""
+        nsorna = namespace or 'N/A'
         print(
             dye_msg_with_color(
-                msg=f"=> Setting up Kubernetes, with namespace {namespace or 'N/A' }",
+                msg=f"=> Setting up Kubernetes with namespace {nsorna}.",
                 color="blue",
             )
         )
-        GCLOUD_SETUP = f"gcloud container clusters get-credentials gotc-{environment}-shared-us-central1-a --zone us-central1-a --project broad-gotc-{environment}"
-        CLI._subprocess_call(GCLOUD_SETUP)
+        ZONE = "us-central1-a"
+        GCLOUD = " ".join(["gcloud container clusters get-credentials",
+                           f"gotc-{environment}-shared-{ZONE} --zone {ZONE}",
+                           f"--project broad-gotc-{environment}"])
+        CLI._subprocess_call(GCLOUD)
         print(
             dye_msg_with_color(
-                msg="=> Setting up Kubernetes cluster context", color="blue"
+                msg="=> Setting up Kubernetes cluster context.", color="blue"
             )
         )
-        CTX = f"gke_broad-gotc-{environment}_us-central1-a_gotc-{environment}-shared-us-central1-a"
-        KUBE_CONTEXT = f"kubectl config use-context {CTX}"
-        CLI._subprocess_call(KUBE_CONTEXT)
+        CONTEXT = "_".join([f"gke_broad-gotc-{environment}_{ZONE}",
+                            f"gotc-{environment}-shared-{ZONE}"])
+        CLI._subprocess_call(f"kubectl config use-context {CONTEXT}")
         if namespace:
-            KUBE_SET_NAMESPACE = f"kubectl config set-context $(kubectl config current-context) --namespace={namespace}"
-            CLI._subprocess_call(KUBE_SET_NAMESPACE)
+            CLI._subprocess_call(
+                f"kubectl config set-context {CONTEXT} --namespace={namespace}"
+            )
             print(
                 dye_msg_with_color(
-                    msg=f"[✔] Set up namespace to {namespace}", color="green"
+                    msg=f"[✔] Set namespace to {namespace}.", color="green"
                 )
             )
 
@@ -219,18 +228,24 @@ class CLI:
         """Use Helm to deploy WFL to K8S using VALUES."""
         print(
             dye_msg_with_color(
-                msg="=> Deploying to K8S cluster with Helm (this requires VPN)",
-                color="blue",
+                msg="=> Deploying to K8S cluster with Helm.",
+                color="blue"
+            )
+        )
+        print(
+            dye_msg_with_color(
+                msg="=> This must run on a non-split VPN.",
+                color="blue"
             )
         )
         UPGRADE = f"helm upgrade wfl-k8s gotc-charts/wfl -f {values} --install"
+        CLI._subprocess_call(UPGRADE)
         print(
             dye_msg_with_color(
-                msg="[✔] WFL is deployed, run `kubectl get pods` to see details",
-                color="green",
+                msg="[✔] WFL is deployed. Run `kubectl get pods` for details.",
+                color="green"
             )
         )
-        CLI._subprocess_call(UPGRADE)
 
     @register
     def deploy(self, arguments):
@@ -242,41 +257,38 @@ class CLI:
             dest="environment",
             default="dev",
             choices={"dev"},
-            help="Environment to deploy to",
+            help="Environment to deploy to"
         )
         parser.add_argument(
             "-t",
             "--tag",
             dest="tag",
             default="latest",
-            help="DockerHub tag of the image to deploy.",
+            help="DockerHub tag of the image to deploy."
         )
         parser.add_argument(
             "-n",
             "--namespace",
             dest="namespace",
             default="",
-            help="Deploy to this namespace.",
+            help="Deploy to this namespace."
         )
         args = parser.parse_args(arguments)
         CLI._is_available("helm", "kubectl", "gcloud", "git", "docker")
         CLI._set_up_helm()
         CLI._set_up_k8s(namespace=args.namespace)
-        with tempfile.TemporaryDirectory(
-            prefix=str(uuid.uuid4()), dir=os.getcwd()
-        ) as dir:
-            CLI._clone_config_repo(
-                dest=f"{dir}/gotc-deploy", branch="master"
-            )
-            file_name = "wfl-values.yaml.ctmpl"
-            src = f"{dir}/gotc-deploy/deploy/gotc-dev/helm/{file_name}"
-            dst = f"{dir}/{file_name}"
-            shutil.copy(src, dst)
+        with tempfile.TemporaryDirectory() as dir:
+            pwd = os.getcwd()
+            os.chdir(dir)
+            CLI._clone_config_repo(dest="gotc-deploy", branch="master")
+            values = "wfl-values.yaml"
+            shutil.copy(f"gotc-deploy/deploy/gotc-dev/helm/{values}.ctmpl", dir)
             CLI._render_ctmpl(
-                ctmpl_file=f"{dir}/{file_name}", WFL_VERSION=args.tag
+                ctmpl_file=f"{values}.ctmpl", WFL_VERSION=args.tag
             )
-            CLI._helm_deploy_wfl(values=f"{dir}/wfl-values.yaml")
-        print(dye_msg_with_color(msg="[✔] Deployment is done!", color="green",))
+            CLI._helm_deploy_wfl(values=values)
+            os.chdir(pwd)
+        print(dye_msg_with_color(msg="[✔] Deployment is done!", color="green"))
 
 
 if __name__ == "__main__":
