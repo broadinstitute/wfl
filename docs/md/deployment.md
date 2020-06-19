@@ -98,13 +98,29 @@ for example.
 docker tag 7fda69c99ba0 wfl-2020-06-17t17-16-50z-7fda69c99ba0
 ```
 
+### Clone the gotc-deploy repository.
+
+``` bash
+git clone https://github.com/broadinstitute/gotc-deploy.git
+```
+
+### Render the chart
+
+``` bash
+docker run -i --rm -v "$(pwd)":/working \
+  -v "$HOME"/.vault-token:/root/.vault-token \
+  broadinstitute/dsde-toolbox:dev \
+  /usr/local/bin/render-ctmpls.sh \
+  -k ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
+```
+
 ### Deploy
 
 Once you have finished the above preparations,
 you could take a look at your custom values for the deployment.
-Usually that means a rendered version
-of [these YML files](https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm),
-with your modifications to some specific values in it.
+Look at `./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml`
+and verify that the values
+substituted into the template are correct.
 
 **Note:**
 Some of the values in these YML files
