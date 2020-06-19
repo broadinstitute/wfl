@@ -6,19 +6,17 @@ requirements: pip3 install gitpython
 
 usage: python3 cli.py -h
 """
-import argparse
-import sys
-from typing import Callable
-import subprocess
+from enum import Enum
 from pathlib import Path
+from typing import Callable
+import argparse
+import git
+import os
+import shutil
+import subprocess
+import sys
 import tempfile
 import uuid
-import git
-import shutil
-from enum import Enum
-import os
-import sys
-import logging
 
 
 # In case this will need to run on Windows systems
@@ -91,11 +89,18 @@ class CLI:
             msg += f"   {command}{'  ' * (space - len(command))} |-> {getattr(self, command).__doc__}\n"
         return msg
 
+    @staticmethod
+    def _subcall(command):
+        print(f"Running: {command}")
+        return subprocess.call(command, shell=True)
+
     @register
     def render(self, arguments: list) -> int:
-        """Render a CTMPL file"""
-        parser = argparse.ArgumentParser(description=f"%(prog) {self.render.__doc__}")
-        parser.add_argument("file", help="Path to the CTMPL file needs to be rendered")
+        """Render a CTMPL file."""
+        parser = argparse.ArgumentParser(
+            description=f"%(prog) {self.render.__doc__}"
+        )
+        parser.add_argument("file", help="CTMPL file to be rendered")
         args = parser.parse_args(arguments)
 
         file = Path(args.file)
@@ -104,10 +109,10 @@ class CLI:
 
     @staticmethod
     def _clone_config_repo(dest: str, branch: str = "master"):
-        """Clone the gotc-deploy repo, this requires permission to clone private Broad repos."""
+        """Clone the gotc-deploy repo."""
         print(
             dye_msg_with_color(
-                msg=f"=> Cloning gotc-deploy repo to {dest}, default branch: {branch}",
+                msg=f"=> Cloning gotc-deploy repo to {dest}, branch: {branch}",
                 color="blue",
             )
         )
@@ -135,14 +140,24 @@ class CLI:
         if kwargs:
             for k, v in kwargs.items():
                 envs += f"-e {k}={v} "
-            print(dye_msg_with_color(msg=f"=> Feeding variables: {envs}", color="blue"))
-        command = f'docker run -i --rm -v "$(pwd)":/working -v "$HOME"/.vault-token:/root/.vault-token{envs}broadinstitute/dsde-toolbox:dev /usr/local/bin/render-ctmpls.sh -k "{ctmpl_file}"'
+            print(
+                dye_msg_with_color(
+                    msg=f"=> Feeding variables: {envs}", color="blue"
+                )
+            )
+        command = " ".join(['docker run -i --rm -v "$(pwd)":/working',
+                            '-v "$HOME"/.vault-token:/root/.vault-token',
+                            f'{envs}',
+                            'broadinstitute/dsde-toolbox:dev',
+                            '/usr/local/bin/render-ctmpls.sh -k',
+                            f'"{ctmpl_file}"'])
         print(
             dye_msg_with_color(
-                msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}", color="green"
+                msg=f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}",
+                color="green"
             )
         )
-        return subprocess.call(command, shell=True)
+        return CLI._subcall(command)
 
     @staticmethod
     def _is_available(*commands: list):
@@ -158,10 +173,11 @@ class CLI:
     @staticmethod
     def _set_up_helm() -> int:
         print(dye_msg_with_color(msg="=> Setting up Helm charts", color="blue"))
-        HELM_ADD = "helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/;"
-        HELM_REPO = "helm repo update;"
+        HELM_ADD = "helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/"
+        HELM_REPO = "helm repo update"
         print(dye_msg_with_color(msg="[✔] Set up Helm charts", color="green"))
-        return subprocess.call(HELM_ADD + HELM_REPO, shell=True)
+        CLI._subcall(HELM_ADD)
+        CLI._subcall(HELM_REPO)
 
     @staticmethod
     def _set_up_k8s(environment: str = "dev", namespace: str = "") -> int:
@@ -173,8 +189,7 @@ class CLI:
             )
         )
         GCLOUD_SETUP = f"gcloud container clusters get-credentials gotc-{environment}-shared-us-central1-a --zone us-central1-a --project broad-gotc-{environment}"
-        code1 = subprocess.call(GCLOUD_SETUP, shell=True)
-
+        CLI._subcall(GCLOUD_SETUP)
         print(
             dye_msg_with_color(
                 msg="=> Setting up Kubernetes cluster context", color="blue"
@@ -182,18 +197,15 @@ class CLI:
         )
         CTX = f"gke_broad-gotc-{environment}_us-central1-a_gotc-{environment}-shared-us-central1-a"
         KUBE_CONTEXT = f"kubectl config use-context {CTX}"
-        code2 = subprocess.call(KUBE_CONTEXT, shell=True)
-
-        code3 = 0
+        CLI._subcall(KUBE_CONTEXT)
         if namespace:
             KUBE_SET_NAMESPACE = f"kubectl config set-context $(kubectl config current-context) --namespace={namespace}"
-            code3 = subprocess.call(KUBE_SET_NAMESPACE, shell=True)
+            CLI._subcall(KUBE_SET_NAMESPACE)
             print(
                 dye_msg_with_color(
                     msg=f"[✔] Set up namespace to {namespace}", color="green"
                 )
             )
-        return any([code1, code2, code3])
 
     @staticmethod
     def _helm_deploy_wfl(values: str) -> int:
@@ -211,7 +223,7 @@ class CLI:
                 color="green",
             )
         )
-        return subprocess.call(HELM_UPGRADE, shell=True)
+        CLI._subcall(HELM_UPGRADE)
 
     @register
     def deploy(self, arguments):
@@ -240,7 +252,6 @@ class CLI:
             help="The namespace you want to use for deployemnt",
         )
         args = parser.parse_args(arguments)
-
         CLI._is_available("helm", "kubectl", "gcloud", "git", "docker")
         CLI._set_up_helm()
         CLI._set_up_k8s(namespace=args.namespace)
@@ -262,7 +273,6 @@ class CLI:
                 WFL_VERSION=args.version,
             )
             CLI._helm_deploy_wfl(values=str(Path(f"./{dir_name}/wfl-values.yaml")))
-
         print(dye_msg_with_color(msg="[✔] Deployment is done!", color="green",))
 
 
