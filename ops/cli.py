@@ -103,7 +103,6 @@ class CLI:
         )
         parser.add_argument("file", help="CTMPL file to be rendered")
         args = parser.parse_args(arguments)
-
         file = Path(args.file)
         assert file.exists() and file.is_file(), f"{file} is not valid!"
         return CLI._render_ctmpl(ctmpl_file=str(file))
@@ -256,14 +255,12 @@ class CLI:
         CLI._is_available("helm", "kubectl", "gcloud", "git", "docker")
         CLI._set_up_helm()
         CLI._set_up_k8s(namespace=args.namespace)
-
         with tempfile.TemporaryDirectory(
             prefix=str(uuid.uuid4()), dir=Path("./")
         ) as dir_name:
             CLI._clone_config_repo(
                 dest=Path(f"./{dir_name}/gotc-deploy"), branch="master"
             )
-
             file_name = "wfl-values.yaml.ctmpl"
             shutil.copy(
                 str(Path(f"./{dir_name}/gotc-deploy/deploy/gotc-dev/helm/{file_name}")),
