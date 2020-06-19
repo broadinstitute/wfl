@@ -91,6 +91,7 @@ class CLI:
 
     @staticmethod
     def _subcall(command):
+        """Run COMMAND in a subprocess."""
         print(f"Running: {command}")
         return subprocess.call(command, shell=True)
 
