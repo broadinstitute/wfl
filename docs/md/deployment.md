@@ -71,21 +71,6 @@ Build a new WFL jar it you want one.
 boot build
 ```
 
-Note the `:version` string.
-Run this if you forget it.
-A WFL version string looks like this `2020-06-17t17-16-50z`.
-This command will print the full WFL-API version.
-
-``` bash
-java -jar ./target/wfl-*.jar version
-```
-
-Remember the version string.
-
-``` bash
-VERSION=2020-06-17t17-16-50z
-```
-
 ### Dockerize
 
 Compose a new docker image if you want one.
@@ -94,9 +79,8 @@ then push it to DockerHub
 so Kubernetes can find it.
 
 ```bash
-IMAGE=broadinstitute/workflow-launcher-api:$USER-$VERSION
-docker build . -t $IMAGE
-docker push $IMAGE
+docker build -t broadinstitute/workflow-launcher-api .
+docker push broadinstitute/workflow-launcher-api:latest
 ```
 
 You should see it listed here.
@@ -106,7 +90,8 @@ https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api
 ### Clone the gotc-deploy repository.
 
 ``` bash
-git clone https://github.com/broadinstitute/gotc-deploy.git
+git clone --branch <the branch you want> \
+  https://github.com/broadinstitute/gotc-deploy.git
 ```
 
 ### Render the chart
@@ -116,7 +101,7 @@ Render the `wfl-values.yaml` file.
 ``` bash
 docker run -i --rm -v "$(pwd)":/working \
   -v "$HOME"/.vault-token:/root/.vault-token \
-  -e WFL_VERSION=$IMAGE \
+  -e WFL_VERSION=latest \
   broadinstitute/dsde-toolbox:dev \
   /usr/local/bin/render-ctmpls.sh \
   -k ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl

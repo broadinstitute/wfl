@@ -253,19 +253,19 @@ class CLI:
         """Deploy WFL to Cloud GKE (VPN is required)"""
         parser = argparse.ArgumentParser(description=f"{self.deploy.__doc__}")
         parser.add_argument(
+            "-b",
+            "--branch",
+            dest="branch",
+            default="master",
+            help="Use this branch of gotc-deploy."
+        )
+        parser.add_argument(
             "-e",
             "--environment",
             dest="environment",
             default="dev",
             choices={"dev"},
-            help="Environment to deploy to"
-        )
-        parser.add_argument(
-            "-t",
-            "--tag",
-            dest="tag",
-            default="latest",
-            help="DockerHub tag of the image to deploy."
+            help="Deploy to this environment."
         )
         parser.add_argument(
             "-n",
@@ -274,6 +274,13 @@ class CLI:
             default="",
             help="Deploy to this namespace."
         )
+        parser.add_argument(
+            "-t",
+            "--tag",
+            dest="tag",
+            default="latest",
+            help="Deploy image with this tag in DockerHub."
+        )
         args = parser.parse_args(arguments)
         CLI._is_available("helm", "kubectl", "gcloud", "git", "docker")
         CLI._set_up_helm()
@@ -281,7 +288,7 @@ class CLI:
         with tempfile.TemporaryDirectory() as dir:
             pwd = os.getcwd()
             os.chdir(dir)
-            CLI._clone_config_repo(dest="gotc-deploy", branch="master")
+            CLI._clone_config_repo(dest="gotc-deploy", branch=args.branch)
             values = "wfl-values.yaml"
             shutil.copy(f"gotc-deploy/deploy/gotc-dev/helm/{values}.ctmpl", dir)
             CLI._render_ctmpl(
