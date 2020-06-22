@@ -99,9 +99,7 @@ class CLI:
         return subprocess.check_call(command, shell=True)
 
     @staticmethod
-    def _subprocess_call_unchecked_because_who_cares_if_it_fails(
-            command: str
-    ):
+    def _subprocess_call_unchecked( command: str ):
         """Run COMMAND in a subprocess and who cares whether it fails!"""
         print(f"Running: {command}")
         return subprocess.call(command, shell=True)
