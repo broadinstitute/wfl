@@ -66,7 +66,7 @@ def register(func: Callable) -> Callable:
 class CLI:
     def __init__(self):
         parser = argparse.ArgumentParser(
-            description="Deploy the workflow-launcher-api.", usage=self._usage()
+            description="Deploy the workflow-launcher-api and workflow-launcher-ui.", usage=self._usage()
         )
         parser.add_argument("command", help="command from above to run")
         if len(sys.argv[1:2]) == 0:
