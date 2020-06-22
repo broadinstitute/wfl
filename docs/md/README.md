@@ -2,6 +2,13 @@
 
 ![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
 
+## Build Board
+
+| Type        | Master Branch                                                                                                                                  | Dev | Prod |
+|-------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----|------|
+| Unit Test   | ![ Tests on Pull Requests and Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg)  | N/A | N/A  |
+| Integration |                                                                                                                                                |     |      |
+
 ## Overview
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
