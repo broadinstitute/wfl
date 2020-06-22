@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.3.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.3.2">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6e35a1a6.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.fe0cca5b.min.css">
       
         <link rel="stylesheet" href="../assets/stylesheets/palette.a46bcfb3.min.css">
       
@@ -312,8 +312,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    Deployment
+  <a href="#build" class="md-nav__link">
+    Build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dockerize" class="md-nav__link">
+    Dockerize
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-the-gotc-deploy-repository" class="md-nav__link">
+    Clone the gotc-deploy repository.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#render-the-chart" class="md-nav__link">
+    Render the chart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    Deploy
   </a>
   
 </li>
@@ -528,8 +556,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    Deployment
+  <a href="#build" class="md-nav__link">
+    Build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dockerize" class="md-nav__link">
+    Dockerize
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clone-the-gotc-deploy-repository" class="md-nav__link">
+    Clone the gotc-deploy repository.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#render-the-chart" class="md-nav__link">
+    Render the chart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    Deploy
   </a>
   
 </li>
@@ -568,70 +624,159 @@
                 
                 <h1 id="deployment-of-workflow-launcher">Deployment of WorkFlow Launcher<a class="headerlink" href="#deployment-of-workflow-launcher" title="Permanent link">&para;</a></h1>
 <h2 id="make-a-deployment">Make a deployment<a class="headerlink" href="#make-a-deployment" title="Permanent link">&para;</a></h2>
-<p>The WorkFlow Launcher is currently running on a Kubernetes cluster, and the deployment is managed by <a href="https://helm.sh/docs/intro/install/">Helm</a>. In order to make a deployment or upgrade the current deployment manually, you have to make the following preparations:</p>
+<p>The WorkFlow Launcher is currently running on a Kubernetes cluster,
+and the deployment is managed by <a href="https://helm.sh/docs/intro/install/">Helm</a>.
+In order to make a deployment or upgrade the current deployment manually,
+you have to make the following preparations:</p>
 <h3 id="setup-kubernetes">Setup Kubernetes<a class="headerlink" href="#setup-kubernetes" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Make sure you have the <code>kubectl</code> command available, while in the Broad network or using the VPN, run a command like the following to setup the connection to the desired cluster:
-    <div class="highlight"><pre><span></span><code>gcloud container clusters get-credentials gotc-dev-shared-us-central1-a --zone us-central1-a --project broad-gotc-dev
-</code></pre></div></li>
-<li>Run <code>kubectl config get-contexts</code> to make sure you are connected to the right cluster.</li>
-<li>Later you could run <code>kubectl config use-context $CONTEXT_NAME</code> to switch (back) to other contexts.</li>
+<li>Make sure you have the <code>kubectl</code> command available,
+  while in the Broad network or using the VPN,
+  run a command like the following
+  to set up the connection to the desired cluster:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>gcloud container clusters get-credentials <span class="se">\</span>
+  gotc-dev-shared-us-central1-a --zone us-central1-a <span class="se">\</span>
+  --project broad-gotc-dev
+</code></pre></div>
+
+<ul>
+<li>
+<p>Run <code>kubectl config get-contexts</code> to make sure you are connected
+  to the right cluster.</p>
+</li>
+<li>
+<p>Later you could run <code>kubectl config use-context $CONTEXT_NAME</code>
+  to switch (back) to other contexts.</p>
+</li>
 </ul>
 <h3 id="setup-helm">Setup Helm<a class="headerlink" href="#setup-helm" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Install Helm, please follow the Helm instructions or simply try <code>brew install helm</code>, assuming you have <a href="https://brew.sh/">HomeBrew</a> installed on your macOS.</li>
 <li>
-<p>Run:
-    <div class="highlight"><pre><span></span><code>helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
-</code></pre></div>
-    to add gotc’s Helm repo to your Helm. Note <code>gotc-charts</code> is just an alias, you could give it any name you want.</p>
+<p>Install Helm,
+  please follow the Helm instructions
+  or simply try <code>brew install helm</code>,
+  assuming you have <a href="https://brew.sh/">HomeBrew</a>
+  installed on your MacOS.</p>
 </li>
 <li>
-<p>Run:
-    <div class="highlight"><pre><span></span><code>helm repo update
+<p>Run:</p>
+</li>
+</ul>
+<p><div class="highlight"><pre><span></span><code>helm repo add gotc-charts https://broadinstitute.github.io/gotc-helm-repo/
 </code></pre></div>
-    to make the local cached charts update-to-date to the remote repo and also run:</p>
+  to add gotc’s Helm repo to your Helm.
+  Note <code>gotc-charts</code> is just an alias, you could give it any name you want.</p>
+<ul>
+<li>Run:</li>
+</ul>
+<p><div class="highlight"><pre><span></span><code>helm repo update
+</code></pre></div>
+  to make the local cached charts update-to-date
+  to the remote repo and also run:</p>
 <p><div class="highlight"><pre><span></span><code>helm repo list
 </code></pre></div>
-to check the list of repo you have connected to anytime you want.</p>
+  to check the list of repo you have connected to anytime you want.</p>
+<ul>
+<li>In the Broad network or on VPN and your <code>kubectl</code>
+  is setup to connect to the right cluster,  run:</li>
+</ul>
+<p><div class="highlight"><pre><span></span><code>helm list
+</code></pre></div>
+  to check the current deployments that are managed by Helm.</p>
+<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h3>
+<p>Build a new WFL jar it you want one.</p>
+<div class="highlight"><pre><span></span><code>boot build
+</code></pre></div>
+
+<h3 id="dockerize">Dockerize<a class="headerlink" href="#dockerize" title="Permanent link">&para;</a></h3>
+<p>Compose a new docker image if you want one.
+Tag it with some helpful name,
+then push it to DockerHub
+so Kubernetes can find it.</p>
+<div class="highlight"><pre><span></span><code>docker build -t broadinstitute/workflow-launcher-api .
+docker push broadinstitute/workflow-launcher-api:latest
+</code></pre></div>
+
+<p>You should see it listed here.</p>
+<p>https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api</p>
+<h3 id="clone-the-gotc-deploy-repository">Clone the gotc-deploy repository.<a class="headerlink" href="#clone-the-gotc-deploy-repository" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>git clone --branch &lt;the branch you want&gt; <span class="se">\</span>
+  https://github.com/broadinstitute/gotc-deploy.git
+</code></pre></div>
+
+<h3 id="render-the-chart">Render the chart<a class="headerlink" href="#render-the-chart" title="Permanent link">&para;</a></h3>
+<p>Render the <code>wfl-values.yaml</code> file.</p>
+<div class="highlight"><pre><span></span><code>docker run -i --rm -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/working <span class="se">\</span>
+  -v <span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">&quot;</span>/.vault-token:/root/.vault-token <span class="se">\</span>
+  -e <span class="nv">WFL_VERSION</span><span class="o">=</span>latest <span class="se">\</span>
+  broadinstitute/dsde-toolbox:dev <span class="se">\</span>
+  /usr/local/bin/render-ctmpls.sh <span class="se">\</span>
+  -k ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
+</code></pre></div>
+
+<p><strong>Note:</strong>
+That command always fails,
+so look at <code>./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml</code>
+to verify that the values
+substituted into the template are correct.</p>
+<p><strong>Note:</strong>
+Some of the values in these YML files
+contain credentials or sensitive information,
+so <strong>DO NOT</strong> check them in
+to your version control system
+or make them public!!!</p>
+<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
+<p>Run this to upgrade a deployment release.</p>
+<div class="highlight"><pre><span></span><code>helm upgrade wfl-k8s gotc-charts/wfl --install <span class="se">\</span>
+  -f ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml
+</code></pre></div>
+
+<p>That doesn't recreate ingress resources and so on,
+but it will <code>--install</code> everything necessary
+if a release is not deployed already.</p>
+<p>Run <code>kubectl get pods</code> to review your deployments.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubectl get pods</span>
+NAME                                              READY STATUS  AGE
+cromwell-auth-gotc-dev-authproxy-6f76598bb4-snpp6 <span class="m">1</span>/1   Running 11d
+hjf-test-authproxy-78758bbb6b-7lnfg               <span class="m">2</span>/2   Running 42d
+wfl-k8s-6948f6566d-2bdcp                          <span class="m">2</span>/2   Running 2d5h
+<span class="c1">#</span>
+</code></pre></div>
+
+<p>Run <code>kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-api</code>
+to view the logs for the WFL-API server.</p>
+<p>Run <code>kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-ui</code>
+to view the logs for the WFL-UI front end.</p>
+<h2 id="testing-the-deployment-locally">Testing the deployment locally<a class="headerlink" href="#testing-the-deployment-locally" title="Permanent link">&para;</a></h2>
+<p>Similar to the above process,
+but in addition to the above preparations,
+you also have to:</p>
+<ul>
+<li>
+<p>Make sure you have a relatively new version of Docker client installed,
+  which has Docker -&gt; Preferences -&gt; Kubernetes -&gt; Enable Kubernetes.
+  Turn on that options and restart your Docker client.</p>
 </li>
 <li>
-<p>In the Broad network or on VPN and your <code>kubectl</code> is setup to connect to the right cluster,  run:
-    <div class="highlight"><pre><span></span><code>helm list
-</code></pre></div>
-    to check the current deployments that are managed by Helm.</p>
+<p>Run <code>kubectl config use-context $CONTEXT_NAME</code>
+  to the Docker-built-in Kubernetes context,
+  usually it should be called something like <code>docker-for-mac</code>.</p>
 </li>
 </ul>
-<h3 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h3>
-<p>Once you have finished the above preparations, you could take a look at your custom values for the deployment. Usually that means a rendered version of <a href="https://github.com/broadinstitute/gotc-deploy/tree/master/deploy/gotc-dev/helm">these YML files</a>, with your modifications to some specific values in it.</p>
-<p><strong>Note:</strong> some of the values in these YML files contain credentials or sensitive information, so <strong>DO NOT</strong> checkout them into your version control system or make them public!!!</p>
-<p>Now with Helm and the custom values YML files, you could run for instance:</p>
-<p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
-</code></pre></div>
-where:</p>
-<ul>
-<li><code>gotc-dev</code> is the name of the deployment</li>
-<li><code>gotc-charts/authproxy</code> is following <code>chart-repo-alias/chartname</code></li>
-<li><code>custom-authvals.yaml</code> is the path to your custom values YML file</li>
-</ul>
-<p>to make a new deployment or
-<div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
-</code></pre></div>
-To update an existing deployment without re-creating all of the resources which could slow down the process.</p>
-<p>You could run <code>kubectl get pods</code> to check the readiness of your deployments, <code>kubectl logs $POD_NAME $POD_APPLICATION_NAME</code> to view the logs.</p>
-<h2 id="testing-the-deployment-locally">Testing the deployment locally<a class="headerlink" href="#testing-the-deployment-locally" title="Permanent link">&para;</a></h2>
-<p>Similar to the above process, but in addition to the above preparations, you also have to:</p>
-<ul>
-<li>Make sure you have a relatively new version of Docker client installed, which has Docker -&gt; Preferences -&gt; Kubernetes -&gt; Enable Kubernetes. Turn on that options and restart your Docker client.</li>
-<li>Run <code>kubectl config use-context $CONTEXT_NAME</code> to the Docker-built-in Kubernetes context, usually it should be called something like <code>docker-for-mac</code>.</li>
-</ul>
 <p>Similar to how you have setup the Helm charts, you could run:</p>
-<p><div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+<div class="highlight"><pre><span></span><code>helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
-Or
+
+<p>Or</p>
 <div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
 </code></pre></div>
-To install or upgrade the deployments on your local cluster. One thing to note is that you <strong>CANNOT</strong> create an <code>ingress</code> resource locally, so it’s important to <code>disable</code> the ingress creation in your custom values YML files.</p>
+
+<p>To install or upgrade the deployments on your local cluster.
+One thing to note is that you <strong>CANNOT</strong> create
+an <code>ingress</code> resource locally,
+so it’s important to <code>disable</code> the ingress creation
+in your custom values YML files.</p>
                 
               
               
@@ -712,14 +857,14 @@ To install or upgrade the deployments on your local cluster. One thing to note i
     </div>
     
       <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.a14cc5fd.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/bundle.7f4f3c92.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.7a2ea5ba.min.js"
+            worker: "../assets/javascripts/worker/search.9b3611bd.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
