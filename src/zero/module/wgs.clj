@@ -163,12 +163,12 @@
   [environment in-gs out-gs]
   (let [path (wdl/hack-unpack-resources-hack adapter-workflow-wdl)]
     (cromwell/submit-workflow
-      environment
-      (io/file (:dir path) (path ".wdl"))
-      (io/file (:dir path) (path ".zip"))
-      (make-inputs environment out-gs in-gs)
-      (util/make-options environment)
-      cromwell-label-map)))
+     environment
+     (io/file (:dir path) (path ".wdl"))
+     (io/file (:dir path) (path ".zip"))
+     (make-inputs environment out-gs in-gs)
+     (util/make-options environment)
+     cromwell-label-map)))
 
 (defn submit-workflow
   "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
@@ -217,7 +217,7 @@
                4 submit-some-workflows-or-throw
                3 (partial all/report-status cromwell-label)
                (throw (IllegalArgumentException.
-                        "Must specify 3 or 4 arguments.")))
+                       "Must specify 3 or 4 arguments.")))
              env (rest args)))
     (catch Exception x
       (binding [*out* *err*] (println description))

@@ -80,11 +80,11 @@
     (let [{:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> body
-          (add-workload! tx)
-          :uuid
-          (conj ["SELECT * FROM workload WHERE uuid = ?"])
-          (jdbc/query tx)
-          first unnilify succeed)))))
+             (add-workload! tx)
+             :uuid
+             (conj ["SELECT * FROM workload WHERE uuid = ?"])
+             (jdbc/query tx)
+             first unnilify succeed)))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
@@ -103,14 +103,14 @@
     (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> uuids
-          (map :uuid)
-          (map (q "''")) (str/join ",") ((q "()"))
-          (format "SELECT * FROM workload WHERE uuid in %s")
-          (jdbc/query tx)
-          (run! (partial start-workload! tx)))
+             (map :uuid)
+             (map (q "''")) (str/join ",") ((q "()"))
+             (format "SELECT * FROM workload WHERE uuid in %s")
+             (jdbc/query tx)
+             (run! (partial start-workload! tx)))
         (->> uuids
-          (mapv (partial postgres/get-workload-for-uuid tx))
-          succeed)))))
+             (mapv (partial postgres/get-workload-for-uuid tx))
+             succeed)))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"

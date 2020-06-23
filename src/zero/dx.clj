@@ -126,7 +126,7 @@
     (if (and result (nat-int? result))
       result
       (throw (IllegalArgumentException.
-               (format "Error: <max> %s must be a positive integer" max))))))
+              (format "Error: <max> %s must be a positive integer" max))))))
 
 (defn failed-workflows
   "The Failed workflows in ENVIRONMENT between TIME0 and TIME1."

@@ -197,11 +197,11 @@
                             (select-keys [:commit :version])
                             (json/write-str :escape-slash false))]
       (merge
-        {(key-for :version)     version-value
-         (key-for :wdl)         wdl-value
-         (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}
-        (select-keys (into {} (map unprefix inputs))
-                     (get-in env/stuff [environment :cromwell :labels]))))))
+       {(key-for :version)     version-value
+        (key-for :wdl)         wdl-value
+        (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}
+       (select-keys (into {} (map unprefix inputs))
+                    (get-in env/stuff [environment :cromwell :labels]))))))
 
 (defn post-workflow
   "Assemble PARTS into a multipart HTML body and post it to the Cromwell

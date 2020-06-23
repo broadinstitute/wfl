@@ -16,9 +16,9 @@
   (let [[bucket object] (gcs/parse-gs-url gs-output-url)]
     (when (first (gcs/list-objects bucket object))
       (throw
-        (IllegalArgumentException.
-          (format "%s: output already exists: %s"
-                  zero/the-name gs-output-url))))))
+       (IllegalArgumentException.
+        (format "%s: output already exists: %s"
+                zero/the-name gs-output-url))))))
 
 (defn bam-or-cram?
   "Nil or a vector with root of PATH and the matching suffix."
@@ -39,7 +39,7 @@
               (util/do-or-nil (gcs/list-objects bucket prefix)))]
       (when-not (ok? result prefix)
         (throw (IllegalArgumentException.
-                 (format "%s must be readable" gs-url)))))
+                (format "%s must be readable" gs-url)))))
     result))
 
 (defn processed-crams
@@ -103,7 +103,7 @@
                                      "SET pipeline = '%s'::pipeline"
                                      "WHERE id = %s"]) pipeline id)
         work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                table pipeline)]
+                      table pipeline)]
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
     (jdbc/db-do-commands tx [kind work])
     [uuid table]))
@@ -119,8 +119,8 @@
   "Keywords from the set of ENVIRONMENTS with Cromwell URL."
   ([url]
    (->> env/stuff
-     (filter #(-> % second :cromwell :url #{url}))
-     keys))
+        (filter #(-> % second :cromwell :url #{url}))
+        keys))
   ([environments url]
    (->> url cromwell-environments
-     (filter environments))))
+        (filter environments))))

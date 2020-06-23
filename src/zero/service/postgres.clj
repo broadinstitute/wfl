@@ -22,25 +22,25 @@
             :db-name       "wfl"
             :classname     "org.postgresql.Driver"
             :subprotocol   "postgresql"}
-      :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
-      :password       (or ZERO_POSTGRES_PASSWORD "password")
-      :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
+           :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
+           :password       (or ZERO_POSTGRES_PASSWORD "password")
+           :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
 
 (defn run-liquibase-update
   "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
   [url username password]
   (let [status (Main/run
-                 (into-array
-                   String
-                   [(str "--url=" url)
-                    (str "--changeLogFile=database/changelog.xml")
-                    (str "--username=" username)
-                    (str "--password=" password)
-                    "update"]))]
+                (into-array
+                 String
+                 [(str "--url=" url)
+                  (str "--changeLogFile=database/changelog.xml")
+                  (str "--username=" username)
+                  (str "--password=" password)
+                  "update"]))]
     (when-not (zero? status)
       (throw
-        (Exception.
-          (format "Liquibase failed with: %s" status))))))
+       (Exception.
+        (format "Liquibase failed with: %s" status))))))
 
 (defn run-liquibase
   "Migrate the database schema for ENV using Liquibase."
@@ -50,7 +50,7 @@
      (run-liquibase-update postgres_url username password)))
   ([]
    (run-liquibase-update
-     "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
+    "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
 (defn get-table
   "Return TABLE using transaction TX."
@@ -65,9 +65,9 @@
   (-> {:method  :get                    ; :debug true :debug-body true
        :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
        :headers (once/get-auth-header)}
-    http/request :body
-    (json/read-str :key-fn keyword)
-    :status util/do-or-nil))
+      http/request :body
+      (json/read-str :key-fn keyword)
+      :status util/do-or-nil))
 
 (defn update-workflow-status!
   "Use TX to update the status of WORKFLOW in ITEMS table."
@@ -78,20 +78,20 @@
             status (if (util/uuid-nil? uuid) "skipped"
                        (cromwell-status cromwell uuid))]
         (jdbc/update! tx items
-          (maybe {:updated now :uuid uuid} :status status)
-          ["id = ?" id])))))
+                      (maybe {:updated now :uuid uuid} :status status)
+                      ["id = ?" id])))))
 
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell id items] :as _workload}]
   (->> items
-    (get-table tx)
-    (run! (partial update-workflow-status! tx cromwell items)))
+       (get-table tx)
+       (run! (partial update-workflow-status! tx cromwell items)))
   (let [finished? (set (conj cromwell/final-statuses "skipped"))]
     (when (every? (comp finished? :status) (get-table tx items))
       (jdbc/update! tx :workload
-        {:finished (OffsetDateTime/now)}
-        ["id = ?" id]))))
+                    {:finished (OffsetDateTime/now)}
+                    ["id = ?" id]))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
@@ -101,11 +101,11 @@
           {:keys [items] :as workload} (first (jdbc/query tx select))]
       (util/do-or-nil (update-workload! tx workload))
       (-> workload
-        (assoc :workflows (->> items
-                            (format "SELECT * FROM %s")
-                            (jdbc/query tx)
-                            (mapv unnilify)))
-        unnilify))))
+          (assoc :workflows (->> items
+                                 (format "SELECT * FROM %s")
+                                 (jdbc/query tx)
+                                 (mapv unnilify)))
+          unnilify))))
 
 (comment
   (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
@@ -113,5 +113,4 @@
                  "--changeLogFile=database/changelog.xml"
                  "--username=$USER" "update"])
   (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
-  (run-liquibase)
-  )
+  (run-liquibase))

@@ -19,8 +19,8 @@
   [uuid]
   (let [auth-header (once/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
-                      {:headers      auth-header
-                       :query-params {:uuid uuid}})]
+                                {:headers      auth-header
+                                 :query-params {:uuid uuid}})]
     (first (parse-json-string (:body response)))))
 
 (defn get-workloads
@@ -28,7 +28,7 @@
   []
   (let [auth-header (once/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
-                      {:headers auth-header})]
+                                {:headers auth-header})]
     (parse-json-string (:body response))))
 
 (def get-pending-workloads
@@ -45,10 +45,10 @@
   (let [auth-header (once/get-auth-header)
         payload     (json/write-str workload :escape-slash false)
         response    (client/post (str server "/api/v1/create")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+                                 {:headers      auth-header
+                                  :content-type :json
+                                  :accept       :json
+                                  :body         payload})]
     (parse-json-string (:body response))))
 
 (defn start-workload
@@ -57,10 +57,10 @@
   (let [auth-header (once/get-auth-header)
         payload     (json/write-str [workload] :escape-slash false)
         response    (client/post (str server "/api/v1/start")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+                                 {:headers      auth-header
+                                  :content-type :json
+                                  :accept       :json
+                                  :body         payload})]
     (first (parse-json-string (:body response)))))
 
 (defn start-wgs-workflow
@@ -69,10 +69,10 @@
   (let [auth-header (once/get-auth-header)
         payload     (json/write-str workflow :escape-slash false)
         response    (client/post (str server "/api/v1/wgs")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+                                 {:headers      auth-header
+                                  :content-type :json
+                                  :accept       :json
+                                  :body         payload})]
     (parse-json-string (:body response))))
 
 (defn exec-workload
@@ -81,8 +81,8 @@
   (let [auth-header (once/get-auth-header)
         payload     (json/write-str workload :escape-slash false)
         response    (client/post (str server "/api/v1/exec")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+                                 {:headers      auth-header
+                                  :content-type :json
+                                  :accept       :json
+                                  :body         payload})]
     (parse-json-string (:body response))))
