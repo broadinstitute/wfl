@@ -55,12 +55,48 @@ jobs:
 
           boot build
 
-      - name: Setup Google Cloud
-        uses: actions-hub/gcloud@master
+        # Get secret from vault
+      - name: Authenticate to GCloud
+        id: gcloud
         env:
-          PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
-          APPLICATION_CREDENTIALS: ${{secrets.WFL_NON_PROD_SERVICE_ACCOUNT}}
-
+          ROLE_ID: ${{ secrets.ROLE_ID }}
+          SECRET_ID: ${{ secrets.SECRET_ID }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        run: |
+          # get vault token using role-id and secret-id
+          VAULT_TOKEN=$(curl \
+              --request POST \
+              --data "{\"role_id\":\"${ROLE_ID}\",\"secret_id\":\"${SECRET_ID}\"}" \
+              ${VAULT_ADDR}/v1/auth/approle/login | jq -r .auth.client_token)
+          if [ -z "${VAULT_TOKEN}" ] ; then
+            echo "Vault authentication failed!"
+            exit 1
+          fi
+          echo ::add-mask::${VAULT_TOKEN}
+          echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
+          # use vault token to read secret - service account json
+          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/ci-non-prod-service-account.json \
+              | jq .data > sa.json
+          if [ ! -s sa.json ] ; then
+            echo "Retrieval of Gcloud SA credentials failed"
+            exit 1
+          fi
+          # auth as service account
+          gcloud auth activate-service-account --key-file=sa.json
+          if [ $? -ne 0 ] ; then
+            echo "Gcloud auth failed!"
+            exit 1
+          fi
+          # get bearer token and set it to a specific env var that
+          #   subsequent steps expect.  bearer token good for 1 hour
+          GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
+          if [ -z "${GOOGLE_OAUTH_ACCESS_TOKEN}" ] ; then
+            echo "Generating Gcloud access token failed"
+            exit 1
+          fi
+          echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
+          echo ::set-env name=GOOGLE_OAUTH_ACCESS_TOKEN::${GOOGLE_OAUTH_ACCESS_TOKEN}
       - name: Unit Test
         run: |
           clojure -A:test unit
