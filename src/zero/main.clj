@@ -16,9 +16,9 @@
          ""
          "Usage: %1$s <command> [<args> ...]"
          "Where: <command> and <args> are described below."]
-      (concat (util/summarize commands)) vec (conj "")
-      (->> (str/join \newline))
-      (format zero/the-name title))))
+        (concat (util/summarize commands)) vec (conj "")
+        (->> (str/join \newline))
+        (format zero/the-name title))))
 
 (defn version
   "Show version information."
@@ -48,9 +48,9 @@
                        zero.module.xx
                        zero.server]]
       (assoc (zipmap (map namify namespaces) (map varify namespaces))
-        "help"         #'help
-        "version"      #'version
-        "version-json" #'version-json))))
+             "help"         #'help
+             "version"      #'version
+             "version-json" #'version-json))))
 
 (defn trace-stack
   "Filter stack trace in #error X for only this code's frames."

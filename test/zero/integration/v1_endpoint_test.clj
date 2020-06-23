@@ -63,8 +63,8 @@
     (let [src (str/join [uri "input.txt"])
           dst (str/join [uri "output.txt"])]
       (->
-        (str/join "/" ["test" "zero" "resources" "copy-me.txt"])
-        (gcs/upload-file src))
+       (str/join "/" ["test" "zero" "resources" "copy-me.txt"])
+       (gcs/upload-file src))
       (let [workload  (workloads/make-copyfile-workload src dst)
             await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)
             submitted (endpoints/exec-workload workload)]

@@ -44,24 +44,13 @@
 
  :aliases
 
- ;; HACK: 0.1.7 fails on any namespace with a docstring.
- ;; HACK: Use ,s to create a single shell argument.
- ;;
- {:clint
-  {:extra-deps  {jonase/eastwood {:mvn/version "0.3.6"}
-                 venantius/yagni {:mvn/version "0.1.7"}}
-   :extra-paths ["test"]
-   :main-opts   ["-m" "eastwood.lint"
-                 {:add-linters  #{#_:keyword-typos
-                                  :non-clojure-file
-                                  :non-dynamic-earmuffs
-                                  :unused-fn-args
-                                  :unused-locals
-                                  :unused-namespaces
-                                  :unused-private-vars}
-                  :cwd          "."
-                  :source-paths #{"src"}
-                  :test-paths   #{"test"}}]}
+ {:lint
+  {:extra-deps {cljfmt {:mvn/version "0.6.7"}}
+   :main-opts  ["-m" "cljfmt.main" "check"]}
+
+  :format
+  {:extra-deps {cljfmt {:mvn/version "0.6.7"}}
+   :main-opts  ["-m" "cljfmt.main" "fix"]}
 
   :kondo
   {:extra-deps {clj-kondo {:mvn/version "2020.02.28-1"}}

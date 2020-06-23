@@ -101,8 +101,8 @@
             (let [ack-ids (map :ackId result)
                   ack-result (pubsub/acknowledge project notification-subscription ack-ids)
                   pull-result (pubsub/pull project notification-subscription)]
-            (is (= ack-result {}))
-            (is (= (count pull-result) 0))))))
+              (is (= ack-result {}))
+              (is (= (count pull-result) 0))))))
       (finally
         (gcs/delete-object notification-bucket test-file)
         (io/delete-file "test.txt")))))

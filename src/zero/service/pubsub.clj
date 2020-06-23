@@ -122,13 +122,13 @@
   ([request]
    (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))]
      (-> request
-       (update-in [:body] jsonify)
-       http/request :body
-       (json/read-str :key-fn keyword))))
+         (update-in [:body] jsonify)
+         http/request :body
+         (json/read-str :key-fn keyword))))
   ([request pushEndpoint]
    (subscribe (assoc-in request
-                [:body :pushConfig]
-                {:pushEndpoint pushEndpoint})))
+                        [:body :pushConfig]
+                        {:pushEndpoint pushEndpoint})))
   ([project topic subscription]
    (subscribe (subscribe-request project topic subscription)))
   ([project topic subscription pushEndpoint]
@@ -160,18 +160,18 @@
   [project topic & messages]
   (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))
           (encode [data] (->> data
-                           jsonify
-                           .getBytes
-                           (.encodeToString (Base64/getEncoder))))
+                              jsonify
+                              .getBytes
+                              (.encodeToString (Base64/getEncoder))))
           (wrap [message] {:data       (encode message)
                            :attributes attributes})]
     (-> {:method  :post
          :url     (str api-url (topic-name project topic) :publish)
          :headers (once/get-auth-header)
          :body    (jsonify {:messages (map wrap messages)})}
-      http/request :body
-      (json/read-str :key-fn keyword)
-      :messageIds)))
+        http/request :body
+        (json/read-str :key-fn keyword)
+        :messageIds)))
 
 ;; The :returnImmediately and :maxMessages are just illustrative.
 ;;
@@ -181,25 +181,25 @@
   (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))
           (ednify [json] (json/read-str json :key-fn keyword))
           (decode [data] (->> data
-                           (.decode (Base64/getDecoder))
-                           String. ednify))
+                              (.decode (Base64/getDecoder))
+                              String. ednify))
           (unwrap [m] (update-in m [:message :data] decode))]
     (-> {:method  :post
          :url     (str api-url (subscription-name project subscription) :pull)
          :headers (once/get-auth-header)
          :body    (jsonify {:returnImmediately true :maxMessages 23})}
-      http/request :body
-      (json/read-str :key-fn keyword)
-      :receivedMessages
-      (->> (map unwrap)))))
+        http/request :body
+        (json/read-str :key-fn keyword)
+        :receivedMessages
+        (->> (map unwrap)))))
 
 (defn acknowledge
   "Acknowledge messages from SUBSCRIPTION in PROJECT given their ACK-IDS"
   [project subscription ack-ids]
   (letfn [(jsonify [edn] (json/write-str edn :escape-slash false))]
     (-> {:method  :post
-       :url     (str api-url (subscription-name project subscription) :acknowledge)
-       :headers (once/get-auth-header)
-       :body    (jsonify {:ackIds ack-ids})}
-      http/request :body
-      (json/read-str :key-fn keyword))))
+         :url     (str api-url (subscription-name project subscription) :acknowledge)
+         :headers (once/get-auth-header)
+         :body    (jsonify {:ackIds ack-ids})}
+        http/request :body
+        (json/read-str :key-fn keyword))))

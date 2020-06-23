@@ -27,10 +27,10 @@
     (-> (cond file  (io/file file)
               vault (-> vault util/vault-secrets jsonify .getBytes)
               :else (throw (IllegalArgumentException. (pr-str sa))))
-      io/input-stream GoogleCredentials/fromStream
-      (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
-                      "https://www.googleapis.com/auth/userinfo.email"
-                      "https://www.googleapis.com/auth/userinfo.profile"]))))
+        io/input-stream GoogleCredentials/fromStream
+        (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
+                        "https://www.googleapis.com/auth/userinfo.email"
+                        "https://www.googleapis.com/auth/userinfo.profile"]))))
 
 (defn- service-account-token
   "Throw or return a bearer token for the service account SA."
@@ -41,21 +41,21 @@
   "An Authorization header with a Bearer token."
   []
   (authorization-header-with-bearer-token
-    (if-let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT")]
-      (let [env (zero/throw-or-environment-keyword! environment)
-            sa (get-in env/stuff [env :server :service-account])]
-        (service-account-token sa))
-      (util/shell! "gcloud" "auth" "print-access-token"))))
+   (if-let [environment (util/getenv "ZERO_DEPLOY_ENVIRONMENT")]
+     (let [env (zero/throw-or-environment-keyword! environment)
+           sa (get-in env/stuff [env :server :service-account])]
+       (service-account-token sa))
+     (util/shell! "gcloud" "auth" "print-access-token"))))
 
 (defn get-service-account-header
   "An Authorization header with service account Bearer token."
   []
   (authorization-header-with-bearer-token
-    (service-account-token
-      (get-service-account-from-environment))))
+   (service-account-token
+    (get-service-account-from-environment))))
 
 (defn service-account-email
   "The client_email for the ZERO_DEPLOY_ENVIRONMENT service account."
   []
   (-> (get-service-account-from-environment)
-    service-account-credentials .getClientEmail))
+      service-account-credentials .getClientEmail))

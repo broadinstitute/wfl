@@ -18,12 +18,12 @@
   "Submit WORKFLOW to Cromwell in ENVIRONMENT."
   [environment workflow]
   (cromwell/submit-workflow
-    environment
-    (io/file (:top workflow-wdl))
-    nil
-    (-> workflow (select-keys [:src :dst]) (util/prefix-keys pipeline))
-    (util/make-options environment)
-    {}))
+   environment
+   (io/file (:top workflow-wdl))
+   nil
+   (-> workflow (select-keys [:src :dst]) (util/prefix-keys pipeline))
+   (util/make-options environment)
+   {}))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -45,7 +45,7 @@
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
-                  {:updated now :uuid uuid}
-                  ["id = ?" id])))]
+                              {:updated now :uuid uuid}
+                              ["id = ?" id])))]
       (let [workflow (postgres/get-table tx items)]
         (run! (comp (partial update! tx) submit!) workflow)))))

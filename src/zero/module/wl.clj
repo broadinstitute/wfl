@@ -15,7 +15,7 @@
 (def get-cromwell-wgs-environment
   "Map Cromwell URL to a :wgs environment."
   (comp first (partial all/cromwell-environments
-                #{:wgs-dev :wgs-prod :wgs-staging})))
+                       #{:wgs-dev :wgs-prod :wgs-staging})))
 
 (defn maybe-update-workflow-status!
   "Use TX to update the status of WORKFLOW in ENV."
@@ -25,16 +25,16 @@
       (let [now    (OffsetDateTime/now)
             status (util/do-or-nil (cromwell/status env uuid))]
         (jdbc/update! tx items
-          (maybe {:updated now :uuid uuid} :status status)
-          ["id = ?" id])))))
+                      (maybe {:updated now :uuid uuid} :status status)
+                      ["id = ?" id])))))
 
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell items] :as _workload}]
   (let [env (@get-cromwell-wgs-environment cromwell)]
     (->> items
-      (postgres/get-table tx)
-      (run! (partial maybe-update-workflow-status! tx env items)))))
+         (postgres/get-table tx)
+         (run! (partial maybe-update-workflow-status! tx env items)))))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -65,18 +65,18 @@
   (let [in-gs  (str (all/slashify input)  input_cram)
         out-gs (str (all/slashify output) input_cram)]
     (or (->> out-gs gcs/parse-gs-url
-          (apply gcs/list-objects)
-          util/do-or-nil seq)        ; done?
-      (->> {:label  wgs/cromwell-label
-            :status ["On Hold" "Running" "Submitted"]}
-        (cromwell/query env)
-        (map (comp :ExternalWholeGenomeReprocessing.input_cram
-               (fn [it] (json/read-str it :key-fn keyword))
-               :inputs :submittedFiles
-               (partial cromwell/metadata env)
-               :id))
-        (keep #{in-gs})
-        seq))))                    ; active?
+             (apply gcs/list-objects)
+             util/do-or-nil seq)        ; done?
+        (->> {:label  wgs/cromwell-label
+              :status ["On Hold" "Running" "Submitted"]}
+             (cromwell/query env)
+             (map (comp :ExternalWholeGenomeReprocessing.input_cram
+                        (fn [it] (json/read-str it :key-fn keyword))
+                        :inputs :submittedFiles
+                        (partial cromwell/metadata env)
+                        :id))
+             (keep #{in-gs})
+             seq))))                    ; active?
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
@@ -92,7 +92,7 @@
                       (if (skip-workflow? env workload workflow)
                         util/uuid-nil
                         (wgs/really-submit-one-workflow
-                          env (str input input_cram) output)))])
+                         env (str input input_cram) output)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items

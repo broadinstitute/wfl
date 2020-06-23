@@ -156,13 +156,13 @@
               (util/do-or-nil (gcs/list-objects bucket prefix)))]
       (when (= in-bucket out-bucket)
         (throw (IllegalArgumentException.
-                 (format "%s and %s must be in different GCS buckets"
-                         in-gs-url out-gs-url))))
+                (format "%s and %s must be in different GCS buckets"
+                        in-gs-url out-gs-url))))
       (when-not (and (readable? in-bucket  in-prefix)
                      (readable? out-bucket out-prefix))
         (throw (IllegalArgumentException.
-                 (format "%s and %s must be readable"
-                         in-gs-url out-gs-url)))))
+                (format "%s and %s must be readable"
+                        in-gs-url out-gs-url)))))
     [in-bucket out-bucket]))
 
 (defn on-hold-some-crams
@@ -243,7 +243,7 @@
                3 report-status
                2 release-some-crams
                (throw (IllegalArgumentException.
-                        "Must specify 2 to 4 arguments.")))
+                       "Must specify 2 to 4 arguments.")))
              env (rest args)))
     (catch Exception x
       (binding [*out* *err*] (println description))
@@ -251,5 +251,4 @@
 
 (comment
   (cromwell/release-workflows-using-agent
-    (fn [] (cons :gotc-dev (find-some-crams :gotc-dev 1))))
-  )
+   (fn [] (cons :gotc-dev (find-some-crams :gotc-dev 1)))))

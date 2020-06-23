@@ -36,7 +36,7 @@
   [url]
   (let [[gs-colon nada bucket object] (str/split url #"/" 4)]
     (when-not
-        (and (every? seq [gs-colon bucket])
+     (and (every? seq [gs-colon bucket])
           (= "gs:" gs-colon)
           (= "" nada))
       (throw (IllegalArgumentException. (format "Bad GCS URL: '%s'" url))))
@@ -46,8 +46,8 @@
   "Format BUCKET and OBJECT into a gs://bucket/object URL."
   [bucket object]
   (when-not (and (string?        bucket)
-              (seq            bucket)
-              (not-any? #{\/} bucket))
+                 (seq            bucket)
+                 (not-any? #{\/} bucket))
     (let [fmt "The bucket (%s) must be a non-empty string."
           msg (format fmt bucket)]
       (throw (IllegalArgumentException. msg))))
@@ -62,8 +62,8 @@
          ;; :query-params {:project project :prefix prefix}
          :content-type :application/json
          :headers      (once/get-auth-header)}
-      http/request :body
-      (json/read-str :key-fn keyword))))
+        http/request :body
+        (json/read-str :key-fn keyword))))
 
 (defn list-buckets
   "The buckets in PROJECT named with optional PREFIX."
@@ -73,10 +73,10 @@
         :query-params {:project project :prefix prefix}
         :content-type :application/json
         :headers      (once/get-auth-header)}
-     http/request :body
-     (json/read-str :key-fn keyword)
-     :items
-     (or [])))
+       http/request :body
+       (json/read-str :key-fn keyword)
+       :items
+       (or [])))
   ([project]
    (list-buckets project "")))
 
@@ -92,9 +92,9 @@
                         :query-params {:prefix prefix
                                        :maxResults 999
                                        :pageToken pageToken}}
-                     http/request
-                     :body
-                     (json/read-str :key-fn keyword))]
+                       http/request
+                       :body
+                       (json/read-str :key-fn keyword))]
                (lazy-cat items (when nextPageToken (each nextPageToken)))))]
      (each "")))
   ([bucket]
@@ -106,21 +106,21 @@
 
 (s/def ::bucket-name
   (s/and string?
-    (partial every? (set/union _-? digit? lowercase?))
-    (complement (comp _-? first))
-    (complement (comp _-? last))
-    (comp (partial > 64) count)
-    (comp (partial <  2) count)))
+         (partial every? (set/union _-? digit? lowercase?))
+         (complement (comp _-? first))
+         (complement (comp _-? last))
+         (comp (partial > 64) count)
+         (comp (partial <  2) count)))
 
 (defn valid-bucket-name-or-throw!
   "Throw unless BUCKET is a valid GCS bucket name."
   [bucket]
   (when-not (s/valid? ::bucket-name bucket)
     (throw
-      (IllegalArgumentException.
-        (format "Bad GCS bucket name: %s\nSee %s\n%s" bucket
-          "https://cloud.google.com/storage/docs/naming#requirements"
-          (s/explain-str ::bucket-name bucket))))))
+     (IllegalArgumentException.
+      (format "Bad GCS bucket name: %s\nSee %s\n%s" bucket
+              "https://cloud.google.com/storage/docs/naming#requirements"
+              (s/explain-str ::bucket-name bucket))))))
 
 (defn make-bucket
   "Make a storageClass CLASS bucket in PROJECT named BUCKET at LOCATION."
@@ -134,7 +134,7 @@
        :form-params  {:name         bucket
                       :location     location
                       :storageClass class}}
-    http/request :body (json/read-str :key-fn keyword)))
+      http/request :body (json/read-str :key-fn keyword)))
 
 (defn delete-bucket
   "Throw or delete the bucket in PROJECT named NAME."
@@ -144,15 +144,15 @@
               204 true
               404 false
               (-> 'delete-bucket
-                (list name)
-                pr-str
-                (ex-info response)
-                throw)))]
+                  (list name)
+                  pr-str
+                  (ex-info response)
+                  throw)))]
     (-> {:method            :delete     ; :debug true :debug-body true
          :url               (str bucket-url name)
          :headers           (once/get-auth-header)
          :throw-exceptions? false}
-      http/request deleted-this-time?)))
+        http/request deleted-this-time?)))
 
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
@@ -165,8 +165,8 @@
           :content-type (.detect (new Tika) body)
           :headers      (once/get-auth-header)
           :body         body}
-       http/request :body
-       (json/read-str :key-fn keyword))))
+         http/request :body
+         (json/read-str :key-fn keyword))))
   ([file url]
    (apply upload-file file (parse-gs-url url))))
 
@@ -179,8 +179,8 @@
           :query-params {:alt "media"}
           :headers      (once/get-auth-header)
           :as           :stream}
-       http/request :body
-       (io/copy out))))
+         http/request :body
+         (io/copy out))))
   ([file url]
    (apply download-file file (parse-gs-url url))))
 
@@ -209,9 +209,9 @@
    (-> {:method       :get              ; :debug true :debug-body true
         :url          (str (bucket-object-url bucket object) params)
         :headers      (once/get-auth-header)}
-     http/request
-     :body
-     (json/read-str :key-fn keyword)))
+       http/request
+       :body
+       (json/read-str :key-fn keyword)))
   ([url]
    (let [[bucket object] (parse-gs-url url)]
      (object-meta bucket object ""))))
@@ -224,8 +224,8 @@
         :content-type :application/json
         :headers      (once/get-auth-header)
         :body         (json/write-str metadata :escape-slash false)}
-     http/request :body
-     (json/read-str :key-fn keyword)))
+       http/request :body
+       (json/read-str :key-fn keyword)))
   ([metadata url]
    (apply patch-object! metadata (parse-gs-url url))))
 
@@ -236,8 +236,8 @@
      (-> {:method  :post                ; :debug true :debug-body true
           :url     (str src-url "/rewriteTo/" destination)
           :headers (once/get-auth-header)}
-       http/request :body
-       (json/read-str :key-fn keyword))))
+         http/request :body
+         (json/read-str :key-fn keyword))))
   ([sbucket sobject dbucket dobject]
    (let [src-url  (bucket-object-url sbucket sobject)
          dest-url (bucket-object-url dbucket dobject)]
@@ -263,11 +263,11 @@
     (let [buckets (keep mine? (list-buckets project bucket))]
       (when-not (== 1 (count buckets))
         (throw (IllegalArgumentException.
-                 (format "Found %s buckets named %s in project %s."
-                   (count buckets) bucket project))))
+                (format "Found %s buckets named %s in project %s."
+                        (count buckets) bucket project))))
       (-> {:method       :patch         ; :debug true :debug-body true
            :url          (:selfLink (first buckets))
            :content-type :application/json
            :headers      (once/get-auth-header)
            :body         (json/write-str metadata :escape-slash false)}
-        http/request :body (json/read-str :key-fn keyword)))))
+          http/request :body (json/read-str :key-fn keyword)))))

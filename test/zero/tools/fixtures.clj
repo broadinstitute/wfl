@@ -30,5 +30,5 @@
      (try ~@body
           (finally
             (->>
-              (gcs/list-objects gcs-test-bucket name#)
-              (run! (comp delete-test-object :name)))))))
+             (gcs/list-objects gcs-test-bucket name#)
+             (run! (comp delete-test-object :name)))))))
