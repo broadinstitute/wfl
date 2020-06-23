@@ -55,6 +55,12 @@ jobs:
 
           boot build
 
+      - name: Setup Google Cloud
+        uses: actions-hub/gcloud@master
+        env:
+          PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
+          APPLICATION_CREDENTIALS: ${{secrets.WFL_NON_PROD_SERVICE_ACCOUNT}}
+
       - name: Unit Test
         run: |
           clojure -A:test unit
