@@ -73,6 +73,7 @@ jobs:
             exit 1
           fi
           echo ::add-mask::${VAULT_TOKEN}
+          echo ::add-mask::${VAULT_TOKEN} > ~/.vault-token
           echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
           # use vault token to read secret - service account json
           curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
