@@ -74,7 +74,7 @@ jobs:
           fi
           echo ::add-mask::${VAULT_TOKEN}
           echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
-          echo "bogus-secret" > ~/.v.token
+          echo ${VAULT_TOKEN} > ~/.vault-token
           # use vault token to read secret - service account json
           curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
               ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
