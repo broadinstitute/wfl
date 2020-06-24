@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.3.2">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.3.3">
     
     
       
@@ -689,13 +689,28 @@ you have to make the following preparations:</p>
 <div class="highlight"><pre><span></span><code>boot build
 </code></pre></div>
 
+<p>Note the <code>:version</code> printed by the build,
+or run this to recover the <code>:version</code> string.</p>
+<div class="highlight"><pre><span></span><code>java -jar ./target/wfl-*.tar version
+</code></pre></div>
+
+<p>The version string should look something like this.</p>
+<div class="highlight"><pre><span></span><code><span class="m">2020</span>-06-24t16-41-44z
+</code></pre></div>
+
+<p>Compose an docker image tag for later use.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">IMAGE</span><span class="o">=</span><span class="m">2020</span>-06-24t16-41-44z-<span class="nv">$USER</span>
+</code></pre></div>
+
 <h3 id="dockerize">Dockerize<a class="headerlink" href="#dockerize" title="Permanent link">&para;</a></h3>
 <p>Compose a new docker image if you want one.
 Tag it with some helpful name,
 then push it to DockerHub
 so Kubernetes can find it.</p>
-<div class="highlight"><pre><span></span><code>docker build -t broadinstitute/workflow-launcher-api .
-docker push broadinstitute/workflow-launcher-api:latest
+<div class="highlight"><pre><span></span><code>docker build -t broadinstitute/workflow-launcher-api:<span class="nv">$IMAGE</span> .
+docker build -t broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>  ui/.
+docker push broadinstitute/workflow-launcher-api:<span class="nv">$IMAGE</span>
+docker push broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>
 </code></pre></div>
 
 <p>You should see it listed here.</p>
@@ -857,7 +872,7 @@ in your custom values YML files.</p>
     </div>
     
       <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.7f4f3c92.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/bundle.4a5ba8d6.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
