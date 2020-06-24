@@ -71,6 +71,25 @@ Build a new WFL jar it you want one.
 boot build
 ```
 
+Note the `:version` printed by the build,
+or run this to recover the `:version` string.
+
+``` bash
+java -jar ./target/wfl-*.tar version
+```
+
+The version string should look something like this.
+
+``` bash
+2020-06-24t16-41-44z
+```
+
+Compose an docker image tag for later use.
+
+``` bash
+IMAGE=2020-06-24t16-41-44z-$USER
+```
+
 ### Dockerize
 
 Compose a new docker image if you want one.
@@ -79,8 +98,10 @@ then push it to DockerHub
 so Kubernetes can find it.
 
 ```bash
-docker build -t broadinstitute/workflow-launcher-api .
-docker push broadinstitute/workflow-launcher-api:latest
+docker build -t broadinstitute/workflow-launcher-api:$IMAGE .
+docker build -t broadinstitute/workflow-launcher-ui:$IMAGE  ui/.
+docker push broadinstitute/workflow-launcher-api:$IMAGE
+docker push broadinstitute/workflow-launcher-ui:$IMAGE
 ```
 
 You should see it listed here.
