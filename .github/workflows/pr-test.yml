@@ -73,21 +73,17 @@ jobs:
             exit 1
           fi
           echo ::add-mask::${VAULT_TOKEN}
-          echo ::add-mask::${VAULT_TOKEN} > ~/.vault-token
-
-          echo "::add-mask::12345" > ~/.test-token
-          cat /home/runner/.test-token
           echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
           # use vault token to read secret - service account json
           curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
               ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
-              | jq .data > sa.json
-          if [ ! -s sa.json ] ; then
+              | jq .data > /etc/service-accounts/wfl-non-prod-service-account.json
+          if [ ! -s /etc/service-accounts/wfl-non-prod-service-account.json ] ; then
             echo "Retrieval of Gcloud SA credentials failed"
             exit 1
           fi
           # auth as service account
-          gcloud auth activate-service-account --key-file=sa.json
+          gcloud auth activate-service-account --key-file=/etc/service-accounts/wfl-non-prod-service-account.json
           if [ $? -ne 0 ] ; then
             echo "Gcloud auth failed!"
             exit 1
@@ -102,5 +98,7 @@ jobs:
           echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
           echo ::set-env name=GOOGLE_OAUTH_ACCESS_TOKEN::${GOOGLE_OAUTH_ACCESS_TOKEN}
       - name: Unit Test
+        env:
+          ZERO_DEPLOY_ENVIRONMENT: "gotc-dev"
         run: |
           clojure -A:test unit
