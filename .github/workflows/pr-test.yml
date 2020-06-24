@@ -75,6 +75,7 @@ jobs:
           echo ::add-mask::${VAULT_TOKEN}
           echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
           # use vault token to read secret - service account json
+          mkdir -p /etc/service-accounts
           curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
               ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
               | jq .data > /etc/service-accounts/wfl-non-prod-service-account.json
