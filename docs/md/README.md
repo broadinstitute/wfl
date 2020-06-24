@@ -4,7 +4,7 @@
 
 | Type        | Master Branch                                                                                                                                  | Dev | Prod |
 |-------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----|------|
-| Unit Test   | ![ Build on Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg)  | N/A | N/A  |
+| Unit Test   | ![ Build on Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)  | N/A | N/A  |
 | Integration |                                                                                                                                                |     |      |
 
 ## Overview
