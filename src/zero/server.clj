@@ -71,18 +71,19 @@
     wrap-internal-error
     (wrap-json-response {:pretty true})))
 
-(defn JettyStfu
-  "A stub logger to shut Jetty up."
+(defn stfu-jetty
+  "Set up a stub logger to shut Jetty up."
   []
-  (proxy [Logger] []
-    (debug ([thrown]) ([msg & args]))
-    (getLogger [name] this)
-    (getName [] "JettyStfu")
-    (ignore [ignored])
-    (info ([thrown]) ([msg & args]))
-    (isDebugEnabled [] false)
-    (setDebugEnabled [enabled])
-    (warn ([thrown]) ([msg & args]))))
+  (Log/setLog
+    (proxy [Logger] []
+      (debug ([thrown]) ([msg & args]))
+      (getLogger [name] this)
+      (getName [] "JettyStfu")
+      (ignore [ignored])
+      (info ([thrown]) ([msg & args]))
+      (isDebugEnabled [] false)
+      (setDebugEnabled [enabled])
+      (warn ([thrown]) ([msg & args])))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."
@@ -90,5 +91,5 @@
   (pprint (into ["Run:" zero/the-name "server"] args))
   (let [port {:port (util/is-non-negative! (first args))}]
     (pprint [zero/the-name port])
-    (Log/setLog (JettyStfu))
+    (stfu-jetty)
     (jetty/run-jetty app port)))
