@@ -23,6 +23,7 @@ import tempfile
 if sys.platform.lower() == "win32":
     os.system("color")
 
+
 class AvailableColors(Enum):
     GRAY = 90
     RED = 91
@@ -34,6 +35,7 @@ class AvailableColors(Enum):
     BLACK = 30
     DEFAULT = 39
 
+
 def _apply_color(color: str, message: str) -> str:
     """Dye message with color, fall back to default if it fails."""
     color_code = AvailableColors["DEFAULT"].value
@@ -43,21 +45,26 @@ def _apply_color(color: str, message: str) -> str:
         pass
     return f"\033[1;{color_code}m{message}\033[0m"
 
+
 def info(message: str):
     """Log the info to stdout"""
     print(_apply_color("default", message))
+
 
 def success(message: str):
     """Log the success to stdout"""
     print(_apply_color("green", message))
 
+
 def error(message: str):
     """Log the error to stderr"""
     print(_apply_color("red", message), file=sys.stderr)
 
+
 def warn(message: str):
     """Log the warning to stdout"""
     print(_apply_color("yellow", message))
+
 
 def registerableCLI(cls):
     """Class decorator to register methodss with @register into a set."""
@@ -68,20 +75,24 @@ def registerableCLI(cls):
             cls.registered_commands.add(name)
     return cls
 
+
 def register(func: Callable) -> Callable:
     """Method decorator to register CLI commands."""
     func.registered = True
     return func
+
 
 def shell(command: str):
     """Run COMMAND in a subprocess."""
     info(f"Running: {command}")
     return subprocess.check_call(command, shell=True)
 
+
 def shell_unchecked(command: str):
     """Run COMMAND in a subprocess and who cares whether it fails!"""
     warn(f"Running unchecked: {command}")
     return subprocess.call(command, shell=True)
+
 
 def clone_config_repo(dest: str, branch: str):
     """Clone the gotc-deploy repo."""
@@ -92,6 +103,7 @@ def clone_config_repo(dest: str, branch: str):
         branch=branch
     )
     success(f"[✔] Cloned gotc-deploy repo to {dest}")
+
 
 def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
     """Render a ctmpl file."""
@@ -112,10 +124,12 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
     shell_unchecked(command)
     success(f"[✔] Rendered file {ctmpl_file.split('.ctmpl')[0]}")
 
+
 def is_available(*commands: list):
     for cmd in commands:
         if not shutil.which(cmd):
             error(f"=> {cmd} is not in PATH. Please install it!")
+
 
 def set_up_helm():
     info("=> Setting up Helm charts")
@@ -124,6 +138,7 @@ def set_up_helm():
     shell(ADD)
     shell("helm repo update")
     success("[✔] Set up Helm charts")
+
 
 def set_up_k8s(environment: str, namespace: str):
     """Connect to K8S cluster and set up namespace."""
@@ -141,6 +156,7 @@ def set_up_k8s(environment: str, namespace: str):
     success(f"[✔] Set context to {context}.")
     success(f"[✔] Set namespace to {namespace}.")
 
+
 def helm_deploy_wfl(values: str):
     """Use Helm to deploy WFL to K8S using VALUES."""
     info("=> Deploying to K8S cluster with Helm.")
@@ -148,6 +164,7 @@ def helm_deploy_wfl(values: str):
 
     shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {values} --install")
     info("[✔] WFL is deployed. Run `kubectl get pods` for details.")
+
 
 @registerableCLI
 class CLI:
@@ -241,6 +258,7 @@ class CLI:
             os.chdir(pwd)
         success("[✔] Deployment is done!")
         return 0
+
 
 if __name__ == "__main__":
     c = CLI()
