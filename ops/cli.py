@@ -257,6 +257,7 @@ class CLI:
             helm_deploy_wfl(values=values)
             os.chdir(pwd)
         success("[✔] Deployment is done!")
+        shell("kubectl get pods")
         return 0
 
 
