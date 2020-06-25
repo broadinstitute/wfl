@@ -12,7 +12,8 @@
             [ring.middleware.session.cookie :as cookie]
             [zero.api.routes :as routes]
             [zero.util :as util]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [org.eclipse.jetty.util.log Log Logger]))
 
 (def description
   "The purpose of this command."
@@ -27,23 +28,23 @@
          "       <port> is a port number to listen on."
          ""
          (str/join \space ["Example: %1$s server" env port])]
-        (->> (str/join \newline))
-        (format zero/the-name title))))
+      (->> (str/join \newline))
+      (format zero/the-name title))))
 
 (def cookie-store
   "A session store for wrap-defaults."
   (cookie/cookie-store
-   {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
-    :readers (merge *data-readers* tc/data-readers)}))
+    {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
+     :readers (merge *data-readers* tc/data-readers)}))
 
 (defn wrap-defaults
   [handler]
   (defaults/wrap-defaults
-   handler
-   (-> defaults/api-defaults
-       (assoc :proxy true)
-       (assoc-in [:session :cookie-attrs :same-site] :lax)
-       (assoc-in [:session :store] cookie-store))))
+    handler
+    (-> defaults/api-defaults
+      (assoc :proxy true)
+      (assoc-in [:session :cookie-attrs :same-site] :lax)
+      (assoc-in [:session :store] cookie-store))))
 
 (defn wrap-internal-error
   [handler]
@@ -64,11 +65,24 @@
 (def app
   "Wrap routes to compile in standard features."
   (-> routes/routes
-      wrap-reload-for-development-only
-      wrap-params
-      wrap-defaults
-      wrap-internal-error
-      (wrap-json-response {:pretty true})))
+    wrap-reload-for-development-only
+    wrap-params
+    wrap-defaults
+    wrap-internal-error
+    (wrap-json-response {:pretty true})))
+
+(defn JettyStfu
+  "A stub logger to shut Jetty up."
+  []
+  (proxy [Logger] []
+    (debug ([thrown]) ([msg & args]))
+    (getLogger [name] this)
+    (getName [] "JettyStfu")
+    (ignore [ignored])
+    (info ([thrown]) ([msg & args]))
+    (isDebugEnabled [] false)
+    (setDebugEnabled [enabled])
+    (warn ([thrown]) ([msg & args]))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."
@@ -76,4 +90,5 @@
   (pprint (into ["Run:" zero/the-name "server"] args))
   (let [port {:port (util/is-non-negative! (first args))}]
     (pprint [zero/the-name port])
+    (Log/setLog (JettyStfu))
     (jetty/run-jetty app port)))
