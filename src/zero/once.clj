@@ -20,9 +20,9 @@
     (if-let [file (util/getenv "GOOGLE_APPLICATION_CREDENTIALS")]
       (-> file io/file)
       (-> "ZERO_DEPLOY_ENVIRONMENT"
-        (util/getenv "gotc-dev")
+        (util/getenv "debug")
         zero/error-or-environment-keyword
-        env/stuff :server :vault util/vault-secrets
+        env/stuff :server :service-account util/vault-secrets
         (json/write-str :escape-slash false)
         .getBytes))
     io/input-stream GoogleCredentials/fromStream
