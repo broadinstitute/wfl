@@ -1,9 +1,10 @@
 (ns zero.main
   "Run some demonstrations."
-  (:require [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
-            [zero.util      :as util]
-            [zero.zero      :as zero])
+  (:require [clojure.data.json :as json]
+            [clojure.pprint    :refer [pprint]]
+            [clojure.string    :as str]
+            [zero.util         :as util]
+            [zero.zero         :as zero])
   (:gen-class))
 
 (defn describe
@@ -24,6 +25,11 @@
   []
   (pprint (zero/get-the-version)))
 
+(defn version-json
+  "Show version information in JSON."
+  []
+  (json/pprint (zero/get-the-version)))
+
 (declare commands)
 
 (defn help
@@ -42,8 +48,9 @@
                        zero.module.xx
                        zero.server]]
       (assoc (zipmap (map namify namespaces) (map varify namespaces))
-             "help"    #'help
-             "version" #'version))))
+             "help"         #'help
+             "version"      #'version
+             "version-json" #'version-json))))
 
 (defn trace-stack
   "Filter stack trace in #error X for only this code's frames."

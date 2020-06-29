@@ -29,7 +29,7 @@
                        (util/shell! "git" "show" "-s" "--format=%cI")
                        OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil
-                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                   (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
     {:version   (-> (if clean? committed built)
                     .toLowerCase
                     (str/replace #"[^-a-z0-9]" "-"))
@@ -69,16 +69,16 @@
   []
   (let [tmp (str "CLONE_" (UUID/randomUUID))]
     (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
-                           "--config" "advice.detachedHead=false" url))]
+                                         "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
       (try
         (run! clone (vals zero/the-github-repos))
         (catch Exception _
           (run! clone (vals zero/the-other-github-repos)))))
     (into {:tmp tmp}
-      (for [repo (keys zero/the-github-repos)]
-        (let [dir (str/join "/" [tmp repo])]
-          [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
+          (for [repo (keys zero/the-github-repos)]
+            (let [dir (str/join "/" [tmp repo])]
+              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
@@ -105,7 +105,7 @@
     (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent pipeline-config)
-        "checkout" "0747243c6dee958518cb3cc1c83be504e3edc6ef")
+                      "checkout" "ed8b91ea300bd11473e3ba6e476c26bb38d8582b")
       (stage pipeline-config))))
 
 (defn adapterize-wgs
@@ -143,8 +143,8 @@
           {:keys [tmp] :as clones} (clone-repos)
           directory (io/file resources "zero")
           edn (merge version
-                (dissoc clones :tmp)
-                (into {} (map frob wdls)))]
+                     (dissoc clones :tmp)
+                     (into {} (map frob wdls)))]
       (pprint edn)
       (util/shell-io! "npm" "install" "--prefix" "ui")
       (util/shell-io! "npm" "run" "build" "--prefix" "ui")

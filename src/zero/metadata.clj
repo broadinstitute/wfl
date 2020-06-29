@@ -35,12 +35,11 @@
       (spit metadata-file (json/write-str metadata :escape-slash false))
       (if (:destination_cloud_path inputs)
         (gcs/upload-file
-          metadata-file
-          (str (:destination_cloud_path inputs) "/" metadata-file))
+         metadata-file
+         (str (:destination_cloud_path inputs) "/" metadata-file))
         (gcs/upload-file metadata-file (str output-dir "/" metadata-file))))
     (str "Skipping workflow " (:id metadata)
-      " - no valid output destination\n")))
-
+         " - no valid output destination\n")))
 
 (defn get-workflow-metadata-by-output
   "Record metadata for all successful workflows in a Cromwell ENV given
@@ -54,16 +53,16 @@
 (def description
   "Describe this command."
   (str/join
-    \newline
-    ["Usage: zero metadata <env> <wf-name> <output-key>"
-     ""
-     "Where: <env> is an environment"
-     "       <wf-name> is the name of a workflow run in Cromwell"
-     "       <output-key> is a key in the workflow output metadata"
-     "                    (where the metadata file will be written)"
-     ""
-     (str "Example: zero metadata pharma5 WhiteAlbumExomeReprocessing"
-          "WhiteAlbumExomeReprocessing.output_cram")]))
+   \newline
+   ["Usage: zero metadata <env> <wf-name> <output-key>"
+    ""
+    "Where: <env> is an environment"
+    "       <wf-name> is the name of a workflow run in Cromwell"
+    "       <output-key> is a key in the workflow output metadata"
+    "                    (where the metadata file will be written)"
+    ""
+    (str "Example: zero metadata pharma5 WhiteAlbumExomeReprocessing"
+         "WhiteAlbumExomeReprocessing.output_cram")]))
 
 ;; TODO: Add destination path key as optional parameter?
 ;;
@@ -81,5 +80,4 @@
       (throw x))))
 
 (comment
-  (run :hca-int "TestCopyFiles" :TestCopyFiles.hello.response)
-  )
+  (run :hca-int "TestCopyFiles" :TestCopyFiles.hello.response))

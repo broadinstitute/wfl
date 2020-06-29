@@ -28,9 +28,9 @@
          :content-type :application/json
          :headers      (once/get-service-account-header)
          :body         body}
-      http/request :body
-      (json/read-str :key-fn keyword)
-      :id)))
+        http/request :body
+        (json/read-str :key-fn keyword)
+        :id)))
 
 (defn file-ingest
   "Ingest SRC file as VDEST in ENVIRONMENT using DATASET-ID and PROFILE-ID."
@@ -40,8 +40,8 @@
        :source_path src
        :target_path vdest
        :mime_type   "text/plain"}
-    (json/write-str :escape-slash false)
-    (->> (thing-ingest environment dataset-id "files"))))
+      (json/write-str :escape-slash false)
+      (->> (thing-ingest environment dataset-id "files"))))
 
 (defn tabular-ingest
   "Ingest TABLE at PATH to DATASET-ID in ENVIRONMENT and return the job ID."
@@ -52,18 +52,18 @@
        :max_bad_records       0
        :path                  path
        :table                 table}
-    (json/write-str :escape-slash false)
-    (->> (thing-ingest environment dataset-id "ingest"))))
+      (json/write-str :escape-slash false)
+      (->> (thing-ingest environment dataset-id "ingest"))))
 
 (defn get-job-result
   "Get result for JOB-ID in ENVIRONMENT."
   [environment job-id]
   (let [{:keys [body status]}
         (http/request
-          {:method :get                 ; :debug true :debug-body true
-           :url (format "%s/jobs/%s/result" (api environment) job-id)
-           :headers (once/get-service-account-header)
-           :throw-exceptions false})]
+         {:method :get                 ; :debug true :debug-body true
+          :url (format "%s/jobs/%s/result" (api environment) job-id)
+          :headers (once/get-service-account-header)
+          :throw-exceptions false})]
     (if (== 200 status)
       (json/read-str body :key-fn keyword)
       (throw (HttpException. body)))))
@@ -75,10 +75,10 @@
             (-> {:method :get ; :debug true :debug-body true
                  :url (format "%s/jobs/%s" (api environment) job-id)
                  :headers (once/get-service-account-header)}
-              http/request :body
-              (json/read-str :key-fn keyword)
-              :job_status
-              #{"running"}))]
+                http/request :body
+                (json/read-str :key-fn keyword)
+                :job_status
+                #{"running"}))]
     (when (running?)
       (Thread/sleep 10000)
       (poll-job environment job-id))

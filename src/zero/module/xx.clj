@@ -137,12 +137,12 @@
   (let [path  (wdl/hack-unpack-resources-hack (:top workflow-wdl))
         in-gs (gcs/gs-url in-bucket object)]
     (cromwell/hold-workflow
-      environment
-      (io/file (:dir path) (path ".wdl"))
-      (io/file (:dir path) (path ".zip"))
-      (make-inputs environment out-gs in-gs)
-      (util/make-options environment)
-      cromwell-label-map)
+     environment
+     (io/file (:dir path) (path ".wdl"))
+     (io/file (:dir path) (path ".zip"))
+     (make-inputs environment out-gs in-gs)
+     (util/make-options environment)
+     cromwell-label-map)
     (prn in-gs)))
 
 (defn on-hold-some-workflows
@@ -189,7 +189,7 @@
                3 (partial all/report-status cromwell-label)
                2 release-some-on-hold-workflows
                (throw (IllegalArgumentException.
-                        "Must specify 2 to 4 arguments.")))
+                       "Must specify 2 to 4 arguments.")))
              env (rest args)))
     (catch Exception x
       (binding [*out* *err*] (println description))

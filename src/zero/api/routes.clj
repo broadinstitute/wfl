@@ -29,8 +29,8 @@
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
             :handler (handlers/success (let [versions (zero/get-the-version)
-                                             pipeline-versions-keys (keep (fn [x] (when (and (string? x) 
-                                                                                             (str/ends-with? x ".wdl")) x)) 
+                                             pipeline-versions-keys (keep (fn [x] (when (and (string? x)
+                                                                                             (str/ends-with? x ".wdl")) x))
                                                                           (keys versions))]
                                          {:pipeline-versions (select-keys versions pipeline-versions-keys)
                                           :version (apply dissoc versions pipeline-versions-keys)}))
@@ -88,21 +88,21 @@
 ;;
 (def routes
   (ring/ring-handler
-    (ring/router
-      endpoints
-      {:data {:coercion   reitit.coercion.spec/coercion
-              :muuntaja   muuntaja-core/instance
-              :middleware [parameters/parameters-middleware
-                           muuntaja/format-negotiate-middleware
-                           muuntaja/format-response-middleware
-                           exception/exception-middleware
-                           muuntaja/format-request-middleware
-                           coercion/coerce-response-middleware
-                           coercion/coerce-request-middleware
-                           coercion/coerce-exceptions-middleware
-                           multipart/multipart-middleware]}})
-    (ring/routes
-      (swagger-ui/create-swagger-ui-handler {:path "/swagger"
-                                             :url  "/swagger/swagger.json"
-                                             :root "swagger-ui"
-                                             :config {:jsonEditor false}}))))
+   (ring/router
+    endpoints
+    {:data {:coercion   reitit.coercion.spec/coercion
+            :muuntaja   muuntaja-core/instance
+            :middleware [parameters/parameters-middleware
+                         muuntaja/format-negotiate-middleware
+                         muuntaja/format-response-middleware
+                         exception/exception-middleware
+                         muuntaja/format-request-middleware
+                         coercion/coerce-response-middleware
+                         coercion/coerce-request-middleware
+                         coercion/coerce-exceptions-middleware
+                         multipart/multipart-middleware]}})
+   (ring/routes
+    (swagger-ui/create-swagger-ui-handler {:path "/swagger"
+                                           :url  "/swagger/swagger.json"
+                                           :root "swagger-ui"
+                                           :config {:jsonEditor false}}))))

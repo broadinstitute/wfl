@@ -27,23 +27,23 @@
          "       <port> is a port number to listen on."
          ""
          (str/join \space ["Example: %1$s server" env port])]
-      (->> (str/join \newline))
-      (format zero/the-name title))))
+        (->> (str/join \newline))
+        (format zero/the-name title))))
 
 (def cookie-store
   "A session store for wrap-defaults."
   (cookie/cookie-store
-    {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
-     :readers (merge *data-readers* tc/data-readers)}))
+   {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
+    :readers (merge *data-readers* tc/data-readers)}))
 
 (defn wrap-defaults
   [handler]
   (defaults/wrap-defaults
-    handler
-    (-> defaults/api-defaults
-        (assoc :proxy true)
-        (assoc-in [:session :cookie-attrs :same-site] :lax)
-        (assoc-in [:session :store] cookie-store))))
+   handler
+   (-> defaults/api-defaults
+       (assoc :proxy true)
+       (assoc-in [:session :cookie-attrs :same-site] :lax)
+       (assoc-in [:session :store] cookie-store))))
 
 (defn wrap-internal-error
   [handler]

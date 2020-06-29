@@ -1,8 +1,10 @@
 (ns zero.unit.pubsub-test
   "Test the Google Cloud Storage namespace."
-  (:require [clojure.string      :as str]
+  (:require [clojure.java.io     :as io]
+            [clojure.string      :as str]
             [clojure.test        :refer [deftest is testing]]
-            [zero.service.pubsub :as pubsub])
+            [zero.service.pubsub :as pubsub]
+            [zero.service.gcs    :as gcs])
   (:import [java.util UUID]))
 
 (def project
