@@ -105,7 +105,7 @@
     (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent pipeline-config)
-        "checkout" "0361b93d500010a54c64a515cbed8f38e8047a57")
+        "checkout" "0855c43ad0ddcae85f99b379b2ed6bc7dd554283")
       (stage pipeline-config))))
 
 (defn adapterize-wgs
