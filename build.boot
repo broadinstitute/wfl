@@ -36,7 +36,6 @@
     [org.liquibase/liquibase-cdi             "3.8.5"]
     [org.liquibase/liquibase-core            "3.8.5"]
     [org.postgresql/postgresql               "42.2.9"]
-    [org.slf4j/slf4j-simple                  "1.7.28"]
     [ring-oauth2                             "0.1.4"]
     [ring/ring-core                          "1.7.1"]
     [ring/ring-defaults                      "0.3.2"]
