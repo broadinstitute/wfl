@@ -121,7 +121,7 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
 
 
 def commands_available():
-    commands = ["boot", "docker", "gcloud", "git", "helm", "java", "kubectl"]
+    commands = ["boot", "docker", "gcloud", "git", "helm", "java", "kubectl", "jq"]
     for cmd in commands:
         if not shutil.which(cmd):
             error(f"=> {cmd} is not in PATH. Please install it!")
@@ -157,7 +157,7 @@ def run_cloud_sql_proxy(gcloud_project, cloudsql_instance_name):
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
     instance_command = " ".join([f"gcloud --format=json sql --project {gcloud_project}",
                              f"instances describe {cloudsql_instance_name}",
-                             "|jq .connectionName | tr -d '\"'"])
+                             "| jq .connectionName | tr -d '\"'"])
     instance = subprocess.check_output(instance_command, shell=True, encoding='utf-8').strip()
     docker_command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
                         f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
