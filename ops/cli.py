@@ -161,8 +161,7 @@ def run_cloud_sql_proxy(gcloud_project, cloudsql_instance_name):
     instance = subprocess.check_output(instance_command, shell=True, encoding='utf-8').strip()
     docker_command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
                         f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
-    container = subprocess.check_output(docker_command, shell=True, encoding='utf-8').strip()
-    return container
+    return subprocess.check_output(docker_command, shell=True, encoding='utf-8').strip()
 
 
 def run_liquibase_migration(db_username, db_password):
