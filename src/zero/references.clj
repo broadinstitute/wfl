@@ -37,12 +37,10 @@
   (let [hsa     "Homo_sapiens_assembly38"
         gold    "Mills_and_1000G_gold_standard.indels.hg38"
         regions "_regions.v1.interval_list"
-        private "gs://broad-references-private/"
-        hd      ".haplotype_database.txt"
         hg      (partial str "gs://gcp-public-data--broad-references/hg38/v0/")]
     {:break_bands_at_multiples_of 0
      :haplotype_scatter_count     50
-     :haplotype_database_file     (str private "hg38/v0/" hsa hd)
+     :haplotype_database_file     (hg hsa ".haplotype_database.txt")
      :evaluation_interval_list    (hg      "exome_evaluation" regions)
      :dbsnp_vcf                   (hg hsa  ".dbsnp138.vcf")
      :dbsnp_vcf_index             (hg hsa  ".dbsnp138.vcf.idx")
