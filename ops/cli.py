@@ -174,7 +174,7 @@ def run_liquibase_migration(db_username, db_password):
     command = ' '.join(['docker run --rm --net=host',
                         f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
                         f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
-                        f'--username="{db_username}" --password="{db_password}" status'])
+                        f'--username="{db_username}" --password="{db_password}" update'])
     shell(command)
     success("[✔] Ran liquibase migration")
 
