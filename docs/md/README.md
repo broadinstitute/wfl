@@ -297,6 +297,15 @@ Find a local Cursive user for guidance if you like IntelliJ.
 [Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it.
 Cursive licences are available
 [here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
+The steps for getting this project set up with very recent versions of IntelliJ 
+differ from Cursive's docs:
+1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to 
+generate the `project.clj` (see below)
+2. *Now inside of IntelliJ*, import the project by specifically targeting the 
+`project.clj` file (it should offer to import the entire project, and targeting 
+the `project.clj` will make use of Leiningen to work with Cursive)
+3. Use the Project Structure window (Help -> Find Action -> Project Structure) to set a JDK as the Project SDK
+
 There is also a
 [Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
 plugin for [Visual Studio Code](https://code.visualstudio.com/).
