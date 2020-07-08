@@ -152,19 +152,23 @@ def set_up_k8s(environment: str, namespace: str):
 
 
 def run_cloud_sql_proxy(gcloud_project, cloudsql_instance_name):
+    """Connect to a google cloud sql instance using the cloud sql proxy."""
     info("=> Running cloud_sql_proxy")
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
-    inst = subprocess.check_output(f"gcloud --format=json sql --project {gcloud_project} instances describe {cloudsql_instance_name}  |jq .connectionName | tr -d '\"'", shell=True, encoding='utf-8')
-    instance = inst.strip()
-    command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
+    instance_command = " ".join([f"gcloud --format=json sql --project {gcloud_project}",
+                             f"instances describe {cloudsql_instance_name}",
+                             "|jq .connectionName | tr -d '\"'"])
+    instance = subprocess.check_output(instance_command, shell=True, encoding='utf-8').strip()
+    docker_command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
                         f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
-    container = subprocess.check_output(command, shell=True, encoding='utf-8').strip()
+    container = subprocess.check_output(docker_command, shell=True, encoding='utf-8').strip()
     return container
 
 
 def run_liquibase_migration(db_username, db_password):
+    """Run liquibase migration on the database that the cloudsql proxy is connected to."""
     info("=> Running liquibase")
-    db_url="jdbc:postgresql://localhost:5432/wfl?useSSL=false"
+    db_url = "jdbc:postgresql://localhost:5432/wfl?useSSL=false"
     pwd = os.getcwd()
     changelog_dir = f"{pwd}/wfl/database"
     command = ' '.join(['docker run --rm --net=host',
