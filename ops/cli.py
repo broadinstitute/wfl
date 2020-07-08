@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import yaml
 
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
@@ -150,6 +151,30 @@ def set_up_k8s(environment: str, namespace: str):
     success(f"[✔] Set namespace to {namespace}.")
 
 
+def run_cloud_sql_proxy(gcloud_project, cloudsql_instance_name):
+    info("=> Running cloud_sql_proxy")
+    token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
+    inst = subprocess.check_output(f"gcloud --format=json sql --project {gcloud_project} instances describe {cloudsql_instance_name}  |jq .connectionName | tr -d '\"'", shell=True, encoding='utf-8')
+    instance = inst.strip()
+    command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
+                        f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
+    container = subprocess.check_output(command, shell=True, encoding='utf-8').strip()
+    return container
+
+
+def run_liquibase_migration(db_username, db_password):
+    info("=> Running liquibase")
+    db_url="jdbc:postgresql://localhost:5432/wfl?useSSL=false"
+    pwd = os.getcwd()
+    changelog_dir = f"{pwd}/wfl/database"
+    command = ' '.join(['docker run --rm --net=host',
+                        f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
+                        f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
+                        f'--username="{db_username}" --password="{db_password}" status'])
+    shell(command)
+    success("[✔] Ran liquibase migration")
+
+
 def helm_deploy_wfl(values: str):
     """Use Helm to deploy WFL to K8S using VALUES."""
     info("=> Deploying to K8S cluster with Helm.")
@@ -265,7 +290,17 @@ class CLI:
             shutil.copy(f"gotc-deploy/deploy/gotc-dev/helm/{values}.ctmpl", dir)
             render_ctmpl(ctmpl_file=f"{values}.ctmpl", WFL_VERSION=tag)
             helm_deploy_wfl(values=values)
+
+            with open(values) as f:
+                helm_values = yaml.safe_load(f)
+            db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
+            db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
+            container = run_cloud_sql_proxy(f"broad-gotc-{args.environment}", "zero-postgresql")
+            run_liquibase_migration(db_username, db_password)
+            info("=> Stopping cloud_sql_proxy")
+            shell(f"docker stop {container}")
             os.chdir(pwd)
+
         success("[✔] Deployment is done!")
         shell("kubectl get pods")
         return 0
