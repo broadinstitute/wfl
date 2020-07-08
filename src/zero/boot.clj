@@ -12,8 +12,7 @@
             [zero.zero :as zero])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
-           [java.util UUID]
-           [java.util.zip ZipEntry ZipFile ZipOutputStream]))
+           [java.util UUID]))
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
@@ -105,32 +104,8 @@
     (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent pipeline-config)
-                      "checkout" "ed8b91ea300bd11473e3ba6e476c26bb38d8582b")
+        "checkout" "4ce6a17e8e0ae349746767514a9bb1a12d2b6725")
       (stage pipeline-config))))
-
-(defn adapterize-wgs
-  "Wrap the released WGS WDL in a new workflow that copy outputs and
-  stage the new .wdl and .zip files in RESOURCES."
-  [resources]
-  (letfn [(zipify [wdl] (str (util/unsuffix (.getPath wdl) ".wdl") ".zip"))]
-    (let [src-wgs (io/file (:top wgs/workflow-wdl))
-          wgs-wdl (io/file resources (.getName src-wgs))
-          adapter (io/file "wdl/ExternalWholeGenomeReprocessing.wdl")
-          adapted (io/file resources (.getName adapter))
-          in-zip  (io/file (zipify wgs-wdl))
-          out-zip (io/file (zipify adapted))
-          cffctc  (io/file resources "CopyFilesFromCloudToCloud.wdl")]
-      (io/copy adapter adapted)
-      (with-open [in  (ZipFile. in-zip)
-                  out (ZipOutputStream. (io/output-stream out-zip))]
-        (doseq [wdl [wgs-wdl cffctc]]
-          (with-open [r (io/reader wdl)]
-            (.putNextEntry out (ZipEntry. (.getName wdl)))
-            (io/copy r out)))
-        (doseq [wdl (enumeration-seq (.entries in))]
-          (with-open [r (.getInputStream in wdl)]
-            (.putNextEntry out (ZipEntry. (.getName wdl)))
-            (io/copy r out)))))))
 
 ;; Hack: (delete-tree directory) is a hack.
 ;;
@@ -151,7 +126,6 @@
       (try (util/delete-tree directory)
            (stage-some-files tmp directory)
            (run! (partial cromwellify-wdl tmp directory) wdls)
-           (adapterize-wgs directory)
            (write-the-version-file directory edn)
            (finally (util/delete-tree (io/file tmp)))))))
 

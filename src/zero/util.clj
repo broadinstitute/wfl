@@ -228,7 +228,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
     (let [gcr    "us.gcr.io"
           repo   "broad-gotc-prod"
-          image  "genomes-in-the-cloud:2.4.1-1540490856"
+          image  "genomes-in-the-cloud:2.4.3-1564508330"
           {:keys [cromwell google]} (env/stuff environment)
           {:keys [projects jes_roots noAddress]} google]
       (-> {:backend           "PAPIv2"
