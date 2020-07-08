@@ -23,6 +23,7 @@
         hg      (partial str "gs://gcp-public-data--broad-references/hg38/v0/")]
     {:haplotype_scatter_count     10
      :break_bands_at_multiples_of 100000
+     :haplotype_database_file     (hg hsa ".haplotype_database.txt")
      :dbsnp_vcf                   (hg hsa  ".dbsnp138.vcf")
      :dbsnp_vcf_index             (hg hsa  ".dbsnp138.vcf.idx")
      :evaluation_interval_list    (hg      "wgs_evaluation" regions)
