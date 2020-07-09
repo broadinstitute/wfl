@@ -21,15 +21,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      # Helm lint seems to use this to check that the
-      # chart version was changed if other parts of the
-      # file were
-      - name: Fetch History
-        run: git fetch --prune --unshallow
-
       - name: Helm Chart Strict Lint
         working-directory: ./helm/wfl
         run: |
+          ct lint --config ../../ct.yaml
           helm lint --strict --namespace default
           yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
           yamllint --config-file /etc/ct/lintconf.yaml --strict Chart.yaml values.yaml
