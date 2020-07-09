@@ -7,10 +7,10 @@ on:
     branches:
       - master
     paths:
-      - 'helm/wfl/**'
+      - helm/wfl/**
   pull_request:
     paths:
-      - 'helm/wfl/**'
+      - helm/wfl/**
 
 jobs:
   lint:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Helm Chart Strict Lint
-        working-directory: './helm/wfl'
+        working-directory: ./helm/wfl
         run: |
           helm lint --strict --namespace default
           yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
