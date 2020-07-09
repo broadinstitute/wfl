@@ -27,3 +27,10 @@ jobs:
           helm lint --strict --namespace default
           yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
           yamllint --config-file /etc/ct/lintconf.yaml --strict Chart.yaml values.yaml
+
+      # We could theoretically run `ct install` or
+      # something else here, but there were breadcrumbs
+      # in previous Helm lint actions that installing
+      # fails on hyphenated names, so more work would
+      # need to be done to eliminate hyphens from
+      # generated names
