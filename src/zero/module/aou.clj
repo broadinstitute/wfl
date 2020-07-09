@@ -106,6 +106,38 @@
    :write_to_cache    true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
+(def get-cromwell-aou-environment
+  "Map Cromwell URL to a :aou environment"
+  (comp first (partial all/cromwell-environments
+                       #{:aou-dev :aou-prod})))
+
+(defn active-or-done-objects
+  "Query by PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
+  [environment {:keys [analysis_version_number chip_well_barcode] :as primary-vals}]
+  (prn (format "%s: querying Cromwell in %s" zero/the-name environment))
+  (let [primary-keys [:analysis_version_number
+                      :chip_well_barcode]
+        md           (partial cromwell/metadata environment)]
+    (letfn [(active? [metadata]
+              (let [cromwell-id                       (metadata :id)
+                    analysis-verion-chip-well-barcode (-> cromwell-id md :inputs
+                                                          (select-keys primary-keys))]
+                (when analysis-verion-chip-well-barcode
+                  (let [found-analysis-version-number (:analysis_version_number analysis-verion-chip-well-barcode)
+                        found-chip-well-barcode       (:chip_well_barcode analysis-verion-chip-well-barcode)]
+                    (when (and (= found-analysis-version-number analysis_version_number)
+                               (= found-chip-well-barcode chip_well_barcode))
+                      analysis-verion-chip-well-barcode)))))]
+      (->> {:label  cromwell-label
+            :status ["On Hold" "Running" "Submitted" "Succeeded"]}
+           (cromwell/query environment)
+           (keep active?)
+           (filter seq)
+           set))))
+
+(comment
+  (active-objects :gotc-dev {:analysis_version_number 1, :chip_well_barcode "7991775143_R01C01"}))
+
 (defn really-submit-one-workflow
   "Submit one workflow to ENVIRONMENT."
   [environment]
@@ -123,35 +155,20 @@
   (keys (make-inputs :aou-dev))
   (really-submit-one-workflow :aou-dev))
 
-(def get-cromwell-aou-environment
-  "Map Cromwell URL to a :aou environment"
-  (comp first (partial all/cromwell-environments
-                       #{:aou-dev :aou-prod})))
-
-(def pub-sub-message
-  "Mock pubsub message"
-  {})
-
-(def workload
-  "Mock AoU workload"
-  {})
-
-(defn workflow-submission
-  "Mock prepared workflow"
-  []
-  {})
-
-(defn active-objects
-  "GCS object names of array samples from IN-GS-URL now active in ENVIRONMENT."
-  [environment in-gs-url]
-  nil)
-
 (defn submit-workflow
-  "Submit OBJECT from IN-BUCKET for processing into OUT-GS in
-  ENVIRONMENT."
-  [environment in-bucket out-gs object]
-  (let [in-gs (gcs/gs-url in-bucket object)]
-    (really-submit-one-workflow environment)))
+  "Submit OBJECT in ENVIRONMENT."
+  [environment object]
+  (really-submit-one-workflow environment))
+
+(defn submit-some-workflows
+  "Submit up to MAX workflows from NOTIFICATIONS in ENVIRONMENT."
+  [environment max notifications]
+  (let [done   (active-or-done-objects environment {:analysis_version_number nil, :chip_well_barcode nil})
+        more   (remove (partial contains? done) notifications)
+        submit (partial submit-workflow environment object)
+        ids    (map submit more)]
+    (run! prn ids)
+    (vec ids)))
 
 #_(defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
