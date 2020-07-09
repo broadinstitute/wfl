@@ -21,13 +21,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+        # `ct lint` likes to find charts on its own using git
+        # history.
       - name: Fetch History
         run: git fetch --prune --unshallow
+
+        # We keep this around because it does version bump and
+        # maintenance checks outside of what `helm lint` does.
+        # It is separate because it needs to be at the top of
+        # the repo.
+      - name: Chart Test Basic Lint
+        run: ct lint --config ct.yaml
 
       - name: Helm Chart Strict Lint
         working-directory: ./helm/wfl
         run: |
-          ct lint --config ../../ct.yaml
           helm lint --strict --namespace default
           yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
           yamllint --config-file /etc/ct/lintconf.yaml --strict Chart.yaml values.yaml
