@@ -7,20 +7,23 @@ on:
     branches:
       - master
     paths:
-      - 'helm/**'
+      - 'helm/wfl/**'
   pull_request:
     paths:
-      - 'helm/**'
+      - 'helm/wfl/**'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    container:
+      image: quay.io/helmpack/chart-testing:v3.0.0-rc.1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Helm Chart Lint
-        uses: helm/chart-testing-action@v1.0.0-rc.1
-        with:
-          command: lint
-          config: ct.yaml
+      - name: Helm Chart Strict Lint
+        working-directory: './helm/wfl'
+        run: |
+          helm lint --strict --namespace default
+          yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
+          yamllint --config-file /etc/ct/lintconf.yaml --strict Chart.yaml values.yaml
