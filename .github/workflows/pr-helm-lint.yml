@@ -24,7 +24,7 @@ jobs:
       - name: Helm Chart Strict Lint
         working-directory: ./helm/wfl
         run: |
-          ct lint --config ../../ct.yaml
+          ct lint --config ../../ct.yaml --all
           helm lint --strict --namespace default
           yamale --schema /etc/ct/chart_schema.yaml Chart.yaml
           yamllint --config-file /etc/ct/lintconf.yaml --strict Chart.yaml values.yaml
