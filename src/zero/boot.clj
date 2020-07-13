@@ -64,18 +64,23 @@
 
 (defn clone-repos
   "Return a map of zero/the-github-repos clones in a :tmp directory.
-   Delete the :tmp directory at some point."
+   Delete the :tmp directory at some point.
+
+   Specifically omits [[zero/the-name]]'s repo since it isn't needed
+   for the version."
   []
-  (let [tmp (str "CLONE_" (UUID/randomUUID))]
+  (let [tmp (str "CLONE_" (UUID/randomUUID))
+        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)
+        the-other-github-repos-no-wfl (dissoc zero/the-other-github-repos zero/the-name)]
     (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
                                          "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
       (try
-        (run! clone (vals zero/the-github-repos))
+        (run! clone (vals the-github-repos-no-wfl))
         (catch Exception _
-          (run! clone (vals zero/the-other-github-repos)))))
+          (run! clone (vals the-other-github-repos-no-wfl)))))
     (into {:tmp tmp}
-          (for [repo (keys zero/the-github-repos)]
+          (for [repo (keys the-github-repos-no-wfl)]
             (let [dir (str/join "/" [tmp repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
