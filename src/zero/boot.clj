@@ -27,7 +27,7 @@
         committed (->> commit
                        (util/shell! "git" "show" "-s" "--format=%cI")
                        OffsetDateTime/parse .toInstant .toString)
-        clean?    (util/do-or-nil
+        clean?    (util/do-or-nil-silently
                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
     {:version   (-> (if clean? committed built)
                     .toLowerCase

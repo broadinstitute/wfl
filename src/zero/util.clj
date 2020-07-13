@@ -31,6 +31,14 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn parse-int     [s] (do-or-nil (Integer/parseInt s)))
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf  s)))
 
+;; `x#` used here since `_` will fail in a macro.
+(defmacro do-or-nil-silently
+  "Value of BODY or nil if it throws, without printing any exceptions.
+  See also [[do-or-nil]]."
+  [& body]
+  `(try (do ~@body)
+        (catch Exception x#)))
+
 (defn slurp-json
   "Nil or the JSON in FILE."
   [file]
