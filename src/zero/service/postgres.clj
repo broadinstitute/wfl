@@ -52,7 +52,8 @@
    (run-liquibase-update
     "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
-(defn table-exists
+(defn table-exists?
+  "Check if TABLE exists using transaction TX."
   [tx table]
   (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
        (jdbc/query tx)
@@ -62,7 +63,7 @@
 (defn get-table
   "Return TABLE using transaction TX."
   [tx table]
-  (if (table-exists tx table)
+  (if (table-exists? tx table)
     (jdbc/query tx (format "SELECT * FROM %s" table))))
 
 ;; HACK: We don't have the workload environment here.
