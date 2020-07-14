@@ -17,7 +17,7 @@
         <sql>
             CREATE TYPE AllOfUsArrays AS (
                 id                          bigint,      -- unique to this table
-                analysis_version_number     text,        -- input to the workflow
+                analysis_version_number     bigint,      -- input to the workflow
                 chip_well_barcode           text,        -- input to the workflow
                 green_idat_cloud_path       text,        -- input to the workflow
                 params_file                 text,        -- input to the workflow
@@ -25,6 +25,11 @@
                 reported_gender             text,        -- input to the workflow
                 sample_alias                text,        -- input to the workflow
                 sample_lsid                 text,        -- input to the workflow
+                bead_pool_manifest_file     text,        -- input to the workflow
+                cluster_file                text,        -- input to the workflow
+                zcall_thresholds_file       text,        -- input to the workflow
+                gender_cluster_file         text,        -- input to the workflow
+                extended_chip_manifest_file text,        -- input to the workflow
                 updated                     timestamptz, -- status update time
                 uuid                        text         -- Cromwell workflow UUID
             )
