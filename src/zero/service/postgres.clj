@@ -92,14 +92,13 @@
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell id items] :as _workload}]
-  (->> items
-       (get-table tx)
-       (run! (partial update-workflow-status! tx cromwell items)))
-  (let [finished? (set (conj cromwell/final-statuses "skipped"))]
-    (when (every? (comp finished? :status) (get-table tx items))
-      (jdbc/update! tx :workload
-                    {:finished (OffsetDateTime/now)}
-                    ["id = ?" id]))))
+  (if-let [workflows (get-table tx items)]
+    (do (run! (partial update-workflow-status! tx cromwell items) workflows)
+        (let [finished? (set (conj cromwell/final-statuses "skipped"))]
+          (when (every? (comp finished? :status) workflows)
+            (jdbc/update! tx :workload
+                          {:finished (OffsetDateTime/now)}
+                          ["id = ?" id]))))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."

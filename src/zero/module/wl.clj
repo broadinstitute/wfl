@@ -32,9 +32,8 @@
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell items] :as _workload}]
   (let [env (@get-cromwell-wgs-environment cromwell)]
-    (->> items
-         (postgres/get-table tx)
-         (run! (partial maybe-update-workflow-status! tx env items)))))
+    (if-let [workflows (postgres/get-table tx items)]
+      (run! (partial maybe-update-workflow-status! tx env items) workflows))))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -88,6 +87,7 @@
     (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(maybe [m k v] (if v (assoc m k v) m))
             (submit! [{:keys [id input_cram uuid] :as workflow}]
+
               [id (or uuid
                       (if (skip-workflow? env workload workflow)
                         util/uuid-nil
@@ -98,6 +98,6 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (let [workflows (postgres/get-table tx items)
-            ids-uuids (map submit! workflows)]
-        (run! (partial update! tx) ids-uuids)))))
+      (if-let [workflows (postgres/get-table tx items)]
+        (let [ids-uuids (map submit! workflows)]
+        (run! (partial update! tx) ids-uuids))))))

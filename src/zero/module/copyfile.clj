@@ -47,5 +47,5 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (let [workflow (postgres/get-table tx items)]
+      (if-let [workflow (postgres/get-table tx items)]
         (run! (comp (partial update! tx) submit!) workflow)))))
