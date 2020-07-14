@@ -52,10 +52,18 @@
    (run-liquibase-update
     "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
+(defn table-exists
+  [tx table]
+  (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
+       (jdbc/query tx)
+       (count)
+       (not= 0)))
+
 (defn get-table
   "Return TABLE using transaction TX."
   [tx table]
-  (jdbc/query tx (format "SELECT * FROM %s" table)))
+  (if (table-exists tx table)
+    (jdbc/query tx (format "SELECT * FROM %s" table))))
 
 ;; HACK: We don't have the workload environment here.
 ;;
@@ -101,9 +109,7 @@
           {:keys [items] :as workload} (first (jdbc/query tx select))]
       (util/do-or-nil (update-workload! tx workload))
       (-> workload
-          (assoc :workflows (->> items
-                                 (format "SELECT * FROM %s")
-                                 (jdbc/query tx)
+          (assoc :workflows (->> (get-table tx items)
                                  (mapv unnilify)))
           unnilify))))
 
