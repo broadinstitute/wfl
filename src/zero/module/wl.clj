@@ -100,6 +100,6 @@
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
       (let [workflows (postgres/get-table tx items)
-              ids-uuids (map submit! workflows)]
+            ids-uuids (map submit! workflows)]
           (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
           (run! (partial update! tx) ids-uuids)))))
