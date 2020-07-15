@@ -6,8 +6,7 @@
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
             [zero.util :as util])
-  (:import [java.time OffsetDateTime]
-           (clojure.lang ExceptionInfo)))
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
 
@@ -47,8 +46,6 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (try
         (let [workflow (postgres/get-table tx items)]
           (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
-          (run! (comp (partial update! tx) submit!) workflow))
-        (catch ExceptionInfo e (throw e))))))
+          (run! (comp (partial update! tx) submit!) workflow)))))

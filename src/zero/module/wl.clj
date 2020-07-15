@@ -8,8 +8,7 @@
             [zero.service.gcs :as gcs]
             [zero.service.postgres :as postgres]
             [zero.util :as util])
-  (:import [java.time OffsetDateTime]
-           (clojure.lang ExceptionInfo)))
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
 
@@ -36,8 +35,8 @@
     (try
       (let [workflows (postgres/get-table tx items)]
         (run! (partial maybe-update-workflow-status! tx env items) workflows))
-      (catch ExceptionInfo e
-        (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"}))))))
+      (catch Exception cause
+        (throw (ex-info "Error updating workload status" {} cause))))))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -100,9 +99,7 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (try
-        (let [workflows (postgres/get-table tx items)
+      (let [workflows (postgres/get-table tx items)
               ids-uuids (map submit! workflows)]
           (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
-          (run! (partial update! tx) ids-uuids))
-        (catch ExceptionInfo e (throw e))))))
+          (run! (partial update! tx) ids-uuids)))))

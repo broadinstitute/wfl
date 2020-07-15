@@ -9,8 +9,7 @@
             [zero.service.cromwell :as cromwell]
             [zero.util :as util])
   (:import [java.time OffsetDateTime]
-           [liquibase.integration.commandline Main]
-           (clojure.lang ExceptionInfo)))
+           [liquibase.integration.commandline Main]))
 
 (defn zero-db-config
   "Get the database configuration."
@@ -103,8 +102,8 @@
           (jdbc/update! tx :workload
                         {:finished (OffsetDateTime/now)}
                         ["id = ?" id]))))
-    (catch ExceptionInfo e
-      (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"})))))
+    (catch Exception cause
+      (throw (ex-info "Error updating workload status" {} cause)))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
@@ -118,9 +117,9 @@
           (-> workload
               (assoc :workflows (mapv unnilify workflows))
               unnilify))
-        (catch ExceptionInfo e
-          (-> workload
-              unnilify))))))
+        (catch Exception e
+          (unnilify workload))))))
+
 
 (comment
   (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
