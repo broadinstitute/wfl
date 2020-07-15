@@ -6,7 +6,8 @@
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
             [zero.util :as util])
-  (:import [java.time OffsetDateTime]))
+  (:import [java.time OffsetDateTime]
+           (clojure.lang ExceptionInfo)))
 
 (def pipeline "copyfile")
 
@@ -39,7 +40,6 @@
   [tx {:keys [cromwell items uuid] :as _workload}]
   (let [env (first (all/cromwell-environments cromwell))
         now (OffsetDateTime/now)]
-    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(submit! [{:keys [id uuid] :as workflow}]
               [id (or uuid (submit-workflow env workflow))])
             (update! [tx [id uuid]]
@@ -47,5 +47,8 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (if-let [workflow (postgres/get-table tx items)]
-        (run! (comp (partial update! tx) submit!) workflow)))))
+      (try
+        (let [workflow (postgres/get-table tx items)]
+          (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
+          (run! (comp (partial update! tx) submit!) workflow))
+        (catch ExceptionInfo e (throw e))))))

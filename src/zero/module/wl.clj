@@ -8,7 +8,8 @@
             [zero.service.gcs :as gcs]
             [zero.service.postgres :as postgres]
             [zero.util :as util])
-  (:import [java.time OffsetDateTime]))
+  (:import [java.time OffsetDateTime]
+           (clojure.lang ExceptionInfo)))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
 
@@ -32,8 +33,10 @@
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell items] :as _workload}]
   (let [env (@get-cromwell-wgs-environment cromwell)]
-    (if-let [workflows (postgres/get-table tx items)]
-      (run! (partial maybe-update-workflow-status! tx env items) workflows))))
+    (try
+      (let [workflows (postgres/get-table tx items)]
+        (run! (partial maybe-update-workflow-status! tx env items) workflows))
+      (catch ExceptionInfo (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"}))))))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
@@ -84,10 +87,8 @@
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
-    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(maybe [m k v] (if v (assoc m k v) m))
             (submit! [{:keys [id input_cram uuid] :as workflow}]
-
               [id (or uuid
                       (if (skip-workflow? env workload workflow)
                         util/uuid-nil
@@ -98,6 +99,9 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (if-let [workflows (postgres/get-table tx items)]
-        (let [ids-uuids (map submit! workflows)]
-        (run! (partial update! tx) ids-uuids))))))
+      (try
+        (let [workflows (postgres/get-table tx items)
+              ids-uuids (map submit! workflows)]
+          (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
+          (run! (partial update! tx) ids-uuids))
+        (catch ExceptionInfo e (throw e))))))
