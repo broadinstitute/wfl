@@ -13,7 +13,9 @@
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
 
@@ -160,7 +162,7 @@
   [environment object]
   (really-submit-one-workflow environment))
 
-(defn submit-some-workflows
+#_(defn submit-some-workflows
   "Submit up to MAX workflows from NOTIFICATIONS in ENVIRONMENT."
   [environment max notifications]
   (let [done   (active-or-done-objects environment {:analysis_version_number nil, :chip_well_barcode nil})
@@ -174,13 +176,101 @@
   "Use transaction TX to update WORKLOAD statuses."
   [tx workload])
 
+(defn add-aou-workload-table!
+  "Return AoU specific UUID and TABLE for _WORKFLOW-WDL in BODY under transaction TX.
+   This function will only create a new aou workload table if there isn't one, and
+   it uses (analysis_version_number, chip_well_barcode) as the primary key."
+  [tx {:keys [release top] :as _workflow-wdl} body]
+  (let [{:keys [creator cromwell pipeline project]} body
+        {:keys [commit version]} (zero/get-the-version)
+        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND wdl = ? AND release = ?"
+                                     project top release])]
+    (if (seq probe-result)
+      ;; if a table already exists, we return its uuid and the name
+      (let [[{:keys [id uuid]}] probe-result
+            table (format "%s_%09d" pipeline id)]
+        [uuid table])
+      ;; if the expected table doesn't exist, we create record + table and return uuid and name
+      (let [[{:keys [id uuid]}]
+            (jdbc/insert! tx :workload {:commit   commit
+                                        :creator  creator
+                                        :cromwell cromwell
+                                        :input    "aou-inputs-placeholder"
+                                        :output   "aou-outputs-placeholder"
+                                        :project  project
+                                        :release  release
+                                        :uuid     (UUID/randomUUID)
+                                        :version  version
+                                        :wdl      top})
+            table (format "%s_%09d" pipeline id)
+            kind  (format (str/join " " ["UPDATE workload"
+                                         "SET pipeline = '%s'::pipeline"
+                                         "WHERE id = %s"]) pipeline id)
+            work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode))" table pipeline)]
+        (jdbc/update! tx :workload {:items table} ["id = ?" id])
+        (jdbc/db-do-commands tx [kind work])
+        [uuid table]))))
+
+(comment
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+    (let [body {:creator      "rex"
+               :cromwell     "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+               :project      "gotc-dev"
+               :pipeline     "AllOfUsArrays"
+               :release      "Arrays_v1.9"
+               :top          "pipelines/arrays/single_sample/Arrays.wdl"}]
+     (add-aou-workload-table! tx workflow-wdl body)))
+  )
+
 (defn add-workload!
-  "Add the workload described by BODY to the database DB."
-  [tx body]
-  (->> body
-       first
-       (filter second)
-       (into {})))
+  "Use transaction TX to add the workload described by BODY to the database DB.
+   Due to the continuous nature of the AoU dataflow, this function will only
+   create a new workload table if it does not exist otherwise append records
+   to the existing one."
+  [tx {:keys [items] :as body}]
+  (let [now          (OffsetDateTime/now)
+        [uuid table] (add-aou-workload-table! tx workflow-wdl body)]
+    (letfn [(idnow [m] (-> m
+                           (assoc :updated now)))]
+      (jdbc/insert-multi! tx table (map idnow items)))
+    {:uuid uuid}))
+
+(comment
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+                            (let [body {:creator  "rex"
+                                        :cromwell "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+                                        :project  "gotc-dev"
+                                        :pipeline "AllOfUsArrays"
+                                        :release  "Arrays_v1.9"
+                                        :top      "pipelines/arrays/single_sample/Arrays.wdl"
+                                        :items    [{:analysis_version_number     1,
+                                                    :chip_well_barcode           "7991775143_R01C01",
+                                                    :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                                                    :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                                                    :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+                                                    :reported_gender             "Female"
+                                                    :sample_alias                "NA12878"
+                                                    :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+                                                    :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
+                                                    :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
+                                                    :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
+                                                    :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
+                                                    :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}
+                                                   {:analysis_version_number     2,
+                                                    :chip_well_barcode           "7991775143_R01C01",
+                                                    :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                                                    :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                                                    :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+                                                    :reported_gender             "Female"
+                                                    :sample_alias                "NA12878"
+                                                    :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+                                                    :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
+                                                    :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
+                                                    :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
+                                                    :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
+                                                    :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]}]
+                              (add-workload! tx body)))
+  )
 
 (defn start-workload!
   "Start the WORKLOAD in the database DB."
@@ -188,3 +278,15 @@
   (->> workload
        (filter second)
        (into {})))
+
+(defn create-workload
+  "Remember the workload specified by BODY."
+  [body]
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+                            (->> body
+                                 (add-workload! tx)
+                                 (conj ["SELECT * FROM workload WHERE uuid = ?"])
+                                 (jdbc/query tx)
+                                 first
+                                 (filter second)
+                                 (into {}))))
