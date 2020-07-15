@@ -110,15 +110,12 @@
             ps (jdbc/prepare-statement db-conn query)]
         (doseq [[i uuid] (map-indexed vector uuids)] (.setString ps (+ i 1) (:uuid uuid)))
         (jdbc/with-db-transaction [tx db-config]
-          (try
-            (->> ps
+          (->> ps
                (jdbc/query tx)
                (run! (partial start-workload! tx)))
             (->> uuids
                (mapv (partial postgres/get-workload-for-uuid tx))
-               succeed)
-            (catch Exception e
-              (fail {:message (.getMessage e)}))))))))
+               succeed))))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"
