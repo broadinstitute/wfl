@@ -99,13 +99,11 @@
                                     :version  version
                                     :wdl      top})
         table (format "%s_%09d" pipeline id)
-        kind  (format (str/join " " ["UPDATE workload"
-                                     "SET pipeline = '%s'::pipeline"
-                                     "WHERE id = %s"]) pipeline id)
         work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                       table pipeline)]
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
-    (jdbc/db-do-commands tx [kind work])
+    (jdbc/execute! tx ["UPDATE workload SET pipeline = '?'::pipeline WHERE id = ?" pipeline id])
+    (jdbc/db-do-commands tx [work])
     [uuid table]))
 
 (defn slashify
