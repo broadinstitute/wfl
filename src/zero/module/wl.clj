@@ -36,7 +36,8 @@
     (try
       (let [workflows (postgres/get-table tx items)]
         (run! (partial maybe-update-workflow-status! tx env items) workflows))
-      (catch ExceptionInfo (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"}))))))
+      (catch ExceptionInfo e
+        (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"}))))))
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."

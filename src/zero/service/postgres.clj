@@ -103,7 +103,7 @@
           (jdbc/update! tx :workload
                         {:finished (OffsetDateTime/now)}
                         ["id = ?" id]))))
-    (catch ExceptionInfo
+    (catch ExceptionInfo e
       (throw (ex-info "Error updating workload status" {:cause "no-workflows-found"})))))
 
 (defn get-workload-for-uuid
