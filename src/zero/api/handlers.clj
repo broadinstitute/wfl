@@ -57,7 +57,7 @@
   (let [{:keys [body]} parameters]
     (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
                               (->> body
-                                   (append-to-workload! tx)
+                                   (aou/append-to-workload! tx)
                                    succeed))))
 
 (defn on-unknown-pipeline
