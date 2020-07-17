@@ -93,10 +93,11 @@
   (array-inputs :aou-dev))
 
 (defn make-inputs
-  "Return inputs for AoU Arrays processing in ENVIRONMENT."
-  [environment]
+  "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
+  [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
                       #_per-sample
+                      (extract-and-validate-per-sample-inputs per-sample-inputs)
                       chip-metadata
                       fingerprinting
                       genotype-concordance
@@ -184,15 +185,38 @@
       environment
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
-      (merge (make-inputs environment)
-             (extract-and-validate-per-sample-inputs per-sample-inputs))
+      (make-inputs environment per-sample-inputs)
       (make-options)
       cromwell-label-map)))
 
 (comment
   (make-options)
-  (keys (make-inputs :aou-dev))
-  (really-submit-one-workflow :aou-dev {}))
+  (keys (make-inputs :aou-dev {:chip_well_barcode "7991775143_R01C01",
+                               :bead_pool_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
+                               :analysis_version_number 1,
+                               :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
+                               :red_idat_cloud_path "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
+                               :zcall_thresholds_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
+                               :reported_gender "Female",
+                               :cluster_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
+                               :sample_lsid "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
+                               :sample_alias "NA12878",
+                               :green_idat_cloud_path "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                               :params_file "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                               :gender_cluster_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"}))
+  (really-submit-one-workflow :aou-dev {:chip_well_barcode "7991775143_R01C01",
+                                        :bead_pool_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
+                                        :analysis_version_number 1,
+                                        :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
+                                        :red_idat_cloud_path "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
+                                        :zcall_thresholds_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
+                                        :reported_gender "Female",
+                                        :cluster_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
+                                        :sample_lsid "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
+                                        :sample_alias "NA12878",
+                                        :green_idat_cloud_path "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                                        :params_file "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                                        :gender_cluster_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"}))
 
 #_(defn update-workload!
     "Use transaction TX to update WORKLOAD statuses."
@@ -227,12 +251,17 @@
                                         :version  version
                                         :wdl      top})
             table (format "%s_%09d" pipeline id)
+            table_seq (format "%s_id_seq" table)
             kind  (format (str/join " " ["UPDATE workload"
                                          "SET pipeline = '%s'::pipeline"
                                          "WHERE id = %s"]) pipeline id)
-            work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode))" table pipeline)]
+            idx (format "CREATE SEQUENCE %s AS bigint" table_seq)
+            work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
+            link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
         (jdbc/update! tx :workload {:items table} ["id = ?" id])
-        (jdbc/db-do-commands tx [kind work])
+        ; this is really painful and hideous, but I cannot find a better way to bypass
+        ; https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
+        (jdbc/db-do-commands tx [kind idx work link-idx-work])
         {:uuid uuid}))))
 
 (comment
@@ -332,7 +361,7 @@
 
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-   (start-workload! tx {:uuid "aae87e30-8084-41b1-a8a5-7b0c5294be23"}))
+   (start-workload! tx {:uuid "a78872fd-565f-4491-b4dd-9127e12feb19"}))
 
 
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
@@ -365,5 +394,5 @@
                                                          :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
                                                          :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
                                                          :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]
-                                        :uuid          "aae87e30-8084-41b1-a8a5-7b0c5294be23"}]
+                                        :uuid          "a78872fd-565f-4491-b4dd-9127e12feb19"}]
                               (append-to-workload! tx body))))
