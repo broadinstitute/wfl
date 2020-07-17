@@ -233,7 +233,7 @@
             work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode))" table pipeline)]
         (jdbc/update! tx :workload {:items table} ["id = ?" id])
         (jdbc/db-do-commands tx [kind work])
-        [uuid table]))))
+        {:uuid uuid}))))
 
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
