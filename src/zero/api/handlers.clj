@@ -51,6 +51,15 @@
         results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
 
+(defn append-to-aou-workload
+  "Append new work to an existing started AoU workload describe in BODY of _REQUEST."
+  [{:keys [parameters] :as _request}]
+  (let [{:keys [body]} parameters]
+    (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+                              (->> body
+                                   (append-to-workload! tx)
+                                   succeed))))
+
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."
   [_ body]

@@ -290,7 +290,6 @@
                                             :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]]
                               (remove-existing-samples! tx samples "allofusarrays_000000001"))))
 
-
 (defn append-to-workload!
   "Use transaction TX to append the samples to a WORKLOAD identified by uuid.
    The workload needs to be marked as 'started' in order to be append-able, and
@@ -368,15 +367,3 @@
                                                          :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]
                                         :uuid          "aae87e30-8084-41b1-a8a5-7b0c5294be23"}]
                               (append-to-workload! tx body))))
-
-(defn create-workload
-  "Remember the workload specified by BODY."
-  [body]
-  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                            (->> body
-                                 (add-workload! tx)
-                                 (conj ["SELECT * FROM workload WHERE uuid = ?"])
-                                 (jdbc/query tx)
-                                 first
-                                 (filter second)
-                                 (into {}))))

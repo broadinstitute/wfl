@@ -57,6 +57,11 @@
             :parameters {:body ::spec/wgs-request}
             :responses  {200 {:body {:results vector?}}}
             :handler    handlers/submit-wgs}}]
+   ["/api/v1/append_to_aou"
+    {:post {:summary    "Append to an existing AOU workload."
+            :parameters {:body ::spec/uuid-kvs}
+            :responses  {200 {:body ::spec/workload-responses}}
+            :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get  {:summary    "Get the workloads."
             :parameters {:query ::spec/uuid-query}
