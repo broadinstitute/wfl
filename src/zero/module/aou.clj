@@ -77,50 +77,39 @@
 (comment
   (env-inputs :aou-dev))
 
-(defn extract-and-validate-per-sample-inputs
-  "Extract valid per-sample inputs from OBJECT"
-  [object]
-  (let [per-sample (select-keys object [:analysis_version_number
-                                        :bead_pool_manifest_file
-                                        :chip_well_barcode
-                                        :cluster_file
-                                        :extended_chip_manifest_file
-                                        :gender_cluster_file
-                                        :green_idat_cloud_path
-                                        :params_file
-                                        :red_idat_cloud_path
-                                        :reported_gender
-                                        :sample_alias
-                                        :sample_lsid
-                                        :zcall_thresholds_file])]
-    (if (every? (fn [x] (not (nil? x))) (vals per-sample))
-      per-sample
-      (throw (Exception. (format "Invalid sample inputs %s" per-sample))))))
+(defn get-per-sample-inputs
+  "Throw or return per-sample INPUTS."
+  [inputs]
+  (let [the-keys [:analysis_version_number
+                  :bead_pool_manifest_file
+                  :chip_well_barcode
+                  :cluster_file
+                  :extended_chip_manifest_file
+                  :gender_cluster_file
+                  :green_idat_cloud_path
+                  :params_file
+                  :red_idat_cloud_path
+                  :reported_gender
+                  :sample_alias
+                  :sample_lsid
+                  :zcall_thresholds_file]
+        result  (select-keys inputs the-keys)
+        missing (vec (keep (fn [k] (when (nil? (k result)) k)) the-keys))]
+    missing
+    (when (seq missing)
+      (throw (Exception. (format "Missing per-sample inputs: %s" missing))))
+    result))
 
 (comment
-  (extract-and-validate-per-sample-inputs {:chip_well_barcode nil,
-                                           :rex               "greetings!"})
-  (extract-and-validate-per-sample-inputs {:chip_well_barcode           "7991775143_R01C01",
-                                           :rex                         "greetings!"
-                                           :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
-                                           :analysis_version_number     1,
-                                           :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
-                                           :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
-                                           :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
-                                           :reported_gender             "Female",
-                                           :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
-                                           :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
-                                           :sample_alias                "NA12878",
-                                           :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-                                           :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-                                           :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"}))
+  (get-per-sample-inputs {:chip_well_barcode "I'm here"
+                          :rex               "greetings!"}))
 
 (defn make-inputs
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
                       #_per-sample
-                      (extract-and-validate-per-sample-inputs per-sample-inputs)
+                      (get-per-sample-inputs per-sample-inputs)
                       chip-metadata
                       fingerprinting
                       genotype-concordance
