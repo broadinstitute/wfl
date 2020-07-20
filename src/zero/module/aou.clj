@@ -146,7 +146,9 @@
 (defn make-options
   "Return options for aou arrays pipeline."
   []
-  {:read_from_cache            true
+  {; TODO: add :final_workflow_outputs_dir here
+   ; TODO: add :default_runtime_attributes {:maxRetries 3} here
+   :read_from_cache            true
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
