@@ -52,7 +52,7 @@
     (succeed {:results results})))
 
 (defn append-to-aou-workload
-  "Append new work to an existing started AoU workload describe in BODY of _REQUEST."
+  "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [body]} parameters]
     (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
