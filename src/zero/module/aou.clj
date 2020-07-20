@@ -1,16 +1,12 @@
 (ns zero.module.aou
   "Process Arrays for the All Of Us project."
   (:require [clojure.java.io :as io]
-            [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
-            [clojure.set :as set]
             [clojure.string :as str]
             [zero.environments :as env]
-            [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
             [zero.zero :as zero])
@@ -33,17 +29,6 @@
   "The WDL label applied to Cromwell metadata."
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
-
-#_(def per-sample
-  "The sample specific inputs for arrays."
-  {:chip_well_barcode       "7991775143_R01C01"
-   :sample_alias            "NA12878"
-   :red_idat_cloud_path     "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
-   :green_idat_cloud_path   "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat"
-   :analysis_version_number 1
-   :sample_lsid             "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
-   :reported_gender         "Female"
-   :params_file             "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt"})
 
 (def chip-metadata
   "Chip Metadata inputs for arrays."
@@ -83,14 +68,14 @@
   [aou-env]
   ({:aou-dev "dev" :aou-prod "prod"} aou-env))
 
-(defn array-inputs
+(defn env-inputs
   "Array inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   {:vault_token_path (get-in env/stuff [environment :vault_token_path])
    :environment      (map-aou-environment environment)})
 
 (comment
-  (array-inputs :aou-dev))
+  (env-inputs :aou-dev))
 
 (defn extract-and-validate-per-sample-inputs
   "Extract valid per-sample inputs from OBJECT"
@@ -140,7 +125,7 @@
                       fingerprinting
                       genotype-concordance
                       other-inputs
-                      (array-inputs environment))]
+                      (env-inputs environment))]
     (util/prefix-keys inputs :Arrays)))
 
 (defn make-options
@@ -233,7 +218,7 @@
   (let [{:keys [creator cromwell pipeline project]} body
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (zero/get-the-version)
-        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND wdl = ? AND release = ?"
+        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ? AND release = ?"
                                      project top release])]
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
