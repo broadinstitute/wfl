@@ -59,5 +59,4 @@
    :ref_fasta_index             "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.fasta.fai"
    :ref_dict                    "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.dict"
    :dbSNP_vcf                   "gs://gcp-public-data--broad-references/hg19/v0/dbsnp_138.b37.vcf.gz"
-   :dbSNP_vcf_index             "gs://gcp-public-data--broad-references/hg19/v0/dbsnp_138.b37.vcf.gz.tbi"}
-  )
+   :dbSNP_vcf_index             "gs://gcp-public-data--broad-references/hg19/v0/dbsnp_138.b37.vcf.gz.tbi"})
