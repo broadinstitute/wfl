@@ -35,15 +35,15 @@
     (str (name key) ":" value)))
 
 #_(def per-sample
-  "The sample specific inputs for arrays."
-  {:chip_well_barcode       "7991775143_R01C01"
-   :sample_alias            "NA12878"
-   :red_idat_cloud_path     "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
-   :green_idat_cloud_path   "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat"
-   :analysis_version_number 1
-   :sample_lsid             "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
-   :reported_gender         "Female"
-   :params_file             "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt"})
+    "The sample specific inputs for arrays."
+    {:chip_well_barcode       "7991775143_R01C01"
+     :sample_alias            "NA12878"
+     :red_idat_cloud_path     "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+     :green_idat_cloud_path   "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat"
+     :analysis_version_number 1
+     :sample_lsid             "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+     :reported_gender         "Female"
+     :params_file             "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt"})
 
 (def chip-metadata
   "Chip Metadata inputs for arrays."
@@ -92,25 +92,26 @@
 (comment
   (array-inputs :aou-dev))
 
-(defn extract-and-validate-per-sample-inputs
-  "Extract valid per-sample inputs from OBJECT"
-  [object]
-  (let [per-sample (select-keys object [:analysis_version_number
-                                        :bead_pool_manifest_file
-                                        :chip_well_barcode
-                                        :cluster_file
-                                        :extended_chip_manifest_file
-                                        :gender_cluster_file
-                                        :green_idat_cloud_path
-                                        :params_file
-                                        :red_idat_cloud_path
-                                        :reported_gender
-                                        :sample_alias
-                                        :sample_lsid
-                                        :zcall_thresholds_file])]
-    (if (every? (fn [x] (not (nil? x))) (vals per-sample))
-      per-sample
-      (throw (Exception. (format "Invalid sample inputs %s" per-sample))))))
+(defn get-per-sample-inputs
+  "Throw or return per-sample INPUTS."
+  [inputs]
+  (let [result (select-keys inputs [:analysis_version_number
+                                    :bead_pool_manifest_file
+                                    :chip_well_barcode
+                                    :cluster_file
+                                    :extended_chip_manifest_file
+                                    :gender_cluster_file
+                                    :green_idat_cloud_path
+                                    :params_file
+                                    :red_idat_cloud_path
+                                    :reported_gender
+                                    :sample_alias
+                                    :sample_lsid
+                                    :zcall_thresholds_file])
+        missing (reduce-kv (fn [r k v] (if (nil? v) (conj r k))) result)]
+    (when (seq missing)
+      (throw (Exception. (format "Missing per-sample inputs: %s" missing))))
+    result))
 
 (comment
   (extract-and-validate-per-sample-inputs {:chip_well_barcode nil,
@@ -134,20 +135,20 @@
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
-                      #_per-sample
-                      (extract-and-validate-per-sample-inputs per-sample-inputs)
-                      chip-metadata
-                      fingerprinting
-                      genotype-concordance
-                      other-inputs
-                      (array-inputs environment))]
+                 #_per-sample
+                 (extract-and-validate-per-sample-inputs per-sample-inputs)
+                 chip-metadata
+                 fingerprinting
+                 genotype-concordance
+                 other-inputs
+                 (array-inputs environment))]
     (util/prefix-keys inputs :Arrays)))
 
 (defn make-options
   "Return options for aou arrays pipeline."
   []
-  {; TODO: add :final_workflow_outputs_dir here
-   ; TODO: add :default_runtime_attributes {:maxRetries 3} here
+  {;; TODO: add :final_workflow_outputs_dir here
+   ;; TODO: add :default_runtime_attributes {:maxRetries 3} here
    :read_from_cache            true
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
@@ -162,19 +163,19 @@
     (letfn [(active? [metadata]
               (let [cromwell-id                       (metadata :id)
                     analysis-verion-chip-well-barcode (-> cromwell-id md :inputs
-                                                          (select-keys primary-keys))]
+                                                        (select-keys primary-keys))]
                 (when analysis-verion-chip-well-barcode
                   (let [found-analysis-version-number (:analysis_version_number analysis-verion-chip-well-barcode)
                         found-chip-well-barcode       (:chip_well_barcode analysis-verion-chip-well-barcode)]
                     (when (and (= found-analysis-version-number analysis_version_number)
-                               (= found-chip-well-barcode chip_well_barcode))
+                            (= found-chip-well-barcode chip_well_barcode))
                       analysis-verion-chip-well-barcode)))))]
       (->> {:label  cromwell-label
             :status ["On Hold" "Running" "Submitted" "Succeeded"]}
-           (cromwell/query environment)
-           (keep active?)
-           (filter seq)
-           set))))
+        (cromwell/query environment)
+        (keep active?)
+        (filter seq)
+        set))))
 
 (comment
   (active-objects :gotc-dev {:analysis_version_number 1, :chip_well_barcode "7991775143_R01C01"}))
@@ -261,18 +262,18 @@
             work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
             link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
         (jdbc/update! tx :workload {:items table} ["id = ?" id])
-        ; this is really painful and hideous, but I cannot find a better way to bypass
-        ; https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
+        ;; this is really painful and hideous, but I cannot find a better way to bypass
+        ;; https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
         (jdbc/db-do-commands tx [kind idx work link-idx-work])
         {:uuid uuid}))))
 
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                            (let [body {:creator  "rex"
-                                        :cromwell "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
-                                        :project  "gotc-dev"
-                                        :pipeline "AllOfUsArrays"}]
-                              (add-workload! tx body))))
+    (let [body {:creator  "rex"
+                :cromwell "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+                :project  "gotc-dev"
+                :pipeline "AllOfUsArrays"}]
+      (add-workload! tx body))))
 
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
@@ -295,31 +296,31 @@
           (assemble-query [query l] (format query (first l) (last l)))]
     (let [samples  (map keep-primary-keys samples)
           existing (->> samples
-                        (extract-key-groups)
-                        (map make-query-group)
-                        (assemble-query (str/join " " ["SELECT * FROM" table "WHERE chip_well_barcode in %s"
-                                                       "AND analysis_version_number in %s"]))
-                        (jdbc/query tx)
-                        (map keep-primary-keys)
-                        set)]
+                     (extract-key-groups)
+                     (map make-query-group)
+                     (assemble-query (str/join " " ["SELECT * FROM" table "WHERE chip_well_barcode in %s"
+                                                    "AND analysis_version_number in %s"]))
+                     (jdbc/query tx)
+                     (map keep-primary-keys)
+                     set)]
       (set (remove existing samples)))))
 
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                            (let [samples [{:analysis_version_number     1,
-                                            :chip_well_barcode           "7991775143_R01C01",
-                                            :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-                                            :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-                                            :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
-                                            :reported_gender             "Female"
-                                            :sample_alias                "NA12878"
-                                            :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
-                                            :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
-                                            :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
-                                            :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
-                                            :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
-                                            :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]]
-                              (remove-existing-samples! tx samples "allofusarrays_000000001"))))
+    (let [samples [{:analysis_version_number     1,
+                    :chip_well_barcode           "7991775143_R01C01",
+                    :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                    :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                    :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+                    :reported_gender             "Female"
+                    :sample_alias                "NA12878"
+                    :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+                    :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
+                    :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
+                    :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
+                    :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
+                    :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]]
+      (remove-existing-samples! tx samples "allofusarrays_000000001"))))
 
 (defn append-to-workload!
   "Use transaction TX to append the samples to a WORKLOAD identified by uuid.
@@ -332,27 +333,27 @@
         table              (:items table-query-result)]
 
     (if (nil? workload-started?)
-      ; throw when the workload does not exist or it hasn't been started yet
+      ;; throw when the workload does not exist or it hasn't been started yet
       (throw (Exception. (format "Workload %s is not started yet!" uuid)))
-      ; insert the new samples into DB and start the workflows
+      ;; insert the new samples into DB and start the workflows
       (let [primary-keys               (map keep-primary-keys notifications)
             primary-keys-notifications (zipmap primary-keys notifications)
             new-samples                (remove-existing-samples! tx primary-keys table)
             to-be-submitted            (->> primary-keys-notifications
-                                            (keys)
-                                            (keep new-samples)
-                                            (select-keys primary-keys-notifications))]
+                                         (keys)
+                                         (keep new-samples)
+                                         (select-keys primary-keys-notifications))]
         (letfn [(sql-rize [m] (-> m
-                                  (assoc :updated now)
-                                  keep-primary-keys))
+                                (assoc :updated now)
+                                keep-primary-keys))
                 (submit! [sample]
                   [(really-submit-one-workflow environment sample) (keep-primary-keys sample)])
                 (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode] :as pks}]]
                   (when uuid
                     (jdbc/update! tx table
-                                  {:updated now :uuid uuid}
-                                  ["analysis_version_number = ? AND chip_well_barcode = ?" analysis_version_number
-                                   chip_well_barcode])
+                      {:updated now :uuid uuid}
+                      ["analysis_version_number = ? AND chip_well_barcode = ?" analysis_version_number
+                       chip_well_barcode])
                     {:updated                 (str now)
                      :uuid                    uuid
                      :analysis_version_number analysis_version_number
@@ -363,38 +364,38 @@
 
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-   (start-workload! tx {:uuid "a78872fd-565f-4491-b4dd-9127e12feb19"}))
+    (start-workload! tx {:uuid "a78872fd-565f-4491-b4dd-9127e12feb19"}))
 
 
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                            (let [body {:cromwell      "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
-                                        :environment   :aou-dev
-                                        :notifications [{:analysis_version_number     1,
-                                                         :chip_well_barcode           "7991775143_R01C01",
-                                                         :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-                                                         :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-                                                         :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
-                                                         :reported_gender             "Female"
-                                                         :sample_alias                "NA12878"
-                                                         :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
-                                                         :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
-                                                         :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
-                                                         :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
-                                                         :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
-                                                         :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}
-                                                        {:analysis_version_number     2,
-                                                         :extra_rex                   "rex-test"
-                                                         :chip_well_barcode           "7991775143_R01C01",
-                                                         :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-                                                         :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-                                                         :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
-                                                         :reported_gender             "Female"
-                                                         :sample_alias                "NA12878"
-                                                         :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
-                                                         :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
-                                                         :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
-                                                         :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
-                                                         :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
-                                                         :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]
-                                        :uuid          "a78872fd-565f-4491-b4dd-9127e12feb19"}]
-                              (append-to-workload! tx body))))
+    (let [body {:cromwell      "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+                :environment   :aou-dev
+                :notifications [{:analysis_version_number     1,
+                                 :chip_well_barcode           "7991775143_R01C01",
+                                 :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                                 :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                                 :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+                                 :reported_gender             "Female"
+                                 :sample_alias                "NA12878"
+                                 :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+                                 :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
+                                 :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
+                                 :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
+                                 :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
+                                 :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}
+                                {:analysis_version_number     2,
+                                 :extra_rex                   "rex-test"
+                                 :chip_well_barcode           "7991775143_R01C01",
+                                 :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                                 :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                                 :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat"
+                                 :reported_gender             "Female"
+                                 :sample_alias                "NA12878"
+                                 :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878"
+                                 :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
+                                 :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
+                                 :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"
+                                 :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
+                                 :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"}]
+                :uuid          "a78872fd-565f-4491-b4dd-9127e12feb19"}]
+      (append-to-workload! tx body))))
