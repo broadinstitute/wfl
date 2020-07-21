@@ -52,7 +52,12 @@
                                                ::max
                                                ::input_path
                                                ::output_path]))
-(s/def ::workflow-aou         (constantly true)) ; stub
+(s/def ::notifications        (s/* map?))
+(s/def ::aou-request          (s/keys :req-un [::cromwell
+                                               ::environment
+                                               ::notifications
+                                               ::uuid]))
+(s/def ::workflow-aou         map?) ; stub
 (s/def ::workflow-wgs         (s/keys :opt-un [::base_file_name
                                                ::final_gvcf_base_name
                                                ::status
@@ -65,7 +70,7 @@
 (s/def ::workflow-request     (s/keys :req-un [::end
                                                ::environment
                                                ::start]))
-(s/def ::workflows            (s/or :aou (s/+ ::workflow-aou)
+(s/def ::workflows            (s/or :aou (s/* ::workflow-aou)
                                     :wgs (s/+ ::workflow-wgs)))
 (s/def ::workload-request     (s/keys :req-un [::creator
                                                ::cromwell
@@ -74,6 +79,11 @@
                                                ::output
                                                ::pipeline
                                                ::project]))
+
+(s/def ::append-to-workload-response (s/* (s/or :none empty?
+                                                :more  (s/keys :req-un [::uuid
+                                                                       ::analysis_version_number
+                                                                       ::chip_well_barcode]))))
 (s/def ::workload-response    (s/keys :opt-un [::finished
                                                ::pipeline
                                                ::started

@@ -59,8 +59,8 @@
             :handler    handlers/submit-wgs}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body ::spec/uuid-kvs}
-            :responses  {200 {:body ::spec/workload-responses}}
+            :parameters {:body ::spec/aou-request}
+            :responses  {200 {:body ::spec/append-to-workload-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get  {:summary    "Get the workloads."
