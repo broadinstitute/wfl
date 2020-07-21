@@ -151,7 +151,7 @@
            set))))
 
 (comment
-  (active-objects :gotc-dev {:analysis_version_number 1, :chip_well_barcode "7991775143_R01C01"}))
+  (active-or-done-objects :gotc-dev {:analysis_version_number 1, :chip_well_barcode "7991775143_R01C01"}))
 
 (defn really-submit-one-workflow
   "Submit one workflow to ENVIRONMENT."
