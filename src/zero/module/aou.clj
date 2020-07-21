@@ -207,13 +207,12 @@
   (let [{:keys [creator cromwell pipeline project]} body
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (zero/get-the-version)
-        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ? AND release = ?"
-                                     project top release])]
+        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ?"
+                                     project pipeline release])]
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
-      (let [[{:keys [id uuid]}] probe-result
-            table (format "%s_%09d" pipeline id)]
-        [uuid table])
+      (let [[{:keys [uuid]}] probe-result]
+        {:uuid uuid})
       ;; if the expected table doesn't exist, we create record + table and return uuid and name
       (let [[{:keys [id uuid]}]
             (jdbc/insert! tx :workload {:commit   commit
@@ -243,7 +242,7 @@
 (comment
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
                             (let [body {:creator  "rex"
-                                        :cromwell "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+                                        :cromwell "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
                                         :project  "gotc-dev"
                                         :pipeline "AllOfUsArrays"}]
                               (add-workload! tx body))))
@@ -252,8 +251,11 @@
   "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
   [tx {:keys [uuid] :as body}]
-  (let [now (OffsetDateTime/now)]
-    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))
+  (let [result (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])
+        started (:started result)]
+    (when (nil? started)
+      (let [now (OffsetDateTime/now)]
+        (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
 
 (defn keep-primary-keys
   "Only return the primary keys of a SAMPLE."
@@ -301,6 +303,7 @@
    any samples being added to the workload table will be submitted right away."
   [tx {:keys [notifications uuid environment] :as body}]
   (let [now                (OffsetDateTime/now)
+        environment        (zero/throw-or-environment-keyword! environment)
         table-query-result (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))
         workload-started?  (:started table-query-result)
         table              (:items table-query-result)]
@@ -341,7 +344,7 @@
 
 
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                            (let [body {:cromwell      "http://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+                            (let [body {:cromwell      "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
                                         :environment   :aou-dev
                                         :notifications [{:analysis_version_number     1,
                                                          :chip_well_barcode           "7991775143_R01C01",
