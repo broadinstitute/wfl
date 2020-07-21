@@ -16,6 +16,18 @@
   [body]
   (-> body response/bad-request (response/content-type "application/json")))
 
+(defn fail-with-response
+  "A failure RESPONSE with BODY."
+  [response body]
+  (-> body response (response/content-type "application/json")))
+
+(defn unprocessable-entity
+  "Returns a 422 'Unprocessable Entity' response with BODY."
+  [body]
+  {:status  422
+   :headers {}
+   :body    body})
+
 (defn succeed
   "A successful response with BODY."
   [body]
@@ -55,10 +67,12 @@
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
   (let [{:keys [body]} parameters]
-    (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                              (->> body
-                                   (aou/append-to-workload! tx)
-                                   succeed))))
+    (try
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+                                (->> body
+                                     (aou/append-to-workload! tx)
+                                     succeed))
+      (catch Exception e (fail-with-response unprocessable-entity {:message (.getMessage e)})))))
 
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."
