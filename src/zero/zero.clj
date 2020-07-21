@@ -19,6 +19,12 @@
         git   (partial str "git@github.com:broadinstitute/")]
     (zipmap repos (map git repos))))
 
+(def the-other-github-repos
+  "Map Zero source repo names to their URLs with aliases"
+  (let [repos ["wfl" "dsde-pipelines" "pipeline-config"]
+        git (fn [x] (str "git@" x ".github.com:broadinstitute/" x))]
+    (zipmap repos (map git repos))))
+
 (defn error-or-environment-keyword
   "Error string or the keyword for a valid ENVIRONMENT."
   [environment]

@@ -70,11 +70,15 @@
    for the version."
   []
   (let [tmp (str "CLONE_" (UUID/randomUUID))
-        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
+        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)
+        the-other-github-repos-no-wfl (dissoc zero/the-other-github-repos zero/the-name)]
     (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
                                          "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
-      (run! clone (vals the-github-repos-no-wfl)))
+      (try
+        (run! clone (vals the-github-repos-no-wfl))
+        (catch Exception _
+          (run! clone (vals the-other-github-repos-no-wfl)))))
     (into {:tmp tmp}
           (for [repo (keys the-github-repos-no-wfl)]
             (let [dir (str/join "/" [tmp repo])]
