@@ -52,10 +52,20 @@
    (run-liquibase-update
     "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
+(defn table-exists?
+  "Check if TABLE exists using transaction TX."
+  [tx table]
+  (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
+       (jdbc/query tx)
+       (count)
+       (not= 0)))
+
 (defn get-table
   "Return TABLE using transaction TX."
   [tx table]
-  (jdbc/query tx (format "SELECT * FROM %s" table)))
+  (if (and table (table-exists? tx table))
+    (jdbc/query tx (format "SELECT * FROM %s" table))
+    (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
 ;; HACK: We don't have the workload environment here.
 ;;
@@ -84,14 +94,16 @@
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell id items] :as _workload}]
-  (->> items
-       (get-table tx)
-       (run! (partial update-workflow-status! tx cromwell items)))
-  (let [finished? (set (conj cromwell/final-statuses "skipped"))]
-    (when (every? (comp finished? :status) (get-table tx items))
-      (jdbc/update! tx :workload
-                    {:finished (OffsetDateTime/now)}
-                    ["id = ?" id]))))
+  (try
+    (let [workflows (get-table tx items)]
+      (run! (partial update-workflow-status! tx cromwell items) workflows)
+      (let [finished? (set (conj cromwell/final-statuses "skipped"))]
+        (when (every? (comp finished? :status) workflows)
+          (jdbc/update! tx :workload
+                        {:finished (OffsetDateTime/now)}
+                        ["id = ?" id]))))
+    (catch Exception cause
+      (throw (ex-info "Error updating workload status" {} cause)))))
 
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
@@ -100,12 +112,14 @@
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
           {:keys [items] :as workload} (first (jdbc/query tx select))]
       (util/do-or-nil (update-workload! tx workload))
-      (-> workload
-          (assoc :workflows (->> items
-                                 (format "SELECT * FROM %s")
-                                 (jdbc/query tx)
-                                 (mapv unnilify)))
-          unnilify))))
+      (try
+        (let [workflows (get-table tx items)]
+          (-> workload
+              (assoc :workflows (mapv unnilify workflows))
+              unnilify))
+        (catch Exception e
+          (unnilify workload))))))
+
 
 (comment
   (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"

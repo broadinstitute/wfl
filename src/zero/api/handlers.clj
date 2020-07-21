@@ -9,7 +9,8 @@
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.sql PreparedStatement]))
 
 (defn fail
   "A failure response with BODY."
@@ -101,16 +102,20 @@
   [request]
   (let [uuids (-> request :parameters :body distinct)]
     (letfn [(q [[left right]] (fn [it] (str left it right)))]
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-        (->> uuids
-             (map :uuid)
-             (map (q "''")) (str/join ",") ((q "()"))
-             (format "SELECT * FROM workload WHERE uuid in %s")
-             (jdbc/query tx)
-             (run! (partial start-workload! tx)))
-        (->> uuids
-             (mapv (partial postgres/get-workload-for-uuid tx))
-             succeed)))))
+      (let [db-config (postgres/zero-db-config)
+            db-conn (jdbc/get-connection db-config)
+            query (->> (repeat (count uuids) "?")
+                       (str/join ",") ((q "()"))
+                       (format "SELECT * FROM workload WHERE uuid in %s"))
+            ps (jdbc/prepare-statement db-conn query)]
+        (doseq [[i uuid] (map-indexed vector uuids)] (.setString ps (+ i 1) (:uuid uuid)))
+        (jdbc/with-db-transaction [tx db-config]
+          (->> ps
+               (jdbc/query tx)
+               (run! (partial start-workload! tx)))
+            (->> uuids
+               (mapv (partial postgres/get-workload-for-uuid tx))
+               succeed))))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"
