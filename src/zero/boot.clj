@@ -51,7 +51,7 @@
   [the-version]
   {:description "WFL manages workflows."
    :project     zero/artifactId
-   :url         (zero/the-github-repos zero/the-name)
+   :url         (:primary (zero/the-github-repos zero/the-name))
    :version     (:version the-version)})
 
 (defn make-the-manifest
@@ -70,15 +70,14 @@
    for the version."
   []
   (let [tmp (str "CLONE_" (UUID/randomUUID))
-        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)
-        the-other-github-repos-no-wfl (dissoc zero/the-other-github-repos zero/the-name)]
+        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
     (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
                                          "--config" "advice.detachedHead=false" url))]
       (io/make-parents (io/file tmp "Who cares, really?"))
       (try
-        (run! clone (vals the-github-repos-no-wfl))
+        (run! clone (map :primary (vals the-github-repos-no-wfl)))
         (catch Exception _
-          (run! clone (vals the-other-github-repos-no-wfl)))))
+          (run! clone (map :actions-backup (vals the-github-repos-no-wfl))))))
     (into {:tmp tmp}
           (for [repo (keys the-github-repos-no-wfl)]
             (let [dir (str/join "/" [tmp repo])]
