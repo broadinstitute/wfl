@@ -16,4 +16,6 @@
     <include file="changesets/20200424_RenameLoadColumnToItems.xml"              relativeToChangelogFile="true"/>
     <include file="changesets/20200600_CopyfileEnum.xml"                         relativeToChangelogFile="true"/>
     <include file="changesets/20200601_CopyfileTable.xml"                        relativeToChangelogFile="true"/>
+    <include file="changesets/20200616_AllOfUsArraysEnum.xml"                    relativeToChangelogFile="true"/>
+    <include file="changesets/20200616_AllOfUsArraysTable.xml"                   relativeToChangelogFile="true"/>
 </databaseChangeLog>
