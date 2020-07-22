@@ -4,10 +4,10 @@ description: A Helm chart for deploy WorkFlow Launcher on Kubernetes
 
 type: application
 
-version: 0.2.6
+version: 0.2.7
 
 home: https://github.com/broadinstitute/wfl
-appVersion: 0.2.6
+appVersion: 0.2.7
 keywords:
 - clojure
 - cloud

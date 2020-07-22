@@ -39,7 +39,6 @@
   [tx {:keys [cromwell items uuid] :as _workload}]
   (let [env (first (all/cromwell-environments cromwell))
         now (OffsetDateTime/now)]
-    (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
     (letfn [(submit! [{:keys [id uuid] :as workflow}]
               [id (or uuid (submit-workflow env workflow))])
             (update! [tx [id uuid]]
@@ -47,5 +46,6 @@
                 (jdbc/update! tx items
                               {:updated now :uuid uuid}
                               ["id = ?" id])))]
-      (let [workflow (postgres/get-table tx items)]
-        (run! (comp (partial update! tx) submit!) workflow)))))
+        (let [workflow (postgres/get-table tx items)]
+          (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
+          (run! (comp (partial update! tx) submit!) workflow)))))

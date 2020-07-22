@@ -1,6 +1,9 @@
 # Default values for wfl.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+fullnameOverride: ""
+nameOverride: ""
+
 replicaCount: 1
 revisionHistoryLimit: 1
 
@@ -103,6 +106,7 @@ rbac:
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
+  name: ""
 
 podSecurityContext: {}
   # fsGroup: 2000
