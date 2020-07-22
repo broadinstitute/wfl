@@ -101,13 +101,12 @@
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
-                      #_per-sample
-                      (get-per-sample-inputs per-sample-inputs)
                       chip-metadata
                       fingerprinting
                       genotype-concordance
                       other-inputs
-                      (env-inputs environment))]
+                      (env-inputs environment)
+                      (get-per-sample-inputs per-sample-inputs))]
     (util/prefix-keys inputs :Arrays)))
 
 (defn make-options
@@ -128,14 +127,14 @@
         md           (partial cromwell/metadata environment)]
     (letfn [(active? [metadata]
               (let [cromwell-id                       (metadata :id)
-                    analysis-verion-chip-well-barcode (-> cromwell-id md :inputs
+                    analysis-version-chip-well-barcode (-> cromwell-id md :inputs
                                                           (select-keys primary-keys))]
-                (when analysis-verion-chip-well-barcode
-                  (let [found-analysis-version-number (:analysis_version_number analysis-verion-chip-well-barcode)
-                        found-chip-well-barcode       (:chip_well_barcode analysis-verion-chip-well-barcode)]
+                (when analysis-version-chip-well-barcode
+                  (let [found-analysis-version-number (:analysis_version_number analysis-version-chip-well-barcode)
+                        found-chip-well-barcode       (:chip_well_barcode analysis-version-chip-well-barcode)]
                     (when (and (= found-analysis-version-number analysis_version_number)
                                (= found-chip-well-barcode chip_well_barcode))
-                      analysis-verion-chip-well-barcode)))))]
+                      analysis-version-chip-well-barcode)))))]
       (->> {:label  cromwell-label
             :status ["On Hold" "Running" "Submitted" "Succeeded"]}
            (cromwell/query environment)
