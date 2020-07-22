@@ -28,3 +28,13 @@
       (is (logged? 'zero.unit.logging-test :info "abc 6 abcd"))
       (log/infof "%s %s" "abc" 123)
       (is (logged? 'zero.unit.logging-test :info "\"abc\" 123")))))
+
+(deftest exception-test
+  (testing "exception output"
+    (with-log
+      (try
+        (int "not an int")
+        (catch Exception e
+          (log/error e "Oops!"))
+        (finally
+          (is (logged? 'zero.unit.logging-test :error [Throwable #"cannot be cast"] #"Oops!")))))))
