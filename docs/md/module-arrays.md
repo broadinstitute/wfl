@@ -56,19 +56,22 @@ analyzed, processed and submitted to Cromwell as long as it has valid informatio
 To give more information, here are some example inputs to the above endpoints:
 
 **GET /api/v1/workload**
-```shell script
+
+```shell
 curl "http://localhost:8080/api/v1/workload" \
      -H 'Accept: application/json'
 ```
 
 **GET /api/v1/workload/{uuid}**
-```shell script
+
+```shell
 curl "http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000" \
      -H 'Accept: application/json'
 ```
 
 **GET /api/v1/workload/create**
-```shell script
+
+```shell
 curl -X "POST" "http://localhost:8080/api/v1/create" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
@@ -84,7 +87,8 @@ curl -X "POST" "http://localhost:8080/api/v1/create" \
 ```
 
 **GET /api/v1/workload/start**
-```shell script
+
+```shell
 curl -X "POST" "http://localhost:8080/api/v1/start" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
@@ -96,7 +100,8 @@ curl -X "POST" "http://localhost:8080/api/v1/start" \
 ```
 
 **GET /api/v1/workload/append_to_aou**
-```shell script
+
+```shell
 curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
@@ -162,6 +167,7 @@ the `workload` table looks like:
 ----+--------+---------+---------+----------+----------+-------+-------+--------+----------+---------+---------+---------+------+---------+-----
 (0 rows)
 ```
+
 Note that different from the fixed workload types, `input`, `output` and `items` are not useful to `aou-arrays` workload
 since these fields vary from sample to sample. Any information the caller provided to these fields will stored as 
 placeholders. 
@@ -173,6 +179,7 @@ will return the information of this existing workload rather than create a new r
 
 Once the caller successfully creates a new sample, there will be a new row added to the above `workload` table, and a
 new table will be created accordingly:
+
 ```
                                     List of relations
  Schema |              Name              |   Type   |  Owner   |    Size    | Description
@@ -186,6 +193,7 @@ new table will be created accordingly:
 ```
 
 The `allofusarrays_00000000X` table has the following fields:
+
 ```
  id | analysis_version_number | chip_well_barcode |  status   |            updated            |                 uuid
 ----+-------------------------+-------------------+-----------+-------------------------------+--------------------------------------

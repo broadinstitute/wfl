@@ -22,7 +22,7 @@ nav:
   - Get Started:
     - README.md
   - Modules:
-    - Arrays: module.arrays.md
+    - Arrays: module-arrays.md
   - Deployment:
     - Deployment with Kubernetes: deployment.md
   - Frontend:
