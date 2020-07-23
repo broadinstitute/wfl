@@ -2,6 +2,7 @@
   "Define handlers for API endpoints"
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [ring.util.response :as response]
             [zero.module.aou :as aou]
             [zero.module.copyfile :as cp]
@@ -14,6 +15,8 @@
 (defn fail
   "A failure response with BODY."
   [body]
+  (log/warn "Endpoint sent a 400 failure response:")
+  (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
 
 (defn succeed
