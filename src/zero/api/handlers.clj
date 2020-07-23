@@ -9,8 +9,7 @@
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.zero :as zero])
-  (:import [java.sql PreparedStatement]))
+            [zero.zero :as zero]))
 
 (defn fail
   "A failure response with BODY."
