@@ -62,22 +62,6 @@
         (update :trace (fn [t] (filterv mine? t)))
         ((juxt :cause :trace)))))
 
-(defn run
-  "Parse THE-ARGS into a command, and run it and return a STRING."
-  [the-args]
-  (try
-    (let [[verb & args] the-args]
-      (if-let [run (commands verb)]
-        (apply run args)
-        (let [error (if verb
-                      (format "%s is not a command." verb)
-                      "Must specify a <command> to run.")]
-          (throw (IllegalArgumentException. error)))))
-    (catch Exception x
-      (log/error x "Uncaught exception rose to zero.main/run")
-      (log/debug "Output from zero.main/trace-stack:")
-      (log/debug (trace-stack x)))))
-
 (defn exit
   "Exit this process with STATUS after SHUTDOWN-AGENTS."
   [status]
