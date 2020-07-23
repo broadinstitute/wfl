@@ -1,10 +1,11 @@
 (ns zero.main
   "Run some demonstrations."
   (:require [clojure.data.json :as json]
-            [clojure.pprint    :refer [pprint]]
-            [clojure.string    :as str]
-            [zero.util         :as util]
-            [zero.zero         :as zero])
+            [clojure.pprint :refer [pprint]]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [zero.util :as util]
+            [zero.zero :as zero])
   (:gen-class))
 
 (defn describe
@@ -73,8 +74,9 @@
                       "Must specify a <command> to run.")]
           (throw (IllegalArgumentException. error)))))
     (catch Exception x
-      (binding [*out* *err*]
-        (pprint (trace-stack x))))))
+      (log/error x "Uncaught exception rose to zero.main/run")
+      (log/debug "Output from zero.main/trace-stack:")
+      (log/debug (trace-stack x)))))
 
 (defn exit
   "Exit this process with STATUS after SHUTDOWN-AGENTS."
@@ -88,16 +90,18 @@
   (try
     (let [[verb & args] the-args]
       (if-let [run (commands verb)]
-        (apply run args)
-        (let [error (if verb
-                      (format "%s is not a command." verb)
-                      "Must specify a <command> to run.")]
-          (binding [*out* *err*] (println (describe commands)))
-          (throw (IllegalArgumentException. error)))))
-    (exit 0)
+        (do
+          (apply run args)
+          (exit 0))
+        (do
+          (log/error (if verb
+                       (format "%s is not a command." verb)
+                       "Must specify a <command> to run."))
+          (log/debug "Output from zero.main/describe on zero.main/commands:")
+          (log/debug (describe commands)))))
     (catch Exception x
-      (binding [*out* *err*]
-        (println)
-        (pprint (trace-stack x))
-        (apply println \newline "BTW:" "You ran:" zero/the-name the-args)))
+      (log/error x "Uncaught exception rose to zero.main/-main")
+      (log/debug "Output from zero.main/trace-stack:")
+      (log/debug (trace-stack x))
+      (log/debug \newline "BTW:" "You ran:" zero/the-name the-args))
     (finally (exit 1))))

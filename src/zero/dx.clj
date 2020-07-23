@@ -7,6 +7,7 @@
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [zero.once :as once]
             [zero.service.cromwell :as cromwell]
@@ -421,5 +422,6 @@
                     "Error: Must specify a dx <tool> to run.")]
         (throw (IllegalArgumentException. error))))
     (catch Exception x
-      (binding [*out* *err*] (println (describe commands)))
+      (log/error x)
+      (log/debug (describe commands))
       (throw x))))

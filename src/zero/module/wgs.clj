@@ -4,6 +4,7 @@
             [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.environments :as env]
             [zero.module.all :as all]
             [zero.references :as references]
@@ -215,5 +216,6 @@
                        "Must specify 3 or 4 arguments.")))
              env (rest args)))
     (catch Exception x
-      (binding [*out* *err*] (println description))
+      (log/error x)
+      (log/debug description)
       (throw x))))

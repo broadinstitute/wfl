@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
@@ -192,5 +193,5 @@
                        "Must specify 2 to 4 arguments.")))
              env (rest args)))
     (catch Exception x
-      (binding [*out* *err*] (println description))
+      (log/error description)
       (throw x))))

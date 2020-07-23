@@ -3,6 +3,7 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.stacktrace :refer [print-throwable]]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clj-time.coerce :as tc]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.defaults :as defaults]
@@ -52,8 +53,7 @@
     (try
       (handler request)
       (catch Throwable t
-        (binding [*err* *out*]
-          (print-throwable t))))))
+        (log/error t)))))
 
 ;; See https://stackoverflow.com/a/43075132
 ;;

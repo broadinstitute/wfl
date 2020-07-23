@@ -2,6 +2,7 @@
   "Collect metadata for successful workflows."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
             [zero.zero :as zero]))
@@ -76,7 +77,8 @@
                (throw (IllegalArgumentException. "Must specify 3 arguments.")))
              env (rest args)))
     (catch Exception x
-      (binding [*out* *err*] (println description))
+      (log/error x)
+      (log/debug description)
       (throw x))))
 
 (comment
