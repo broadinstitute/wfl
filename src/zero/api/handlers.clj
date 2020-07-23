@@ -1,11 +1,11 @@
 *(ns zero.api.handlers
   "Define handlers for API endpoints"
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ring.util.response :as response]
             [zero.module.aou :as aou]
             [zero.module.copyfile :as cp]
+            [zero.jdbc :as jdbc]
             [zero.module.wgs :as wgs]
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]

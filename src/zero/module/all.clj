@@ -1,8 +1,8 @@
 (ns zero.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.pprint :refer [pprint]]
+  (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [zero.jdbc :as jdbc]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
             [zero.environments :as env]

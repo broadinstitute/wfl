@@ -1,10 +1,10 @@
 (ns zero.service.postgres
   "Talk to the Postgres database."
   (:require [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clj-http.client :as http]
             [zero.environments :as env]
+            [zero.jdbc :as jdbc]
             [zero.once :as once]
             [zero.service.cromwell :as cromwell]
             [zero.util :as util])
