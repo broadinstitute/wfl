@@ -73,6 +73,8 @@
   [& the-args]
   (try
     (let [[verb & args] the-args]
+      (log/info "Understood entry point verb to be" verb)
+      (log/info "Understood entry point arguments to be" args)
       (if-let [run (commands verb)]
         (do
           (apply run args)
