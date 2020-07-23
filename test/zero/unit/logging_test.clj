@@ -1,7 +1,7 @@
 (ns zero.unit.logging-test
   "Test that logging is functional (since there's several layers of delegation)"
   (:require
-    [clojure.tools.logging.readable :as log]
+    [clojure.tools.logging :as log]
     [clojure.tools.logging.test :refer [logged? with-log]]
     [clojure.test :refer [is deftest testing]]))
 
@@ -27,7 +27,7 @@
       (log/info "abc" 6 "abcd")
       (is (logged? 'zero.unit.logging-test :info "abc 6 abcd"))
       (log/infof "%s %s" "abc" 123)
-      (is (logged? 'zero.unit.logging-test :info "\"abc\" 123")))))
+      (is (logged? 'zero.unit.logging-test :info "abc 123")))))
 
 (deftest exception-test
   (testing "exception output"

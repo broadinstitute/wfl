@@ -1,21 +1,20 @@
 # WFL Logging
 
 ## Usage
-We use clojure.tools.logging, specifically its "readable" variant that
-helps make interpolated values distinct from explanatory text.
+We use `clojure.tools.logging`.
 
 Require it like any other dependency:
 ```clojure
 (ns "..."
   (:require
     ...
-    [clojure.tools.logging.readable :as log]
+    [clojure.tools.logging :as log]
     ...))
 
 (log/info "Hello!")
 ```
 
-Full documentation is available [here](http://clojure.github.io/tools.logging/#clojure.tools.logging.readable),
+Full documentation is available [here](http://clojure.github.io/tools.logging/#clojure.tools.logging),
 but the primary functions we use are these:
 
 - `log/error` and `log/errorf` for failures and uncaught exceptions
