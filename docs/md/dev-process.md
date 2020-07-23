@@ -191,7 +191,7 @@ For the above, the username and password need to be correct for the target envir
 You may be able to find this data in the Vault entry for the environment's server --
 `resources/zero/environments.clj` has environments if you've built locally.
 
-Starting `postgress`:
+Starting `postgres`:
 ```bash
 pg_ctl -D /usr/local/var/postgresql@11 start
 ```
