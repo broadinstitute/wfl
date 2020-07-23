@@ -53,18 +53,16 @@ WFL's logging works as follows:
    - Why delegate? clojure.tools.logging is just a bunch of macros, it finds
      something to delegate to at runtime
    - Why SLF4J? Jetty already uses it, so configuring it ourselves helps keep
-     it quiet, and it can delegate to Logback, which is stuck on our classpath
-   - Why not Logback directly? Logback is an SLF4J implementation but
-     clojure.tools.logging doesn't support it directly
-3. SLF4J delegates to Logback
+     it quiet
+   - Why not Log4j 2 directly? SLF4J is brought in by Jetty and will complain
+     if we don't include it in our chain of delegation anywhere
+3. SLF4J delegates to Log4j 2
    - Why delegate? SLF4J is an opinionated facade that still needs something to
      delegate to
-   - Why Logback? Liquibase, another dependency, makes the mistake (in SLF4J's
-     eyes) of including a SLF4J *implementation*, which means we have to use it
-     because SLF4J delegates via ServiceLoader only
+   - Why Log4j 2? It is a fair default implementation: highly configurable,
+     well-tested, well-supported
      
 Even without making our own wrapper around clojure.tools.logging, we have
-a lot of flexibility. Suppose Liquibase removes their dependency on Logback:
-we could simply slot in another SLF4J implementation in our dependencies and
-SLF4J would pick it up, or we could remove SLF4J entirely and add something
-else supported by clojure.tools.logging like 
+a lot of flexibility. Suppose Jetty removes their dependency on SLF4J: we
+could remove our own dependency on SLF4J and clojure.tools.logging would
+immediately begin interacting directly with Log4j 2.
