@@ -1,4 +1,4 @@
-(ns zero.api.handlers
+*(ns zero.api.handlers
   "Define handlers for API endpoints"
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]

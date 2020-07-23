@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [buddy.sign.jwt :as jwt]
             [clj-yaml.core :as yaml]
             [vault.client.http]         ; vault.core needs this
@@ -24,7 +25,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (println x#))))
+          (log/warn x# "Swallowed exception and returned nil in zero.util/do-or-nil"))))
 
 ;; Parsers that will not throw.
 ;;
@@ -62,10 +63,8 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
             (vault/authenticate! :token (slurp token-path)))
           path)
          (catch Throwable e
-           (let [error (get-in (Throwable->map e) [:via 0 :message])
-                 lines ["%1$s: %2$s" "%1$s: Run 'vault login' and try again."]
-                 msg   (format (str/join \newline lines) zero/the-name error)]
-             (println msg))))))
+           (log/warn e "Issue with Vault")
+           (log/debug "Perhaps run 'vault login' and try again")))))
 
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."
