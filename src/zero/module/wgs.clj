@@ -54,7 +54,7 @@
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
   {(keyword (str zero/the-name "-wgs-po-ticket"))
-   "PO-26024"
+   "PO-26024-bams"
    (keyword (str zero/the-name "-wgs"))
    (wdl/workflow-name (:top workflow-wdl))})
 
