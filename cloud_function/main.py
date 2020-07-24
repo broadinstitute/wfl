@@ -100,7 +100,8 @@ def submit_aou_workload(event, context):
 
     # Parse manifest file to get input file paths
     input_data = json.loads(manifest_file_content)
-    input_values = input_data.values()
+    notification = input_data['notifications'][0]
+    input_values = notification.values()
     input_files = set([f for f in input_values if str(f).startswith("gs://")])
 
     # Check if the input files have been uploaded
@@ -114,7 +115,7 @@ def submit_aou_workload(event, context):
             return
 
     if upload_complete:
-        sample_alias = input_data.get('sample_alias')
+        sample_alias = notification.get('sample_alias')
         print(f"Submitting analysis workflow for sample {sample_alias}")
         # workload = get_or_create_workload(headers)
         # print(workload)
