@@ -2,8 +2,6 @@
 <!--
 This file configures Log4j 2.
 Its syntax is given by https://logging.apache.org/log4j/2.x/manual/configuration.html
-
-The file currently represents the defaults for Log4j 2, it just makes them explicit.
 -->
 <Configuration status="WARN">
     <Appenders>
@@ -12,7 +10,7 @@ The file currently represents the defaults for Log4j 2, it just makes them expli
         </Console>
     </Appenders>
     <Loggers>
-        <Root level="error">
+        <Root level="debug">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
