@@ -1,7 +1,14 @@
 # WFL Logging
 
+> ## Summary
+> Import `clojure.tools.logging :as log` and use `log/error` / `log/info` etc.
+> 
+> `clojure.tools.logging` uses SLF4J under the hood which in turn uses Log4j2 as its implementation.
+> 
+> Below is more detailed information for those interested.
+
 ## Usage
-We use `clojure.tools.logging`.
+We use `clojure.tools.logging` aliased to `log`.
 
 Require it like any other dependency:
 ```clojure
