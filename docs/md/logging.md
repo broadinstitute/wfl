@@ -28,6 +28,16 @@ concatenates them with spaces, while the second variant uses format
 strings. All functions can also accept a throwable before other normal 
 arguments to log a specific exception.
 
+## Behavior
+Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.
+
+Thus, to have WFL log everything to a file you'd want to use something like
+```bash
+my-command >output.log 2>&1
+```
+That'll capture both STDOUT and STDERR to the same file.
+Note that this specific syntax is more universal than just `&>output.log`.
+
 
 ## Testing
 clojure.tools.logging provides a [test namespace](http://clojure.github.io/tools.logging/#clojure.tools.logging.test).
