@@ -102,7 +102,7 @@
         work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                       table pipeline)]
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
-    (jdbc/execute! tx ["UPDATE workload SET pipeline = '?'::pipeline WHERE id = ?" pipeline id])
+    (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
     (jdbc/db-do-commands tx [work])
     [uuid table]))
 
