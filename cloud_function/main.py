@@ -50,21 +50,21 @@ def get_manifest_path(object_name):
     return "/".join(parts)
 
 def get_or_create_workload(headers):
-    create_payload = {
+    payload = {
         "creator": "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
         "cromwell": cromwell_url,
         "input": "aou-inputs-placeholder",
         "output": "aou-ouputs-placeholder",
         "pipeline": "AllOfUsArrays",
-        "project": project,
+        "project": "gotc-dev",
         "items": [{}]
     }
     response = requests.post(
-        url=f"{wfl_url}/api/v1/create",
+        url=f"{wfl_url}/api/v1/exec",
         headers=headers,
-        json=create_payload
+        json=payload
     )
-    return response.json()
+    return response.json().get('uuid')
 
 def submit_aou_workload(event, context):
     """Background Cloud Function to be triggered by Cloud Storage.
@@ -117,5 +117,10 @@ def submit_aou_workload(event, context):
     if upload_complete:
         sample_alias = notification.get('sample_alias')
         print(f"Submitting analysis workflow for sample {sample_alias}")
-        # workload = get_or_create_workload(headers)
-        # print(workload)
+        workload_uuid = get_or_create_workload(headers)
+        input_data['uuid'] = workload_uuid
+        requests.post(
+            url=f"{wfl_url}/api/v1/append_to_aou",
+            headers=headers,
+            json=input_data
+        )
