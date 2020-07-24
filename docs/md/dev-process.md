@@ -183,18 +183,22 @@ after merging a PR.
 
 ### Useful hacks for debugging Postgres/Liquibase
 
-Running `liquibase update`:
-```bash
-liquibase --classpath=$(clojure -Spath) --url=jdbc:postgresql:wfl --changeLogFile=database/changelog.xml --username=$USER --password=$PASSWORD update
-```
-For the above, the username and password need to be correct for the target environment.
-You may be able to find this data in the Vault entry for the environment's server --
-`resources/zero/environments.clj` has environments if you've built locally.
-
 Starting `postgres`:
 ```bash
 pg_ctl -D /usr/local/var/postgresql@11 start
 ```
+
+Running `liquibase update`:
+```bash
+liquibase --classpath=$(clojure -Spath) --url=jdbc:postgresql:wfl --changeLogFile=database/changelog.xml --username=$USER update
+```
+For the above, the username and password need to be correct for the target environment.
+
+If you're running a local server with the postgres command above, you don't need a password and can omit it.
+
+Otherwise, you may be able to find this data in the Vault entry for the environment's server --
+`resources/zero/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING` 
+to supply it.
 
 ### Test
 
