@@ -7,7 +7,6 @@ from google.cloud import exceptions
 
 project = os.environ.get("GCP_PROJECT", "broad-gotc-dev")
 wfl_url = os.environ.get("WFL_URL", "https://workflow-launcher.gotc-dev.broadinstitute.org")
-cromwell_url = os.environ.get("CROMWELL_URL", "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 default_credentials = os.environ.get("DEFAULT_CREDENTIALS", False)
 
 
@@ -49,7 +48,7 @@ def get_manifest_path(object_name):
     parts.append("ptc.json")
     return "/".join(parts)
 
-def get_or_create_workload(headers):
+def get_or_create_workload(headers, cromwell_url):
     payload = {
         "creator": "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
         "cromwell": cromwell_url,
@@ -116,8 +115,9 @@ def submit_aou_workload(event, context):
 
     if upload_complete:
         sample_alias = notification.get('sample_alias')
+        cromwell_url = input_data.get('cromwell')
         print(f"Submitting analysis workflow for sample {sample_alias}")
-        workload_uuid = get_or_create_workload(headers)
+        workload_uuid = get_or_create_workload(headers, cromwell_url)
         input_data['uuid'] = workload_uuid
         requests.post(
             url=f"{wfl_url}/api/v1/append_to_aou",
