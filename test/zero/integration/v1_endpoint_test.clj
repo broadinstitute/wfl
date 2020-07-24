@@ -31,7 +31,7 @@
 
 (deftest test-start-workload
   (testing "The `start` endpoint starts an existing workload"
-    (let [unstarted (or (endpoints/first-pending-workload) make-workload)
+    (let [unstarted (make-workload)
           response  (endpoints/start-workload unstarted)
           status    (endpoints/get-workload-status (:uuid response))]
       (is (:uuid unstarted) "Workloads should have been assigned a uuid")
