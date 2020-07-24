@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20200616"
+               logicalFilePath="20200616_AllOfUsArraysTable.xml">
+        <comment>
+            the AllOfUsArrays table schema
+        </comment>
+        <sql>
+            CREATE TYPE AllOfUsArrays AS (
+                id                          bigint,      -- just an unique id
+                analysis_version_number     bigint,      -- input to the workflow (PK 1/2)
+                chip_well_barcode           text,        -- input to the workflow (PK 2/2)
+                status                      text,        -- Cromwell workflow status
+                updated                     timestamptz, -- status update time
+                uuid                        text         -- Cromwell workflow UUID
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -19,6 +19,18 @@
   (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
 
+(defn fail-with-response
+  "A failure RESPONSE with BODY."
+  [response body]
+  (-> body response (response/content-type "application/json")))
+
+(defn unprocessable-entity
+  "Returns a 422 'Unprocessable Entity' response with BODY."
+  [body]
+  {:status  422
+   :headers {}
+   :body    body})
+
 (defn succeed
   "A successful response with BODY."
   [body]
@@ -53,6 +65,17 @@
         env     (zero/throw-or-environment-keyword! environment)
         results (wgs/submit-some-workflows env max input_path output_path)]
     (succeed {:results results})))
+
+(defn append-to-aou-workload
+  "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
+  [{:keys [parameters] :as _request}]
+  (let [{:keys [body]} parameters]
+    (try
+      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+                                (->> body
+                                     (aou/append-to-workload! tx)
+                                     succeed))
+      (catch Exception e (fail-with-response unprocessable-entity {:message (.getMessage e)})))))
 
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."

@@ -6,6 +6,7 @@
             [zero.main :as main]
             [zero.module.ukb :as ukb]
             [zero.module.wgs :as wgs]
+            [zero.module.aou :as aou]
             [zero.module.xx :as xx]
             [zero.util :as util]
             [zero.wdl :as wdl]
@@ -108,7 +109,7 @@
     (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
       (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent pipeline-config)
-        "checkout" "4ce6a17e8e0ae349746767514a9bb1a12d2b6725")
+                      "checkout" "9fecc4601b8e8c4812ec97e2bbc02d56e99c3a8f")
       (stage pipeline-config))))
 
 ;; Hack: (delete-tree directory) is a hack.
@@ -118,7 +119,7 @@
   [version resources]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
-    (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
+    (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
           {:keys [tmp] :as clones} (clone-repos)
           directory (io/file resources "zero")
           edn (merge version

@@ -203,3 +203,10 @@
          :body    (jsonify {:ackIds ack-ids})}
         http/request :body
         (json/read-str :key-fn keyword))))
+
+
+(comment
+  (make-topic "broad-gotc-dev" "rex-wfl-test")
+  (subscribe "broad-gotc-dev" "rex-wfl-test" "subsA")
+  (publish "broad-gotc-dev" "rex-wfl-test" "helloWFL!")
+  (pull "broad-gotc-dev" "subsA"))
