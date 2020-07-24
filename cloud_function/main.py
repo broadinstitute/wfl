@@ -1,7 +1,6 @@
 import os
 import json
 import requests
-from urllib.parse import urlparse
 from google.cloud import storage
 from google.cloud import exceptions
 
@@ -36,12 +35,6 @@ def get_auth_headers():
         'Authorization': 'Bearer {}'.format(access_token)
     }
     return headers
-
-def parse_gs_url(gs_url):
-    url = urlparse(gs_url)
-    bucket = url.netloc
-    object = url.path[1:]
-    return bucket, object
 
 def get_manifest_path(object_name):
     parts = object_name.split("/")[:-1]
@@ -106,21 +99,25 @@ def submit_aou_workload(event, context):
     # Check if the input files have been uploaded
     upload_complete = True
     for gs_url in input_files:
-        bucket_name, object_name = parse_gs_url(gs_url)
-        file_blob = bucket.get_blob(object_name)
-        if not file_blob:
+        file_blob = storage.Blob.from_string(gs_url)
+        file_metadata = bucket.get_blob(file_blob.name)
+        if not file_metadata:
             upload_complete = False
             print(f"File not found: {gs_url}")
             return
 
     if upload_complete:
         sample_alias = notification.get('sample_alias')
+        print(f"Sample upload completed for {sample_alias}")
         cromwell_url = input_data.get('cromwell')
-        print(f"Submitting analysis workflow for sample {sample_alias}")
         workload_uuid = get_or_create_workload(headers, cromwell_url)
         input_data['uuid'] = workload_uuid
-        requests.post(
+        print(f"Updating workload {workload_uuid}")
+        response = requests.post(
             url=f"{wfl_url}/api/v1/append_to_aou",
             headers=headers,
             json=input_data
         )
+        workflows = response.json()
+        workflow_ids = [each['uuid'] for each in workflows]
+        print(f"Started cromwell workflows: {workflow_ids}")
