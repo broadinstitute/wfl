@@ -21,19 +21,7 @@ Require it like any other dependency:
 (log/info "Hello!")
 ```
 
-Full documentation is available [here](http://clojure.github.io/tools.logging/#clojure.tools.logging),
-but the primary functions we use are these:
-
-- `log/error` and `log/errorf` for failures and uncaught exceptions
-- `log/warn` and `log/warnf` for issues that could be recovered from
-- `log/info` and `log/infof` for recording normal interaction
-- `log/debug` and `log/debugf` for more granular output that might be 
-added during debugging
-
-The first function of each level accepts any number of arguments and 
-concatenates them with spaces, while the second variant uses format 
-strings. All functions can also accept a throwable before other normal 
-arguments to log a specific exception.
+Full documentation is available [here](http://clojure.github.io/tools.logging/#clojure.tools.logging).
 
 ## Behavior
 Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.
@@ -49,33 +37,27 @@ Note that this specific syntax is more universal than just `&>output.log`.
 ## Testing
 clojure.tools.logging provides a [test namespace](http://clojure.github.io/tools.logging/#clojure.tools.logging.test).
 
-An example of usage is in `test/zero/unit/logging_test.clj`. 
-That file doesn't actually test our code, but rather our dependencies:
-it helps catch issues that might arise from clojure.tools.logging (or SLF4J, which
-it currently delegates to) having trouble finding a logging implementation via
-service loaders and the like. It isn't bulletproof--it is theoretically possible
-for tests to use a different classpath than other execution--but it is a good smoke
-test that in that any failures there would require remediation in our own codebase.
+An example of usage is in `test/zero/unit/logging_test.clj`, which exists to test that the service loaders are correctly resolving our dependencies.
 
 ## Under the Hood
+> This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup
+> doesn't change all that much. 
+>
+> The key takeaway here is that JVM logging libraries use service loaders
+> and other runtime configuration to find each other.
+
 WFL's logging works as follows:
 
 1. clojure.tools.logging is imported and used directly
    - Why clojure.tools.logging? It is Clojure-native so it has intuitive syntax
-   - Why not wrap or delegate to it? It is written in macros so delegation
-     is messier, the macros themselves just delegate to other logging
-     implementations anyway, and its interface is so generic that we'd be
-     repeating it very closely if we were to wrap it
+   - Why not wrap or delegate to it? It already works just as a wrapper to any
+     other logging implementation so wrapping it would duplicate its purpose
 2. clojure.tools.logging delegates to SLF4J
-   - Why delegate? clojure.tools.logging is just a bunch of macros, it finds
-     something to delegate to at runtime
    - Why SLF4J? Jetty already uses it, so configuring it ourselves helps keep
      it quiet
-   - Why not Log4j 2 directly? SLF4J is brought in by Jetty and will complain
-     if we don't include it in our chain of delegation anywhere
 3. SLF4J delegates to Log4j 2
-   - Why delegate? SLF4J is an opinionated facade that still needs something to
-     delegate to
+   - Why delegate? SLF4J is a facade that still needs an implementation to
+     actually log things
    - Why Log4j 2? It is a fair default implementation: highly configurable,
      well-tested, well-supported
      
