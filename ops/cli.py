@@ -253,6 +253,19 @@ class CLI:
         return 0
 
     @register
+    def connect(self, arguments: list) -> int:
+        """Connect to the Cloud SQL proxy through docker."""
+        parser = argparse.ArgumentParser(description=f"{self.connect.__doc__}")
+        parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
+        parser.add_argument("-i", "--instance", default="zero-postgresql", dest="instance", help="The name of the Cloud SQL instance. e.g. zero-postgresql")
+        args = parser.parse_args(arguments)
+        container = run_cloud_sql_proxy(gcloud_project=args.project, cloudsql_instance_name=args.instance)
+        success(f"[✔] You have connected to Zero's Cloud SQL instance {args.instance} in {args.project}")
+        info(f'To use psql, run: \n\t psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"')
+        info(f"To disconnect and stop the container, run: \n\t docker stop {container}")
+        return 0
+
+    @register
     def deploy(self, arguments) -> int:
         """Deploy WFL to Cloud GKE (VPN is required)"""
         parser = argparse.ArgumentParser(description=f"{self.deploy.__doc__}")
