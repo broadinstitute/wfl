@@ -53,7 +53,7 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-wgs-po-ticket"))
+  {(keyword (str zero/the-name "-wgs-po-ticket-crams"))
    "PO-26024"
    (keyword (str zero/the-name "-wgs"))
    (wdl/workflow-name (:top workflow-wdl))})
@@ -118,6 +118,15 @@
    :papi_settings       {:agg_preemptible_tries 3
                          :preemptible_tries     3}})
 
+(def memory-muliplier-inputs
+  {
+   "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.UnmappedBamToAlignedBam.UnmappedBamToAlignedBam.ApplyBQSR.memory_multiplier" 2,
+   "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.BamToCram.BamToCram.ValidateCram.memory_multiplier" 2,
+   "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.CollectRawWgsMetrics.memory_multiplier" 2,
+   "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.UnmappedBamToAlignedBam.UnmappedBamToAlignedBam.MarkDuplicates.memory_multiplier" 2
+   }
+  )
+
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
   [environment out-gs in-gs]
@@ -130,7 +139,8 @@
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
                    (merge (genome-inputs environment)
-                          hack-task-level-values))
+                          hack-task-level-values
+                          memory-muliplier-inputs))
         {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
     (all/throw-when-output-exists-already! output)
