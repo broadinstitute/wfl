@@ -172,6 +172,7 @@ def run_liquibase_migration(db_username, db_password):
     changelog_dir = f"{pwd}/wfl/database"
     command = ' '.join(['docker run --rm --net=host',
                         f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
+                        '/liquibase/liquibase',
                         f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
                         f'--username="{db_username}" --password="{db_password}" update'])
     shell(command)
@@ -249,6 +250,19 @@ class CLI:
         file = Path(args.file)
         assert file.exists() and file.is_file(), f"{file} is not valid!"
         render_ctmpl(ctmpl_file=str(file))
+        return 0
+
+    @register
+    def connect(self, arguments: list) -> int:
+        """Connect to the Cloud SQL proxy through docker."""
+        parser = argparse.ArgumentParser(description=f"{self.connect.__doc__}")
+        parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
+        parser.add_argument("-i", "--instance", default="zero-postgresql", dest="instance", help="The name of the Cloud SQL instance. e.g. zero-postgresql")
+        args = parser.parse_args(arguments)
+        container = run_cloud_sql_proxy(gcloud_project=args.project, cloudsql_instance_name=args.instance)
+        success(f"[✔] You have connected to Zero's Cloud SQL instance {args.instance} in {args.project}")
+        info(f'To use psql, run: \n\t psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"')
+        info(f"To disconnect and stop the container, run: \n\t docker stop {container}")
         return 0
 
     @register
