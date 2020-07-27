@@ -59,6 +59,17 @@ def get_or_create_workload(headers, cromwell_url):
     )
     return response.json().get('uuid')
 
+def update_workload(headers, workload_uuid, input_data):
+    input_data['uuid'] = workload_uuid
+    print(f"Updating workload {workload_uuid}")
+    response = requests.post(
+        url=f"{wfl_url}/api/v1/append_to_aou",
+        headers=headers,
+        json=input_data
+    )
+    workflows = response.json()
+    return [each['uuid'] for each in workflows]
+
 def submit_aou_workload(event, context):
     """Background Cloud Function to be triggered by Cloud Storage.
     Args:
@@ -112,13 +123,5 @@ def submit_aou_workload(event, context):
         print(f"Sample upload completed for {sample_alias}")
         cromwell_url = input_data.get('cromwell')
         workload_uuid = get_or_create_workload(headers, cromwell_url)
-        input_data['uuid'] = workload_uuid
-        print(f"Updating workload {workload_uuid}")
-        response = requests.post(
-            url=f"{wfl_url}/api/v1/append_to_aou",
-            headers=headers,
-            json=input_data
-        )
-        workflows = response.json()
-        workflow_ids = [each['uuid'] for each in workflows]
+        workflow_ids = update_workload(headers, workload_uuid, input_data)
         print(f"Started cromwell workflows: {workflow_ids}")
