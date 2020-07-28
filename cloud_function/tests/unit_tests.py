@@ -1,5 +1,4 @@
 import mock
-from unittest.mock import MagicMock
 from google.cloud import storage, exceptions
 from cloud_function import main
 
