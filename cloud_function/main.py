@@ -5,23 +5,8 @@ from google.cloud import storage
 from google.cloud import exceptions
 
 
-project = os.environ.get("GCP_PROJECT")
-service_account = os.environ.get('FUNCTION_IDENTITY')
+service_account = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
 wfl_url = os.environ.get("WFL_URL")
-default_credentials = os.environ.get("DEFAULT_CREDENTIALS")
-
-
-def get_test_credentials():
-    import google.auth
-    import google.auth.transport.requests
-
-    scopes = ["https://www.googleapis.com/auth/cloud-platform",
-              "https://www.googleapis.com/auth/userinfo.email",
-              "https://www.googleapis.com/auth/userinfo.profile"]
-    credentials, gcp_project = google.auth.default(scopes=scopes)
-    if not credentials.valid:
-        credentials.refresh(google.auth.transport.requests.Request())
-    return credentials
 
 def get_auth_headers():
     scopes_list = ["https://www.googleapis.com/auth/cloud-platform",
@@ -81,17 +66,10 @@ def submit_aou_workload(event, context):
          metadata. The `event_id` field contains the Pub/Sub message ID. The
          `timestamp` field contains the publish time.
     """
-    if default_credentials:
-        headers = get_auth_headers()
-        client = storage.Client()
-    else:
-        credentials = get_test_credentials()
-        headers = {
-            'Authorization': 'Bearer {}'.format(credentials.token)
-        }
-        client = storage.Client(credentials=credentials, project=project)
+    headers = get_auth_headers()
 
     # Get sample manifest/metadata file
+    client = storage.Client()
     bucket = client.bucket(event['bucket'])
     manifest_path = get_manifest_path(event['name'])
     manifest_blob = bucket.blob(manifest_path)

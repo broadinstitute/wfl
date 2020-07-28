@@ -18,9 +18,9 @@ def test_get_manifest_path_from_uploaded_file():
 @mock.patch("cloud_function.main.update_workload", return_value=["workflow_uuid"])
 @mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Blob, 'download_as_string')
-def test_manifest_file_not_uploaded(mock_download, mock_get_workload, mock_update_workload):
+@mock.patch("cloud_function.main.get_auth_headers")
+def test_manifest_file_not_uploaded(mock_headers, mock_download, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
-    client.token = MagicMock(return_value="token")
     mock_download.side_effect = exceptions.NotFound('Error')
     main.submit_aou_workload(event_data, None)
     assert not mock_get_workload.called
@@ -30,9 +30,9 @@ def test_manifest_file_not_uploaded(mock_download, mock_get_workload, mock_updat
 @mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Bucket, 'get_blob')
 @mock.patch.object(storage.Blob, 'download_as_string')
-def test_input_file_not_uploaded(mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
+@mock.patch("cloud_function.main.get_auth_headers")
+def test_input_file_not_uploaded(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
-    client.token = MagicMock(return_value="token")
     mock_download.return_value = '{"notifications": [{"file": "gs://test_bucket/file.txt"}]}'
     mock_get_blob.return_value = None
     main.submit_aou_workload(event_data, None)
@@ -43,9 +43,9 @@ def test_input_file_not_uploaded(mock_download, mock_get_blob, mock_get_workload
 @mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Bucket, 'get_blob')
 @mock.patch.object(storage.Blob, 'download_as_string')
-def test_wfl_called_when_sample_upload_completes(mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
+@mock.patch("cloud_function.main.get_auth_headers")
+def test_wfl_called_when_sample_upload_completes(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
-    client.token = MagicMock(return_value="token")
     mock_download.return_value = '{"cromwell": "http://cromwell.broadinstitute.org", ' \
                                  '"sample_alias": "test_sample", ' \
                                  '"notifications": [{"file": "gs://test_bucket/file.txt"}]}'

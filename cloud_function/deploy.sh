@@ -21,6 +21,6 @@ gcloud functions deploy submit_aou_workload \
     --trigger-resource ${TRIGGER_BUCKET} \
     --trigger-event ${TRIGGER_EVENT} \
     --service-account ${SA_EMAIL} \
-    --set-env-vars WFL_URL=${_WFL_URL},DEFAULT_CREDENTIALS="TRUE" \
+    --set-env-vars WFL_URL=${_WFL_URL} \
     --runtime python37 \
     --memory 128MB
