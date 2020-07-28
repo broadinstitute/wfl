@@ -2,7 +2,7 @@
 """WFL Deployment Script
 @rex
 
-requirements: pip3 install gitpython
+requirements: pip3 install gitpython pyyaml
 
 Example: ./ops/cli.py -t latest
 
