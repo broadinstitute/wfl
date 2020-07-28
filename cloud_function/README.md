@@ -13,5 +13,5 @@ Run `bash deploy.sh $GCLOUD_PROJECT> $TRIGGER_BUCKET`
 
 Testing
 -------
-1) Create a virtual python3 environment and install `dev-requirements.txt`
+1) Create a virtual python3 environment and install with `pip install -r dev-requirements.txt`
 2) Run the unit tests: `pytest tests/unit_tests.py`
