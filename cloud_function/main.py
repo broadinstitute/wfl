@@ -5,6 +5,7 @@ from google.cloud import storage
 from google.cloud import exceptions
 
 project = os.environ.get("GCP_PROJECT", "broad-gotc-dev")
+service_account = os.environ.get('FUNCTION_IDENTITY')
 wfl_url = os.environ.get("WFL_URL", "https://workflow-launcher.gotc-dev.broadinstitute.org")
 default_credentials = os.environ.get("DEFAULT_CREDENTIALS", False)
 
@@ -44,7 +45,7 @@ def get_manifest_path(object_name):
 
 def get_or_create_workload(headers, cromwell_url):
     payload = {
-        "creator": "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+        "creator": service_account,
         "cromwell": cromwell_url,
         "input": "aou-inputs-placeholder",
         "output": "aou-ouputs-placeholder",
