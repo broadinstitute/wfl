@@ -27,8 +27,8 @@ def get_auth_headers():
 
 def get_manifest_path(object_name):
     path = object_name.strip("/")
-    chipwell_barcode, analysis_version, file_name = path.split("/", maxsplit=2)
-    return "/".join([chipwell_barcode, analysis_version, "ptc.json"])
+    chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=2)
+    return "/".join([chip_well_barcode, analysis_version, "ptc.json"])
 
 def get_or_create_workload(headers, cromwell_url):
     payload = {
@@ -99,9 +99,10 @@ def submit_aou_workload(event, context):
             return
 
     if upload_complete:
-        sample_alias = notification.get('sample_alias')
-        print(f"Sample upload completed for {sample_alias}")
+        chip_well_barcode = notification.get('chip_well_barcode')
+        analysis_version = notification.get('analysis_version_number')
+        print(f"Completed sample upload for {chip_well_barcode}-{analysis_version}")
         cromwell_url = input_data.get('cromwell')
         workload_uuid = get_or_create_workload(headers, cromwell_url)
         workflow_ids = update_workload(headers, workload_uuid, input_data)
-        print(f"Started cromwell workflows: {workflow_ids}")
+        print(f"Started cromwell workflows: {workflow_ids} for {chip_well_barcode}-{analysis_version}")
