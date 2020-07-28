@@ -4,8 +4,6 @@
 
 requirements: pip3 install gitpython pyyaml
 
-Example: ./ops/cli.py -t latest
-
 usage: python3 cli.py -h
 """
 from enum import Enum
