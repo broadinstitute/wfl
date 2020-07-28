@@ -1,12 +1,10 @@
 (ns zero.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [clojure.java.io :as io]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.util :as util]
-            [zero.wdl :as wdl])
+            [zero.util :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
