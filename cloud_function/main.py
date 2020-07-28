@@ -5,8 +5,10 @@ from google.cloud import storage
 from google.cloud import exceptions
 
 
-service_account = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
-wfl_url = os.environ.get("WFL_URL")
+_SERVICE_ACCOUNT = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
+WFL_URL = os.environ.get("WFL_URL")
+
+assert WFL_URL is not None, "WFL_URL is not set"
 
 def get_auth_headers():
     scopes_list = ["https://www.googleapis.com/auth/cloud-platform",
@@ -30,7 +32,7 @@ def get_manifest_path(object_name):
 
 def get_or_create_workload(headers, cromwell_url):
     payload = {
-        "creator": service_account,
+        "creator": _SERVICE_ACCOUNT,
         "cromwell": cromwell_url,
         "input": "aou-inputs-placeholder",
         "output": "aou-ouputs-placeholder",
@@ -39,7 +41,7 @@ def get_or_create_workload(headers, cromwell_url):
         "items": [{}]
     }
     response = requests.post(
-        url=f"{wfl_url}/api/v1/exec",
+        url=f"{WFL_URL}/api/v1/exec",
         headers=headers,
         json=payload
     )
@@ -49,7 +51,7 @@ def update_workload(headers, workload_uuid, input_data):
     input_data['uuid'] = workload_uuid
     print(f"Updating workload {workload_uuid}")
     response = requests.post(
-        url=f"{wfl_url}/api/v1/append_to_aou",
+        url=f"{WFL_URL}/api/v1/append_to_aou",
         headers=headers,
         json=input_data
     )

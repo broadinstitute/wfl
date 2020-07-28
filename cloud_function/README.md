@@ -13,5 +13,10 @@ Run `bash deploy.sh $GCLOUD_PROJECT> $TRIGGER_BUCKET`
 
 Testing
 -------
-1) Create a virtual python3 environment and install with `pip install -r dev-requirements.txt`
-2) Run the unit tests: `pytest tests/unit_tests.py`
+1) Create a virtual python3 environment
+2) Install requirements with `pip install -r dev-requirements.txt`
+3) Run the unit tests:
+```
+WFL_URL="https://workflow-launcher.gotc-dev.broadinstitute.org"
+WFL_URL=${WFL_URL} pytest tests/unit_tests.py
+```
