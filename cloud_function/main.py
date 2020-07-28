@@ -4,10 +4,11 @@ import requests
 from google.cloud import storage
 from google.cloud import exceptions
 
-project = os.environ.get("GCP_PROJECT", "broad-gotc-dev")
+
+project = os.environ.get("GCP_PROJECT")
 service_account = os.environ.get('FUNCTION_IDENTITY')
-wfl_url = os.environ.get("WFL_URL", "https://workflow-launcher.gotc-dev.broadinstitute.org")
-default_credentials = os.environ.get("DEFAULT_CREDENTIALS", False)
+wfl_url = os.environ.get("WFL_URL")
+default_credentials = os.environ.get("DEFAULT_CREDENTIALS")
 
 
 def get_test_credentials():
