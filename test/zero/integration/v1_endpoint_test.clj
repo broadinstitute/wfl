@@ -9,7 +9,7 @@
             [zero.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
-(def make-workload (partial endpoints/create-workload workloads/wl-workload))
+(def make-workload (partial endpoints/create-workload workloads/wgs-workload))
 
 (def get-existing-workload-uuids
   (comp set (partial map :uuid) endpoints/get-workloads))
@@ -17,7 +17,7 @@
 (deftest test-create-workload
   (testing "The `create` endpoint creates new workload"
     (let [uuids-before (get-existing-workload-uuids)
-          no-items     (dissoc workloads/wl-workload :items)
+          no-items     (dissoc workloads/wgs-workload :items)
           {:keys [id items pipeline uuid] :as response} (make-workload)]
       (is uuid "Workloads should have been assigned a uuid")
       (is (not (contains? uuids-before uuid)) "The new workflow uuid was not unique")
@@ -54,7 +54,7 @@
 (deftest test-exec-workload
   (testing "The `exec` endpoint creates and starts a workload"
     (let [uuids-before (get-existing-workload-uuids)
-          {:keys [uuid started]} (endpoints/exec-workload workloads/wl-workload)]
+          {:keys [uuid started]} (endpoints/exec-workload workloads/wgs-workload)]
       (is (not (contains? uuids-before uuid)) "The new workload uuid was not unique")
       (is started "The workload wasn't started"))))
 

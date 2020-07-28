@@ -7,7 +7,7 @@
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 (def git-email (delay (shell! "git" "config" "user.email")))
 
-(def wl-workload
+(def wgs-workload
   "A whole genome sequencing workload used for testing."
   (let [path "/single_sample/plumbing/truth"]
     {:creator  @git-email
