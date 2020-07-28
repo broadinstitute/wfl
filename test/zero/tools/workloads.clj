@@ -2,7 +2,8 @@
   (:require [zero.environments :refer [stuff]]
             [zero.module.copyfile :as cp]
             [zero.module.wl :as wl]
-            [zero.util :refer [shell!]]))
+            [zero.util :refer [shell!]]
+            [zero.module.aou :as aou]))
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 (def git-email (delay (shell! "git" "config" "user.email")))
@@ -21,6 +22,16 @@
                  :base_file_name       "NA12878_PLUMBING",
                  :final_gvcf_base_name "NA12878_PLUMBING",
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
+
+(def aou-workload
+  "An allofus arrays workload used for testing."
+  {:creator  @git-email
+   :cromwell (get-in stuff [:gotc-dev :cromwell :url])
+   :input    "aou-inputs-placeholder"
+   :output   "aou-outputs-placeholder"
+   :pipeline aou/pipeline
+   :project  (format "(Test) %s" @git-branch)
+   :items    [{}]})
 
 (defn make-copyfile-workload
   "Make a workload to copy a file from SRC to DST"
