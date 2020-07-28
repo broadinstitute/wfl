@@ -39,9 +39,8 @@ def get_auth_headers():
     return headers
 
 def get_manifest_path(object_name):
-    parts = object_name.split("/")
-    chipwell_barcode = parts[0]
-    analysis_version = parts[1]
+    path = object_name.strip("/")
+    chipwell_barcode, analysis_version, file_name = path.split("/", maxsplit=2)
     return "/".join([chipwell_barcode, analysis_version, "ptc.json"])
 
 def get_or_create_workload(headers, cromwell_url):
@@ -82,7 +81,6 @@ def submit_aou_workload(event, context):
          metadata. The `event_id` field contains the Pub/Sub message ID. The
          `timestamp` field contains the publish time.
     """
-
     if default_credentials:
         headers = get_auth_headers()
         client = storage.Client()
