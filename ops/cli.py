@@ -2,9 +2,7 @@
 """WFL Deployment Script
 @rex
 
-requirements: pip3 install gitpython
-
-Example: ./ops/cli.py -t latest
+requirements: pip3 install gitpython pyyaml
 
 usage: python3 cli.py -h
 """
@@ -136,26 +134,25 @@ def set_up_helm():
     success("[✔] Set up Helm charts")
 
 
-def set_up_k8s(environment: str, namespace: str):
+def set_up_k8s(project: str, namespace: str, cluster: str, zone: str):
     """Connect to K8S cluster and set up namespace."""
     info(f"=> Setting up Kubernetes with namespace {namespace}.")
-    ZONE = "us-central1-a"
     GCLOUD = " ".join(["gcloud container clusters get-credentials",
-                       f"gotc-{environment}-shared-{ZONE} --zone {ZONE}",
-                       f"--project broad-gotc-{environment}"])
+                       f"{cluster} --zone {zone}",
+                       f"--project {project}"])
     shell(GCLOUD)
     info("=> Setting up Kubernetes cluster context.")
-    ctx = f"gke_broad-gotc-{environment}_{ZONE}_gotc-{environment}-shared-{ZONE}"
+    ctx = f"gke_{project}_{zone}_{cluster}"
     shell(f"kubectl config use-context {ctx} --namespace={namespace}")
     success(f"[✔] Set context to {ctx}.")
     success(f"[✔] Set namespace to {namespace}.")
 
 
-def run_cloud_sql_proxy(gcloud_project, cloudsql_instance_name):
+def run_cloud_sql_proxy(project: str, cloudsql_instance_name):
     """Connect to a google cloud sql instance using the cloud sql proxy."""
     info("=> Running cloud_sql_proxy")
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
-    instance_command = " ".join([f"gcloud --format=json sql --project {gcloud_project}",
+    instance_command = " ".join([f"gcloud --format=json sql --project {project}",
                              f"instances describe {cloudsql_instance_name}",
                              "| jq .connectionName | tr -d '\"'"])
     instance = subprocess.check_output(instance_command, shell=True, encoding='utf-8').strip()
@@ -277,12 +274,38 @@ class CLI:
             help="Use this branch of gotc-deploy."
         )
         parser.add_argument(
+            "-z",
+            "--zone",
+            dest="zone",
+            default="us-central1-a",
+            help="Use this location for the google cloud cluster."
+        )
+        parser.add_argument(
             "-e",
             "--environment",
             dest="environment",
-            default="dev",
-            choices={"dev"},
-            help="Deploy to this environment."
+            default="gotc-dev",
+            choices=["gotc-dev", "gotc-prod", "aou"],
+            help="Deploy to project 'broad-{ENVIRONMENT}' in cluster '{ENVIRONMENT}-shared-{ZONE}' via "
+                 "'gotc-deploy/deploy/{ENVIRONMENT}'."
+        )
+        parser.add_argument(
+            "-c",
+            "--cluster",
+            dest="cluster",
+            help="Overrides ENVIRONMENT; specify cluster name as '{CLUSTER}-{ZONE}'."
+        )
+        parser.add_argument(
+            "-p",
+            "--project",
+            dest="project",
+            help="Overrides ENVIRONMENT; specify exact gcp project name."
+        )
+        parser.add_argument(
+            "-g",
+            "--gotc-folder",
+            dest="gotc_folder",
+            help="Overrides ENVIRONMENT; specify exact 'gotc-deploy/deploy/{GOTC_FOLDER}' path to use."
         )
         parser.add_argument(
             "-n",
@@ -291,10 +314,37 @@ class CLI:
             default="default",
             help="Deploy to this namespace."
         )
+        parser.add_argument(
+            "-d",
+            "--dry-run",
+            dest="dry_run",
+            action="store_true",
+            help="When provided, exit after printing parsed arguments."
+        )
+        parser.add_argument(
+            "--cluster-no-zone-name",
+            dest="cluster_no_zone_name",
+            action="store_true",
+            help="When provided, do not append '-{ZONE}' to the CLUSTER name."
+        )
         args = parser.parse_args(arguments)
+        project = args.project if args.project is not None else f"broad-{args.environment}"
+        cluster = args.cluster if args.cluster is not None else f"{args.environment}-shared"
+        if not args.cluster_no_zone_name:
+            cluster = f"{cluster}-{args.zone}"
+        gotc_folder = args.gotc_folder if args.gotc_folder is not None else args.environment
+        info("=> Deploy config:")
+        info(f"   GCP project: {project}")
+        info(f"   GCP zone: {args.zone}")
+        info(f"   GCP cluster: {cluster} (namespace: {args.namespace})")
+        info(f"   GOTC deploy folder: gotc-deploy/deploy/{gotc_folder}")
+        if args.dry_run:
+            info("=> Exiting due to --dry-run")
+            return 0
+
         commands_available()
         set_up_helm()
-        set_up_k8s(environment=args.environment, namespace=args.namespace)
+        set_up_k8s(project=project, namespace=args.namespace, cluster=cluster, zone=args.zone)
         with tempfile.TemporaryDirectory() as dir:
             pwd = os.getcwd()
             os.chdir(dir)
@@ -304,7 +354,7 @@ class CLI:
             tag = build("./wfl")
             docker(directory="./wfl", tag=tag)
             values = "wfl-values.yaml"
-            shutil.copy(f"gotc-deploy/deploy/gotc-dev/helm/{values}.ctmpl", dir)
+            shutil.copy(f"gotc-deploy/deploy/{gotc_folder}/helm/{values}.ctmpl", dir)
             render_ctmpl(ctmpl_file=f"{values}.ctmpl", WFL_VERSION=tag)
             helm_deploy_wfl(values=values)
 
@@ -312,7 +362,7 @@ class CLI:
                 helm_values = yaml.safe_load(f)
             db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
             db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
-            container = run_cloud_sql_proxy(f"broad-gotc-{args.environment}", "zero-postgresql")
+            container = run_cloud_sql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
             run_liquibase_migration(db_username, db_password)
             info("=> Stopping cloud_sql_proxy")
             shell(f"docker stop {container}")
