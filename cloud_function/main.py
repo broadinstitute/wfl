@@ -30,14 +30,14 @@ def get_manifest_path(object_name):
     chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=2)
     return "/".join([chip_well_barcode, analysis_version, "ptc.json"])
 
-def get_or_create_workload(headers, cromwell_url):
+def get_or_create_workload(headers, cromwell_url, environment):
     payload = {
         "creator": _SERVICE_ACCOUNT,
         "cromwell": cromwell_url,
         "input": "aou-inputs-placeholder",
         "output": "aou-ouputs-placeholder",
         "pipeline": "AllOfUsArrays",
-        "project": "gotc-dev",
+        "project": environment,
         "items": [{}]
     }
     response = requests.post(
@@ -103,6 +103,8 @@ def submit_aou_workload(event, context):
         analysis_version = notification.get('analysis_version_number')
         print(f"Completed sample upload for {chip_well_barcode}-{analysis_version}")
         cromwell_url = input_data.get('cromwell')
-        workload_uuid = get_or_create_workload(headers, cromwell_url)
+        environment = input_data.get('environment')
+        workload_uuid = get_or_create_workload(headers, cromwell_url, environment)
+        print(f"Updating workload: {workload_uuid}")
         workflow_ids = update_workload(headers, workload_uuid, input_data)
         print(f"Started cromwell workflows: {workflow_ids} for {chip_well_barcode}-{analysis_version}")
