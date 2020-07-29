@@ -77,8 +77,9 @@
   [binding & body]
   `(let [id# (rand-int 10000)]
      (log/info "JDBC SQL transaction" id# "started to" (clean-db ~(second binding)))
-     (jdbc/with-db-transaction ~binding ~@body)
-     (log/info "JDBC SQL transaction" id# "ended")))
+     (let [~'exe (jdbc/with-db-transaction ~binding ~@body)]
+       (log/info "JDBC SQL transaction" id# "ended")
+       ~'exe)))
 
 (defmacro prepare-statement
   "Alias for [[clojure.java.jdbc/prepare-statement]], does not log since the statement would be used later"
