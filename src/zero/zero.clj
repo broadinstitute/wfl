@@ -3,6 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.environments :as env]))
 
 (def the-name
@@ -34,13 +35,12 @@
                                 the-name environment)
                         (format "%s: Error: Must specify an environment."
                                 the-name))]
-            (binding [*out* *err*]
-              (println error)
-              (println (format "%s: The valid environments are:" the-name))
-              (println (->> env/environments
+            (log/error error)
+            (log/debug "The valid environments are:")
+            (log/debug (->> env/environments
                             (sort-by first)
                             (map stringify)
-                            (str/join \newline))))
+                            (str/join \newline)))
             error)))))
 
 (defn throw-or-environment-keyword!

@@ -2,6 +2,7 @@
   "Manage WDL files for Cromwell workflows."
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.util :as util]
             [zero.zero :as zero])
   (:import [java.io File FileNotFoundException]
@@ -83,8 +84,7 @@
                                   (filter dependency?)
                                   (apply util/zip-files zip)))]))
     (catch FileNotFoundException x
-      (binding [*out* *err*]
-        (println (format "%s: WARNING: %s" zero/the-name (.getMessage x)))))))
+      (log/warn (.getMessage x)))))
 
 ;; HACK: The (or ...) gets the resource name into the exception info.
 ;;

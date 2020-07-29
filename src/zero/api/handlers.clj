@@ -1,20 +1,22 @@
-(ns zero.api.handlers
+*(ns zero.api.handlers
   "Define handlers for API endpoints"
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [ring.util.response :as response]
             [zero.module.aou :as aou]
             [zero.module.copyfile :as cp]
+            [zero.jdbc :as jdbc]
             [zero.module.wgs :as wgs]
             [zero.module.wl :as wl]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
-            [zero.zero :as zero])
-  (:import [java.sql PreparedStatement]))
+            [zero.zero :as zero]))
 
 (defn fail
   "A failure response with BODY."
   [body]
+  (log/warn "Endpoint sent a 400 failure response:")
+  (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
 
 (defn fail-with-response

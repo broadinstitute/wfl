@@ -1,7 +1,7 @@
 (ns zero.module.wl
   "Reprocess Whole Genomes in workloads."
   (:require [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
+            [zero.jdbc :as jdbc]
             [zero.module.all :as all]
             [zero.module.wgs :as wgs]
             [zero.service.cromwell :as cromwell]

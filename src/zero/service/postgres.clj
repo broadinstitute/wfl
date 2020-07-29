@@ -1,15 +1,13 @@
 (ns zero.service.postgres
   "Talk to the Postgres database."
   (:require [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clj-http.client :as http]
-            [zero.environments :as env]
+            [zero.jdbc :as jdbc]
             [zero.once :as once]
             [zero.service.cromwell :as cromwell]
             [zero.util :as util])
-  (:import [java.time OffsetDateTime]
-           [liquibase.integration.commandline Main]))
+  (:import [java.time OffsetDateTime]))
 
 (defn zero-db-config
   "Get the database configuration."
@@ -25,32 +23,6 @@
            :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
            :password       (or ZERO_POSTGRES_PASSWORD "password")
            :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
-
-(defn run-liquibase-update
-  "Run Liquibase update on the database at URL with USERNAME and PASSWORD."
-  [url username password]
-  (let [status (Main/run
-                (into-array
-                 String
-                 [(str "--url=" url)
-                  (str "--changeLogFile=database/changelog.xml")
-                  (str "--username=" username)
-                  (str "--password=" password)
-                  "update"]))]
-    (when-not (zero? status)
-      (throw
-       (Exception.
-        (format "Liquibase failed with: %s" status))))))
-
-(defn run-liquibase
-  "Migrate the database schema for ENV using Liquibase."
-  ([env]
-   (let [{:keys [username password postgres_url]}
-         (-> env/stuff env :server :vault util/vault-secrets)]
-     (run-liquibase-update postgres_url username password)))
-  ([]
-   (run-liquibase-update
-    "jdbc:postgresql:wfl" (util/getenv "USER" "postgres") "password")))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."
@@ -119,12 +91,3 @@
               unnilify))
         (catch Exception e
           (unnilify workload))))))
-
-
-(comment
-  (str/join " " ["liquibase" "--classpath=$(clojure -Spath)"
-                 "--url=jdbc:postgresql:wfl"
-                 "--changeLogFile=database/changelog.xml"
-                 "--username=$USER" "update"])
-  (str/join " " ["pg_ctl" "-D" "/usr/local/var/postgresql@11" "start"])
-  (run-liquibase))
