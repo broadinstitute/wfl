@@ -23,14 +23,16 @@
                  :final_gvcf_base_name "NA12878_PLUMBING",
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
 
-(def aou-workload
-  "An allofus arrays workload used for testing."
+(defn aou-workload
+  "An allofus arrays workload used for testing.
+  Randomize it with IDENTIFIER for easier testing."
+  [identifier]
   {:creator  @git-email
    :cromwell (get-in stuff [:gotc-dev :cromwell :url])
    :input    "aou-inputs-placeholder"
    :output   "aou-outputs-placeholder"
    :pipeline aou/pipeline
-   :project  (format "(Test) %s" @git-branch)
+   :project  (format "(Test) %s %s" @git-branch identifier)
    :items    [{}]})
 
 (defn make-copyfile-workload
