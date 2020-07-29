@@ -61,7 +61,8 @@
   (let [keywords [:description :url :version]]
     (assoc (zipmap (map (comp str/capitalize name) keywords)
                    ((apply juxt keywords) the-pom))
-           "Application-Name" (str/capitalize zero/the-name))))
+           "Application-Name" (str/capitalize zero/the-name)
+           "Multi-Release" "true")))
 
 (defn clone-repos
   "Return a map of zero/the-github-repos clones in a :tmp directory.
