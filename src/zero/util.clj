@@ -7,18 +7,20 @@
             [clojure.tools.logging :as log]
             [buddy.sign.jwt :as jwt]
             [clj-yaml.core :as yaml]
-            [vault.client.http]         ; vault.core needs this
+            [vault.client.http]                             ; vault.core needs this
             [vault.core :as vault]
             [zero.environments :as env]
             [zero.zero :as zero])
-  (:import [com.google.auth.oauth2 GoogleCredentials]
-           [java.io File Writer]
+  (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
+           [java.nio.file Files]
+           [java.nio.file.attribute FileAttribute]
            [java.util ArrayList Collections Random UUID]
-           [java.util.zip ZipOutputStream ZipEntry]))
+           [java.util.zip ZipOutputStream ZipEntry]
+           [org.apache.commons.io FilenameUtils]))
 
-vault.client.http/http-client           ; Keep :clint eastwood quiet.
+vault.client.http/http-client                               ; Keep :clint eastwood quiet.
 
 (defmacro do-or-nil
   "Value of BODY or nil if it throws."
@@ -321,3 +323,17 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [uuid]
   (or (= uuid uuid-nil)
       (= uuid (str uuid-nil))))
+
+(defn extract-resource
+  "Extract the resource given by RESOURCE-NAME to a temporary folder
+    @returns  java.io.File to the extracted resource
+    @throws   java.io.IOException if the resource was not found"
+  [^String resource-name]
+  (let [resource (io/resource resource-name)]
+    (when (nil? resource)
+      (throw (IOException. (str "No such resource " resource-name))))
+    (let [temp (.toFile (Files/createTempDirectory "wfl" (into-array FileAttribute nil)))
+          file (io/file temp (FilenameUtils/getName resource-name))]
+      (run! #(.deleteOnExit %) [temp file])
+      (with-open [in (io/input-stream resource)] (io/copy in file))
+      file)))
