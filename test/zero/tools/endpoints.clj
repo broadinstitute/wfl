@@ -63,6 +63,18 @@
                                   :body         payload})]
     (first (parse-json-string (:body response)))))
 
+(defn append-to-aou-workload
+  "Append a or a few SAMPLES to the aou workload"
+  [samples]
+  (let [auth-header (once/get-auth-header)
+        payload     (json/write-str samples :escape-slash false)
+        response    (client/post (str server "/api/v1/append_to_aou")
+                                 {:headers      auth-header
+                                  :content-type :json
+                                  :accept       :json
+                                  :body         payload})]
+    (parse-json-string (:body response))))
+
 (defn start-wgs-workflow
   "Submit the WGS Reprocessing WORKFLOW"
   [workflow]
