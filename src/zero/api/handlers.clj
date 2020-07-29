@@ -27,9 +27,12 @@
 (defn unprocessable-entity
   "Returns a 422 'Unprocessable Entity' response with BODY."
   [body]
-  {:status  422
-   :headers {}
-   :body    body})
+  (let [response {:status  422
+                  :headers {}
+                  :body    body}]
+    (log/warn "Endpoint sent a 422 failure response:")
+    (log/warn body)
+    response))
 
 (defn succeed
   "A successful response with BODY."
@@ -43,7 +46,8 @@
 
 (defn status-counts
   "Get status counts for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
+  [{:keys [parameters] :as _request}]0
+  (log/info "status-counts endpoint parameters:" parameters)
   (let [environment (some :environment ((juxt :query :body) parameters))
         env         (zero/throw-or-environment-keyword! environment)]
     (succeed (cromwell/status-counts env {:includeSubworkflows false}))))
@@ -51,6 +55,7 @@
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
+  (log/info "query-workflows endpoint parameters:" parameters)
   (let [{:keys [body environment query]} parameters
         env   (zero/throw-or-environment-keyword! environment)
         start (some :start [query body])
@@ -61,6 +66,7 @@
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
+  (log/info "submit-wgs endpoint parameters:" parameters)
   (let [{:keys [environment input_path max output_path]} (:body parameters)
         env     (zero/throw-or-environment-keyword! environment)
         results (wgs/submit-some-workflows env max input_path output_path)]
@@ -69,13 +75,16 @@
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
+  (log/info "append-to-aou-workload endpoint parameters:" parameters)
   (let [{:keys [body]} parameters]
     (try
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
                                 (->> body
                                      (aou/append-to-workload! tx)
                                      succeed))
-      (catch Exception e (fail-with-response unprocessable-entity {:message (.getMessage e)})))))
+      (catch Exception e
+        (log/warn e "Exception in appending to aou workload")
+        (fail-with-response unprocessable-entity {:message (.getMessage e)})))))
 
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."
@@ -102,6 +111,7 @@
 (defn post-create
   "Create the workload described in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
+  (log/info "post-create endpoint parameters:" parameters)
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [{:keys [body]} parameters]
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
@@ -115,6 +125,7 @@
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
   [request]
+  (log/info "get-workload endpoint parameters:" (:parameters request))
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
            [{:uuid uuid}]
@@ -125,6 +136,7 @@
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
+  (log/info "post-start endpoint parameters:" (:parameters request))
   (let [uuids (-> request :parameters :body distinct)]
     (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (let [db-config (postgres/zero-db-config)
