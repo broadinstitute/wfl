@@ -148,7 +148,7 @@ def set_up_k8s(project: str, namespace: str, cluster: str, zone: str):
     success(f"[✔] Set namespace to {namespace}.")
 
 
-def run_cloud_sql_proxy(project: str, cloudsql_instance_name):
+def run_cloudsql_proxy(project: str, cloudsql_instance_name):
     """Connect to a google cloud sql instance using the cloud sql proxy."""
     info("=> Running cloud_sql_proxy")
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
@@ -256,7 +256,7 @@ class CLI:
         parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
         parser.add_argument("-i", "--instance", default="zero-postgresql", dest="instance", help="The name of the Cloud SQL instance. e.g. zero-postgresql")
         args = parser.parse_args(arguments)
-        container = run_cloud_sql_proxy(gcloud_project=args.project, cloudsql_instance_name=args.instance)
+        container = run_cloudsql_proxy(project=args.project, cloudsql_instance_name=args.instance)
         success(f"[✔] You have connected to Zero's Cloud SQL instance {args.instance} in {args.project}")
         info(f'To use psql, run: \n\t psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"')
         info(f"To disconnect and stop the container, run: \n\t docker stop {container}")
@@ -362,7 +362,7 @@ class CLI:
                 helm_values = yaml.safe_load(f)
             db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
             db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
-            container = run_cloud_sql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
+            container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
             run_liquibase_migration(db_username, db_password)
             info("=> Stopping cloud_sql_proxy")
             shell(f"docker stop {container}")
