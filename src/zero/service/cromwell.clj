@@ -2,6 +2,7 @@
   "Launch a Cromwell workflow and wait for it to complete."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clojure.walk :as walk]
             [clj-http.client :as http]
             [zero.debug :as debug]
@@ -285,9 +286,8 @@
     (let [seconds 15
           now (status environment id)]
       (if (#{"Submitted" "Running"} now)
-        (do (binding [*out* *err*]
-              (println (format "%s: Sleeping %s seconds on status: %s"
-                               id seconds now)))
+        (do (log/infof "%s: Sleeping %s seconds on status: %s"
+                     id seconds now)
             (util/sleep-seconds seconds)
             (recur environment id))
         (metadata environment id)))))

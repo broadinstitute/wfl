@@ -2,6 +2,7 @@
   "Collect metadata for successful workflows."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
             [zero.zero :as zero]))
@@ -31,7 +32,7 @@
           output-file (last url-parts)
           output-dir (clojure.string/join "/" (pop url-parts))
           metadata-file (str output-file "_" end-time ".metadata.json")]
-      (println (str  "Saving metadata to " metadata-file))
+      (log/info "Saving metadata to" metadata-file)
       (spit metadata-file (json/write-str metadata :escape-slash false))
       (if (:destination_cloud_path inputs)
         (gcs/upload-file
@@ -46,7 +47,7 @@
   a WF-NAME and an OUTPUT-KEY to indicate which output file the
   metadata should be saved next to."
   [env wf-name output-key]
-  (print (->> (successes env wf-name)
+  (log/info (->> (successes env wf-name)
               (map (partial get-metadata env))
               (map (partial record-metadata (keyword output-key))))))
 
@@ -76,7 +77,8 @@
                (throw (IllegalArgumentException. "Must specify 3 arguments.")))
              env (rest args)))
     (catch Exception x
-      (binding [*out* *err*] (println description))
+      (log/error x)
+      (log/debug description)
       (throw x))))
 
 (comment

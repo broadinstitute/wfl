@@ -1,6 +1,6 @@
 (ns zero.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [zero.jdbc :as jdbc]
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]

@@ -1,7 +1,8 @@
 (ns zero.server-debug
   "Debug the HTTP server (zero.server)."
   (:require [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]))
 
 (def ignored-keys
   "Ignore these keys when tracing a request or response map."
@@ -42,10 +43,10 @@
   [handler tag]
   (fn [request]
     (let [incoming (format-trace (str tag " Request:") request)]
-      (println incoming)
+      (log/info incoming)
       (let [response (handler request)
             outgoing (format-trace (str tag " Response:") response)]
-        (println outgoing)
+        (log/info outgoing)
         (update-in response [:body]
                    (fn [body]
                      (str/join \newline

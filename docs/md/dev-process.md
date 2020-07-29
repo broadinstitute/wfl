@@ -181,25 +181,24 @@ so don't forget to reset `:debug` to `env`
 before deploying your changes
 after merging a PR.
 
-### Rich comment in `zero.service.postgres`
+### Useful hacks for debugging Postgres/Liquibase
 
-There is also a "Rich comment"
-at the end of `zero.service.postgres`
-with some useful hacks for debugging
-Postgres and Liquibase operations
-during development.
-The 0-arity `zero.service.postgres/run-liquibase` function
-runs the standard liquibase scripts
-against the local `:debug` database.
-Similarly,
-`zero.service.postgres/reset-debug-db`
-resets the local `:debug` Postgres server
-to its initial state.
+Starting `postgres`:
+```bash
+pg_ctl -D /usr/local/var/postgresql@11 start
+```
 
-Do *not* run something like `reset-debug-db`
-against a Postgres server
-deployed in the cloud
-or with an actual _environment_ set.
+Running `liquibase update`:
+```bash
+liquibase --classpath=$(clojure -Spath) --url=jdbc:postgresql:wfl --changeLogFile=database/changelog.xml --username=$USER update
+```
+For the above, the username and password need to be correct for the target environment.
+
+If you're running a local server with the postgres command above, you don't need a password and can omit it.
+
+Otherwise, you may be able to find this data in the Vault entry for the environment's server --
+`resources/zero/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING` 
+to supply it.
 
 ### Test
 

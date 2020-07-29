@@ -5,6 +5,7 @@
             [clojure.pprint :refer [pprint]]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [zero.module.all :as all]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
@@ -246,7 +247,8 @@
                        "Must specify 2 to 4 arguments.")))
              env (rest args)))
     (catch Exception x
-      (binding [*out* *err*] (println description))
+      (log/error x)
+      (log/debug description)
       (throw x))))
 
 (comment
