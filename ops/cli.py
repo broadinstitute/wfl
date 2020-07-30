@@ -169,7 +169,6 @@ def run_liquibase_migration(db_username, db_password):
     changelog_dir = f"{pwd}/wfl/database"
     command = ' '.join(['docker run --rm --net=host',
                         f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
-                        '/liquibase/liquibase',
                         f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
                         f'--username="{db_username}" --password="{db_password}" update'])
     shell(command)
