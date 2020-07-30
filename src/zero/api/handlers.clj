@@ -2,6 +2,7 @@
   "Define handlers for API endpoints"
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [clojure.tools.logging.readable :as logr]
             [ring.util.response :as response]
             [zero.module.aou :as aou]
             [zero.module.copyfile :as cp]
@@ -47,36 +48,37 @@
 (defn status-counts
   "Get status counts for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (log/info "status-counts endpoint parameters:" parameters)
-  (let [environment (some :environment ((juxt :query :body) parameters))
-        env         (zero/throw-or-environment-keyword! environment)]
-    (succeed (cromwell/status-counts env {:includeSubworkflows false}))))
+  (let [environment (some :environment ((juxt :query :body) parameters))]
+    (logr/infof "status-counts endpoint called: environment=%s" environment)
+    (let [env (zero/throw-or-environment-keyword! environment)]
+      (succeed (cromwell/status-counts env {:includeSubworkflows false})))))
 
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (log/info "query-workflows endpoint parameters:" parameters)
-  (let [{:keys [body environment query]} parameters
-        env   (zero/throw-or-environment-keyword! environment)
-        start (some :start [query body])
-        end   (some :end [query body])
-        query {:includeSubworkflows false :start start :end end}]
-    (succeed {:results (cromwell/query env query)})))
+  (let [{:keys [body environment query]} parameters]
+    (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
+    (let [env   (zero/throw-or-environment-keyword! environment)
+          start (some :start [query body])
+          end   (some :end [query body])
+          query {:includeSubworkflows false :start start :end end}]
+      (succeed {:results (cromwell/query env query)}))))
 
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
-  (log/info "submit-wgs endpoint parameters:" parameters)
-  (let [{:keys [environment input_path max output_path]} (:body parameters)
-        env     (zero/throw-or-environment-keyword! environment)
-        results (wgs/submit-some-workflows env max input_path output_path)]
-    (succeed {:results results})))
+  (let [{:keys [environment input_path max output_path]} (:body parameters)]
+    (logr/infof "submit-wgs endpoint called: environment=%s input_path=%s max=%s output_path=%s"
+                environment input_path max output_path)
+    (let [env     (zero/throw-or-environment-keyword! environment)
+          results (wgs/submit-some-workflows env max input_path output_path)]
+      (succeed {:results results}))))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (log/info "append-to-aou-workload endpoint parameters:" parameters)
   (let [{:keys [body]} parameters]
+    (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
     (try
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
                                 (->> body
@@ -111,9 +113,9 @@
 (defn post-create
   "Create the workload described in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (log/info "post-create endpoint parameters:" parameters)
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [{:keys [body]} parameters]
+      (logr/infof "post-create endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
         (->> body
              (add-workload! tx)
@@ -125,11 +127,14 @@
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
   [request]
-  (log/info "get-workload endpoint parameters:" (:parameters request))
   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-           [{:uuid uuid}]
-           (jdbc/query tx ["SELECT uuid FROM workload"]))
+           (do
+             (logr/infof "get-workload endpoint called: uuid=%s" uuid)
+             [{:uuid uuid}])
+           (do
+             (logr/info "get-workload endpoint called with no uuid, querying all")
+             (jdbc/query tx ["SELECT uuid FROM workload"])))
          (mapv (partial postgres/get-workload-for-uuid tx))
          succeed)))
 
@@ -138,6 +143,7 @@
   [request]
   (log/info "post-start endpoint parameters:" (:parameters request))
   (let [uuids (-> request :parameters :body distinct)]
+    (logr/infof "post-start endpoint called: uuids=%s" uuids)
     (letfn [(q [[left right]] (fn [it] (str left it right)))]
       (let [db-config (postgres/zero-db-config)
             db-conn (jdbc/get-connection db-config)
