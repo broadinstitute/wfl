@@ -1,41 +1,10 @@
-/.classpath
-/.cpcache/
-/.eastwood
-/.java-version
-/.lein-*
-/.nrepl-port
-/.project
-/.settings
-/checkouts
-/classes
-/project.clj
-/target
-/wfl
-/changelog.xml
-/changesets
-
-# Ignore Vscode's local UUID cache directory.
-/[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-[a-f0-9][a-f0-9][a-f0-9][a-f0-9]-[a-f0-9][a-f0-9][a-f0-9][a-f0-9]-[a-f0-9][a-f0-9][a-f0-9][a-f0-9]-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]/
-/.vscode/
-
-# UI
-.DS_Store
-node_modules/
-dist/
-
-# Doc site build artifact
-/docs/site
-
-# local env files
-.env.local
-.env.*.local
-
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Intellij + Cursive Files
+# Ignore IDE settings
 .idea/
+.vscode/
 boot-project.iml
 wfl.iml
+
+# derived files and build artifacts
+derived/
+docs/site
+*.ts

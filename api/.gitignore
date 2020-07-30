@@ -1,0 +1,11 @@
+.classpath/
+.cpcache/
+.lein-*
+.nrepl-port
+checkouts
+classes
+project.clj
+target
+wfl
+changelog.xml
+changesets
