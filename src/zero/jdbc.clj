@@ -22,11 +22,11 @@
   "Logged alias for [[clojure.java.jdbc/query]]"
   ([db sql-params]
    `(do
-      (log/info "JDBC SQL query (without opts):" (format-db ~db) ~sql-params)
+      (log/trace "JDBC SQL query (without opts):" (format-db ~db) ~sql-params)
       (jdbc/query ~db ~sql-params)))
   ([db sql-params opts]
    `(do
-      (log/info "JDBC SQL query:" (format-db ~db) ~sql-params ~opts)
+      (log/trace "JDBC SQL query:" (format-db ~db) ~sql-params ~opts)
       (jdbc/query ~db ~sql-params ~opts))))
 
 (defmacro update!
