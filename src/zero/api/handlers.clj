@@ -141,7 +141,6 @@
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (log/info "post-start endpoint parameters:" (:parameters request))
   (let [uuids (-> request :parameters :body distinct)]
     (logr/infof "post-start endpoint called: uuids=%s" uuids)
     (letfn [(q [[left right]] (fn [it] (str left it right)))]
