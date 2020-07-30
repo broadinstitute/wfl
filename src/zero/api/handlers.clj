@@ -46,7 +46,7 @@
 
 (defn status-counts
   "Get status counts for environment in REQUEST."
-  [{:keys [parameters] :as _request}]0
+  [{:keys [parameters] :as _request}]
   (log/info "status-counts endpoint parameters:" parameters)
   (let [environment (some :environment ((juxt :query :body) parameters))
         env         (zero/throw-or-environment-keyword! environment)]
