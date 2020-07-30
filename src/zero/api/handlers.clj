@@ -1,17 +1,26 @@
-*(ns zero.api.handlers
-  "Define handlers for API endpoints"
-  (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure.tools.logging.readable :as logr]
-            [ring.util.response :as response]
-            [zero.module.aou :as aou]
-            [zero.module.copyfile :as cp]
-            [zero.jdbc :as jdbc]
-            [zero.module.wgs :as wgs]
-            [zero.module.wl :as wl]
-            [zero.service.cromwell :as cromwell]
-            [zero.service.postgres :as postgres]
-            [zero.zero :as zero]))
+* (ns zero.api.handlers
+    "Define handlers for API endpoints"
+    (:require [clojure.string :as str]
+              [clojure.tools.logging :as log]
+              [clojure.tools.logging.readable :as logr]
+              [ring.util.response :as response]
+              [zero.module.aou :as aou]
+              [zero.module.copyfile :as cp]
+              [zero.jdbc :as jdbc]
+              [zero.module.wgs :as wgs]
+              [zero.module.wl :as wl]
+              [zero.service.cromwell :as cromwell]
+              [zero.service.postgres :as postgres]
+              [zero.zero :as zero]))
+
+(defmacro ^:private print-handler-error
+  "Run BODY, printing any exception rises through it."
+  [& body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (log/error e# "Exception rose uncaught through handler")
+       (throw e#))))
 
 (defn fail
   "A failure response with BODY."
@@ -48,45 +57,49 @@
 (defn status-counts
   "Get status counts for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (let [environment (some :environment ((juxt :query :body) parameters))]
-    (logr/infof "status-counts endpoint called: environment=%s" environment)
-    (let [env (zero/throw-or-environment-keyword! environment)]
-      (succeed (cromwell/status-counts env {:includeSubworkflows false})))))
+  (zero.api.handlers/print-handler-error
+   (let [environment (some :environment ((juxt :query :body) parameters))]
+     (logr/infof "status-counts endpoint called: environment=%s" environment)
+     (let [env (zero/throw-or-environment-keyword! environment)]
+       (succeed (cromwell/status-counts env {:includeSubworkflows false}))))))
 
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (let [{:keys [body environment query]} parameters]
-    (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
-    (let [env   (zero/throw-or-environment-keyword! environment)
-          start (some :start [query body])
-          end   (some :end [query body])
-          query {:includeSubworkflows false :start start :end end}]
-      (succeed {:results (cromwell/query env query)}))))
+  (zero.api.handlers/print-handler-error
+   (let [{:keys [body environment query]} parameters]
+     (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
+     (let [env   (zero/throw-or-environment-keyword! environment)
+           start (some :start [query body])
+           end   (some :end [query body])
+           query {:includeSubworkflows false :start start :end end}]
+       (succeed {:results (cromwell/query env query)})))))
 
 (defn submit-wgs
   "Submit the WGS workload described in REQUEST."
   [{:keys [parameters] :as _request}]
-  (let [{:keys [environment input_path max output_path]} (:body parameters)]
-    (logr/infof "submit-wgs endpoint called: environment=%s input_path=%s max=%s output_path=%s"
-                environment input_path max output_path)
-    (let [env     (zero/throw-or-environment-keyword! environment)
-          results (wgs/submit-some-workflows env max input_path output_path)]
-      (succeed {:results results}))))
+  (zero.api.handlers/print-handler-error
+   (let [{:keys [environment input_path max output_path]} (:body parameters)]
+     (logr/infof "submit-wgs endpoint called: environment=%s input_path=%s max=%s output_path=%s"
+                 environment input_path max output_path)
+     (let [env     (zero/throw-or-environment-keyword! environment)
+           results (wgs/submit-some-workflows env max input_path output_path)]
+       (succeed {:results results})))))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (let [{:keys [body]} parameters]
-    (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
-    (try
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-                                (->> body
-                                     (aou/append-to-workload! tx)
-                                     succeed))
-      (catch Exception e
-        (log/warn e "Exception in appending to aou workload")
-        (fail-with-response unprocessable-entity {:message (.getMessage e)})))))
+  (zero.api.handlers/print-handler-error
+   (let [{:keys [body]} parameters]
+     (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
+     (try
+       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+         (->> body
+              (aou/append-to-workload! tx)
+              succeed))
+       (catch Exception e
+         (log/warn e "Exception in appending to aou workload")
+         (fail-with-response unprocessable-entity {:message (.getMessage e)}))))))
 
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."
@@ -113,51 +126,54 @@
 (defn post-create
   "Create the workload described in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (let [{:keys [body]} parameters]
-      (logr/infof "post-create endpoint called: body=%s" body)
-      (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-        (->> body
-             (add-workload! tx)
-             :uuid
-             (conj ["SELECT * FROM workload WHERE uuid = ?"])
-             (jdbc/query tx)
-             first unnilify succeed)))))
+  (zero.api.handlers/print-handler-error
+   (letfn [(unnilify [m] (into {} (filter second m)))]
+     (let [{:keys [body]} parameters]
+       (logr/infof "post-create endpoint called: body=%s" body)
+       (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+         (->> body
+              (add-workload! tx)
+              :uuid
+              (conj ["SELECT * FROM workload WHERE uuid = ?"])
+              (jdbc/query tx)
+              first unnilify succeed))))))
 
 (defn get-workload
   "List all workloads or the workload with UUID in REQUEST."
   [request]
-  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-    (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-           (do
-             (logr/infof "get-workload endpoint called: uuid=%s" uuid)
-             [{:uuid uuid}])
-           (do
-             (logr/info "get-workload endpoint called with no uuid, querying all")
-             (jdbc/query tx ["SELECT uuid FROM workload"])))
-         (mapv (partial postgres/get-workload-for-uuid tx))
-         succeed)))
+  (zero.api.handlers/print-handler-error
+   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+            (do
+              (logr/infof "get-workload endpoint called: uuid=%s" uuid)
+              [{:uuid uuid}])
+            (do
+              (logr/info "get-workload endpoint called with no uuid, querying all")
+              (jdbc/query tx ["SELECT uuid FROM workload"])))
+          (mapv (partial postgres/get-workload-for-uuid tx))
+          succeed))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (let [uuids (-> request :parameters :body distinct)]
-    (logr/infof "post-start endpoint called: uuids=%s" uuids)
-    (letfn [(q [[left right]] (fn [it] (str left it right)))]
-      (let [db-config (postgres/zero-db-config)
-            db-conn (jdbc/get-connection db-config)
-            query (->> (repeat (count uuids) "?")
-                       (str/join ",") ((q "()"))
-                       (format "SELECT * FROM workload WHERE uuid in %s"))
-            ps (jdbc/prepare-statement db-conn query)]
-        (doseq [[i uuid] (map-indexed vector uuids)] (.setString ps (+ i 1) (:uuid uuid)))
-        (jdbc/with-db-transaction [tx db-config]
-          (->> ps
-               (jdbc/query tx)
-               (run! (partial start-workload! tx)))
-            (->> uuids
-               (mapv (partial postgres/get-workload-for-uuid tx))
-               succeed))))))
+  (zero.api.handlers/print-handler-error
+   (let [uuids (-> request :parameters :body distinct)]
+     (logr/infof "post-start endpoint called: uuids=%s" uuids)
+     (letfn [(q [[left right]] (fn [it] (str left it right)))]
+       (let [db-config (postgres/zero-db-config)
+             db-conn (jdbc/get-connection db-config)
+             query (->> (repeat (count uuids) "?")
+                        (str/join ",") ((q "()"))
+                        (format "SELECT * FROM workload WHERE uuid in %s"))
+             ps (jdbc/prepare-statement db-conn query)]
+         (doseq [[i uuid] (map-indexed vector uuids)] (.setString ps (+ i 1) (:uuid uuid)))
+         (jdbc/with-db-transaction [tx db-config]
+           (->> ps
+                (jdbc/query tx)
+                (run! (partial start-workload! tx)))
+           (->> uuids
+                (mapv (partial postgres/get-workload-for-uuid tx))
+                succeed)))))))
 
 (def post-exec
   "Create and start workload described in BODY of REQUEST"
