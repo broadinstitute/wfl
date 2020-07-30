@@ -22,7 +22,7 @@ ptc_json = {
     "uuid": None,
     "notifications": [{
         "analysis_version_number": 1,
-        "chip_well_barcode": uuid,
+        "chip_well_barcode": str(uuid),
         "green_idat_cloud_path": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
         "params_file": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
         "red_idat_cloud_path": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
