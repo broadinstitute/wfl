@@ -213,7 +213,6 @@
         http/request :body
         (json/read-str :key-fn keyword))))
 
-
 (comment
   (make-topic "broad-gotc-dev" "rex-wfl-test")
   (subscribe "broad-gotc-dev" "rex-wfl-test" "subsA")

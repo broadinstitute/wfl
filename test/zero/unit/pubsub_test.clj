@@ -63,24 +63,24 @@
   In line with not deleting things that seem to work at least most
   of the time, I (Jack) am just commenting this."
   (deftest message-test
-  (try
-    (pubsub/make-topic project topic)
-    (pubsub/subscribe project topic subscription)
-    (testing "Messages"
-      (let [messages [:wut  23 :k  "v" [:wut  23 "x"] {:wut 23 :k "v"}]
-            expected ["wut" 23 "k" "v" ["wut" 23 "x"] {:wut 23 :k "v"}]
-            ids (apply pubsub/publish project topic messages)
-            expect (map (fn [id data] {:data       data
-                                       :messageId  id
-                                       :attributes pubsub/attributes})
-                        ids expected)]
-        (testing "publish"
-          (is (= (count messages) (count ids))))
-        (testing "pull"
-          (let [result (pubsub/pull project subscription)]
-            (is (= expect
-                   (map (fn [m] (select-keys m (keys (first expect))))
-                        (map :message result))))))))
-    (finally
-      (pubsub/unsubscribe project subscription)
-      (pubsub/delete-topic project topic)))))
+    (try
+      (pubsub/make-topic project topic)
+      (pubsub/subscribe project topic subscription)
+      (testing "Messages"
+        (let [messages [:wut  23 :k  "v" [:wut  23 "x"] {:wut 23 :k "v"}]
+              expected ["wut" 23 "k" "v" ["wut" 23 "x"] {:wut 23 :k "v"}]
+              ids (apply pubsub/publish project topic messages)
+              expect (map (fn [id data] {:data       data
+                                         :messageId  id
+                                         :attributes pubsub/attributes})
+                          ids expected)]
+          (testing "publish"
+            (is (= (count messages) (count ids))))
+          (testing "pull"
+            (let [result (pubsub/pull project subscription)]
+              (is (= expect
+                     (map (fn [m] (select-keys m (keys (first expect))))
+                          (map :message result))))))))
+      (finally
+        (pubsub/unsubscribe project subscription)
+        (pubsub/delete-topic project topic)))))
