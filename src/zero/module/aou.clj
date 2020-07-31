@@ -1,9 +1,9 @@
 (ns zero.module.aou
   "Process Arrays for the All Of Us project."
   (:require [clojure.java.io :as io]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [zero.environments :as env]
+            [zero.jdbc :as jdbc]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
             [zero.service.postgres :as postgres]
