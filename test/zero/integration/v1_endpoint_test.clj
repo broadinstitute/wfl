@@ -10,7 +10,7 @@
   (:import (java.util UUID)))
 
 ;; Here we register db-fixture to be called once, wrapping ALL tests in this namespace
-#_(clj-test/use-fixtures :once clean-db-fixture)
+;; (clj-test/use-fixtures :once clean-db-fixture)
 
 (def make-wgs-workload (partial endpoints/create-workload workloads/wgs-workload))
 (defn make-aou-workload [] ((partial endpoints/create-workload (workloads/aou-workload (UUID/randomUUID)))))

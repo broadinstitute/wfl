@@ -119,6 +119,7 @@
   This assumes not database with name testing-dbname
   has been manually created in the current testing environment."
   (try
+    (create-db testing-dbname)
     (setup-db testing-dbname)
     (f)
     (finally
