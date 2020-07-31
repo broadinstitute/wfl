@@ -84,7 +84,7 @@
 (def testing-dbname
   (:db-name (postgres/zero-db-config)))
 
-(defn create-db
+(defn- create-db
   "Create the ad-hoc testing database with DBNAME."
   [dbname]
   (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
@@ -93,7 +93,7 @@
     ; local
     (util/shell! "createdb" dbname)))
 
-(defn setup-db
+(defn- setup-db
   "Setup te db by running liquibase migrations by DBNAME."
   [dbname]
   (if-let [test-env (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
@@ -105,7 +105,7 @@
     ; local
     (run-liquibase (format "jdbc:postgresql:%s" dbname) (System/getenv "USER") "")))
 
-(defn destroy-db
+(defn- destroy-db
   "Tear down the testing database by DBNAME."
   [dbname]
   (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
