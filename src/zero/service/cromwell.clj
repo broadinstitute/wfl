@@ -279,7 +279,7 @@
       (recur (dec n) environment id))))
 
 (defn wait-for-workflow-complete
-  "Return metadata of workflow named by ID when it completes."
+  "Return status of workflow named by ID when it completes."
   [environment id]
   (work-around-cromwell-fail-bug 9 environment id)
   (loop [environment environment id id]
@@ -290,7 +290,7 @@
                      id seconds now)
             (util/sleep-seconds seconds)
             (recur environment id))
-        (metadata environment id)))))
+        (status environment id)))))
 
 (defn abort
   "Abort the workflow with ID run on Cromwell in ENVIRONMENT."
