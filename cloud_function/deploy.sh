@@ -8,8 +8,11 @@ REGION=${4:-"us-central1"}
 
 if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev" ]; then
   # This service account must have access to the WFL API
-  SA_EMAIL="wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
+  SA_EMAIL="aou-cloud-fn-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
   _WFL_URL="https://workflow-launcher.gotc-dev.broadinstitute.org"
+elif [ "${GCLOUD_PROJECT}" == "broad-aou" ]; then
+  SA_EMAIL="aou-cloud-fn@broad-aou.iam.gserviceaccount.com"
+  _WFL_URL=""
 else
   printf "Unrecognized google project\n"
   exit 1
