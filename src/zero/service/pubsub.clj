@@ -7,6 +7,15 @@
             [zero.once         :as once])
   (:import [java.util Base64]))
 
+(comment
+  "Once upon a time we thought that WFL would consume pub/sub messages
+  so that PTC could create said messages instead of being tightly
+  coupled to WFL. In the end, we decided that the code would be
+  simpler if PTC just called WFL's endpoint rather than having pub/sub
+  as another layer in-between. That makes the code here not have much
+  of a purpose, but since it does work I (Jack) am hesitant to delete
+  it as of 7/31/20")
+
 (def api-url
   "The Google Cloud API URL."
   "https://pubsub.googleapis.com/v1/")
