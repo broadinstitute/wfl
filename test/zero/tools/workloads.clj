@@ -35,6 +35,25 @@
    :project  (format "(Test) %s %s" @git-branch identifier)
    :items    [{}]})
 
+(def aou-sample
+  "An aou arrays sample for testing."
+  {:cromwell      "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+   :notifications [{:chip_well_barcode           "7991775143_R01C01",
+                    :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
+                    :analysis_version_number     1,
+                    :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
+                    :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
+                    :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
+                    :reported_gender             "Female",
+                    :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
+                    :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
+                    :sample_alias                "NA12878",
+                    :green_idat_cloud_path       "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+                    :params_file                 "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+                    :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"}],
+   :environment   "aou-dev",
+   :uuid          nil})
+
 (defn make-copyfile-workload
   "Make a workload to copy a file from SRC to DST"
   [src dst]
