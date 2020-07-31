@@ -56,7 +56,13 @@
         (is (false? (pubsub/unsubscribe project subscription)))))
     (finally (pubsub/delete-topic project topic))))
 
-(deftest message-test
+(comment
+  "GH-847 aims to make this flaky, randomly failing test not bother
+  us anymore. See the zero.service.pubsub for more information on
+  the state of pub/sub in WFL.
+  In line with not deleting things that seem to work at least most
+  of the time, I (Jack) am just commenting this."
+  (deftest message-test
   (try
     (pubsub/make-topic project topic)
     (pubsub/subscribe project topic subscription)
@@ -77,4 +83,4 @@
                         (map :message result))))))))
     (finally
       (pubsub/unsubscribe project subscription)
-      (pubsub/delete-topic project topic))))
+      (pubsub/delete-topic project topic)))))
