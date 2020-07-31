@@ -118,6 +118,12 @@
    :papi_settings       {:agg_preemptible_tries 3
                          :preemptible_tries     3}})
 
+(def memory-multiplier-inputs
+  {
+   "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.BamToCram.BamToCram.ValidateCram.memory_multiplier" 4,
+   }
+  )
+
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
   [environment out-gs in-gs]
@@ -130,7 +136,8 @@
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
                    (merge (genome-inputs environment)
-                          hack-task-level-values))
+                          hack-task-level-values
+                          memory-multiplier-inputs))
         {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
     (all/throw-when-output-exists-already! output)
