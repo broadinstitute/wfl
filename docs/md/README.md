@@ -58,7 +58,6 @@ currently talk to the following services:
 | Cromwell                    | x           | x        |
 | Google App Engine           | x           | x        |
 | Google Cloud Platform Admin | x           | x        |
-| Google Cloud Pub/Sub        | x           | x        |
 | Google Cloud Storage        | x           | x        |
 | Oracle DB                   | x           |          |
 | Vault                       | x           | x        |
@@ -207,7 +206,6 @@ the services WFL talks to, and are named accordingly.
 | gcs.clj      | Google Cloud Storage                      |
 | jms.clj      | Java Message Service queues               |
 | postgres.clj | Cloud SQL postgres databases              |
-| pubsub.clj   | Google Cloud Pub/Sub                      |
 | server.clj   | the WFL server itself                     |
 | wdl.clj      | parse WDL and manage dependencies         |
 
