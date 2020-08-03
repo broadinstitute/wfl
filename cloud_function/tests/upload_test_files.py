@@ -6,6 +6,7 @@ been run before). """
 import json
 import uuid
 import subprocess
+import tempfile
 
 bucket = "dev-aou-arrays-input"
 uuid = uuid.uuid4()
@@ -38,11 +39,12 @@ ptc_json = {
 }
 
 def main():
-    with open('ptc.json', 'w') as f:
-        json.dump(ptc_json, f)
-    subprocess.run(["gsutil", "cp", "-r", arrays_path, dest_arrays_path])
-    subprocess.run(["gsutil", "cp", "-r", arrays_metadata_path, dest_arrays_metadata_path])
-    subprocess.run(["gsutil", "cp", "ptc.json", dest_ptc_json_path])
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with open(f'{tmpdirname}/ptc.json', 'w') as f:
+            json.dump(ptc_json, f)
+        subprocess.run(["gsutil", "cp", "-r", arrays_path, dest_arrays_path])
+        subprocess.run(["gsutil", "cp", "-r", arrays_metadata_path, dest_arrays_metadata_path])
+        subprocess.run(["gsutil", "cp", f"{tmpdirname}/ptc.json", dest_ptc_json_path])
 
 
 if __name__ == '__main__':
