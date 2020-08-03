@@ -121,6 +121,8 @@
 (def memory-multiplier-inputs
   {
    "WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.BamToCram.BamToCram.ValidateCram.memory_multiplier" 4,
+   "ExternalWholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.CollectRawWgsMetrics.memory_multiplier" 4,
+   "ExternalWholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.WholeGenomeGermlineSingleSample.CollectRawWgsMetrics.additional_disk" 100
    }
   )
 
