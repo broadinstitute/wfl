@@ -52,15 +52,10 @@
             :parameters {:query {:environment string?}}
             :responses {200 {:body {:total pos-int?}}}
             :handler handlers/status-counts}}]
-   ["/api/v1/wgs"
-    {:post {:summary    "Submit WGS Reprocessing workflows"
-            :parameters {:body ::spec/wgs-request}
-            :responses  {200 {:body {:results vector?}}}
-            :handler    handlers/submit-wgs}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body ::spec/aou-request}
-            :responses  {200 {:body ::spec/append-to-workload-response}}
+            :parameters {:body ::spec/append-to-aou-request}
+            :responses  {200 {:body ::spec/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get  {:summary    "Get the workloads."
