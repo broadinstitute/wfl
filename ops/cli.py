@@ -148,21 +148,8 @@ def set_up_k8s(project: str, namespace: str, cluster: str, zone: str):
     success(f"[✔] Set namespace to {namespace}.")
 
 
-def run_cloudsql_proxy(project: str, cloudsql_instance_name: str = None):
+def run_cloudsql_proxy(project: str, cloudsql_instance_name):
     """Connect to a google cloud sql instance using the cloud sql proxy."""
-    if cloudsql_instance_name is None:
-        info("=> Finding cloud_sql_proxy instance")
-        gcloud_command = f"gcloud --format=json --project {project} sql instances list"
-        instances = json.loads(subprocess.check_output(gcloud_command, shell=True, encoding='utf-8').strip())
-        instance_names = instances\
-            .filter(lambda i: i.get("settings", {}).get("labels", {}).get("wfl", False))\
-            .map(lambda i: i["name"])
-        if len(instance_names) == 1:
-            cloudsql_instance_name = instance_names[0]
-            info(f"   Found instance: {cloudsql_instance_name}")
-        else:
-            error(f"   Didn't find one instance: {instance_names}")
-            exit(1)
     info("=> Running cloud_sql_proxy")
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
     instance_command = " ".join([f"gcloud --format=json sql --project {project}",
