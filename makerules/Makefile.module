@@ -1,0 +1,63 @@
+# Module targets
+
+ifndef MODULE
+$(error MODULE was not defined - please invoke make from top level)
+endif
+
+# Directories
+PROJECT_DIR         ?= $(shell dirname $(CURDIR))
+MODULE_DIR          := $(PROJECT_DIR)/$(MODULE)
+DERIVED_DIR 	    ?= $(PROJECT_DIR)/derived
+THIRD_PARTY_DIR     := $(DERIVED_DIR)/3p
+DERIVED_MODULE_DIR  := $(DERIVED_DIR)/$(MODULE)
+export WFL_VERSION	?= $(shell $(CAT) $(PROJECT_DIR)/version)
+
+# Build targets and hooks
+BUILD_TARGETS := prebuild build check images
+PREBUILD      := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
+BUILD         := $(DERIVED_MODULE_DIR)/build.$(TS)
+CHECK         := $(DERIVED_MODULE_DIR)/check.$(TS)
+IMAGES        := $(DERIVED_MODULE_DIR)/images.$(TS)
+CLEAN_DIRS    := $(DERIVED_MODULE_DIR)
+CLEAN_FILES   :=
+
+.PHONY:	all $(BUILD_TARGETS)
+all: $(BUILD_TARGETS)
+
+$(BUILD_TARGETS): | $(DERIVED_MODULE_DIR)
+prebuild: $(PREBUILD)
+build: $(BUILD)
+images: $(IMAGES)
+
+.PHONY:	clean
+clean:
+	$(RM) -r $(CLEAN_DIRS)
+	$(RM) $(CLEAN_FILES)
+
+.PHONY: help
+help:
+	@$(MAKE) --print-data-base --question no-such-target | \
+		$(GREP) -v -e '^no-such-target' -e '^Makefile' |   \
+		$(AWK) '/^[^.%][-A-Za-z0-9_]*:/                    \
+			{ print substr($$1, 1, length($$1)-1) }' |     \
+		$(SORT) |                                          \
+		$(PR) --omit-pagination --width=80 --columns=4     \
+
+$(DERIVED_DIR) $(THIRD_PARTY_DIR) $(DERIVED_MODULE_DIR):
+	@$(MKDIR) $@
+
+%.$(TS):
+	@$(TOUCH) $@
+
+# 3p Repositories
+THIRD_PARTY_REPOSITORIES := \
+  $(patsubst %, $(THIRD_PARTY_DIR)/%.$(TS),$(REQUIRED_GITHUB_REPOSITORIES))
+
+define make-github-url
+  $(patsubst $(THIRD_PARTY_DIR)/%.$(TS),git@github.com:%.git,$@)
+endef
+
+$(PREBUILD): $(THIRD_PARTY_REPOSITORIES)
+$(THIRD_PARTY_REPOSITORIES): $(THIRD_PARTY_DIR)
+	$(GIT) clone $(make-github-url) $(patsubst %.$(TS),%,$@)
+	@$(TOUCH) $@

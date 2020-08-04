@@ -1,9 +1,13 @@
 #!/usr/bin/make -f
 # Project-Level Makefile for WFL
 
-export PROJECT_DIR	:= $(CURDIR)
-export DERIVED_DIR	:= $(PROJECT_DIR)/derived
-export WFL_VERSION  := $(shell cat $(PROJECT_DIR)/version)
+export PROJECT_DIR	    := $(CURDIR)
+export DERIVED_DIR		:= $(PROJECT_DIR)/derived
+export MAKE_INCLUDE_DIR := $(PROJECT_DIR)/makerules
+
+include $(MAKE_INCLUDE_DIR)/common.mk
+
+export WFL_VERSION := $(shell $(CAT) $(PROJECT_DIR)/version)
 
 MODULES	    := api
 
@@ -11,7 +15,7 @@ MODULES	    := api
 all: $(MODULES)
 
 $(MODULES):
-	$+$(MAKE) --directory=$@ MODULE=$@ $(TARGET)
+	@+$(CD) $@ && $(MAKE) -f module.mk MODULE=$@ $(TARGET)
 
 .PHONY: clean
 clean:
