@@ -148,7 +148,7 @@ def set_up_k8s(project: str, namespace: str, cluster: str, zone: str):
     success(f"[✔] Set namespace to {namespace}.")
 
 
-def run_cloudsql_proxy(project: str, cloudsql_instance_name):
+def run_cloudsql_proxy(project: str, cloudsql_instance_name: str):
     """Connect to a google cloud sql instance using the cloud sql proxy."""
     info("=> Running cloud_sql_proxy")
     token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
