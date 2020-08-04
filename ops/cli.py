@@ -266,7 +266,7 @@ class CLI:
         """Connect to the Cloud SQL proxy through docker."""
         parser = argparse.ArgumentParser(description=f"{self.connect.__doc__}")
         parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
-        parser.add_argument("-i", "--instance", default="zero-postgresql", dest="instance", help="The name of the Cloud SQL instance. e.g. zero-postgresql")
+        parser.add_argument("-i", "--instance", dest="instance", help="The name of the Cloud SQL instance, instead of finding one with a 'wfl' label.")
         args = parser.parse_args(arguments)
         container = run_cloudsql_proxy(project=args.project, cloudsql_instance_name=args.instance)
         success(f"[✔] You have connected to Zero's Cloud SQL instance {args.instance} in {args.project}")
