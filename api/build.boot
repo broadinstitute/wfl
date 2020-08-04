@@ -9,7 +9,7 @@
 (set-env!
   :resource-paths #{"src"}
   :source-paths #{"resources"}
-  :target-path "target"
+  :target-path "../derived/api/target"
   :repositories
   '[["broad"
      {:url "https://broadinstitute.jfrog.io/broadinstitute/ext-release-local"}]
@@ -66,7 +66,7 @@
 (deftask manage-version-and-resources
   "Add WDL files and version information to /resources/."
   []
-  (let [resources (clojure.java.io/file "./resources")]
+  (let [resources (clojure.java.io/file "../derived/api/resources")]
     (zero.boot/manage-version-and-resources the-version resources)
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
@@ -75,11 +75,15 @@
 (def the-pom (zero.boot/make-the-pom the-version))
 (task-options! pom the-pom)
 
+(deftask prebuild
+  ""
+  []
+  (manage-version-and-resources))
+
 (deftask build
   "Build this."
   []
-  (comp (manage-version-and-resources)
-    (pom)
+  (comp 
     (aot :namespace '#{zero.main})
     (uber)
     (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))

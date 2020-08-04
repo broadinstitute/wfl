@@ -65,24 +65,17 @@
            "Multi-Release" "true")))
 
 (defn clone-repos
-  "Return a map of zero/the-github-repos clones in a :tmp directory.
-   Delete the :tmp directory at some point.
+  "Return a map of zero/the-github-repos clones in a :derived directory.
+   Delete the :derived directory at some point.
 
    Specifically omits [[zero/the-name]]'s repo since it isn't needed
    for the version."
   []
-  (let [tmp (str "CLONE_" (UUID/randomUUID))
+  (let [derived "../derived/3p/broadinstitute"
         the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
-    (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
-                                         "--config" "advice.detachedHead=false" url))]
-      (io/make-parents (io/file tmp "Who cares, really?"))
-      (try
-        (run! clone (map :primary (vals the-github-repos-no-wfl)))
-        (catch Exception _
-          (run! clone (map :actions-backup (vals the-github-repos-no-wfl))))))
-    (into {:tmp tmp}
+    (into {:derived derived}
           (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [tmp repo])]
+            (let [dir (str/join "/" [derived repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
@@ -121,19 +114,18 @@
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
-          {:keys [tmp] :as clones} (clone-repos)
+          {:keys [derived] :as clones} (clone-repos)
           directory (io/file resources "zero")
           edn (merge version
-                     (dissoc clones :tmp)
+                     (dissoc clones :derived)
                      (into {} (map frob wdls)))]
       (pprint edn)
-      (util/shell-io! "npm" "install" "--prefix" "ui")
-      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
-      (try (util/delete-tree directory)
-           (stage-some-files tmp directory)
-           (run! (partial cromwellify-wdl tmp directory) wdls)
-           (write-the-version-file directory edn)
-           (finally (util/delete-tree (io/file tmp)))))))
+;      (util/shell-io! "npm" "install" "--prefix" "ui")
+;      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
+      (util/shell-io! "pwd")
+      (stage-some-files derived directory)
+      (run! (partial cromwellify-wdl derived directory) wdls)
+      (write-the-version-file directory edn))))
 
 (defn main
   "Run this with ARGS."

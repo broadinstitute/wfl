@@ -5,7 +5,6 @@
 checkouts
 classes
 project.clj
-target
 wfl
 changelog.xml
 changesets

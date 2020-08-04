@@ -1,15 +1,15 @@
 #!/usr/bin/make -f
 # Project-Level Makefile for WFL
 
-PROJECT_DIR	:= $(PWD)
-DERIVED_DIR	:= $(PROJECT_DIR)/derived
+export PROJECT_DIR	:= $(CURDIR)
+export DERIVED_DIR	:= $(PROJECT_DIR)/derived
 MODULES	    := api
 
 .PHONY: all $(MODULES) clean
 all: $(MODULES)
 
 $(MODULES):
-	@+$(MAKE) --directory=$@ $(TARGET)
+	$+$(MAKE) --directory=$@ MODULE=$@ $(TARGET)
 
 .PHONY: clean
 clean:
