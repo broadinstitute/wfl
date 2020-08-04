@@ -9,8 +9,8 @@
               :ns-patterns  ["zero\\.unit\\..*-test$"]}]
 
      :plugins [
-               :kaocha.plugin/print-invocations
-;;               :kaocha.plugin/profiling
+               :print-invocations
+               :profiling
                ]
 
      ;; Colorize output (use ANSI escape sequences).
@@ -25,7 +25,8 @@
      ;; will make sure are loaded. When providing a vector of symbols, or pointing
      ;; at a var containing a vector, then kaocha will call all referenced functions
      ;; for reporting.
-     :reporter    [kaocha.report.progress/report]
+     :reporter    [kaocha.report/documentation
+                   #_kaocha.report.progress/report]
 
      ;; Enable/disable output capturing.
      :capture-output? true

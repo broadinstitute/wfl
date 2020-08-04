@@ -6,7 +6,8 @@
             [zero.service.gcs :as gcs]
             [zero.tools.endpoints :as endpoints]
             [zero.tools.fixtures :refer [with-temporary-gcs-folder clean-db-fixture]]
-            [zero.tools.workloads :as workloads])
+            [zero.tools.workloads :as workloads]
+            [zero.util :as util])
   (:import (java.util UUID)))
 
 ;; Here we register db-fixture to be called once, wrapping ALL tests in this namespace
@@ -53,7 +54,13 @@
       (is (:uuid unstarted) "Workload should have been assigned a uuid")
       (is (= (:uuid response) (:uuid unstarted)) "uuids are not modified by start")
       (is (:started response) "The workload should have a started time stamp")
-      (is (every? :status (:workflows status))))))
+      (is (every? :status (:workflows status)) "Not all of the workflows have been started")
+      (let [env             :wgs-dev
+            ids             (map :uuid (:workflows status))
+            non-skipped-ids (remove util/uuid-nil? ids)
+            await     (partial wait-for-workflow-complete env)
+            results   (zipmap ids (map await non-skipped-ids))]
+        (is (every? #{"Succeeded"} (vals results)) "One or more workflows failed")))))
 
 (deftest test-start-aou-workload
   (testing "The `start` endpoint starts an existing AOU workload"
@@ -64,18 +71,6 @@
       (is (= (:uuid response) (:uuid unstarted)) "uuids are not modified by start")
       (is (:started response) "The workload should have a started time stamp")
       (is (nil? (seq (:workflows status))) "The workload should not have any workflows yet"))))
-
-(deftest test-start-wgs-workflow
-  (testing "The `wgs` endpoint starts a new workflow."
-    (let [env      :wgs-dev
-          await     (partial wait-for-workflow-complete env)
-          workflow {:environment env
-                    :max         1
-                    :input_path  "gs://broad-gotc-test-storage/single_sample/plumbing/bams/2m"
-                    :output_path (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" (UUID/randomUUID))}
-          ids      (:results (endpoints/start-wgs-workflow workflow))
-          results  (zipmap ids (map await ids))]
-      (is (every? #{"Succeeded"} (vals results))))))
 
 (deftest test-append-to-aou-workload
   (testing "The `append_to_aou` endpoint appends a new workflow to aou workload."

@@ -75,17 +75,6 @@
            query {:includeSubworkflows false :start start :end end}]
        (succeed {:results (cromwell/query env query)})))))
 
-(defn submit-wgs
-  "Submit the WGS workload described in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (zero.api.handlers/print-handler-error
-   (let [{:keys [environment input_path max output_path]} (:body parameters)]
-     (logr/infof "submit-wgs endpoint called: environment=%s input_path=%s max=%s output_path=%s"
-                 environment input_path max output_path)
-     (let [env     (zero/throw-or-environment-keyword! environment)
-           results (wgs/submit-some-workflows env max input_path output_path)]
-       (succeed {:results results})))))
-
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
