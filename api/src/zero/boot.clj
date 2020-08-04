@@ -30,9 +30,7 @@
                        OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
-    {:version   (-> (if clean? committed built)
-                    .toLowerCase
-                    (str/replace #"[^-a-z0-9]" "-"))
+    {:version   (or (System/getenv "WFL_VERSION") "devel")
      :commit    commit
      :committed committed
      :built     built
