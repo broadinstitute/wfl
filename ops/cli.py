@@ -327,6 +327,12 @@ class CLI:
             help="Deploy to this namespace."
         )
         parser.add_argument(
+            "-i",
+            "--instance",
+            dest="cloudsql_instance",
+            help="The name of the Cloud SQL instance, instead of finding one with a 'wfl' label."
+        )
+        parser.add_argument(
             "-d",
             "--dry-run",
             dest="dry_run",
@@ -374,7 +380,7 @@ class CLI:
                 helm_values = yaml.safe_load(f)
             db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
             db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
-            container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
+            container = run_cloudsql_proxy(project=project, cloudsql_instance_name=args.cloudsql_instance)
             run_liquibase_migration(db_username, db_password)
             info("=> Stopping cloud_sql_proxy")
             shell(f"docker stop {container}")
