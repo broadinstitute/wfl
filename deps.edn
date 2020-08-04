@@ -66,11 +66,11 @@
   {:main-opts   ["-m" "zero.main"]}
 
   :test
-  {:extra-deps  {lambdaisland/kaocha {:mvn/version "1.0.632"}
-                 org.liquibase/liquibase-cdi {:mvn/version "4.0.0"
-                                              :exclusions [ch.qos.logback/logback-classic]}
-                 org.liquibase/liquibase-core {:mvn/version "4.0.0"
-                                               :exclusions [ch.qos.logback/logback-classic]}}
+  {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.632"}
+                 org.liquibase/liquibase-cdi   {:mvn/version "4.0.0"
+                                                :exclusions [ch.qos.logback/logback-classic]}
+                 org.liquibase/liquibase-core  {:mvn/version "4.0.0"
+                                                :exclusions [ch.qos.logback/logback-classic]}}
    :extra-paths ["resources" "test"]
    :main-opts   ["-m" "kaocha.runner"]}
 

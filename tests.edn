@@ -9,8 +9,8 @@
               :ns-patterns  ["zero\\.unit\\..*-test$"]}]
 
      :plugins [
-               :kaocha.plugin/print-invocations
-;;               :kaocha.plugin/profiling
+               :print-invocations
+               :profiling
                ]
 
      ;; Colorize output (use ANSI escape sequences).
