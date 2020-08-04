@@ -270,7 +270,10 @@ class CLI:
         parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
         parser.add_argument("-i", "--instance", dest="instance", help="The name of the Cloud SQL instance, instead of finding one with a 'wfl' label.")
         args = parser.parse_args(arguments)
-        container = run_cloudsql_proxy(project=args.project, cloudsql_instance_name=args.instance)
+        container = run_cloudsql_proxy(
+            project=args.project,
+            cloudsql_instance_name=args.instance or infer_cloudsql_name(args.project)
+        )
         success(f"[✔] You have connected to Zero's Cloud SQL instance {args.instance} in {args.project}")
         info(f'To use psql, run: \n\t psql "host=127.0.0.1 sslmode=disable dbname=<DB_NAME> user=<USER_NAME>"')
         info(f"To disconnect and stop the container, run: \n\t docker stop {container}")
@@ -352,11 +355,13 @@ class CLI:
         cluster = args.cluster if args.cluster is not None else f"{args.environment}-shared"
         if not args.cluster_no_zone_name:
             cluster = f"{cluster}-{args.zone}"
+        cloudsql_instance = args.cloudsql_instance if args.cloudsql_instance is not None else infer_cloudsql_name(project)
         gotc_folder = args.gotc_folder if args.gotc_folder is not None else args.environment
         info("=> Deploy config:")
         info(f"   GCP project: {project}")
         info(f"   GCP zone: {args.zone}")
         info(f"   GCP cluster: {cluster} (namespace: {args.namespace})")
+        info(f"   GCP Cloud SQL instance: {cloudsql_instance}")
         info(f"   GOTC deploy folder: gotc-deploy/deploy/{gotc_folder}")
         if args.dry_run:
             info("=> Exiting due to --dry-run")
@@ -382,7 +387,7 @@ class CLI:
                 helm_values = yaml.safe_load(f)
             db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
             db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
-            container = run_cloudsql_proxy(project=project, cloudsql_instance_name=args.cloudsql_instance)
+            container = run_cloudsql_proxy(project=project, cloudsql_instance_name=cloudsql_instance)
             run_liquibase_migration(db_username, db_password)
             info("=> Stopping cloud_sql_proxy")
             shell(f"docker stop {container}")
