@@ -6,10 +6,15 @@
 ;; 2. Crazy long (Google) artifact names in alphabetical order.
 ;; 3. Test scoped dependencies again in alphabetical order.
 
+(def third-party "../derived/3p")
+(defn derived
+  [part]
+  (str "../derived/api/" part))
+
 (set-env!
-  :resource-paths #{"src"}
-  :source-paths #{"resources"}
-  :target-path "../derived/api/target"
+  :resource-paths #{"resources" (derived "resources")}
+  :source-paths #{"src"}
+  :target-path (derived "target")
   :repositories
   '[["broad"
      {:url "https://broadinstitute.jfrog.io/broadinstitute/ext-release-local"}]
@@ -57,17 +62,15 @@
 (when-not (.exists (clojure.java.io/file "./wfl"))
   (dosh "ln" "-s" "./build.boot" "./wfl"))
 
-(require '[adzerk.boot-test :as boot-test])
-
 (require 'zero.boot)
 
 (def the-version (zero.boot/make-the-version))
 
-(deftask manage-version-and-resources
+(defn manage-version-and-resources
   "Add WDL files and version information to /resources/."
   []
-  (let [resources (clojure.java.io/file "../derived/api/resources")]
-    (zero.boot/manage-version-and-resources the-version resources)
+  (let [resources (clojure.java.io/file (derived "resources"))]
+    (zero.boot/manage-version-and-resources the-version third-party resources)
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
 ;; So boot.lein can pick up the project name and version.
@@ -83,11 +86,12 @@
 (deftask build
   "Build this."
   []
-  (comp 
-    (aot :namespace '#{zero.main})
-    (uber)
-    (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
-    (target)))
+  (comp
+   (pom)
+   (aot :namespace '#{zero.main})
+   (uber)
+   (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
+   (target :dir #{(derived "target")})))
 
 (defn -main
   "Run this."

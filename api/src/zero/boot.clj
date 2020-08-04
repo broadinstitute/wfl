@@ -64,18 +64,17 @@
            "Application-Name" (str/capitalize zero/the-name)
            "Multi-Release" "true")))
 
-(defn clone-repos
-  "Return a map of zero/the-github-repos clones in a :derived directory.
-   Delete the :derived directory at some point.
+(defn find-repos
+  "Return a map of zero/the-github-repos clones in a :broadinstitute directory.
 
    Specifically omits [[zero/the-name]]'s repo since it isn't needed
    for the version."
-  []
-  (let [derived "../derived/3p/broadinstitute"
+  [third-party]
+  (let [broadinstitute (str/join "/" [third-party "broadinstitute"])
         the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
-    (into {:derived derived}
+    (into {:broadinstitute broadinstitute}
           (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [derived repo])]
+            (let [dir (str/join "/" [broadinstitute repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
@@ -110,21 +109,20 @@
 ;;
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
-  [version resources]
+  [version third-party resources]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
-          {:keys [derived] :as clones} (clone-repos)
+          {:keys [broadinstitute] :as clones} (find-repos third-party)
           directory (io/file resources "zero")
           edn (merge version
-                     (dissoc clones :derived)
+                     (dissoc clones :broadinstitute)
                      (into {} (map frob wdls)))]
       (pprint edn)
 ;      (util/shell-io! "npm" "install" "--prefix" "ui")
 ;      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
-      (util/shell-io! "pwd")
-      (stage-some-files derived directory)
-      (run! (partial cromwellify-wdl derived directory) wdls)
+      (stage-some-files broadinstitute directory)
+      (run! (partial cromwellify-wdl broadinstitute directory) wdls)
       (write-the-version-file directory edn))))
 
 (defn main

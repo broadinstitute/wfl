@@ -2,6 +2,7 @@
 .cpcache/
 .lein-*
 .nrepl-port
+api.iml
 checkouts
 classes
 project.clj
