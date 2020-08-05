@@ -40,8 +40,8 @@ jobs:
       with:
         boot: 2.8.3
 
-        - name: Configure SSH Keys
-        run: |
+    - name: Configure SSH Keys
+      run: |
           mkdir -p ~/.ssh
 
           echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
@@ -68,11 +68,11 @@ jobs:
             User git
             IdentityFile ~/.ssh/wfl_deploy_key """ > ~/.ssh/config
 
-      - name: Pre-Build
-        run: make "${MODULES}" TARGET=prebuild
+    - name: Pre-Build
+      run: make "${MODULES}" TARGET=prebuild
 
-      - name: Build
-        run: make "${MODULES}" TARGET=build
+    - name: Build
+      run: make "${MODULES}" TARGET=build
 
     - name: Build and Publish Docker Images
       run: |

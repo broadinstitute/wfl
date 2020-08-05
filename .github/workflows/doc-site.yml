@@ -30,7 +30,7 @@ jobs:
         run: make docs TARGET=prebuild
 
       - name: Build
-      - run: make docs TARGET=build
+        run: make docs TARGET=build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
