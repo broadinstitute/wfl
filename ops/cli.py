@@ -84,7 +84,7 @@ def register(func: Callable) -> Callable:
 def shell(command: str):
     """Run COMMAND in a subprocess."""
     info(f"Running: {command}")
-    return subprocess.check_call(command, shell=True)
+    return subprocess.check_output(command, shell=True, encoding='utf-8').strip()
 
 
 def shell_unchecked(command: str):
@@ -151,21 +151,22 @@ def set_up_k8s(project: str, namespace: str, cluster: str, zone: str):
 def run_cloudsql_proxy(project: str, cloudsql_instance_name: str):
     """Connect to a google cloud sql instance using the cloud sql proxy."""
     info("=> Running cloud_sql_proxy")
-    token = subprocess.check_output("gcloud auth print-access-token", shell=True, encoding='utf-8').strip()
-    instance_command = " ".join([f"gcloud --format=json sql --project {project}",
-                             f"instances describe {cloudsql_instance_name}",
-                             "| jq .connectionName | tr -d '\"'"])
-    instance = subprocess.check_output(instance_command, shell=True, encoding='utf-8').strip()
-    docker_command = " ".join(['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
-                        f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
-    return subprocess.check_output(docker_command, shell=True, encoding='utf-8').strip()
+    token = shell("gcloud auth print-access-token")
+    instance = shell(" ".join([f"gcloud --format=json sql --project {project}",
+                               f"instances describe {cloudsql_instance_name}",
+                               "| jq .connectionName | tr -d '\"'"]))
+    docker_command = " ".join(
+        ['docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 /cloud_sql_proxy',
+         f'-token="{token}" -instances="{instance}=tcp:0.0.0.0:5432"'])
+    return shell(docker_command)
+
 
 def infer_cloudsql_name(project: str):
     """Try to find a single cloudsql instance with a truthy 'wfl' tag."""
     info("=> Finding cloud_sql_proxy instance")
     gcloud_command = ". ".join([f"gcloud --format=json --project {project} sql instances list",
                                 "--filter=\"settings.userLabels.wfl=true\""])
-    instances = json.loads(subprocess.check_output(gcloud_command, shell=True, encoding='utf-8').strip())
+    instances = json.loads(shell(gcloud_command))
     instance_names = [i["name"] for i in instances]
     if len(instance_names) == 1:
         info(f"   Found instance: {instance_names[0]}")
@@ -204,7 +205,7 @@ def build(directory: str) -> int:
     shell("boot build")
     command = "java -jar ./target/wfl-*.jar version-json"
     info(f"Running: {command}")
-    output = subprocess.check_output(command, shell=True)
+    output = shell(command)
     version = json.loads(output)
     os.chdir(cwd)
     return version["version"]
@@ -266,8 +267,10 @@ class CLI:
     def connect(self, arguments: list) -> int:
         """Connect to the Cloud SQL proxy through docker."""
         parser = argparse.ArgumentParser(description=f"{self.connect.__doc__}")
-        parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project", help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
-        parser.add_argument("-i", "--instance", dest="instance", help="The name of the Cloud SQL instance, instead of finding one with a 'wfl' label.")
+        parser.add_argument("-p", "--project", default="broad-gotc-dev", dest="project",
+                            help="The google project that Cloud SQL is running in. e.g. broad-gotc-dev")
+        parser.add_argument("-i", "--instance", dest="instance",
+                            help="The name of the Cloud SQL instance, instead of finding one with a 'wfl' label.")
         args = parser.parse_args(arguments)
         container = run_cloudsql_proxy(
             project=args.project,
@@ -354,7 +357,8 @@ class CLI:
         cluster = args.cluster if args.cluster is not None else f"{args.environment}-shared"
         if not args.cluster_no_zone_name:
             cluster = f"{cluster}-{args.zone}"
-        cloudsql_instance = args.cloudsql_instance if args.cloudsql_instance is not None else infer_cloudsql_name(project)
+        cloudsql_instance = args.cloudsql_instance if args.cloudsql_instance is not None else infer_cloudsql_name(
+            project)
         gotc_folder = args.gotc_folder if args.gotc_folder is not None else args.environment
         info("=> Deploy config:")
         info(f"   GCP project: {project}")
