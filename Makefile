@@ -7,7 +7,10 @@ export MAKE_INCLUDE_DIR := $(PROJECT_DIR)/makerules
 
 include $(MAKE_INCLUDE_DIR)/common.mk
 
-export WFL_VERSION := $(shell $(CAT) $(PROJECT_DIR)/version)
+# Enable for `WFL_VERSION` to be overriden
+# Example:
+# $ export WFL_VERSION=1.2.3 && make images
+export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 MODULES := api cloud_function docs ui
 
