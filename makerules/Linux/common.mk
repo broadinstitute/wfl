@@ -23,5 +23,6 @@ PUSHD   := pushd
 PYTHON  := python3
 PR      := pr
 SED     := sed
+SOURCE  := source
 SORT    := sort
 TOUCH   := touch
