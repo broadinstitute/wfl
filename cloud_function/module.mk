@@ -12,7 +12,7 @@ SCM_SRC := \
 
 SCM_TEST = $(shell $(FIND) $(TEST_DIR) -name '*.py')
 
-VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/venv
+VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/.venv
 
 $(PREBUILD): $(MODULE_DIR)/dev-requirements.txt
 	$(PYTHON) -m venv $(VIRTUAL_ENVIRONMENT)
@@ -22,12 +22,14 @@ $(PREBUILD): $(MODULE_DIR)/dev-requirements.txt
 	)
 	@$(TOUCH) $@
 
+
+TESTING_LOG := $(DERIVED_MODULE_DIR)/test.log
+$(CHECK): $(TESTING_LOG)
+
 WFL_URL := https://workflow-launcher.gotc-dev.broadinstitute.org
-TESTLOG := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(SCM_SRC) $(SCM_TEST)
-	(                                                                      \
-		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate;                     \
-		$(EXPORT) WFL_URL=$(WFL_URL);                                      \
-		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py | $(TEE) $(LOGFILE); \
+$(TESTING_LOG): $(SCM_SRC) $(SCM_TEST)
+	(                                                              \
+		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate;             \
+		$(EXPORT) WFL_URL=$(WFL_URL);                              \
+		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py | $(TEE) $@; \
 	)
-	@$(TOUCH) $@

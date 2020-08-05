@@ -6,7 +6,7 @@ include $(MAKE_INCLUDE_DIR)/Makefile.module
 MD_DIR := $(MODULE_DIR)/md
 SCM_MD  = $(shell $(FIND) $(MD_DIR) -type f)
 
-VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/venv
+VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/.venv
 $(PREBUILD): $(MODULE_DIR)/requirements.txt
 	$(PYTHON) -m venv $(VIRTUAL_ENVIRONMENT)
 	(                                                  \
