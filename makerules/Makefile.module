@@ -13,7 +13,7 @@ DERIVED_MODULE_DIR  := $(DERIVED_DIR)/$(MODULE)
 export WFL_VERSION	?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 # Top level `make` targets for the module
-MAKE_TARGETS := prebuild lint build test images
+MAKE_TARGETS := prebuild lint build check images
 
 # Timestamps for the top level make targets.
 # Write your module make-targets against these
