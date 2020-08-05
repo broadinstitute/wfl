@@ -165,9 +165,7 @@ def infer_cloudsql_name(project: str):
     info("=> Finding cloud_sql_proxy instance")
     gcloud_command = f"gcloud --format=json --project {project} sql instances list"
     instances = json.loads(subprocess.check_output(gcloud_command, shell=True, encoding='utf-8').strip())
-    instance_names = instances \
-        .filter(lambda i: i.get("settings", {}).get("labels", {}).get("wfl", False)) \
-        .map(lambda i: i["name"])
+    instance_names = [i["name"] for i in instances if i.get("settings", {}).get("labels", {}).get("wfl", False)]
     if len(instance_names) == 1:
         info(f"   Found instance: {instance_names[0]}")
         return instance_names[0]
