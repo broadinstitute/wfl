@@ -63,16 +63,15 @@
            "Multi-Release" "true")))
 
 (defn find-repos
-  "Return a map of zero/the-github-repos clones in a :broadinstitute directory.
+  "Return a map of zero/the-github-repos clones.
 
    Specifically omits [[zero/the-name]]'s repo since it isn't needed
    for the version."
-  [third-party]
-  (let [broadinstitute (str/join "/" [third-party "broadinstitute"])
-        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
-    (into {:broadinstitute broadinstitute}
+  [second-party]
+  (let [the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
+    (into {}
           (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [broadinstitute repo])]
+            (let [dir (str/join "/" [second-party repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
@@ -107,18 +106,16 @@
 ;;
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
-  [version third-party resources]
+  [version second-party resources]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
-          {:keys [broadinstitute] :as clones} (find-repos third-party)
+          clones (find-repos second-party)
           directory (io/file resources "zero")
-          edn (merge version
-                     (dissoc clones :broadinstitute)
-                     (into {} (map frob wdls)))]
+          edn (merge version clones (into {} (map frob wdls)))]
       (pprint edn)
-      (stage-some-files broadinstitute directory)
-      (run! (partial cromwellify-wdl broadinstitute directory) wdls)
+      (stage-some-files second-party directory)
+      (run! (partial cromwellify-wdl second-party directory) wdls)
       (write-the-version-file directory edn))))
 
 (defn main

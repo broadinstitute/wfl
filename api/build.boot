@@ -6,7 +6,7 @@
 ;; 2. Crazy long (Google) artifact names in alphabetical order.
 ;; 3. Test scoped dependencies again in alphabetical order.
 
-(def third-party "../derived/3p")
+(def second-party "../derived/2p")
 (defn derived
   [part]
   (str "../derived/api/" part))
@@ -70,7 +70,7 @@
   "Add WDL files and version information to /resources/."
   []
   (let [resources (clojure.java.io/file (derived "resources"))]
-    (zero.boot/manage-version-and-resources the-version third-party resources)
+    (zero.boot/manage-version-and-resources the-version second-party resources)
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
 ;; So boot.lein can pick up the project name and version.
