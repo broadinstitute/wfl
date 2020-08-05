@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # Project-Level Makefile for WFL
 
-export PROJECT_DIR	    := $(CURDIR)
+export PROJECT_DIR      := $(CURDIR)
 export DERIVED_DIR      := $(PROJECT_DIR)/derived
 export MAKE_INCLUDE_DIR := $(PROJECT_DIR)/makerules
 
