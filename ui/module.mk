@@ -1,6 +1,5 @@
 # Makefile for the ui module
 
-include $(MAKE_INCLUDE_DIR)/common.mk
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 SRC_DIR	:= $(MODULE_DIR)/src

@@ -4,6 +4,8 @@ ifndef MODULE
 $(error MODULE was not defined - please invoke make from top level)
 endif
 
+include $(MAKE_INCLUDE_DIR)/common.mk
+
 # Directories
 PROJECT_DIR         ?= $(shell dirname $(CURDIR))
 MODULE_DIR          := $(PROJECT_DIR)/$(MODULE)

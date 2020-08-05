@@ -1,6 +1,5 @@
 # Makefile for the cloud_function module
 
-include $(MAKE_INCLUDE_DIR)/common.mk
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 MD_DIR := $(MODULE_DIR)/md

@@ -4,7 +4,6 @@ REQUIRED_BROAD_REPOSITORIES := \
 	dsde-pipelines \
 	pipeline-config
 
-include $(MAKE_INCLUDE_DIR)/common.mk
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 # Makefile for API
