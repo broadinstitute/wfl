@@ -14,7 +14,7 @@ $(PREBUILD): $(MODULE_DIR)/package.json
 	@$(TOUCH) $@
 
 $(BUILD): $(SCM_SRC)
-	$(RM) -f $(DERIVED_MODULE_DIR)/public $(DERIVED_MODULE_DIR)/src
+	$(RM) -r $(DERIVED_MODULE_DIR)/public $(DERIVED_MODULE_DIR)/src
 	$(CP) -r $(MODULE_DIR)/* $(DERIVED_MODULE_DIR)
 	$(NPM) run build --prefix $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@

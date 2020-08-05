@@ -19,4 +19,4 @@ $(MODULES):
 
 .PHONY: clean
 clean:
-	@echo $(RM) -r $(DERIVED_DIR)
+	$(RM) -r $(DERIVED_DIR)

@@ -34,8 +34,9 @@ $(ARTIFACT): $(SCM_SRC)
 $(SYMLINK): $(ARTIFACT)
 	$(LN) $< $@
 
-$(TEST):
+$(CHECK): $(SCM_SRC)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR) && $(CLOJURE) $(CLJFLAGS) -A:test unit
+	@$(TOUCH) $@
 
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(ARTIFACT)
 	$(DOCKER) build                                                       \

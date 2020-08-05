@@ -26,8 +26,9 @@ all: $(BUILD_TARGETS)
 
 $(BUILD_TARGETS): | $(DERIVED_MODULE_DIR)
 prebuild: $(PREBUILD)
-build: $(BUILD)
-images: $(IMAGES)
+build: prebuild $(BUILD)
+check: build $(CHECK)
+images: check $(IMAGES)
 
 .PHONY:	clean
 clean:
