@@ -30,3 +30,4 @@ $(CHECK): $(SCM_SRC) $(SCM_TEST)
 		$(EXPORT) WFL_URL=$(WFL_URL);                  \
 		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py; \
 	)
+	@$(TOUCH) $@
