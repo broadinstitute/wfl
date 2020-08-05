@@ -117,8 +117,6 @@
                      (dissoc clones :broadinstitute)
                      (into {} (map frob wdls)))]
       (pprint edn)
-;      (util/shell-io! "npm" "install" "--prefix" "ui")
-;      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
       (stage-some-files broadinstitute directory)
       (run! (partial cromwellify-wdl broadinstitute directory) wdls)
       (write-the-version-file directory edn))))
