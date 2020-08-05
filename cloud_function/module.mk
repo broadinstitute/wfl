@@ -10,7 +10,7 @@ SCM_SRC := \
 	$(MODULE_DIR)/__init__.py \
 	$(MODULE_DIR)/main.py
 
-SCM_TEST = $(shell $(FIND) $(TEST_DIR) -name '*.py')
+TEST_SCM_SRC = $(shell $(FIND) $(TEST_DIR) -name '*.py')
 
 VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/.venv
 
@@ -20,14 +20,13 @@ $(PREBUILD): $(MODULE_DIR)/dev-requirements.txt
 		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate; \
 		$(PYTHON) -m pip install -r $<;                \
 	)
-	@$(TOUCH) $@
-
+	@$(TOUCH) $@
 
 TESTING_LOG := $(DERIVED_MODULE_DIR)/test.log
 $(CHECK): $(TESTING_LOG)
 
 WFL_URL := https://workflow-launcher.gotc-dev.broadinstitute.org
-$(TESTING_LOG): $(SCM_SRC) $(SCM_TEST)
+$(TESTING_LOG): $(SCM_SRC) $(TEST_SCM_SRC)
 	(                                                              \
 		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate;             \
 		$(EXPORT) WFL_URL=$(WFL_URL);                              \
