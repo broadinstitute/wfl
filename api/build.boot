@@ -12,7 +12,7 @@
   (str "../derived/api/" part))
 
 (set-env!
-  :resource-paths #{"resources" (derived "resources")}
+  :resource-paths #{(derived "resources") "resources"}
   :source-paths #{"src"}
   :target-path (derived "target")
   :repositories
