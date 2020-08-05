@@ -9,7 +9,7 @@ include $(MAKE_INCLUDE_DIR)/common.mk
 
 export WFL_VERSION := $(shell $(CAT) $(PROJECT_DIR)/version)
 
-MODULES	    := api ui cloud_function
+MODULES	:= api cloud_function docs ui
 
 .PHONY: all $(MODULES) clean
 all: $(MODULES)
