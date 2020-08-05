@@ -26,23 +26,21 @@ $(PREBUILD):
 	$(BOOT) prebuild
 	@$(TOUCH) $@
 
-$(BUILD): $(ARTIFACT) $(SYMLINK)
-$(ARTIFACT): $(SCM_SRC)
+$(BUILD): $(SCM_SRC)
 	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(BOOT) build
+	$(LN) $(ARTIFACT) $(SYMLINK)
+	@$(TOUCH) $@
 
-$(SYMLINK): $(ARTIFACT)
-	$(LN) $< $@
-
-TESTING_LOG := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(TESTING_LOG)
-$(TESTING_LOG): $(SCM_SRC)
-	(                                                    \
-		$(EXPORT) CPCACHE=$(CPCACHE_DIR);                \
-		$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $@; \
+LOGFILE := $(DERIVED_MODULE_DIR)/test.log
+$(CHECK): $(SCM_SRC)
+	(                                                            \
+		$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
+		$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE); \
 	)
+	@$(TOUCH) $@
 
-$(IMAGES): $(MODULE_DIR)/Dockerfile $(ARTIFACT)
+$(IMAGES): $(MODULE_DIR)/Dockerfile
 	$(DOCKER) build                                                       \
 		--file $<                                                         \
 		--tag "broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)" \

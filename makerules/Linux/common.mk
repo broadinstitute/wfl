@@ -5,6 +5,7 @@ CAT     := cat
 CD      := cd
 CLOJURE := clojure
 CP      := cp -f
+DATE    := date
 DOCKER  := docker
 ECHO    := echo
 EXPORT  := export

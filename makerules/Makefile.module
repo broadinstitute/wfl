@@ -17,30 +17,31 @@ MAKE_TARGETS := prebuild build check images
 
 # Timestamps for the top level make targets.
 # Write your module make-targets against these
-PREBUILD := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
-BUILD    := $(DERIVED_MODULE_DIR)/build.$(TS)
-CHECK    := $(DERIVED_MODULE_DIR)/check.$(TS)
-IMAGES   := $(DERIVED_MODULE_DIR)/images.$(TS)
+PREBUILD   := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
+BUILD      := $(DERIVED_MODULE_DIR)/build.$(TS)
+CHECK      := $(DERIVED_MODULE_DIR)/check.$(TS)
+IMAGES     := $(DERIVED_MODULE_DIR)/images.$(TS)
 
 .PHONY:	all $(MAKE_TARGETS)
 all: $(MAKE_TARGETS)
-$(MAKE_TARGETS): | $(DERIVED_MODULE_DIR)
 
-# `make` target dependencies
-prebuild:
-build:    prebuild
-check:    build
-images:   build
+# Configure `make` dependencies via their timestamps.
+$(PREBUILD): | $(DERIVED_MODULE_DIR)
+$(BUILD):    $(PREBUILD)
+$(CHECK):    $(BUILD)
+$(IMAGES):   $(BUILD)
 
 # Top level `make` targets depend on their corresponding timestamp.
-# We use a pattern instead of the actual to allow module.mk to override
-# the default recipe.
 $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TS)
+	@$(ECHO) $(MODULE) $@ finished on $(shell $(DATE))
+
+# We use a pattern instead $(TIMESTAMPS) to allow module.mk to override
+# the default recipe.
 $(DERIVED_MODULE_DIR)/%.$(TS):
 	@$(TOUCH) $@
 
-CLEAN_DIRS    := $(DERIVED_MODULE_DIR)
-CLEAN_FILES   :=
+CLEAN_DIRS  := $(DERIVED_MODULE_DIR)
+CLEAN_FILES :=
 .PHONY:	clean
 clean:
 	$(RM) -r $(CLEAN_DIRS)
@@ -74,3 +75,14 @@ $(PREBUILD): $(THIRD_PARTY_REPOSITORIES)
 $(THIRD_PARTY_REPOSITORIES): $(THIRD_PARTY_DIR)
 	$(GIT) clone $(make-github-url) $(patsubst %.$(TS),%,$@)
 	@$(TOUCH) $@
+
+# Python environment:
+# usage $(call make-python-environment, env, requirements.txt)
+define make-python-environment
+	$(PYTHON) -m venv $1
+	(                                           \
+		$(SOURCE) $1/bin/activate;              \
+		$(PYTHON) -m pip install --upgrade pip; \
+		$(PYTHON) -m pip install -r $2;         \
+	)
+endef
