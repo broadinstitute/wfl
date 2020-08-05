@@ -34,8 +34,12 @@ $(ARTIFACT): $(SCM_SRC)
 $(SYMLINK): $(ARTIFACT)
 	$(LN) $< $@
 
+LOGFILE := $(DERIVED_MODULE_DIR)/test.log
 $(CHECK): $(SCM_SRC)
-	$(EXPORT) CPCACHE=$(CPCACHE_DIR) && $(CLOJURE) $(CLJFLAGS) -A:test unit
+	(                                                            \
+		$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
+		$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE); \
+	)
 	@$(TOUCH) $@
 
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(ARTIFACT)

@@ -23,11 +23,11 @@ $(PREBUILD): $(MODULE_DIR)/dev-requirements.txt
 	@$(TOUCH) $@
 
 WFL_URL := https://workflow-launcher.gotc-dev.broadinstitute.org
-
+TESTLOG := $(DERIVED_MODULE_DIR)/test.log
 $(CHECK): $(SCM_SRC) $(SCM_TEST)
-	(                                                  \
-		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate; \
-		$(EXPORT) WFL_URL=$(WFL_URL);                  \
-		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py; \
+	(                                                                      \
+		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate;                     \
+		$(EXPORT) WFL_URL=$(WFL_URL);                                      \
+		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py | $(TEE) $(LOGFILE); \
 	)
 	@$(TOUCH) $@

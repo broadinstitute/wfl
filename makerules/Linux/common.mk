@@ -25,4 +25,5 @@ PR      := pr
 SED     := sed
 SOURCE  := source
 SORT    := sort
+TEE     := tee
 TOUCH   := touch
