@@ -7,7 +7,7 @@ endif
 # Directories
 PROJECT_DIR         ?= $(shell dirname $(CURDIR))
 MODULE_DIR          := $(PROJECT_DIR)/$(MODULE)
-DERIVED_DIR 	    ?= $(PROJECT_DIR)/derived
+DERIVED_DIR         ?= $(PROJECT_DIR)/derived
 THIRD_PARTY_DIR     := $(DERIVED_DIR)/3p
 DERIVED_MODULE_DIR  := $(DERIVED_DIR)/$(MODULE)
 export WFL_VERSION	?= $(shell $(CAT) $(PROJECT_DIR)/version)
@@ -40,7 +40,7 @@ help:
 	@$(MAKE) --print-data-base --question no-such-target | \
 		$(GREP) -v -e '^no-such-target' -e '^Makefile' |   \
 		$(AWK) '/^[^.%][-A-Za-z0-9_]*:/                    \
-			{ print substr($$1, 1, length($$1)-1) }' |     \
+		    { print substr($$1, 1, length($$1)-1) }' |     \
 		$(SORT) |                                          \
 		$(PR) --omit-pagination --width=80 --columns=4     \
 

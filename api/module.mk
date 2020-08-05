@@ -10,16 +10,16 @@ include $(MAKE_INCLUDE_DIR)/Makefile.module
 # Makefile for API
 # clojure tools ignore the CPCACHE environment variable
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
-SRC_DIR	      		  := $(MODULE_DIR)/src
+SRC_DIR	              := $(MODULE_DIR)/src
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 
 CLEAN_DIRS  += $(CPCACHE_DIR)
 
-RESOURCES 	:= $(DERIVED_RESOURCES_DIR).$(TS)
-SCM_SRC  	:= $(shell $(FIND) $(SRC_DIR) -name "*.$(CLJ)")
-ARTIFACT 	:= $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
-SYMLINK  	:= $(DERIVED_TARGET_DIR)/wfl.jar
+RESOURCES   := $(DERIVED_RESOURCES_DIR).$(TS)
+SCM_SRC      = $(shell $(FIND) $(SRC_DIR) -name "*.$(CLJ)")
+ARTIFACT    := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
+SYMLINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD):
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR)

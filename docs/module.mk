@@ -3,8 +3,8 @@
 include $(MAKE_INCLUDE_DIR)/common.mk
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
-MD_DIR 		:= $(MODULE_DIR)/md
-SCM_MD 		 = $(shell $(FIND) $(MD_DIR) -type f)
+MD_DIR := $(MODULE_DIR)/md
+SCM_MD  = $(shell $(FIND) $(MD_DIR) -type f)
 
 VIRTUAL_ENVIRONMENT := $(DERIVED_MODULE_DIR)/venv
 $(PREBUILD): $(MODULE_DIR)/requirements.txt
@@ -21,7 +21,7 @@ $(BUILD): $(MODULE_DIR)/mkdocs.yml $(SCM_MD)
 	$(LN) $(MD_DIR) $(DERIVED_MODULE_DIR)/md
 	(                                                    \
 		$(SOURCE) $(VIRTUAL_ENVIRONMENT)/bin/activate;   \
-		$(CD) $(DERIVED_MODULE_DIR);  					 \
+		$(CD) $(DERIVED_MODULE_DIR);                     \
 		$(PYTHON) -m mkdocs build;                       \
 	)
 	@$(TOUCH) $@
