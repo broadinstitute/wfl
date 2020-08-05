@@ -12,7 +12,7 @@ if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev" ]; then
   _WFL_URL="https://workflow-launcher.gotc-dev.broadinstitute.org"
 elif [ "${GCLOUD_PROJECT}" == "broad-aou" ]; then
   SA_EMAIL="aou-cloud-fn@broad-aou.iam.gserviceaccount.com"
-  _WFL_URL=""
+  _WFL_URL="https://aou-wfl.gotc-prod.broadinstitute.org"
 else
   printf "Unrecognized google project\n"
   exit 1
