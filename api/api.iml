@@ -30,6 +30,7 @@
     <orderEntry type="library" name="Deps: org.clojure/tools.logging:1.1.0" level="project" />
     <orderEntry type="library" name="Deps: org.clojure/core.specs.alpha:0.2.44" level="project" />
     <orderEntry type="library" name="Deps: com.google.oauth-client/google-oauth-client:1.30.1" level="project" />
+    <orderEntry type="library" name="Deps: org.liquibase/liquibase-core:4.0.0" level="project" />
     <orderEntry type="library" name="Deps: org.bouncycastle/bcpkix-jdk15on:1.62" level="project" />
     <orderEntry type="library" name="Deps: metosin/muuntaja:0.6.4" level="project" />
     <orderEntry type="library" name="Deps: lambdaisland/kaocha:1.0.632" level="project" />
@@ -117,6 +118,7 @@
     <orderEntry type="library" name="Deps: environ:1.1.0" level="project" />
     <orderEntry type="library" name="Deps: com.google.guava/guava:27.1-android" level="project" />
     <orderEntry type="library" name="Deps: org.clojure/data.xml:0.2.0-alpha6" level="project" />
+    <orderEntry type="library" name="Deps: org.liquibase/liquibase-cdi:4.0.0" level="project" />
     <orderEntry type="library" name="Deps: metosin/reitit-schema:0.3.2" level="project" />
     <orderEntry type="library" name="Deps: com.google.cloud.sql/jdbc-socket-factory-core:1.0.15" level="project" />
     <orderEntry type="library" name="Deps: org.apache.activemq/kahadb:5.7.0" level="project" />
