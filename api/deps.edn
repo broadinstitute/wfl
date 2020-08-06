@@ -73,7 +73,6 @@
                                                 :exclusions [ch.qos.logback/logback-classic]}
                  org.liquibase/liquibase-core  {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
-   :extra-paths ["../derived/api/resources" "resources" "test"]
    :main-opts   ["-m" "kaocha.runner"]}
 
   :uberjar {:extra-deps {uberdeps {:mvn/version "0.1.4"}}

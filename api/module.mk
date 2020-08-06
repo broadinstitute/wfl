@@ -33,10 +33,8 @@ $(BUILD): $(SCM_SRC)
 
 LOGFILE := $(DERIVED_MODULE_DIR)/test.log
 $(CHECK): $(SCM_SRC)
-	(                                                            \
-		$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
-		$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE); \
-	)
+	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
+	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE);
 	@$(TOUCH) $@
 
 $(IMAGES): $(MODULE_DIR)/Dockerfile
