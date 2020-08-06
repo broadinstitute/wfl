@@ -10,8 +10,8 @@ if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev" ]; then
   # This service account must have access to the WFL API
   SA_EMAIL="aou-cloud-fn-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
   _WFL_URL="https://workflow-launcher.gotc-dev.broadinstitute.org"
-elif [ "${GCLOUD_PROJECT}" == "broad-aou" ]; then
-  SA_EMAIL="aou-cloud-fn@broad-aou.iam.gserviceaccount.com"
+elif [ "${GCLOUD_PROJECT}" == "broad-aou-storage" ]; then
+  SA_EMAIL="aou-cloud-fn@broad-aou-storage.iam.gserviceaccount.com"
   _WFL_URL="https://aou-wfl.gotc-prod.broadinstitute.org"
 else
   printf "Unrecognized google project\n"
