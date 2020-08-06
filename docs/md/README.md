@@ -14,15 +14,12 @@
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
 is a workload manager.
 
-For example,
-a workload could be a set of WGS samples
-to be reprocessed in a given project/bucket,
-the workflow is the processing
-of an individual sample
+For example, a workload could be a set of WGS samples to be reprocessed in a
+given project/bucket, the workflow is the processing of an individual sample
 in that workload running WGS reprocessing.
 
-It runs as you, with your credentials, from your laptop, and
-communicates with other services as necessary to manage a workload.
+It runs as you, with your credentials, from your laptop, and communicates with
+other services as necessary to manage a workload.
 
 It can also be deployed to run as a service in the cloud.
 
@@ -31,12 +28,23 @@ For more on Workflow Launcher's role in the Terra infrastructure see
 
 ## Set up
 
-Run `boot build` at the top of a `wfl.git` repo to build an
-uberjar. The resulting jar is in `target/wfl-*.jar` relative to
-the `wfl.git` clone.
+Invoke `make` at the project level to build all `workflow-launcher` modules:
+```bash
+$ make -jN
+```
+where `N` is the number of concurrent jobs you wish to run.
 
-With some start-up and performance penalty, you can also run
-Workflow Launcher as a script. See below for details.
+`make` will build each module in `worfklow-launcher`, run tests and generate
+`Docker` images. All generated files go into a `derived` directory under the
+project root.
+
+You can invoke `make` on a module from the top level directory by
+
+```bash
+$ make [MODULE] TARGET={prebuild|build|check|images}
+```
+
+See `make help` for more information.
 
 ## Versioning
 
@@ -69,7 +77,7 @@ for debugging problems.
 Run `zero dx` to get a list of the diagnostics available.
 
 ```bash
-wm28d-f87:wfl yanc$ java -jar ./target/wfl-2020-03-13t17-29-12z.jar dx
+$ java -jar derived/api/target/wfl.jar dx
 
 zero dx: tools to help debug workflow problems.
 
@@ -92,59 +100,32 @@ wm28d-f87:wfl yanc$
 
 For frontend details, check [Frontend Section](/docs/md/frontend.md)
 
-#### Top-level files
+### Top-level files
 
-After cloning a new WFL repo, the top-level files are.
+After cloning a new WFL repo, the top-level files are:
 
-  - `README.md` is this file, which is just a symlink to the actual doc
-    file under `docs/md/`.
+.
+├── api/            - `workflow-launcher` backend
+├── cloud_function/ - functions deployed separately
+├── database/       - database scheme migration changelog and changeset
+├── derived/        - generated artifacts
+├── docs/           - ancillary documentation
+├── helm/           - helm-managed k8s configuration
+├── LICENSE.txt
+├── Makefile        - project level` Makefile`
+├── makerules/      - common `Makefile` functionality
+├── ops/            - scripts to support Operations
+├── README.md       - symbolic link to docs/md/README.md
+├── ui/             - `workflow-launcher` frontend
+└── version         - holds the current semantic version
 
-  - `boot.properties` overrides some defaults in `boot-clj`.
-    (`boot.properties` is something like `build.properties` for
-    `sbt`.)
+Tip: Run `make` at least once after cloning the repo to make sure all the
+necessary files are in place.
 
-  - `build.boot` is a Clojure script to bootstrap WFL with
-    `boot-clj`.
-
-  - `build.txt` holds a monotonically increasing integer for
-    build versioning.
-
-  - `database/` holds database scheme migration changelog and changeset
-    files for liquibase.
-
-  - `docs/` has ancillary documentation. It's compiled as a static doc
-    website.
-
-  - `ops/` is a directory of standard scripts to support
-    operations. It includes scripts to deploy the server in
-    Google App Engine, and to run it locally for easier
-    debugging. (See [server.md](/docs/md/server.md) for
-    more information.)
-
-  - `resources/` contains the `simplelogger` properties and
-    files staged from other repositories that need to be on the
-    Java classpath when running from the `.jar` file.
-
-  - `src/` contains the Workflow Launcher source code.
-
-  - `test/` contains a mixture of unit and integration tests
-    and supplementary test tooling.
-
-After building and working with WFL a while, you may notice a
-couple of other top-level files and directories.
-
-  - `project.clj` is a `lein` project file to support
-    IntelliJ.
-
-  - `zero` is a link to `build.boot` that runs WFL as a
-    script.
-
-Run `boot build` at least once after cloning the repo to make
-sure all the necessary files are in place.
-
+### `api` Module
 #### Source code
 
-The Clojure source code is in the `src/` directory.
+The Clojure source code is in the `api/src/` directory.
 
 The entry point for the WFL executable is the `-main` function
 in `main.clj`. It takes the command line arguments as strings,
@@ -240,7 +221,7 @@ host a Clojure program.
 WFL uses a `gcloud auth` command line to authenticate the user. You
 need to be authenticated to Google Cloud and have a recent version
 of `google-cloud-sdk` in your path to run `zero` or its jar
-successfully. I verified that `Google Cloud SDK 161.0.0` works. That
+successfully. I verified that `Google Cloud SDK 304.0.0` works. That
 or any later version should be OK.
 
 #####  Installation
@@ -273,7 +254,7 @@ then running this.
 You can `brew install maven`, and `java` too if necessary.
 
 ###### Arch Linux
-install [clojure](https://www.archlinux.org/packages/?name=clojure) and
+Install [clojure](https://www.archlinux.org/packages/?name=clojure) and
 [leiningen](https://www.archlinux.org/packages/?name=leiningen)
 from the official repositories.
 Install [boot](https://aur.archlinux.org/packages/boot/) and
@@ -295,12 +276,12 @@ Find a local Cursive user for guidance if you like IntelliJ.
 [Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it.
 Cursive licences are available
 [here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
-The steps for getting this project set up with very recent versions of IntelliJ 
+The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:
-1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to 
+1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to
 generate the `project.clj` (see below)
-2. *Now inside of IntelliJ*, import the project by specifically targeting the 
-`project.clj` file (it should offer to import the entire project, and targeting 
+2. *Now inside of IntelliJ*, import the project by specifically targeting the
+`project.clj` file (it should offer to import the entire project, and targeting
 the `project.clj` will make use of Leiningen to work with Cursive)
 3. Use the Project Structure window (Help -> Find Action -> Project Structure) to set a JDK as the Project SDK
 
