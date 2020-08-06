@@ -4,8 +4,8 @@
   "central" {:url "https://repo1.maven.org/maven2/"}
   "clojars" {:url "https://clojars.org/repo"}}
 
- ; clojure makes me want to self harm. If you're feeling suicidal, you'll
- ; re-arrange the classpath.
+ ; derived/api/resources must come first so the environments.clj there is found before
+ ; the placeholder in src
  :paths ["../derived/api/resources" "resources" "src"]
 
  :deps
