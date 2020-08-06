@@ -1,1 +1,1 @@
-/home/edmund/.local/src/broadinstitute/wfl/makerules/Linux/common.mk
+../Linux/common.mk
