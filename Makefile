@@ -14,22 +14,16 @@ export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 MODULES := api cloud_function docs helm ui
 
-.PHONY: all $(MODULES) clean
+.PHONY: all $(MODULES)
 all: $(MODULES)
 
 $(MODULES):
 	@+$(CD) $@ && $(MAKE) -f module.mk MODULE=$@ $(TARGET)
 
+.PHONY: clean
+clean:
+	@+$(MAKE) TARGET=clean
+
 .PHONY: help
 help:
 	@$(call brief-help, $(PROJECT_DIR)/Makefile)
-
-.PHONY: clean
-clean:
-	for m in $(MODULES);                    \
-	do                                      \
-		$(PUSHD) $$m;                       \
-		$(MAKE) -f module.mk MODULE=$$m $@; \
-		$(POPD);                            \
-	done
-	$(RM) -r $(DERIVED_DIR)

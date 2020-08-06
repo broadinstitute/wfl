@@ -23,6 +23,7 @@ POPD    := popd
 PUSHD   := pushd
 PYTHON  := python3
 PR      := pr
+RMDIR   := rmdir -p
 SED     := sed
 SOURCE  := source
 SORT    := sort
