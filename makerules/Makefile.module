@@ -17,8 +17,14 @@ export WFL_VERSION	?= $(shell $(CAT) $(PROJECT_DIR)/version)
 # Top level `make` targets for the module
 MAKE_TARGETS := prebuild lint build check images
 
-# Timestamps for the top level make targets.
-# Write your module make-targets against these
+# Time stamps for the top level make targets in a loose order of their timeings.
+# Implementers should write module make-targets against these, ensuring that
+# the time stamp is touched as the last action.
+# Example:
+# $(LINT): $(SCM_SRC) $(TEST_SCM_SRC)
+# 	$(PYTHON) -m pylint $(PYLINT_OPTIONS)
+# 	@$(TOUCH) $@
+
 PREBUILD   := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
 LINT       := $(DERIVED_MODULE_DIR)/lint.$(TS)
 BUILD      := $(DERIVED_MODULE_DIR)/build.$(TS)
@@ -28,19 +34,19 @@ IMAGES     := $(DERIVED_MODULE_DIR)/images.$(TS)
 .PHONY:	all $(MAKE_TARGETS)
 all: $(MAKE_TARGETS)
 
-# Configure `make` dependencies via their timestamps.
+# Configure `make` dependencies via their time stamps.
 $(PREBUILD): | $(DERIVED_MODULE_DIR)
 $(LINT):     $(PREBUILD)
 $(BUILD):    $(PREBUILD)
 $(CHECK):    $(BUILD)
 $(IMAGES):   $(BUILD)
 
-# Top level `make` targets depend on their corresponding timestamp.
+# Top level `make` targets depend on their corresponding time stamp.
 $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TS)
 	@$(ECHO) $(MODULE) $@ finished on $(shell $(DATE))
 
-# We use a pattern instead $(TIMESTAMPS) to allow module.mk to override
-# the default recipe.
+# Use a pattern instead of the actual time stamps to allow module.mk
+# implementers to override the default recipe.
 $(DERIVED_MODULE_DIR)/%.$(TS):
 	@$(TOUCH) $@
 
@@ -57,12 +63,7 @@ endef
 
 .PHONY: help
 help:
-	@$(invoke) --print-data-base --question no-such-target | \
-		$(GREP) -v -e '^no-such-target' -e '^Makefile' |   \
-		$(AWK) '/^[^.%][-A-Za-z0-9_]*:/                    \
-		    { print substr($$1, 1, length($$1)-1) }' |     \
-		$(SORT) |                                          \
-		$(PR) --omit-pagination --width=80 --columns=4     \
+	@$(call brief-help, $(MODULE_DIR)/module.mk)
 
 $(DERIVED_DIR) $(SECOND_PARTY_DIR) $(DERIVED_MODULE_DIR):
 	@$(MKDIR) $@
