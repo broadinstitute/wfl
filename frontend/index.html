@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.3">
     
     
       
@@ -19,9 +19,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.b5d04df8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.947af8d5.min.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/palette.9ab2c1f8.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.7f672a1f.min.css">
       
       
         
@@ -389,6 +389,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    Quick Start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#install-dependencies" class="md-nav__link">
     Install dependencies
   </a>
@@ -618,6 +625,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    Quick Start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#install-dependencies" class="md-nav__link">
     Install dependencies
   </a>
@@ -727,8 +741,6 @@ Workflow Launcher Server. You could find its position in the following Diagram:<
 <div class="highlight"><pre><span></span><code>ui
 ├── README.md
 ├── babel.config.js
-├── dist/
-├── node_modules/
 ├── package-lock.json
 ├── package.json
 ├── public/
@@ -746,8 +758,6 @@ Workflow Launcher Server. You could find its position in the following Diagram:<
 
 <p>In the above structure:</p>
 <ul>
-<li><code>dist/</code> folder hosts the built target of the application.</li>
-<li><code>node_modules/</code> hosts the installed JS dependencies and libraries. They are ignored by git.</li>
 <li><code>public/</code> hosts the template static index HTML file that will be injected.</li>
 <li><code>package-*.json</code> files hold various metadata relevant to the project. This file is used to give information to npm that allows it to identify the project as well as handle the project's dependencies.</li>
 <li><code>src/</code> folder hosts the source code of the UI application:<ul>
@@ -763,24 +773,35 @@ Workflow Launcher Server. You could find its position in the following Diagram:<
 <li><code>vue.config.js</code> contains settings for the Vue applicationm, such as the proxy table for local development.</li>
 </ul>
 <h2 id="project-setup">Project setup<a class="headerlink" href="#project-setup" title="Permanent link">&para;</a></h2>
-<p><strong> Note: for any of the following commands that uses <code>npm</code>, if you prefer to run from the root
-directory of the WFL repo instead of running from within <code>zero/ui</code>, please be sure to append <code>--prefix=ui</code>
-to the npm command you run. </strong></p>
-<h3 id="install-dependencies">Install dependencies<a class="headerlink" href="#install-dependencies" title="Permanent link">&para;</a></h3>
-<p>When you first clone the repo, run:
-<div class="highlight"><pre><span></span><code>npm install
+<h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
+<p>Run the following command from the <code>workflow-launcher</code> root directory:
+<div class="highlight"><pre><span></span><code>$ make ui
 </code></pre></div>
-to install the necessary dependencies.</p>
+To build the module. You can then execute
+<div class="highlight"><pre><span></span><code>$ npm serve --prefix<span class="o">=</span>derived/ui
+</code></pre></div>
+to host the page.</p>
+<p>Notes:
+1. For any of the following commands that uses <code>npm</code>, if you prefer to run from
+the root directory of the WFL repo instead of running from within <code>zero/ui</code>,
+please be sure to append <code>--prefix=ui</code>to the npm command you run.
+2. When using the environment as configured by <code>make</code>, append
+<code>--prefix=derived/ui</code> to your <code>npm</code> commands.</p>
+<h3 id="install-dependencies">Install dependencies<a class="headerlink" href="#install-dependencies" title="Permanent link">&para;</a></h3>
+<p>After cloning <code>workflow-launcher</code>, run the following command to install the
+necessary dependencies:
+<div class="highlight"><pre><span></span><code>$ npm install
+</code></pre></div></p>
 <h3 id="compiles-and-hot-reloads-for-development">Compiles and hot-reloads for development<a class="headerlink" href="#compiles-and-hot-reloads-for-development" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run serve
+<div class="highlight"><pre><span></span><code>$ npm run serve
 </code></pre></div>
 
 <h3 id="compiles-and-minifies-for-production">Compiles and minifies for production<a class="headerlink" href="#compiles-and-minifies-for-production" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run build
+<div class="highlight"><pre><span></span><code>$ npm run build
 </code></pre></div>
 
 <h3 id="lints-and-fixes-files">Lints and fixes files<a class="headerlink" href="#lints-and-fixes-files" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>npm run lint
+<div class="highlight"><pre><span></span><code>$ npm run lint
 </code></pre></div>
 
 <h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
@@ -893,15 +914,15 @@ to install the necessary dependencies.</p>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.92ffa368.min.js"></script>
-      <script src="../assets/javascripts/bundle.5123e3d4.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.c3dc8c49.min.js"></script>
+      <script src="../assets/javascripts/bundle.f9edbbd5.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "../assets/javascripts/worker/search.8e2cddea.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

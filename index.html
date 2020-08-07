@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.3">
     
     
       
@@ -19,9 +19,9 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.b5d04df8.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.947af8d5.min.css">
       
-        <link rel="stylesheet" href="assets/stylesheets/palette.9ab2c1f8.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.7f672a1f.min.css">
       
       
         
@@ -298,6 +298,14 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#api-module" class="md-nav__link">
+    api Module
+  </a>
+  
+    <nav class="md-nav" aria-label="api Module">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#source-code" class="md-nav__link">
     Source code
   </a>
@@ -369,6 +377,11 @@
   <a href="#exomes-in-the-cloud-resources" class="md-nav__link">
     Exomes in the Cloud Resources
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -687,6 +700,14 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#api-module" class="md-nav__link">
+    api Module
+  </a>
+  
+    <nav class="md-nav" aria-label="api Module">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#source-code" class="md-nav__link">
     Source code
   </a>
@@ -765,6 +786,11 @@
     </nav>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
     </ul>
   
@@ -816,23 +842,27 @@
 <p><img alt="Docsite Build" src="https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master" /></p>
 <p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a>
 is a workload manager.</p>
-<p>For example,
-a workload could be a set of WGS samples
-to be reprocessed in a given project/bucket,
-the workflow is the processing
-of an individual sample
+<p>For example, a workload could be a set of WGS samples to be reprocessed in a
+given project/bucket, the workflow is the processing of an individual sample
 in that workload running WGS reprocessing.</p>
-<p>It runs as you, with your credentials, from your laptop, and
-communicates with other services as necessary to manage a workload.</p>
+<p>It runs as you, with your credentials, from your laptop, and communicates with
+other services as necessary to manage a workload.</p>
 <p>It can also be deployed to run as a service in the cloud.</p>
 <p>For more on Workflow Launcher's role in the Terra infrastructure see
 <a href="/docs/md/terra.md">Workflow Launcher's role in Terra</a>.</p>
 <h2 id="set-up">Set up<a class="headerlink" href="#set-up" title="Permanent link">&para;</a></h2>
-<p>Run <code>boot build</code> at the top of a <code>wfl.git</code> repo to build an
-uberjar. The resulting jar is in <code>target/wfl-*.jar</code> relative to
-the <code>wfl.git</code> clone.</p>
-<p>With some start-up and performance penalty, you can also run
-Workflow Launcher as a script. See below for details.</p>
+<p>Invoke <code>make</code> at the project level to build all <code>workflow-launcher</code> modules:
+<div class="highlight"><pre><span></span><code>$ make -jN
+</code></pre></div>
+where <code>N</code> is the number of concurrent jobs you wish to run.</p>
+<p><code>make</code> will build each module in <code>worfklow-launcher</code>, run tests and generate
+<code>Docker</code> images. All generated files go into a <code>derived</code> directory under the
+project root.</p>
+<p>You can invoke <code>make</code> on a module from the top level directory by</p>
+<div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">={</span>prebuild<span class="p">|</span>build<span class="p">|</span>check<span class="p">|</span>images<span class="p">|</span>clean<span class="p">|</span>distclean<span class="o">}</span>
+</code></pre></div>
+
+<p>See the output of <code>make help</code> for more information.</p>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
 <p>Workflow Launcher needs to manage its version and the versions of
 <code>dsde-pipelines.git</code> which contribute the WDL files. There may be as
@@ -896,7 +926,7 @@ currently talk to the following services:</p>
 <p>Workflow Launcher has a diagnostic mode, <code>dx</code>,
 for debugging problems.</p>
 <p>Run <code>zero dx</code> to get a list of the diagnostics available.</p>
-<div class="highlight"><pre><span></span><code>wm28d-f87:wfl yanc$ java -jar ./target/wfl-2020-03-13t17-29-12z.jar dx
+<div class="highlight"><pre><span></span><code>$ java -jar derived/api/target/wfl.jar dx
 
 zero dx: tools to <span class="nb">help</span> debug workflow problems.
 
@@ -917,70 +947,28 @@ wm28d-f87:wfl yanc$
 
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
 <p>For frontend details, check <a href="/docs/md/frontend.md">Frontend Section</a></p>
-<h4 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h4>
-<p>After cloning a new WFL repo, the top-level files are.</p>
-<ul>
-<li>
-<p><code>README.md</code> is this file, which is just a symlink to the actual doc
-    file under <code>docs/md/</code>.</p>
-</li>
-<li>
-<p><code>boot.properties</code> overrides some defaults in <code>boot-clj</code>.
-    (<code>boot.properties</code> is something like <code>build.properties</code> for
-    <code>sbt</code>.)</p>
-</li>
-<li>
-<p><code>build.boot</code> is a Clojure script to bootstrap WFL with
-    <code>boot-clj</code>.</p>
-</li>
-<li>
-<p><code>build.txt</code> holds a monotonically increasing integer for
-    build versioning.</p>
-</li>
-<li>
-<p><code>database/</code> holds database scheme migration changelog and changeset
-    files for liquibase.</p>
-</li>
-<li>
-<p><code>docs/</code> has ancillary documentation. It's compiled as a static doc
-    website.</p>
-</li>
-<li>
-<p><code>ops/</code> is a directory of standard scripts to support
-    operations. It includes scripts to deploy the server in
-    Google App Engine, and to run it locally for easier
-    debugging. (See <a href="/docs/md/server.md">server.md</a> for
-    more information.)</p>
-</li>
-<li>
-<p><code>resources/</code> contains the <code>simplelogger</code> properties and
-    files staged from other repositories that need to be on the
-    Java classpath when running from the <code>.jar</code> file.</p>
-</li>
-<li>
-<p><code>src/</code> contains the Workflow Launcher source code.</p>
-</li>
-<li>
-<p><code>test/</code> contains a mixture of unit and integration tests
-    and supplementary test tooling.</p>
-</li>
-</ul>
-<p>After building and working with WFL a while, you may notice a
-couple of other top-level files and directories.</p>
-<ul>
-<li>
-<p><code>project.clj</code> is a <code>lein</code> project file to support
-    IntelliJ.</p>
-</li>
-<li>
-<p><code>zero</code> is a link to <code>build.boot</code> that runs WFL as a
-    script.</p>
-</li>
-</ul>
-<p>Run <code>boot build</code> at least once after cloning the repo to make
-sure all the necessary files are in place.</p>
+<h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h3>
+<p>After cloning a new WFL repo, the top-level files are:
+<div class="highlight"><pre><span></span><code>.
+├── api/            - `workflow-launcher` backend
+├── cloud_function/ - functions deployed separately
+├── database/       - database scheme migration changelog and changeset
+├── derived/        - generated artifacts
+├── docs/           - ancillary documentation
+├── helm/           - helm-managed k8s configuration
+├── LICENSE.txt
+├── Makefile        - project level` Makefile`
+├── makerules/      - common `Makefile` functionality
+├── ops/            - scripts to support Operations
+├── README.md       - symbolic link to docs/md/README.md
+├── ui/             - `workflow-launcher` frontend
+└── version         - holds the current semantic version
+</code></pre></div>
+Tip: Run <code>make</code> at least once after cloning the repo to make sure all the
+necessary files are in place.</p>
+<h3 id="api-module"><code>api</code> Module<a class="headerlink" href="#api-module" title="Permanent link">&para;</a></h3>
 <h4 id="source-code">Source code<a class="headerlink" href="#source-code" title="Permanent link">&para;</a></h4>
-<p>The Clojure source code is in the <code>src/</code> directory.</p>
+<p>The Clojure source code is in the <code>api/src/</code> directory.</p>
 <p>The entry point for the WFL executable is the <code>-main</code> function
 in <code>main.clj</code>. It takes the command line arguments as strings,
 validates the arguments, then launches the appropriate process.</p>
@@ -1081,7 +1069,7 @@ host a Clojure program.</p>
 <p>WFL uses a <code>gcloud auth</code> command line to authenticate the user. You
 need to be authenticated to Google Cloud and have a recent version
 of <code>google-cloud-sdk</code> in your path to run <code>zero</code> or its jar
-successfully. I verified that <code>Google Cloud SDK 161.0.0</code> works. That
+successfully. I verified that <code>Google Cloud SDK 304.0.0</code> works. That
 or any later version should be OK.</p>
 <h5 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h5>
 <p>See <a href="https://github.com/boot-clj/boot#install">this link</a> to
@@ -1105,7 +1093,7 @@ then running this.</p>
 
 <p>You can <code>brew install maven</code>, and <code>java</code> too if necessary.</p>
 <h6 id="arch-linux">Arch Linux<a class="headerlink" href="#arch-linux" title="Permanent link">&para;</a></h6>
-<p>install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a> and
+<p>Install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a> and
 <a href="https://www.archlinux.org/packages/?name=leiningen">leiningen</a>
 from the official repositories.
 Install <a href="https://aur.archlinux.org/packages/boot/">boot</a> and
@@ -1123,12 +1111,12 @@ things out on your own.</p>
 <a href="mailto:sehsan@broadinstitute.org">Saman Ehsan</a> know how to use it.
 Cursive licences are available
 <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
-The steps for getting this project set up with very recent versions of IntelliJ 
+The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:
-1. <em>Outside of IntelliJ</em>, <code>clone</code> the repo and run <code>boot</code> at the top-level to 
+1. <em>Outside of IntelliJ</em>, <code>clone</code> the repo and run <code>boot</code> at the top-level to
 generate the <code>project.clj</code> (see below)
-2. <em>Now inside of IntelliJ</em>, import the project by specifically targeting the 
-<code>project.clj</code> file (it should offer to import the entire project, and targeting 
+2. <em>Now inside of IntelliJ</em>, import the project by specifically targeting the
+<code>project.clj</code> file (it should offer to import the entire project, and targeting
 the <code>project.clj</code> will make use of Leiningen to work with Cursive)
 3. Use the Project Structure window (Help -&gt; Find Action -&gt; Project Structure) to set a JDK as the Project SDK</p>
 <p>There is also a
@@ -1246,15 +1234,15 @@ JAR file.</p>
       
     </div>
     
-      <script src="assets/javascripts/vendor.92ffa368.min.js"></script>
-      <script src="assets/javascripts/bundle.5123e3d4.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="assets/javascripts/vendor.c3dc8c49.min.js"></script>
+      <script src="assets/javascripts/bundle.f9edbbd5.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: ".",
           features: [],
           search: Object.assign({
-            worker: "assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "assets/javascripts/worker/search.8e2cddea.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
