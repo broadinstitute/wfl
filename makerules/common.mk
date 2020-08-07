@@ -1,8 +1,38 @@
 # common.mk
-# defines common shell utilites for wfl
+# Defines common shell utilites for wfl
 
-ARCH := $(shell uname -s)
-include $(MAKE_INCLUDE_DIR)/$(ARCH)/common.mk
+# Common shell programs
+AWK     := awk
+BOOT    := boot
+CAT     := cat
+CD      := cd
+CLOJURE := clojure
+CP      := cp -f
+DATE    := date
+DOCKER  := docker
+ECHO    := echo
+EXPORT  := export
+FIND    := find
+GIT     := git
+GREP    := grep
+JAVA    := java
+JQ      := jq
+LEIN    := lein
+LN      := ln -s
+MKDIR   := mkdir -p
+MV      := mv -f
+NPM     := npm
+POPD    := popd
+PUSHD   := pushd
+PYTHON  := python3
+PR      := pr
+RMDIR   := rmdir -p
+SED     := sed
+SOURCE  := source
+SORT    := sort
+TEE     := tee
+TOUCH   := touch
+UNAME   := uname
 
 # Extensions
 CSS  := css
