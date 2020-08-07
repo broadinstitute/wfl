@@ -7,11 +7,11 @@ endif
 include $(MAKE_INCLUDE_DIR)/common.mk
 
 # Directories
-PROJECT_DIR              ?= $(shell dirname $(CURDIR))
-MODULE_DIR          	 := $(PROJECT_DIR)/$(MODULE)
-DERIVED_DIR         	 ?= $(PROJECT_DIR)/derived
-DERIVED_MODULE_DIR  	 := $(DERIVED_DIR)/$(MODULE)
-export WFL_VERSION		 ?= $(shell $(CAT) $(PROJECT_DIR)/version)
+PROJECT_DIR        ?= $(shell dirname $(CURDIR))
+MODULE_DIR         := $(PROJECT_DIR)/$(MODULE)
+DERIVED_DIR        ?= $(PROJECT_DIR)/derived
+DERIVED_MODULE_DIR := $(DERIVED_DIR)/$(MODULE)
+export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 # Top level `make` targets for the module
 MAKE_TARGETS := prebuild lint build check images
@@ -24,11 +24,11 @@ MAKE_TARGETS := prebuild lint build check images
 # 	$(PYTHON) -m pylint $(PYLINT_OPTIONS)
 # 	@$(TOUCH) $@
 
-PREBUILD   := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
-LINT       := $(DERIVED_MODULE_DIR)/lint.$(TS)
-BUILD      := $(DERIVED_MODULE_DIR)/build.$(TS)
-CHECK      := $(DERIVED_MODULE_DIR)/check.$(TS)
-IMAGES     := $(DERIVED_MODULE_DIR)/images.$(TS)
+PREBUILD := $(DERIVED_MODULE_DIR)/prebuild.$(TS)
+LINT     := $(DERIVED_MODULE_DIR)/lint.$(TS)
+BUILD    := $(DERIVED_MODULE_DIR)/build.$(TS)
+CHECK    := $(DERIVED_MODULE_DIR)/check.$(TS)
+IMAGES   := $(DERIVED_MODULE_DIR)/images.$(TS)
 
 .PHONY:	all $(MAKE_TARGETS)
 all: $(MAKE_TARGETS)
