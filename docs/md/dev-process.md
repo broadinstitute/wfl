@@ -83,7 +83,7 @@ It's not decided yet.
 
 11. Make sure build the backend code at least once with:
     ```
-    boot build
+    make api
     ```
 
 12. Merge the PR. The feature branch will be automatically cleaned up.
@@ -197,7 +197,7 @@ For the above, the username and password need to be correct for the target envir
 If you're running a local server with the postgres command above, you don't need a password and can omit it.
 
 Otherwise, you may be able to find this data in the Vault entry for the environment's server --
-`resources/zero/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING` 
+`resources/zero/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING`
 to supply it.
 
 ### Test

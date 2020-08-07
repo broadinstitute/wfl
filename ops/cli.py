@@ -22,7 +22,6 @@ import yaml
 if sys.platform.lower() == "win32":
     os.system("color")
 
-
 class AvailableColors(Enum):
     GRAY = 90
     RED = 91
@@ -81,10 +80,10 @@ def register(func: Callable) -> Callable:
     return func
 
 
-def shell(command: str):
+def shell(command: str) -> str:
     """Run COMMAND in a subprocess."""
     info(f"Running: {command}")
-    return subprocess.check_call(command, shell=True)
+    return subprocess.check_output(command, shell=True, encoding="utf-8").strip()
 
 
 def shell_unchecked(command: str):
@@ -119,7 +118,7 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
 
 
 def commands_available():
-    commands = ["boot", "docker", "gcloud", "git", "helm", "java", "kubectl", "jq"]
+    commands = ["docker", "gcloud", "git", "helm", "java", "kubectl", "jq"]
     for cmd in commands:
         if not shutil.which(cmd):
             error(f"=> {cmd} is not in PATH. Please install it!")
@@ -165,8 +164,7 @@ def run_liquibase_migration(db_username, db_password):
     """Run liquibase migration on the database that the cloudsql proxy is connected to."""
     info("=> Running liquibase")
     db_url = "jdbc:postgresql://localhost:5432/wfl?useSSL=false"
-    pwd = os.getcwd()
-    changelog_dir = f"{pwd}/wfl/database"
+    changelog_dir = os.path.join(os.getcwd(), "database")
     command = ' '.join(['docker run --rm --net=host',
                         f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
                         f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
@@ -183,27 +181,10 @@ def helm_deploy_wfl(values: str):
     info("[✔] WFL is deployed. Run `kubectl get pods` for details.")
 
 
-def build(directory: str) -> int:
-    """Boot build WFL in DIRECTORY and return its version string."""
-    cwd = os.getcwd()
-    os.chdir(directory)
-    shell("boot build")
-    command = "java -jar ./target/wfl-*.jar version-json"
-    info(f"Running: {command}")
-    output = subprocess.check_output(command, shell=True)
-    version = json.loads(output)
-    os.chdir(cwd)
-    return version["version"]
-
-
-def docker(directory: str, tag: str) -> int:
+def publish_docker_images(version: str):
     """Push API and UI docker images with TAG in DIRECTORY."""
-    build = "docker build -t broadinstitute"
-    shell(f"{build}/workflow-launcher-api:{tag} {directory}")
-    shell(f"{build}/workflow-launcher-ui:{tag} {directory}/ui")
-    push = "docker push broadinstitute"
-    shell(f"{push}/workflow-launcher-api:{tag}")
-    shell(f"{push}/workflow-launcher-ui:{tag}")
+    for x in ["api", "ui"]:
+        shell(f"docker push broadinstitute/workflow-launcher-{x}:{version}")
 
 
 @registerableCLI
@@ -265,13 +246,6 @@ class CLI:
     def deploy(self, arguments) -> int:
         """Deploy WFL to Cloud GKE (VPN is required)"""
         parser = argparse.ArgumentParser(description=f"{self.deploy.__doc__}")
-        parser.add_argument(
-            "-b",
-            "--branch",
-            dest="branch",
-            default="master",
-            help="Use this branch of gotc-deploy."
-        )
         parser.add_argument(
             "-z",
             "--zone",
@@ -344,28 +318,28 @@ class CLI:
         commands_available()
         set_up_helm()
         set_up_k8s(project=project, namespace=args.namespace, cluster=cluster, zone=args.zone)
-        with tempfile.TemporaryDirectory() as dir:
-            pwd = os.getcwd()
-            os.chdir(dir)
-            for url in ["git@github.com:broadinstitute/gotc-deploy.git",
-                        "git@github.com:broadinstitute/wfl.git"]:
-                clone(url=url, branch=args.branch)
-            tag = build("./wfl")
-            docker(directory="./wfl", tag=tag)
-            values = "wfl-values.yaml"
-            shutil.copy(f"gotc-deploy/deploy/{gotc_folder}/helm/{values}.ctmpl", dir)
-            render_ctmpl(ctmpl_file=f"{values}.ctmpl", WFL_VERSION=tag)
-            helm_deploy_wfl(values=values)
 
-            with open(values) as f:
-                helm_values = yaml.safe_load(f)
-            db_username = helm_values['api']['env']['ZERO_POSTGRES_USERNAME']
-            db_password = helm_values['api']['env']['ZERO_POSTGRES_PASSWORD']
-            container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
-            run_liquibase_migration(db_username, db_password)
+        version = shell("cat version")
+        publish_docker_images(version=version)
+
+        deploy = os.path.join("derived", "helm", "deploy")
+        if not os.path.exists(deploy):
+            os.makedirs(deploy)
+
+        values = "wfl-values.yaml"
+        ctmpl = f"derived/2p/gotc-deploy/deploy/{gotc_folder}/helm/{values}.ctmpl"
+        shutil.copy(ctmpl, deploy)
+
+        render_ctmpl(ctmpl_file=f"{deploy}/{values}.ctmpl", WFL_VERSION=version)
+        helm_deploy_wfl(values=f"{deploy}/{values}")
+
+        container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
+        with open(f"{deploy}/{values}") as f:
+            helm_values = yaml.safe_load(f)
+            env = helm_values['api']['env']
+            run_liquibase_migration(env['ZERO_POSTGRES_USERNAME'], env['ZERO_POSTGRES_PASSWORD'])
             info("=> Stopping cloud_sql_proxy")
             shell(f"docker stop {container}")
-            os.chdir(pwd)
 
         success("[✔] Deployment is done!")
         shell("kubectl get pods")

@@ -24,16 +24,16 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r ./docs/requirements.txt
-      - run: mkdocs build --config-file ./docs/mkdocs.yml
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Pre-Build
+        run: make docs TARGET=prebuild
+
+      - name: Build
+        run: make docs TARGET=build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/site
+          publish_dir: derived/docs/site

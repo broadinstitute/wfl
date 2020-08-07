@@ -4,7 +4,9 @@
   "central" {:url "https://repo1.maven.org/maven2/"}
   "clojars" {:url "https://clojars.org/repo"}}
 
- :paths ["src", "resources"]
+ ; derived/api/resources must come first so the environments.clj there is found before
+ ; the placeholder in src
+ :paths ["../derived/api/resources" "resources" "src"]
 
  :deps
 
@@ -71,7 +73,7 @@
                                                 :exclusions [ch.qos.logback/logback-classic]}
                  org.liquibase/liquibase-core  {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
-   :extra-paths ["resources" "test"]
+   :extra-paths ["test"]
    :main-opts   ["-m" "kaocha.runner"]}
 
   :uberjar {:extra-deps {uberdeps {:mvn/version "0.1.4"}}

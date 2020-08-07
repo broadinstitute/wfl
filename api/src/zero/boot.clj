@@ -30,9 +30,7 @@
                        OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
-    {:version   (-> (if clean? committed built)
-                    .toLowerCase
-                    (str/replace #"[^-a-z0-9]" "-"))
+    {:version   (or (System/getenv "WFL_VERSION") "devel")
      :commit    commit
      :committed committed
      :built     built
@@ -64,25 +62,16 @@
            "Application-Name" (str/capitalize zero/the-name)
            "Multi-Release" "true")))
 
-(defn clone-repos
-  "Return a map of zero/the-github-repos clones in a :tmp directory.
-   Delete the :tmp directory at some point.
+(defn find-repos
+  "Return a map of zero/the-github-repos clones.
 
    Specifically omits [[zero/the-name]]'s repo since it isn't needed
    for the version."
-  []
-  (let [tmp (str "CLONE_" (UUID/randomUUID))
-        the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
-    (letfn [(clone [url] (util/shell-io! "git" "-C" tmp "clone"
-                                         "--config" "advice.detachedHead=false" url))]
-      (io/make-parents (io/file tmp "Who cares, really?"))
-      (try
-        (run! clone (map :primary (vals the-github-repos-no-wfl)))
-        (catch Exception _
-          (run! clone (map :actions-backup (vals the-github-repos-no-wfl))))))
-    (into {:tmp tmp}
+  [second-party]
+  (let [the-github-repos-no-wfl (dissoc zero/the-github-repos zero/the-name)]
+    (into {}
           (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [tmp repo])]
+            (let [dir (str/join "/" [second-party repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
@@ -117,23 +106,17 @@
 ;;
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
-  [version resources]
+  [version second-party resources]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
-          {:keys [tmp] :as clones} (clone-repos)
+          clones (find-repos second-party)
           directory (io/file resources "zero")
-          edn (merge version
-                     (dissoc clones :tmp)
-                     (into {} (map frob wdls)))]
+          edn (merge version clones (into {} (map frob wdls)))]
       (pprint edn)
-      (util/shell-io! "npm" "install" "--prefix" "ui")
-      (util/shell-io! "npm" "run" "build" "--prefix" "ui")
-      (try (util/delete-tree directory)
-           (stage-some-files tmp directory)
-           (run! (partial cromwellify-wdl tmp directory) wdls)
-           (write-the-version-file directory edn)
-           (finally (util/delete-tree (io/file tmp)))))))
+      (stage-some-files second-party directory)
+      (run! (partial cromwellify-wdl second-party directory) wdls)
+      (write-the-version-file directory edn))))
 
 (defn main
   "Run this with ARGS."

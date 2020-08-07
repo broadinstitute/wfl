@@ -6,10 +6,15 @@
 ;; 2. Crazy long (Google) artifact names in alphabetical order.
 ;; 3. Test scoped dependencies again in alphabetical order.
 
+(def second-party "../derived/2p")
+(defn derived
+  [part]
+  (str "../derived/api/" part))
+
 (set-env!
-  :resource-paths #{"src"}
-  :source-paths #{"resources"}
-  :target-path "target"
+  :resource-paths #{(derived "resources") "resources"}
+  :source-paths #{"src"}
+  :target-path (derived "target")
   :repositories
   '[["broad"
      {:url "https://broadinstitute.jfrog.io/broadinstitute/ext-release-local"}]
@@ -57,17 +62,15 @@
 (when-not (.exists (clojure.java.io/file "./wfl"))
   (dosh "ln" "-s" "./build.boot" "./wfl"))
 
-(require '[adzerk.boot-test :as boot-test])
-
 (require 'zero.boot)
 
 (def the-version (zero.boot/make-the-version))
 
-(deftask manage-version-and-resources
+(defn manage-version-and-resources
   "Add WDL files and version information to /resources/."
   []
-  (let [resources (clojure.java.io/file "./resources")]
-    (zero.boot/manage-version-and-resources the-version resources)
+  (let [resources (clojure.java.io/file (derived "resources"))]
+    (zero.boot/manage-version-and-resources the-version second-party resources)
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
 ;; So boot.lein can pick up the project name and version.
@@ -75,15 +78,20 @@
 (def the-pom (zero.boot/make-the-pom the-version))
 (task-options! pom the-pom)
 
+(deftask prebuild
+  ""
+  []
+  (manage-version-and-resources))
+
 (deftask build
   "Build this."
   []
-  (comp (manage-version-and-resources)
-    (pom)
-    (aot :namespace '#{zero.main})
-    (uber)
-    (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
-    (target)))
+  (comp
+   (pom)
+   (aot :namespace '#{zero.main})
+   (uber)
+   (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
+   (target :dir #{(derived "target")})))
 
 (defn -main
   "Run this."
