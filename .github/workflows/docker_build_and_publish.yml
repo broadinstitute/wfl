@@ -69,10 +69,10 @@ jobs:
             IdentityFile ~/.ssh/wfl_deploy_key """ > ~/.ssh/config
 
     - name: Pre-Build
-      run: make "${MODULES}" TARGET=prebuild
+      run: make MODULES="${MODULES}" TARGET=prebuild
 
     - name: Build
-      run: make "${MODULES}" TARGET=build
+      run: make MODULES="${MODULES}" TARGET=build
 
     - name: Build and Publish Docker Images
       run: |
@@ -87,7 +87,7 @@ jobs:
         fi
 
         # Build the images
-        export WFL_VERSION="${VERSION}" && make "${MODULES}" TARGET=images
+        export WFL_VERSION="${VERSION}" && make MODULES="${MODULES}" TARGET=images
 
         # Tag the images
         docker tag \
