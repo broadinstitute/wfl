@@ -45,9 +45,9 @@ def get_ptc_json(bucket, uuid):
     }
 
 def main(bucket):
-    id = uuid.uuid4()
-    ptc_json = get_ptc_json(bucket, id)
-    destination_paths = get_destination_paths(bucket, id)
+    id_ = uuid.uuid4()
+    ptc_json = get_ptc_json(bucket, id_)
+    destination_paths = get_destination_paths(bucket, id_)
     with tempfile.TemporaryDirectory() as tmpdirname:
         with open(f'{tmpdirname}/ptc.json', 'w') as f:
             json.dump(ptc_json, f)
