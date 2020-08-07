@@ -61,6 +61,7 @@ pom.xml.asc
 .idea/modules
 *.iml
 *.ipr
+.idea
 
 # CMake
 cmake-build-*/

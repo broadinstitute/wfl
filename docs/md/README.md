@@ -41,10 +41,10 @@ project root.
 You can invoke `make` on a module from the top level directory by
 
 ```bash
-$ make [MODULE] TARGET={prebuild|build|check|images}
+$ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
 
-See `make help` for more information.
+See the output of `make help` for more information.
 
 ## Versioning
 
@@ -103,7 +103,7 @@ For frontend details, check [Frontend Section](/docs/md/frontend.md)
 ### Top-level files
 
 After cloning a new WFL repo, the top-level files are:
-
+```
 .
 ├── api/            - `workflow-launcher` backend
 ├── cloud_function/ - functions deployed separately
@@ -118,7 +118,7 @@ After cloning a new WFL repo, the top-level files are:
 ├── README.md       - symbolic link to docs/md/README.md
 ├── ui/             - `workflow-launcher` frontend
 └── version         - holds the current semantic version
-
+```
 Tip: Run `make` at least once after cloning the repo to make sure all the
 necessary files are in place.
 

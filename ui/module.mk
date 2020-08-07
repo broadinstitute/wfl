@@ -12,6 +12,12 @@ $(PREBUILD): $(MODULE_DIR)/package.json
 	$(NPM) install --prefix $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
+$(LINT):
+	$(RM) -r $(DERIVED_MODULE_DIR)/public $(DERIVED_MODULE_DIR)/src
+	$(CP) -r $(MODULE_DIR)/* $(DERIVED_MODULE_DIR)
+	$(NPM) run lint --prefix $(DERIVED_MODULE_DIR)
+	@$(TOUCH) $@
+
 $(BUILD): $(SCM_SRC)
 	$(RM) -r $(DERIVED_MODULE_DIR)/public $(DERIVED_MODULE_DIR)/src
 	$(CP) -r $(MODULE_DIR)/* $(DERIVED_MODULE_DIR)

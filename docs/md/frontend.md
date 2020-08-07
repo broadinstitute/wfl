@@ -12,8 +12,6 @@ Workflow Launcher Server. You could find its position in the following Diagram:
 ui
 ├── README.md
 ├── babel.config.js
-├── dist/
-├── node_modules/
 ├── package-lock.json
 ├── package.json
 ├── public/
@@ -31,8 +29,6 @@ ui
 
 In the above structure:
 
-- `dist/` folder hosts the built target of the application.
-- `node_modules/` hosts the installed JS dependencies and libraries. They are ignored by git.
 - `public/` hosts the template static index HTML file that will be injected.
 - `package-*.json` files hold various metadata relevant to the project. This file is used to give information to npm that allows it to identify the project as well as handle the project's dependencies.
 - `src/` folder hosts the source code of the UI application:
@@ -47,32 +43,46 @@ In the above structure:
 
 ## Project setup
 
-** Note: for any of the following commands that uses `npm`, if you prefer to run from the root
-directory of the WFL repo instead of running from within `zero/ui`, please be sure to append `--prefix=ui`
-to the npm command you run. **
+### Quick Start
+Run the following command from the `workflow-launcher` root directory:
+```bash
+$ make ui
+```
+To build the module. You can then execute
+```bash
+$ npm serve --prefix=derived/ui
+```
+to host the page.
+
+Notes:
+1. For any of the following commands that uses `npm`, if you prefer to run from
+the root directory of the WFL repo instead of running from within `zero/ui`,
+please be sure to append `--prefix=ui`to the npm command you run.
+2. When using the environment as configured by `make`, append
+`--prefix=derived/ui` to your `npm` commands.
 
 ### Install dependencies
-When you first clone the repo, run:
+After cloning `workflow-launcher`, run the following command to install the
+necessary dependencies:
+```bash
+$ npm install
 ```
-npm install
-```
-to install the necessary dependencies.
 
 ### Compiles and hot-reloads for development
 
-```
-npm run serve
+```bash
+$ npm run serve
 ```
 
 ### Compiles and minifies for production
 
 ```
-npm run build
+$ npm run build
 ```
 
 ### Lints and fixes files
 ```
-npm run lint
+$ npm run lint
 ```
 
 ## Development
