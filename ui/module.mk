@@ -18,10 +18,10 @@ $(BUILD): $(SCM_SRC)
 	$(NPM) run build --prefix $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
-DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
+DOCKER_UI_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile
-	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(DERIVED_MODULE_DIR)
+	$(DOCKER) build --file $< --tag $(DOCKER_UI_IMAGE) $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
 $(CLEAN):
-	-$(DOCKER) image rm -f $(DOCKER_API_IMAGE)
+	-$(DOCKER) image rm -f $(DOCKER_UI_IMAGE)
