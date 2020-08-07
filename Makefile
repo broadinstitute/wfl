@@ -20,9 +20,9 @@ all: $(MODULES)
 $(MODULES):
 	@+$(CD) $@ && $(MAKE) -f module.mk MODULE=$@ $(TARGET)
 
-.PHONY: clean
-clean:
-	@+$(MAKE) TARGET=clean
+.PHONY: clean distclean
+clean distclean:
+	@+$(MAKE) TARGET=$@
 
 .PHONY: help
 help:
