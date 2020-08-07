@@ -3,7 +3,7 @@
 # 2p repositories are cloned into derived/2p and are cleaed on `distclean`
 # Example:
 # REQUIRED_2P_REPOSITORIES := wfl
-# include $(MAKE_INLUDE_DIR)/Makefile.module
+# include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 # 2p repository time stamps
 SECOND_PARTY_DIR          := $(DERIVED_DIR)/2p

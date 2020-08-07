@@ -3,8 +3,8 @@
 # Virtual evironments are created in derived/venv/$(MODULE) and are cleaned on
 # `distclean`
 # Example:
-# REQUIRED_2P_REPOSITORIES := requirements.txt
-# include $(MAKE_INLUDE_DIR)/Makefile.module
+# REQUIRED_2P_REPOSREQUIRED_PYTHON_ENVIRONMENTITORIES := requirements.txt
+# include $(MAKE_INCLUDE_DIR)/Makefile.module
 #
 # # Then use
 # $(call using-python-enviroment, echo `which python`)
