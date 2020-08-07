@@ -32,6 +32,7 @@ SOURCE  := source
 SORT    := sort
 TEE     := tee
 TOUCH   := touch
+TR      := tr
 UNAME   := uname
 
 # Extensions

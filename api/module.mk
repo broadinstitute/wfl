@@ -34,9 +34,10 @@ $(CHECK): $(SCM_SRC)
 	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE);
 	@$(TOUCH) $@
 
+DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile
-	$(DOCKER) build                                                       \
-		--file $<                                                         \
-		--tag "broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)" \
-		$(DERIVED_MODULE_DIR)
+	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
+
+$(CLEAN):
+	-$(DOCKER) image rm -f $(DOCKER_API_IMAGE)

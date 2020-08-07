@@ -49,11 +49,14 @@ $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TS)
 $(DERIVED_MODULE_DIR)/%.$(TS):
 	@$(TOUCH) $@
 
+# CLEAN is a PHONY target for custom clean recipes
+CLEAN       := $(MODULE).clean
 CLEAN_FILES :=
 CLEAN_DIRS  := $(DERIVED_MODULE_DIR)
 
-.PHONY:	clean
-clean:
+.PHONY:	clean $(CLEAN)
+$(CLEAN):
+clean: $(CLEAN)
 	$(RM) $(CLEAN_FILES)
 	$(RM) -r $(CLEAN_DIRS)
 
