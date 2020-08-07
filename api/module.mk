@@ -1,13 +1,9 @@
 # Makefile for the wfl/api module
 
-REQUIRED_BROAD_REPOSITORIES := \
-	dsde-pipelines \
-	pipeline-config
-
+REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
-# Makefile for API
-# clojure tools ignore the CPCACHE environment variable
+
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
 SRC_DIR	              := $(MODULE_DIR)/src
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources

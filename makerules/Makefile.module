@@ -7,12 +7,11 @@ endif
 include $(MAKE_INCLUDE_DIR)/common.mk
 
 # Directories
-PROJECT_DIR         ?= $(shell dirname $(CURDIR))
-MODULE_DIR          := $(PROJECT_DIR)/$(MODULE)
-DERIVED_DIR         ?= $(PROJECT_DIR)/derived
-SECOND_PARTY_DIR    := $(DERIVED_DIR)/2p
-DERIVED_MODULE_DIR  := $(DERIVED_DIR)/$(MODULE)
-export WFL_VERSION	?= $(shell $(CAT) $(PROJECT_DIR)/version)
+PROJECT_DIR              ?= $(shell dirname $(CURDIR))
+MODULE_DIR          	 := $(PROJECT_DIR)/$(MODULE)
+DERIVED_DIR         	 ?= $(PROJECT_DIR)/derived
+DERIVED_MODULE_DIR  	 := $(DERIVED_DIR)/$(MODULE)
+export WFL_VERSION		 ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 # Top level `make` targets for the module
 MAKE_TARGETS := prebuild lint build check images
@@ -53,7 +52,7 @@ $(DERIVED_MODULE_DIR)/%.$(TS):
 CLEAN_FILES :=
 CLEAN_DIRS  := $(DERIVED_MODULE_DIR)
 
-.PHONY:	clean distclean
+.PHONY:	clean
 clean:
 	$(RM) $(CLEAN_FILES)
 	$(RM) -r $(CLEAN_DIRS)
@@ -61,46 +60,22 @@ clean:
 DISTCLEAN_FILES :=
 DISTCLEAN_DIRS  :=
 
+.PHONY: distclean
 distclean: clean
 	$(RM) $(DISTCLEAN_FILES)
 	$(RM) -r $(DISTCLEAN_DIRS)
-
-define invoke
-  $(MAKE) -f $(firstword $(MAKEFILE_LIST))
-endef
 
 .PHONY: help
 help:
 	@$(call brief-help, $(MODULE_DIR)/module.mk)
 
-$(DERIVED_DIR) $(SECOND_PARTY_DIR) $(DERIVED_MODULE_DIR):
+$(DERIVED_DIR) $(DERIVED_MODULE_DIR):
 	@$(MKDIR) $@
 
-# 2p repository time stamps
-SECOND_PARTY_REPOSITORIES := \
-  $(patsubst %, $(SECOND_PARTY_DIR)/%.$(TS),$(REQUIRED_BROAD_REPOSITORIES))
+ifneq ($(REQUIRED_2P_REPOSITORIES),)
+  include $(MAKE_INCLUDE_DIR)/2p.mk
+endif
 
-DISTCLEAN_DIRS  += $(subst .$(TS),,$(SECOND_PARTY_REPOSITORIES))
-DISTCLEAN_FILES += $(SECOND_PARTY_REPOSITORIES)
-
-define make-github-url
-$(strip \
-  $(if $(GITHUB_ACTOR),\
-    git@$*.github.com:broadinstitute/$*.git,\
-    git@github.com:broadinstitute/$*.git))
-endef
-
-$(PREBUILD): $(SECOND_PARTY_REPOSITORIES)
-$(SECOND_PARTY_REPOSITORIES): | $(SECOND_PARTY_DIR)
-$(SECOND_PARTY_REPOSITORIES): $(SECOND_PARTY_DIR)/%.$(TS):
-	$(GIT) clone $(make-github-url) $(SECOND_PARTY_DIR)/$*
-	@$(TOUCH) $@
-
-# Python environment:
-# usage $(call make-python-environment, env, requirements.txt)
-define make-python-environment
-	$(PYTHON) -m venv $1;                   \
-	$(SOURCE) $1/bin/activate;              \
-	$(PYTHON) -m pip install --upgrade pip; \
-	$(PYTHON) -m pip install -r $2;
-endef
+ifneq ($(REQUIRED_PYTHON_ENVIRONMENT),)
+  include $(MAKE_INCLUDE_DIR)/Python.mk
+endif
