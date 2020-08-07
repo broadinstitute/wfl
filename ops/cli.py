@@ -6,7 +6,6 @@ requirements: pip3 install gitpython pyyaml
 
 usage: python3 cli.py -h
 """
-from contextlib import contextmanager
 from enum import Enum
 from pathlib import Path
 from typing import Callable
@@ -22,17 +21,6 @@ import yaml
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
     os.system("color")
-
-# shamelessly plagiarised from
-# https://stackoverflow.com/questions/431684/how-do-i-change-the-working-directory-in-python
-@contextmanager
-def cd(directory):
-    prevdir = os.getcwd()
-    try:
-        os.chdir(os.path.expanduser(directory))
-        yield
-    finally:
-        os.chdir(prevdir)
 
 class AvailableColors(Enum):
     GRAY = 90
@@ -176,8 +164,7 @@ def run_liquibase_migration(db_username, db_password):
     """Run liquibase migration on the database that the cloudsql proxy is connected to."""
     info("=> Running liquibase")
     db_url = "jdbc:postgresql://localhost:5432/wfl?useSSL=false"
-    pwd = os.getcwd()
-    changelog_dir = f"{pwd}/wfl/database"
+    changelog_dir = os.path.join(os.getcwd(), "database")
     command = ' '.join(['docker run --rm --net=host',
                         f'-v {changelog_dir}:/liquibase/changelog liquibase/liquibase',
                         f'--url="{db_url}" --changeLogFile=/changelog/changelog.xml',
@@ -335,20 +322,24 @@ class CLI:
         version = shell("cat version")
         publish_docker_images(version=version)
 
-        pwd = os.getcwd()
-        with tempfile.TemporaryDirectory() as temp, cd(temp):
-            values = "wfl-values.yaml"
-            shutil.copy(f"{pwd}/derived/2p/gotc-deploy/deploy/{gotc_folder}/helm/{values}.ctmpl", temp)
-            render_ctmpl(ctmpl_file=f"{values}.ctmpl", WFL_VERSION=version)
-            helm_deploy_wfl(values=values)
+        deploy = os.path.join("derived", "helm", "deploy")
+        if not os.path.exists(deploy):
+            os.makedirs(deploy)
 
-            container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
-            with open(values) as f:
-                helm_values = yaml.safe_load(f)
-                env = helm_values['api']['env']
-                run_liquibase_migration(env['ZERO_POSTGRES_USERNAME'], env['ZERO_POSTGRES_PASSWORD'])
-                info("=> Stopping cloud_sql_proxy")
-                shell(f"docker stop {container}")
+        values = "wfl-values.yaml"
+        ctmpl = f"derived/2p/gotc-deploy/deploy/{gotc_folder}/helm/{values}.ctmpl"
+        shutil.copy(ctmpl, deploy)
+
+        render_ctmpl(ctmpl_file=f"{deploy}/{values}.ctmpl", WFL_VERSION=version)
+        helm_deploy_wfl(values=f"{deploy}/{values}")
+
+        container = run_cloudsql_proxy(project=project, cloudsql_instance_name="zero-postgresql")
+        with open(f"{deploy}/{values}") as f:
+            helm_values = yaml.safe_load(f)
+            env = helm_values['api']['env']
+            run_liquibase_migration(env['ZERO_POSTGRES_USERNAME'], env['ZERO_POSTGRES_PASSWORD'])
+            info("=> Stopping cloud_sql_proxy")
+            shell(f"docker stop {container}")
 
         success("[✔] Deployment is done!")
         shell("kubectl get pods")
