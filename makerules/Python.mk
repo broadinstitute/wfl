@@ -9,7 +9,7 @@
 # # Then use
 # $(call using-python-enviroment, echo `which python`)
 
-VIRTUAL_ENVIRONMENT_DIR := $(DERIVED_DIR)/.venv
+VIRTUAL_ENVIRONMENT_DIR    := $(DERIVED_DIR)/.venv
 PYTHON_VIRTUAL_ENVIRONMENT := \
 	$(addsuffix /$(MODULE),$(VIRTUAL_ENVIRONMENT_DIR))
 

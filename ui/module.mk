@@ -2,7 +2,7 @@
 
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
-SRC_DIR	:= $(MODULE_DIR)/src
+SRC_DIR := $(MODULE_DIR)/src
 SCM_SRC := \
 	$(shell $(FIND) $(MODULE_DIR)/public -type f) \
 	$(shell $(FIND) $(MODULE_DIR)/src -type f)

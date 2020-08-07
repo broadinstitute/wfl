@@ -6,7 +6,7 @@
 # include $(MAKE_INLUDE_DIR)/Makefile.module
 
 # 2p repository time stamps
-SECOND_PARTY_DIR           := $(DERIVED_DIR)/2p
+SECOND_PARTY_DIR          := $(DERIVED_DIR)/2p
 SECOND_PARTY_REPOSITORIES := \
   $(patsubst %, $(SECOND_PARTY_DIR)/%.$(TS),$(REQUIRED_2P_REPOSITORIES))
 

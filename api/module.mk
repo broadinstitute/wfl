@@ -5,7 +5,7 @@ include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
-SRC_DIR	              := $(MODULE_DIR)/src
+SRC_DIR               := $(MODULE_DIR)/src
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 

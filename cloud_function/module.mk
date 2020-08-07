@@ -3,7 +3,7 @@
 REQUIRED_PYTHON_ENVIRONMENT := dev-requirements.txt
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
-SRC_DIR	 := $(MODULE_DIR)
+SRC_DIR  := $(MODULE_DIR)
 TEST_DIR := $(MODULE_DIR)/tests
 
 SCM_SRC := \
