@@ -115,8 +115,8 @@
                         (get-in env/stuff [environment :vault_path_to_picard_account])
    :vault_token_path (get-in env/stuff [environment :vault_token_path])
    :unmapped_bam_suffix ".unmapped.bam"
-   :papi_settings       {:agg_preemptible_tries 0
-                         :preemptible_tries     0}})
+   :papi_settings       {:agg_preemptible_tries 3
+                         :preemptible_tries     3}})
 
 (def memory-multiplier-inputs
   {
