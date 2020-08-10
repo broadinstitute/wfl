@@ -12,70 +12,16 @@ import os
 import shutil
 import subprocess
 import sys
-from enum import Enum
-from typing import Callable, Optional
+from typing import Callable
 
 import yaml
 
-from .render_ctmpl import render_ctmpl
+from render_ctmpl import render_ctmpl
+from util.misc import info, success, error, warn, shell
 
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
     os.system("color")
-
-
-class AvailableColors(Enum):
-    GRAY = 90
-    RED = 91
-    GREEN = 92
-    YELLOW = 93
-    BLUE = 94
-    PURPLE = 95
-    WHITE = 97
-    BLACK = 30
-    DEFAULT = 39
-
-
-def _apply_color(color: str, message: str) -> str:
-    """Dye message with color, fall back to default if it fails."""
-    color_code = AvailableColors["DEFAULT"].value
-    try:
-        color_code = AvailableColors[color.upper()].value
-    except KeyError:
-        pass
-    return f"\033[1;{color_code}m{message}\033[0m"
-
-
-def info(message: str, plain=False):
-    """Log the info to stdout"""
-    print(_apply_color("default", message) if not plain else message)
-
-
-def success(message: str):
-    """Log the success to stdout"""
-    print(_apply_color("green", f"[✔] {message}"))
-
-
-def error(message: str):
-    """Log the error to stderr"""
-    print(_apply_color("red", f"[✗] {message}"), file=sys.stderr)
-
-
-def warn(message: str):
-    """Log the warning to stdout"""
-    print(_apply_color("yellow", f"[!] {message}"))
-
-
-def shell(command: str, quiet: bool = False, timeout: Optional[float] = None) -> str:
-    """Run COMMAND in a subprocess."""
-    if not quiet:
-        info(f"Running: {command}")
-    try:
-        return subprocess.check_output(command, shell=True, timeout=timeout, encoding="utf-8").strip()
-    except subprocess.CalledProcessError as err:
-        error(f"Error running: {command}")
-        error(err.output)
-        exit(err.returncode)
 
 
 class Config:
@@ -105,7 +51,7 @@ class Config:
         self.cluster_namespace: str = \
             self.__resolve_config_value("Kubernetes namespace", parsed_args.namespace,
                                         lambda: f"{self.instance_id}-wfl")
-        success("Resolved configuration")
+        success("Resolved configuration") if not self.force else warn("Resolved forced configuration")
 
     @staticmethod
     def __resolve_config_value(description: str, specific: str, default: Callable[[], str] = lambda: None) -> str:
@@ -133,7 +79,7 @@ class Config:
                  f"`--filter='labels.app_name=wfl AND labels.instance_id={self.instance_id}'`")
             info(f"    Available instances in {self.project}:", plain=True)
             info(shell(f"gcloud --project {self.project} sql instances list", quiet=True), plain=True)
-            return "null" if self.force else exit(1)
+            return None if self.force else exit(1)
 
     def __find_cluster_name(self) -> str:
         """Look at the Cloud SQL labels to find the cluster name."""
@@ -150,7 +96,7 @@ class Config:
             info("    The `app_cluster` label is used to find cluster name, see wfl-instance documentation.")
             info(f"    Available clusters in {self.project}:", plain=True)
             info(shell(f"gcloud --project {self.project} container clusters list", quiet=True), plain=True)
-            return "null" if self.force else exit(1)
+            return None if self.force else exit(1)
 
     def __find_cluster_zone(self) -> str:
         """Look in the cluster list for the cluster's zone."""
@@ -163,7 +109,7 @@ class Config:
             error(f"No cluster zone could be found for cluster named {self.cluster_name}")
             info("    Couldn't find a single match for "
                  f"`--filter='name={self.cluster_name}'`")
-            return "null" if self.force else exit(1)
+            return None if self.force else exit(1)
 
     def validate(self):
         """Validate stored configuration, exiting upon failure if not forced."""
@@ -200,7 +146,8 @@ class Config:
     def __cluster_exists(self) -> bool:
         """Check that the cluster exists."""
         clusters = json.loads(shell(f"gcloud --project {self.project} --format=json "
-                                    f"container clusters list --zone {self.cluster_zone}"))
+                                    f"container clusters list "
+                                    f'{f"--zone {self.cluster_zone}" if self.cluster_zone else ""}'))
         return self.cluster_name in [c["name"] for c in clusters]
 
     def __cloudsql_exists(self) -> bool:
@@ -211,7 +158,7 @@ class Config:
 
     def __namespace_exists(self) -> bool:
         """Configure K8s context and check that the namespace is present."""
-        info(f"=>  Configuring Kubernetes for {self.cluster_name}")
+        info(f"=>  Configuring Kubernetes for cluster {self.cluster_name}")
         shell(f"gcloud --project {self.project} container clusters get-credentials "
               f"{self.cluster_name} --zone {self.cluster_zone}")
         ctx = f"gke_{self.project}_{self.cluster_zone}_{self.cluster_name}"
@@ -339,7 +286,7 @@ class CLI:
     def __init__(self):
         """Set up the parser."""
         parser = argparse.ArgumentParser(description="Deploy or connect to WFL infrastructure instances",
-                                         usage="%(prog)s [-h] [-d] COMMAND [-e ENV] [-i INSTANCE] [...]")
+                                         usage="%(prog)s [-h] [-d | -f] COMMAND [-e ENV] [-i INSTANCE] [...]")
         parser.add_argument("-d", "--dry-run", action="store_true",
                             help="Prevent COMMAND from enacting changes")
         parser.add_argument("-f", "--force", action="store_true",
