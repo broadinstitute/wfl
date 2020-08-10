@@ -282,6 +282,12 @@ class DeployCommand(ConnectCommand):
 
 
 class CLI:
+    command_mapping = {
+        "deploy": DeployCommand,
+        "connect": ConnectCommand,
+        "info": InfoCommand
+    }
+
     def __init__(self):
         """Set up the parser."""
         parser = argparse.ArgumentParser(description="Deploy or connect to WFL infrastructure instances",
@@ -292,9 +298,9 @@ class CLI:
                             help="Force COMMAND to run even if validation fails")
         commands = parser.add_argument_group("COMMAND")
         commands.add_argument("command",
-                              type=lambda s: getattr(sys.modules[__name__], f"{s.title()}Command"),
-                              choices=[DeployCommand, ConnectCommand, InfoCommand],
-                              metavar="{deploy, connect, info}",
+                              type=lambda s: self.command_mapping.get(s),
+                              choices=self.command_mapping.values(),
+                              metavar=f"{{{', '.join(self.command_mapping.keys())}}}",
                               help="Deploy the local build to the instance, "
                                    "connect to the instance's Cloud SQL, "
                                    "or display instance config")
