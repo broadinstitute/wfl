@@ -177,9 +177,8 @@ class InfoCommand(Config):
     def __init__(self, parsed_args: argparse.Namespace):
         super().__init__(parsed_args)
 
-    # This can't be static if we're to override it in subclasses
-    # noinspection PyMethodMayBeStatic
-    def execute(self) -> int:
+    @staticmethod
+    def execute() -> int:
         return 0
 
 
