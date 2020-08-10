@@ -29,11 +29,10 @@ class Config:
 
     def __init__(self, parsed_args: argparse.Namespace):
         """Resolve and store input from parsed arguments."""
-        self.command: str = parsed_args.command
         self.dry_run: bool = parsed_args.dry_run
         self.force: bool = parsed_args.force
         self.environment: str = parsed_args.environment
-        info(f"=>  Resolving {self.command} configuration")
+        info(f"=>  Resolving configuration")
         self.version: str = \
             self.__resolve_config_value("Version", parsed_args.version, lambda: self.__read_version())
         self.gotc_deploy_folder: str = \
@@ -114,7 +113,7 @@ class Config:
 
     def validate(self):
         """Validate stored configuration, exiting upon failure if not forced."""
-        info(f"=>  Validating {self.command} configuration")
+        info(f"=>  Validating configuration")
         issues = 0
         if self.__cloudsql_exists():
             success(f"CloudSQL instance {self.cloudsql_name} exists")
@@ -293,7 +292,10 @@ class CLI:
         parser.add_argument("-f", "--force", action="store_true",
                             help="Force COMMAND to run even if validation fails")
         commands = parser.add_argument_group("COMMAND")
-        commands.add_argument("command", choices=["deploy", "connect", "info"],
+        commands.add_argument("command",
+                              type=lambda s: getattr(sys.modules[__name__], f"{s.title()}Command"),
+                              choices=[DeployCommand, ConnectCommand, InfoCommand],
+                              metavar="{deploy, connect, info}",
                               help="Deploy the local build to the instance, "
                                    "connect to the instance's Cloud SQL, "
                                    "or display instance config")
@@ -326,12 +328,7 @@ class CLI:
         for cmd in ["docker", "gcloud", "git", "helm", "java", "kubectl", "jq"]:
             if not shutil.which(cmd):
                 error(f"{cmd} is not in PATH. Please install it!")
-        commands = {
-            "info": InfoCommand,
-            "connect": ConnectCommand,
-            "deploy": DeployCommand
-        }
-        config = commands[args.command](args)
+        config = args.command(args)
         config.validate()
         if config.dry_run:
             success("Exiting due to '--dry-run'")
