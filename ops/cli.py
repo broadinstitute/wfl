@@ -88,7 +88,7 @@ class Config:
                                      f"--filter='labels.app_name=wfl AND labels.instance_id={self.instance_id}'",
                                      quiet=True))
         if len(instances) == 1:
-            return instances[0]["labels"]["app_cluster"]
+            return instances[0]["settings"]["userLabels"]["app_cluster"]
         else:
             error("No cluster name could be inferred")
             info("    Couldn't find a single match for "
