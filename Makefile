@@ -9,7 +9,7 @@ include $(MAKE_INCLUDE_DIR)/common.mk
 
 # Enable for `WFL_VERSION` to be overriden
 # Example:
-# $ WFL_VERSION=1.2.3 make
+# $ make WFL_VERSION=1.2.3
 export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 MODULES := api cloud_function docs helm ui
