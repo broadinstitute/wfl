@@ -102,7 +102,8 @@ class Config:
         """Look in the cluster list for the cluster's zone."""
         clusters = json.loads(shell(f"gcloud --project {self.project} --format=json "
                                     "container clusters list "
-                                    f"--filter='name={self.cluster_name}'"))
+                                    f"--filter='name={self.cluster_name}'",
+                                    quiet=True))
         if len(clusters) == 1:
             return clusters[0]["zone"]
         else:
