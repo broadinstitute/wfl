@@ -291,7 +291,7 @@ class CLI:
     def __init__(self):
         """Set up the parser."""
         parser = argparse.ArgumentParser(description="Deploy or connect to WFL infrastructure instances",
-                                         usage="%(prog)s [-h] [-d | -f] COMMAND [-e ENV] [-i INSTANCE] [...]")
+                                         usage="%(prog)s [-h] [-d | -f] COMMAND -e ENV -i INSTANCE [...]")
         parser.add_argument("-d", "--dry-run", action="store_true",
                             help="Prevent COMMAND from enacting changes")
         parser.add_argument("-f", "--force", action="store_true",
@@ -304,15 +304,14 @@ class CLI:
                               help="Deploy the local build to the instance, "
                                    "connect to the instance's Cloud SQL, "
                                    "or display instance config")
-        typical = parser.add_argument_group("typical arguments",
-                                            "(usually necessary to target a particular instance)")
-        typical.add_argument("-e", "--environment", default="gotc-dev", metavar="ENV",
-                             choices=["gotc-dev", "gotc-prod", "aou"],
-                             help="Specify 'gotc-deploy/deploy/{ENV}' with one of: %(choices)s")
-        typical.add_argument("-i", "--instance", default="dev",
-                             help="Provide the ID of the target instance in the environment")
-        specific = parser.add_argument_group("specific arguments",
-                                             "(rarely necessary, inferred from typical arguments)")
+        required = parser.add_argument_group("required arguments")
+        required.add_argument("-e", "--environment", metavar="ENV", required=True,
+                              choices=["gotc-dev", "gotc-prod", "aou"],
+                              help="Specify 'gotc-deploy/deploy/{ENV}' with one of: %(choices)s")
+        required.add_argument("-i", "--instance", required=True,
+                              help="Provide the ID of the target instance in the environment")
+        specific = parser.add_argument_group("miscellaneous arguments",
+                                             "(rarely necessary; by default inferred from required arguments)")
         specific.add_argument("-v", "--version",
                               help="Specify the exact version to use instead of the 'version' file")
         specific.add_argument("--project",
