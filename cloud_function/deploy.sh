@@ -6,10 +6,10 @@ TRIGGER_BUCKET=${2}
 TRIGGER_EVENT=${3:-"google.storage.object.finalize"}
 REGION=${4:-"us-central1"}
 
-if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev" ]; then
+if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev-storage" ]; then
   # This service account must have access to the WFL API
   SA_EMAIL="aou-cloud-fn-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
-  _WFL_URL="https://workflow-launcher.gotc-dev.broadinstitute.org"
+  _WFL_URL="https://dev-wfl.gotc-dev.broadinstitute.org"
 elif [ "${GCLOUD_PROJECT}" == "broad-aou-storage" ]; then
   SA_EMAIL="aou-cloud-fn@broad-aou-storage.iam.gserviceaccount.com"
   _WFL_URL="https://aou-wfl.gotc-prod.broadinstitute.org"
