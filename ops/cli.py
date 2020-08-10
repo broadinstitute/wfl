@@ -132,7 +132,7 @@ class Config:
             issues += 1 if self.force else exit(1)
         if self.__namespace_exists():
             success(f"Namespace {self.cluster_namespace} exists in cluster")
-            shell(f"gcloud set-context --current --namespace={self.cluster_namespace}")
+            shell(f"kubectl config set-context --current --namespace={self.cluster_namespace}")
             info("    Namespace now set")
         else:
             error(f"Namespace {self.cluster_namespace} not found in cluster")
