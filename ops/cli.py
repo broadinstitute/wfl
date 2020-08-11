@@ -181,7 +181,7 @@ def configure_cloud_sql_proxy(config: WflInstanceConfig) -> None:
                                        f"describe {config.cloud_sql_name}"))["connectionName"]
     config.cloud_sql_local_proxy_container = \
         shell(f"docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 "
-              f"/cloud_sql_proxy -token='{token}' -instances='{connection_name}=tcp:0.0.0.0:5432'")
+              f"/cloud_sql_proxy -token='{token}' -instances='{connection_name}=tcp:0.0.0.0:5432'", quiet=True)
 
 
 def print_cloud_sql_proxy_instructions(config: WflInstanceConfig) -> None:
