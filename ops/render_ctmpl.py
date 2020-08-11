@@ -5,7 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from util.misc import info, success, error, shell
+from util.misc import info, success, error, shell_unchecked
 
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
@@ -20,7 +20,7 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
         for k, v in kwargs.items():
             envs += f"-e {k}={v}"
     info(f"=>  Feeding variables: {envs}")
-    shell(" ".join(['docker run -i --rm -v "$(pwd)":/working',
+    shell_unchecked(" ".join(['docker run -i --rm -v "$(pwd)":/working',
                     '-v "$HOME"/.vault-token:/root/.vault-token',
                     f'{envs}',
                     'broadinstitute/dsde-toolbox:dev',

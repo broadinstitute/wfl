@@ -60,3 +60,13 @@ def shell(command: str, quiet: bool = False, timeout: Optional[float] = None) ->
         error(f"Error running: {command}")
         error(err.output)
         exit(err.returncode)
+
+
+def shell_unchecked(command: str, quiet: bool = False, timeout: Optional[float] = None) -> str:
+    """Run COMMAND in a subprocess, always returning as if it succeeded."""
+    if not quiet:
+        info(f"Running: {command}")
+    try:
+        return subprocess.check_output(command, shell=True, timeout=timeout, encoding="utf-8").strip()
+    except subprocess.CalledProcessError as err:
+        return err.output.strip()
