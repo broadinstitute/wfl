@@ -155,14 +155,14 @@ def render_values_file(config: WflInstanceConfig) -> None:
         os.makedirs(deploy)
     values = "wfl-values.yaml"
     config.rendered_values_file = os.path.join(deploy, values)
-    ctmpl = f"derived/2p/{config.environment}/helm/{values}.ctmpl"
+    ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl", WFL_VERSION=config.version)
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
-        config.db_username = env["WFL_POSTGRES_USERNAME"] or env["ZERO_POSTGRES_USERNAME"]
-        config.db_password = env["WFL_POSTGRES_PASSWORD"] or env["ZERO_POSTGRES_PASSWORD"]
+        config.db_username = env.get("WFL_POSTGRES_USERNAME", "ZERO_POSTGRES_USERNAME")
+        config.db_password = env.get("WFL_POSTGRES_PASSWORD", "ZERO_POSTGRES_PASSWORD")
     success(f"Rendered Helm values file to {config.rendered_values_file}")
 
 
