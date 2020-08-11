@@ -10,16 +10,16 @@ import argparse
 import json
 import os
 import shutil
-import sys
 import subprocess
+import sys
 from dataclasses import dataclass
-from typing import Dict, Callable, List
 from pprint import PrettyPrinter
+from typing import Dict, Callable, List
 
 import yaml
 
-from util.misc import info, success, error, warn, shell
 from render_ctmpl import render_ctmpl
+from util.misc import info, success, error, warn, shell
 
 # In case this will need to run on Windows systems
 if sys.platform.lower() == "win32":
