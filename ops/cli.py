@@ -105,6 +105,7 @@ def infer_missing_arguments(config: WflInstanceConfig) -> None:
 
 def print_config(config: WflInstanceConfig) -> None:
     """Print the entire config--be careful about calling this after sensitive info has been stored."""
+    info("=>  Current script configuration:")
     PrettyPrinter().pprint(config)
 
 
