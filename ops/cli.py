@@ -113,9 +113,9 @@ def infer_missing_arguments(config: WflInstanceConfig) -> None:
 
 
 def print_config(config: WflInstanceConfig) -> None:
-    """Print the entire config--be careful about calling this after sensitive info has been stored."""
+    """Print the entire config, filtering out any field containing password."""
     info("=>  Current script configuration:")
-    PrettyPrinter().pprint(config)
+    PrettyPrinter().pprint({k: v for (k, v) in vars(config).items() if "password" not in k})
 
 
 def configure_kubectl(config: WflInstanceConfig) -> None:
