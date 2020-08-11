@@ -27,8 +27,8 @@ def get_auth_headers():
 
 def get_manifest_path(object_name):
     path = object_name.strip("/")
-    chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=2)
-    return "/".join([chip_well_barcode, analysis_version, "ptc.json"])
+    chip_name, chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=3)
+    return "/".join([chip_name, chip_well_barcode, analysis_version, "ptc.json"])
 
 def get_or_create_workload(headers, cromwell_url, environment):
     payload = {

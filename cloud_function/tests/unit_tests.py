@@ -4,13 +4,13 @@ from cloud_function import main
 
 
 bucket_name = "test_bucket"
-file_name = "chipwell_barcode/analysis_version/arrays/metadata/file.txt"
+file_name = "chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
 event_data = {'bucket': bucket_name, 'name': file_name}
 
 
 def test_get_manifest_path_from_uploaded_file():
-    uploaded_file = "chipwell_barcode/analysis_version/arrays/metadata/file.txt"
-    manifest_file = "chipwell_barcode/analysis_version/ptc.json"
+    uploaded_file = "chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
+    manifest_file = "chip_name/chipwell_barcode/analysis_version/ptc.json"
     result = main.get_manifest_path(uploaded_file)
     assert result == manifest_file
 
