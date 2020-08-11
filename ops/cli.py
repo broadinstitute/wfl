@@ -48,12 +48,14 @@ class WflInstanceConfig:
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
     """Infer and store all arguments required for validation steps."""
     if not config.project:
+        info("=>  Inferring project name to be `broad-{ENV}`")
         config.project = f"broad-{config.environment}"
 
 
 def validate_cloud_sql_name(config: WflInstanceConfig) -> None:
     """Validate that the stored Cloud SQL name exists."""
     if config.cloud_sql_name:
+        info("=>  Validating Cloud SQL name")
         instances = json.loads(shell(f"gcloud --project {config.project} --format=json "
                                      "sql instances list"))
         if config.cloud_sql_name not in [i["name"] for i in instances]:
@@ -67,6 +69,7 @@ def validate_cloud_sql_name(config: WflInstanceConfig) -> None:
 def validate_cluster_name(config: WflInstanceConfig) -> None:
     """Validate that the stored cluster name exists."""
     if config.cluster_name:
+        info("=>  Validating GKE cluster name")
         clusters = json.loads(shell(f"gcloud --project {config.project} --format=json "
                                     f"container clusters list"))
         if config.cluster_name not in [c["name"] for c in clusters]:
@@ -80,27 +83,33 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
 def infer_missing_arguments(config: WflInstanceConfig) -> None:
     """Infer and store all arguments not required for validation steps."""
     if not config.version:
+        info("=>  Inferring version from file at `./version`")
         with open("version") as version_file:
             config.version = version_file.read().strip()
     if not config.cloud_sql_name:
+        info("=>  Inferring Cloud SQL from GCP labels")
         config.cloud_sql_name = \
             json.loads(shell(f"gcloud --project {config.project} --format=json "
                              "sql instances list "
                              f"--filter='labels.app_name=wfl AND labels.instance_id={config.instance_id}'",
                              quiet=True))[0]["name"]
     if not config.cluster_name:
+        info("=>  Inferring GKE cluster name from GCP labels")
         config.cluster_name = \
             json.loads(shell(f"gcloud --project {config.project} --format=json "
                              "sql instances list "
                              f"--filter='labels.app_name=wfl AND labels.instance_id={config.instance_id}'",
                              quiet=True))[0]["settings"]["userLabels"]["app_cluster"]
+        info("=>  Inferring GKE cluster zone from cluster list")
     if not config.cluster_zone:
         config.cluster_zone = json.loads(shell(f"gcloud --project {config.project} --format=json "
                                                "container clusters list "
                                                f"--filter='name={config.cluster_name}'",
                                                quiet=True))[0]["zone"]
     if not config.cluster_namespace:
+        info("=>  Inferring Kubernetes namespace to be `{INSTANCE}-wfl`")
         config.cluster_namespace = f"{config.instance_id}-wfl"
+    success("Inference complete")
 
 
 def print_config(config: WflInstanceConfig) -> None:
