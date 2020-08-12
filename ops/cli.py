@@ -155,8 +155,8 @@ def render_values_file(config: WflInstanceConfig) -> None:
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
-        config.db_username = env.get("WFL_POSTGRES_USERNAME", "ZERO_POSTGRES_USERNAME")
-        config.db_password = env.get("WFL_POSTGRES_PASSWORD", "ZERO_POSTGRES_PASSWORD")
+        config.db_username = env.get("WFL_POSTGRES_USERNAME", env["ZERO_POSTGRES_USERNAME"])
+        config.db_password = env.get("WFL_POSTGRES_PASSWORD", env["ZERO_POSTGRES_PASSWORD"])
 
 
 def exit_if_dry_run(config: WflInstanceConfig) -> None:
@@ -187,7 +187,7 @@ def print_cloud_sql_proxy_instructions(config: WflInstanceConfig) -> None:
 
 def prompt_deploy_version(config: WflInstanceConfig) -> None:
     """Verify that the user would like to deploy the stored version."""
-    if not input(f"Are you sure you want to deploy version {config.version}? [N/y]").lower().startswith("y"):
+    if not input(f"Are you sure you want to deploy version {config.version}? [N/y]: ").lower().startswith("y"):
         exit(0)
 
 
@@ -203,7 +203,8 @@ def helm_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
     info("    This must run on a non-split VPN", plain=True)
-    shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {config.rendered_values_file} --install")
+    shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {config.rendered_values_file} --install "
+          f"--namespace {config.cluster_namespace}")
     success("WFL deployed")
 
 
