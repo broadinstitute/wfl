@@ -149,7 +149,6 @@ def configure_helm(config: WflInstanceConfig) -> None:
 
 def render_values_file(config: WflInstanceConfig) -> None:
     """Render the values file and store pertinent info from it in the config."""
-    info("=>  Rendering Helm values file")
     deploy = os.path.join("derived", "helm", "deploy")
     if not os.path.exists(deploy):
         os.makedirs(deploy)
@@ -163,7 +162,6 @@ def render_values_file(config: WflInstanceConfig) -> None:
         env = helm_values["api"]["env"]
         config.db_username = env.get("WFL_POSTGRES_USERNAME", "ZERO_POSTGRES_USERNAME")
         config.db_password = env.get("WFL_POSTGRES_PASSWORD", "ZERO_POSTGRES_PASSWORD")
-    success(f"Rendered Helm values file to {config.rendered_values_file}")
 
 
 def exit_if_dry_run(config: WflInstanceConfig) -> None:

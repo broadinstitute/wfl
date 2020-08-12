@@ -14,7 +14,7 @@ if sys.platform.lower() == "win32":
 
 def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
     """Render a ctmpl file."""
-    info("=> Rendering ctmpl file {ctmpl_file}")
+    info("=>  Rendering ctmpl file {ctmpl_file}")
     envs = ""
     if kwargs:
         for k, v in kwargs.items():
@@ -26,7 +26,7 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
                     'broadinstitute/dsde-toolbox:dev',
                     '/usr/local/bin/render-ctmpls.sh -k',
                     f'"{ctmpl_file}"']))
-    success(f"Rendered file {ctmpl_file.split('.ctmpl')[0]}")
+    success(f"Rendered {ctmpl_file.split('.ctmpl')[0]}")
     return 0
 
 
