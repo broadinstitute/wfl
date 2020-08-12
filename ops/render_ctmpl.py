@@ -28,17 +28,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="CTMPL file to be rendered")
     parser.add_argument("-v", "--version", help="A specific version to use other than the root's `version` file")
+    parser.add_argument("--no-version", action="store_true", help="Don't pass a WFL_VERSION variable")
     args = parser.parse_args()
     file = Path(args.file)
     assert file.exists() and file.is_file(), f"{file} is not valid!"
 
-    if args.version:
-        version = args.version
+    if not args.no_version:
+        if args.version:
+            version = args.version
+        else:
+            with open("version") as version_file:
+                version = version_file.read().strip()
+        exit(render_ctmpl(ctmpl_file=str(file), WFL_VERSION = version))
     else:
-        with open("version") as version_file:
-            version = version_file.read().strip()
-
-    if not shutil.which("docker"):
-        error("Docker is not in PATH. Please install it!")
-
-    exit(render_ctmpl(ctmpl_file=str(file), WFL_VERSION=version))
+        exit(render_ctmpl(ctmpl_file=str(file)))
