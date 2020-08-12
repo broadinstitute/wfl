@@ -203,7 +203,8 @@ def helm_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
     info("    This must run on a non-split VPN", plain=True)
-    shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {config.rendered_values_file} --install")
+    shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {config.rendered_values_file} --install "
+          f"--namespace {config.cluster_namespace}")
     success("WFL deployed")
 
 
