@@ -187,7 +187,7 @@ def print_cloud_sql_proxy_instructions(config: WflInstanceConfig) -> None:
 
 def prompt_deploy_version(config: WflInstanceConfig) -> None:
     """Verify that the user would like to deploy the stored version."""
-    if not input(f"Are you sure you want to deploy version {config.version}? [N/y]").lower().startswith("y"):
+    if not input(f"Are you sure you want to deploy version {config.version}? [N/y]: ").lower().startswith("y"):
         exit(0)
 
 
