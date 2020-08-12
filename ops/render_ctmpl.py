@@ -15,11 +15,11 @@ def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
             envs += f"-e {k}={v}"
     info(f"=>  Feeding variables: {envs}")
     shell_unchecked(" ".join(['docker run -i --rm -v "$(pwd)":/working',
-                    '-v "$HOME"/.vault-token:/root/.vault-token',
-                    f'{envs}',
-                    'broadinstitute/dsde-toolbox:dev',
-                    '/usr/local/bin/render-ctmpls.sh -k',
-                    f'"{ctmpl_file}"']))
+                              '-v "$HOME"/.vault-token:/root/.vault-token',
+                              f'{envs}',
+                              'broadinstitute/dsde-toolbox:dev',
+                              '/usr/local/bin/render-ctmpls.sh -k',
+                              f'"{ctmpl_file}"']))
     success(f"Rendered {ctmpl_file.split('.ctmpl')[0]}")
     return 0
 
