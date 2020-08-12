@@ -224,7 +224,7 @@ def run_liquibase_migration(config: WflInstanceConfig) -> None:
     shell(f"docker run --rm --net=host "
           f"-v {changelog_dir}:/liquibase/changelog liquibase/liquibase "
           f"--url='{db_url}' --changeLogFile=/changelog/changelog.xml "
-          f"--username='{config.db_username}' --password='{config.db_password}' update")
+          f"--username='{config.db_username}' --password='{config.db_password}' update", quiet=True)
     success("Ran liquibase migration")
 
 
