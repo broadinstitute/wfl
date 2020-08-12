@@ -304,7 +304,7 @@ def main() -> int:
             func(config)
         return 0
     except Exception as err:
-        error(f"{err}")
+        error(str(err))
         return 1
 
 
