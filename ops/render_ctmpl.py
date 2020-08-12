@@ -39,6 +39,6 @@ if __name__ == "__main__":
         else:
             with open("version") as version_file:
                 version = version_file.read().strip()
-        exit(render_ctmpl(ctmpl_file=str(file), WFL_VERSION = version))
+        exit(render_ctmpl(ctmpl_file=str(file), WFL_VERSION=version))
     else:
         exit(render_ctmpl(ctmpl_file=str(file)))
