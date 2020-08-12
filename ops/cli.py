@@ -37,6 +37,7 @@ class WflInstanceConfig:
     cluster_namespace: str = None
     db_username: str = None
     db_password: str = None
+    db_connection_name: str = None
     rendered_values_file: str = None
 
 
@@ -88,6 +89,11 @@ def infer_missing_arguments(config: WflInstanceConfig) -> None:
                              "sql instances list "
                              f"--filter='labels.app_name=wfl AND labels.instance_id={config.instance_id}'",
                              quiet=True))[0]["name"]
+    if not config.db_connection_name:
+        info("=>  Fetching Cloud SQL connection name")
+        config.db_connection_name = json.loads(shell(f"gcloud --project {config.project} --format=json sql instances "
+                                                     f"describe {config.cloud_sql_name}",
+                                                     quiet=True))["connectionName"]
     if not config.cluster_name:
         info("=>  Inferring GKE cluster name from GCP labels")
         config.cluster_name = \
@@ -151,7 +157,10 @@ def render_values_file(config: WflInstanceConfig) -> None:
     config.rendered_values_file = os.path.join(deploy, values)
     ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
-    render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl", WFL_VERSION=config.version)
+    render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
+                 WFL_VERSION=config.version,
+                 WFL_DB_URL=f"'jdbc:postgresql://google/wfl?cloudSqlInstance={config.db_connection_name}"
+                            f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'")
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
@@ -170,11 +179,10 @@ def configure_cloud_sql_proxy(config: WflInstanceConfig) -> None:
     """Initiate the Cloud SQL proxy and store the container name in the config."""
     info("=>  Running cloud_sql_proxy")
     token = shell("gcloud auth print-access-token")
-    connection_name = json.loads(shell(f"gcloud --project {config.project} --format=json sql instances "
-                                       f"describe {config.cloud_sql_name}"))["connectionName"]
     config.cloud_sql_local_proxy_container = \
         shell(f"docker run --rm -d -p 127.0.0.1:5432:5432 gcr.io/cloudsql-docker/gce-proxy:1.16 "
-              f"/cloud_sql_proxy -token='{token}' -instances='{connection_name}=tcp:0.0.0.0:5432'", quiet=True)
+              f"/cloud_sql_proxy -token='{token}' -instances='{config.db_connection_name}=tcp:0.0.0.0:5432'",
+              quiet=True)
 
 
 def print_cloud_sql_proxy_instructions(config: WflInstanceConfig) -> None:
