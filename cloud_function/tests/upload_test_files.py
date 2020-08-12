@@ -15,39 +15,40 @@ import uuid
 arrays_path = "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/"
 arrays_metadata_path = "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/"
 
-def get_destination_paths(bucket, uuid):
+def get_destination_paths(bucket, prefix):
     return {
-        "arrays": f"gs://{bucket}/{uuid}/v1/arrays/",
-        "arrays_metadata": f"gs://{bucket}/{uuid}/v1/arrays/metadata/",
-        "ptc": f"gs://{bucket}/{uuid}/v1/ptc.json"
+        "arrays": f"gs://{bucket}/{prefix}/arrays/",
+        "arrays_metadata": f"gs://{bucket}/{prefix}/arrays/metadata/",
+        "ptc": f"gs://{bucket}/{prefix}/ptc.json"
     }
 
-def get_ptc_json(bucket, uuid):
+def get_ptc_json(bucket, prefix, chip_well_barcode):
     return {
         "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
         "environment": "aou-dev",
         "uuid": None,
         "notifications": [{
             "analysis_version_number": 1,
-            "chip_well_barcode": str(uuid),
-            "green_idat_cloud_path": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-            "params_file": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-            "red_idat_cloud_path": f"gs://{bucket}/{uuid}/v1/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
+            "chip_well_barcode": str(chip_well_barcode),
+            "green_idat_cloud_path": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+            "params_file": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+            "red_idat_cloud_path": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
             "reported_gender": "Female",
             "sample_alias": "NA12878",
             "sample_lsid": "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
-            "bead_pool_manifest_file": f"gs://{bucket}/{uuid}/v1/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
-            "cluster_file": f"gs://{bucket}/{uuid}/v1/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
-            "zcall_thresholds_file": f"gs://{bucket}/{uuid}/v1/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
-            "gender_cluster_file": f"gs://{bucket}/{uuid}/v1/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt",
-            "extended_chip_manifest_file": f"gs://{bucket}/{uuid}/v1/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"
+            "bead_pool_manifest_file": f"gs://{bucket}/{prefix}/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
+            "cluster_file": f"gs://{bucket}/{prefix}/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
+            "zcall_thresholds_file": f"gs://{bucket}/{prefix}/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
+            "gender_cluster_file": f"gs://{bucket}/{prefix}/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt",
+            "extended_chip_manifest_file": f"gs://{bucket}/{prefix}/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"
         }]
     }
 
 def main(bucket):
-    id_ = uuid.uuid4()
-    ptc_json = get_ptc_json(bucket, id_)
-    destination_paths = get_destination_paths(bucket, id_)
+    chip_well_barcode = uuid.uuid4()
+    prefix = f"chip_name/{chip_well_barcode}/v1"
+    ptc_json = get_ptc_json(bucket, prefix, chip_well_barcode)
+    destination_paths = get_destination_paths(bucket, prefix)
     with tempfile.TemporaryDirectory() as tmpdirname:
         with open(f'{tmpdirname}/ptc.json', 'w') as f:
             json.dump(ptc_json, f)
