@@ -121,7 +121,7 @@ def configure_kubectl(config: WflInstanceConfig) -> None:
     ctx = f"gke_{config.project}_{config.cluster_zone}_{config.cluster_name}"
     shell(f"kubectl config use-context {ctx}")
     try:
-        namespaces = json.loads(shell("kubectl get namespace -o json", timeout=5))
+        namespaces = json.loads(shell("kubectl get namespace -o json", timeout=10))
         if config.cluster_namespace not in [item["metadata"]["name"] for item in namespaces["items"]]:
             info(f"    Available namespaces in {config.cluster_name}:", plain=True)
             info(shell("kubectl get namespace", quiet=True), plain=True)
