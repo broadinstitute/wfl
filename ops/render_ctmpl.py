@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import argparse
-import shutil
 from pathlib import Path
 
-from util.misc import info, success, error, shell_unchecked
+from util.misc import info, success, shell_unchecked
 
 
 def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
