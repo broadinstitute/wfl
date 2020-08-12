@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import shutil
-import sys
 from pathlib import Path
 
 from util.misc import info, success, error, shell_unchecked
-
-# In case this will need to run on Windows systems
-if sys.platform.lower() == "win32":
-    os.system("color")
 
 
 def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
