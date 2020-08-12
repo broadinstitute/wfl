@@ -54,9 +54,9 @@ def validate_cloud_sql_name(config: WflInstanceConfig) -> None:
         instances = json.loads(shell(f"gcloud --project {config.project} --format=json "
                                      "sql instances list"))
         if config.cloud_sql_name not in [i["name"] for i in instances]:
+            error(f"Cloud SQL instance {config.cloud_sql_name} not found")
             info(f"    Available Cloud SQL instances in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} sql instances list", quiet=True), plain=True)
-            raise RuntimeError(f"Cloud SQL instance {config.cloud_sql_name} not found")
         else:
             success(f"Cloud SQL instance {config.cloud_sql_name} exists")
 
@@ -68,9 +68,9 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
         clusters = json.loads(shell(f"gcloud --project {config.project} --format=json "
                                     f"container clusters list"))
         if config.cluster_name not in [c["name"] for c in clusters]:
+            error(f"GKE cluster {config.cluster_name} not found")
             info(f"    Available clusters in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} container clusters list", quiet=True), plain=True)
-            raise RuntimeError(f"GKE cluster {config.cluster_name} not found")
         else:
             success(f"GKE cluster {config.cluster_name} exists")
 
@@ -123,9 +123,9 @@ def configure_kubectl(config: WflInstanceConfig) -> None:
     try:
         namespaces = json.loads(shell("kubectl get namespace -o json", timeout=10))
         if config.cluster_namespace not in [item["metadata"]["name"] for item in namespaces["items"]]:
+            error(f"Namespace {config.cluster_namespace} not found in {config.cluster_name}")
             info(f"    Available namespaces in {config.cluster_name}:", plain=True)
             info(shell("kubectl get namespace", quiet=True), plain=True)
-            raise RuntimeError(f"Namespace {config.cluster_namespace} not found in {config.cluster_name}")
         else:
             shell(f"kubectl config set-context --current --namespace={config.cluster_namespace}")
             success("Kubernetes configured")
