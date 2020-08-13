@@ -36,7 +36,7 @@ all: $(MAKE_TARGETS)
 # Configure `make` dependencies via their time stamps.
 $(PREBUILD): | $(DERIVED_MODULE_DIR)
 $(LINT):     $(PREBUILD)
-$(BUILD):    $(PREBUILD)
+$(BUILD):    $(LINT)
 $(CHECK):    $(BUILD)
 $(IMAGES):   $(BUILD)
 

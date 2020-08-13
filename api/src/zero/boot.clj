@@ -89,34 +89,35 @@
              (finally (util/delete-tree directory)))))))
 
 (defn stage-some-files
-  "Stage some files from CLONES to RESOURCES."
-  [clones resources]
+  "Stage some files from CLONES to generated SOURCES and RESOURCES."
+  [clones sources resources]
   (letfn [(clone [repo file] (io/file (str/join "/" [clones repo]) file))
-          (stage [in]
-            (let [out (io/file resources (.getName in))]
+          (stage [dir file]
+            (let [out (io/file dir (.getName file))]
               (io/make-parents out)
-              (io/copy in out)))]
-    (let [pipeline-config (clone "pipeline-config" "wfl/environments.clj")]
-      (stage (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
-      (util/shell-io! "git" "-C" (.getParent pipeline-config)
+              (io/copy file out)))]
+    (let [environments (clone "pipeline-config" "wfl/environments.clj")]
+      (stage resources (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
+      (util/shell-io! "git" "-C" (.getParent environments)
                       "checkout" "9fecc4601b8e8c4812ec97e2bbc02d56e99c3a8f")
-      (stage pipeline-config))))
+      (stage sources environments))))
 
 ;; Hack: (delete-tree directory) is a hack.
 ;;
 (defn manage-version-and-resources
   "Use VERSION to stage any needed RESOURCES on the class path."
-  [version second-party resources]
+  [version second-party derived]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
           clones (find-repos second-party)
-          directory (io/file resources "zero")
+          sources (io/file derived "src" "zero")
+          resources (io/file derived "resources" "zero")
           edn (merge version clones (into {} (map frob wdls)))]
       (pprint edn)
-      (stage-some-files second-party directory)
-      (run! (partial cromwellify-wdl second-party directory) wdls)
-      (write-the-version-file directory edn))))
+      (stage-some-files second-party sources resources)
+      (run! (partial cromwellify-wdl second-party resources) wdls)
+      (write-the-version-file resources edn))))
 
 (defn main
   "Run this with ARGS."
