@@ -25,16 +25,21 @@ if __name__ == "__main__":
     parser.add_argument("file", help="CTMPL file to be rendered")
     parser.add_argument("-v", "--version", help="A specific version to use other than the root's `version` file")
     parser.add_argument("--no-version", action="store_true", help="Don't pass a WFL_VERSION variable")
+    parser.add_argument("-e", "--environment", metavar="KEY=VALUE", action="append",
+                        help="Pass extra things in the environment (can exist multiple times)")
     args = parser.parse_args()
     file = Path(args.file)
     assert file.exists() and file.is_file(), f"{file} is not valid!"
 
+    # We have to run render-ctmpls.sh unchecked, so manually parse arguments here despite reassembly later
+    # to help catch issues that would otherwise silently fail
+    environment = {k: v for k, v in map(lambda i: i.split("="), args.environment)} if args.environment else {}
+
     if not args.no_version:
         if args.version:
-            version = args.version
+            environment["WFL_VERSION"] = args.version
         else:
             with open("version") as version_file:
-                version = version_file.read().strip()
-        exit(render_ctmpl(ctmpl_file=str(file), WFL_VERSION=version))
-    else:
-        exit(render_ctmpl(ctmpl_file=str(file)))
+                environment["WFL_VERSION"] = version_file.read().strip()
+
+    exit(render_ctmpl(ctmpl_file=str(file), **environment))
