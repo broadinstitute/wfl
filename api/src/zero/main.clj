@@ -3,7 +3,6 @@
   (:require [clojure.data.json :as json]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [zero.util :as util]
             [zero.zero :as zero])
   (:gen-class))
@@ -78,14 +77,9 @@
           (apply run args)
           (exit 0))
         (do
-          (log/error (if verb
-                       (format "%s is not a command." verb)
-                       "Must specify a <command> to run."))
-          (log/debug "Output from zero.main/describe on zero.main/commands:")
-          (log/debug (describe commands)))))
-    (catch Exception x
-      (log/error x "Uncaught exception rose to zero.main/-main")
-      (log/debug "Output from zero.main/trace-stack:")
-      (log/debug (trace-stack x))
-      (log/debug \newline "BTW:" "You ran:" zero/the-name the-args))
-    (finally (exit 1))))
+          (if verb (printf "%s is not a command.\n" verb))
+          (help)
+          (exit 1))))
+    (catch Throwable t
+      (println (.getMessage t))
+      (exit 1))))
