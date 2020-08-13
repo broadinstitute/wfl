@@ -160,7 +160,8 @@ def render_values_file(config: WflInstanceConfig) -> None:
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
                  WFL_VERSION=config.version,
                  WFL_DB_URL=f"'jdbc:postgresql://google/wfl?cloudSqlInstance={config.db_connection_name}"
-                            f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'")
+                            f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'",
+                 WFL_INSTANCE=config.instance_id)
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
