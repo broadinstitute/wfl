@@ -3,10 +3,12 @@
 REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
+
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
-SRC_DIR               := $(MODULE_DIR)/src
 RESOURCES_DIR         := $(MODULE_DIR)/resources
+SRC_DIR               := $(MODULE_DIR)/src
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
+DERIVED_SRC_DIR		  := $(DERIVED_MODULE_DIR)/src
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 BOOT_PROJECT          := $(MODULE_DIR)/build.boot
 LEIN_PROJECT          := $(MODULE_DIR)/project.clj
@@ -20,7 +22,7 @@ JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD): $(MODULE_DIR)/wfl
-	@$(MKDIR) $(DERIVED_RESOURCES_DIR)
+	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
 	$(BOOT) prebuild
 	@$(TOUCH) $@
 

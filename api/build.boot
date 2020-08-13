@@ -8,19 +8,12 @@
 
 (def second-party "../derived/2p")
 (defn derived
-  [part]
-  (str "../derived/api/" part))
+  ([] "../derived/api")
+  ([part] (str (derived) "/" part)))
 
 (set-env!
- ; There's something fishu going on with these paths... "Why are the generated
- ; `resources` a :source while `resources` are a :resource?", I hear you cry!
- ; This is because the generated `environments.clj` needs to be treated as a
- ; source rather then a resource to be compiled into the jar.
- ; 
- ; ROBIN: What if you get the configuration wrong?
- ; ARTHUR: Then you are cast into the Gorge of Eternal Peril.
- :resource-paths #{"resources"}
- :source-paths #{(derived "resources") "src"}
+ :resource-paths #{(derived "resources") "resources"}
+ :source-paths #{(derived "src") "src"}
  :target-path (derived "target")
  :repositories
  '[["broad"
@@ -72,7 +65,7 @@
   "Add WDL files and version information to /resources/."
   []
   (let [resources (clojure.java.io/file (derived "resources"))]
-    (zero.boot/manage-version-and-resources the-version second-party resources)
+    (zero.boot/manage-version-and-resources the-version second-party (derived))
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
 ;; So boot.lein can pick up the project name and version.
