@@ -160,7 +160,8 @@ def render_values_file(config: WflInstanceConfig) -> None:
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
                  WFL_VERSION=config.version,
                  WFL_DB_URL=f"'jdbc:postgresql://google/wfl?cloudSqlInstance={config.db_connection_name}"
-                            f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'")
+                            f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'",
+                 WFL_INSTANCE=config.instance_id)
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
@@ -211,7 +212,7 @@ def helm_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
     info("    This must run on a non-split VPN", plain=True)
-    shell(f"helm upgrade wfl-k8s gotc-charts/wfl -f {config.rendered_values_file} --install "
+    shell(f"helm upgrade {config.instance_id}-wfl gotc-charts/wfl -f {config.rendered_values_file} --install "
           f"--namespace {config.cluster_namespace}")
     success("WFL deployed")
 
