@@ -9,7 +9,8 @@ test "$1" && export ZERO_DEPLOY_ENVIRONMENT="$1"
 npm run serve --prefix=derived/ui -- --port 8080 &
 
 pushd api
-"${WFL:-.}/../wfl" server 3000 &
+"./wfl" server 3000 &
+popd
 
 declare OPEN=open
 test CharlesDarwin = Charles$(uname) || OPEN=xdg-open
