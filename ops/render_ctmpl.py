@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 import argparse
-import shutil
 from pathlib import Path
 
-from util.misc import info, success, error, shell_unchecked
+from util.misc import info, success, shell_unchecked
 
 
 def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
     """Render a ctmpl file."""
-    info("=>  Rendering ctmpl file {ctmpl_file}")
-    envs = ""
-    if kwargs:
-        for k, v in kwargs.items():
-            envs += f"-e {k}={v}"
+    info(f"=>  Rendering ctmpl file {ctmpl_file}")
+    envs = " ".join([f"-e {k}={v}" for k, v in kwargs.items()]) if kwargs else ""
     info(f"=>  Feeding variables: {envs}")
     shell_unchecked(" ".join(['docker run -i --rm -v "$(pwd)":/working',
                               '-v "$HOME"/.vault-token:/root/.vault-token',
