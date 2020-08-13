@@ -12,11 +12,10 @@
   (str "../derived/api/" part))
 
 (set-env!
- ; At first glance these paths might appear slightly fishy and you'd be right.
- ; "Why is (derived "resources") a :source while "resources" is a :resource?"
- ; I hear you cry! Well, it's the only configuration that seems to not clobber
- ; the (derived "resources/zero/environments.clj") with
- ; "resources/zero/environments.clj" in the JAR.
+ ; There's something fishu going on with these paths... "Why are the generated
+ ; `resources` a :source while `resources` are a :resource?", I hear you cry!
+ ; This is because the generated `environments.clj` needs to be treated as a
+ ; source rather then a resource to be compiled into the jar.
  ; 
  ; ROBIN: What if you get the configuration wrong?
  ; ARTHUR: Then you are cast into the Gorge of Eternal Peril.
