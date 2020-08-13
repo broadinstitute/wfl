@@ -11,6 +11,7 @@ DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
 DERIVED_SRC_DIR		  := $(DERIVED_MODULE_DIR)/src
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 BOOT_PROJECT          := $(MODULE_DIR)/build.boot
+CLOJURE_PROJECT       := $(MODULE_DIR)/deps.edn
 LEIN_PROJECT          := $(MODULE_DIR)/project.clj
 
 CLEAN_DIRS  += $(CPCACHE_DIR)
@@ -36,9 +37,9 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(TOUCH) $@
 
 LOGFILE := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(SCM_SRC)
+$(CHECK): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
-	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE);
+	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE)
 	@$(TOUCH) $@
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
