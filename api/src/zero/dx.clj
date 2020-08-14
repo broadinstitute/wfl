@@ -7,7 +7,6 @@
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [zero.once :as once]
             [zero.service.cromwell :as cromwell]
@@ -414,14 +413,10 @@
 (defn run
   "Run diagnostic program specified by ARGS."
   [& args]
-  (try
     (if-let [diagnostic (commands (first args))]
       (apply diagnostic (rest args))
       (let [error (if-let [verb (first args)]
                     (format "Error: %s is not a dx <tool>." verb)
-                    "Error: Must specify a dx <tool> to run.")]
-        (throw (IllegalArgumentException. error))))
-    (catch Exception x
-      (log/error x)
-      (log/debug (describe commands))
-      (throw x))))
+                    "Error: Must specify a dx <tool> to run.")
+            usage (describe commands)]
+        (throw (IllegalArgumentException. (str error "\n" usage))))))
