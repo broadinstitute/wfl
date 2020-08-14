@@ -4,7 +4,8 @@
 We have the ability to deploy isolated instances of WFL infrastructure to that developers can work in parallel. Summary of the steps:
 1. Copy another dev's sandbox in `gotc-deploy/deploy/` and change every instance of their username to yours, PR in the changes, `apply` them
 2. Change your Cloud SQL instance's `wfl` password to the one in `secret/dsde/gotc/dev/zero`
-3. Deploy WFL via `./ops/cli.py gotc-dev <username>`
+3. Add the new URL to the OAuth credentials
+4. Deploy WFL via `./ops/cli.py gotc-dev <username>`
 
 Because this process might well be a new team member's first introduction to WFL, Terraform, and/or GCP, I've added more in-depth instructions below.
 
@@ -52,6 +53,11 @@ The password is defined in Vault at `secret/dsde/gotc/dev/zero`. You'll want to 
 
 Next, find your Cloud SQL instance. It is named starting with `{username}-wfl` in the `broad-gotc-dev` GCP project. Go to [the list of SQL instances](https://console.cloud.google.com/sql/instances?folder=&organizationId=&project=broad-gotc-dev), click on yours, go to "Users", change the `wfl` user's password, and paste the value you copied earlier.
 
-## 3. Deploy WFL
+## 3. Add URL to OAuth credentials
+WFL makes use of OAuth and the new URL of your deployment will need to be added to what the OAuth client will accept. The credentials to edit correspond to the `oauth2_client_id` field at `secret/dsde/gotc/dev/zero` (match to the "Client ID" column [here](https://console.cloud.google.com/apis/credentials?project=broad-gotc-dev)).
+
+If you'd rather copy-paste, go to `https://console.cloud.google.com/apis/credentials/oauthclient/{oauth2_client_id}`. You'll need to the following URI to both the "Authorized JavaScript origins" and the "Authorized redirect URIs": `https://{username}-wfl.gotc-dev.broadinstitute.org`.
+
+## 4. Deploy WFL
 See the README.md for more info on building WFL and pushing images. Assuming you've done that, run `./ops/cli.py gotc-dev {username}` to deploy the version in `./version` to your sandbox. The help text on `./ops/cli.py` has more options for customizing the deployment.
 
