@@ -1,7 +1,7 @@
 # WFL Sandboxes
-### :deploy_parrot:
+### ![:deploy_parrot:](https://emojis.slackmojis.com/emojis/images/1554740062/5584/deployparrot.gif ":deploy_parrot:")
 
-We have the ability to deploy isolated instances of WFL infrastructure to that developers can work in parallel. Summary of the steps:
+We have the ability to deploy isolated instances of WFL infrastructure so that developers can work in parallel. Summary of the steps:
 1. Copy another dev's sandbox in `gotc-deploy/deploy/` and change every instance of their username to yours, PR in the changes, `apply` them
 2. Change your Cloud SQL instance's `wfl` password to the one in `secret/dsde/gotc/dev/zero`
 3. Add the new URL to the OAuth credentials
