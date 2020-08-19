@@ -10,7 +10,9 @@
             [zero.service.gcs :as gcs]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero]))
+            [zero.zero :as zero]
+            [zero.environments :as env]
+            [clojure.tools.logging :as log]))
 
 (def description
   "Describe the purpose of this command."
@@ -204,7 +206,12 @@
 (defn print-help
   [& _]
   (println description)
-  (println (describe-overrides "baits and targets" "-B" default-baits-and-targets)))
+  (println (describe-overrides "baits and targets" "-B" default-baits-and-targets))
+  (println)
+  (println (format "Note that any bucket path overrides must be accessible by %s in the %s project"
+                   ; Hardcode because having help text reading from Vault / environments.clj is error-prone
+                   ; (This is very very unlikely to change during the lifetime of this CLI)
+                  "picard-prod" "broad-gotc-prod")))
 
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
