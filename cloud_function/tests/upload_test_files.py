@@ -22,10 +22,12 @@ def get_destination_paths(bucket, prefix):
         "ptc": f"gs://{bucket}/{prefix}/ptc.json"
     }
 
-def get_ptc_json(bucket, prefix, chip_well_barcode):
+def get_ptc_json(bucket, prefix, chip_well_barcode, prod):
     return {
-        "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
-        "environment": "aou-dev",
+        "cromwell":
+            "https://cromwell-aou.gotc-prod.broadinstitute.org" if prod
+            else "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+        "environment": "aou-prod" if prod else "aou-dev",
         "uuid": None,
         "notifications": [{
             "analysis_version_number": 1,
@@ -44,10 +46,10 @@ def get_ptc_json(bucket, prefix, chip_well_barcode):
         }]
     }
 
-def main(bucket):
+def main(bucket, prod):
     chip_well_barcode = uuid.uuid4()
     prefix = f"chip_name/{chip_well_barcode}/v1"
-    ptc_json = get_ptc_json(bucket, prefix, chip_well_barcode)
+    ptc_json = get_ptc_json(bucket, prefix, chip_well_barcode, prod)
     destination_paths = get_destination_paths(bucket, prefix)
     with tempfile.TemporaryDirectory() as tmpdirname:
         with open(f'{tmpdirname}/ptc.json', 'w') as f:
@@ -66,5 +68,11 @@ if __name__ == '__main__':
         default="dev-aou-arrays-input",
         help="The upload destination bucket."
     )
+    parser.add_argument(
+        "-p",
+        "--prod",
+        action="store_true",
+        help="Use infrastructure in broad-aou rather than broad-gotc-dev."
+    )
     args = parser.parse_args()
-    main(args.bucket)
+    main(args.bucket, args.prod)
