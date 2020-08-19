@@ -4,7 +4,6 @@
             [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
@@ -47,6 +46,19 @@
         (->> (str/join \newline))
         (format zero/the-name title))))
 
+(defn describe-overrides
+  "Describe how to override OPTIONS that configure NAME via FLAG-PREFIX"
+  [name flag-prefix options]
+  (when (seq options)
+    (-> [""
+         (format "Override the %s configuration by specifying arguments prefixed with %s"
+                 name flag-prefix)
+         (format "Example: %s%s=my-new-value"
+                 flag-prefix (first (keys options)))
+         "Configuration defaults:"]
+        (concat (map (fn [[k v]] (str k "=" v)) options))
+        (->> (str/join \newline)))))
+
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "ExternalExomeReprocessing_v1.1"
@@ -74,8 +86,8 @@
             :contamination_sites_mu  (str subset ".mu")
             :contamination_sites_ud  (str subset ".UD")})))
 
-(def baits-and-targets
-  "Baits and targets inputs."
+(def default-baits-and-targets
+  "Default baits and targets inputs."
   (let [private              "gs://broad-references-private/"
         bait_set_name        "whole_exome_illumina_coding_v1"
         interval_list        (str private "HybSelOligos/" bait_set_name "/" bait_set_name ".Homo_sapiens_assembly38")
@@ -88,9 +100,18 @@
      :cram_ref_fasta       fasta
      :cram_ref_fasta_index (str fasta ".fai")}))
 
+(defn apply-overrides
+  "Return an map like DEFAULTS but overridden with any RAW-ARGS that have FLAG-PREFIX."
+  [defaults flag-prefix raw-args]
+  (merge defaults (->> raw-args
+                       (filter #(str/starts-with? % (str flag-prefix ":")))
+                       (map #(str/split (subs % 3) #"="))
+                       (map (fn [[k v]] [(keyword k) v]))
+                       (into {}))))
+
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
-  [environment out-gs in-gs]
+  [baits-and-targets environment out-gs in-gs]
   (let [[input-key base _] (all/bam-or-cram? in-gs)
         leaf                    (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
@@ -134,14 +155,14 @@
 (defn hold-workflow
   "Hold OBJECT from IN-BUCKET for reprocessing into OUT-GS in
   ENVIRONMENT."
-  [environment in-bucket out-gs object]
+  [baits-and-targets environment in-bucket out-gs object]
   (let [path  (wdl/hack-unpack-resources-hack (:top workflow-wdl))
         in-gs (gcs/gs-url in-bucket object)]
     (cromwell/hold-workflow
      environment
      (io/file (:dir path) (path ".wdl"))
      (io/file (:dir path) (path ".zip"))
-     (make-inputs environment out-gs in-gs)
+     (make-inputs baits-and-targets environment out-gs in-gs)
      (util/make-options environment)
      cromwell-label-map)
     (prn in-gs)))
@@ -149,7 +170,7 @@
 (defn on-hold-some-workflows
   "Submit 'On Hold' up to MAX workflows from IN-GS to OUT-GS
   in ENVIRONMENT."
-  [environment max-string in-gs out-gs]
+  [baits-and-targets environment max-string in-gs out-gs]
   (let [max (util/is-non-negative! max-string)
         bucket (all/readable! in-gs)]
     (letfn [(input? [{:keys [name]}]
@@ -167,7 +188,7 @@
                         (remove done)
                         (take max)
                         (map (fn [base] (str base (suffix base)))))]
-        (run! (partial hold-workflow environment bucket out-gs) more)))))
+        (run! (partial hold-workflow baits-and-targets environment bucket out-gs) more)))))
 
 (defn release-some-on-hold-workflows
   "Submit up to MAX-STRING workflows from 'On Hold' in ENVIRONMENT."
@@ -180,18 +201,26 @@
            (take max)
            (run! release!)))))
 
+(defn print-help
+  [& _]
+  (println description)
+  (println (describe-overrides "baits and targets" "-B" default-baits-and-targets)))
+
 (defn run
   "Reprocess the BAM or CRAM files described by ARGS."
   [& args]
   (try
-    (let [env (zero/throw-or-environment-keyword! (first args))]
-      (apply (case (count args)
-               4 on-hold-some-workflows
+    (let [args-no-overrides (filter #(not (str/starts-with? % "-B")) args)
+          baits-and-targets (apply-overrides default-baits-and-targets "-B" args)
+          env               (zero/throw-or-environment-keyword! (first args-no-overrides))]
+      (apply (case (count args-no-overrides)
+               4 (partial on-hold-some-workflows baits-and-targets)
                3 (partial all/report-status cromwell-label)
                2 release-some-on-hold-workflows
+               1 print-help
                (throw (IllegalArgumentException.
                        "Must specify 2 to 4 arguments.")))
-             env (rest args)))
+             env (rest args-no-overrides)))
     (catch Exception x
-      (log/error description)
+      (print-help)
       (throw x))))
