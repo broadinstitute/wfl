@@ -40,9 +40,7 @@
 
 (def other-inputs
   "Miscellaneous inputs for arrays."
-  {:call_rate_threshold              0.98
-   :genotype_concordance_threshold   0.98
-   :contamination_controls_vcf       nil
+  {:contamination_controls_vcf       nil
    :subsampled_metrics_interval_list nil
    :disk_size                        100
    :preemptible_tries                3})
@@ -63,6 +61,7 @@
   [inputs]
   (let [mandatory-keys [:analysis_version_number
                         :bead_pool_manifest_file
+                        :call_rate_threshold
                         :chip_well_barcode
                         :cluster_file
                         :extended_chip_manifest_file

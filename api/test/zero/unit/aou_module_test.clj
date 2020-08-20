@@ -10,6 +10,7 @@
 (deftest test-aou-inputs-preparation
   (let [expected-per-sample-inputs         {:analysis_version_number     "foo"
                                             :bead_pool_manifest_file     "foo"
+                                            :call_rate_threshold         "foo"
                                             :chip_well_barcode           "foo"
                                             :cluster_file                "foo"
                                             :extended_chip_manifest_file "foo"
@@ -45,7 +46,6 @@
                                                   :Arrays.sample_lsid
                                                   :Arrays.red_idat_cloud_path
                                                   :Arrays.gender_cluster_file
-                                                  :Arrays.genotype_concordance_threshold
                                                   :Arrays.ref_fasta
                                                   :Arrays.bead_pool_manifest_file
                                                   :Arrays.analysis_version_number
