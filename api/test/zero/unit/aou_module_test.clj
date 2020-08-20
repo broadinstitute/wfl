@@ -23,43 +23,50 @@
                                             :zcall_thresholds_file       "foo"}
         redundant-per-sample-inputs-inputs (merge expected-per-sample-inputs {:extra "bar"})
         missing-per-sample-inputs-inputs   (dissoc expected-per-sample-inputs :analysis_version_number)
-        all-expected-keys                  [:Arrays.preemptible_tries
-                                            :Arrays.environment
-                                            :Arrays.ref_dict
-                                            :Arrays.params_file
-                                            :Arrays.subsampled_metrics_interval_list
-                                            :Arrays.chip_well_barcode
-                                            :Arrays.sample_alias
-                                            :Arrays.control_sample_vcf_file
-                                            :Arrays.variant_rsids_file
-                                            :Arrays.ref_fasta_index
-                                            :Arrays.dbSNP_vcf
-                                            :Arrays.disk_size
-                                            :Arrays.contamination_controls_vcf
-                                            :Arrays.green_idat_cloud_path
-                                            :Arrays.fingerprint_genotypes_vcf_index_file
-                                            :Arrays.control_sample_intervals_file
-                                            :Arrays.vault_token_path
-                                            :Arrays.reported_gender
-                                            :Arrays.dbSNP_vcf_index
-                                            :Arrays.extended_chip_manifest_file
-                                            :Arrays.zcall_thresholds_file
-                                            :Arrays.sample_lsid
-                                            :Arrays.red_idat_cloud_path
-                                            :Arrays.gender_cluster_file
-                                            :Arrays.control_sample_vcf_index_file
-                                            :Arrays.genotype_concordance_threshold
-                                            :Arrays.ref_fasta
-                                            :Arrays.bead_pool_manifest_file
-                                            :Arrays.analysis_version_number
-                                            :Arrays.fingerprint_genotypes_vcf_file
-                                            :Arrays.control_sample_name
-                                            :Arrays.cluster_file
-                                            :Arrays.call_rate_threshold
-                                            :Arrays.haplotype_database_file]]
+        all-expected-keys-no-control       (sort [:Arrays.preemptible_tries
+                                                  :Arrays.environment
+                                                  :Arrays.ref_dict
+                                                  :Arrays.params_file
+                                                  :Arrays.subsampled_metrics_interval_list
+                                                  :Arrays.chip_well_barcode
+                                                  :Arrays.sample_alias
+                                                  :Arrays.variant_rsids_file
+                                                  :Arrays.ref_fasta_index
+                                                  :Arrays.dbSNP_vcf
+                                                  :Arrays.disk_size
+                                                  :Arrays.contamination_controls_vcf
+                                                  :Arrays.green_idat_cloud_path
+                                                  :Arrays.fingerprint_genotypes_vcf_index_file
+                                                  :Arrays.vault_token_path
+                                                  :Arrays.reported_gender
+                                                  :Arrays.dbSNP_vcf_index
+                                                  :Arrays.extended_chip_manifest_file
+                                                  :Arrays.zcall_thresholds_file
+                                                  :Arrays.sample_lsid
+                                                  :Arrays.red_idat_cloud_path
+                                                  :Arrays.gender_cluster_file
+                                                  :Arrays.genotype_concordance_threshold
+                                                  :Arrays.ref_fasta
+                                                  :Arrays.bead_pool_manifest_file
+                                                  :Arrays.analysis_version_number
+                                                  :Arrays.fingerprint_genotypes_vcf_file
+                                                  :Arrays.cluster_file
+                                                  :Arrays.call_rate_threshold
+                                                  :Arrays.haplotype_database_file])
+        all-expected-keys                   (sort (concat all-expected-keys-no-control
+                                                          [:Arrays.control_sample_vcf_index_file
+                                                           :Arrays.control_sample_intervals_file
+                                                           :Arrays.control_sample_vcf_file
+                                                           :Arrays.control_sample_name]))]
     (testing "aou filters out non-necessary keys for per-sample-inputs"
-      (is (= (aou/get-per-sample-inputs redundant-per-sample-inputs-inputs) expected-per-sample-inputs)))
+      (is (= expected-per-sample-inputs (aou/get-per-sample-inputs redundant-per-sample-inputs-inputs))))
     (testing "aou throws for missing keys for per-sample-inputs"
       (is (thrown? Exception (aou/get-per-sample-inputs missing-per-sample-inputs-inputs))))
     (testing "aou prepares all necessary keys"
-      (is (= (keys (aou/make-inputs :aou-dev expected-per-sample-inputs)) all-expected-keys)))))
+      (is (= all-expected-keys-no-control (sort (keys (aou/make-inputs :aou-dev expected-per-sample-inputs))))))
+    (testing "aou prepares all necessary keys plus optional keys"
+      (is (= all-expected-keys (sort (keys (aou/make-inputs :aou-dev (merge expected-per-sample-inputs
+                                                                       {:control_sample_vcf_index_file "foo"
+                                                                        :control_sample_intervals_file "foo"
+                                                                        :control_sample_vcf_file       "foo"
+                                                                        :control_sample_name           "foo"})))))))))
