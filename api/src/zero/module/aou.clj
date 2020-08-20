@@ -22,8 +22,8 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-aou"))
-   (wdl/workflow-name (:top workflow-wdl))})
+  {(keyword zero/the-name)
+   pipeline})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
@@ -104,6 +104,11 @@
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
+(defn make-labels
+  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS."
+  [per-sample-inputs]
+  (merge cromwell-label-map (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])))
+
 (defn active-or-done-objects
   "Query by PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
   [environment {:keys [analysis_version_number chip_well_barcode] :as primary-vals}]
@@ -141,7 +146,7 @@
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
       (make-options)
-      cromwell-label-map)))
+      (make-labels per-sample-inputs))))
 
 #_(defn update-workload!
     "Use transaction TX to update WORKLOAD statuses."
