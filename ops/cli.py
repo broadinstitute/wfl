@@ -295,6 +295,32 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         run_liquibase_migration,
         stop_cloud_sql_proxy,
         print_deployment_success
+    ],
+    "ops-deploy": [
+        infer_missing_arguments_pre_validate,
+        validate_cloud_sql_name,
+        validate_cluster_name,
+        infer_missing_arguments,
+        check_git_tag,
+        configure_kubectl,
+        configure_helm,
+        render_values_file,
+        print_config,
+        exit_if_dry_run,
+        prompt_deploy_version,
+        configure_cloud_sql_proxy,
+        helm_deploy_wfl,
+        run_liquibase_migration,
+        stop_cloud_sql_proxy,
+        print_deployment_success
+    ],
+    "hornet-pre-deploy": [
+        infer_missing_arguments_pre_validate,
+        validate_cloud_sql_name,
+        validate_cluster_name,
+        infer_missing_arguments,
+        make_git_tag,
+        publish_docker_images
     ]
 }
 
