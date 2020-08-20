@@ -35,12 +35,19 @@ def get_manifest_path(object_name):
     chip_name, chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=3)
     return "/".join([chip_name, chip_well_barcode, analysis_version, "ptc.json"])
 
+def get_final_output_bucket(environment):
+    if environment == "aou-dev":
+        return "gs://dev-aou-arrays-output"
+    elif environment == "aou-prod":
+        return "gs://broad-aou-arrays-output"
+    return "aou-ouputs-placeholder"
+
 def get_or_create_workload(headers):
     payload = {
         "creator": _SERVICE_ACCOUNT,
         "cromwell": CROMWELL_URL,
         "input": "aou-inputs-placeholder",
-        "output": "aou-ouputs-placeholder",
+        "output": get_final_output_bucket(WFL_ENVIRONMENT),
         "pipeline": "AllOfUsArrays",
         "project": WFL_ENVIRONMENT,
         "items": [{}]
