@@ -30,7 +30,7 @@
   {:creator  @git-email
    :cromwell (get-in stuff [:gotc-dev :cromwell :url])
    :input    "aou-inputs-placeholder"
-   :output   "aou-outputs-placeholder"
+   :output   "gs://broad-gotc-dev-zero-test/aou-test-output"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)
    :items    [{}]})
