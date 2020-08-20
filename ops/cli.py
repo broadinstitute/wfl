@@ -244,6 +244,23 @@ def print_deployment_success(config: WflInstanceConfig) -> None:
     info(shell("kubectl get pods"), plain=True)
 
 
+def make_git_tag(config: WflInstanceConfig) -> None:
+    info("=>  Tagging current commit with version")
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'")
+    shell(f"git push origin v{config.version}")
+    success(f"Tag 'v{config.version}' created and pushed")
+
+
+def check_git_tag(config: WflInstanceConfig) -> None:
+    info("=>  Checking current commit tags for version")
+    if not any(t == f"v{config.version}" for t in shell(f"git tag -l", quiet=True).splitlines()):
+        error(f"No tag 'v{config.version} found--did you check out the right tag?")
+        info("This is necessary because liquibase changelogs are read from the repo itself", plain=True)
+        info("Tags on the current commit, if any:", plain=True)
+        info(shell("git tag -l", quiet=True), plain=True)
+        exit(1)
+
+
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     "info": [
         infer_missing_arguments_pre_validate,
