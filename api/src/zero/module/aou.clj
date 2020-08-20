@@ -9,7 +9,9 @@
             [zero.service.postgres :as postgres]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero])
+            [zero.zero :as zero]
+            [zero.service.gcs :as gcs]
+            [zero.module.all :as all])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -162,7 +164,8 @@
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (zero/get-the-version)
         probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ?"
-                                     project pipeline release])]
+                                     project pipeline release])
+        checked-output (gcs/parse-gs-url output)]
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
       (let [[{:keys [uuid]}] probe-result]
@@ -173,7 +176,7 @@
                                         :creator  creator
                                         :cromwell cromwell
                                         :input    "aou-inputs-placeholder"
-                                        :output   output
+                                        :output   (all/de-slashify output)
                                         :project  project
                                         :release  release
                                         :uuid     (UUID/randomUUID)
