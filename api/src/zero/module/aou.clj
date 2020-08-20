@@ -30,15 +30,6 @@
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
 
-(def chip-metadata
-  "Chip Metadata inputs for arrays."
-  {:bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm"
-   :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv"
-   :cluster_file                "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt"
-   :gender_cluster_file         "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"
-   :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt"}
-  )
-
 (def fingerprinting
   "Fingerprinting inputs for arrays."
   {:fingerprint_genotypes_vcf_file       nil
@@ -47,18 +38,9 @@
    :variant_rsids_file                   "gs://broad-references-private/hg19/v0/Homo_sapiens_assembly19.haplotype_database.snps.list"}
   )
 
-(def genotype-concordance
-  "Genotype Concordance inputs for arrays."
-  {:control_sample_vcf_file       "gs://broad-gotc-test-storage/arrays/controldata/NA12878.vcf.gz"
-   :control_sample_vcf_index_file "gs://broad-gotc-test-storage/arrays/controldata/NA12878.vcf.gz.tbi"
-   :control_sample_intervals_file "gs://broad-gotc-test-storage/arrays/controldata/NA12878.interval_list"
-   :control_sample_name           "NA12878"})
-
 (def other-inputs
   "Miscellaneous inputs for arrays."
-  {:call_rate_threshold              0.98
-   :genotype_concordance_threshold   0.98
-   :contamination_controls_vcf       nil
+  {:contamination_controls_vcf       nil
    :subsampled_metrics_interval_list nil
    :disk_size                        100
    :preemptible_tries                3})
@@ -77,33 +59,37 @@
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
   [inputs]
-  (let [the-keys [:analysis_version_number
-                  :bead_pool_manifest_file
-                  :chip_well_barcode
-                  :cluster_file
-                  :extended_chip_manifest_file
-                  :gender_cluster_file
-                  :green_idat_cloud_path
-                  :params_file
-                  :red_idat_cloud_path
-                  :reported_gender
-                  :sample_alias
-                  :sample_lsid
-                  :zcall_thresholds_file]
-        result  (select-keys inputs the-keys)
-        missing (vec (keep (fn [k] (when (nil? (k result)) k)) the-keys))]
-    missing
+  (let [mandatory-keys [:analysis_version_number
+                        :bead_pool_manifest_file
+                        :call_rate_threshold
+                        :chip_well_barcode
+                        :cluster_file
+                        :extended_chip_manifest_file
+                        :gender_cluster_file
+                        :green_idat_cloud_path
+                        :params_file
+                        :red_idat_cloud_path
+                        :reported_gender
+                        :sample_alias
+                        :sample_lsid
+                        :zcall_thresholds_file]
+        optional-keys [; genotype concordance inputs
+                       :control_sample_vcf_file
+                       :control_sample_vcf_index_file
+                       :control_sample_intervals_file
+                       :control_sample_name]
+        mandatory  (select-keys inputs mandatory-keys)
+        optional   (select-keys inputs optional-keys)
+        missing (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
     (when (seq missing)
       (throw (Exception. (format "Missing per-sample inputs: %s" missing))))
-    result))
+    (merge optional mandatory)))
 
 (defn make-inputs
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
-                      chip-metadata
                       fingerprinting
-                      genotype-concordance
                       other-inputs
                       (env-inputs environment)
                       (get-per-sample-inputs per-sample-inputs))]
