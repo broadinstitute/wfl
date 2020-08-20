@@ -58,6 +58,7 @@ def validate_cloud_sql_name(config: WflInstanceConfig) -> None:
             error(f"Cloud SQL instance {config.cloud_sql_name} not found")
             info(f"    Available Cloud SQL instances in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} sql instances list", quiet=True), plain=True)
+            exit(1)
         else:
             success(f"Cloud SQL instance {config.cloud_sql_name} exists")
 
@@ -72,6 +73,7 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
             error(f"GKE cluster {config.cluster_name} not found")
             info(f"    Available clusters in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} container clusters list", quiet=True), plain=True)
+            exit(1)
         else:
             success(f"GKE cluster {config.cluster_name} exists")
 
@@ -132,6 +134,7 @@ def configure_kubectl(config: WflInstanceConfig) -> None:
             error(f"Namespace {config.cluster_namespace} not found in {config.cluster_name}")
             info(f"    Available namespaces in {config.cluster_name}:", plain=True)
             info(shell("kubectl get namespace", quiet=True), plain=True)
+            exit(1)
         else:
             shell(f"kubectl config set-context --current --namespace={config.cluster_namespace}")
             success("Kubernetes configured")
