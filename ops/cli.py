@@ -307,7 +307,6 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         render_values_file,
         print_config,
         exit_if_dry_run,
-        prompt_deploy_version,
         configure_cloud_sql_proxy,
         helm_deploy_wfl,
         run_liquibase_migration,
