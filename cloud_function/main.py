@@ -55,6 +55,12 @@ def update_workload(headers, workload_uuid, input_data):
         headers=headers,
         json=input_data
     )
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        print(f"The failed request: {response.request}")
+        print(f"The failed response: {response.text}")
+        raise e
     workflows = response.json()
     return [each['uuid'] for each in workflows]
 
