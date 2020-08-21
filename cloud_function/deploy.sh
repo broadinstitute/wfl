@@ -12,11 +12,13 @@ if [ "${GCLOUD_PROJECT}" == "broad-gotc-dev-storage" ]; then
   _WFL_URL="https://dev-wfl.gotc-dev.broadinstitute.org"
   _CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
   _WFL_ENVIRONMENT="aou-dev"
+  _OUTPUT_BUCKET="gs://dev-aou-arrays-output"
 elif [ "${GCLOUD_PROJECT}" == "broad-aou-storage" ]; then
   SA_EMAIL="aou-cloud-fn@broad-aou-storage.iam.gserviceaccount.com"
   _WFL_URL="https://aou-wfl.gotc-prod.broadinstitute.org"
   _CROMWELL_URL="https://cromwell-aou.gotc-prod.broadinstitute.org/"
   _WFL_ENVIRONMENT="aou-prod"
+  _OUTPUT_BUCKET="gs://broad-aou-arrays-output"
 else
   printf "Unrecognized google project\n"
   exit 1
@@ -28,6 +30,6 @@ gcloud functions deploy submit_aou_workload \
     --trigger-resource ${TRIGGER_BUCKET} \
     --trigger-event ${TRIGGER_EVENT} \
     --service-account ${SA_EMAIL} \
-    --set-env-vars WFL_URL=${_WFL_URL},CROMWELL_URL=${_CROMWELL_URL},WFL_ENVIRONMENT=${_WFL_ENVIRONMENT} \
+    --set-env-vars WFL_URL=${_WFL_URL},CROMWELL_URL=${_CROMWELL_URL},WFL_ENVIRONMENT=${_WFL_ENVIRONMENT},OUTPUT_BUCKET=${_OUTPUT_BUCKET} \
     --runtime python37 \
     --memory 128MB
