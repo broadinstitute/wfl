@@ -7,8 +7,13 @@ from google.cloud import exceptions
 
 _SERVICE_ACCOUNT = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
 WFL_URL = os.environ.get("WFL_URL")
+CROMWELL_URL = os.environ.get("CROMWELL_URL")
+WFL_ENVIRONMENT = os.environ.get("WFL_ENVIRONMENT")
 
 assert WFL_URL is not None, "WFL_URL is not set"
+assert CROMWELL_URL is not None, "CROMWELL_URL is not set"
+assert WFL_ENVIRONMENT is not None, "WFL_ENVIRONMENT is not set"
+
 
 def get_auth_headers():
     scopes_list = ["https://www.googleapis.com/auth/cloud-platform",
@@ -30,14 +35,14 @@ def get_manifest_path(object_name):
     chip_name, chip_well_barcode, analysis_version, file_name = path.split("/", maxsplit=3)
     return "/".join([chip_name, chip_well_barcode, analysis_version, "ptc.json"])
 
-def get_or_create_workload(headers, cromwell_url, environment):
+def get_or_create_workload(headers):
     payload = {
         "creator": _SERVICE_ACCOUNT,
-        "cromwell": cromwell_url,
+        "cromwell": CROMWELL_URL,
         "input": "aou-inputs-placeholder",
         "output": "aou-ouputs-placeholder",
         "pipeline": "AllOfUsArrays",
-        "project": environment,
+        "project": WFL_ENVIRONMENT,
         "items": [{}]
     }
     response = requests.post(
@@ -108,9 +113,7 @@ def submit_aou_workload(event, context):
         chip_well_barcode = notification.get('chip_well_barcode')
         analysis_version = notification.get('analysis_version_number')
         print(f"Completed sample upload for {chip_well_barcode}-{analysis_version}")
-        cromwell_url = input_data.get('cromwell')
-        environment = input_data.get('environment')
-        workload_uuid = get_or_create_workload(headers, cromwell_url, environment)
+        workload_uuid = get_or_create_workload(headers)
         print(f"Updating workload: {workload_uuid}")
         workflow_ids = update_workload(headers, workload_uuid, input_data)
         print(f"Started cromwell workflows: {workflow_ids} for {chip_well_barcode}-{analysis_version}")
