@@ -319,6 +319,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         validate_cloud_sql_name,
         validate_cluster_name,
         infer_missing_arguments,
+        exit_if_dry_run,
         make_git_tag,
         publish_docker_images
     ]
