@@ -215,6 +215,11 @@
          :multipart (map multipartify parts)}
         request-json #_debug/dump :body :id)))
 
+(defn stringify-vals
+  "Stringify all of the values of a Map."
+  [m]
+  (into {} (map (fn [[k v]] [k (str v)]) m)))
+
 (defn partify-workflow
   "Return a map describing a workflow named WF to run in ENVIRONMENT
    with DEPENDENCIES, INPUTS, OPTIONS, and LABELS."
@@ -222,7 +227,7 @@
   (letfn [(jsonify [edn] (when edn (json/write-str edn :escape-slash false)))
           (maybe [m k v] (if v (assoc m k v) m))]
     (let [wf-labels (make-workflow-labels environment (.getName wf) inputs)
-          all-labels (merge labels wf-labels)]
+          all-labels (stringify-vals (merge labels wf-labels))]
       (-> {:workflowSource wf
            :workflowType   "WDL"
            :labels         (jsonify all-labels)}
