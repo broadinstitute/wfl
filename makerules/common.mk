@@ -10,6 +10,7 @@ CLOJURE := clojure
 CP      := cp -f
 DATE    := date
 DOCKER  := docker
+DIRNAME := dirname
 ECHO    := echo
 EXPORT  := export
 FIND    := find
@@ -34,14 +35,15 @@ TEE     := tee
 TOUCH   := touch
 TR      := tr
 UNAME   := uname
+UNIQUE  := uniq
 
 # Extensions
-CSS  := css
-CLJ  := clj
-HTML := html
-JS   := js
-TS   := ts
-VUE  := vue
+CSS       := css
+CLJ       := clj
+HTML      := html
+JS        := js
+TS        := ts
+VUE       := vue
 
 # Shamelessly plagiarised from
 # Mecklenburg, R., Managing Projects with GNU Make, 3rd Edition.
@@ -51,6 +53,6 @@ define brief-help
     $(GREP) -v -e '^no-such-target' |                          \
     $(AWK) '/^[^.%][-A-Za-z0-9_]*:/                            \
         { print substr($$1, 1, length($$1)-1) }' |             \
-	$(SORT) |                                                  \
+    $(SORT) |                                                  \
     $(PR) --omit-pagination --width=80 --columns=4
 endef
