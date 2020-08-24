@@ -9,7 +9,9 @@
             [zero.service.postgres :as postgres]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero])
+            [zero.zero :as zero]
+            [zero.service.gcs :as gcs]
+            [zero.module.all :as all])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -97,9 +99,10 @@
 
 (defn make-options
   "Return options for aou arrays pipeline."
-  []
-  {; TODO: add :final_workflow_outputs_dir here
-   ; TODO: add :default_runtime_attributes {:maxRetries 3} here
+  [sample-output-path]
+  {; TODO: add :default_runtime_attributes {:maxRetries 3} here
+   :final_workflow_outputs_dir sample-output-path
+   :use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
@@ -138,14 +141,14 @@
 
 (defn really-submit-one-workflow
   "Submit one workflow to ENVIRONMENT."
-  [environment per-sample-inputs]
+  [environment per-sample-inputs sample-output-path]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
-      (make-options)
+      (make-options sample-output-path)
       (make-labels per-sample-inputs))))
 
 #_(defn update-workload!
@@ -158,11 +161,12 @@
    create a new workload table if it does not exist otherwise append records
    to the existing one."
   [tx body]
-  (let [{:keys [creator cromwell pipeline project]} body
+  (let [{:keys [creator cromwell pipeline project output]} body
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (zero/get-the-version)
-        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ?"
-                                     project pipeline release])]
+        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
+                                     project pipeline release output])
+        checked-output (gcs/parse-gs-url output)]
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
       (let [[{:keys [uuid]}] probe-result]
@@ -173,7 +177,7 @@
                                         :creator  creator
                                         :cromwell cromwell
                                         :input    "aou-inputs-placeholder"
-                                        :output   "aou-outputs-placeholder"
+                                        :output   (all/de-slashify output)
                                         :project  project
                                         :release  release
                                         :uuid     (UUID/randomUUID)
@@ -260,7 +264,8 @@
         environment        (zero/throw-or-environment-keyword! environment)
         table-query-result (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))
         workload-started?  (:started table-query-result)
-        table              (:items table-query-result)]
+        table              (:items table-query-result)
+        output-bucket      (:output table-query-result)]
 
     (if (nil? workload-started?)
       ; throw when the workload does not exist or it hasn't been started yet
@@ -277,7 +282,9 @@
                                   (assoc :updated now)
                                   keep-primary-keys))
                 (submit! [sample]
-                  [(really-submit-one-workflow environment sample) (keep-primary-keys sample)])
+                  (let [{:keys [chip_well_barcode analysis_version_number] :as sample-pks} (keep-primary-keys sample)
+                        output-path (str/join "/" [output-bucket chip_well_barcode analysis_version_number])]
+                    [(really-submit-one-workflow environment sample output-path) sample-pks]))
                 (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode] :as pks}]]
                   (when uuid
                     (jdbc/update! tx table

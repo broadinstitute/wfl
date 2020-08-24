@@ -9,11 +9,12 @@ _SERVICE_ACCOUNT = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
 WFL_URL = os.environ.get("WFL_URL")
 CROMWELL_URL = os.environ.get("CROMWELL_URL")
 WFL_ENVIRONMENT = os.environ.get("WFL_ENVIRONMENT")
+OUTPUT_BUCKET = os.environ.get("OUTPUT_BUCKET")
 
 assert WFL_URL is not None, "WFL_URL is not set"
 assert CROMWELL_URL is not None, "CROMWELL_URL is not set"
 assert WFL_ENVIRONMENT is not None, "WFL_ENVIRONMENT is not set"
-
+assert OUTPUT_BUCKET is not None, "OUTPUT_BUCKET is not set"
 
 def get_auth_headers():
     scopes_list = ["https://www.googleapis.com/auth/cloud-platform",
@@ -40,7 +41,7 @@ def get_or_create_workload(headers):
         "creator": _SERVICE_ACCOUNT,
         "cromwell": CROMWELL_URL,
         "input": "aou-inputs-placeholder",
-        "output": "aou-ouputs-placeholder",
+        "output": OUTPUT_BUCKET,
         "pipeline": "AllOfUsArrays",
         "project": WFL_ENVIRONMENT,
         "items": [{}]
