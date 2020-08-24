@@ -28,7 +28,8 @@ $(BUILD): $(DERIVED_SRC)
 	@$(TOUCH) $@
 
 DOCKER_UI_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
-$(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/Dockerfile.dockerignore
+$(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
+	$(CP) $(MODULE_DIR)/.dockerignore $(DERIVED_MODULE_DIR)
 	$(DOCKER) build --file $< --tag $(DOCKER_UI_IMAGE) $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
