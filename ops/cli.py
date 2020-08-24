@@ -298,7 +298,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         stop_cloud_sql_proxy,
         print_deployment_success
     ],
-    "ops-deploy": [
+    "deploy-from-tag": [
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -315,7 +315,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         stop_cloud_sql_proxy,
         print_deployment_success
     ],
-    "hornet-pre-deploy": [
+    "tag-and-push-images": [
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
