@@ -5,13 +5,13 @@ from pathlib import Path
 from util.misc import info, success, shell_unchecked
 
 
-def render_ctmpl(ctmpl_file: str, **kwargs) -> int:
+def render_ctmpl(ctmpl_file: str, vault_token_path: str, **kwargs) -> int:
     """Render a ctmpl file."""
     info(f"=>  Rendering ctmpl file {ctmpl_file}")
     envs = " ".join([f"-e {k}={v}" for k, v in kwargs.items()]) if kwargs else ""
     info(f"=>  Feeding variables: {envs}")
     shell_unchecked(" ".join(['docker run -i --rm -v "$(pwd)":/working',
-                              '-v "$HOME"/.vault-token:/root/.vault-token',
+                              f'-v {vault_token_path}:/root/.vault-token',
                               f'{envs}',
                               'broadinstitute/dsde-toolbox:dev',
                               '/usr/local/bin/render-ctmpls.sh -k',
@@ -27,6 +27,8 @@ if __name__ == "__main__":
     parser.add_argument("--no-version", action="store_true", help="Don't pass a WFL_VERSION variable")
     parser.add_argument("-e", "--environment", metavar="KEY=VALUE", action="append",
                         help="Pass extra things in the environment (can exist multiple times)")
+    parser.add_argument("--vault-token-path", help="Use a vault token at a specific path",
+                        default='"$HOME"/.vault-token')
     args = parser.parse_args()
     file = Path(args.file)
     assert file.exists() and file.is_file(), f"{file} is not valid!"
@@ -42,4 +44,4 @@ if __name__ == "__main__":
             with open("version") as version_file:
                 environment["WFL_VERSION"] = version_file.read().strip()
 
-    exit(render_ctmpl(ctmpl_file=str(file), **environment))
+    exit(render_ctmpl(ctmpl_file=str(file), vault_token_path=args.vault_token_path, **environment))

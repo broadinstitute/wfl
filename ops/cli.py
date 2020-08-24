@@ -39,6 +39,7 @@ class WflInstanceConfig:
     db_password: str = None
     db_connection_name: str = None
     rendered_values_file: str = None
+    vault_token_path: str = None
 
 
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
@@ -58,6 +59,7 @@ def validate_cloud_sql_name(config: WflInstanceConfig) -> None:
             error(f"Cloud SQL instance {config.cloud_sql_name} not found")
             info(f"    Available Cloud SQL instances in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} sql instances list", quiet=True), plain=True)
+            exit(1)
         else:
             success(f"Cloud SQL instance {config.cloud_sql_name} exists")
 
@@ -72,6 +74,7 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
             error(f"GKE cluster {config.cluster_name} not found")
             info(f"    Available clusters in {config.project}:", plain=True)
             info(shell(f"gcloud --project {config.project} container clusters list", quiet=True), plain=True)
+            exit(1)
         else:
             success(f"GKE cluster {config.cluster_name} exists")
 
@@ -132,6 +135,7 @@ def configure_kubectl(config: WflInstanceConfig) -> None:
             error(f"Namespace {config.cluster_namespace} not found in {config.cluster_name}")
             info(f"    Available namespaces in {config.cluster_name}:", plain=True)
             info(shell("kubectl get namespace", quiet=True), plain=True)
+            exit(1)
         else:
             shell(f"kubectl config set-context --current --namespace={config.cluster_namespace}")
             success("Kubernetes configured")
@@ -158,6 +162,7 @@ def render_values_file(config: WflInstanceConfig) -> None:
     ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
+                 vault_token_path=config.vault_token_path,
                  WFL_VERSION=config.version,
                  WFL_DB_URL=f"'jdbc:postgresql://google/wfl?cloudSqlInstance={config.db_connection_name}"
                             f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'",
@@ -211,7 +216,7 @@ def publish_docker_images(config: WflInstanceConfig) -> None:
 def helm_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
-    info("    This must run on a non-split VPN", plain=True)
+    info("    This must run on a non-split VPN (or on a specifically-allowed Jenkins agent)", plain=True)
     shell(f"helm upgrade {config.instance_id}-wfl gotc-charts/wfl -f {config.rendered_values_file} --install "
           f"--namespace {config.cluster_namespace}")
     success("WFL deployed")
@@ -241,6 +246,23 @@ def print_deployment_success(config: WflInstanceConfig) -> None:
     info(shell("kubectl get pods"), plain=True)
 
 
+def make_git_tag(config: WflInstanceConfig) -> None:
+    info("=>  Tagging current commit with version")
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'")
+    shell(f"git push origin v{config.version}")
+    success(f"Tag 'v{config.version}' created and pushed")
+
+
+def check_git_tag(config: WflInstanceConfig) -> None:
+    info("=>  Checking current commit tags for version")
+    if not any(t == f"v{config.version}" for t in shell(f"git tag -l", quiet=True).splitlines()):
+        error(f"No tag 'v{config.version} found--did you check out the right tag?")
+        info("This is necessary because liquibase changelogs are read from the repo itself", plain=True)
+        info("Tags on the current commit, if any:", plain=True)
+        info(shell("git tag -l", quiet=True), plain=True)
+        exit(1)
+
+
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     "info": [
         infer_missing_arguments_pre_validate,
@@ -263,10 +285,10 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         validate_cloud_sql_name,
         validate_cluster_name,
         infer_missing_arguments,
-        print_config,
         configure_kubectl,
         configure_helm,
         render_values_file,
+        print_config,
         exit_if_dry_run,
         prompt_deploy_version,
         configure_cloud_sql_proxy,
@@ -275,6 +297,32 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         run_liquibase_migration,
         stop_cloud_sql_proxy,
         print_deployment_success
+    ],
+    "deploy-from-tag": [
+        infer_missing_arguments_pre_validate,
+        validate_cloud_sql_name,
+        validate_cluster_name,
+        infer_missing_arguments,
+        check_git_tag,
+        configure_kubectl,
+        configure_helm,
+        render_values_file,
+        print_config,
+        exit_if_dry_run,
+        configure_cloud_sql_proxy,
+        helm_deploy_wfl,
+        run_liquibase_migration,
+        stop_cloud_sql_proxy,
+        print_deployment_success
+    ],
+    "tag-and-push-images": [
+        infer_missing_arguments_pre_validate,
+        validate_cloud_sql_name,
+        validate_cluster_name,
+        infer_missing_arguments,
+        exit_if_dry_run,
+        make_git_tag,
+        publish_docker_images
     ]
 }
 
@@ -303,6 +351,8 @@ def cli() -> WflInstanceConfig:
                         help="specify the GKE cluster name instead of inferring from labels")
     parser.add_argument("--cluster-namespace",
                         help="specify the K8s namespace instead of '{INSTANCE}-wfl'")
+    parser.add_argument("--vault-token-path", default='"$HOME"/.vault-token',
+                        help="for operations that need a vault token, specify a specific path to one")
     return WflInstanceConfig(**vars(parser.parse_args()))
 
 
