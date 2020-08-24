@@ -214,7 +214,7 @@ def publish_docker_images(config: WflInstanceConfig) -> None:
 def helm_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
-    info("    This must run on a non-split VPN", plain=True)
+    info("    This must run on a non-split VPN (or on a specifically-allowed Jenkins agent)", plain=True)
     shell(f"helm upgrade {config.instance_id}-wfl gotc-charts/wfl -f {config.rendered_values_file} --install "
           f"--namespace {config.cluster_namespace}")
     success("WFL deployed")
