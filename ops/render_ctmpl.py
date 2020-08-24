@@ -11,7 +11,7 @@ def render_ctmpl(ctmpl_file: str, vault_token_path: str, **kwargs) -> int:
     envs = " ".join([f"-e {k}={v}" for k, v in kwargs.items()]) if kwargs else ""
     info(f"=>  Feeding variables: {envs}")
     shell_unchecked(" ".join(['docker run -i --rm -v "$(pwd)":/working',
-                              f'-v ${vault_token_path}:/root/.vault-token',
+                              f'-v {vault_token_path}:/root/.vault-token',
                               f'{envs}',
                               'broadinstitute/dsde-toolbox:dev',
                               '/usr/local/bin/render-ctmpls.sh -k',
