@@ -42,6 +42,7 @@ CSS       := css
 CLJ       := clj
 HTML      := html
 JS        := js
+TIMESTAMP := timestamp
 TS        := ts
 VUE       := vue
 
