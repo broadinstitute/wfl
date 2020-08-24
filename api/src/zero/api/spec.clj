@@ -27,8 +27,7 @@
 (s/def ::uuids (s/* ::uuid))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
 (s/def ::uuid-kvs (s/* ::uuid-kv))
-(s/def ::uuid-query (s/or :none empty?
-                          :one (s/keys :req-un [::uuid])))
+(s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::workload-request (s/keys :req-un [::creator
