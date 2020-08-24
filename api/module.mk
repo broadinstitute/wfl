@@ -3,7 +3,6 @@
 REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
-
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
 RESOURCES_DIR         := $(MODULE_DIR)/resources
 SRC_DIR               := $(MODULE_DIR)/src
@@ -43,7 +42,7 @@ $(CHECK): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	@$(TOUCH) $@
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
-$(IMAGES): $(MODULE_DIR)/Dockerfile
+$(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/Dockerfile.dockerignore
 	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
