@@ -39,6 +39,7 @@ class WflInstanceConfig:
     db_password: str = None
     db_connection_name: str = None
     rendered_values_file: str = None
+    vault_token_path: str = None
 
 
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
@@ -161,6 +162,7 @@ def render_values_file(config: WflInstanceConfig) -> None:
     ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
+                 vault_token_path=config.vault_token_path,
                  WFL_VERSION=config.version,
                  WFL_DB_URL=f"'jdbc:postgresql://google/wfl?cloudSqlInstance={config.db_connection_name}"
                             f"&socketFactory=com.google.cloud.sql.postgres.SocketFactory'",
@@ -349,6 +351,8 @@ def cli() -> WflInstanceConfig:
                         help="specify the GKE cluster name instead of inferring from labels")
     parser.add_argument("--cluster-namespace",
                         help="specify the K8s namespace instead of '{INSTANCE}-wfl'")
+    parser.add_argument("--vault-token-path", default='"$HOME"/.vault-token',
+                        help="for operations that need a vault token, specify a specific path to one")
     return WflInstanceConfig(**vars(parser.parse_args()))
 
 
