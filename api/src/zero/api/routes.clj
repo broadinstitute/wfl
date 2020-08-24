@@ -81,6 +81,12 @@
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
            :swagger {:info {:title (str zero/the-name "-API")
                             :version (str (:version (zero/get-the-version)))}
+                     :securityDefinitions {:googleoauth {:type "oauth2"
+                                                         :flow "implicit"
+                                                         :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
+                                                         :scopes {:openid  "open id authorization"
+                                                                  :email   "email authorization"
+                                                                  :profile "profile authorization"}}}
                      :basePath "/"} ;; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
