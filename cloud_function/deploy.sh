@@ -30,4 +30,5 @@ gcloud functions deploy submit_aou_workload \
     --service-account ${SA_EMAIL} \
     --set-env-vars WFL_URL=${_WFL_URL},CROMWELL_URL=${_CROMWELL_URL},WFL_ENVIRONMENT=${_WFL_ENVIRONMENT} \
     --runtime python37 \
-    --memory 128MB
+    --memory 128MB \
+    --retry
