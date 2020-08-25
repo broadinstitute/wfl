@@ -2,8 +2,7 @@
 # Defines common shell utilites for wfl
 
 # Set the shell used on all platforms
-SHELL       := bash
-.SHELLFLAGS += -o pipefail -c
+SHELL       := bash -o pipefail -c
 
 # Common shell programs
 AWK     := awk
