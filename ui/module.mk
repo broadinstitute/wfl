@@ -39,8 +39,8 @@ $(CLEAN):
 $(DERIVED_NPM_CONFIG): $(DERIVED_MODULE_DIR)/%.json : $(MODULE_DIR)/%.json
 	$(JQ) '.version="$(WFL_VERSION)"' $< > $@
 
-DERIVED_SRC_DIRS = $(filter-out $(DERIVED_MODULE_DIR),\
-	$(shell eval "$(DIRNAME) $(DERIVED_SRC) | $(SORT) | $(UNIQUE)"))
+DERIVED_SRC_DIRS = \
+	$(filter-out $(DERIVED_MODULE_DIR)/,$(sort $(dir $(DERIVED_SRC))))
 
 $(DERIVED_SRC): | $(DERIVED_SRC_DIRS)
 $(DERIVED_SRC): $(DERIVED_MODULE_DIR)/% : $(MODULE_DIR)/%
