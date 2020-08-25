@@ -1,6 +1,10 @@
 # common.mk
 # Defines common shell utilites for wfl
 
+# Set the shell used on all platforms
+SHELL       := bash
+.SHELLFLAGS += -o pipefail -c
+
 # Common shell programs
 AWK     := awk
 BOOT    := boot
