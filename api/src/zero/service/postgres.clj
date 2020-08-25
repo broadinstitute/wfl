@@ -16,10 +16,12 @@
                 ZERO_POSTGRES_PASSWORD
                 ZERO_POSTGRES_URL
                 ZERO_POSTGRES_USERNAME]} (util/getenv)]
-    (assoc {:instance-name "zero-postgresql"
-            :db-name       "wfl"
-            :classname     "org.postgresql.Driver"
-            :subprotocol   "postgresql"}
+    (assoc {:classname       "org.postgresql.Driver"
+            :db-name         "wfl"
+            :instance-name   "zero-postgresql"
+            ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
+            :isolation-level :serializable
+            :subprotocol     "postgresql"}
            :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
            :password       (or ZERO_POSTGRES_PASSWORD "password")
            :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
