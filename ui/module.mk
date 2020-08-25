@@ -37,7 +37,7 @@ $(CLEAN):
 	-$(DOCKER) image rm -f $(DOCKER_UI_IMAGE)
 
 $(DERIVED_NPM_CONFIG): $(DERIVED_MODULE_DIR)/%.json : $(MODULE_DIR)/%.json
-	$(SED) "s/%VERSION%/$(WFL_VERSION)/g" $< > $@
+	$(JQ) '.version="$(WFL_VERSION)"' $< > $@
 
 DERIVED_SRC_DIRS = $(filter-out $(DERIVED_MODULE_DIR),\
 	$(shell eval "$(DIRNAME) $(DERIVED_SRC) | $(SORT) | $(UNIQUE)"))
