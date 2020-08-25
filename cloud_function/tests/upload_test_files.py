@@ -8,9 +8,10 @@ Usage: python upload_test_files.py -b <bucket>
 
 import argparse
 import json
+import random
+import sys
 import subprocess
 import tempfile
-import uuid
 
 arrays_path = "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/"
 arrays_metadata_path = "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/"
@@ -22,7 +23,7 @@ def get_destination_paths(bucket, prefix):
         "ptc": f"gs://{bucket}/{prefix}/ptc.json"
     }
 
-def get_ptc_json(bucket, prefix, chip_well_barcode, prod):
+def get_ptc_json(bucket, prefix, chip_well_barcode, analysis_version, prod):
     return {
         "cromwell":
             "https://cromwell-aou.gotc-prod.broadinstitute.org" if prod
@@ -30,8 +31,8 @@ def get_ptc_json(bucket, prefix, chip_well_barcode, prod):
         "environment": "aou-prod" if prod else "aou-dev",
         "uuid": None,
         "notifications": [{
-            "analysis_version_number": 1,
-            "chip_well_barcode": str(chip_well_barcode),
+            "analysis_version_number": analysis_version,
+            "chip_well_barcode": chip_well_barcode,
             "green_idat_cloud_path": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
             "params_file": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
             "red_idat_cloud_path": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
@@ -47,9 +48,10 @@ def get_ptc_json(bucket, prefix, chip_well_barcode, prod):
     }
 
 def main(bucket, prod):
-    chip_well_barcode = uuid.uuid4()
-    prefix = f"chip_name/{chip_well_barcode}/v1"
-    ptc_json = get_ptc_json(bucket, prefix, chip_well_barcode, prod)
+    chip_well_barcode = "7991775143_R01C01"
+    analysis_version = random.randrange(sys.maxsize)
+    prefix = f"chip_name/{chip_well_barcode}/{analysis_version}"
+    ptc_json = get_ptc_json(bucket, prefix, chip_well_barcode, analysis_version, prod)
     destination_paths = get_destination_paths(bucket, prefix)
     with tempfile.TemporaryDirectory() as tmpdirname:
         with open(f'{tmpdirname}/ptc.json', 'w') as f:
