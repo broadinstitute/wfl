@@ -67,19 +67,21 @@
                         :chip_well_barcode
                         :cluster_file
                         :extended_chip_manifest_file
-                        :gender_cluster_file
                         :green_idat_cloud_path
                         :params_file
                         :red_idat_cloud_path
                         :reported_gender
                         :sample_alias
-                        :sample_lsid
-                        :zcall_thresholds_file]
-        optional-keys [; genotype concordance inputs
+                        :sample_lsid]
+        optional-keys [;; genotype concordance inputs
                        :control_sample_vcf_file
                        :control_sample_vcf_index_file
                        :control_sample_intervals_file
-                       :control_sample_name]
+                       :control_sample_name
+                       ;; cloud path of the Illumina gender cluster file
+                       :zcall_thresholds_file
+                       ;; cloud path of a thresholds file to be used with zCall
+                       :gender_cluster_file]
         mandatory  (select-keys inputs mandatory-keys)
         optional   (select-keys inputs optional-keys)
         missing (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
