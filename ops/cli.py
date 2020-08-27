@@ -269,7 +269,7 @@ def make_git_tag(config: WflInstanceConfig) -> None:
 def check_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Checking current commit tags for version")
     if not any(t == f"v{config.version}" for t
-               in shell(f"git tag -l", cwd=config.wfl_root_folder, quiet=True).splitlines()):
+               in shell(f"git tag --points-at HEAD", cwd=config.wfl_root_folder, quiet=True).splitlines()):
         error(f"No tag 'v{config.version} found--did you check out the right tag?")
         info("This is necessary because liquibase changelogs are read from the repo itself", plain=True)
         info("Tags on the current commit, if any:", plain=True)
