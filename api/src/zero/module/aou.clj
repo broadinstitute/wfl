@@ -78,9 +78,9 @@
                        :control_sample_vcf_index_file
                        :control_sample_intervals_file
                        :control_sample_name
-                       ;; cloud path of the Illumina gender cluster file
-                       :zcall_thresholds_file
                        ;; cloud path of a thresholds file to be used with zCall
+                       :zcall_thresholds_file
+                       ;; cloud path of the Illumina gender cluster file
                        :gender_cluster_file]
         mandatory  (select-keys inputs mandatory-keys)
         optional   (select-keys inputs optional-keys)
