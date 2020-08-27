@@ -40,11 +40,12 @@ class WflInstanceConfig:
     db_connection_name: str = None
     rendered_values_file: str = None
     vault_token_path: str = None
+    wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}/.."
 
 
 def check_env_instance_present(config: WflInstanceConfig) -> None:
     if not config.environment or not config.instance_id:
-        info(shell(f"{os.path.dirname(os.path.realpath(__file__))}/cli.py -h", quiet=True), plain=True)
+        info(shell(f"{config.wfl_root_folder}/cli.py -h", quiet=True), plain=True)
         error(f"No ENV and INSTANCE passed, this is required for the {config.command} command")
         exit(1)
 
@@ -52,7 +53,7 @@ def check_env_instance_present(config: WflInstanceConfig) -> None:
 def read_version(config: WflInstanceConfig) -> None:
     if not config.version:
         info("=>  Reading version from file at `./version`")
-        with open(f"{os.path.dirname(os.path.realpath(__file__))}/../version") as version_file:
+        with open(f"{config.wfl_root_folder}/version") as version_file:
             config.version = version_file.read().strip()
     else:
         info(f"=>  Version overridden, using {config.version} instead of `./version`")
@@ -171,7 +172,7 @@ def render_values_file(config: WflInstanceConfig) -> None:
         os.makedirs(deploy)
     values = "wfl-values.yaml"
     config.rendered_values_file = os.path.join(deploy, values)
-    ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
+    ctmpl = f"{config.wfl_root_folder}/derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
                  vault_token_path=config.vault_token_path,
@@ -238,7 +239,7 @@ def run_liquibase_migration(config: WflInstanceConfig) -> None:
     """Run the liquibase migration using stored credentials from rendering the values file."""
     info("=>  Running liquibase migration")
     db_url = "jdbc:postgresql://localhost:5432/wfl?useSSL=false"
-    changelog_dir = os.path.join(os.getcwd(), "database")
+    changelog_dir = f"{config.wfl_root_folder}/database"
     shell(f"docker run --rm --net=host "
           f"-v {changelog_dir}:/liquibase/changelog liquibase/liquibase "
           f"--url='{db_url}' --changeLogFile=/changelog/changelog.xml "
@@ -260,14 +261,15 @@ def print_deployment_success(config: WflInstanceConfig) -> None:
 
 def make_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Tagging current commit with version")
-    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'")
-    shell(f"git push origin v{config.version}")
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'", cwd=config.wfl_root_folder)
+    shell(f"git push origin v{config.version}", cwd=config.wfl_root_folder)
     success(f"Tag 'v{config.version}' created and pushed")
 
 
 def check_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Checking current commit tags for version")
-    if not any(t == f"v{config.version}" for t in shell(f"git tag -l", quiet=True).splitlines()):
+    if not any(t == f"v{config.version}" for t
+               in shell(f"git tag -l", cwd=config.wfl_root_folder, quiet=True).splitlines()):
         error(f"No tag 'v{config.version} found--did you check out the right tag?")
         info("This is necessary because liquibase changelogs are read from the repo itself", plain=True)
         info("Tags on the current commit, if any:", plain=True)
