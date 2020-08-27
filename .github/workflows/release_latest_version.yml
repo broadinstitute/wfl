@@ -61,6 +61,9 @@ jobs:
       - name: Build
         run: make MODULES="${MODULES}" TARGET=build
 
+      - name: Check
+        run: make MODULES="${MODULES}" TARGET=check
+
       - name: Images
         run: make MODULES="${MODULES}" TARGET=images
 
