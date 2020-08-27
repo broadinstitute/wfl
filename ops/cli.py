@@ -52,7 +52,7 @@ def check_env_instance_present(config: WflInstanceConfig) -> None:
 def read_version(config: WflInstanceConfig) -> None:
     if not config.version:
         info("=>  Reading version from file at `./version`")
-        with open("version") as version_file:
+        with open(f"{os.path.dirname(os.path.realpath(__file__))}/../version") as version_file:
             config.version = version_file.read().strip()
     else:
         info(f"=>  Version overridden, using {config.version} instead of `./version`")
