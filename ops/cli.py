@@ -49,6 +49,13 @@ def check_env_instance_present(config: WflInstanceConfig) -> None:
         exit(1)
 
 
+def read_version(config: WflInstanceConfig) -> None:
+    if not config.version:
+        info("=>  Reading version from file at `./version`")
+        with open("version") as version_file:
+            config.version = version_file.read().strip()
+
+
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
     """Infer and store all arguments required for validation steps."""
     if not config.project:
@@ -88,10 +95,6 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
 
 def infer_missing_arguments(config: WflInstanceConfig) -> None:
     """Infer and store all arguments not required for validation steps."""
-    if not config.version:
-        info("=>  Inferring version from file at `./version`")
-        with open("version") as version_file:
-            config.version = version_file.read().strip()
     if not config.cloud_sql_name:
         info("=>  Inferring Cloud SQL from GCP labels")
         config.cloud_sql_name = \
@@ -273,6 +276,7 @@ def check_git_tag(config: WflInstanceConfig) -> None:
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     "info": [
         check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -281,6 +285,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     ],
     "connect": [
         check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         infer_missing_arguments,
@@ -291,6 +296,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     ],
     "deploy": [
         check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -310,6 +316,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     ],
     "deploy-from-tag": [
         check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -327,10 +334,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_deployment_success
     ],
     "tag-and-push-images": [
-        infer_missing_arguments_pre_validate,
-        validate_cloud_sql_name,
-        validate_cluster_name,
-        infer_missing_arguments,
+        read_version,
         exit_if_dry_run,
         make_git_tag,
         publish_docker_images
