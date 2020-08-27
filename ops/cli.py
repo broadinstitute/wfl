@@ -25,8 +25,8 @@ from util.misc import info, success, error, warn, shell
 class WflInstanceConfig:
     """Data class representing the 'state' of this script's configuration as it interacts with infrastructure."""
     command: str
-    environment: str
-    instance_id: str
+    environment: None
+    instance_id: None
     dry_run: bool = False
     version: str = None
     project: str = None
@@ -40,6 +40,13 @@ class WflInstanceConfig:
     db_connection_name: str = None
     rendered_values_file: str = None
     vault_token_path: str = None
+
+
+def check_env_instance_present(config: WflInstanceConfig) -> None:
+    if not config.environment or not config.instance_id:
+        info(shell(f"{os.path.dirname(os.path.realpath(__file__))}/cli.py -h", quiet=True), plain=True)
+        error(f"No ENV and INSTANCE passed, this is required for the {config.command} command")
+        exit(1)
 
 
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
@@ -265,6 +272,7 @@ def check_git_tag(config: WflInstanceConfig) -> None:
 
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     "info": [
+        check_env_instance_present,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -272,6 +280,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_config
     ],
     "connect": [
+        check_env_instance_present,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         infer_missing_arguments,
@@ -281,6 +290,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_cloud_sql_proxy_instructions
     ],
     "deploy": [
+        check_env_instance_present,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -299,6 +309,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_deployment_success
     ],
     "deploy-from-tag": [
+        check_env_instance_present,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -330,13 +341,13 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
 def cli() -> WflInstanceConfig:
     """Configure the arguments, help text, and parsing."""
     parser = argparse.ArgumentParser(description="deploy or connect to WFL infrastructure",
-                                     usage="%(prog)s [-h] [-d] COMMAND ENV INSTANCE [...]")
+                                     usage="%(prog)s [-h] [-d] COMMAND [ENV INSTANCE] [...]")
     parser.add_argument("command", choices=command_mapping.keys(), metavar="COMMAND",
                         help=f"one of [{', '.join(command_mapping.keys())}]")
-    parser.add_argument("environment", choices=["gotc-dev", "gotc-prod", "aou"], metavar="ENV",
-                        help="specify 'gotc-deploy/deploy/{ENV}' with one of [%(choices)s]")
-    parser.add_argument("instance_id", metavar="INSTANCE",
-                        help="specify the ID of the instance to use in the environment")
+    parser.add_argument("environment", choices=["gotc-dev", "gotc-prod", "aou"], metavar="ENV", nargs="?",
+                        help="specify 'gotc-deploy/deploy/{ENV}' with one of [%(choices)s], if applicable")
+    parser.add_argument("instance_id", metavar="INSTANCE", nargs="?",
+                        help="specify the ID of the instance to use in the environment, if applicable")
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="exit before COMMAND makes any remote changes")
     parser.add_argument("-v", "--version",
