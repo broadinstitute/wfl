@@ -54,6 +54,8 @@ def read_version(config: WflInstanceConfig) -> None:
         info("=>  Reading version from file at `./version`")
         with open("version") as version_file:
             config.version = version_file.read().strip()
+    else:
+        info(f"=>  Version overridden, using {config.version} instead of `./version`")
 
 
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
