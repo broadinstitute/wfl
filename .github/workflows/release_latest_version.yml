@@ -1,0 +1,68 @@
+name: Release Latest Version
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - version
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MODULES: api ui
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Clojure tools
+        uses: DeLaGuardo/setup-clojure@2.0
+        with:
+          boot: 2.8.3
+
+      - name: Configure SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+
+          echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
+          echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
+          echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
+
+          chmod 600 ~/.ssh/dsde_pipelines_deploy_key
+          chmod 600 ~/.ssh/pipeline_config_deploy_key
+          chmod 600 ~/.ssh/wfl_deploy_key
+
+          echo """
+           Host dsde-pipelines.github.com
+           HostName github.com
+           User git
+           IdentityFile ~/.ssh/dsde_pipelines_deploy_key
+
+           Host pipeline-config.github.com
+           HostName github.com
+           User git
+           IdentityFile ~/.ssh/pipeline_config_deploy_key
+
+           Host wfl.github.com
+           HostName github.com
+           User git
+           IdentityFile ~/.ssh/wfl_deploy_key """ > ~/.ssh/config
+
+      - name: Docker Login
+        run: |
+          docker login \
+            --username "${{ secrets.dockerhub_username }}" \
+            --password "${{ secrets.dockerhub_password }}"
+
+      - name: Pre-Build
+        run: make MODULES="${MODULES}" TARGET=prebuild
+
+      - name: Build
+        run: make MODULES="${MODULES}" TARGET=build
+
+      - name: Images
+        run: make MODULES="${MODULES}" TARGET=images
+
+      - name: tag-and-push-images
+        run: ./ops/cli.py tag-and-push-images
