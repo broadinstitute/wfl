@@ -1,7 +1,6 @@
 (ns zero.tools.workloads
   (:require [zero.environments :refer [stuff]]
             [zero.module.copyfile :as cp]
-            [zero.module.wl :as wl]
             [zero.util :refer [shell!]]
             [zero.module.aou :as aou]))
 
@@ -15,7 +14,7 @@
      :cromwell (get-in stuff [:gotc-dev :cromwell :url])
      :input    (str "gs://broad-gotc-test-storage" path)
      :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
-     :pipeline wl/pipeline
+     :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
                  :sample_name          "NA12878 PLUMBING",
