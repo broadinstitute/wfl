@@ -25,8 +25,8 @@ from util.misc import info, success, error, warn, shell
 class WflInstanceConfig:
     """Data class representing the 'state' of this script's configuration as it interacts with infrastructure."""
     command: str
-    environment: str
-    instance_id: str
+    environment: None
+    instance_id: None
     dry_run: bool = False
     version: str = None
     project: str = None
@@ -40,6 +40,23 @@ class WflInstanceConfig:
     db_connection_name: str = None
     rendered_values_file: str = None
     vault_token_path: str = None
+    wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}/.."
+
+
+def check_env_instance_present(config: WflInstanceConfig) -> None:
+    if not config.environment or not config.instance_id:
+        info(shell(f"{config.wfl_root_folder}/cli.py -h", quiet=True), plain=True)
+        error(f"No ENV and INSTANCE passed, this is required for the {config.command} command")
+        exit(1)
+
+
+def read_version(config: WflInstanceConfig) -> None:
+    if not config.version:
+        info("=>  Reading version from file at `./version`")
+        with open(f"{config.wfl_root_folder}/version") as version_file:
+            config.version = version_file.read().strip()
+    else:
+        info(f"=>  Version overridden, using {config.version} instead of `./version`")
 
 
 def infer_missing_arguments_pre_validate(config: WflInstanceConfig) -> None:
@@ -81,10 +98,6 @@ def validate_cluster_name(config: WflInstanceConfig) -> None:
 
 def infer_missing_arguments(config: WflInstanceConfig) -> None:
     """Infer and store all arguments not required for validation steps."""
-    if not config.version:
-        info("=>  Inferring version from file at `./version`")
-        with open("version") as version_file:
-            config.version = version_file.read().strip()
     if not config.cloud_sql_name:
         info("=>  Inferring Cloud SQL from GCP labels")
         config.cloud_sql_name = \
@@ -159,7 +172,7 @@ def render_values_file(config: WflInstanceConfig) -> None:
         os.makedirs(deploy)
     values = "wfl-values.yaml"
     config.rendered_values_file = os.path.join(deploy, values)
-    ctmpl = f"derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
+    ctmpl = f"{config.wfl_root_folder}/derived/2p/gotc-deploy/deploy/{config.environment}/helm/{values}.ctmpl"
     shutil.copy(ctmpl, deploy)
     render_ctmpl(ctmpl_file=f"{config.rendered_values_file}.ctmpl",
                  vault_token_path=config.vault_token_path,
@@ -226,7 +239,7 @@ def run_liquibase_migration(config: WflInstanceConfig) -> None:
     """Run the liquibase migration using stored credentials from rendering the values file."""
     info("=>  Running liquibase migration")
     db_url = "jdbc:postgresql://localhost:5432/wfl?useSSL=false"
-    changelog_dir = os.path.join(os.getcwd(), "database")
+    changelog_dir = f"{config.wfl_root_folder}/database"
     shell(f"docker run --rm --net=host "
           f"-v {changelog_dir}:/liquibase/changelog liquibase/liquibase "
           f"--url='{db_url}' --changeLogFile=/changelog/changelog.xml "
@@ -248,23 +261,26 @@ def print_deployment_success(config: WflInstanceConfig) -> None:
 
 def make_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Tagging current commit with version")
-    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'")
-    shell(f"git push origin v{config.version}")
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'", cwd=config.wfl_root_folder)
+    shell(f"git push origin v{config.version}", cwd=config.wfl_root_folder)
     success(f"Tag 'v{config.version}' created and pushed")
 
 
 def check_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Checking current commit tags for version")
-    if not any(t == f"v{config.version}" for t in shell(f"git tag -l", quiet=True).splitlines()):
-        error(f"No tag 'v{config.version} found--did you check out the right tag?")
+    if not any(t == f"v{config.version}" for t
+               in shell(f"git tag --points-at HEAD", cwd=config.wfl_root_folder, quiet=True).splitlines()):
+        error(f"No tag 'v{config.version}' found--did you check out the right tag?")
         info("This is necessary because liquibase changelogs are read from the repo itself", plain=True)
         info("Tags on the current commit, if any:", plain=True)
-        info(shell("git tag -l", quiet=True), plain=True)
+        info(shell("git tag --points-at HEAD", cwd=config.wfl_root_folder, quiet=True), plain=True)
         exit(1)
 
 
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
     "info": [
+        check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -272,6 +288,8 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_config
     ],
     "connect": [
+        check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         infer_missing_arguments,
@@ -281,6 +299,8 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_cloud_sql_proxy_instructions
     ],
     "deploy": [
+        check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -299,6 +319,8 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_deployment_success
     ],
     "deploy-from-tag": [
+        check_env_instance_present,
+        read_version,
         infer_missing_arguments_pre_validate,
         validate_cloud_sql_name,
         validate_cluster_name,
@@ -316,10 +338,7 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         print_deployment_success
     ],
     "tag-and-push-images": [
-        infer_missing_arguments_pre_validate,
-        validate_cloud_sql_name,
-        validate_cluster_name,
-        infer_missing_arguments,
+        read_version,
         exit_if_dry_run,
         make_git_tag,
         publish_docker_images
@@ -330,13 +349,13 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
 def cli() -> WflInstanceConfig:
     """Configure the arguments, help text, and parsing."""
     parser = argparse.ArgumentParser(description="deploy or connect to WFL infrastructure",
-                                     usage="%(prog)s [-h] [-d] COMMAND ENV INSTANCE [...]")
+                                     usage="%(prog)s [-h] [-d] COMMAND [ENV INSTANCE] [...]")
     parser.add_argument("command", choices=command_mapping.keys(), metavar="COMMAND",
                         help=f"one of [{', '.join(command_mapping.keys())}]")
-    parser.add_argument("environment", choices=["gotc-dev", "gotc-prod", "aou"], metavar="ENV",
-                        help="specify 'gotc-deploy/deploy/{ENV}' with one of [%(choices)s]")
-    parser.add_argument("instance_id", metavar="INSTANCE",
-                        help="specify the ID of the instance to use in the environment")
+    parser.add_argument("environment", choices=["gotc-dev", "gotc-prod", "aou"], metavar="ENV", nargs="?",
+                        help="specify 'gotc-deploy/deploy/{ENV}' with one of [%(choices)s], if applicable")
+    parser.add_argument("instance_id", metavar="INSTANCE", nargs="?",
+                        help="specify the ID of the instance to use in the environment, if applicable")
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="exit before COMMAND makes any remote changes")
     parser.add_argument("-v", "--version",
