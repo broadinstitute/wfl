@@ -39,6 +39,7 @@
   "An aou arrays sample for testing."
   {:cromwell      "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
    :notifications [{:chip_well_barcode           "7991775143_R01C01",
+                    :call_rate_threshold         0.98
                     :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
                     :analysis_version_number     1,
                     :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
