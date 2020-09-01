@@ -2,6 +2,7 @@
   (:require [zero.environments :refer [stuff]]
             [zero.module.copyfile :as cp]
             [zero.util :refer [shell!]]
+            [zero.module.wgs :as wgs]
             [zero.module.aou :as aou]))
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))

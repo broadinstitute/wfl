@@ -34,45 +34,15 @@
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
 
-(def description
-  "Describe the purpose of this command."
-  (let [in  (str "gs://broad-gotc-test-storage/single_sample/plumbing"
-                 "/truth/develop/20k/")
-        out "gs://broad-gotc-dev-zero-test/wgs"
-        title (str (str/capitalize zero/the-name) ":")]
-    (-> [""
-         "%2$s Reprocess Genomes"
-         "%2$s %1$s wgs reprocesses CRAMs."
-         ""
-         "Usage: %1$s wgs <env> <in> <out>"
-         "       %1$s wgs <env> <max> <in> <out>"
-         ""
-         "Where: <env> is an environment,"
-         "       <max> is a non-negative integer,"
-         "       and <in> and <out> are GCS urls."
-         "       <max> is the maximum number of inputs to process."
-         "       <in>  is a GCS url to files ending in '.bam' or '.cram'."
-         "       <out> is an output URL for the reprocessed CRAMs."
-         ""
-         "The 3-argument command reports on the status of workflows"
-         "and the counts of BAMs and CRAMs in the <in> and <out> urls."
-         ""
-         "The 4-argument command submits up to <max> .bam or .cram files"
-         "from the <in> URL to the Cromwell in environment <env>."
-         ""
-         (str/join \space ["Example: %1$s wgs wgs-dev 42" in out])]
-        (->> (str/join \newline))
-        (format zero/the-name title))))
-
 (def get-cromwell-wgs-environment
   "Transduce Cromwell URL to a :wgs environment."
   (comp first (partial all/cromwell-environments
                 #{:wgs-dev :wgs-prod :wgs-staging})))
 
-(def per-sample
-  "The per-sample stuff for wgs."
+(def fingerprinting
+  "Fingerprinting inputs for wgs."
   (let [fp   (str "single_sample/plumbing/bams/20k/NA12878_PLUMBING"
-                  ".hg38.reference.fingerprint")
+               ".hg38.reference.fingerprint")
         storage "gs://broad-gotc-test-storage/"]
     {:fingerprint_genotypes_file  (str storage fp ".vcf.gz")
      :fingerprint_genotypes_index (str storage fp ".vcf.gz.tbi")}))
@@ -107,7 +77,7 @@
              (util/prefix-keys :WholeGenomeReprocessing)
              (util/prefix-keys :WholeGenomeReprocessing))))
 
-(defn genome-inputs
+(defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   (let [{:keys [google_account_vault_path vault_token_path]}
@@ -131,9 +101,9 @@
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references references)
-                   #_(merge per-sample) ;; Uncomment to enable fingerprinting
+                   #_(merge fingerprinting) ;; Uncomment to enable fingerprinting
                    (merge cram-ref)
-                   (merge (genome-inputs environment)
+                   (merge (env-inputs environment)
                           hack-task-level-values))
         {:keys [destination_cloud_path final_gvcf_base_name]} inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
@@ -214,24 +184,8 @@
   (let [max (util/is-non-negative! max-string)]
     (submit-some-workflows environment max in-gs out-gs)))
 
-(defn run
-  "Reprocess the BAM or CRAM files described by ARGS."
-  [& args]
-  (try
-    (let [env (zero/throw-or-environment-keyword! (first args))]
-      (apply (case (count args)
-               4 submit-some-workflows-or-throw
-               3 (partial all/report-status cromwell-label)
-               (throw (IllegalArgumentException.
-                       "Must specify 3 or 4 arguments.")))
-             env (rest args)))
-    (catch Exception x
-      (log/error x)
-      (log/debug description)
-      (throw x))))
-
 (defn maybe-update-workflow-status!
-  "Use TX to update the status of WORKFLOW in ENV."
+  "Use transaction TX to update the status of WORKFLOW in ENV."
   [tx env items {:keys [id uuid] :as _workflow}]
   (letfn [(maybe [m k v] (if v (assoc m k v) m))]
     (when uuid
@@ -244,7 +198,7 @@
 (defn update-workload!
   "Use transaction TX to update _WORKLOAD statuses."
   [tx {:keys [cromwell items] :as _workload}]
-  (let [env (@get-cromwell-wgs-environment cromwell)]
+  (let [env (@get-cromwell-wgs-environment (all/de-slashify cromwell))]
     (try
       (let [workflows (postgres/get-table tx items)]
         (run! (partial maybe-update-workflow-status! tx env items) workflows))
@@ -296,7 +250,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell input items output uuid] :as workload}]
-  (let [env    (get-cromwell-wgs-environment cromwell)
+  (let [env    (get-cromwell-wgs-environment (all/de-slashify cromwell))
         input  (all/slashify input)
         output (all/slashify output)
         now    (OffsetDateTime/now)]
