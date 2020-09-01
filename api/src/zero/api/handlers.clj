@@ -31,6 +31,8 @@
 (defn fail-with-response
   "A failure RESPONSE with BODY."
   [response body]
+  (log/warn "Endpoint sent a failure response:")
+  (log/warn body)
   (-> body response (response/content-type "application/json")))
 
 (defn unprocessable-entity
@@ -131,15 +133,18 @@
   [request]
   (zero.api.handlers/print-handler-error
    (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-            (do
-              (logr/infof "get-workload endpoint called: uuid=%s" uuid)
-              [{:uuid uuid}])
-            (do
-              (logr/info "get-workload endpoint called with no uuid, querying all")
-              (jdbc/query tx ["SELECT uuid FROM workload"])))
-          (mapv (partial postgres/get-workload-for-uuid tx))
-          succeed))))
+     (let [uuid (get-in request [:parameters :query :uuid])
+           result (->> (if uuid
+                         (do
+                           (logr/infof "get-workload endpoint called: uuid=%s" uuid)
+                           [{:uuid uuid}])
+                         (do
+                           (logr/info "get-workload endpoint called with no uuid, querying all")
+                           (jdbc/query tx ["SELECT uuid FROM workload"])))
+                    (mapv (partial postgres/get-workload-for-uuid tx)))]
+       (if (every? empty? result)
+         (fail-with-response response/not-found (format "Workload %s not found" uuid))
+         (succeed result))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
