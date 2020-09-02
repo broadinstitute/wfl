@@ -134,7 +134,7 @@ See the next section for suggestions.
 Something seems to swallow SQL exceptions
 raised by Postgres and the JDBC library.
 Wrap suspect `clojure.java.jdbc` calls
-in `zero.util/do-or-nil` to ensure
+in `wfl.util/do-or-nil` to ensure
 that any exceptions show up
 in the server logs.
 
@@ -144,7 +144,7 @@ If an API references an undefined spec,
 HTTP requests and responses might silently fail
 or the Swagger page will fail to render.
 Check the `clojure.spec.alpha/def`s
-in `zero.api.routes` for typos
+in `wfl.api.routes` for typos
 before tearing your hair out.
 
 ### hacking a scratch database
@@ -166,7 +166,7 @@ and there are differences in the SQL syntax.
 
 Set `"ZERO_POSTGRES_URL"`
 to `(postgres/zero-db-url :debug)`
-in `zero.server/env_variables`
+in `wfl.server/env_variables`
 to redirect the WFL server's database
 to a local Postgres server.
 With that hack in place,
@@ -197,7 +197,7 @@ For the above, the username and password need to be correct for the target envir
 If you're running a local server with the postgres command above, you don't need a password and can omit it.
 
 Otherwise, you may be able to find this data in the Vault entry for the environment's server --
-`resources/zero/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING`
+`resources/wfl/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING`
 to supply it.
 
 ### Test

@@ -74,14 +74,14 @@ currently talk to the following services:
 Workflow Launcher has a diagnostic mode, `dx`,
 for debugging problems.
 
-Run `zero dx` to get a list of the diagnostics available.
+Run `wfl dx` to get a list of the diagnostics available.
 
 ```bash
 $ java -jar derived/api/target/wfl.jar dx
 
-zero dx: tools to help debug workflow problems.
+wfl dx: tools to help debug workflow problems.
 
-Usage: zero dx <tool> [<arg> ...]
+Usage: wfl dx <tool> [<arg> ...]
 Where: <tool> is the name of some diagnostic tool.
        <arg> ... are optional arguments to <tool>.
 
@@ -92,7 +92,7 @@ The <tool>s and their <arg>s are named here.
     Time per event type for workflow with ID in ENVIRONMENT.
 ...
 Error: Must specify a dx <tool> to run.
-BTW: You ran: zero dx
+BTW: You ran: wfl dx
 wm28d-f87:wfl yanc$
 ```
 
@@ -135,7 +135,7 @@ The `server.clj` file implements the WFL server. The
 `server_debug.clj` file adds some tools to aid in debugging the
 server.
 
-Some hacks specific to WFL are in `zero.clj`.
+Some hacks specific to WFL are in `wfl.clj`.
 
 The `boot.clj` offloads code from the `build.boot` file for
 easier development and debugging.
@@ -220,7 +220,7 @@ host a Clojure program.
 
 WFL uses a `gcloud auth` command line to authenticate the user. You
 need to be authenticated to Google Cloud and have a recent version
-of `google-cloud-sdk` in your path to run `zero` or its jar
+of `google-cloud-sdk` in your path to run `wfl` or its jar
 successfully. I verified that `Google Cloud SDK 304.0.0` works. That
 or any later version should be OK.
 
@@ -300,7 +300,7 @@ support `lein`, Cursive, and Calva users.
 
 Running `boot build` will not only build a fat jar (*uberjar*)
 for the WFL project, but will add an executable symbolic link
-`zero` to conveniently execute the Clojure code as a script.
+`wfl` to conveniently execute the Clojure code as a script.
 
 ####  Testing
 
