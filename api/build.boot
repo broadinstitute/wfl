@@ -57,20 +57,20 @@
    [onetom/boot-lein-generate         "0.1.3"   :scope "test"]])
 
 (require '[boot.lein])
-(require 'zero.boot)
+(require 'wfl.boot)
 
-(def the-version (zero.boot/make-the-version))
+(def the-version (wfl.boot/make-the-version))
 
 (defn manage-version-and-resources
   "Add WDL files and version information to /resources/."
   []
   (let [resources (clojure.java.io/file (derived "resources"))]
-    (zero.boot/manage-version-and-resources the-version second-party (derived))
+    (wfl.boot/manage-version-and-resources the-version second-party (derived))
     (with-pre-wrap fileset (-> fileset (add-resource resources) commit!))))
 
 ;; So boot.lein can pick up the project name and version.
 ;;
-(def the-pom (zero.boot/make-the-pom the-version))
+(def the-pom (wfl.boot/make-the-pom the-version))
 (task-options! pom the-pom)
 
 (deftask prebuild
@@ -85,12 +85,12 @@
   []
   (comp
    (pom)
-   (aot :namespace '#{zero.main})
+   (aot :namespace '#{wfl.main})
    (uber)
-   (jar :main 'zero.main :manifest (zero.boot/make-the-manifest the-pom))
+   (jar :main 'wfl.main :manifest (wfl.boot/make-the-manifest the-pom))
    (target :dir #{(derived "target")})))
 
 (defn -main
   "Run this."
   [& args]
-  (apply zero.boot/main args))
+  (apply wfl.boot/main args))

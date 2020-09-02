@@ -2,11 +2,11 @@
     {:tests [{:id           :integration
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
-              :ns-patterns  ["zero\\.integration\\..*-test$"]}
+              :ns-patterns  ["wfl\\.integration\\..*-test$"]}
              {:id           :unit
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
-              :ns-patterns  ["zero\\.unit\\..*-test$"]}]
+              :ns-patterns  ["wfl\\.unit\\..*-test$"]}]
 
      :plugins [
                :print-invocations
