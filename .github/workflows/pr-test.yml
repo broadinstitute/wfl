@@ -106,9 +106,11 @@ jobs:
         run: |
           make cloud_function TARGET=check
 
-      - name: Cloud Function Unit Test
+      - name: Setup Python3
         uses: actions/setup-python@v2
         with:
           python-version: '3.8' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+
+      - name: Cloud Function Unit Test
         run: |
           make api TARGET=check
