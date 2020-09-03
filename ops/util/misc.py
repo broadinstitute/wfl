@@ -50,12 +50,12 @@ def warn(message: str):
     print(_apply_color("yellow", f"[!] {message}"))
 
 
-def shell(command: str, quiet: bool = False, timeout: Optional[float] = None) -> str:
+def shell(command: str, quiet: bool = False, timeout: Optional[float] = None, cwd: Optional[str] = None) -> str:
     """Run COMMAND in a subprocess."""
     if not quiet:
         info(f"Running: {command}")
     try:
-        return subprocess.check_output(command, shell=True, timeout=timeout, encoding="utf-8").strip()
+        return subprocess.check_output(command, shell=True, timeout=timeout, encoding="utf-8", cwd=cwd).strip()
     except subprocess.CalledProcessError as err:
         error(f"Error running: {command}")
         error(err.output)
