@@ -112,6 +112,7 @@ jobs:
           make api TARGET=check
 
       - name: Cloud Function Unit Test
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: sa.json
         run: |
-          gcloud auth application-default login
           make cloud_function TARGET=check
