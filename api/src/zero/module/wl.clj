@@ -93,7 +93,7 @@
                       (if (skip-workflow? env workload workflow)
                         util/uuid-nil
                         (wgs/really-submit-one-workflow
-                         env (str input input_cram) output)))])
+                         env (str input input_cram) output workflow)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
