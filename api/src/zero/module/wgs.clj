@@ -1,48 +1,23 @@
 (ns zero.module.wgs
-  "Reprocess (External) Whole Genomes, whatever they are."
+  "Reprocess (External) Whole Genomes."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [zero.environments :as env]
+            [zero.jdbc :as jdbc]
             [zero.module.all :as all]
             [zero.references :as references]
             [zero.service.cromwell :as cromwell]
             [zero.service.gcs :as gcs]
+            [zero.service.postgres :as postgres]
             [zero.util :as util]
             [zero.wdl :as wdl]
-            [zero.zero :as zero]))
+            [zero.zero :as zero])
+  (:import [java.time OffsetDateTime]))
 
-(def description
-  "Describe the purpose of this command."
-  (let [in  (str "gs://broad-gotc-test-storage/single_sample/plumbing"
-                 "/truth/develop/20k/")
-        out "gs://broad-gotc-dev-zero-test/wgs"
-        title (str (str/capitalize zero/the-name) ":")]
-    (-> [""
-         "%2$s Reprocess Genomes"
-         "%2$s %1$s wgs reprocesses CRAMs."
-         ""
-         "Usage: %1$s wgs <env> <in> <out>"
-         "       %1$s wgs <env> <max> <in> <out>"
-         ""
-         "Where: <env> is an environment,"
-         "       <max> is a non-negative integer,"
-         "       and <in> and <out> are GCS urls."
-         "       <max> is the maximum number of inputs to process."
-         "       <in>  is a GCS url to files ending in '.bam' or '.cram'."
-         "       <out> is an output URL for the reprocessed CRAMs."
-         ""
-         "The 3-argument command reports on the status of workflows"
-         "and the counts of BAMs and CRAMs in the <in> and <out> urls."
-         ""
-         "The 4-argument command submits up to <max> .bam or .cram files"
-         "from the <in> URL to the Cromwell in environment <env>."
-         ""
-         (str/join \space ["Example: %1$s wgs wgs-dev 42" in out])]
-        (->> (str/join \newline))
-        (format zero/the-name title))))
+(def pipeline "ExternalWholeGenomeReprocessing")
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -51,18 +26,23 @@
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
-  {(keyword (str zero/the-name "-wgs"))
-   (wdl/workflow-name (:top workflow-wdl))})
+  {(keyword zero/the-name)
+   pipeline})
 
 (def cromwell-label
   "The WDL label applied to Cromwell metadata."
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
 
-(def per-sample
-  "The per-sample stuff for wgs."
+(def get-cromwell-wgs-environment
+  "Transduce Cromwell URL to a :wgs environment."
+  (comp first (partial all/cromwell-environments
+                #{:wgs-dev :wgs-prod :wgs-staging})))
+
+(def fingerprinting
+  "Fingerprinting inputs for wgs."
   (let [fp   (str "single_sample/plumbing/bams/20k/NA12878_PLUMBING"
-                  ".hg38.reference.fingerprint")
+               ".hg38.reference.fingerprint")
         storage "gs://broad-gotc-test-storage/"]
     {:fingerprint_genotypes_file  (str storage fp ".vcf.gz")
      :fingerprint_genotypes_index (str storage fp ".vcf.gz.tbi")}))
@@ -98,7 +78,7 @@
              (util/prefix-keys :WholeGenomeReprocessing)
              (util/prefix-keys :WholeGenomeReprocessing))))
 
-(defn genome-inputs
+(defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   (let [{:keys [google_account_vault_path vault_token_path]}
@@ -123,9 +103,9 @@
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references (make-references ref-prefix))
-                   #_(merge per-sample) ;; Uncomment to enable fingerprinting
+                   #_(merge fingerprinting) ;; Uncomment to enable fingerprinting
                    (merge cram-ref)
-                   (merge (genome-inputs environment)
+                   (merge (env-inputs environment)
                           hack-task-level-values))
         merged-inputs (merge inputs sample)
         {:keys [destination_cloud_path final_gvcf_base_name]} merged-inputs
@@ -169,3 +149,90 @@
      (make-inputs environment out-gs in-gs sample)
      (util/make-options environment)
      cromwell-label-map)))
+
+(defn maybe-update-workflow-status!
+  "Use transaction TX to update the status of WORKFLOW in ENV."
+  [tx env items {:keys [id uuid] :as _workflow}]
+  (letfn [(maybe [m k v] (if v (assoc m k v) m))]
+    (when uuid
+      (let [now    (OffsetDateTime/now)
+            status (util/do-or-nil (cromwell/status env uuid))]
+        (jdbc/update! tx items
+          (maybe {:updated now :uuid uuid} :status status)
+          ["id = ?" id])))))
+
+(defn update-workload!
+  "Use transaction TX to update _WORKLOAD statuses."
+  [tx {:keys [cromwell items] :as _workload}]
+  (let [env (@get-cromwell-wgs-environment (all/de-slashify cromwell))]
+    (try
+      (let [workflows (postgres/get-table tx items)]
+        (run! (partial maybe-update-workflow-status! tx env items) workflows))
+      (catch Exception cause
+        (throw (ex-info "Error updating workload status" {} cause))))))
+
+(defn add-workload!
+  "Use transaction TX to add the workload described by BODY."
+  [tx {:keys [items] :as body}]
+  (let [now          (OffsetDateTime/now)
+        [uuid table] (all/add-workload-table! tx workflow-wdl body)]
+    (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
+      (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
+    {:uuid uuid}))
+
+(defn create-workload
+  "Remember the workload specified by BODY."
+  [body]
+  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+    (->> body
+      (add-workload! tx)
+      (conj ["SELECT * FROM workload WHERE uuid = ?"])
+      (jdbc/query tx)
+      first
+      (filter second)
+      (into {}))))
+
+(defn skip-workflow?
+  "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
+  [env
+   {:keys [input output] :as _workload}
+   {:keys [input_cram]   :as _workflow}]
+  (let [in-gs  (str (all/slashify input)  input_cram)
+        out-gs (str (all/slashify output) input_cram)]
+    (or (->> out-gs gcs/parse-gs-url
+          (apply gcs/list-objects)
+          util/do-or-nil seq)        ; done?
+      (->> {:label  cromwell-label
+            :status ["On Hold" "Running" "Submitted"]}
+        (cromwell/query env)
+        (map (comp :ExternalWholeGenomeReprocessing.input_cram
+               (fn [it] (json/read-str it :key-fn keyword))
+               :inputs :submittedFiles
+               (partial cromwell/metadata env)
+               :id))
+        (keep #{in-gs})
+        seq))))                    ; active?
+
+(defn start-workload!
+  "Use transaction TX to start the WORKLOAD."
+  [tx {:keys [cromwell input items output uuid] :as workload}]
+  (let [env    (get-cromwell-wgs-environment (all/de-slashify cromwell))
+        input  (all/slashify input)
+        output (all/slashify output)
+        now    (OffsetDateTime/now)]
+    (letfn [(maybe [m k v] (if v (assoc m k v) m))
+            (submit! [{:keys [id input_cram uuid] :as workflow}]
+              [id (or uuid
+                    (if (skip-workflow? env workload workflow)
+                      util/uuid-nil
+                      (really-submit-one-workflow
+                        env (str input input_cram) output workflow)))])
+            (update! [tx [id uuid]]
+              (when uuid
+                (jdbc/update! tx items
+                  {:updated now :uuid uuid}
+                  ["id = ?" id])))]
+      (let [workflows (postgres/get-table tx items)
+            ids-uuids (map submit! workflows)]
+        (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
+        (run! (partial update! tx) ids-uuids)))))
