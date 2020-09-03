@@ -113,4 +113,5 @@ jobs:
 
       - name: Cloud Function Unit Test
         run: |
+          gcloud auth activate-service-account --key-file=sa.json
           make cloud_function TARGET=check
