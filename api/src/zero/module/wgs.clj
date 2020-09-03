@@ -52,12 +52,13 @@
   {:cram_ref_fasta        "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
    :cram_ref_fasta_index  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"})
 
-(def references
+(defn make-references
   "HG38 reference, calling interval, and contamination files."
+  [prefix]
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
         il   "wgs_calling_regions.hg38.interval_list"
         p3   "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat"]
-    (merge references/hg38-genome-references
+    (merge (references/hg38-genome-references prefix)
            {:calling_interval_list       (str hg38 il)
             :contamination_sites_bed     (str hg38 p3 ".bed")
             :contamination_sites_mu      (str hg38 p3 ".mu")
@@ -92,23 +93,26 @@
 
 (defn make-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
-  [environment out-gs in-gs]
+  [environment out-gs in-gs sample]
   (let [[input-key base _] (all/bam-or-cram? in-gs)
         leaf (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
+        ref-prefix (get sample :reference_fasta_prefix)
         inputs (-> (zipmap [:base_file_name :final_gvcf_base_name :sample_name]
                            (repeat leaf))
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
-                   (assoc :references references)
+                   (assoc :references (make-references ref-prefix))
                    #_(merge fingerprinting) ;; Uncomment to enable fingerprinting
                    (merge cram-ref)
                    (merge (env-inputs environment)
                           hack-task-level-values))
-        {:keys [destination_cloud_path final_gvcf_base_name]} inputs
+        merged-inputs (merge inputs sample)
+        {:keys [destination_cloud_path final_gvcf_base_name]} merged-inputs
         output (str destination_cloud_path final_gvcf_base_name ".cram")]
     (all/throw-when-output-exists-already! output)
-    (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
+    (util/prefix-keys merged-inputs :ExternalWholeGenomeReprocessing)
+    ))
 
 (defn active-objects
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
@@ -136,53 +140,15 @@
 
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
-  [environment in-gs out-gs]
+  [environment in-gs out-gs sample]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
      environment
      (io/file (:dir path) (path ".wdl"))
      (io/file (:dir path) (path ".zip"))
-     (make-inputs environment out-gs in-gs)
+     (make-inputs environment out-gs in-gs sample)
      (util/make-options environment)
      cromwell-label-map)))
-
-(defn submit-workflow
-  "Submit OBJECT from IN-BUCKET for reprocessing into OUT-GS in
-  ENVIRONMENT."
-  [environment in-bucket out-gs object]
-  (let [in-gs (gcs/gs-url in-bucket object)]
-    (really-submit-one-workflow environment in-gs out-gs)))
-
-(defn submit-some-workflows
-  "Submit up to MAX workflows from IN-GS to OUT-GS in ENVIRONMENT."
-  [environment max in-gs out-gs]
-  (let [bucket (all/readable! in-gs)]
-    (letfn [(input? [{:keys [name]}]
-              (let [[_ unsuffixed suffix] (all/bam-or-cram? name)]
-                (when unsuffixed [unsuffixed suffix])))]
-      (let [slashified (all/slashify out-gs)
-            done   (set/union (all/processed-crams slashified)
-                              (active-objects environment in-gs))
-            suffix (->> in-gs
-                        gcs/parse-gs-url
-                        (apply gcs/list-objects)
-                        (keep input?)
-                        (into {}))
-            more   (->> suffix
-                        keys
-                        (remove done)
-                        (take max)
-                        (map (fn [base] (str base (suffix base)))))
-            submit (partial submit-workflow environment bucket slashified)
-            ids    (map submit more)]
-        (run! prn ids)
-        (vec ids)))))
-
-(defn submit-some-workflows-or-throw
-  "Submit up to MAX-STRING workflows from IN-GS to OUT-GS in ENVIRONMENT."
-  [environment max-string in-gs out-gs]
-  (let [max (util/is-non-negative! max-string)]
-    (submit-some-workflows environment max in-gs out-gs)))
 
 (defn maybe-update-workflow-status!
   "Use transaction TX to update the status of WORKFLOW in ENV."
@@ -260,7 +226,7 @@
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
                       (really-submit-one-workflow
-                        env (str input input_cram) output)))])
+                        env (str input input_cram) output workflow)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
