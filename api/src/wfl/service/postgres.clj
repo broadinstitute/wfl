@@ -85,7 +85,8 @@
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
           {:keys [items] :as workload} (first (jdbc/query tx select))]
-      (util/do-or-nil (update-workload! tx workload))
+      (when workload
+        (util/do-or-nil (update-workload! tx workload)))
       (try
         (let [workflows (get-table tx items)]
           (-> workload

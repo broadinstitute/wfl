@@ -8,7 +8,6 @@
               [wfl.module.copyfile :as cp]
               [wfl.jdbc :as jdbc]
               [wfl.module.wgs :as wgs]
-              [wfl.module.wl :as wl]
               [wfl.service.cromwell :as cromwell]
               [wfl.service.postgres :as postgres]
               [wfl.wfl :as wfl]))
@@ -32,6 +31,8 @@
 (defn fail-with-response
   "A failure RESPONSE with BODY."
   [response body]
+  (log/warn "Endpoint sent a failure response:")
+  (log/warn body)
   (-> body response (response/content-type "application/json")))
 
 (defn unprocessable-entity
@@ -104,13 +105,13 @@
 (defoverload add-workload! :default on-unknown-pipeline)
 (defoverload add-workload! aou/pipeline aou/add-workload!)
 (defoverload add-workload! cp/pipeline cp/add-workload!)
-(defoverload add-workload! wl/pipeline wl/add-workload!)
+(defoverload add-workload! wgs/pipeline wgs/add-workload!)
 
 (defmulti start-workload! (fn [_ body] (:pipeline body)))
 (defoverload start-workload! :default on-unknown-pipeline)
 (defoverload start-workload! aou/pipeline aou/start-workload!)
 (defoverload start-workload! cp/pipeline cp/start-workload!)
-(defoverload start-workload! wl/pipeline wl/start-workload!)
+(defoverload start-workload! wgs/pipeline wgs/start-workload!)
 
 (defn post-create
   "Create the workload described in BODY of _REQUEST."
@@ -131,16 +132,19 @@
   "List all workloads or the workload with UUID in REQUEST."
   [request]
   (wfl.api.handlers/print-handler-error
-   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-            (do
-              (logr/infof "get-workload endpoint called: uuid=%s" uuid)
-              [{:uuid uuid}])
-            (do
-              (logr/info "get-workload endpoint called with no uuid, querying all")
-              (jdbc/query tx ["SELECT uuid FROM workload"])))
-          (mapv (partial postgres/get-workload-for-uuid tx))
-          succeed))))
+   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+     (let [uuid (get-in request [:parameters :query :uuid])
+           result (->> (if uuid
+                         (do
+                           (logr/infof "get-workload endpoint called: uuid=%s" uuid)
+                           [{:uuid uuid}])
+                         (do
+                           (logr/info "get-workload endpoint called with no uuid, querying all")
+                           (jdbc/query tx ["SELECT uuid FROM workload"])))
+                    (mapv (partial postgres/get-workload-for-uuid tx)))]
+       (if (every? empty? result)
+         (fail-with-response response/not-found (format "Workload %s not found" uuid))
+         (succeed result))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."

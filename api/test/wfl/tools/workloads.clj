@@ -1,9 +1,18 @@
+<<<<<<< HEAD:api/test/wfl/tools/workloads.clj
 (ns wfl.tools.workloads
   (:require [wfl.environments :refer [stuff]]
             [wfl.module.copyfile :as cp]
             [wfl.module.wl :as wl]
             [wfl.util :refer [shell!]]
             [wfl.module.aou :as aou]))
+=======
+(ns zero.tools.workloads
+  (:require [zero.environments :refer [stuff]]
+            [zero.module.copyfile :as cp]
+            [zero.util :refer [shell!]]
+            [zero.module.wgs :as wgs]
+            [zero.module.aou :as aou]))
+>>>>>>> master:api/test/zero/tools/workloads.clj
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 (def git-email (delay (shell! "git" "config" "user.email")))
@@ -15,7 +24,7 @@
      :cromwell (get-in stuff [:gotc-dev :cromwell :url])
      :input    (str "gs://broad-gotc-test-storage" path)
      :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
-     :pipeline wl/pipeline
+     :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
                  :sample_name          "NA12878 PLUMBING",
@@ -41,6 +50,7 @@
    :notifications [{:chip_well_barcode           "7991775143_R01C01",
                     :bead_pool_manifest_file     "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
                     :analysis_version_number     1,
+                    :call_rate_threshold         0.98
                     :extended_chip_manifest_file "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
                     :red_idat_cloud_path         "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
                     :zcall_thresholds_file       "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",

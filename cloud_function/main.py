@@ -100,7 +100,7 @@ def submit_aou_workload(event, context):
     input_data = json.loads(manifest_file_content)
     notification = input_data['notifications'][0]
     input_values = notification.values()
-    input_files = set([f for f in input_values if str(f).startswith("gs://")])
+    input_files = set([f for f in input_values if str(f).startswith(f"gs://{bucket.name}")])
 
     # Check if the input files have been uploaded
     upload_complete = True

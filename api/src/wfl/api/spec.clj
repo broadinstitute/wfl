@@ -81,8 +81,10 @@
 (s/def ::base_file_name string?)
 (s/def ::final_gvcf_base_name string?)
 (s/def ::input_cram string?)
+(s/def ::reference_fasta_prefix string?)
 (s/def ::items-wgs (s/keys :opt-un [::base_file_name
                                     ::final_gvcf_base_name
+                                    ::reference_fasta_prefix
                                     ::unmapped_bam_suffix]
                            :req-un [::input_cram
                                     ::sample_name]))
@@ -90,6 +92,7 @@
 (s/def ::unmapped_bam_suffix string?)
 (s/def ::workflow-wgs (s/keys :opt-un [::base_file_name
                                        ::final_gvcf_base_name
+                                       ::reference_fasta_prefix
                                        ::status
                                        ::unmapped_bam_suffix
                                        ::updated
