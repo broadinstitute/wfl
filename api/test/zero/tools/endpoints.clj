@@ -6,7 +6,7 @@
 (def server
   "The WFL server URL to test."
   (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
-    "https://workflow-launcher.gotc-dev.broadinstitute.org"
+    "https://dev-wfl.gotc-dev.broadinstitute.org"
     "http://localhost:8080"))
 
 (defn parse-json-string

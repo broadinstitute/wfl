@@ -16,7 +16,7 @@
         </comment>
         <sql>
             ALTER TYPE ExternalWholeGenomeReprocessing
-                ADD ATTRIBUTE reference_fasta_prefix   text    -- input to the workflow
+                ADD ATTRIBUTE reference_fasta_prefix   text  CASCADE   -- input to the workflow
         </sql>
     </changeSet>
 </databaseChangeLog>
