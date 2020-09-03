@@ -102,6 +102,10 @@ jobs:
           echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
           echo ::set-env name=GOOGLE_OAUTH_ACCESS_TOKEN::${GOOGLE_OAUTH_ACCESS_TOKEN}
 
-      - name: Unit Test
+      - name: WFL Unit Test
+        run: |
+          make cloud_function TARGET=check
+
+      - name: Cloud Function Unit Test
         run: |
           make api TARGET=check
