@@ -1,18 +1,9 @@
-<<<<<<< HEAD:api/test/wfl/tools/workloads.clj
 (ns wfl.tools.workloads
   (:require [wfl.environments :refer [stuff]]
             [wfl.module.copyfile :as cp]
-            [wfl.module.wl :as wl]
+            [wfl.module.wgs :as wgs]
             [wfl.util :refer [shell!]]
             [wfl.module.aou :as aou]))
-=======
-(ns zero.tools.workloads
-  (:require [zero.environments :refer [stuff]]
-            [zero.module.copyfile :as cp]
-            [zero.util :refer [shell!]]
-            [zero.module.wgs :as wgs]
-            [zero.module.aou :as aou]))
->>>>>>> master:api/test/zero/tools/workloads.clj
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 (def git-email (delay (shell! "git" "config" "user.email")))

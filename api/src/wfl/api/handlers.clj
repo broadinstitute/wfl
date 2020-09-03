@@ -132,7 +132,7 @@
   "List all workloads or the workload with UUID in REQUEST."
   [request]
   (wfl.api.handlers/print-handler-error
-   (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (let [uuid (get-in request [:parameters :query :uuid])
            result (->> (if uuid
                          (do

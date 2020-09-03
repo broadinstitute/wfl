@@ -8,7 +8,7 @@
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
-            [zero.service.postgres :as postgres]
+            [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
@@ -181,7 +181,7 @@
 (defn create-workload
   "Remember the workload specified by BODY."
   [body]
-  (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> body
       (add-workload! tx)
       (conj ["SELECT * FROM workload WHERE uuid = ?"])
