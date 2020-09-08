@@ -87,7 +87,7 @@
 (defn- create-db
   "Create the ad-hoc testing database with DBNAME."
   [dbname]
-  (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
+  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
     ; cloud
     (util/shell! "gcloud" "sql" "databases" "create" dbname "-i" "zero-postgresql")
     ; local
@@ -96,7 +96,7 @@
 (defn- setup-db
   "Setup te db by running liquibase migrations by DBNAME."
   [dbname]
-  (if-let [test-env (System/getenv "ZERO_DEPLOY_ENVIRONMENT")]
+  (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
     ; cloud
     (let [url (cloud-db-url :gotc-dev "zero-postgresql" dbname)
           {:keys [username password]}
@@ -108,7 +108,7 @@
 (defn- destroy-db
   "Tear down the testing database by DBNAME."
   [dbname]
-  (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
+  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
     ; cloud
     (util/shell! "gcloud" "sql" "databases" "delete" dbname "-i" "zero-postgresql")
     ; local

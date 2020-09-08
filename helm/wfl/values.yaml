@@ -22,9 +22,9 @@ api:
   env:
     COOKIE_SECRET: ""
     WFL_LIVE_SERVER_MODE: "true"
-    ZERO_DEPLOY_ENVIRONMENT: "wgs-dev"
-    ZERO_POSTGRES_PASSWORD: ""
-    ZERO_POSTGRES_USERNAME: ""
+    WFL_DEPLOY_ENVIRONMENT: "wgs-dev"
+    WFL_POSTGRES_PASSWORD: ""
+    WFL_POSTGRES_USERNAME: ""
 
   resources: {}
   secrets:

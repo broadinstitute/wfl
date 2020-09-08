@@ -19,7 +19,7 @@
   (some->
     (if-let [file (util/getenv "GOOGLE_APPLICATION_CREDENTIALS")]
       (-> file io/file)
-      (-> "ZERO_DEPLOY_ENVIRONMENT"
+      (-> "WFL_DEPLOY_ENVIRONMENT"
         (util/getenv "debug")
         wfl/error-or-environment-keyword
         env/stuff :server :service-account util/vault-secrets
@@ -49,6 +49,6 @@
   "An Authorization header with a Bearer token."
   []
   (authorization-header-with-bearer-token
-    (if (util/getenv "ZERO_DEPLOY_ENVIRONMENT")
+    (if (util/getenv "WFL_DEPLOY_ENVIRONMENT")
       (service-account-token)
       (util/shell! "gcloud" "auth" "print-access-token"))))

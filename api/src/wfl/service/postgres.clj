@@ -13,18 +13,18 @@
   "Get the database configuration."
   []
   (let [{:strs [USER
-                ZERO_POSTGRES_PASSWORD
-                ZERO_POSTGRES_URL
-                ZERO_POSTGRES_USERNAME]} (util/getenv)]
+                WFL_POSTGRES_PASSWORD
+                WFL_POSTGRES_URL
+                WFL_POSTGRES_USERNAME]} (util/getenv)]
     (assoc {:classname       "org.postgresql.Driver"
             :db-name         "wfl"
             :instance-name   "zero-postgresql"
             ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
             :isolation-level :serializable
             :subprotocol     "postgresql"}
-           :connection-uri (or ZERO_POSTGRES_URL "jdbc:postgresql:wfl")
-           :password       (or ZERO_POSTGRES_PASSWORD "password")
-           :user           (or ZERO_POSTGRES_USERNAME USER "postgres"))))
+           :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
+           :password       (or WFL_POSTGRES_PASSWORD "password")
+           :user           (or WFL_POSTGRES_USERNAME USER "postgres"))))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."

@@ -5,7 +5,7 @@
 
 (def server
   "The WFL server URL to test."
-  (if (System/getenv "ZERO_DEPLOY_ENVIRONMENT")
+  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
     "https://dev-wfl.gotc-dev.broadinstitute.org"
     "http://localhost:8080"))
 
