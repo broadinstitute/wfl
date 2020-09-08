@@ -164,10 +164,9 @@ You need version 11 because that
 is what Google's hosted service supports,
 and there are differences in the SQL syntax.
 
-Set `"ZERO_POSTGRES_URL"`
-to `(postgres/zero-db-url :debug)`
-in `wfl.server/env_variables`
-to redirect the WFL server's database
+Modify the value of `WFL_POSTGRES_URL`
+in `(postgres/wfl-db-config)` to redirect
+the WFL server's database
 to a local Postgres server.
 With that hack in place,
 running `./ops/server.sh`
