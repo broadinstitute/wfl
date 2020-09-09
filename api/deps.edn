@@ -65,7 +65,7 @@
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
 
   :run
-  {:main-opts   ["-m" "zero.main"]}
+  {:main-opts   ["-m" "wfl.main"]}
 
   :test
   {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.632"}

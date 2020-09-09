@@ -1,8 +1,8 @@
 # Workflow Launcher UI
 
-This is the front-end interface of the Workflow Launcher. It is a VueJS based 
-SPA (Single-Page Application) that works as an ordinary client of the 
-Workflow Launcher Server. You could find its position in the following Diagram: 
+This is the front-end interface of the Workflow Launcher. It is a VueJS based
+SPA (Single-Page Application) that works as an ordinary client of the
+Workflow Launcher Server. You could find its position in the following Diagram:
 
 ![Workflow Launcher Tech Arch](https://www.lucidchart.com/publicSegments/view/07076782-0aea-4c3b-b999-6bc413f4250a/image.png)
 
@@ -47,8 +47,8 @@ In the above structure:
 
 ## Project setup
 
-** Note: for any of the following commands that uses `npm`, if you prefer to run from the root 
-directory of the WFL repo instead of running from within `zero/ui`, please be sure to append `--prefix=ui` 
+** Note: for any of the following commands that uses `npm`, if you prefer to run from the root
+directory of the WFL repo instead of running from within `wfl/ui`, please be sure to append `--prefix=ui`
 to the npm command you run. **
 
 ### Install dependencies

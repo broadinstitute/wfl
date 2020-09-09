@@ -37,7 +37,7 @@ Note that this specific syntax is more universal than just `&>output.log`.
 ## Testing
 clojure.tools.logging provides a [test namespace](http://clojure.github.io/tools.logging/#clojure.tools.logging.test).
 
-An example of usage is in `test/zero/unit/logging_test.clj`, which exists to test that the service loaders are correctly resolving our dependencies.
+An example of usage is in `test/wfl/unit/logging_test.clj`, which exists to test that the service loaders are correctly resolving our dependencies.
 
 ## Under the Hood
 > This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup

@@ -1,20 +1,17 @@
 # Welcome to WorkFlow Launcher
 
-## Build Board
 
-| Type        | Master Branch                                                                                                                                  | Dev | Prod |
-|-------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----|------|
-| Unit Test   | ![ Build on Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)  | N/A | N/A  |
-| Integration |                                                                                                                                                |     |      |
+[To the Build Board](https://internal.broadinstitute.org/~jwarren/green-hornet-status.html)
 
 ## Overview
 
 ![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
+![ Build on Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
 is a workload manager.
 
-For example, a workload could be a set of WGS samples to be reprocessed in a
+For example, a workload could be a set of Whole Genome samples to be reprocessed in a
 given project/bucket, the workflow is the processing of an individual sample
 in that workload running WGS reprocessing.
 
@@ -28,7 +25,7 @@ For more on Workflow Launcher's role in the Terra infrastructure see
 
 ## Set up
 
-Invoke `make` at the project level to build all `workflow-launcher` modules:
+Invoke `make` at the project level to test and build all `workflow-launcher` modules:
 ```bash
 $ make -jN
 ```
@@ -43,6 +40,13 @@ You can invoke `make` on a module from the top level directory by
 ```bash
 $ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
+
+For most of the time, you would want to run:
+
+```bash
+$ make ui api TARGET=images
+```
+to only build the WFL and its docker images without running tests.
 
 See the output of `make help` for more information.
 
@@ -69,19 +73,18 @@ currently talk to the following services:
 | Google Cloud Storage        | x           | x        |
 | Oracle DB                   | x           |          |
 | Vault                       | x           | x        |
-| Wfl                         |             | x        |
 
 Workflow Launcher has a diagnostic mode, `dx`,
 for debugging problems.
 
-Run `zero dx` to get a list of the diagnostics available.
+Run `wfl dx` to get a list of the diagnostics available.
 
 ```bash
 $ java -jar derived/api/target/wfl.jar dx
 
-zero dx: tools to help debug workflow problems.
+wfl dx: tools to help debug workflow problems.
 
-Usage: zero dx <tool> [<arg> ...]
+Usage: wfl dx <tool> [<arg> ...]
 Where: <tool> is the name of some diagnostic tool.
        <arg> ... are optional arguments to <tool>.
 
@@ -92,7 +95,7 @@ The <tool>s and their <arg>s are named here.
     Time per event type for workflow with ID in ENVIRONMENT.
 ...
 Error: Must specify a dx <tool> to run.
-BTW: You ran: zero dx
+BTW: You ran: wfl dx
 wm28d-f87:wfl yanc$
 ```
 
@@ -135,7 +138,7 @@ The `server.clj` file implements the WFL server. The
 `server_debug.clj` file adds some tools to aid in debugging the
 server.
 
-Some hacks specific to WFL are in `zero.clj`.
+Some hacks specific to WFL are in `wfl.clj`.
 
 The `boot.clj` offloads code from the `build.boot` file for
 easier development and debugging.
@@ -220,7 +223,7 @@ host a Clojure program.
 
 WFL uses a `gcloud auth` command line to authenticate the user. You
 need to be authenticated to Google Cloud and have a recent version
-of `google-cloud-sdk` in your path to run `zero` or its jar
+of `google-cloud-sdk` in your path to run `wfl` or its jar
 successfully. I verified that `Google Cloud SDK 304.0.0` works. That
 or any later version should be OK.
 
@@ -300,7 +303,7 @@ support `lein`, Cursive, and Calva users.
 
 Running `boot build` will not only build a fat jar (*uberjar*)
 for the WFL project, but will add an executable symbolic link
-`zero` to conveniently execute the Clojure code as a script.
+`wfl` to conveniently execute the Clojure code as a script.
 
 ####  Testing
 
@@ -316,7 +319,7 @@ The first `boot build` run will create a `./wfl` link to the
 ```
 
 You should eventually receive an humongous email from
-`wfl@broadinstitute.org` containing evidence of Zero's
+`wfl@broadinstitute.org` containing evidence of WFL's
 adventures.
 
 Of course, after `boot build`, you can also run WFL from its

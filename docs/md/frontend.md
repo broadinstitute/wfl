@@ -56,7 +56,7 @@ to host the page.
 
 Notes:
 1. For any of the following commands that uses `npm`, if you prefer to run from
-the root directory of the WFL repo instead of running from within `zero/ui`,
+the root directory of the WFL repo instead of running from within `wfl/ui`,
 please be sure to append `--prefix=ui`to the npm command you run.
 2. When using the environment as configured by `make`, append
 `--prefix=derived/ui` to your `npm` commands.

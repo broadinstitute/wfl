@@ -23,7 +23,7 @@ The WFL server doesn't do much now.
 
 This is the application server's home URL.
 
-https://zero-dot-broad-gotc-dev.appspot.com/
+https://dev-wfl.gotc-dev.broadinstitute.org/
 
 ## Create a workload
 
@@ -130,24 +130,19 @@ unless it is specified.
 
 The following URIs work now.
 
- - Home ([/](https://zero-dot-broad-gotc-dev.appspot.com/)) :
+ - Home ([/](https://dev-wfl.gotc-dev.broadinstitute.org/)) :
    Home replies with `Authorized!` when authorized.
    Otherwise it redirects to the Status page.
 
- - Status ([/status](https://zero-dot-broad-gotc-dev.appspot.com/status)) :
+ - Status ([/status](https://dev-wfl.gotc-dev.broadinstitute.org/status)) :
    Status is an uauthorized endpoint that responds with "OK".
 
- - Version ([/version](https://zero-dot-broad-gotc-dev.appspot.com/version)) :
+ - Version ([/version](https://dev-wfl.gotc-dev.broadinstitute.org/version)) :
    Version is an uauthorized endpoint that responds
    with the version currently deployed.
 
- - OAuth Launch
-   ([/auth/google](https://zero-dot-broad-gotc-dev.appspot.com/auth/google)) :
-   Launch begins the OAuth2 call chain
-   to authenticate using your Google credentials.
-
  - Environments
-   ([/api/v1/environments](https://zero-dot-broad-gotc-dev.appspot.com/api/v1/environments)) :
+   ([/api/v1/environments](https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/environments)) :
    Environments returns WFL's environment tree as JSON when authorized.
    Environments redirects to Status when unauthorized.
 
