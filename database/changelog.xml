@@ -19,4 +19,5 @@
     <include file="changesets/20200616_AllOfUsArraysEnum.xml"                    relativeToChangelogFile="true"/>
     <include file="changesets/20200616_AllOfUsArraysTable.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20200827_ExternalWholeGenomeReprocessingTable.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/20200909_ExternalExomeReprocessing.xml"            relativeToChangelogFile="true"/>
 </databaseChangeLog>
