@@ -3,6 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
             [clojure.string :as str]
+            [clojure.tools.logging.readable :as logr]
             [wfl.environments :as env]
             [wfl.module.all :as all]
             [wfl.references :as references]
@@ -105,12 +106,11 @@
                    (merge cram-ref)
                    (merge (env-inputs environment)
                           hack-task-level-values))
-        merged-inputs (merge inputs sample)
-        {:keys [destination_cloud_path final_gvcf_base_name]} merged-inputs
-        output (str destination_cloud_path final_gvcf_base_name ".cram")]
+        output (str (:destination_cloud_path inputs) 
+                    (:final_gvcf_base_name sample) 
+                    ".cram")]
     (all/throw-when-output-exists-already! output)
-    (util/prefix-keys merged-inputs :ExternalWholeGenomeReprocessing)
-    ))
+    (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
 
 (defn active-objects
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
@@ -140,6 +140,7 @@
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
   [environment in-gs out-gs sample]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
+    (logr/infof "submitting workflow with: in-gs: %s, out-gs: %s" in-gs out-gs)
     (cromwell/submit-workflow
      environment
      (io/file (:dir path) (path ".wdl"))
