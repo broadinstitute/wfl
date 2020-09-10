@@ -59,4 +59,5 @@
               slurp
               str/trim
               edn/read-string)
-      {:version "SOME BOGUS VERSION"}))
+      {:version "SOME BOGUS VERSION"
+       :commit "aaaaabbbbbcccccdddddeeeeefffffggggghhhhh"}))
