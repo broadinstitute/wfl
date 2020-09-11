@@ -6,13 +6,11 @@
             [wfl.module.aou :as aou]))
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
-(def git-email (delay (shell! "git" "config" "user.email")))
 
 (def wgs-workload
   "A whole genome sequencing workload used for testing."
   (let [path "/single_sample/plumbing/truth"]
-    {:creator  @git-email
-     :cromwell (get-in stuff [:gotc-dev :cromwell :url])
+    {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
      :input    (str "gs://broad-gotc-test-storage" path)
      :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
      :pipeline wgs/pipeline
@@ -27,8 +25,7 @@
   "An allofus arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:creator  @git-email
-   :cromwell (get-in stuff [:gotc-dev :cromwell :url])
+  {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
    :input    "aou-inputs-placeholder"
    :output   "gs://broad-gotc-dev-zero-test/aou-test-output"
    :pipeline aou/pipeline
@@ -58,8 +55,7 @@
 (defn make-copyfile-workload
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:creator  @git-email
-   :cromwell (get-in stuff [:gotc-dev :cromwell :url])
+  {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
    :input    ""
    :output   ""
    :pipeline cp/pipeline

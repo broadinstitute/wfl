@@ -5,7 +5,6 @@ from google.cloud import storage
 from google.cloud import exceptions
 
 
-_SERVICE_ACCOUNT = os.environ.get('FUNCTION_IDENTITY')  # Set by the cloud fn
 WFL_URL = os.environ.get("WFL_URL")
 CROMWELL_URL = os.environ.get("CROMWELL_URL")
 WFL_ENVIRONMENT = os.environ.get("WFL_ENVIRONMENT")
@@ -38,7 +37,6 @@ def get_manifest_path(object_name):
 
 def get_or_create_workload(headers):
     payload = {
-        "creator": _SERVICE_ACCOUNT,
         "cromwell": CROMWELL_URL,
         "input": "aou-inputs-placeholder",
         "output": OUTPUT_BUCKET,

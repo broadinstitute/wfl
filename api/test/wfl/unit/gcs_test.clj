@@ -1,9 +1,10 @@
 (ns wfl.unit.gcs-test
   "Test the Google Cloud Storage namespace."
-  (:require [clojure.java.io  :as io]
-            [clojure.string   :as str]
-            [clojure.test     :refer [deftest is testing]]
-            [wfl.service.gcs :as gcs])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [wfl.service.gcs :as gcs]
+            [wfl.once :as once])
   (:import [java.util UUID]))
 
 (def project
@@ -119,3 +120,10 @@
             (gcs/download-file local-file-name url)
             (is (= (slurp properties) (slurp local-file-name)))))))
     (finally (cleanup-object-test))))
+
+(deftest userinfo-test
+  (testing "no \"Authorization\" header in request should throw"
+    (is (thrown? Exception (gcs/userinfo {:headers {}}))))
+  (testing "fetching userinfo from request with \"Authorization\" header"
+    (let [info (gcs/userinfo {:headers (once/get-auth-header)})]
+      (is (:email info)))))
