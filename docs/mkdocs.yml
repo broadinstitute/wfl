@@ -21,9 +21,8 @@ extra:
 nav:
   - Get Started: README.md
   - Development Guide:
-    - Clojure Development: dev-clojure.md
+    - Development Process and Tips: dev-process.md
     - Local Development SandBox: dev-sandbox.md
-    - Development Process: dev-process.md
     - Logging: dev-logging.md
     - Deployment: dev-deployment.md
     - Frontend: dev-frontend.md

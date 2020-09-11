@@ -4,8 +4,8 @@
 
 The WorkFlow Launcher is currently running on a Kubernetes cluster,
 and the deployment is managed by [Helm](https://helm.sh/docs/intro/install/).
-In order to make a deployment or upgrade the current deployment manually,
-you have to make the following preparations:
+In order to make a deployment or upgrade the current deployment manually without
+using the automations, you have to make the following preparations:
 
 ### Setup Kubernetes
 
@@ -63,48 +63,28 @@ you have to make the following preparations:
   ```
   to check the current deployments that are managed by Helm.
 
-### Build
+### Build and Dockerize
 
-Build a new WFL jar it you want one.
-
-```bash
-boot build
-```
-
-Note the `:version` printed by the build,
-or run this to recover the `:version` string.
-
-``` bash
-java -jar ./target/wfl-*.tar version
-```
-
-The version string should look something like this.
-
-``` bash
-2020-06-24t16-41-44z
-```
-
-Compose an docker image tag for later use.
-
-``` bash
-IMAGE=2020-06-24t16-41-44z-$USER
-```
-
-### Dockerize
-
-Compose a new docker image if you want one.
-Tag it with some helpful name,
-then push it to DockerHub
-so Kubernetes can find it.
+Build the WFL with `make` as it's described in [Quickstart](/docs/md/README.md):
 
 ```bash
-docker build -t broadinstitute/workflow-launcher-api:$IMAGE .
-docker build -t broadinstitute/workflow-launcher-ui:$IMAGE  ui/.
-docker push broadinstitute/workflow-launcher-api:$IMAGE
-docker push broadinstitute/workflow-launcher-ui:$IMAGE
+$ make ui api TARGET=images -j8
 ```
 
-You should see it listed here.
+!!! info
+    To manually compose a new docker image if you want one.
+    Tag it with some helpful name,
+    then push it to DockerHub
+    so Kubernetes can find it, run:
+
+    ```bash
+    docker build -t broadinstitute/workflow-launcher-api:$IMAGE .
+    docker build -t broadinstitute/workflow-launcher-ui:$IMAGE  ui/.
+    docker push broadinstitute/workflow-launcher-api:$IMAGE
+    docker push broadinstitute/workflow-launcher-ui:$IMAGE
+    ```
+
+You should see it listed here:
 
 https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api
 
@@ -190,13 +170,7 @@ you also have to:
 Similar to how you have setup the Helm charts, you could run:
 
 ```bash
-helm install gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
-```
-
-Or
-
-```bash
-helm upgrade gotc-dev gotc-charts/authproxy -f custom-authvals.yaml
+helm upgrade gotc-dev gotc-charts/wfl -f custom-authvals.yaml --install
 ```
 
 To install or upgrade the deployments on your local cluster.

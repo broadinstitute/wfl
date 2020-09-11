@@ -30,7 +30,7 @@ https://dev-wfl.gotc-dev.broadinstitute.org/
 Defining a workload requires these top-level parameters.
 
 | Parameter | Type       |
-|-----------|------------ |
+|-----------|------------|
 | project   | text       |
 | cromwell  | URL        |
 | pipeline  | pipeline   |

@@ -44,8 +44,16 @@ following prerequisites are needed:
 - Python3 (`brew install python@3.8` on macOS)
 - NodeJS (`brew install node` on macOS)
 
-You could then invoke `make` at the project level to test and build all
-`workflow-launcher` modules:
+!!! tip "Arch Linux tips"
+    - Install [clojure](https://www.archlinux.org/packages/?name=clojure) and
+    [leiningen](https://www.archlinux.org/packages/?name=leiningen)
+    from the official repositories.
+    - Install [boot](https://aur.archlinux.org/packages/boot/) and
+    [google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
+    from the AUR.
+
+    You could then invoke `make` at the project level to test and build all
+    `workflow-launcher` modules:
 
 ```bash
 $ make -j8
@@ -108,8 +116,17 @@ invoke `clojure` cli from within the `api` directory, for example, `cd api` and:
 $ clojure -A:test integration --focus wfl.integration.v1-endpoint-test
 ```
 
-In general, the Clojure test code lives under the project `test/` root. At present,
-`wfl` api has two kinds of test, `unit` and `integration`. These can be run
+In general, we implement Clojure tests under the `test/` root directory and use the
+[kaocha](https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme) test
+runner. Test suites use a `-test` namespace suffix. You can pass extra command
+line arguments to `kaocha`, such as the above `--focus` flag.
+You can see the full list of options with the following:
+
+```shell
+clojure -A:integration --help
+```
+
+At present, `wfl` api has two kinds of test, `unit` and `integration`. These can be run
 via the `deps.edn`, optionally specifying the kind:
 
 ```shell
@@ -122,9 +139,6 @@ before they can be run, namely, they require a `wfl` server running locally:
 ```shell
 ./ops/server.sh
 ```
-
-See the [development guide](/docs/md/dev-process.md#Test) for more
-information.
 
 ### Deploy
 
@@ -152,6 +166,9 @@ to deploy applicable versions of WFL to various available cloud projects.
     ```
 
     In the long term, this is likely to change.
+
+Learn more about the deployment details in
+[Deployment of WorkFlow Launcher](/docs/md/dev-deployment.md).
 
 ### Diagnosis
 
