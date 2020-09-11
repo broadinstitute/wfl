@@ -76,7 +76,7 @@ where currently available `MODULE`s are {api cloud_function docs helm ui}
 For most of the time, you would want to run something like:
 
 ```bash
-$ make clean && make distclean
+$ make distclean
 ```
 
 to clean up the built modules such as the docker images or the derived folder first,
