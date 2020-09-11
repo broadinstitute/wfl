@@ -13,42 +13,66 @@ is a workload manager.
 
 For example, a workload could be a set of Whole Genome samples to be reprocessed in a
 given project/bucket, the workflow is the processing of an individual sample
-in that workload running WGS reprocessing.
+in that workload running WGS reprocessing; a workload could also be a queue of incoming notifications that describe all of the required inputs to launch Arrays scientific pipelines in Cromwell.
 
-It runs as you, with your credentials, from your laptop, and communicates with
-other services as necessary to manage a workload.
+WFL is designed to be deployed to run as a service in the cloud, primarily on Kubernetes clusters.
 
-It can also be deployed to run as a service in the cloud.
+!!! info ""
+    For more on Workflow Launcher's role in the Terra infrastructure see [Workflow Launcher's role in Terra](terra.md).
 
-For more on Workflow Launcher's role in the Terra infrastructure see
-[Workflow Launcher's role in Terra](/docs/md/terra.md).
 
-## Set up
+## Quickstart
 
-Invoke `make` at the project level to test and build all `workflow-launcher` modules:
+???+ tip ""
+    This is the Quickstart section, which should cover the most frequent
+    uses cases that interact with WFL. For more detailed information, please
+    check other sections such as the [development hacks](dev-process.md)
+    or [modules design principles](module-arrays.md).
+
+### Build
+
+The easiest way to build WFL is via `make` (or `gmake` on macOS), in addition, the
+following prerequisites are needed:
+
+- [The Docker daemon](https://www.docker.com/products/docker-desktop)
+- Clojure (`brew install clojure` on macOS)
+- [Boot](https://github.com/boot-clj/boot) (`brew install boot-clj` on macOS)
+- Python3 (`brew install python@3.8` on macOS)
+- NodeJS (`brew install node` on macOS)
+
+You could then invoke `make` at the project level to test and build all
+`workflow-launcher` modules:
+
 ```bash
-$ make -jN
+$ make -j8
 ```
-where `N` is the number of concurrent jobs you wish to run.
+where `8` can be replaced by any number that represents the concurrent
+jobs you wish to run.
 
-`make` will build each module in `worfklow-launcher`, run tests and generate
+!!! info "about the out-of-order outputs"
+    If the version of your `make` is above GNU Make 4.0 (you could check
+    by running `make --version`), it's **highly recommended** to use
+    `--output-sync` along with `-j` so the standard outputs are sorted, i.e.
+    ```
+    $ make -j8 --output-sync
+    ```
+
+`make` will build each module in `workflow-launcher`, run tests and generate
 `Docker` images. All generated files go into a `derived` directory under the
 project root.
 
-You can invoke `make` on a module from the top level directory by
+You can also invoke `make` on a module from the top level directory by
 
 ```bash
 $ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
 
-For most of the time, you would want to run:
+For most of the time, you would want to run something like:
 
 ```bash
-$ make ui api TARGET=images
+$ make ui api TARGET=images -j8
 ```
-to only build the WFL and its docker images without running tests.
-
-See the output of `make help` for more information.
+to **only build** the WFL and its docker images without running tests.
 
 ## Versioning
 

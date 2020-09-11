@@ -39,6 +39,7 @@ markdown_extensions:
   - codehilite
   - admonition
   - pymdownx.superfences
+  - pymdownx.details
   - toc:
       permalink: True
   - markdown_include.include:
