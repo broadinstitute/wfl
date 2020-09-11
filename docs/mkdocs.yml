@@ -29,6 +29,7 @@ nav:
   - Modules:
     - General: modules-general.md
     - Arrays: modules-arrays.md
+    - Whole Genome: dev-wgs.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md
 

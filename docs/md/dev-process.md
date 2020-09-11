@@ -6,6 +6,12 @@ within the team,
 and encourage ourselves
 to follow in most cases.
 
+## The Swagger page
+
+WFL ships with a swaggger UI that documents all of the
+available endpoints. It's available at path `/swagger`, e.g.
+https://dev-wfl.gotc-dev.broadinstitute.org/swagger
+
 ## Development Setup
 
 Clojure development feels very different from Scala and Java

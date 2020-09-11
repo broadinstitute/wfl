@@ -21,3 +21,38 @@ into batches (workloads) by a set of properties.
 
 To learn more about the details of each module, please check their own sections in
 this documentation.
+
+## Create a workload
+
+Defining a workload type requires these top-level parameters.
+
+| Parameter | Type       |
+|-----------|------------|
+| project   | text       |
+| cromwell  | URL        |
+| pipeline  | pipeline   |
+| input     | URL prefix |
+| output    | URL prefix |
+
+The parameters are used this way.
+
+The `project` is just some text
+to identify a researcher,
+billing entity,
+or cost object
+responsible for the workload.
+
+The `cromwell` URL specifies the Cromwell instance
+to service the _workload_.
+
+The `pipeline` enumeration implicitly identifies a data
+schema for the inputs to and outputs from the workload.
+You can think of it as the _kind_ of workflow
+specified for the workload.
+People sometimes refer to this as _the tag_
+in that it is a well-known name
+for a Cromwell pipeline defined in WDL.
+You might also think of `pipeline`
+as the external or official name
+of a WFL processing module.
+
