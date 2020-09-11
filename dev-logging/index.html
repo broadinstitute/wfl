@@ -15,7 +15,7 @@
     
     
       
-        <title>Server - Workflow Launcher</title>
+        <title>Logging - Workflow Launcher</title>
       
     
     
@@ -58,7 +58,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#workflow-launcher-server" class="md-skip">
+        <a href="#wfl-logging" class="md-skip">
           Skip to content
         </a>
       
@@ -86,7 +86,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Server
+              Logging
             
           </span>
         </div>
@@ -185,18 +185,32 @@
       
 
 
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
-    
-    <label class="md-nav__link" for="nav-1">
+  <li class="md-nav__item">
+    <a href=".." title="Get Started" class="md-nav__link">
       Get Started
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+    
+    <label class="md-nav__link" for="nav-2">
+      Development Guide
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Get Started" data-md-level="1">
-      <label class="md-nav__title" for="nav-1">
+    <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon"></span>
-        Get Started
+        Development Guide
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -207,37 +221,101 @@
 
 
   <li class="md-nav__item">
-    <a href=".." title="Welcome to WorkFlow Launcher" class="md-nav__link">
-      Welcome to WorkFlow Launcher
+    <a href="../dev-process/" title="Development Process and Tips" class="md-nav__link">
+      Development Process and Tips
     </a>
   </li>
 
         
-      </ul>
-    </nav>
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../dev-sandbox/" title="Local Development SandBox" class="md-nav__link">
+      Local Development SandBox
+    </a>
   </li>
 
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
-    
-    <label class="md-nav__link" for="nav-2">
-      Modules
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Modules" data-md-level="1">
-      <label class="md-nav__title" for="nav-2">
-        <span class="md-nav__icon md-icon"></span>
-        Modules
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
         
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Logging
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" title="Logging" class="md-nav__link md-nav__link--active">
+      Logging
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tldr" class="md-nav__link">
+    TL;DR
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    Behavior
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    Testing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#under-the-hood" class="md-nav__link">
+    Under the Hood
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
         
           
           
@@ -245,8 +323,20 @@
 
 
   <li class="md-nav__item">
-    <a href="../module-arrays/" title="Arrays" class="md-nav__link">
-      Arrays
+    <a href="../dev-deployment/" title="Deployment" class="md-nav__link">
+      Deployment
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../dev-frontend/" title="Frontend" class="md-nav__link">
+      Frontend
     </a>
   </li>
 
@@ -266,13 +356,13 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
-      Deployment
+      Modules
       <span class="md-nav__icon md-icon"></span>
     </label>
-    <nav class="md-nav" aria-label="Deployment" data-md-level="1">
+    <nav class="md-nav" aria-label="Modules" data-md-level="1">
       <label class="md-nav__title" for="nav-3">
         <span class="md-nav__icon md-icon"></span>
-        Deployment
+        Modules
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -283,8 +373,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../deployment/" title="Deployment with Kubernetes" class="md-nav__link">
-      Deployment with Kubernetes
+    <a href="../modules-general/" title="General" class="md-nav__link">
+      General
     </a>
   </li>
 
@@ -295,8 +385,20 @@
 
 
   <li class="md-nav__item">
-    <a href="../sandbox/" title="Making your sandbox" class="md-nav__link">
-      Making your sandbox
+    <a href="../modules-arrays/" title="Arrays" class="md-nav__link">
+      Arrays
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../dev-wgs/" title="Whole Genome" class="md-nav__link">
+      Whole Genome
     </a>
   </li>
 
@@ -316,191 +418,16 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
     
     <label class="md-nav__link" for="nav-4">
-      Frontend
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Frontend" data-md-level="1">
-      <label class="md-nav__title" for="nav-4">
-        <span class="md-nav__icon md-icon"></span>
-        Frontend
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../frontend/" title="Frontend" class="md-nav__link">
-      Frontend
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
-    
-    <label class="md-nav__link" for="nav-5">
-      Server
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Server" data-md-level="1">
-      <label class="md-nav__title" for="nav-5">
-        <span class="md-nav__icon md-icon"></span>
-        Server
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Server
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" title="Server" class="md-nav__link md-nav__link--active">
-      Server
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#deploy-to-google-app-engine" class="md-nav__link">
-    Deploy to Google App Engine
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#wfl-server-features" class="md-nav__link">
-    WFL server features
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-a-workload" class="md-nav__link">
-    Create a workload
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#an-externalwholegenomereprocessing-workload" class="md-nav__link">
-    An ExternalWholeGenomeReprocessing workload
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#uris-served" class="md-nav__link">
-    URIs served
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starting-wfl-server-for-local-development" class="md-nav__link">
-    Starting WFL server for local development
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
-    
-    <label class="md-nav__link" for="nav-6">
       Readings
       <span class="md-nav__icon md-icon"></span>
     </label>
     <nav class="md-nav" aria-label="Readings" data-md-level="1">
-      <label class="md-nav__title" for="nav-6">
+      <label class="md-nav__title" for="nav-4">
         <span class="md-nav__icon md-icon"></span>
         Readings
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../dev-process/" title="Development Process" class="md-nav__link">
-      Development Process
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../logging/" title="Logging" class="md-nav__link">
-      Logging
-    </a>
-  </li>
-
         
           
           
@@ -543,43 +470,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#deploy-to-google-app-engine" class="md-nav__link">
-    Deploy to Google App Engine
+  <a href="#tldr" class="md-nav__link">
+    TL;DR
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#wfl-server-features" class="md-nav__link">
-    WFL server features
+  <a href="#usage" class="md-nav__link">
+    Usage
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#create-a-workload" class="md-nav__link">
-    Create a workload
+  <a href="#behavior" class="md-nav__link">
+    Behavior
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#an-externalwholegenomereprocessing-workload" class="md-nav__link">
-    An ExternalWholeGenomeReprocessing workload
+  <a href="#testing" class="md-nav__link">
+    Testing
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#uris-served" class="md-nav__link">
-    URIs served
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starting-wfl-server-for-local-development" class="md-nav__link">
-    Starting WFL server for local development
+  <a href="#under-the-hood" class="md-nav__link">
+    Under the Hood
   </a>
   
 </li>
@@ -596,7 +516,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/server.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/dev-logging.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -604,166 +524,61 @@
                   
                 
                 
-                <h1 id="workflow-launcher-server">WorkFlow Launcher Server<a class="headerlink" href="#workflow-launcher-server" title="Permanent link">&para;</a></h1>
-<p>We now have the basics of WorkFlow Launcher
-running as a server
-in Google App Engine (GAE).</p>
-<h2 id="deploy-to-google-app-engine">Deploy to Google App Engine<a class="headerlink" href="#deploy-to-google-app-engine" title="Permanent link">&para;</a></h2>
-<p>To build and deploy WFL,
-run <code>./ops/deploy.sh</code>.</p>
-<p>It's Google Credentials page is here.</p>
-<p>https://console.developers.google.com/apis/credentials?project=broad-gotc-dev</p>
-<h2 id="wfl-server-features">WFL server features<a class="headerlink" href="#wfl-server-features" title="Permanent link">&para;</a></h2>
-<p>The WFL server doesn't do much now.</p>
-<ul>
-<li>It can configure its secrets and deploy itself.</li>
-<li>It can authenticate to Google using OAuth2.</li>
-<li>It can serve authorized and unauthorized routes.</li>
-</ul>
-<p>This is the application server's home URL.</p>
-<p>https://dev-wfl.gotc-dev.broadinstitute.org/</p>
-<h2 id="create-a-workload">Create a workload<a class="headerlink" href="#create-a-workload" title="Permanent link">&para;</a></h2>
-<p>Defining a workload requires these top-level parameters.</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>project</td>
-<td>text</td>
-</tr>
-<tr>
-<td>cromwell</td>
-<td>URL</td>
-</tr>
-<tr>
-<td>pipeline</td>
-<td>pipeline</td>
-</tr>
-<tr>
-<td>input</td>
-<td>URL prefix</td>
-</tr>
-<tr>
-<td>output</td>
-<td>URL prefix</td>
-</tr>
-</tbody>
-</table>
-<p>The parameters are used this way.</p>
-<p>The <code>project</code> is just some text
-to identify a researcher,
-billing entity,
-or cost object
-responsible for the workload.</p>
-<p>The <code>cromwell</code> URL specifies the Cromwell instance
-to service the <em>workload</em>.</p>
-<p>The <code>pipeline</code> enumeration implicitly identifies a data
-schema for the inputs to and outputs from the workload.
-You can think of it as the <em>kind</em> of workflow
-specified for the workload.
-People sometimes refer to this as <em>the tag</em>
-in that it is a well-known name
-for a Cromwell pipeline defined in WDL.
-You might also think of <code>pipeline</code>
-as the external or official name
-of a WFL processing module.</p>
-<p><code>ExternalWholeGenomeReprocessing</code>
-is the only <code>pipeline</code> currently defined.
-Pipelines differ in their processing and results,
-so each <code>pipeline</code> requires a different
-set of inputs for each workflow in a workload.</p>
-<p>All input files for the workload
-share the <code>input</code> URL prefix,
-and all output files from the workload
-share the <code>output</code> URL prefix.
-These should be the longest common prefix
-shared by all the files
-to keep discovery and monitoring efficient.</p>
-<h2 id="an-externalwholegenomereprocessing-workload">An ExternalWholeGenomeReprocessing workload<a class="headerlink" href="#an-externalwholegenomereprocessing-workload" title="Permanent link">&para;</a></h2>
-<p>An <code>ExternalWholeGenomeReprocessing</code> workload
-requires the following inputs
-for each workflow in the workload.</p>
-<ul>
-<li>input_cram</li>
-<li>sample_name</li>
-<li>base_file_name</li>
-<li>final_gvcf_base_name</li>
-<li>unmapped_bam_suffix</li>
-</ul>
-<p>The <code>input_cram</code> is the path to a file
-relative to the <code>input</code> URL prefix
-in the <code>workload</code> definition above.</p>
-<p>The <code>input_cram</code> contains the <code>sample_name</code>
-but we break it out into a separate input here
-to avoid parsing every (often large) CRAM file.</p>
-<p>The <code>base_file_name</code> is used to name result files.
-The workflow uses the <code>base_file_name</code>
-together with one or more filetype suffixes
-to name intermediate and output files.
-It is usually just the leaf name of <code>input_cram</code>
-with the <code>.cram</code> extension removed.</p>
-<p>The <code>final_gvcf_base_name</code> is the root
-of the leaf name
-of the pathname of the final VCF.
-The final VCF will have some variant
-of a <code>.vcf</code> suffix
-added by the workflow WDL.</p>
-<p>It is common for <code>base_file_name</code>
-and <code>final_gvcf_base_name</code>
-to be identical to <code>sample_name</code>.
-If no <code>base_file_name</code> is specified
-for any workflow in a workload,
-<code>base_file_name</code> defaults to <code>sample_name</code>.
-Likewise,
-if no <code>final_gvcf_base_name</code> is specified
-for any workflow in a workload,
-then <code>final_gvcf_base_name</code>
-also defaults to <code>sample_name</code>.</p>
-<p>It is used to recover the filename resulting
-from re-aligning a reverted CRAM file.
-The <code>unmapped_bam_suffix</code>
-is almost always <code>.unmapped.bam</code>,
-so that is its default value
-unless it is specified.</p>
-<h2 id="uris-served">URIs served<a class="headerlink" href="#uris-served" title="Permanent link">&para;</a></h2>
-<p>The following URIs work now.</p>
-<ul>
-<li>
-<p>Home (<a href="https://dev-wfl.gotc-dev.broadinstitute.org/">/</a>) :
-   Home replies with <code>Authorized!</code> when authorized.
-   Otherwise it redirects to the Status page.</p>
-</li>
-<li>
-<p>Status (<a href="https://dev-wfl.gotc-dev.broadinstitute.org/status">/status</a>) :
-   Status is an uauthorized endpoint that responds with "OK".</p>
-</li>
-<li>
-<p>Version (<a href="https://dev-wfl.gotc-dev.broadinstitute.org/version">/version</a>) :
-   Version is an uauthorized endpoint that responds
-   with the version currently deployed.</p>
-</li>
-<li>
-<p>Environments
-   (<a href="https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/environments">/api/v1/environments</a>) :
-   Environments returns WFL's environment tree as JSON when authorized.
-   Environments redirects to Status when unauthorized.</p>
-</li>
-</ul>
-<h2 id="starting-wfl-server-for-local-development">Starting WFL server for local development<a class="headerlink" href="#starting-wfl-server-for-local-development" title="Permanent link">&para;</a></h2>
-<p>Run <code>./ops/server.sh</code> from the command line.</p>
-<p>There is a <code>wrap-reload-for-development-only</code> handler wrapper
-commented out on the <code>app</code> defined in the <code>server.clj</code> file.
-When it is compiled in,
-source code changes that you make
-will be reloaded into the running server.</p>
-<p>As its name implies,
-you should comment it out
-before deploying WFL.</p>
+                <h1 id="wfl-logging">WFL Logging<a class="headerlink" href="#wfl-logging" title="Permanent link">&para;</a></h1>
+<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Import <code>clojure.tools.logging :as log</code> and use <code>log/error</code> / <code>log/info</code> etc.</p>
+<p><code>clojure.tools.logging</code> uses SLF4J under the hood which in turn uses Log4j2 as its implementation.</p>
+<p>Below is more detailed information for those interested.</p>
+</blockquote>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<p>We use <code>clojure.tools.logging</code> aliased to <code>log</code>.</p>
+<p>Require it like any other dependency:
+<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">ns </span><span class="s">&quot;...&quot;</span>
+  <span class="p">(</span><span class="ss">:require</span>
+    <span class="nv">...</span>
+    <span class="p">[</span><span class="nv">clojure.tools.logging</span> <span class="ss">:as</span> <span class="nv">log</span><span class="p">]</span>
+    <span class="nv">...</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nf">log/info</span> <span class="s">&quot;Hello!&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+<p>Full documentation is available <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging">here</a>.</p>
+<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">&para;</a></h2>
+<p>Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.</p>
+<p>Thus, to have WFL log everything to a file you'd want to use something like
+<div class="highlight"><pre><span></span><code>my-command &gt;output.log <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</code></pre></div>
+That'll capture both STDOUT and STDERR to the same file.
+Note that this specific syntax is more universal than just <code>&amp;&gt;output.log</code>.</p>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>clojure.tools.logging provides a <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging.test">test namespace</a>.</p>
+<p>An example of usage is in <code>test/wfl/unit/logging_test.clj</code>, which exists to test that the service loaders are correctly resolving our dependencies.</p>
+<h2 id="under-the-hood">Under the Hood<a class="headerlink" href="#under-the-hood" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup
+doesn't change all that much.</p>
+<p>The key takeaway here is that JVM logging libraries use service loaders
+and other runtime configuration to find each other.</p>
+</blockquote>
+<p>WFL's logging works as follows:</p>
+<ol>
+<li>clojure.tools.logging is imported and used directly</li>
+<li>Why clojure.tools.logging? It is Clojure-native so it has intuitive syntax</li>
+<li>Why not wrap or delegate to it? It already works just as a wrapper to any
+     other logging implementation so wrapping it would duplicate its purpose</li>
+<li>clojure.tools.logging delegates to SLF4J</li>
+<li>Why SLF4J? Jetty already uses it, so configuring it ourselves helps keep
+     it quiet</li>
+<li>SLF4J delegates to Log4j 2</li>
+<li>Why delegate? SLF4J is a facade that still needs an implementation to
+     actually log things</li>
+<li>Why Log4j 2? It is a fair default implementation: highly configurable,
+     well-tested, well-supported</li>
+</ol>
+<p>Even without making our own wrapper around clojure.tools.logging, we have
+a lot of flexibility. Suppose Jetty removes their dependency on SLF4J: we
+could remove our own dependency on SLF4J and clojure.tools.logging would
+immediately begin interacting directly with Log4j 2.</p>
                 
               
               
@@ -782,7 +597,7 @@ before deploying WFL.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../frontend/" title="Frontend" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../dev-sandbox/" title="Local Development SandBox" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -791,19 +606,19 @@ before deploying WFL.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Frontend
+                Local Development SandBox
               </div>
             </div>
           </a>
         
         
-          <a href="../dev-process/" title="Development Process" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../dev-deployment/" title="Deployment" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Development Process
+                Deployment
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
