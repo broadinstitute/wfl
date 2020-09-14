@@ -30,6 +30,13 @@ Cursive licences are available
 The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:
 
+???+ tip
+    It is recommended to run `prebuild` before launching IntelliJ
+    as it sets up all libraries and derived resources and sources:
+    ```bash
+    make TARGET=prebuild - jN
+    ```
+
 1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to
 generate the `project.clj` (see below)
 2. *Now inside of IntelliJ*, import the project by specifically targeting the
@@ -257,3 +264,29 @@ environment's server --
 `resources/wfl/environments.clj` has some environments if you've built locally.
 You can use `--password=$ENV_SOMETHING` to supply it.
 
+### Diagnosis
+
+Workflow Launcher has a diagnostic command, `dx`,
+for debugging problems.
+
+Run `wfl dx` to get a list of the diagnostics available.
+
+```bash
+$ java -jar derived/api/target/wfl.jar dx
+
+wfl dx: tools to help debug workflow problems.
+
+Usage: wfl dx <tool> [<arg> ...]
+Where: <tool> is the name of some diagnostic tool.
+       <arg> ... are optional arguments to <tool>.
+
+The <tool>s and their <arg>s are named here.
+  all-metadata environment & ids
+    All workflow metadata for IDS from Cromwell in ENVIRONMENT.
+  event-timing environment id
+    Time per event type for workflow with ID in ENVIRONMENT.
+...
+Error: Must specify a dx <tool> to run.
+BTW: You ran: wfl dx
+wm28d-f87:wfl yanc$
+```

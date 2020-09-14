@@ -84,10 +84,11 @@ where currently available `MODULE`s are {api cloud_function docs helm ui}
 For most of the time, you would want to run something like:
 
 ```bash
-$ make distclean
+$ make clean
 ```
 
-to clean up the built modules such as the docker images or the derived folder first,
+to clean up the built modules (`-j8` is also available for `make clean`).
+
 and then run:
 
 ```bash
@@ -95,6 +96,16 @@ $ make ui api TARGET=images -j8
 ```
 
 to **only build** the WFL and its docker images without running tests.
+
+!!! info
+    Note if you updated the second party repositories such as
+    `dsde-pipelines` or `gotc-deploy`, you might have to run:
+    ```bash
+    $ make distclean
+    ```
+    to remove them. This is not always needed but can help completely
+    purge the local derived files.
+
 
 ### Test
 
@@ -105,6 +116,7 @@ $ make [MODULE] TARGET=check
 ```
 
 such as `make api TARGET=check` or `make cloud_function TARGET=check`.
+Note this automatically makes all of `check`'s prerequisites.
 
 #### Clojure Test
 
@@ -169,33 +181,6 @@ to deploy applicable versions of WFL to various available cloud projects.
 
 Learn more about the deployment details in
 [Deployment of WorkFlow Launcher](/docs/md/dev-deployment.md).
-
-### Diagnosis
-
-Workflow Launcher has a diagnostic command, `dx`,
-for debugging problems.
-
-Run `wfl dx` to get a list of the diagnostics available.
-
-```bash
-$ java -jar derived/api/target/wfl.jar dx
-
-wfl dx: tools to help debug workflow problems.
-
-Usage: wfl dx <tool> [<arg> ...]
-Where: <tool> is the name of some diagnostic tool.
-       <arg> ... are optional arguments to <tool>.
-
-The <tool>s and their <arg>s are named here.
-  all-metadata environment & ids
-    All workflow metadata for IDS from Cromwell in ENVIRONMENT.
-  event-timing environment id
-    Time per event type for workflow with ID in ENVIRONMENT.
-...
-Error: Must specify a dx <tool> to run.
-BTW: You ran: wfl dx
-wm28d-f87:wfl yanc$
-```
 
 ## Implementation
 
