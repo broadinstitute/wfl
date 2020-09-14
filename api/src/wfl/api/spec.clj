@@ -30,8 +30,7 @@
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
-(s/def ::workload-request (s/keys :req-un [::creator
-                                           ::cromwell
+(s/def ::workload-request (s/keys :req-un [::cromwell
                                            ::input
                                            ::items
                                            ::output

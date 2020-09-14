@@ -271,3 +271,13 @@
            :headers      (once/get-auth-header)
            :body         (json/write-str metadata :escape-slash false)}
           http/request :body (json/read-str :key-fn keyword)))))
+
+(defn userinfo
+  "Query Google Cloud services for who made the http REQUEST"
+  [request]
+  (if-let [auth-token (or (get-in request [:headers "Authorization"])
+                          (get-in request [:headers "authorization"]))]
+    (let [response (http/get (str api-url "oauth2/v3/userinfo")
+                     {:headers {"Authorization" auth-token}})]
+      (json/read-str (:body response) :key-fn keyword))
+    (throw (IllegalArgumentException. "no auth header in request"))))

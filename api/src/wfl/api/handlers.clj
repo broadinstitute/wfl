@@ -10,7 +10,8 @@
               [wfl.module.wgs :as wgs]
               [wfl.service.cromwell :as cromwell]
               [wfl.service.postgres :as postgres]
-              [wfl.wfl :as wfl]))
+              [wfl.wfl :as wfl]
+              [wfl.service.gcs :as gcs]))
 
 (defmacro ^:private print-handler-error
   "Run BODY, printing any exception rises through it."
@@ -114,14 +115,15 @@
 (defoverload start-workload! wgs/pipeline wgs/start-workload!)
 
 (defn post-create
-  "Create the workload described in BODY of _REQUEST."
-  [{:keys [parameters] :as _request}]
+  "Create the workload described in BODY of REQUEST."
+  [{:keys [parameters] :as request}]
   (wfl.api.handlers/print-handler-error
    (letfn [(unnilify [m] (into {} (filter second m)))]
-     (let [{:keys [body]} parameters]
+     (let [{:keys [body]} parameters
+           {:keys [email]} (gcs/userinfo request)]
        (logr/infof "post-create endpoint called: body=%s" body)
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (->> body
+         (->> (assoc body :creator email)
               (add-workload! tx)
               :uuid
               (conj ["SELECT * FROM workload WHERE uuid = ?"])
