@@ -315,6 +315,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#diagnosis" class="md-nav__link">
+    Diagnosis
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -567,6 +574,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#diagnosis" class="md-nav__link">
+    Diagnosis
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -616,6 +630,11 @@ Cursive licences are available
 <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
 The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:</p>
+<details class="tip" open="open"><summary>Tip</summary><p>It is recommended to run <code>prebuild</code> before launching IntelliJ
+as it sets up all libraries and derived resources and sources:
+<div class="highlight"><pre><span></span><code>make <span class="nv">TARGET</span><span class="o">=</span>prebuild - jN
+</code></pre></div></p>
+</details>
 <ol>
 <li><em>Outside of IntelliJ</em>, <code>clone</code> the repo and run <code>boot</code> at the top-level to
 generate the <code>project.clj</code> (see below)</li>
@@ -816,6 +835,28 @@ password and can omit it.</p>
 environment's server --
 <code>resources/wfl/environments.clj</code> has some environments if you've built locally.
 You can use <code>--password=$ENV_SOMETHING</code> to supply it.</p>
+<h3 id="diagnosis">Diagnosis<a class="headerlink" href="#diagnosis" title="Permanent link">&para;</a></h3>
+<p>Workflow Launcher has a diagnostic command, <code>dx</code>,
+for debugging problems.</p>
+<p>Run <code>wfl dx</code> to get a list of the diagnostics available.</p>
+<div class="highlight"><pre><span></span><code>$ java -jar derived/api/target/wfl.jar dx
+
+wfl dx: tools to <span class="nb">help</span> debug workflow problems.
+
+Usage: wfl dx &lt;tool&gt; <span class="o">[</span>&lt;arg&gt; ...<span class="o">]</span>
+Where: &lt;tool&gt; is the name of some diagnostic tool.
+       &lt;arg&gt; ... are optional arguments to &lt;tool&gt;.
+
+The &lt;tool&gt;s and their &lt;arg&gt;s are named here.
+  all-metadata environment <span class="p">&amp;</span> ids
+    All workflow metadata <span class="k">for</span> IDS from Cromwell in ENVIRONMENT.
+  event-timing environment id
+    Time per event <span class="nb">type</span> <span class="k">for</span> workflow with ID in ENVIRONMENT.
+...
+Error: Must specify a dx &lt;tool&gt; to run.
+BTW: You ran: wfl dx
+wm28d-f87:wfl yanc$
+</code></pre></div>
                 
               
               

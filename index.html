@@ -265,13 +265,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#diagnosis" class="md-nav__link">
-    Diagnosis
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -589,13 +582,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#diagnosis" class="md-nav__link">
-    Diagnosis
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -736,21 +722,31 @@ project root.</p>
 
 <p>where currently available <code>MODULE</code>s are {api cloud_function docs helm ui}</p>
 <p>For most of the time, you would want to run something like:</p>
-<div class="highlight"><pre><span></span><code>$ make distclean
+<div class="highlight"><pre><span></span><code>$ make clean
 </code></pre></div>
 
-<p>to clean up the built modules such as the docker images or the derived folder first,
-and then run:</p>
+<p>to clean up the built modules (<code>-j8</code> is also available for <code>make clean</code>).</p>
+<p>and then run:</p>
 <div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
 </code></pre></div>
 
 <p>to <strong>only build</strong> the WFL and its docker images without running tests.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Note if you updated the second party repositories such as
+<code>dsde-pipelines</code> or <code>gotc-deploy</code>, you might have to run:
+<div class="highlight"><pre><span></span><code>$ make distclean
+</code></pre></div>
+to remove them. This is not always needed but can help completely
+purge the local derived files.</p>
+</div>
 <h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h3>
 <p>If you only want to run tests on specific modules, you could run:</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
 </code></pre></div>
 
-<p>such as <code>make api TARGET=check</code> or <code>make cloud_function TARGET=check</code>.</p>
+<p>such as <code>make api TARGET=check</code> or <code>make cloud_function TARGET=check</code>.
+Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">&para;</a></h4>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
 of tests to save time and filter out noise. You can do this by directly
@@ -777,7 +773,7 @@ before they can be run, namely, they require a <code>wfl</code> server running l
 </code></pre></div>
 
 <h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
-<p>Currently, we mainly deploy WFL to gotc-dev and gotc-prod projects.
+<p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
 When it's time to deploy WFL, developers need to bump the version string
 in the <code>version</code> file at the root of repo, which could be done either in
 a standalone PR or along with a feature PR. After having done that, the Github Action
@@ -801,29 +797,6 @@ function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for ins
 </div>
 <p>Learn more about the deployment details in
 <a href="/docs/md/dev-deployment.md">Deployment of WorkFlow Launcher</a>.</p>
-<h3 id="diagnosis">Diagnosis<a class="headerlink" href="#diagnosis" title="Permanent link">&para;</a></h3>
-<p>Workflow Launcher has a diagnostic command, <code>dx</code>,
-for debugging problems.</p>
-<p>Run <code>wfl dx</code> to get a list of the diagnostics available.</p>
-<div class="highlight"><pre><span></span><code>$ java -jar derived/api/target/wfl.jar dx
-
-wfl dx: tools to <span class="nb">help</span> debug workflow problems.
-
-Usage: wfl dx &lt;tool&gt; <span class="o">[</span>&lt;arg&gt; ...<span class="o">]</span>
-Where: &lt;tool&gt; is the name of some diagnostic tool.
-       &lt;arg&gt; ... are optional arguments to &lt;tool&gt;.
-
-The &lt;tool&gt;s and their &lt;arg&gt;s are named here.
-  all-metadata environment <span class="p">&amp;</span> ids
-    All workflow metadata <span class="k">for</span> IDS from Cromwell in ENVIRONMENT.
-  event-timing environment id
-    Time per event <span class="nb">type</span> <span class="k">for</span> workflow with ID in ENVIRONMENT.
-...
-Error: Must specify a dx &lt;tool&gt; to run.
-BTW: You ran: wfl dx
-wm28d-f87:wfl yanc$
-</code></pre></div>
-
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
 <p>For frontend details, check <a href="/docs/md/frontend.md">Frontend Section</a></p>
 <h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h3>
