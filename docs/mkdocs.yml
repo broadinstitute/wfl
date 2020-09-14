@@ -19,26 +19,25 @@ extra:
       link: 'https://github.com/broadinstitute/wfl'
 
 nav:
-  - Get Started:
-    - README.md
+  - Get Started: README.md
+  - Development Guide:
+    - Development Process and Tips: dev-process.md
+    - Local Development SandBox: dev-sandbox.md
+    - Logging: dev-logging.md
+    - Deployment: dev-deployment.md
+    - Frontend: dev-frontend.md
   - Modules:
-    - Arrays: module-arrays.md
-  - Deployment:
-    - Deployment with Kubernetes: deployment.md
-    - Making your sandbox: sandbox.md
-  - Frontend:
-    - Frontend: frontend.md
-  - Server:
-    - Server: server.md
+    - General: modules-general.md
+    - Arrays: modules-arrays.md
+    - Whole Genome: dev-wgs.md
   - Readings:
-    - Development Process: dev-process.md
-    - Logging: logging.md
     - WorkFlow Launcher's Role in Terra: terra.md
 
 markdown_extensions:
   - codehilite
   - admonition
   - pymdownx.superfences
+  - pymdownx.details
   - toc:
       permalink: True
   - markdown_include.include:

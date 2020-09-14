@@ -6,7 +6,62 @@ within the team,
 and encourage ourselves
 to follow in most cases.
 
-## Summary
+## The Swagger page
+
+WFL ships with a swaggger UI that documents all of the
+available endpoints. It's available at path `/swagger`, e.g.
+https://dev-wfl.gotc-dev.broadinstitute.org/swagger
+
+## Development Setup
+
+Clojure development feels very different from Scala and Java
+development. It even differs markedly from development in other
+*dynamic languages* such as Python or Ruby.
+
+Get a demonstration from someone familiar with Clojure
+development before you spend too much time trying to figure
+things out on your own.
+
+Find a local Cursive user for guidance if you like IntelliJ.
+[Rex Wang](mailto:chengche@broadinstitute.org) and
+[Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it.
+Cursive licences are available
+[here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
+The steps for getting this project set up with very recent versions of IntelliJ
+differ from Cursive's docs:
+
+???+ tip
+    It is recommended to run `prebuild` before launching IntelliJ
+    as it sets up all libraries and derived resources and sources:
+    ```bash
+    make TARGET=prebuild - jN
+    ```
+
+1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to
+generate the `project.clj` (see below)
+2. *Now inside of IntelliJ*, import the project by specifically targeting the
+`project.clj` file (it should offer to import the entire project, and targeting
+the `project.clj` will make use of Leiningen to work with Cursive)
+3. Use the Project Structure window (Help -> Find Action -> Project Structure) to set a JDK as the Project SDK
+
+There is also a
+[Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
+plugin for [Visual Studio Code](https://code.visualstudio.com/).
+
+I hack Clojure in Emacs using
+[CIDER](https://cider.readthedocs.io/) and
+[nREPL](https://github.com/clojure/tools.nrepl). CIDER is not
+trivial to set up, but not *especially* difficult if you are
+used to Emacs. (I can help if CIDER gives you trouble.)
+
+Every time `boot` runs, it generates a `project.clj` file to
+support `lein`, Cursive, and Calva users.
+
+Running `boot build` will not only build a fat jar (*uberjar*)
+for the WFL project, but will add an executable symbolic link
+`wfl` to conveniently execute the Clojure code as a script.
+
+## Process
 
 We always make feature branches from `master`,
 make pull requests,
@@ -20,8 +75,6 @@ to cut off releases on master
 and deploy the released versions
 to the server only.
 It's not decided yet.
-
-## Steps
 
 1. Clone the repo
     ```
@@ -103,7 +156,7 @@ It's not decided yet.
 
     **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!**
 
-## Tips
+## Development Tips
 
 Here are some tips for WFL development.
 
@@ -111,6 +164,7 @@ Some of this advice might help
 when testing Liquibase migration
 or other changes
 that affect WFL's Postgres database.
+
 
 ### migrating a database
 
@@ -180,12 +234,21 @@ so don't forget to reset `:debug` to `env`
 before deploying your changes
 after merging a PR.
 
-### Useful hacks for debugging Postgres/Liquibase
+### Useful hacks for debugging Postgres/Liquibase locally
 
 Starting `postgres`:
 ```bash
 pg_ctl -D /usr/local/var/postgresql@11 start
 ```
+
+!!! tip
+    It might be useful to set up some an alias for postgres if you are using zsh, for
+    example:
+    ```
+    alias pq="pg_ctl -D /usr/local/var/postgresql@11"
+    ```
+    thus you could use `pq start` or `pq stop` to easily spin up and turn down the db.
+
 
 Running `liquibase update`:
 ```bash
@@ -193,25 +256,37 @@ liquibase --classpath=$(clojure -Spath) --url=jdbc:postgresql:wfl --changeLogFil
 ```
 For the above, the username and password need to be correct for the target environment.
 
-If you're running a local server with the postgres command above, you don't need a password and can omit it.
+If you're running a local server with the postgres command above, you don't need a
+password and can omit it.
 
-Otherwise, you may be able to find this data in the Vault entry for the environment's server --
-`resources/wfl/environments.clj` has some environments if you've built locally. You can use `--password=$ENV_SOMETHING`
-to supply it.
+Otherwise, you may be able to find this data in the Vault entry for the
+environment's server --
+`resources/wfl/environments.clj` has some environments if you've built locally.
+You can use `--password=$ENV_SOMETHING` to supply it.
 
-### Test
+### Diagnosis
 
-We implement tests under the `test/` root directory and use the
-[kaocha](https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme) test
-runner. Test suites use a `-test` namespace suffix. You can pass extra command
-line arguments to `kaocha`. For example, to run a specific test point:
+Workflow Launcher has a diagnostic command, `dx`,
+for debugging problems.
 
-```shell
-clojure -A:test --focus my.integration-test/test-foo-works
-```
+Run `wfl dx` to get a list of the diagnostics available.
 
-You can see the full list of options with the following:
+```bash
+$ java -jar derived/api/target/wfl.jar dx
 
-```shell
-clojure -A:integration --help
+wfl dx: tools to help debug workflow problems.
+
+Usage: wfl dx <tool> [<arg> ...]
+Where: <tool> is the name of some diagnostic tool.
+       <arg> ... are optional arguments to <tool>.
+
+The <tool>s and their <arg>s are named here.
+  all-metadata environment & ids
+    All workflow metadata for IDS from Cromwell in ENVIRONMENT.
+  event-timing environment id
+    Time per event type for workflow with ID in ENVIRONMENT.
+...
+Error: Must specify a dx <tool> to run.
+BTW: You ran: wfl dx
+wm28d-f87:wfl yanc$
 ```

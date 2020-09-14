@@ -6,19 +6,7 @@ samples. This page documents the design principles and assumptions
 of the module as well as summarizes the general process of module
 development.
 
-## Design Principles and Assumptions
-
-WorkFlow Launcher is responsible for preparing the required
-workflow WDLs, inputs and options for Cromwell in a large scale.
-This work involves in inputs validation, pipeline WDL orchestration
-and Cromwell workflow management. Similar to other WFL modules, the
-`aou-arrays` module takes advantage of the `workload` concept in order
-to manage workflows efficiently.
-
-![](./assets/workload.png)
-
-In general, WFL classify all workloads into 2 categories: continuous and fixed.
-`aou-arrays` module implements arrays workload as a continuous workload, which
+`aou-arrays` module implements arrays workload as a **continuous workload**, which
 means all samples are coming in like a continuous stream, and WFL does not make
 any assumption of how many samples will be in the workload or how to group the
 samples together: it hands off the workload creation and starting process to its
@@ -169,13 +157,13 @@ the `workload` table looks like:
 ```
 
 Note that different from the fixed workload types, `input`, `output` and `items` are not useful to `aou-arrays` workload
-since these fields vary from sample to sample. Any information the caller provided to these fields will stored as 
-placeholders. 
+since these fields vary from sample to sample. Any information the caller provided to these fields will stored as
+placeholders.
 
 More importantly, eve though `id` is the `primary` key here, `(pipeline, project, release)` works as the
-unique identifier for arrays workloads, for instance, if there's already a workload with values: 
+unique identifier for arrays workloads, for instance, if there's already a workload with values:
 `(AllOfUsArrays, gotc-dev, Arrays_v1.9)`, any further attempts to create a new workload with exact the same values
-will return the information of this existing workload rather than create a new row. 
+will return the information of this existing workload rather than create a new row.
 
 Once the caller successfully creates a new sample, there will be a new row added to the above `workload` table, and a
 new table will be created accordingly:
