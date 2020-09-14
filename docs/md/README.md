@@ -142,7 +142,7 @@ before they can be run, namely, they require a `wfl` server running locally:
 
 ### Deploy
 
-Currently, we mainly deploy WFL to gotc-dev and gotc-prod projects.
+Currently, we mainly deploy WFL to `broad-gotc-dev` and `broad-gotc-prod` projects.
 When it's time to deploy WFL, developers need to bump the version string
 in the `version` file at the root of repo, which could be done either in
 a standalone PR or along with a feature PR. After having done that, the Github Action
