@@ -7,7 +7,7 @@
   "The WFL server URL to test."
   (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
     "https://dev-wfl.gotc-dev.broadinstitute.org"
-    "http://localhost:8080"))
+    "http://localhost:3000"))
 
 (defn parse-json-string
   "Parse the json string STR into a keyword-string map"
