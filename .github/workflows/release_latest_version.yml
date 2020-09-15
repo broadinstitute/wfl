@@ -11,11 +11,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      MODULES: api ui
+      MODULES: api ui ops
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Configure Git
         run: |
           git config --local user.email "$(git log --format='%ae' HEAD^!)"
@@ -25,14 +25,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: '11'
-          
+
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.7'
-          
-      - name: Install Python Dependencies
-        run: python -m pip install --upgrade pip pyyaml
 
       - name: Setup Clojure
         uses: DeLaGuardo/setup-clojure@2.0
