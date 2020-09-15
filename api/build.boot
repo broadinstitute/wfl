@@ -43,6 +43,7 @@
    [org.apache.logging.log4j/log4j-core       "2.13.3"]
    [org.apache.logging.log4j/log4j-slf4j-impl "2.13.3"]
    [org.postgresql/postgresql                 "42.2.9"]
+   [org.liquibase/liquibase-core              "4.0.0" :exclusions [ch.qos.logback/logback-classic]]
    [org.slf4j/slf4j-api                       "1.7.30"]
    [ring-oauth2                               "0.1.4"]
    [ring/ring-core                            "1.7.1"]

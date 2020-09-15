@@ -65,9 +65,7 @@
   
   :liquibase
   {:main-opts   ["-m" "wfl.service.postgres"]
-   :extra-deps  {org.liquibase/liquibase-cdi   {:mvn/version "4.0.0"
-                                                :exclusions [ch.qos.logback/logback-classic]}
-                 org.liquibase/liquibase-core  {:mvn/version "4.0.0"
+   :extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}}}
 
   :run
