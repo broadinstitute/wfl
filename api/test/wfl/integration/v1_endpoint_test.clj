@@ -13,7 +13,7 @@
 ;; Here we register db-fixture to be called once, wrapping ALL tests in this namespace
 ;; (clj-test/use-fixtures :once clean-db-fixture)
 
-(def make-wgs-workload (partial endpoints/create-workload workloads/wgs-workload))
+(def make-wgs-workload (partial endpoints/create-workload (workloads/wgs-workload (UUID/randomUUID))))
 (defn make-aou-workload [] ((partial endpoints/create-workload (workloads/aou-workload (UUID/randomUUID)))))
 
 (def get-existing-workload-uuids
@@ -21,14 +21,15 @@
 
 (deftest test-create-wgs-workload
   (testing "The `create` endpoint creates new WGS workload"
-    (let [uuids-before (get-existing-workload-uuids)
-          no-items     (dissoc workloads/wgs-workload :items)
+    (let [uuids-before        (get-existing-workload-uuids)
+          wl                  (workloads/wgs-workload (UUID/randomUUID))
+          no-items-output     (dissoc wl :items :output)
           {:keys [id items pipeline uuid] :as response} (make-wgs-workload)]
       (is uuid "Workloads should have been assigned a uuid")
       (is (not (contains? uuids-before uuid)) "The new workload uuid was not unique")
       (is (not (:started response)) "The workload should not have been started")
       (let [got (endpoints/get-workload-status uuid)]
-        (is (= no-items (select-keys response (keys no-items))))
+        (is (= no-items-output (select-keys response (keys no-items-output))))
         (is (str/starts-with? items pipeline))
         (is (str/ends-with? items (str id)))
         (is (= (select-keys got (keys response)) response))
@@ -87,7 +88,7 @@
 (deftest test-exec-wgs-workload
   (testing "The `exec` endpoint creates and starts a WGS workload"
     (let [uuids-before (get-existing-workload-uuids)
-          {:keys [uuid started]} (endpoints/exec-workload workloads/wgs-workload)]
+          {:keys [uuid started]} (endpoints/exec-workload (workloads/wgs-workload (UUID/randomUUID)))]
       (is (not (contains? uuids-before uuid)) "The new workload uuid was not unique")
       (is started "The workload wasn't started"))))
 
