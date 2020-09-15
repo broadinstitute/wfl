@@ -6,7 +6,6 @@
             [wfl.jdbc :as jdbc]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
@@ -109,13 +108,15 @@
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
 (defn make-labels
-  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS."
-  [per-sample-inputs]
-  (merge cromwell-label-map (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])))
+  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
+  [per-sample-inputs other-labels]
+  (merge cromwell-label-map 
+         (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
+         other-labels))
 
 (defn active-or-done-objects
   "Query by PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
-  [environment {:keys [analysis_version_number chip_well_barcode] :as primary-vals}]
+  [environment {:keys [analysis_version_number chip_well_barcode]}]
   (prn (format "%s: querying Cromwell in %s" wfl/the-name environment))
   (let [primary-keys [:analysis_version_number
                       :chip_well_barcode]
@@ -138,8 +139,9 @@
            set))))
 
 (defn really-submit-one-workflow
-  "Submit one workflow to ENVIRONMENT."
-  [environment per-sample-inputs sample-output-path]
+  "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
+   SAMPLE-OUTPUT-PATH and OTHER-LABELS."
+  [environment per-sample-inputs sample-output-path other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
@@ -147,7 +149,7 @@
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
       (make-options sample-output-path)
-      (make-labels per-sample-inputs))))
+      (make-labels per-sample-inputs other-labels))))
 
 #_(defn update-workload!
     "Use transaction TX to update WORKLOAD statuses."
@@ -164,7 +166,7 @@
         {:keys [commit version]} (wfl/get-the-version)
         probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                      project pipeline release output])
-        checked-output (gcs/parse-gs-url output)]
+        _            (gcs/parse-gs-url output)]
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
       (let [[{:keys [uuid]}] probe-result]
@@ -198,7 +200,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
-  [tx {:keys [uuid] :as body}]
+  [tx {:keys [uuid]}]
   (let [result (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])
         started (:started result)]
     (when (nil? started)
@@ -232,13 +234,14 @@
   "Use transaction TX to append the samples to a WORKLOAD identified by uuid.
    The workload needs to be marked as 'started' in order to be append-able, and
    any samples being added to the workload table will be submitted right away."
-  [tx {:keys [notifications uuid environment] :as body}]
+  [tx {:keys [notifications uuid environment]}]
   (let [now                (OffsetDateTime/now)
         environment        (wfl/throw-or-environment-keyword! environment)
         table-query-result (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))
         workload-started?  (:started table-query-result)
         table              (:items table-query-result)
-        output-bucket      (:output table-query-result)]
+        output-bucket      (:output table-query-result)
+        workload->label  {:workload uuid}]
 
     (if (nil? workload-started?)
       ; throw when the workload does not exist or it hasn't been started yet
@@ -257,8 +260,8 @@
                 (submit! [sample]
                   (let [{:keys [chip_well_barcode analysis_version_number] :as sample-pks} (keep-primary-keys sample)
                         output-path (str/join "/" [output-bucket chip_well_barcode analysis_version_number])]
-                    [(really-submit-one-workflow environment sample output-path) sample-pks]))
-                (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode] :as pks}]]
+                    [(really-submit-one-workflow environment sample output-path workload->label) sample-pks]))
+                (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode]}]]
                   (when uuid
                     (jdbc/update! tx table
                                   {:updated now :uuid uuid}
@@ -268,6 +271,6 @@
                      :uuid                    uuid
                      :analysis_version_number analysis_version_number
                      :chip_well_barcode       chip_well_barcode}))]
-          (let [inserted            (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
+          (let [_                   (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
                 submitted-uuids-pks (map submit! (vals to-be-submitted))]
             (doall (map (partial update! tx) submitted-uuids-pks))))))))
