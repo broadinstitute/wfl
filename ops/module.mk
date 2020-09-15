@@ -7,5 +7,4 @@ SRC_DIR  := $(MODULE_DIR)
 
 # Remove any python caches
 CLEAN_DIRS += \
-	$(shell $(FIND) $(MODULE_DIR) -type d -name '__pycache__') \
-	$(shell $(FIND) $(MODULE_DIR) -type d -name '.pytest_cache')
+	$(shell $(FIND) $(MODULE_DIR) -type d -name '__pycache__')
