@@ -79,7 +79,7 @@ You can also invoke `make` on a module from the top level directory by
 $ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
 
-where currently available `MODULE`s are {api cloud_function docs helm ui}
+where currently available `MODULE`s are {api cloud_function docs helm ops ui}
 
 For most of the time, you would want to run something like:
 
