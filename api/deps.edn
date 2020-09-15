@@ -47,8 +47,7 @@
          "../derived/api/resources" "resources"]
 
  :aliases
- { 
-  :lint
+ {:lint
   {:extra-deps {cljfmt {:mvn/version "0.6.7"}}
    :main-opts  ["-m" "cljfmt.main" "check"]}
 
@@ -63,6 +62,13 @@
   :kibit
   {:extra-deps  {jonase/kibit {:mvn/version "0.1.6"}}
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
+  
+  :liquibase
+  {:main-opts   ["-m" "wfl.service.postgres.local-liquibase-migration"]
+   :extra-deps  {org.liquibase/liquibase-cdi   {:mvn/version "4.0.0"
+                                                :exclusions [ch.qos.logback/logback-classic]}
+                 org.liquibase/liquibase-core  {:mvn/version "4.0.0"
+                                                :exclusions [ch.qos.logback/logback-classic]}}}
 
   :run
   {:main-opts   ["-m" "wfl.main"]}
