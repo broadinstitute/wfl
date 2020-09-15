@@ -7,18 +7,18 @@ requirements: pip3 install pyyaml
 usage: python3 cli.py -h
 """
 import argparse
+import getpass
 import json
 import os
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pprint import PrettyPrinter
-from typing import Dict, Callable, List
+from typing import Callable, Dict, List
 
 import yaml
-
 from render_ctmpl import render_ctmpl
-from util.misc import info, success, error, warn, shell
+from util.misc import error, info, shell, success, warn
 
 
 @dataclass
@@ -243,7 +243,8 @@ def run_liquibase_migration(config: WflInstanceConfig) -> None:
     shell(f"docker run --rm --net=host "
           f"-v {changelog_dir}:/liquibase/changelog liquibase/liquibase "
           f"--url='{db_url}' --changeLogFile=/changelog/changelog.xml "
-          f"--username='{config.db_username}' --password='{config.db_password}' update", quiet=True)
+          f"--username='{(config.db_username or getpass.getuser())}' "
+          f"--password='{config.db_password}' update", quiet=True)
     success("Ran liquibase migration")
 
 
@@ -336,6 +337,11 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         run_liquibase_migration,
         stop_cloud_sql_proxy,
         print_deployment_success
+    ],
+    "migrate": [
+        print_config,
+        exit_if_dry_run,
+        run_liquibase_migration
     ],
     "tag-and-push-images": [
         read_version,
