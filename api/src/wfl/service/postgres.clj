@@ -96,18 +96,15 @@
         (catch Exception e
           (unnilify workload))))))
 
-(defn main
+(defn -main
   "Migrate the local database schema using Liquibase."
   []
-  (let [{:strs [USER]} (util/getenv)
-        WFL_POSTGRES_URL "jdbc:postgresql:wfl"
-        status (Main/run
-                (into-array
-                 String
-                 [(str "--url=" WFL_POSTGRES_URL)
-                  (str "--changeLogFile=../database/migration/changelog.xml")
-                  (str "--username=" USER)
-                  "update"]))]
+  (let [status (Main/run
+                (into-array String
+                            ["--url=jdbc:postgresql:wfl"
+                             "--changeLogFile=../database/changelog.xml"
+                             (str "--username=" (util/getenv "USER"))
+                             "update"]))]
     (when-not (zero? status)
       (throw
        (Exception.

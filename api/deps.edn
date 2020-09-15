@@ -41,18 +41,18 @@
   com.google.cloud.sql/postgres-socket-factory {:mvn/version "1.0.15"}
   com.google.cloud.sql/jdbc-socket-factory-core {:mvn/version "1.0.15"}}
 
- ; derived/api/src must come first so environments.clj is found before
- ; placeholder in src/.
+ ;; derived/api/src must come first so environments.clj is found before
+ ;; placeholder in src/.
  :paths ["../derived/api/src" "src"
          "../derived/api/resources" "resources"]
 
  :aliases
  {:lint
-  {:extra-deps {cljfmt {:mvn/version "0.6.7"}}
+  {:extra-deps {cljfmt {:mvn/version "0.7.0"}}
    :main-opts  ["-m" "cljfmt.main" "check"]}
 
   :format
-  {:extra-deps {cljfmt {:mvn/version "0.6.7"}}
+  {:extra-deps {cljfmt {:mvn/version "0.7.0"}}
    :main-opts  ["-m" "cljfmt.main" "fix"]}
 
   :kondo
@@ -64,7 +64,7 @@
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
   
   :liquibase
-  {:main-opts   ["-m" "wfl.service.postgres.local-liquibase-migration"]
+  {:main-opts   ["-m" "wfl.service.postgres"]
    :extra-deps  {org.liquibase/liquibase-cdi   {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}
                  org.liquibase/liquibase-core  {:mvn/version "4.0.0"
@@ -75,8 +75,6 @@
 
   :test
   {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.632"}
-                 org.liquibase/liquibase-cdi   {:mvn/version "4.0.0"
-                                                :exclusions [ch.qos.logback/logback-classic]}
                  org.liquibase/liquibase-core  {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
    :extra-paths ["test"]
