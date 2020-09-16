@@ -112,6 +112,12 @@
     (all/throw-when-output-exists-already! output)
     (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
 
+(defn make-labels
+  "Return labels for wgs pipeline from OTHER-LABELS."
+  [other-labels]
+  (merge cromwell-label-map
+         other-labels))
+
 (defn active-objects
   "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
   [environment in-gs-url]
@@ -137,8 +143,8 @@
            set))))
 
 (defn really-submit-one-workflow
-  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT."
-  [environment in-gs out-gs sample]
+  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OTHER-LABELS."
+  [environment in-gs out-gs sample other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (logr/infof "submitting workflow with: in-gs: %s, out-gs: %s" in-gs out-gs)
     (cromwell/submit-workflow
@@ -147,7 +153,7 @@
      (io/file (:dir path) (path ".zip"))
      (make-inputs environment out-gs in-gs sample)
      (util/make-options environment)
-     cromwell-label-map)))
+     (make-labels other-labels))))
 
 (defn maybe-update-workflow-status!
   "Use transaction TX to update the status of WORKFLOW in ENV."
@@ -215,17 +221,18 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell input items output uuid] :as workload}]
-  (let [env    (get-cromwell-wgs-environment (all/de-slashify cromwell))
-        input  (all/slashify input)
-        output (all/slashify output)
-        now    (OffsetDateTime/now)]
+  (let [env             (get-cromwell-wgs-environment (all/de-slashify cromwell))
+        input           (all/slashify input)
+        output          (all/slashify output)
+        now             (OffsetDateTime/now)
+        workload->label {:workload uuid}]
     (letfn [(maybe [m k v] (if v (assoc m k v) m))
             (submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
                       (really-submit-one-workflow
-                        env (str input input_cram) output workflow)))])
+                        env (str input input_cram) output workflow workload->label)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items

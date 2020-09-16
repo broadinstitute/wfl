@@ -241,7 +241,7 @@
         workload-started?  (:started table-query-result)
         table              (:items table-query-result)
         output-bucket      (:output table-query-result)
-        workload->label  {:workload uuid}]
+        workload->label    {:workload uuid}]
 
     (if (nil? workload-started?)
       ; throw when the workload does not exist or it hasn't been started yet
