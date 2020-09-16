@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      MODULES: api ui ops
+      MODULES: api ui
 
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +30,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.7'
+
+      - name: Install Python Dependencies
+        run: python -m pip install -r ops/requirements.txt
 
       - name: Setup Clojure
         uses: DeLaGuardo/setup-clojure@2.0
