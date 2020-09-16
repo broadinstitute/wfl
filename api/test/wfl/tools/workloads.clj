@@ -7,12 +7,13 @@
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 
-(def wgs-workload
+(defn wgs-workload
+  [identifier]
   "A whole genome sequencing workload used for testing."
   (let [path "/single_sample/plumbing/truth"]
     {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
      :input    (str "gs://broad-gotc-test-storage" path)
-     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output" path)
+     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
