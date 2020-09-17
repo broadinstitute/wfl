@@ -2,8 +2,6 @@
 """
 WFL Deployment Script
 
-requirements: pip3 install pyyaml
-
 usage: python3 cli.py -h
 """
 import argparse
