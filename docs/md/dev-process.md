@@ -264,6 +264,16 @@ environment's server --
 `resources/wfl/environments.clj` has some environments if you've built locally.
 You can use `--password=$ENV_SOMETHING` to supply it.
 
+!!! tip
+    It is more convenient to use the following alias to migrate the database schema
+    from within the `api` directory:
+    ```
+    clojure -A:liquibase
+    ```
+    if you are working aginst a local database. If you are working with a CloudSQL
+    database, the liquibase migration is a encoded step of the `cli.py`'s `deploy`
+    command.
+
 ### Diagnosis
 
 Workflow Launcher has a diagnostic command, `dx`,

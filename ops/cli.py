@@ -11,12 +11,11 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pprint import PrettyPrinter
-from typing import Dict, Callable, List
+from typing import Callable, Dict, List
 
 import yaml
-
 from render_ctmpl import render_ctmpl
-from util.misc import info, success, error, warn, shell
+from util.misc import error, info, shell, success, warn
 
 
 @dataclass
