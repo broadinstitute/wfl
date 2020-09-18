@@ -3,8 +3,9 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
+            [wfl.once :as once]
             [wfl.service.gcs :as gcs]
-            [wfl.once :as once])
+            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]])
   (:import [java.util UUID]))
 
 (def project
@@ -91,35 +92,30 @@
 (defn cleanup-object-test
   "Clean up after the object-test."
   []
-  (io/delete-file local-file-name :silently)
-  (doseq [bucket (map :name (gcs/list-buckets project prefix))]
-    (doseq [object (map :name (gcs/list-objects bucket))]
-      (gcs/delete-object bucket object))
-    (gcs/delete-bucket bucket)))
+  (io/delete-file local-file-name :silently))
 
 (deftest object-test
   (try
-    (testing "Objects"
-      (let [[source destination] buckets
-            object {:name "test/junk" :contentType "text/x-java-properties"}
-            properties "boot.properties"]
-        (run! make-bucket buckets)
-        (testing "upload"
-          (let [result (gcs/upload-file properties source (:name object))]
-            (is (= object (select-keys result (keys object))))
-            (is (= source (:bucket result)))))
-        (testing "list"
-          (let [result (gcs/list-objects source)]
-            (is (= 1 (count result)))
-            (is (= object (select-keys (first result) (keys object))))))
-        (testing "copy"
-          (is (gcs/copy-object source      (:name object)
-                               destination (:name object))))
-        (testing "download"
-          (let [url (gcs/gs-url destination (:name object))]
-            (gcs/download-file local-file-name url)
+    (with-temporary-gcs-folder uri
+      (testing "Objects"
+        (let [[bucket src-folder] (gcs/parse-gs-url uri)
+              dest-folder (str src-folder "destination/")
+              object {:name (str src-folder "test") :contentType "text/x-java-properties"}
+              properties "boot.properties"]
+          (testing "upload"
+            (let [result (gcs/upload-file properties bucket (:name object))]
+              (is (= object (select-keys result (keys object))))
+              (is (= bucket (:bucket result)))))
+          (testing "list"
+            (let [result (gcs/list-objects bucket src-folder)]
+              (is (= 1 (count result)))
+              (is (= object (select-keys (first result) (keys object))))))
+          (testing "copy"
+            (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
+          (testing "download"
+            (gcs/download-file local-file-name bucket (str dest-folder "test"))
             (is (= (slurp properties) (slurp local-file-name)))))))
-    (finally (cleanup-object-test))))
+  (finally (cleanup-object-test))))
 
 (deftest userinfo-test
   (testing "no \"Authorization\" header in request should throw"
