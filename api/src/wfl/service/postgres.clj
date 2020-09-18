@@ -80,14 +80,19 @@
     (catch Exception cause
       (throw (ex-info "Error updating workload status" {} cause)))))
 
+(defn update-workload-for-uuid!
+  "Use transaction TX to update workload statuses with UUID."
+  [tx {:keys [uuid]}]
+  (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
+        wl       (first (jdbc/query tx select))]
+    (update-workload! tx wl)))
+
 (defn get-workload-for-uuid
   "Use transaction TX to return workload with UUID."
   [tx {:keys [uuid]}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
           {:keys [items] :as workload} (first (jdbc/query tx select))]
-      (when workload
-        (util/do-or-nil (update-workload! tx workload)))
       (try
         (let [workflows (get-table tx items)]
           (-> workload
