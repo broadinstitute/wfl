@@ -11,6 +11,7 @@
               [zero.module.wl :as wl]
               [zero.service.cromwell :as cromwell]
               [zero.service.postgres :as postgres]
+              [zero.util :as util]
               [zero.zero :as zero]))
 
 (defmacro ^:private print-handler-error
@@ -127,20 +128,20 @@
               (jdbc/query tx)
               first unnilify succeed))))))
 
-(defn get-workload
+(defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
   [request]
   (zero.api.handlers/print-handler-error
    (jdbc/with-db-transaction [tx (postgres/zero-db-config)]
-     (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
-            (do
-              (logr/infof "get-workload endpoint called: uuid=%s" uuid)
-              [{:uuid uuid}])
-            (do
-              (logr/info "get-workload endpoint called with no uuid, querying all")
-              (jdbc/query tx ["SELECT uuid FROM workload"])))
-          (mapv (partial postgres/get-workload-for-uuid tx))
-          succeed))))
+     (let [uuid-vec (->> (if-let [uuid (get-in request [:parameters :query :uuid])]
+                           (do
+                             (logr/infof "get-workload endpoint called: uuid=%s" uuid)
+                             [{:uuid uuid}])
+                           (do
+                             (logr/info "get-workload endpoint called with no uuid, querying all")
+                             (jdbc/query tx ["SELECT uuid FROM workload"]))))]
+       (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
+       (succeed (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
