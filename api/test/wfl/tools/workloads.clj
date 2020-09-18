@@ -13,7 +13,7 @@
   (let [path "/single_sample/plumbing/truth"]
     {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
      :input    (str "gs://broad-gotc-test-storage" path)
-     :output   (str "gs://broad-gotc-dev-zero-test/wgs-test-output/" identifier)
+     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:unmapped_bam_suffix  ".unmapped.bam",
@@ -28,7 +28,7 @@
   [identifier]
   {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
    :input    "aou-inputs-placeholder"
-   :output   "gs://broad-gotc-dev-zero-test/aou-test-output"
+   :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)
    :items    [{}]})
