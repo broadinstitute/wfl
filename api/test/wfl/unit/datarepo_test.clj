@@ -6,7 +6,8 @@
             [wfl.environments     :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.gcs      :as gcs]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]]))
+            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]])
+  (:import [java.util UUID]))
 
 ;; UUIDs known to the Data Repo.
 ;;
@@ -17,8 +18,9 @@
   (with-temporary-gcs-folder uri
     (testing "delivery succeeds"
       (let [[bucket object] (gcs/parse-gs-url uri)
-            vcf "test.vcf"
-            table "test.tabular.json"
+            file-id (UUID/randomUUID)
+            vcf (str file-id ".vcf")
+            table (str file-id ".tabular.json")
             vcf-url (gcs/gs-url bucket (str object vcf))
             ingest-file (partial datarepo/file-ingest :gotc-dev dataset profile)
             drsa (get-in env/stuff [:debug :data-repo :service-account])]
@@ -36,7 +38,7 @@
           (stage vcf "bogus vcf content")
           (stage (str vcf ".tbi") "bogus index content")
           (stage table (json/write-str
-                        {:id        bucket
+                        {:id        object
                          :vcf       (ingest vcf-url vcf)
                          :vcf_index (ingest vcf-url (str vcf ".tbi"))}
                         :escape-slash false))
