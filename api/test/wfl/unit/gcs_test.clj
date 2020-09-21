@@ -12,26 +12,9 @@
   "Test in this Google Cloud project."
   "broad-gotc-dev-storage")
 
-(def blame
-  "Who is to blame?"
-  (or (System/getenv "USER") "wfl"))
-
 (def uid
   "A new unique string compressed from a random UUID."
   (str/replace (str (UUID/randomUUID)) "-" ""))
-
-(def prefix
-  "A unique prefix for naming things in GCS."
-  (str/join "-" [blame "test" uid ""]))
-
-(def buckets
-  "Make some unique GCS bucket names for testing."
-  (mapv (fn [n] (str prefix n)) (range 2)))
-
-(defn make-bucket
-  "Make a bucket named BUCKET."
-  [bucket]
-  (gcs/make-bucket project bucket "US" "STANDARD"))
 
 (deftest gs-url-test
   (testing "URL utilities"
@@ -57,33 +40,6 @@
     (testing "gs-url bad"
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "")))
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "o"))))))
-
-(deftest bucket-test
-  (testing "Buckets"
-    (testing "bad names"
-      (let [too-short  (str/join (take 2 (str blame blame)))
-            too-long   (str/join (take 64 (str prefix uid uid)))
-            uppercase  (str prefix "Uppercase")
-            underfirst (str "_" prefix 0)]
-        (is (thrown? IllegalArgumentException (make-bucket too-short)))
-        (is (thrown? IllegalArgumentException (make-bucket too-long)))
-        (is (thrown? IllegalArgumentException (make-bucket uppercase)))
-        (is (thrown? IllegalArgumentException (make-bucket prefix)))
-        (is (thrown? IllegalArgumentException (make-bucket underfirst)))))
-    (let [bucket (first buckets)]
-      (testing "make"
-        (is (= [bucket "US" "STANDARD"]
-               ((juxt :name :location :storageClass)
-                (make-bucket bucket)))))
-      (testing "list project"
-        (is (<= 1 (count (gcs/list-buckets project)))))
-      (testing "list project prefix"
-        (let [result (gcs/list-buckets project prefix)]
-          (is (= 1 (count result)))
-          (is (= bucket (:name (first result))))))
-      (testing "delete"
-        (is (gcs/delete-bucket bucket))
-        (is (not (gcs/delete-bucket bucket)))))))
 
 (def local-file-name
   "A disposable local file name for object-test."
