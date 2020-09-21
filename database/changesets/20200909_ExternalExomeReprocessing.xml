@@ -16,13 +16,12 @@
             ALTER TYPE pipeline ADD VALUE 'ExternalExomeReprocessing'
         </sql>
         <sql>
-            CREATE TABLE ExternalExomeReprocessing (
-                id                          bigint,      -- unique id
+            CREATE Type ExternalExomeReprocessing AS (
+                id                          bigint,      -- primary key
                 status                      text,        -- Cromwell workflow status
                 updated                     timestamptz, -- status update time
                 uuid                        text,        -- Cromwell workflow UUID
-                options                     json,        -- Workflow options
-                samples                     text[]       -- list of samples to process
+                inputs                      json         -- non-default workflow inputs
             )
         </sql>
     </changeSet>
