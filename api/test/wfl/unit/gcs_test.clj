@@ -41,6 +41,10 @@
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "")))
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "o"))))))
 
+(def blame
+  "Who is to blame?"
+  (or (System/getenv "USER") "wfl"))
+
 (def local-file-name
   "A disposable local file name for object-test."
   (str/join "-" [blame "junk" uid]))
