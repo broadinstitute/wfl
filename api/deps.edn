@@ -27,6 +27,9 @@
   org.apache.logging.log4j/log4j-api        {:mvn/version "2.13.3"}
   org.apache.logging.log4j/log4j-core       {:mvn/version "2.13.3"}
   org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.13.3"}
+  org.liquibase/liquibase-core              {:mvn/version "4.0.0"
+                                             :exclusions
+                                             [ch.qos.logback/logback-classic]}
   org.postgresql/postgresql                 {:mvn/version "42.2.9"}
   org.slf4j/slf4j-api                       {:mvn/version "1.7.30"}
   ring-oauth2                               {:mvn/version "0.1.4"}
