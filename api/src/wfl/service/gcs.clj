@@ -122,38 +122,6 @@
               "https://cloud.google.com/storage/docs/naming#requirements"
               (s/explain-str ::bucket-name bucket))))))
 
-(defn make-bucket
-  "Make a storageClass CLASS bucket in PROJECT named BUCKET at LOCATION."
-  [project bucket location class]
-  (valid-bucket-name-or-throw! bucket)
-  (-> {:method       :post              ; :debug true :debug-body true
-       :url          bucket-url
-       :query-params {:project project}
-       :content-type :application/json
-       :headers      (once/get-auth-header)
-       :form-params  {:name         bucket
-                      :location     location
-                      :storageClass class}}
-      http/request :body (json/read-str :key-fn keyword)))
-
-(defn delete-bucket
-  "Throw or delete the bucket in PROJECT named NAME."
-  [name]
-  (letfn [(deleted-this-time? [{:keys [status] :as response}]
-            (case status
-              204 true
-              404 false
-              (-> 'delete-bucket
-                  (list name)
-                  pr-str
-                  (ex-info response)
-                  throw)))]
-    (-> {:method            :delete     ; :debug true :debug-body true
-         :url               (str bucket-url name)
-         :headers           (once/get-auth-header)
-         :throw-exceptions? false}
-        http/request deleted-this-time?)))
-
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
   ([file bucket object]

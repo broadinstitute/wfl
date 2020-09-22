@@ -3,34 +3,18 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
+            [wfl.once :as once]
             [wfl.service.gcs :as gcs]
-            [wfl.once :as once])
+            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]])
   (:import [java.util UUID]))
 
 (def project
   "Test in this Google Cloud project."
   "broad-gotc-dev-storage")
 
-(def blame
-  "Who is to blame?"
-  (or (System/getenv "USER") "wfl"))
-
 (def uid
   "A new unique string compressed from a random UUID."
   (str/replace (str (UUID/randomUUID)) "-" ""))
-
-(def prefix
-  "A unique prefix for naming things in GCS."
-  (str/join "-" [blame "test" uid ""]))
-
-(def buckets
-  "Make some unique GCS bucket names for testing."
-  (mapv (fn [n] (str prefix n)) (range 2)))
-
-(defn make-bucket
-  "Make a bucket named BUCKET."
-  [bucket]
-  (gcs/make-bucket project bucket "US" "STANDARD"))
 
 (deftest gs-url-test
   (testing "URL utilities"
@@ -57,69 +41,37 @@
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "")))
       (is (thrown? IllegalArgumentException (gcs/gs-url ""  "o"))))))
 
-(deftest bucket-test
-  (testing "Buckets"
-    (testing "bad names"
-      (let [too-short  (str/join (take 2 (str blame blame)))
-            too-long   (str/join (take 64 (str prefix uid uid)))
-            uppercase  (str prefix "Uppercase")
-            underfirst (str "_" prefix 0)]
-        (is (thrown? IllegalArgumentException (make-bucket too-short)))
-        (is (thrown? IllegalArgumentException (make-bucket too-long)))
-        (is (thrown? IllegalArgumentException (make-bucket uppercase)))
-        (is (thrown? IllegalArgumentException (make-bucket prefix)))
-        (is (thrown? IllegalArgumentException (make-bucket underfirst)))))
-    (let [bucket (first buckets)]
-      (testing "make"
-        (is (= [bucket "US" "STANDARD"]
-               ((juxt :name :location :storageClass)
-                (make-bucket bucket)))))
-      (testing "list project"
-        (is (<= 1 (count (gcs/list-buckets project)))))
-      (testing "list project prefix"
-        (let [result (gcs/list-buckets project prefix)]
-          (is (= 1 (count result)))
-          (is (= bucket (:name (first result))))))
-      (testing "delete"
-        (is (gcs/delete-bucket bucket))
-        (is (not (gcs/delete-bucket bucket)))))))
-
 (def local-file-name
   "A disposable local file name for object-test."
-  (str/join "-" [blame "junk" uid]))
+  (str/join "-" ["wfl" "test" uid]))
 
 (defn cleanup-object-test
   "Clean up after the object-test."
   []
-  (io/delete-file local-file-name :silently)
-  (doseq [bucket (map :name (gcs/list-buckets project prefix))]
-    (doseq [object (map :name (gcs/list-objects bucket))]
-      (gcs/delete-object bucket object))
-    (gcs/delete-bucket bucket)))
+  (io/delete-file local-file-name :silently))
 
 (deftest object-test
   (try
-    (testing "Objects"
-      (let [[source destination] buckets
-            object {:name "test/junk" :contentType "text/x-java-properties"}
-            properties "boot.properties"]
-        (run! make-bucket buckets)
-        (testing "upload"
-          (let [result (gcs/upload-file properties source (:name object))]
-            (is (= object (select-keys result (keys object))))
-            (is (= source (:bucket result)))))
-        (testing "list"
-          (let [result (gcs/list-objects source)]
-            (is (= 1 (count result)))
-            (is (= object (select-keys (first result) (keys object))))))
-        (testing "copy"
-          (is (gcs/copy-object source      (:name object)
-                               destination (:name object))))
-        (testing "download"
-          (let [url (gcs/gs-url destination (:name object))]
-            (gcs/download-file local-file-name url)
+    (with-temporary-gcs-folder uri
+      (testing "Objects"
+        (let [[bucket src-folder] (gcs/parse-gs-url uri)
+              dest-folder (str src-folder "destination/")
+              object {:name (str src-folder "test") :contentType "text/x-java-properties"}
+              properties "boot.properties"]
+          (testing "upload"
+            (let [result (gcs/upload-file properties bucket (:name object))]
+              (is (= object (select-keys result (keys object))))
+              (is (= bucket (:bucket result)))))
+          (testing "list"
+            (let [result (gcs/list-objects bucket src-folder)]
+              (is (= 1 (count result)))
+              (is (= object (select-keys (first result) (keys object))))))
+          (testing "copy"
+            (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
+          (testing "download"
+            (gcs/download-file local-file-name bucket (str dest-folder "test"))
             (is (= (slurp properties) (slurp local-file-name)))))))
-    (finally (cleanup-object-test))))
+  (finally (cleanup-object-test))))
 
 (deftest userinfo-test
   (testing "no \"Authorization\" header in request should throw"

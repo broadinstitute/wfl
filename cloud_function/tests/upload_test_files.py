@@ -13,8 +13,8 @@ import sys
 import subprocess
 import tempfile
 
-arrays_path = "gs://broad-gotc-test-storage/arrays/HumanExome-12v1-1_A/"
-arrays_metadata_path = "gs://broad-gotc-test-storage/arrays/metadata/HumanExome-12v1-1_A/"
+arrays_path = "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/"
+arrays_metadata_path = "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/"
 
 def get_destination_paths(bucket, prefix):
     return {
@@ -32,6 +32,7 @@ def get_ptc_json(bucket, prefix, chip_well_barcode, analysis_version, prod):
         "uuid": None,
         "notifications": [{
             "analysis_version_number": analysis_version,
+            "call_rate_threshold": 0.98,
             "chip_well_barcode": chip_well_barcode,
             "green_idat_cloud_path": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
             "params_file": f"gs://{bucket}/{prefix}/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",

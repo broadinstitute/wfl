@@ -18,7 +18,7 @@
     (run-test)
     (remove-method multifn dispatch-val)))
 
-(def gcs-test-bucket "broad-gotc-dev-zero-test")
+(def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
 
 (defmacro with-temporary-gcs-folder
