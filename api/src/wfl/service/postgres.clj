@@ -7,8 +7,7 @@
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
             [wfl.util :as util])
-  (:import [java.time OffsetDateTime]
-           [liquibase.integration.commandline Main]))
+  (:import [java.time OffsetDateTime]))
 
 (defn wfl-db-config
   "Get the database configuration."
@@ -95,17 +94,3 @@
               unnilify))
         (catch Exception e
           (unnilify workload))))))
-
-(defn -main
-  "Migrate the local database schema using Liquibase."
-  []
-  (let [status (Main/run
-                (into-array String
-                            ["--url=jdbc:postgresql:wfl"
-                             "--changeLogFile=../database/changelog.xml"
-                             (str "--username=" (util/getenv "USER"))
-                             "update"]))]
-    (when-not (zero? status)
-      (throw
-       (Exception.
-        (format "Liquibase migration failed with: %s" status))))))
