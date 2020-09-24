@@ -61,7 +61,7 @@
     {:get  {:summary    "Get the workloads."
             :parameters {:query ::spec/uuid-query}
             :responses  {200 {:body ::spec/workload-responses}}
-            :handler    handlers/get-workload}}]
+            :handler    handlers/get-workload!}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::spec/workload-request}

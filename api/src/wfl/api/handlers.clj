@@ -11,6 +11,7 @@
               [wfl.service.cromwell :as cromwell]
               [wfl.service.postgres :as postgres]
               [wfl.wfl :as wfl]
+              [wfl.util :as util]
               [wfl.service.gcs :as gcs]))
 
 (defmacro ^:private print-handler-error
@@ -130,23 +131,24 @@
               (jdbc/query tx)
               first unnilify succeed))))))
 
-(defn get-workload
+(defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
   [request]
   (wfl.api.handlers/print-handler-error
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (let [uuid (get-in request [:parameters :query :uuid])
-           result (->> (if uuid
+           uuid-vec (->> (if uuid
                          (do
                            (logr/infof "get-workload endpoint called: uuid=%s" uuid)
                            [{:uuid uuid}])
                          (do
                            (logr/info "get-workload endpoint called with no uuid, querying all")
-                           (jdbc/query tx ["SELECT uuid FROM workload"])))
-                    (mapv (partial postgres/get-workload-for-uuid tx)))]
-       (if (every? empty? result)
-         (fail-with-response response/not-found (format "Workload %s not found" uuid))
-         (succeed result))))))
+                           (jdbc/query tx ["SELECT uuid FROM workload"]))))]
+       (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
+       (let [result (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec)]
+         (if (every? empty? result)
+           (fail-with-response response/not-found (format "Workload %s not found" uuid))
+           (succeed result)))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
