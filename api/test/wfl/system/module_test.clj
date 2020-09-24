@@ -44,15 +44,15 @@
 (deftest test-copyfile-workload
   (with-temporary-gcs-folder uri
     (let [src (str/join [uri "input.txt"])
-         dst (str/join [uri "output.txt"])]
-     (->
+          dst (str/join [uri "output.txt"])]
+      (->
        (str/join "/" ["test" "wfl" "resources" "copy-me.txt"])
        (gcs/upload-file src))
-     (let [workload  (workloads/make-copyfile-workload src dst)
-           await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)
-           submitted (endpoints/exec-workload workload)]
-       (is (= (:pipeline submitted) cp/pipeline))
-       (is (:started submitted))
-       (let [result (-> submitted :workflows first await)]
-         (is (= "Succeeded" result))
-         (is (gcs/object-meta dst) "The file was not copied!"))))))
+      (let [workload  (workloads/make-copyfile-workload src dst)
+            await     (comp (partial wait-for-workflow-complete :gotc-dev) :uuid)
+            submitted (endpoints/exec-workload workload)]
+        (is (= (:pipeline submitted) cp/pipeline))
+        (is (:started submitted))
+        (let [result (-> submitted :workflows first await)]
+          (is (= "Succeeded" result))
+          (is (gcs/object-meta dst) "The file was not copied!"))))))
