@@ -52,3 +52,19 @@
     (if (util/getenv "WFL_DEPLOY_ENVIRONMENT")
       (service-account-token)
       (util/shell! "gcloud" "auth" "print-access-token"))))
+
+(defn- read-oauth-client-id
+  "Actively read the OAuth client ID from vault"
+  []
+  (-> "WFL_DEPLOY_ENVIRONMENT"
+      (util/getenv "debug")
+      wfl/error-or-environment-keyword
+      env/stuff
+      :server
+      :vault
+      util/vault-secrets
+      :oauth2_client_id))
+
+(def return-oauth-client-id
+  "Memoize the reading of the OAuth client ID to be more responsive"
+  (memoize read-oauth-client-id))

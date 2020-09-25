@@ -11,10 +11,11 @@
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
             [reitit.swagger-ui                  :as swagger-ui]
-            [wfl.api.handlers                  :as handlers]
-            [wfl.environments                  :as env]
-            [wfl.api.spec                      :as spec]
-            [wfl.wfl                          :as wfl]))
+            [wfl.api.handlers                   :as handlers]
+            [wfl.environments                   :as env]
+            [wfl.api.spec                       :as spec]
+            [wfl.wfl                            :as wfl]
+            [wfl.once                           :as once]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -37,6 +38,11 @@
             :responses {200 {:body {:version map?
                                     :pipeline-versions map?}}}
             :swagger {:tags ["Information"]}}}]
+   ["/oauth2_id"
+    {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
+           :handler   (handlers/success {:oauth2-client-id (once/return-oauth-client-id)})
+           :responses {200 {:body {:oauth2-client-id string?}}}
+           :swagger   {:tags ["Information"]}}}]
    ["/api/v1/environments"
     {:get  {:summary "Get all of the environments the server knows"
             :parameters nil
