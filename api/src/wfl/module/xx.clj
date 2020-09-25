@@ -11,8 +11,10 @@
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
-            [wfl.jdbc :as jdbc])
-  (:import [java.time OffsetDateTime]))
+            [wfl.jdbc :as jdbc]
+            [wfl.service.postgres :as postgres])
+  (:import [java.time OffsetDateTime]
+           (java.util UUID)))
 
 (def pipeline "ExternalExomeReprocessing")
 
@@ -86,7 +88,7 @@
       (map bam-or-cram-ify))
     items))
 
-(defn make-inputs
+(defn make-persisted-inputs
   [output-url common inputs]
   (letfn [(absent? [coll key] (not (contains? coll key)))]
     (let [[_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
@@ -96,21 +98,40 @@
         (util/assoc-when absent? :sample_name (util/remove-extension basename))
         (util/assoc-when absent? :final_gvcf_base_name basename)
         (util/assoc-when absent? :destination_cloud_path
-          (str/join "/" [output-url (util/dirname path)]))))))
+          (str (all/slashify output-url) (util/dirname path)))))))
+
+(defn- get-cromwell-environment [url]
+  (first (all/cromwell-environments #{:gotc-dev :gotc-prod :gotc-staging} url)))
 
 (defn add-workload!
-  [transaction {:keys [output common_inputs items] :as request}]
-  (let [[uuid table] (all/add-workload-table! transaction workflow-wdl request)]
+  [tx {:keys [output common_inputs items] :as request}]
+  (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
     (letfn [(make-workflow [inputs id]
-              {:inputs (json/print-json (make-inputs common_inputs output inputs))
+              {:inputs (json/print-json (make-persisted-inputs output common_inputs inputs))
                :id     id})]
-      (jdbc/insert-multi!
-        transaction
-        table
-        (map make-workflow (input-items items) (range))))
+      (jdbc/insert-multi! tx table (map make-workflow (input-items items) (range))))
     uuid))
 
-(defn start-workload! [tx])
+(defn- do-submit! [cromwell saved-inputs]
+  (let [] (UUID/randomUUID)))
+
+(defn start-workload!
+  [tx {:keys [cromwell items uuid] :as workflow}]
+  (letfn [(update-workflow-record!
+            [id uuid submitted]
+            (let [values          {:uuid uuid :updated submitted}
+                  workflow-filter ["id = ?" id]]
+              (jdbc/update! tx items values workflow-filter)))
+          (submit-workflow!
+            [{:keys [id inputs] :as workflow}]
+            (when-not (:uuid workflow)
+              (let [uuid (do-submit! cromwell inputs)]
+                (update-workflow-record! id uuid (OffsetDateTime/now)))))]
+    (when-not (:started workflow)
+      (let [workflows (postgres/get-table tx items)
+            now       (delay (OffsetDateTime/now))]
+        (run! submit-workflow! workflows)
+        (jdbc/update! tx :workload {:started @now} ["uuid = " uuid])))))
 
 ;(def cromwell-label-map
 ;  "The WDL label applied to Cromwell metadata."
