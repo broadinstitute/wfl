@@ -14,6 +14,12 @@
   [str]
   (json/read-str str :key-fn keyword))
 
+(defn get-oauth2-id
+  "Query oauth2 ID that the server is currently using"
+  []
+  (let [response (client/get (str server "/oauth2_id"))]
+    (first (parse-json-string (:body response)))))
+
 (defn get-workload-status
   "Query v1 api for the status of the workload with UUID"
   [uuid]
