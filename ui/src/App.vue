@@ -39,14 +39,20 @@ export default {
     const store = this.$store
     window.gapi.load('auth2', initAuth);
     function initAuth() {
-      window.gapi.auth2.init({
-        client_id: '450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com'
-      }).then(()=> {
-        window.gapi.auth2.getAuthInstance().currentUser.listen((user) => {
-            if(user.isSignedIn()) {
-              store.dispatch('auth/login', user)
-            }
-        })
+      axios.get("/oauth2_id").then(response => {
+        if (response.status == 200) {
+          window.gapi.auth2.init({
+            client_id: response.data["oauth2-client-id"]
+          }).then(()=> {
+            window.gapi.auth2.getAuthInstance().currentUser.listen((user) => {
+              if(user.isSignedIn()) {
+                store.dispatch('auth/login', user)
+              }
+            })
+          });
+        } else {
+          alert("Unable to prepare login, WFL backend may be offline!")
+        }
       });
     }
     axios.interceptors.response.use(null, (error) => {
