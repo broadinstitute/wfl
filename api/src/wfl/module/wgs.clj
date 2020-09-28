@@ -20,7 +20,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ExternalWholeGenomeReprocessing_v1.0"
+  {:release "ExternalWholeGenomeReprocessing_v1.1.0"
    :top     "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
 
 (def cromwell-label-map
