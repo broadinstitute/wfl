@@ -6,7 +6,11 @@
              {:id           :unit
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
-              :ns-patterns  ["wfl\\.unit\\..*-test$"]}]
+              :ns-patterns  ["wfl\\.unit\\..*-test$"]}
+             {:id           :system
+              :source-paths ["../derived/api/src" "src"]
+              :test-paths   ["test"]
+              :ns-patterns  ["wfl\\.system\\..*-test$"]}]
 
      :plugins [
                :print-invocations
