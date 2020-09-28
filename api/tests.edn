@@ -1,5 +1,6 @@
 #kaocha/v1
     {:tests [{:id           :integration
+              :skip-meta    [:exclude]
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
               :ns-patterns  ["wfl\\.integration\\..*-test$"]}

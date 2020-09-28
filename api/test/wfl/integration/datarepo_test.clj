@@ -1,4 +1,4 @@
-(ns wfl.unit.datarepo-test
+(ns wfl.integration.datarepo-test
   (:require [clojure.data.json     :as json]
             [clojure.java.io       :as io]
             [clojure.string        :as str]
@@ -14,7 +14,7 @@
 (def dataset "f359303e-15d7-4cd8-a4c7-c50499c90252")
 (def profile "390e7a85-d47f-4531-b612-165fc977d3bd")
 
-(deftest delivery
+(deftest ^:exclude delivery
   (with-temporary-gcs-folder uri
     (testing "delivery succeeds"
       (let [[bucket object] (gcs/parse-gs-url uri)
