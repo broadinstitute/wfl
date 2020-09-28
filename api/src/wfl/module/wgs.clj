@@ -64,10 +64,7 @@
          (-> {:disable_sanity_check true}
              (util/prefix-keys :CheckContamination)
              (util/prefix-keys :UnmappedBamToAlignedBam)
-             (util/prefix-keys :UnmappedBamToAlignedBam)
              (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeReprocessing)
              (util/prefix-keys :WholeGenomeReprocessing))))
 
 (defn env-inputs
