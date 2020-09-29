@@ -37,7 +37,7 @@
           started-uuid (:uuid started)
           await        (partial wait-for-workflow-complete env)
           samples      (assoc workloads/aou-sample :uuid started-uuid)
-          ids          (:results (endpoints/append-to-aou-workload samples))
+          ids          (map :uuid (endpoints/append-to-aou-workload samples))
           results      (zipmap ids (map await ids))]
       (is (every? #{"Succeeded"} (vals results))))))
 
