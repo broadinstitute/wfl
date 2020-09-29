@@ -180,9 +180,14 @@ def render_values_file(config: WflInstanceConfig) -> None:
     with open(config.rendered_values_file) as values_file:
         helm_values = yaml.safe_load(values_file)
         env = helm_values["api"]["env"]
-        config.db_username = env.get("WFL_POSTGRES_USERNAME", env["ZERO_POSTGRES_USERNAME"])
-        config.db_password = env.get("WFL_POSTGRES_PASSWORD", env["ZERO_POSTGRES_PASSWORD"])
-
+        config.db_username = env.get("WFL_POSTGRES_USERNAME", env.get("ZERO_POSTGRES_USERNAME"))
+        config.db_password = env.get("WFL_POSTGRES_PASSWORD", env.get("ZERO_POSTGRES_PASSWORD"))
+    if not config.db_username:
+        error("WFL_POSTGRES_USERNAME or ZERO_POSTGRES_USERNAME not found in helm values.")
+        exit(1)
+    if not config.db_password:
+        error("WFL_POSTGRES_PASSWORD or ZERO_POSTGRES_PASSWORD not found in helm values.")
+        exit(1)
 
 def exit_if_dry_run(config: WflInstanceConfig) -> None:
     """Exit if the config is storing True for the dry_run flag."""
