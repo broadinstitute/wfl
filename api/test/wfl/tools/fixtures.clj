@@ -1,14 +1,14 @@
 (ns wfl.tools.fixtures
-  (:require [wfl.service.gcs :as gcs]
-            [wfl.util :as util]
+  (:require [clj-http.client :as http]
+            [clojure.data.json :as json]
+            [clojure.string :as str]
             [wfl.environments :as env]
             [wfl.once :as once]
+            [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
-            [clojure.data.json :as json]
-            [clj-http.client :as http]
-            [clojure.string :as str])
-  (:import [java.util UUID]
-           [liquibase.integration.commandline Main]))
+            [wfl.tools.liquibase :as liquibase]
+            [wfl.util :as util])
+  (:import [java.util UUID]))
 
 (defn method-overload-fixture
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
@@ -38,48 +38,32 @@
      (try ~@body
           (finally
             (->>
-             (gcs/list-objects gcs-test-bucket name#)
-             (run! (comp delete-test-object :name)))))))
+              (gcs/list-objects gcs-test-bucket name#)
+              (run! (comp delete-test-object :name)))))))
 
 (defn- cloud-db-url
   "Return NIL or an URL for the CloudSQL instance containing DB-NAME."
   [environment instance-name db-name]
   (if-let [gcp (get-in env/stuff [environment :server :project])]
     (letfn [(postgresql? [{:keys [instanceType name region]}]
-              (when (= [instanceType         name]
-                       ["CLOUD_SQL_INSTANCE" instance-name])
+              (when (= [instanceType name]
+                      ["CLOUD_SQL_INSTANCE" instance-name])
                 (str "jdbc:postgresql://google/" db-name "?useSSL=false"
-                     "&socketFactory="
-                     "com.google.cloud.sql.postgres.SocketFactory"
-                     "&cloudSqlInstance="
-                     (str/join ":" [gcp region name]))))]
-      (-> {:method :get
-           :url (str "https://www.googleapis.com/sql/v1beta4/projects/"
-                     gcp "/instances")
+                  "&socketFactory="
+                  "com.google.cloud.sql.postgres.SocketFactory"
+                  "&cloudSqlInstance="
+                  (str/join ":" [gcp region name]))))]
+      (-> {:method  :get
+           :url     (str "https://www.googleapis.com/sql/v1beta4/projects/"
+                      gcp "/instances")
            :headers (merge {"Content-Type" "application/json"}
-                           (once/get-auth-header))}
-          http/request
-          :body
-          (json/read-str :key-fn keyword)
-          :items
-          (->> (keep postgresql?))
-          first))))
-
-(defn- run-liquibase
-  "Migrate the database schema using Liquibase."
-  [url username password]
-  (let [status (Main/run
-                 (into-array
-                   String
-                   [(str "--url=" url)
-                    (str "--changeLogFile=database/changelog.xml")
-                    (str "--username=" username)
-                    (str "--password=" password)
-                    "update"]))]
-    (when-not (zero? status)
-      (throw
-        (Exception.
-          (format "Liquibase failed with: %s" status))))))
+                      (once/get-auth-header))}
+        http/request
+        :body
+        (json/read-str :key-fn keyword)
+        :items
+        (->> (keep postgresql?))
+        first))))
 
 (def testing-dbname
   (:db-name (postgres/wfl-db-config)))
@@ -96,14 +80,13 @@
 (defn- setup-db
   "Setup te db by running liquibase migrations by DBNAME."
   [dbname]
-  (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
-    ; cloud
-    (let [url (cloud-db-url :gotc-dev "zero-postgresql" dbname)
-          {:keys [username password]}
-          (-> env/stuff test-env :server :vault util/vault-secrets)]
-      (run-liquibase url username password))
-    ; local
-    (run-liquibase (format "jdbc:postgresql:%s" dbname) (System/getenv "USER") "")))
+  (let [changelog "database/changelog.xml"]
+    (apply liquibase/run-liquibase
+      (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
+        (let [url     (cloud-db-url :gotc-dev "zero-postgresql" dbname)
+              secrets (-> env/stuff test-env :server :vault util/vault-secrets)]
+          [url changelog (:username secrets) (:password secrets)]))
+      [(format "jdbc:postgresql:%s" dbname) changelog (System/getenv "USER")])))
 
 (defn- destroy-db
   "Tear down the testing database by DBNAME."
