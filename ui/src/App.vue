@@ -39,7 +39,7 @@ export default {
     const store = this.$store
     window.gapi.load('auth2', initAuth);
     function initAuth() {
-      axios.get("/oauth2_id").then(response => {
+      axios.get("/oauth2id").then(response => {
         if (response.status == 200) {
           window.gapi.auth2.init({
             client_id: response.data["oauth2-client-id"]

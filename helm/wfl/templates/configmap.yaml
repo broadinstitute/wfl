@@ -77,15 +77,15 @@ data:
         # === API ===
 
         # For those endpoints that does NOT require AUTH
-        # reverse proxy for /status, /version, and /oauth2_id
-        ProxyPassMatch          ^/(status|version|oauth2_id) ${PROXY_URL}/$1
-        ProxyPassReverse        ^/(status|version|oauth2_id) ${PROXY_URL}/$1
+        # reverse proxy for /status, /version, and /oauth2id
+        ProxyPassMatch          ^/(status|version|oauth2id) ${PROXY_URL}/$1
+        ProxyPassReverse        ^/(status|version|oauth2id) ${PROXY_URL}/$1
 
         # reverse proxy for /swagger
         ProxyPass               /swagger ${PROXY_URL}/swagger
         ProxyPassReverse        /swagger ${PROXY_URL}/swagger
 
-        <LocationMatch "/(status|version|oauth2_id|swagger)">
+        <LocationMatch "/(status|version|oauth2id|swagger)">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers

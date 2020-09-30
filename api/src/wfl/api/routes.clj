@@ -38,7 +38,7 @@
             :responses {200 {:body {:version map?
                                     :pipeline-versions map?}}}
             :swagger {:tags ["Information"]}}}]
-   ["/oauth2_id"
+   ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
            :handler   (handlers/success {:oauth2-client-id (once/return-oauth-client-id)})
            :responses {200 {:body {:oauth2-client-id string?}}}

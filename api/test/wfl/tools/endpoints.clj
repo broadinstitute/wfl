@@ -17,7 +17,7 @@
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
   []
-  (let [response (client/get (str server "/oauth2_id"))]
+  (let [response (client/get (str server "/oauth2id"))]
     (first (parse-json-string (:body response)))))
 
 (defn get-workload-status
