@@ -4,13 +4,13 @@
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
             [wfl.module.aou :as aou]
+            [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
-            [wfl.util :refer [shell!]]
             [wfl.util :as util])
   (:import (java.util.concurrent TimeoutException)))
 
-(def git-branch (delay (shell! "git" "branch" "--show-current")))
+(def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
 (defn wgs-workload-request
   [identifier]
@@ -67,6 +67,16 @@
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:src src :dst dst}]})
+
+(defn xx-workload
+  [identifier]
+  "A whole genome sequencing workload used for testing."
+  (let [gotc-test-exome-storage "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/"]
+    {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
+     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
+     :pipeline xx/pipeline
+     :project  (format "(Test) %s" @git-branch)
+     :items    [{:input_cram (str gotc-test-exome-storage "NWD101908.cram")}]}))
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."

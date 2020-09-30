@@ -16,7 +16,7 @@
 (s/def ::finished inst?)
 (s/def ::input string?)
 (s/def ::output string?)
-(s/def ::shared_inputs map?)
+(s/def ::common_inputs map?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
@@ -31,7 +31,7 @@
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::workload-request (s/keys :opt-un [::input
-                                           ::shared_inputs]
+                                           ::common_inputs]
                                   :req-un [::cromwell
                                            ::items
                                            ::output

@@ -4,15 +4,13 @@
 
 (deftest test-make-inputs
   (testing "make-inputs from cram"
-    (let [common {}
-          output "gs://output"
+    (let [output "gs://output"
           items  {:input_cram "gs://input/sample.cram"}]
-      (is (xx/make-persisted-inputs output common items))))
+      (is (xx/make-persisted-inputs output {} items))))
   (testing "make-inputs from bam"
-    (let [common {}
-          output "gs://output"
+    (let [output "gs://output"
           items  {:input_bam "gs://input/sample.bam"}]
-      (is (xx/make-persisted-inputs output common items)))))
+      (is (xx/make-persisted-inputs output {} items)))))
 
 (deftest test-common-inputs
   (testing "add common overrides to the workflows"
@@ -28,3 +26,14 @@
           items  {:input_cram    "gs://input/sample.cram"
                   :bait_set_name "geoff"}]
       (is (= "geoff" (:bait_set_name (xx/make-persisted-inputs output common items)))))))
+
+(deftest sample-name-behaviour
+  (testing "specifying smaple name"
+    (let [output "gs://output"
+          items  {:input_cram  "gs://input/sample.cram"
+                  :sample_name "dave"}]
+      (is (= "dave" (:sample_name (xx/make-persisted-inputs output {} items))))))
+  (testing "computing the sample name"
+    (let [output "gs://output"
+          items  {:input_cram "gs://input/sample.foo.bar.baz.cram"}]
+      (is (= "sample" (:sample_name (xx/make-persisted-inputs output {} items)))))))

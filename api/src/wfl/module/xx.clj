@@ -1,18 +1,14 @@
 (ns wfl.module.xx
   "Reprocess External Exomes, whatever they are."
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
-            [clojure.set :as set]
             [clojure.string :as str]
             [wfl.module.all :as all]
-            [wfl.references :as references]
-            [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl]
             [wfl.jdbc :as jdbc]
-            [wfl.service.postgres :as postgres])
+            [wfl.service.postgres :as postgres]
+            [clojure.data :as data]
+            [wfl.environments :as env])
   (:import [java.time OffsetDateTime]
            (java.util UUID)))
 
@@ -70,35 +66,33 @@
    :scatter_settings     scatter-settings-defaults
    :papi_settings        papi-settings-defaults})
 
-(defn- bam-or-cram-ify
-  [path]
-  (cond (str/ends-with? ".bam" path) {:input_bam path}
-        (str/ends-with? ".cram" path) {:input_cram path}
-        :else
-        (throw
-          (IllegalArgumentException. (str path " is not a bam or cram")))))
-
 (defn input-items
   "The `items` of this workload are either a bucket or a list of samples"
   [items]
   (if (string? items)
-    (->>
-      (gcs/parse-gs-url items)
-      (apply gcs/list-objects)
-      (map bam-or-cram-ify))
+    (let [[bucket object] (gcs/parse-gs-url items)]
+      (letfn [(bam-or-cram-ify [{:keys [name]}]
+                (let [url (gcs/gs-url bucket name)]
+                  (cond (str/ends-with? name ".bam") {:input_bam url}
+                        (str/ends-with? name ".cram") {:input_cram url})))]
+        (->>
+          (gcs/list-objects bucket object)
+          (map bam-or-cram-ify)
+          (remove nil?))))
     items))
 
 (defn make-persisted-inputs
   [output-url common inputs]
-  (letfn [(absent? [coll key] (not (contains? coll key)))]
-    (let [[_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
-          basename (util/basename path)]
-      (->
-        (util/deep-merge common inputs)
-        (util/assoc-when absent? :sample_name (util/remove-extension basename))
-        (util/assoc-when absent? :final_gvcf_base_name basename)
-        (util/assoc-when absent? :destination_cloud_path
-          (str (all/slashify output-url) (util/dirname path)))))))
+  (let [absent?     (fn [coll key] (not (contains? coll key)))
+        sample-name (fn [basename] (first (str/split basename #"\.")))
+        [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
+        basename    (util/basename path)]
+    (->
+      (util/deep-merge common inputs)
+      (util/assoc-when absent? :sample_name (sample-name basename))
+      (util/assoc-when absent? :final_gvcf_base_name basename)
+      (util/assoc-when absent? :destination_cloud_path
+        (str (all/slashify output-url) (util/dirname path))))))
 
 (defn- get-cromwell-environment [url]
   (first (all/cromwell-environments #{:gotc-dev :gotc-prod :gotc-staging} url)))
@@ -112,26 +106,37 @@
       (jdbc/insert-multi! tx table (map make-workflow (input-items items) (range))))
     uuid))
 
-(defn- do-submit! [cromwell saved-inputs]
-  (let [] (UUID/randomUUID)))
+(defn- submit-workflows! [environment workflows]
+  (let [now        (OffsetDateTime/now)
+        do-submit! (fn [workflow] [(:id workflow)
+                                   (UUID/randomUUID)
+                                   "Submitted"
+                                   now])]
+    (map do-submit! workflows)))
+
+
+(defn make-workflow [environment persisted-items]
+  (->
+    (env/stuff environment)
+    (select-keys [:google_account_vault_path :vault_token_path])
+    (merge (util/deep-merge workflow-defaults persisted-items))))
 
 (defn start-workload!
   [tx {:keys [cromwell items uuid] :as workflow}]
-  (letfn [(update-workflow-record!
-            [id uuid submitted]
-            (let [values          {:uuid uuid :updated submitted}
+  (letfn [(update-record!
+            [[id uuid status updated]]
+            (let [values          {:uuid uuid :status status :updated updated}
                   workflow-filter ["id = ?" id]]
-              (jdbc/update! tx items values workflow-filter)))
-          (submit-workflow!
-            [{:keys [id inputs] :as workflow}]
-            (when-not (:uuid workflow)
-              (let [uuid (do-submit! cromwell inputs)]
-                (update-workflow-record! id uuid (OffsetDateTime/now)))))]
+              (jdbc/update! tx items values workflow-filter)))]
     (when-not (:started workflow)
-      (let [workflows (postgres/get-table tx items)
-            now       (delay (OffsetDateTime/now))]
-        (run! submit-workflow! workflows)
-        (jdbc/update! tx :workload {:started @now} ["uuid = " uuid])))))
+      (let [environment (get-cromwell-environment cromwell)
+            now         (delay (OffsetDateTime/now))]
+        (->>
+          (postgres/get-table tx items)
+          (map (comp (partial make-workflow environment) json/read-str :inputs))
+          (submit-workflows! environment)
+          (run! update-record!))
+        (jdbc/update! tx :workload {:started @now} ["uuid = ?" uuid])))))
 
 ;(def cromwell-label-map
 ;  "The WDL label applied to Cromwell metadata."
