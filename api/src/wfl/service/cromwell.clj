@@ -38,6 +38,11 @@
   [environment]
   (str (url environment) "/api/workflows/v1"))
 
+(defn batch
+  "API URL for GotC Cromwell API in ENVIRONMENT."
+  [environment]
+  (str (url environment) "/api/workflows/v1/batch"))
+
 (defn request-json
   "Response to REQUEST with :body parsed as JSON."
   [request]
@@ -215,6 +220,17 @@
          :multipart (map multipartify parts)}
         request-json #_debug/dump :body :id)))
 
+(defn post-workflows
+  "Assemble PARTS into a multipart HTML body and post it to the Cromwell
+  server in ENVIRONMENT, and return the workflow ID."
+  [environment parts]
+  (letfn [(multipartify [[k v]] {:name (name k) :content v})]
+    (-> {:method    :post               ; :debug true :debug-body true
+         :url       (batch environment)
+         :headers   (once/get-auth-header)
+         :multipart (map multipartify parts)}
+      request-json #_debug/dump :body :id)))
+
 (defn stringify-vals
   "Stringify all of the values of a Map."
   [m]
@@ -267,6 +283,28 @@
                                    inputs
                                    options
                                    labels)))
+
+(defn submit-workflows
+  "Submit one or more workflows to cromwell.
+  Formal Parameters:
+   ENVIRONMENT - Cromwell Deployment Environment
+   WDL         - Workflow WDL to be executed
+   IMPORTS-ZIP - Zip archive of WDL dependencies
+   INPUTS      - Sequence of workflow inputs
+   OPTIONS     - Workflow options for entire batch
+   LABELS      - Labels to apply to each workflow
+
+  Return:
+   List {:id string :status string} for each workflow,
+   as reported by cromwell."
+  [environment wdl imports-zip inputs options labels]
+  (post-workflow environment
+    (partify-workflow environment
+      wdl
+      imports-zip
+      inputs
+      options
+      labels)))
 
 (defn work-around-cromwell-fail-bug
   "Wait 2 seconds and ignore up to N times a bogus failure response from
