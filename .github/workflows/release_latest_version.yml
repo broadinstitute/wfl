@@ -122,7 +122,7 @@ jobs:
         run: make MODULES="${MODULES}" TARGET=prebuild
 
       - name: Build
-        run: make MODULES="${MODULES}" TARGET=build
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=build
 
       - name: Check
         run: make MODULES="${MODULES}" TARGET=check

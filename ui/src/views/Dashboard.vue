@@ -19,7 +19,7 @@
               <v-divider></v-divider>
               <b> System Version </b>: {{ versions.version.version}}
               <v-divider></v-divider>
-              <b> Latest Built by </b>: {{ versions.version.user}}
+              <b> Version Built by </b>: {{ versions.version.user}}
               <v-divider></v-divider>
             </v-card-text>
             <v-card-actions>
