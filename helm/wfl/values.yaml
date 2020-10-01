@@ -25,6 +25,7 @@ api:
     WFL_DEPLOY_ENVIRONMENT: "wgs-dev"
     WFL_POSTGRES_PASSWORD: ""
     WFL_POSTGRES_USERNAME: ""
+    WFL_OAUTH2_CLIENT_ID: ""
 
   resources: {}
   secrets:

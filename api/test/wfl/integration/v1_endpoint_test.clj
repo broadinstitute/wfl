@@ -15,6 +15,13 @@
 (def get-existing-workload-uuids
   (comp set (partial map :uuid) endpoints/get-workloads))
 
+(deftest test-oauth2-endpoint
+  (testing "The `oauth2_id` endpoint indeed provides an ID"
+    (let [response (endpoints/get-oauth2-id)]
+      (is (= (count response) 2))
+      (is (some #(= % :oauth2-client-id) response))
+      (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
+
 (deftest test-create-wgs-workload
   (testing "The `create` endpoint creates new WGS workload"
     (let [uuids-before        (get-existing-workload-uuids)
