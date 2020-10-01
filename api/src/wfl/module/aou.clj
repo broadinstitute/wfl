@@ -1,20 +1,20 @@
 (ns wfl.module.aou
-  "Process Arrays for the All Of Us project."
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [wfl.environments :as env]
-            [wfl.api.workloads :as workloads]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.references :as references]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
-            [wfl.util :as util]
-            [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+"Process Arrays for the All Of Us project."
+(:require [clojure.java.io :as io]
+  [clojure.string :as str]
+  [clojure.tools.logging :as log]
+  [wfl.environments :as env]
+  [wfl.api.workloads :as workloads]
+  [wfl.jdbc :as jdbc]
+  [wfl.module.all :as all]
+  [wfl.references :as references]
+  [wfl.service.cromwell :as cromwell]
+  [wfl.service.gcs :as gcs]
+  [wfl.util :as util]
+  [wfl.wdl :as wdl]
+  [wfl.wfl :as wfl])
+(:import [java.time OffsetDateTime]
+  [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
 
@@ -95,10 +95,10 @@
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (let [inputs (merge references/hg19-arrays-references
-                      fingerprinting
-                      other-inputs
-                      (env-inputs environment)
-                      (get-per-sample-inputs per-sample-inputs))]
+                 fingerprinting
+                 other-inputs
+                 (env-inputs environment)
+                 (get-per-sample-inputs per-sample-inputs))]
     (util/prefix-keys inputs :Arrays)))
 
 (defn make-options
@@ -128,19 +128,19 @@
     (letfn [(active? [metadata]
               (let [cromwell-id                       (metadata :id)
                     analysis-version-chip-well-barcode (-> cromwell-id md :inputs
-                                                          (select-keys primary-keys))]
+                                                         (select-keys primary-keys))]
                 (when analysis-version-chip-well-barcode
                   (let [found-analysis-version-number (:analysis_version_number analysis-version-chip-well-barcode)
                         found-chip-well-barcode       (:chip_well_barcode analysis-version-chip-well-barcode)]
                     (when (and (= found-analysis-version-number analysis_version_number)
-                               (= found-chip-well-barcode chip_well_barcode))
+                            (= found-chip-well-barcode chip_well_barcode))
                       analysis-version-chip-well-barcode)))))]
       (->> {:label  cromwell-label
             :status ["On Hold" "Running" "Submitted" "Succeeded"]}
-           (cromwell/query environment)
-           (keep active?)
-           (filter seq)
-           set))))
+        (cromwell/query environment)
+        (keep active?)
+        (filter seq)
+        set))))
 
 (defn really-submit-one-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
@@ -228,13 +228,13 @@
           (assemble-query [query l] (format query (first l) (last l)))]
     (let [samples  (map keep-primary-keys samples)
           existing (->> samples
-                        (extract-key-groups)
-                        (map make-query-group)
-                        (assemble-query (str/join " " ["SELECT * FROM" table "WHERE chip_well_barcode in %s"
-                                                       "AND analysis_version_number in %s"]))
-                        (jdbc/query tx)
-                        (map keep-primary-keys)
-                        set)]
+                     (extract-key-groups)
+                     (map make-query-group)
+                     (assemble-query (str/join " " ["SELECT * FROM" table "WHERE chip_well_barcode in %s"
+                                                    "AND analysis_version_number in %s"]))
+                     (jdbc/query tx)
+                     (map keep-primary-keys)
+                     set)]
       (set (remove existing samples)))))
 
 (defn append-to-workload!
@@ -291,4 +291,3 @@
   (do
     (start-aou-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
-

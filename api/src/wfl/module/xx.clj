@@ -66,8 +66,9 @@
    :scatter_settings     scatter-settings-defaults
    :papi_settings        papi-settings-defaults})
 
-(defn input-items
-  "The `items` of this workload are either a bucket or a list of samples"
+(defn normalize-input-items
+  "The `items` of this workload are either a bucket or a list of samples.
+  Normalise these `items` into a list of samples"
   [items]
   (if (string? items)
     (let [[bucket object] (gcs/parse-gs-url items)]
@@ -81,8 +82,7 @@
           (remove nil?))))
     items))
 
-(defn make-persisted-inputs
-  [output-url common inputs]
+(defn make-persisted-inputs [output-url common inputs]
   (let [absent?     (fn [coll key] (not (contains? coll key)))
         sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
@@ -97,46 +97,66 @@
 (defn- get-cromwell-environment [url]
   (first (all/cromwell-environments #{:gotc-dev :gotc-prod :gotc-staging} url)))
 
-(defn add-workload!
-  [tx {:keys [output common_inputs items] :as request}]
-  (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
-    (letfn [(make-workflow [inputs id]
-              {:inputs (json/print-json (make-persisted-inputs output common_inputs inputs))
-               :id     id})]
-      (jdbc/insert-multi! tx table (map make-workflow (input-items items) (range))))
-    uuid))
-
-(defn- submit-workflows! [environment workflows]
-  (let [now        (OffsetDateTime/now)
-        do-submit! (fn [workflow] [(:id workflow)
-                                   (UUID/randomUUID)
-                                   "Submitted"
-                                   now])]
-    (map do-submit! workflows)))
-
-
-(defn make-workflow [environment persisted-items]
+(defn- make-workflow-inputs [environment persisted-inputs]
   (->
     (env/stuff environment)
     (select-keys [:google_account_vault_path :vault_token_path])
-    (merge (util/deep-merge workflow-defaults persisted-items))))
+    (merge (util/deep-merge workflow-defaults persisted-inputs))))
+
+(defn- get-workflows-table-name [tx workload]
+  (->>
+    (:id workload)
+    (conj ["SELECT items FROM workload WHERE id = ?"])
+    (jdbc/query tx)
+    (map :items)
+    first))
+
+; visible for testing
+(defn submit-workflows! [environment workflows]
+  (throw (NoSuchMethodError. "Not Implemented")))
+
+(defn add-workload!
+  [tx {:keys [output common_inputs items] :as request}]
+  (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
+    (letfn [(make-workflow-record [id items]
+              (->>
+                (make-persisted-inputs output common_inputs items)
+                json/write-str
+                (assoc {:id id} :inputs)))]
+      (->>
+        (normalize-input-items items)
+        (map make-workflow-record (range))
+        (jdbc/insert-multi! tx table))
+      {:uuid uuid})))
+
+(defn get-workload [tx workload-uuid]
+  (when-first [workload (->>
+                          workload-uuid
+                          (conj ["SELECT * FROM workload WHERE uuid = ?"])
+                          (jdbc/query tx))]
+    (let [environment (get-cromwell-environment (:cromwell workload))]
+      (->>
+        (postgres/get-table tx (:items workload))
+        (map (fn [workflow]
+               (update workflow
+                 :inputs
+                 #(->> % util/parse-json (make-workflow-inputs environment)))))
+        (assoc workload :items)))))
 
 (defn start-workload!
-  [tx {:keys [cromwell items uuid] :as workflow}]
-  (letfn [(update-record!
-            [[id uuid status updated]]
-            (let [values          {:uuid uuid :status status :updated updated}
-                  workflow-filter ["id = ?" id]]
-              (jdbc/update! tx items values workflow-filter)))]
-    (when-not (:started workflow)
-      (let [environment (get-cromwell-environment cromwell)
-            now         (delay (OffsetDateTime/now))]
+  [tx {:keys [cromwell items id] :as workload}]
+  (when-not (:started workload)
+    (let [table       (get-workflows-table-name tx workload)
+          environment (get-cromwell-environment cromwell)
+          now         (OffsetDateTime/now)]
+      (letfn [(update-record!
+                [[id uuid status updated]]
+                (let [values {:uuid uuid :status status :updated updated}]
+                  (jdbc/update! tx table values ["id = ?" id])))]
         (->>
-          (postgres/get-table tx items)
-          (map (comp (partial make-workflow environment) json/read-str :inputs))
-          (submit-workflows! environment)
+          (submit-workflows! environment items)
           (run! update-record!))
-        (jdbc/update! tx :workload {:started @now} ["uuid = ?" uuid])))))
+        (jdbc/update! tx :workload {:started now} ["id = ?" id])))))
 
 ;(def cromwell-label-map
 ;  "The WDL label applied to Cromwell metadata."
