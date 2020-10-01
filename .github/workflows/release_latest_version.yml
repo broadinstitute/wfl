@@ -119,16 +119,16 @@ jobs:
           echo ::set-env name=GOOGLE_OAUTH_ACCESS_TOKEN::${GOOGLE_OAUTH_ACCESS_TOKEN}
 
       - name: Pre-Build
-        run: make MODULES="${MODULES}" TARGET=prebuild
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=prebuild
 
       - name: Build
         run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=build
 
       - name: Check
-        run: make MODULES="${MODULES}" TARGET=check
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=check
 
       - name: Images
-        run: make MODULES="${MODULES}" TARGET=images
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=images
 
       - name: tag-and-push-images
         run: ./ops/cli.py tag-and-push-images
