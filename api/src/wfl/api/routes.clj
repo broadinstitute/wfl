@@ -40,7 +40,7 @@
             :swagger {:tags ["Information"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
-           :handler   (handlers/success {:oauth2-client-id (once/return-oauth-client-id)})
+           :handler   (handlers/success {:oauth2-client-id (once/get-oauth-client-id)})
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Information"]}}}]
    ["/api/v1/environments"
