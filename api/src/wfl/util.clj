@@ -34,6 +34,11 @@ vault.client.http/http-client                               ; Keep :clint eastwo
 (defn parse-int [s] (do-or-nil (Integer/parseInt s)))
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
+
+(defn parse-json [^String object]
+  "parse json `object` into keyword->object map recursively"
+  (json/read-str object :key-fn keyword))
+
 ;; `x#` used here since `_` will fail in a macro.
 (defmacro do-or-nil-silently
   "Value of BODY or nil if it throws, without printing any exceptions.

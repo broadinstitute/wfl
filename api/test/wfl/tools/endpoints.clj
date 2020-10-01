@@ -2,7 +2,8 @@
   (:require [clojure.data.json :as json]
             [clj-http.client :as client]
             [wfl.once :as once]
-            [wfl.service.gcs :as gcs]))
+            [wfl.service.gcs :as gcs]
+            [wfl.util :as util]))
 
 (def server
   "The WFL server URL to test."
@@ -13,19 +14,11 @@
 (def userinfo
   (delay (gcs/userinfo {:headers (once/get-auth-header)})))
 
-(defn parse-json-string
-  "Parse the json string STR into a keyword-string map"
-  [str]
-  (json/read-str str :key-fn keyword))
-
-(def userinfo
-  (delay (gcs/userinfo {:headers (once/get-auth-header)})))
-
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
   []
   (let [response (client/get (str server "/oauth2id"))]
-    (first (parse-json-string (:body response)))))
+    (first (util/parse-json (:body response)))))
 
 (defn get-workload-status
   "Query v1 api for the status of the workload with UUID"
@@ -34,7 +27,7 @@
         response    (client/get (str server "/api/v1/workload")
                       {:headers      auth-header
                        :query-params {:uuid uuid}})]
-    (first (parse-json-string (:body response)))))
+    (first (util/parse-json (:body response)))))
 
 (defn get-workloads
   "Query v1 api for all workloads"
@@ -42,7 +35,7 @@
   (let [auth-header (once/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
                       {:headers auth-header})]
-    (parse-json-string (:body response))))
+    (util/parse-json (:body response))))s
 
 (defn create-workload
   "Create workload defined by WORKLOAD"
@@ -54,7 +47,7 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (parse-json-string (:body response))))
+    (util/parse-json (:body response))))
 
 (defn start-workload
   "Start processing WORKLOAD. WORKLOAD must be known to the server."
@@ -66,7 +59,7 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (first (parse-json-string (:body response)))))
+    (first (util/parse-json (:body response)))))
 
 (defn append-to-aou-workload
   "Append a or a few SAMPLES to the aou workload"
@@ -78,7 +71,7 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (parse-json-string (:body response))))
+    (util/parse-json (:body response))))
 
 (defn start-wgs-workflow
   "Submit the WGS Reprocessing WORKFLOW"
@@ -90,7 +83,7 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (parse-json-string (:body response))))
+    (util/parse-json (:body response))))
 
 (defn exec-workload
   "Create and start workload defined by WORKLOAD"
@@ -102,4 +95,4 @@
                        :content-type :json
                        :accept       :json
                        :body         payload})]
-    (parse-json-string (:body response))))
+    (util/parse-json (:body response))))

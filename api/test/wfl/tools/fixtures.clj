@@ -41,7 +41,7 @@
               (gcs/list-objects gcs-test-bucket name#)
               (run! (comp delete-test-object :name)))))))
 
-(defn- cloud-db-url
+(defn cloud-db-url
   "Return NIL or an URL for the CloudSQL instance containing DB-NAME."
   [environment instance-name db-name]
   (if-let [gcp (get-in env/stuff [environment :server :project])]
@@ -77,16 +77,17 @@
     ; local
     (util/shell! "createdb" dbname)))
 
-(defn- setup-db
+(defn setup-db
   "Setup te db by running liquibase migrations by DBNAME."
   [dbname]
-  (let [changelog "database/changelog.xml"]
-    (apply liquibase/run-liquibase
-      (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
-        (let [url     (cloud-db-url :gotc-dev "zero-postgresql" dbname)
-              secrets (-> env/stuff test-env :server :vault util/vault-secrets)]
-          [url changelog (:username secrets) (:password secrets)]))
-      [(format "jdbc:postgresql:%s" dbname) changelog (System/getenv "USER")])))
+  (let [changelog "../database/changelog.xml"]
+    (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
+      (let [url     (cloud-db-url :gotc-dev "zero-postgresql" dbname)
+            secrets (-> env/stuff test-env :server :vault util/vault-secrets)]
+        (liquibase/run-liquibase url changelog (:username secrets) (:password secrets)))
+      (let [url      (format "jdbc:postgresql:%s" dbname)
+            username (System/getenv "USER")]
+        (liquibase/run-liquibase url changelog username)))))
 
 (defn- destroy-db
   "Tear down the testing database by DBNAME."
