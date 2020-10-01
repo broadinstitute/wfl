@@ -53,8 +53,8 @@
       (service-account-token)
       (util/shell! "gcloud" "auth" "print-access-token"))))
 
-(def get-oauth-client-id
-  "Get the client ID based on, in order, the environment, vault, or the gotc-dev one"
+(def oauth-client-id
+  "The client ID based on, in order, the environment, vault, or the gotc-dev one"
   (delay (if-let [id-from-env
                   (not-empty (util/getenv "WFL_OAUTH2_CLIENT_ID"))]
            id-from-env
