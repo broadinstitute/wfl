@@ -2,14 +2,15 @@
 
 ## Inputs
 An `ExternalWholeGenomeReprocessing` workload
-requires the following inputs
-for each workflow in the workload.
+specifies the following inputs
+for each workflow:
 
-- input_cram
-- sample_name
+- input_cram (required)
+- sample_name (required)
 - base_file_name
 - final_gvcf_base_name
 - unmapped_bam_suffix
+- reference_fasta_prefix
 
 The `input_cram` is the path to a file
 relative to the `input` URL prefix
@@ -51,6 +52,10 @@ The `unmapped_bam_suffix`
 is almost always `.unmapped.bam`,
 so that is its default value
 unless it is specified.
+
+The `reference_fasta_prefix` can be used to override
+the [default value](https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7) used by this module: 
+"gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
 
 ## Usage
 
