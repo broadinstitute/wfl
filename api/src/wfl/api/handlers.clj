@@ -144,11 +144,14 @@
                          (do
                            (logr/info "get-workload endpoint called with no uuid, querying all")
                            (jdbc/query tx ["SELECT uuid FROM workload"]))))]
-       (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
-       (let [result (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec)]
-         (if (and (not-empty result) (every? empty? result))
-           (fail-with-response response/not-found (format "Workload %s not found" uuid))
-           (succeed result)))))))
+       (if (not-empty uuid-vec)
+         (do
+           (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
+           (let [result (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec)]
+             (if (every? empty? result)
+               (fail-with-response response/not-found (format "Workload %s not found" uuid))
+               (succeed result))))
+         (success []))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
