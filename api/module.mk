@@ -1,6 +1,6 @@
 # Makefile for the wfl/api module
 
-REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config
+REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config warp
 include $(MAKE_INCLUDE_DIR)/Makefile.module
 
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
