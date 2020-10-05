@@ -146,7 +146,7 @@
                            (jdbc/query tx ["SELECT uuid FROM workload"]))))]
        (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
        (let [result (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec)]
-         (if (every? empty? result)
+         (if (and (not-empty result) (every? empty? result))
            (fail-with-response response/not-found (format "Workload %s not found" uuid))
            (succeed result)))))))
 
