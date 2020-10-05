@@ -113,3 +113,6 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
 curl --location --request GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d' \
 --header 'Authorization: Bearer '$(gcloud auth print-access-token)
 ```
+The "workflows" field lists out each Cromwell workflow that was started, and includes their
+status information. It is also possible to use the Job Manager to check workflow progress and
+easily see information about any workflow failures.
