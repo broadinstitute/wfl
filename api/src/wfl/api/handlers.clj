@@ -1,7 +1,6 @@
 * (ns wfl.api.handlers
     "Define handlers for API endpoints"
-    (:require [clojure.string :as str]
-              [clojure.tools.logging :as log]
+    (:require [clojure.tools.logging :as log]
               [clojure.tools.logging.readable :as logr]
               [ring.util.response :as response]
               [wfl.module.aou :as aou]
@@ -11,7 +10,6 @@
               [wfl.service.cromwell :as cromwell]
               [wfl.service.postgres :as postgres]
               [wfl.wfl :as wfl]
-              [wfl.util :as util]
               [wfl.service.gcs :as gcs]))
 
 (defn fail
@@ -29,23 +27,6 @@
      (catch Exception e#
        (log/error e#)
        (fail e#))))
-
-(defn fail-with-response
-  "A failure RESPONSE with BODY."
-  [response body]
-  (log/warn "Endpoint sent a failure response:")
-  (log/warn body)
-  (-> body response (response/content-type "application/json")))
-
-(defn unprocessable-entity
-  "Returns a 422 'Unprocessable Entity' response with BODY."
-  [body]
-  (let [response {:status  422
-                  :headers {}
-                  :body    body}]
-    (log/warn "Endpoint sent a 422 failure response:")
-    (log/warn body)
-    response))
 
 (defn succeed
   "A successful response with BODY."
@@ -149,11 +130,13 @@
   [request]
   (letfn [(go! [tx {:keys [uuid]}]
             (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
-              (do
-                (start-workload! tx workload)
-                (postgres/load-workload-for-id tx (:id workload)))
-              (throw
-                (ex-info "No such workload" {:uuid uuid}))))]
+              (if-not (:started workload)
+                (do
+                  (logr/infof "starting workload %s" uuid)
+                  (start-workload! tx workload)
+                  (postgres/load-workload-for-id tx (:id workload)))
+                workload)
+              (throw (ex-info "No such workload" {:uuid uuid}))))]
     (log-and-fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [uuids (-> request :parameters :body distinct)]
@@ -164,13 +147,13 @@
   "Create and start workload described in BODY of REQUEST"
   [request]
   (letfn [(create! [tx workload-request]
-            (->>
-              (add-workload! tx workload-request)
-              :uuid
-              (postgres/load-workload-for-uuid tx)))
-          (start! [tx workload]
+            (let [{:keys [uuid]} (add-workload! tx workload-request)]
+              (log/infof "created workload %s" uuid)
+              (postgres/load-workload-for-uuid tx uuid)))
+          (start! [tx {:keys [id uuid] :as workload}]
+            (log/infof "starting workload %s" uuid)
             (start-workload! tx workload)
-            (postgres/load-workload-for-id tx (:id workload)))
+            (postgres/load-workload-for-id tx id))
           (exec! [tx workload-request]
             (start! tx (create! tx workload-request)))]
     (log-and-fail-on-error

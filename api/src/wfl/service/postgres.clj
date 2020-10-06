@@ -78,27 +78,26 @@
     (catch Exception cause
       (throw (ex-info "Error updating workload status" {} cause)))))
 
-(defn- make-get-workload [load-workload]
-  (fn [tx identifier]
-    (letfn [(unnilify [m] (into {} (filter second m)))]
-      (when-let [workload (load-workload tx identifier)]
-        (->>
-          (get-table tx (:items workload))
-          (map unnilify)
-          (assoc workload :workflows)
-          unnilify)))))
+(defn- make-load-workload [load-workload tx identifier]
+  (letfn [(unnilify [m] (into {} (filter second m)))]
+    (if-let [workload (load-workload tx identifier)]
+      (->>
+        (get-table tx (:items workload))
+        (map unnilify)
+        (assoc workload :workflows)
+        unnilify))))
 
 (def load-workload-for-uuid
-  "Use transaction TX to return workload with UUID."
-  (make-get-workload
+  "Use transaction `tx` to load `workload` with `uuid`."
+  (partial make-load-workload
     (fn [tx uuid]
       (->> ["SELECT * FROM workload WHERE uuid = ?" uuid]
         (jdbc/query tx)
         first))))
 
 (def load-workload-for-id
-  "Use transaction TX to return workload with ID."
-  (make-get-workload
+  "Use transaction `tx` to load `workload` with `id`."
+  (partial make-load-workload
     (fn [tx id]
       (->> ["SELECT * FROM workload WHERE id = ?" id]
         (jdbc/query tx)
@@ -107,5 +106,5 @@
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
   [tx]
-  (letfn [(do-load [{:keys [id]}] (load-workload-for-id tx id))]
-    (map do-load (jdbc/query tx ["SELECT id FROM workload"]))))
+  (let [do-load (partial make-load-workload (fn [_ x] x) tx)]
+    (map do-load (jdbc/query tx ["SELECT * FROM workload"]))))
