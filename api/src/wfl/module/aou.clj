@@ -20,7 +20,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "Arrays_v2.0"
-   :top     "pipelines/arrays/single_sample/Arrays.wdl"})
+   :top     "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
