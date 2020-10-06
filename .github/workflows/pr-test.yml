@@ -81,7 +81,7 @@ jobs:
             exit 1
           fi
           echo ::add-mask::${VAULT_TOKEN}
-          echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
+          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $GITHUB_ENV
           echo ${VAULT_TOKEN} > ~/.vault-token
           # use vault token to read secret - service account json
           curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
@@ -105,8 +105,8 @@ jobs:
             exit 1
           fi
           echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
-          echo ::set-env name=GOOGLE_OAUTH_ACCESS_TOKEN::${GOOGLE_OAUTH_ACCESS_TOKEN}
-          echo ::set-env name=GOOGLE_APPLICATION_CREDENTIALS::$(find `pwd` -maxdepth 1 -name sa.json)
+          echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
       - name: WFL Unit Test
         run: |
           make api TARGET=check

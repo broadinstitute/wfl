@@ -40,7 +40,7 @@ jobs:
            exit 1
         fi
         echo ::add-mask::${VAULT_TOKEN}
-        echo ::set-env name=VAULT_TOKEN::${VAULT_TOKEN}
+        echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $GITHUB_ENV
         # use vault token to read secret - api access token
         CR_TOKEN=$(curl --silent \
              -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
@@ -51,7 +51,7 @@ jobs:
            exit 1
         fi
         echo ::add-mask::${CR_TOKEN}
-        echo ::set-env name=CR_TOKEN::${CR_TOKEN}
+        echo "CR_TOKEN=${CR_TOKEN}" >> $GITHUB_ENV
     - name: Runchart-releaser
       uses: broadinstitute/chart-releaser-action@v1.0.0-rc.4
       with:
