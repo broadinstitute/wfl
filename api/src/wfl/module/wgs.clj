@@ -97,8 +97,11 @@
         leaf (last (str/split base #"/"))
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
         ref-prefix (get sample :reference_fasta_prefix)
-        inputs (-> (zipmap [:base_file_name :final_gvcf_base_name :sample_name]
-                           (repeat leaf))
+        final_gvcf_base_name (or (:final_gvcf_base_name sample) leaf)
+        inputs (-> {}
+                   (assoc :base_file_name (or (:base_file_name sample) leaf))
+                   (assoc :sample_name (or (:sample_name sample) leaf))
+                   (assoc :final_gvcf_base_name final_gvcf_base_name)
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references (make-references ref-prefix))
@@ -106,8 +109,8 @@
                    (merge cram-ref)
                    (merge (env-inputs environment)
                           hack-task-level-values))
-        output (str (:destination_cloud_path inputs) 
-                    (:final_gvcf_base_name sample) 
+        output (str (:destination_cloud_path inputs)
+                    final_gvcf_base_name
                     ".cram")]
     (all/throw-when-output-exists-already! output)
     (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
