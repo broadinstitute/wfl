@@ -1,7 +1,7 @@
 # Makefile for the cloud_function module
 
 REQUIRED_PYTHON_ENVIRONMENT := requirements.txt
-include $(MAKE_INCLUDE_DIR)/Makefile.module
+include $(MAKE_INCLUDE_DIR)/modules.mk
 
 MD_DIR  := $(MODULE_DIR)/md
 SCM_SRC  = $(shell $(FIND) $(MD_DIR) -type f)
