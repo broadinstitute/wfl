@@ -35,6 +35,7 @@ jobs:
 
           echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
           echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
+          echo "${{ secrets.warp_deploy_key }}" > ~/.ssh/warp_deploy_key
           echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
 
           chmod 600 ~/.ssh/dsde_pipelines_deploy_key
@@ -51,6 +52,11 @@ jobs:
             HostName github.com
             User git
             IdentityFile ~/.ssh/pipeline_config_deploy_key
+
+            Host warp.github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/warp_deploy_key
 
             Host wfl.github.com
             HostName github.com
