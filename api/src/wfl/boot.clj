@@ -74,9 +74,24 @@
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
-  "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES."
+  "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES.
+   TODO: remove this function once the WARP transition is done."
   [clones resources {:keys [release top] :as _wdl}]
   (let [dp (str/join "/" [clones "dsde-pipelines"])]
+    (util/shell-io! "git" "-C" dp "checkout" release)
+    (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
+      (when directory
+        (try (let [out-wdl (.getPath (io/file resources (.getName in-wdl)))
+                   out-zip (str (util/unsuffix out-wdl ".wdl") ".zip")]
+               (io/make-parents out-zip)
+               (.renameTo in-wdl (io/file out-wdl))
+               (.renameTo in-zip (io/file out-zip)))
+             (finally (util/delete-tree directory)))))))
+
+(defn cromwellify-warp-wdl
+  "Cromwellify the WDL from warp in CLONES to RESOURCES."
+  [clones resources {:keys [release top] :as _wdl}]
+  (let [dp (str/join "/" [clones "warp"])]
     (util/shell-io! "git" "-C" dp "checkout" release)
     (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
       (when directory
@@ -108,7 +123,8 @@
   [version second-party derived]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
-    (let [wdls [ukb/workflow-wdl wgs/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
+    (let [wdls [ukb/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
+          warp-wdls [wgs/workflow-wdl]
           clones (find-repos second-party)
           sources (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
@@ -116,6 +132,7 @@
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
+      (run! (partial cromwellify-warp-wdl second-party resources) warp-wdls)
       (write-the-version-file resources edn))))
 
 (defn main
