@@ -209,6 +209,7 @@ Tip: Run `make` at least once after cloning the repo to make sure all the
 necessary files are in place.
 
 ### `api` Module
+
 #### Source code
 
 The Clojure source code is in the `api/src/` directory.
