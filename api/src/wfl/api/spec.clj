@@ -84,21 +84,21 @@
 (s/def ::items-wgs (s/keys :opt-un [::base_file_name
                                     ::final_gvcf_base_name
                                     ::reference_fasta_prefix
+                                    ::sample_name
                                     ::unmapped_bam_suffix]
-                           :req-un [::input_cram
-                                    ::sample_name]))
+                           :req-un [::input_cram]))
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
 (s/def ::workflow-wgs (s/keys :opt-un [::base_file_name
                                        ::final_gvcf_base_name
                                        ::reference_fasta_prefix
+                                       ::sample_name
                                        ::status
                                        ::unmapped_bam_suffix
                                        ::updated
                                        ::uuid]
                               :req-un [::id
-                                       ::input_cram
-                                       ::sample_name]))
+                                       ::input_cram]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)
