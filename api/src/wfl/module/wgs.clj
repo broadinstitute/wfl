@@ -84,7 +84,6 @@
         (env/stuff environment)]
     {:google_account_vault_path google_account_vault_path
      :vault_token_path vault_token_path
-     :unmapped_bam_suffix ".unmapped.bam"
      :papi_settings       {:agg_preemptible_tries 3
                            :preemptible_tries     3}
      :scatter_settings    {:haplotype_scatter_count         10
@@ -101,6 +100,7 @@
         inputs (-> {}
                    (assoc :base_file_name (or (:base_file_name sample) leaf))
                    (assoc :sample_name (or (:sample_name sample) leaf))
+                   (assoc :unmapped_bam_suffix (or (:unmapped_bam_suffix sample) ".unmapped.bam"))
                    (assoc :final_gvcf_base_name final_gvcf_base_name)
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
