@@ -14,21 +14,21 @@
               [wfl.util :as util]
               [wfl.service.gcs :as gcs]))
 
-(defmacro ^:private print-handler-error
-  "Run BODY, printing any exception rises through it."
-  [& body]
-  `(try
-     ~@body
-     (catch Exception e#
-       (log/error e# "Exception rose uncaught through handler")
-       (throw e#))))
-
 (defn fail
   "A failure response with BODY."
   [body]
   (log/warn "Endpoint sent a 400 failure response:")
   (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
+
+(defmacro ^:private log-and-fail-on-error
+  "Run BODY, printing any exception rises through it."
+  [& body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (log/error e#)
+       (fail e#))))
 
 (defn fail-with-response
   "A failure RESPONSE with BODY."
@@ -60,38 +60,32 @@
 (defn status-counts
   "Get status counts for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (wfl.api.handlers/print-handler-error
-   (let [environment (some :environment ((juxt :query :body) parameters))]
-     (logr/infof "status-counts endpoint called: environment=%s" environment)
-     (let [env (wfl/throw-or-environment-keyword! environment)]
-       (succeed (cromwell/status-counts env {:includeSubworkflows false}))))))
+  (log-and-fail-on-error
+    (let [environment (some :environment ((juxt :query :body) parameters))]
+      (logr/infof "status-counts endpoint called: environment=%s" environment)
+      (let [env (wfl/throw-or-environment-keyword! environment)]
+        (succeed (cromwell/status-counts env {:includeSubworkflows false}))))))
 
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (wfl.api.handlers/print-handler-error
-   (let [{:keys [body environment query]} parameters]
-     (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
-     (let [env   (wfl/throw-or-environment-keyword! environment)
-           start (some :start [query body])
-           end   (some :end [query body])
-           query {:includeSubworkflows false :start start :end end}]
-       (succeed {:results (cromwell/query env query)})))))
+  (log-and-fail-on-error
+    (let [{:keys [body environment query]} parameters]
+      (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
+      (let [env   (wfl/throw-or-environment-keyword! environment)
+            start (some :start [query body])
+            end   (some :end [query body])
+            query {:includeSubworkflows false :start start :end end}]
+        (succeed {:results (cromwell/query env query)})))))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (wfl.api.handlers/print-handler-error
-   (let [{:keys [body]} parameters]
-     (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
-     (try
-       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (->> body
-              (aou/append-to-workload! tx)
-              succeed))
-       (catch Exception e
-         (log/warn e "Exception in appending to aou workload")
-         (fail-with-response unprocessable-entity {:message (.getMessage e)}))))))
+  (log-and-fail-on-error
+    (let [{:keys [body]} parameters]
+      (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (succeed (aou/append-to-workload! tx body))))))
 
 (defn on-unknown-pipeline
   "Fail this request returning BODY as result."
@@ -118,65 +112,72 @@
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
-  (wfl.api.handlers/print-handler-error
-   (letfn [(unnilify [m] (into {} (filter second m)))]
-     (let [{:keys [body]} parameters
-           {:keys [email]} (gcs/userinfo request)]
-       (logr/infof "post-create endpoint called: body=%s" body)
-       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (->> (assoc body :creator email)
-              (add-workload! tx)
-              :uuid
-              (conj ["SELECT * FROM workload WHERE uuid = ?"])
-              (jdbc/query tx)
-              first unnilify succeed))))))
+  (log-and-fail-on-error
+    (let [{:keys [body]} parameters
+          {:keys [email]} (gcs/userinfo request)]
+      (logr/infof "post-create endpoint called: body=%s" body)
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (->>
+          (assoc body :creator email)
+          (add-workload! tx)
+          :uuid
+          (postgres/load-workload-for-uuid tx)
+          succeed)))))
 
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
   [request]
-  (wfl.api.handlers/print-handler-error
-   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-     (let [uuid (get-in request [:parameters :query :uuid])
-           uuid-vec (->> (if uuid
-                         (do
-                           (logr/infof "get-workload endpoint called: uuid=%s" uuid)
-                           [{:uuid uuid}])
-                         (do
-                           (logr/info "get-workload endpoint called with no uuid, querying all")
-                           (jdbc/query tx ["SELECT uuid FROM workload"]))))]
-       (if (not-empty uuid-vec)
-         (do
-           (util/do-or-nil (postgres/update-workload-for-uuid! tx uuid-vec))
-           (let [result (mapv (partial postgres/get-workload-for-uuid tx) uuid-vec)]
-             (if (every? empty? result)
-               (fail-with-response response/not-found (format "Workload %s not found" uuid))
-               (succeed result))))
-         (success []))))))
+  (letfn [(go! [tx {:keys [uuid id] :as workload}]
+            (if-not (:finished workload)
+              (do
+                (logr/infof "updating workload %s" uuid)
+                (postgres/update-workload! tx workload)
+                (postgres/load-workload-for-id tx id))
+              workload))]
+    (log-and-fail-on-error
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (succeed
+          (mapv (partial go! tx)
+            (if-let [uuid (-> request :parameters :query :uuid)]
+              (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
+                [workload]
+                (throw (ex-info "No such workload" {:uuid uuid})))
+              (postgres/load-workloads tx))))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (wfl.api.handlers/print-handler-error
-   (let [uuids (-> request :parameters :body distinct)]
-     (logr/infof "post-start endpoint called: uuids=%s" uuids)
-     (letfn [(q [[left right]] (fn [it] (str left it right)))]
-       (let [db-config (postgres/wfl-db-config)
-             db-conn (jdbc/get-connection db-config)
-             query (->> (repeat (count uuids) "?")
-                        (str/join ",") ((q "()"))
-                        (format "SELECT * FROM workload WHERE uuid in %s"))
-             ps (jdbc/prepare-statement db-conn query)]
-         (doseq [[i uuid] (map-indexed vector uuids)] (.setString ps (+ i 1) (:uuid uuid)))
-         (jdbc/with-db-transaction [tx db-config]
-           (->> ps
-                (jdbc/query tx)
-                (run! (partial start-workload! tx)))
-           (->> uuids
-                (mapv (partial postgres/get-workload-for-uuid tx))
-                succeed)))))))
+  (letfn [(go! [tx {:keys [uuid]}]
+            (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
+              (do
+                (start-workload! tx workload)
+                (postgres/load-workload-for-id tx (:id workload)))
+              (throw
+                (ex-info "No such workload" {:uuid uuid}))))]
+    (log-and-fail-on-error
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (let [uuids (-> request :parameters :body distinct)]
+          (logr/infof "post-start endpoint called: uuids=%s" uuids)
+          (succeed (mapv #(go! tx %) uuids)))))))
 
-(def post-exec
+(defn post-exec
   "Create and start workload described in BODY of REQUEST"
-  (let [pack   (fn [response] {:parameters {:body [(:body response)]}})
-        unpack (comp first :body)]
-    (comp succeed unpack post-start pack post-create)))
+  [request]
+  (letfn [(create! [tx workload-request]
+            (->>
+              (add-workload! tx workload-request)
+              :uuid
+              (postgres/load-workload-for-uuid tx)))
+          (start! [tx workload]
+            (start-workload! tx workload)
+            (postgres/load-workload-for-id tx (:id workload)))
+          (exec! [tx workload-request]
+            (start! tx (create! tx workload-request)))]
+    (log-and-fail-on-error
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (succeed
+          (exec! tx
+            (assoc
+              (get-in request [:parameters :body])
+              :creator
+              (:email (gcs/userinfo request)))))))))

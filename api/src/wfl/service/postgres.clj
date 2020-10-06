@@ -22,17 +22,17 @@
             ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
             :isolation-level :serializable
             :subprotocol     "postgresql"}
-           :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
-           :password       (or WFL_POSTGRES_PASSWORD "password")
-           :user           (or WFL_POSTGRES_USERNAME USER "postgres"))))
+      :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
+      :password (or WFL_POSTGRES_PASSWORD "password")
+      :user (or WFL_POSTGRES_USERNAME USER "postgres"))))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."
   [tx table]
   (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
-       (jdbc/query tx)
-       (count)
-       (not= 0)))
+    (jdbc/query tx)
+    (count)
+    (not= 0)))
 
 (defn get-table
   "Return TABLE using transaction TX."
@@ -46,12 +46,12 @@
 (defn cromwell-status
   "NIL or the status of the workflow with UUID on CROMWELL."
   [cromwell uuid]
-  (-> {:method  :get                    ; :debug true :debug-body true
+  (-> {:method  :get                                        ; :debug true :debug-body true
        :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
        :headers (once/get-auth-header)}
-      http/request :body
-      (json/read-str :key-fn keyword)
-      :status util/do-or-nil))
+    http/request :body
+    (json/read-str :key-fn keyword)
+    :status util/do-or-nil))
 
 (defn update-workflow-status!
   "Use TX to update the status of WORKFLOW in ITEMS table."
@@ -60,42 +60,52 @@
     (when uuid
       (let [now    (OffsetDateTime/now)
             status (if (util/uuid-nil? uuid) "skipped"
-                       (cromwell-status cromwell uuid))]
+                                             (cromwell-status cromwell uuid))]
         (jdbc/update! tx items
-                      (maybe {:updated now :uuid uuid} :status status)
-                      ["id = ?" id])))))
+          (maybe {:updated now :uuid uuid} :status status)
+          ["id = ?" id])))))
 
 (defn update-workload!
-  "Use transaction TX to update _WORKLOAD statuses."
-  [tx {:keys [cromwell id items] :as _workload}]
+  "Use transaction TX to update WORKLOAD statuses."
+  [tx {:keys [cromwell id items workflows] :as _workload}]
   (try
-    (let [workflows (get-table tx items)]
-      (run! (partial update-workflow-status! tx cromwell items) workflows)
-      (let [finished? (set (conj cromwell/final-statuses "skipped"))]
-        (when (every? (comp finished? :status) workflows)
-          (jdbc/update! tx :workload
-                        {:finished (OffsetDateTime/now)}
-                        ["id = ?" id]))))
+    (run! (partial update-workflow-status! tx cromwell items) workflows)
+    (let [finished? (set (conj cromwell/final-statuses "skipped"))]
+      (when (every? (comp finished? :status) workflows)
+        (jdbc/update! tx :workload
+          {:finished (OffsetDateTime/now)}
+          ["id = ?" id])))
     (catch Exception cause
       (throw (ex-info "Error updating workload status" {} cause)))))
 
-(defn update-workload-for-uuid!
-  "Use transaction TX to update workload statuses with UUID."
-  [tx {:keys [uuid]}]
-  (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
-        wl       (first (jdbc/query tx select))]
-    (update-workload! tx wl)))
+(defn- make-get-workload [load-workload]
+  (fn [tx identifier]
+    (letfn [(unnilify [m] (into {} (filter second m)))]
+      (when-let [workload (load-workload tx identifier)]
+        (->>
+          (get-table tx (:items workload))
+          (map unnilify)
+          (assoc workload :workflows)
+          unnilify)))))
 
-(defn get-workload-for-uuid
+(def load-workload-for-uuid
   "Use transaction TX to return workload with UUID."
-  [tx {:keys [uuid]}]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (let [select   ["SELECT * FROM workload WHERE uuid = ?" uuid]
-          {:keys [items] :as workload} (first (jdbc/query tx select))]
-      (try
-        (let [workflows (get-table tx items)]
-          (-> workload
-              (assoc :workflows (mapv unnilify workflows))
-              unnilify))
-        (catch Exception e
-          (unnilify workload))))))
+  (make-get-workload
+    (fn [tx uuid]
+      (->> ["SELECT * FROM workload WHERE uuid = ?" uuid]
+        (jdbc/query tx)
+        first))))
+
+(def load-workload-for-id
+  "Use transaction TX to return workload with ID."
+  (make-get-workload
+    (fn [tx id]
+      (->> ["SELECT * FROM workload WHERE id = ?" id]
+        (jdbc/query tx)
+        first))))
+
+(defn load-workloads
+  "Use transaction TX to load all known `workloads`"
+  [tx]
+  (letfn [(do-load [{:keys [id]}] (load-workload-for-id tx id))]
+    (map do-load (jdbc/query tx ["SELECT id FROM workload"]))))
