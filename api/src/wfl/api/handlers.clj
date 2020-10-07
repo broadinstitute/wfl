@@ -108,12 +108,12 @@
   "List all workloads or the workload with UUID in REQUEST."
   [request]
   (letfn [(go! [tx {:keys [uuid id] :as workload}]
-            (if-not (:finished workload)
+            (if (:finished workload)
+              workload
               (do
                 (logr/infof "updating workload %s" uuid)
                 (postgres/update-workload! tx workload)
-                (postgres/load-workload-for-id tx id))
-              workload))]
+                (postgres/load-workload-for-id tx id))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (succeed
@@ -129,12 +129,12 @@
   [request]
   (letfn [(go! [tx {:keys [uuid]}]
             (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
-              (if-not (:started workload)
+              (if (:started workload)
+                workload
                 (do
                   (logr/infof "starting workload %s" uuid)
                   (start-workload! tx workload)
-                  (postgres/load-workload-for-id tx (:id workload)))
-                workload)
+                  (postgres/load-workload-for-id tx (:id workload))))
               (throw (ex-info "No such workload" {:uuid uuid}))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
