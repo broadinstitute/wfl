@@ -19,13 +19,12 @@
   (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
 
-(defmacro ^:private log-and-fail-on-error
+(defmacro ^:private fail-on-error
   "Run BODY, printing any exception rises through it."
   [& body]
   `(try
      ~@body
      (catch Exception e#
-       (log/error e#)
        (fail e#))))
 
 (defn succeed
@@ -41,7 +40,7 @@
 (defn status-counts
   "Get status counts for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (log-and-fail-on-error
+  (fail-on-error
     (let [environment (some :environment ((juxt :query :body) parameters))]
       (logr/infof "status-counts endpoint called: environment=%s" environment)
       (let [env (wfl/throw-or-environment-keyword! environment)]
@@ -50,7 +49,7 @@
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
-  (log-and-fail-on-error
+  (fail-on-error
     (let [{:keys [body environment query]} parameters]
       (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
       (let [env   (wfl/throw-or-environment-keyword! environment)
@@ -62,7 +61,7 @@
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
   [{:keys [parameters] :as _request}]
-  (log-and-fail-on-error
+  (fail-on-error
     (let [{:keys [body]} parameters]
       (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -93,7 +92,7 @@
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
-  (log-and-fail-on-error
+  (fail-on-error
     (let [{:keys [body]} parameters
           {:keys [email]} (gcs/userinfo request)]
       (logr/infof "post-create endpoint called: body=%s" body)
@@ -115,7 +114,7 @@
                 (postgres/update-workload! tx workload)
                 (postgres/load-workload-for-id tx id))
               workload))]
-    (log-and-fail-on-error
+    (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (succeed
           (mapv (partial go! tx)
@@ -137,7 +136,7 @@
                   (postgres/load-workload-for-id tx (:id workload)))
                 workload)
               (throw (ex-info "No such workload" {:uuid uuid}))))]
-    (log-and-fail-on-error
+    (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [uuids (-> request :parameters :body distinct)]
           (logr/infof "post-start endpoint called: uuids=%s" uuids)
@@ -156,7 +155,7 @@
             (postgres/load-workload-for-id tx id))
           (exec! [tx workload-request]
             (start! tx (create! tx workload-request)))]
-    (log-and-fail-on-error
+    (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (succeed
           (exec! tx
