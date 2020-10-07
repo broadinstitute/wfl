@@ -162,8 +162,8 @@
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
-                                     project pipeline release output])
-        checked-output (gcs/parse-gs-url output)]
+                                     project pipeline release output])]
+    (gcs/parse-gs-url output)
     (if (seq probe-result)
       ;; if a table already exists, we return its uuid and the name
       (let [[{:keys [uuid]}] probe-result]
@@ -197,7 +197,7 @@
 (defn start-workload!
   "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
-  [tx {:keys [uuid] :as body}]
+  [tx {:keys [uuid] :as _workload}]
   (let [result (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])
         started (:started result)]
     (when (nil? started)
@@ -231,7 +231,7 @@
   "Use transaction TX to append the samples to a WORKLOAD identified by uuid.
    The workload needs to be marked as 'started' in order to be append-able, and
    any samples being added to the workload table will be submitted right away."
-  [tx {:keys [notifications uuid environment] :as body}]
+  [tx {:keys [notifications uuid environment] :as _workload}]
   (let [now                (OffsetDateTime/now)
         environment        (wfl/throw-or-environment-keyword! environment)
         table-query-result (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))
@@ -267,6 +267,6 @@
                      :uuid                    uuid
                      :analysis_version_number analysis_version_number
                      :chip_well_barcode       chip_well_barcode}))]
-          (let [inserted            (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
-                submitted-uuids-pks (map submit! (vals to-be-submitted))]
+          (let [submitted-uuids-pks (map submit! (vals to-be-submitted))]
+            (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
             (doall (map (partial update! tx) submitted-uuids-pks))))))))

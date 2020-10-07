@@ -172,9 +172,9 @@
 
 (defn add-workload!
   "Use transaction TX to add the workload described by BODY."
-  [tx {:keys [items] :as body}]
+  [tx {:keys [items] :as _workload}]
   (let [now          (OffsetDateTime/now)
-        [uuid table] (all/add-workload-table! tx workflow-wdl body)]
+        [uuid table] (all/add-workload-table! tx workflow-wdl _workload)]
     (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
       (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
     {:uuid uuid}))
