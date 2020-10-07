@@ -108,13 +108,15 @@
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
 (defn make-labels
-  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS."
-  [per-sample-inputs]
-  (merge cromwell-label-map (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])))
+  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
+  [per-sample-inputs other-labels]
+  (merge cromwell-label-map
+    (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
+    other-labels))
 
 (defn active-or-done-objects
   "Query by PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
-  [environment {:keys [analysis_version_number chip_well_barcode] :as primary-vals}]
+  [environment {:keys [analysis_version_number chip_well_barcode]}]
   (prn (format "%s: querying Cromwell in %s" wfl/the-name environment))
   (let [primary-keys [:analysis_version_number
                       :chip_well_barcode]
@@ -137,8 +139,9 @@
            set))))
 
 (defn really-submit-one-workflow
-  "Submit one workflow to ENVIRONMENT."
-  [environment per-sample-inputs sample-output-path]
+  "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
+   SAMPLE-OUTPUT-PATH and OTHER-LABELS."
+  [environment per-sample-inputs sample-output-path other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
@@ -146,7 +149,7 @@
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
       (make-options sample-output-path)
-      (make-labels per-sample-inputs))))
+      (make-labels per-sample-inputs other-labels))))
 
 #_(defn update-workload!
     "Use transaction TX to update WORKLOAD statuses."
@@ -232,41 +235,38 @@
    The workload needs to be marked as 'started' in order to be append-able, and
    any samples being added to the workload table will be submitted right away."
   [tx {:keys [notifications uuid environment] :as _workload}]
-  (let [now                (OffsetDateTime/now)
-        environment        (wfl/throw-or-environment-keyword! environment)
-        table-query-result (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))
-        workload-started?  (:started table-query-result)
-        table              (:items table-query-result)
-        output-bucket      (:output table-query-result)]
-
-    (if (nil? workload-started?)
-      ; throw when the workload does not exist or it hasn't been started yet
-      (throw (Exception. (format "Workload %s is not started yet!" uuid)))
-      ; insert the new samples into DB and start the workflows
-      (let [primary-keys               (map keep-primary-keys notifications)
-            primary-keys-notifications (zipmap primary-keys notifications)
-            new-samples                (remove-existing-samples! tx primary-keys table)
-            to-be-submitted            (->> primary-keys-notifications
-                                            (keys)
-                                            (keep new-samples)
-                                            (select-keys primary-keys-notifications))]
-        (letfn [(sql-rize [m] (-> m
-                                  (assoc :updated now)
-                                  keep-primary-keys))
-                (submit! [sample]
-                  (let [{:keys [chip_well_barcode analysis_version_number] :as sample-pks} (keep-primary-keys sample)
-                        output-path (str/join "/" [output-bucket chip_well_barcode analysis_version_number])]
-                    [(really-submit-one-workflow environment sample output-path) sample-pks]))
-                (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode] :as pks}]]
-                  (when uuid
-                    (jdbc/update! tx table
-                                  {:updated now :uuid uuid}
-                                  ["analysis_version_number = ? AND chip_well_barcode = ?" analysis_version_number
-                                   chip_well_barcode])
-                    {:updated                 (str now)
-                     :uuid                    uuid
-                     :analysis_version_number analysis_version_number
-                     :chip_well_barcode       chip_well_barcode}))]
-          (let [submitted-uuids-pks (map submit! (vals to-be-submitted))]
-            (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
-            (doall (map (partial update! tx) submitted-uuids-pks))))))))
+  (let [workload           (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))]
+    (when-not (:started workload)
+      (throw (Exception. (format "Workload %s is not started yet!" uuid))))
+    (let [now                         (OffsetDateTime/now)
+          environment                 (wfl/throw-or-environment-keyword! environment)
+          table                       (:items workload)
+          output-bucket               (:output workload)
+          primary-keys                (map keep-primary-keys notifications)
+          primary-keys-notifications  (zipmap primary-keys notifications)
+          new-samples                 (remove-existing-samples! tx primary-keys table)
+          to-be-submitted             (->> primary-keys-notifications
+                                        (keys)
+                                        (keep new-samples)
+                                        (select-keys primary-keys-notifications))
+          workload->label             {:workload uuid}]
+      (letfn [(sql-rize [m] (-> m
+                              (assoc :updated now)
+                              keep-primary-keys))
+              (submit! [sample]
+                (let [{:keys [chip_well_barcode analysis_version_number] :as sample-pks} (keep-primary-keys sample)
+                      output-path (str/join "/" [output-bucket chip_well_barcode analysis_version_number])]
+                  [(really-submit-one-workflow environment sample output-path workload->label) sample-pks]))
+              (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode]}]]
+                (when uuid
+                  (jdbc/update! tx table
+                    {:updated now :uuid uuid}
+                    ["analysis_version_number = ? AND chip_well_barcode = ?" analysis_version_number
+                     chip_well_barcode])
+                  {:updated                 (str now)
+                   :uuid                    uuid
+                   :analysis_version_number analysis_version_number
+                   :chip_well_barcode       chip_well_barcode}))]
+        (let [submitted-uuids-pks (map submit! (vals to-be-submitted))]
+          (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
+          (doall (map (partial update! tx) submitted-uuids-pks)))))))
