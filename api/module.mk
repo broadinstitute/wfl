@@ -36,10 +36,18 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(TOUCH) $@
 
 LOGFILE := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
+$(UNIT): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
 	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE)
 	@$(TOUCH) $@
+
+LOGFILE := $(DERIVED_MODULE_DIR)/test.log
+$(INTEGRATION): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
+	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
+	$(CLOJURE) $(CLJFLAGS) -A:test integration | $(TEE) $(LOGFILE)
+	@$(TOUCH) $@
+
+$(CHECK): $(UNIT) $(INTEGRATION)
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
