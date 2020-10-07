@@ -123,8 +123,8 @@
   [version second-party derived]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
-    (let [wdls [ukb/workflow-wdl xx/workflow-wdl aou/workflow-wdl]
-          warp-wdls [wgs/workflow-wdl]
+    (let [wdls [ukb/workflow-wdl aou/workflow-wdl]
+          warp-wdls [wgs/workflow-wdl xx/workflow-wdl]
           clones (find-repos second-party)
           sources (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
