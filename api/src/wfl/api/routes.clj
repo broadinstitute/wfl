@@ -93,6 +93,7 @@
                                                                   :email   "email authorization"
                                                                   :profile "profile authorization"}}}
                      :basePath "/"} ;; prefix for all paths
+           :tags ["Information Authenticated"]
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
