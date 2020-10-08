@@ -83,33 +83,27 @@
     items))
 
 (defn make-persisted-inputs [output-url common inputs]
-  (let [absent?     (fn [coll key] (not (contains? coll key)))
-        sample-name (fn [basename] (first (str/split basename #"\.")))
+  (let [sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
         basename    (util/basename path)]
     (->
       (util/deep-merge common inputs)
-      (util/assoc-when absent? :sample_name (sample-name basename))
-      (util/assoc-when absent? :final_gvcf_base_name basename)
-      (util/assoc-when absent? :destination_cloud_path
+      (util/assoc-when util/absent? :sample_name (sample-name basename))
+      (util/assoc-when util/absent? :final_gvcf_base_name basename)
+      (util/assoc-when util/absent? :destination_cloud_path
         (str (all/slashify output-url) (util/dirname path))))))
 
-(defn- get-cromwell-environment [url]
-  (first (all/cromwell-environments #{:gotc-dev :gotc-prod :gotc-staging} url)))
+(defn- get-cromwell-environment [workload]
+  (first
+    (all/cromwell-environments
+      #{:gotc-dev :gotc-prod :gotc-staging}
+      (:cromwell workload))))
 
 (defn- make-workflow-inputs [environment persisted-inputs]
   (->
     (env/stuff environment)
     (select-keys [:google_account_vault_path :vault_token_path])
     (merge (util/deep-merge workflow-defaults persisted-inputs))))
-
-(defn- get-workflows-table-name [tx workload]
-  (->>
-    (:id workload)
-    (conj ["SELECT items FROM workload WHERE id = ?"])
-    (jdbc/query tx)
-    (map :items)
-    first))
 
 ; visible for testing
 (defn submit-workflows! [environment workflows]
@@ -129,32 +123,24 @@
         (jdbc/insert-multi! tx table))
       {:uuid uuid})))
 
-(defn get-workload [tx workload-uuid]
-  (when-first [workload (->>
-                          workload-uuid
-                          (conj ["SELECT * FROM workload WHERE uuid = ?"])
-                          (jdbc/query tx))]
-    (let [environment (get-cromwell-environment (:cromwell workload))]
-      (->>
-        (postgres/get-table tx (:items workload))
-        (map (fn [workflow]
-               (update workflow
-                 :inputs
-                 #(->> % util/parse-json (make-workflow-inputs environment)))))
-        (assoc workload :items)))))
+(defn get-workload-for-uuid [tx workload-uuid]
+  (when-let [workload (postgres/load-workload-for-uuid tx workload-uuid)]
+    (let [environment  (get-cromwell-environment workload)
+          load-inputs! #(make-workflow-inputs environment (util/parse-json %))]
+      (update workload :workflows
+        (fn [workflows] (mapv #(update % :inputs load-inputs!) workflows))))))
 
 (defn start-workload!
-  [tx {:keys [cromwell items id] :as workload}]
+  [tx {:keys [items workflows id] :as workload}]
   (when-not (:started workload)
-    (let [table       (get-workflows-table-name tx workload)
-          environment (get-cromwell-environment cromwell)
+    (let [environment (get-cromwell-environment workload)
           now         (OffsetDateTime/now)]
       (letfn [(update-record!
                 [[id uuid status updated]]
                 (let [values {:uuid uuid :status status :updated updated}]
-                  (jdbc/update! tx table values ["id = ?" id])))]
+                  (jdbc/update! tx items values ["id = ?" id])))]
         (->>
-          (submit-workflows! environment items)
+          (submit-workflows! environment workflows)
           (run! update-record!))
         (jdbc/update! tx :workload {:started now} ["id = ?" id])))))
 
