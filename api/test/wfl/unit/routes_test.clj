@@ -19,6 +19,18 @@
   [endpoint-route endpoints]
   (first (filter #(= endpoint-route (first %)) endpoints)))
 
+(defn recursive-merge
+  "Deep merging of maps so we can test that we don't lose anything in processing.
+
+  Partially based on Marin Atanasov Nikolov's tutorial at
+  http://dnaeon.github.io/recursively-merging-maps-in-clojure/"
+  [& maps]
+  (letfn [(partial-merge [& to-merge]
+            (if (some #(map? %) to-merge)
+              (apply merge-with partial-merge to-merge)
+              (last to-merge)))]
+    (reduce partial-merge maps)))
+
 (deftest test-route-processing
   (testing "route processing"
     (let [processed-sample-endpoints (routes/endpoint-swagger-auth-processor sample-endpoints)]
@@ -44,7 +56,7 @@
                            :get
                            :swagger
                            :security
-                           first) :googleoauth )))
+                           first) :googleoauth)))
       (testing "merges with existing"
         (is (= "Authenticated" (-> (config-for-endpoint "/api/has/swagger/config" processed-sample-endpoints)
                                    second
@@ -56,4 +68,16 @@
                          second
                          :get
                          :swagger
-                         :foo)))))))
+                         :foo))))
+      (testing "isn't lossy"
+        (is (every? identity
+                    (map (fn [sample processed]
+                           (and
+                             (= (first sample) (first processed))
+                             (every? identity
+                                     ;; does processed not change when we
+                                     ;; override it with the original?
+                                     ;; (is processed a superset of original)
+                                     (map #(= %2 (recursive-merge %2 %1))
+                                          (rest sample) (rest processed)))))
+                         sample-endpoints processed-sample-endpoints)))))))
