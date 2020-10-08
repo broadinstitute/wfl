@@ -66,9 +66,18 @@ The password is defined in Vault at `secret/dsde/gotc/dev/zero`. You'll want to 
 Next, find your Cloud SQL instance. It is named starting with `{username}-wfl` in the `broad-gotc-dev` GCP project. Go to [the list of SQL instances](https://console.cloud.google.com/sql/instances?folder=&organizationId=&project=broad-gotc-dev), click on yours, go to "Users", change the `wfl` user's password, and paste the value you copied earlier.
 
 ## 3. Add URL to OAuth credentials
-WFL makes use of OAuth and the new URL of your deployment will need to be added to what the OAuth client will accept. The credentials to edit correspond to the `oauth2_client_id` field at `secret/dsde/gotc/dev/zero` (match to the "Client ID" column [here](https://console.cloud.google.com/apis/credentials?project=broad-gotc-dev)).
+WFL makes use of OAuth and the new URL of your deployment will need to be added to what the OAuth client will accept. The credentials to edit correspond to the `oauth2_client_id` field at `secret/dsde/gotc/dev/zero` (match to the "Client ID" column [here](https://console.cloud.google.com/apis/credentials?project=broad-gotc-dev)). If you'd rather copy-paste, go to `https://console.cloud.google.com/apis/credentials/oauthclient/{oauth2_client_id}`. 
 
-If you'd rather copy-paste, go to `https://console.cloud.google.com/apis/credentials/oauthclient/{oauth2_client_id}`. You'll need to the following URI to both the "Authorized JavaScript origins" and the "Authorized redirect URIs": `https://{username}-wfl.gotc-dev.broadinstitute.org`.
+You'll need to the following URI to the "Authorized JavaScript origins":
+```
+https://{username}-wfl.gotc-dev.broadinstitute.org
+```
+You'll also need to add the following URIs to the "Authorized redirect URIs": 
+```
+https://{username}-wfl.gotc-dev.broadinstitute.org
+https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2_redirect.html
+```
+That latter one is used for authenticating the Swagger UI.
 
 ## 4. Deploy WFL
 See the [Quickstart section](/docs/md/README.md) for more info on building WFL and pushing images. Assuming you've done that, run `./ops/cli.py gotc-dev {username}` to deploy the version in `./version` to your sandbox. The help text on `./ops/cli.py` has more options for customizing the deployment.
