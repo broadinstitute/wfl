@@ -45,6 +45,14 @@ const routes = [
     component: () => import(/* webpackChunkName: "modules" */ '../views/Modules.vue')
   },
   {
+    path: '/swagger',
+    name: 'swagger',
+    // route level code-splitting
+    // this generates a separate chunk (modules.[hash].js) for this route
+    // which is lazy-loaded when the route is visited.
+    component: () => import(/* webpackChunkName: "modules" */ '../views/Swagger.vue')
+  },
+  {
     path: '/error',
     name: 'error',
     component: () => import(/* webpackChunkName: "modules" */ '../views/Error.vue')
