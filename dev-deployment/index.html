@@ -1,6 +1,4 @@
 
-
-
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
@@ -11,7 +9,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.12">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.0.2">
     
     
       
@@ -19,19 +17,21 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.4dd2dd8d.min.css">
-      
-        <link rel="stylesheet" href="../assets/stylesheets/palette.6a5ad368.min.css">
-      
+      <link rel="stylesheet" href="../assets/stylesheets/main.38780c08.min.css">
       
         
+        <link rel="stylesheet" href="../assets/stylesheets/palette.3f72e892.min.css">
         
-        <meta name="theme-color" content="#4cae4f">
+          
+          
+          <meta name="theme-color" content="#4cae4f">
+        
       
     
     
     
       
+        
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
@@ -49,9 +49,11 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
-  
     
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+      
+  
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -142,8 +144,6 @@
     
     <div class="md-container" data-md-component="container">
       
-        
-      
       
         
       
@@ -186,7 +186,7 @@
 
 
   <li class="md-nav__item">
-    <a href=".." title="Get Started" class="md-nav__link">
+    <a href=".." class="md-nav__link">
       Get Started
     </a>
   </li>
@@ -221,7 +221,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-process/" title="Development Process and Tips" class="md-nav__link">
+    <a href="../dev-process/" class="md-nav__link">
       Development Process and Tips
     </a>
   </li>
@@ -233,7 +233,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-sandbox/" title="Local Development SandBox" class="md-nav__link">
+    <a href="../dev-sandbox/" class="md-nav__link">
       Local Development SandBox
     </a>
   </li>
@@ -245,7 +245,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-logging/" title="Logging" class="md-nav__link">
+    <a href="../dev-logging/" class="md-nav__link">
       Logging
     </a>
   </li>
@@ -270,7 +270,7 @@
         <span class="md-nav__icon md-icon"></span>
       </label>
     
-    <a href="./" title="Deployment" class="md-nav__link md-nav__link--active">
+    <a href="./" class="md-nav__link md-nav__link--active">
       Deployment
     </a>
     
@@ -362,7 +362,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-frontend/" title="Frontend" class="md-nav__link">
+    <a href="../dev-frontend/" class="md-nav__link">
       Frontend
     </a>
   </li>
@@ -400,7 +400,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../modules-general/" title="General" class="md-nav__link">
+    <a href="../modules-general/" class="md-nav__link">
       General
     </a>
   </li>
@@ -412,7 +412,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../modules-arrays/" title="Arrays" class="md-nav__link">
+    <a href="../modules-arrays/" class="md-nav__link">
       Arrays
     </a>
   </li>
@@ -424,7 +424,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" title="Whole Genome" class="md-nav__link">
+    <a href="../dev-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -462,7 +462,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../terra/" title="WorkFlow Launcher's Role in Terra" class="md-nav__link">
+    <a href="../terra/" class="md-nav__link">
       WorkFlow Launcher's Role in Terra
     </a>
   </li>
@@ -575,9 +575,6 @@
                   </a>
                 
                 
-                  
-                
-                
                 <h1 id="deployment-of-workflow-launcher">Deployment of WorkFlow Launcher<a class="headerlink" href="#deployment-of-workflow-launcher" title="Permanent link">&para;</a></h1>
 <h2 id="make-a-deployment">Make a deployment<a class="headerlink" href="#make-a-deployment" title="Permanent link">&para;</a></h2>
 <p>The WorkFlow Launcher is currently running on a Kubernetes cluster,
@@ -595,7 +592,6 @@ using the automations, you have to make the following preparations:</p>
   gotc-dev-shared-us-central1-a --zone us-central1-a <span class="se">\</span>
   --project broad-gotc-dev
 </code></pre></div>
-
 <ul>
 <li>
 <p>Run <code>kubectl config get-contexts</code> to make sure you are connected
@@ -644,7 +640,6 @@ using the automations, you have to make the following preparations:</p>
 <p>Build the WFL with <code>make</code> as it's described in <a href="/docs/md/README.md">Quickstart</a>:</p>
 <div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
 </code></pre></div>
-
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>To manually compose a new docker image if you want one.
@@ -656,7 +651,6 @@ docker build -t broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</spa
 docker push broadinstitute/workflow-launcher-api:<span class="nv">$IMAGE</span>
 docker push broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>
 </code></pre></div>
-
 </div>
 <p>You should see it listed here:</p>
 <p>https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api</p>
@@ -664,7 +658,6 @@ docker push broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>
 <div class="highlight"><pre><span></span><code>git clone --branch &lt;the branch you want&gt; <span class="se">\</span>
   https://github.com/broadinstitute/gotc-deploy.git
 </code></pre></div>
-
 <h3 id="render-the-chart">Render the chart<a class="headerlink" href="#render-the-chart" title="Permanent link">&para;</a></h3>
 <p>Render the <code>wfl-values.yaml</code> file.</p>
 <div class="highlight"><pre><span></span><code>docker run -i --rm -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/working <span class="se">\</span>
@@ -674,7 +667,6 @@ docker push broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>
   /usr/local/bin/render-ctmpls.sh <span class="se">\</span>
   -k ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl
 </code></pre></div>
-
 <p><strong>Note:</strong>
 That command always fails,
 so look at <code>./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml</code>
@@ -691,7 +683,6 @@ or make them public!!!</p>
 <div class="highlight"><pre><span></span><code>helm upgrade wfl-k8s gotc-charts/wfl --install <span class="se">\</span>
   -f ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml
 </code></pre></div>
-
 <p>That doesn't recreate ingress resources and so on,
 but it will <code>--install</code> everything necessary
 if a release is not deployed already.</p>
@@ -703,7 +694,6 @@ hjf-test-authproxy-78758bbb6b-7lnfg               <span class="m">2</span>/2   R
 wfl-k8s-6948f6566d-2bdcp                          <span class="m">2</span>/2   Running 2d5h
 <span class="c1">#</span>
 </code></pre></div>
-
 <p>Run <code>kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-api</code>
 to view the logs for the WFL-API server.</p>
 <p>Run <code>kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-ui</code>
@@ -727,7 +717,6 @@ you also have to:</p>
 <p>Similar to how you have setup the Helm charts, you could run:</p>
 <div class="highlight"><pre><span></span><code>helm upgrade gotc-dev gotc-charts/wfl -f custom-authvals.yaml --install
 </code></pre></div>
-
 <p>To install or upgrade the deployments on your local cluster.
 One thing to note is that you <strong>CANNOT</strong> create
 an <code>ingress</code> resource locally,
@@ -751,7 +740,7 @@ in your custom values YML files.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../dev-logging/" title="Logging" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../dev-logging/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -766,7 +755,7 @@ in your custom values YML files.</p>
           </a>
         
         
-          <a href="../dev-frontend/" title="Frontend" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../dev-frontend/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
@@ -812,15 +801,15 @@ in your custom values YML files.</p>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.3636a4ec.min.js"></script>
-      <script src="../assets/javascripts/bundle.e9fe3281.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.77e55a48.min.js"></script>
+      <script src="../assets/javascripts/bundle.9554a270.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.5eca75d3.min.js"
+            worker: "../assets/javascripts/worker/search.4ac00218.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

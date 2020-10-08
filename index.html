@@ -1,6 +1,4 @@
 
-
-
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
@@ -11,7 +9,7 @@
       
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.12">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.0.2">
     
     
       
@@ -19,19 +17,21 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.4dd2dd8d.min.css">
-      
-        <link rel="stylesheet" href="assets/stylesheets/palette.6a5ad368.min.css">
-      
+      <link rel="stylesheet" href="assets/stylesheets/main.38780c08.min.css">
       
         
+        <link rel="stylesheet" href="assets/stylesheets/palette.3f72e892.min.css">
         
-        <meta name="theme-color" content="#4cae4f">
+          
+          
+          <meta name="theme-color" content="#4cae4f">
+        
       
     
     
     
       
+        
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
@@ -49,9 +49,11 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
-  
     
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+      
+  
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -142,8 +144,6 @@
     
     <div class="md-container" data-md-component="container">
       
-        
-      
       
         
       
@@ -199,7 +199,7 @@
         <span class="md-nav__icon md-icon"></span>
       </label>
     
-    <a href="." title="Get Started" class="md-nav__link md-nav__link--active">
+    <a href="." class="md-nav__link md-nav__link--active">
       Get Started
     </a>
     
@@ -351,7 +351,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-process/" title="Development Process and Tips" class="md-nav__link">
+    <a href="dev-process/" class="md-nav__link">
       Development Process and Tips
     </a>
   </li>
@@ -363,7 +363,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-sandbox/" title="Local Development SandBox" class="md-nav__link">
+    <a href="dev-sandbox/" class="md-nav__link">
       Local Development SandBox
     </a>
   </li>
@@ -375,7 +375,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-logging/" title="Logging" class="md-nav__link">
+    <a href="dev-logging/" class="md-nav__link">
       Logging
     </a>
   </li>
@@ -387,7 +387,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-deployment/" title="Deployment" class="md-nav__link">
+    <a href="dev-deployment/" class="md-nav__link">
       Deployment
     </a>
   </li>
@@ -399,7 +399,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-frontend/" title="Frontend" class="md-nav__link">
+    <a href="dev-frontend/" class="md-nav__link">
       Frontend
     </a>
   </li>
@@ -437,7 +437,7 @@
 
 
   <li class="md-nav__item">
-    <a href="modules-general/" title="General" class="md-nav__link">
+    <a href="modules-general/" class="md-nav__link">
       General
     </a>
   </li>
@@ -449,7 +449,7 @@
 
 
   <li class="md-nav__item">
-    <a href="modules-arrays/" title="Arrays" class="md-nav__link">
+    <a href="modules-arrays/" class="md-nav__link">
       Arrays
     </a>
   </li>
@@ -461,7 +461,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-wgs/" title="Whole Genome" class="md-nav__link">
+    <a href="dev-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -499,7 +499,7 @@
 
 
   <li class="md-nav__item">
-    <a href="terra/" title="WorkFlow Launcher's Role in Terra" class="md-nav__link">
+    <a href="terra/" class="md-nav__link">
       WorkFlow Launcher's Role in Terra
     </a>
   </li>
@@ -651,9 +651,6 @@
                   </a>
                 
                 
-                  
-                
-                
                 <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">&para;</a></h1>
 <p><a href="https://internal.broadinstitute.org/~jwarren/green-hornet-status.html">To the Build Board</a></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
@@ -719,17 +716,14 @@ project root.</p>
 <p>You can also invoke <code>make</code> on a module from the top level directory by</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">={</span>prebuild<span class="p">|</span>build<span class="p">|</span>check<span class="p">|</span>images<span class="p">|</span>clean<span class="p">|</span>distclean<span class="o">}</span>
 </code></pre></div>
-
 <p>where currently available <code>MODULE</code>s are {api cloud_function docs helm ui}</p>
 <p>For most of the time, you would want to run something like:</p>
 <div class="highlight"><pre><span></span><code>$ make clean
 </code></pre></div>
-
 <p>to clean up the built modules (<code>-j8</code> is also available for <code>make clean</code>).</p>
 <p>and then run:</p>
 <div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
 </code></pre></div>
-
 <p>to <strong>only build</strong> the WFL and its docker images without running tests.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
@@ -744,7 +738,6 @@ purge the local derived files.</p>
 <p>If you only want to run tests on specific modules, you could run:</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
 </code></pre></div>
-
 <p>such as <code>make api TARGET=check</code> or <code>make cloud_function TARGET=check</code>.
 Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">&para;</a></h4>
@@ -753,7 +746,6 @@ of tests to save time and filter out noise. You can do this by directly
 invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
 <div class="highlight"><pre><span></span><code>$ clojure -A:test integration --focus wfl.integration.v1-endpoint-test
 </code></pre></div>
-
 <p>In general, we implement Clojure tests under the <code>test/</code> root directory and use the
 <a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
 runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
@@ -761,17 +753,14 @@ line arguments to <code>kaocha</code>, such as the above <code>--focus</code> fl
 You can see the full list of options with the following:</p>
 <div class="highlight"><pre><span></span><code>clojure -A:integration --help
 </code></pre></div>
-
 <p>At present, <code>wfl</code> api has two kinds of test, <code>unit</code> and <code>integration</code>. These can be run
 via the <code>deps.edn</code>, optionally specifying the kind:</p>
 <div class="highlight"><pre><span></span><code>clojure -A:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="o">]</span>
 </code></pre></div>
-
 <p>Note that the integration tests currently require a little more configuration
 before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
 <div class="highlight"><pre><span></span><code>./ops/server.sh
 </code></pre></div>
-
 <h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
 <p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
 When it's time to deploy WFL, developers need to bump the version string
@@ -792,7 +781,6 @@ function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for ins
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nf">util/shell-io!</span> <span class="s">&quot;git&quot;</span> <span class="s">&quot;-C&quot;</span> <span class="p">(</span><span class="nf">.getParent</span> <span class="nv">environments</span><span class="p">)</span>
                   <span class="s">&quot;checkout&quot;</span> <span class="s">&quot;ad2a1b6b0f16d0e732dd08abcb79eccf4913c8d8&quot;</span><span class="p">)</span>
 </code></pre></div>
-
 <p>In the long term, this is likely to change.</p>
 </div>
 <p>Learn more about the deployment details in
@@ -944,7 +932,7 @@ the services WFL talks to, and are named accordingly.</p>
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
         
-          <a href="dev-process/" title="Development Process and Tips" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="dev-process/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
@@ -990,15 +978,15 @@ the services WFL talks to, and are named accordingly.</p>
       
     </div>
     
-      <script src="assets/javascripts/vendor.3636a4ec.min.js"></script>
-      <script src="assets/javascripts/bundle.e9fe3281.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="assets/javascripts/vendor.77e55a48.min.js"></script>
+      <script src="assets/javascripts/bundle.9554a270.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
           base: ".",
           features: [],
           search: Object.assign({
-            worker: "assets/javascripts/worker/search.5eca75d3.min.js"
+            worker: "assets/javascripts/worker/search.4ac00218.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
