@@ -1,20 +1,20 @@
 (ns wfl.module.aou
-"Process Arrays for the All Of Us project."
-(:require [clojure.java.io :as io]
-  [clojure.string :as str]
-  [clojure.tools.logging :as log]
-  [wfl.environments :as env]
-  [wfl.api.workloads :as workloads]
-  [wfl.jdbc :as jdbc]
-  [wfl.module.all :as all]
-  [wfl.references :as references]
-  [wfl.service.cromwell :as cromwell]
-  [wfl.service.gcs :as gcs]
-  [wfl.util :as util]
-  [wfl.wdl :as wdl]
-  [wfl.wfl :as wfl])
-(:import [java.time OffsetDateTime]
-  [java.util UUID]))
+  "Process Arrays for the All Of Us project."
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [wfl.environments :as env]
+            [wfl.api.workloads :as workloads]
+            [wfl.jdbc :as jdbc]
+            [wfl.module.all :as all]
+            [wfl.references :as references]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.service.gcs :as gcs]
+            [wfl.util :as util]
+            [wfl.wdl :as wdl]
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
 
