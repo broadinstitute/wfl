@@ -101,10 +101,10 @@
   [endpoints]
   (let [security-info {:swagger {:tags ["Authenticated"]
                                  :security [{:googleoauth []}]}}]
-    (letfn [(needs-security [endpoint] (str/starts-with? (first endpoint) "/api"))
+    (letfn [(needs-security? [endpoint] (str/starts-with? (first endpoint) "/api"))
             (write-security-info [method-description] (merge-with merge security-info method-description))
             (modify-method [method] (zipmap (keys method) (map write-security-info (vals method))))]
-      (vec (map #(if (needs-security %) (apply vector (first %) (map modify-method (rest %))) %)
+      (vec (map #(if (needs-security? %) (apply vector (first %) (map modify-method (rest %))) %)
                 endpoints)))))
 
 ;; :muuntaja is required for showing response body on swagger page.
