@@ -1,10 +1,9 @@
 (ns wfl.tools.endpoints
-  (:require [clojure.data.json :as json]
-            [clj-http.client :as client]
+  (:require [clj-http.client :as client]
+            [clojure.data.json :as json]
             [wfl.once :as once]
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]))
-
 (def server
   "The WFL server URL to test."
   (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
@@ -99,3 +98,4 @@
                        :accept       :json
                        :body         payload})]
     (util/parse-json (:body response))))
+

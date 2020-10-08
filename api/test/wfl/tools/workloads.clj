@@ -1,9 +1,9 @@
 (ns wfl.tools.workloads
   (:require [clojure.tools.logging.readable :as log]
             [wfl.environments :refer [stuff]]
+            [wfl.module.aou :as aou]
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
-            [wfl.module.aou :as aou]
             [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
@@ -67,7 +67,7 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:src src :dst dst}]})
 
-(defn xx-workload
+(defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
   (let [gotc-test-exome-storage "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/"]
