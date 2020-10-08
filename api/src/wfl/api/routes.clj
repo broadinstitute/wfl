@@ -97,7 +97,7 @@
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
-  "Use the same security-info across all /api endpoints"
+  "Use the same security-info across all /api endpoints."
   [endpoints]
   (let [security-info {:swagger {:tags ["Authenticated"]
                                  :security [{:googleoauth []}]}}]
