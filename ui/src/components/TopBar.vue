@@ -27,7 +27,7 @@
           <v-col cols="5">
             <v-row justify="end" align="center">
             <v-btn class="mr-2"  text >Status: {{ status.status }}</v-btn>
-            <v-btn class="mr-2"  outlined v-if="isAuthenticated" v-bind:href="swagger_link">Swagger API</v-btn>
+            <v-btn class="mr-2"  outlined v-if="isAuthenticated" v-bind:to="swagger_link">Swagger API</v-btn>
             <v-btn outlined v-if="isAuthenticated" v-on:click="logout">Logout</v-btn>
             </v-row>
           </v-col>
@@ -51,7 +51,7 @@ export default {
   data() {
     return {
       status: { status: "N/A" },
-      swagger_link: "/swagger/index.html"
+      swagger_link: "/swagger"
     };
   },
   computed: {
