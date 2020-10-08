@@ -89,9 +89,9 @@
                      :securityDefinitions {:googleoauth {:type "oauth2"
                                                          :flow "implicit"
                                                          :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
-                                                         :scopes {:openid  "open id authorization"
-                                                                  :email   "email authorization"
-                                                                  :profile "profile authorization"}}}
+                                                         :scopes {:openid  "Basic OpenID authorization"
+                                                                  :email   "Read access to your email"
+                                                                  :profile "Read access to your profile"}}}
                      :basePath "/"} ;; prefix for all paths
            :tags ["Information Authenticated"]
            :handler (swagger/create-swagger-handler)}}]])
