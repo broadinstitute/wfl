@@ -37,7 +37,6 @@
    [com.fasterxml.jackson.core/jackson-core   "2.10.0"]
    [metosin/muuntaja                          "0.6.6"]
    [metosin/reitit                            "0.4.2" :exclusions [metosin/ring-swagger-ui]]
-   [metosin/ring-swagger-ui                   "3.20.1"]
    [org.apache.tika/tika-core                 "1.19.1"]
    [org.apache.logging.log4j/log4j-api        "2.13.3"]
    [org.apache.logging.log4j/log4j-core       "2.13.3"]
