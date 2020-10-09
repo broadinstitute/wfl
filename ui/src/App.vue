@@ -50,8 +50,6 @@ export default {
               }
             })
           });
-        } else {
-          alert("Unable to prepare login, WFL backend may be offline!")
         }
       });
     }
