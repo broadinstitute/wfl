@@ -4,9 +4,9 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [wfl.main :as main]
-            [wfl.module.ukb :as ukb]
-            [wfl.module.wgs :as wgs]
             [wfl.module.aou :as aou]
+            [wfl.module.wgs :as wgs]
+            [wfl.module.ukb :as ukb]
             [wfl.module.xx :as xx]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
@@ -21,14 +21,14 @@
   "Make a map of version information."
   []
   (let [built     (-> (OffsetDateTime/now)
-                      (.truncatedTo ChronoUnit/SECONDS)
-                      .toInstant .toString)
+                    (.truncatedTo ChronoUnit/SECONDS)
+                    .toInstant .toString)
         commit    (util/shell! "git" "rev-parse" "HEAD")
         committed (->> commit
-                       (util/shell! "git" "show" "-s" "--format=%cI")
-                       OffsetDateTime/parse .toInstant .toString)
+                    (util/shell! "git" "show" "-s" "--format=%cI")
+                    OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
-                   (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
     {:version   (or (System/getenv "WFL_VERSION") "devel")
      :commit    commit
      :committed committed
@@ -57,9 +57,9 @@
   [the-pom]
   (let [keywords [:description :url :version]]
     (assoc (zipmap (map (comp str/capitalize name) keywords)
-                   ((apply juxt keywords) the-pom))
-           "Application-Name" (str/capitalize wfl/the-name)
-           "Multi-Release" "true")))
+             ((apply juxt keywords) the-pom))
+      "Application-Name" (str/capitalize wfl/the-name)
+      "Multi-Release" "true")))
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
@@ -69,9 +69,9 @@
   [second-party]
   (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
     (into {}
-          (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [second-party repo])]
-              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
+      (for [repo (keys the-github-repos-no-wfl)]
+        (let [dir (str/join "/" [second-party repo])]
+          [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from dsde-pipelines in CLONES to RESOURCES.
@@ -113,7 +113,7 @@
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "dsde-pipelines" "tasks/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent environments)
-                      "checkout" "ad2a1b6b0f16d0e732dd08abcb79eccf4913c8d8")
+        "checkout" "ad2a1b6b0f16d0e732dd08abcb79eccf4913c8d8")
       (stage sources environments))))
 
 ;; Hack: (delete-tree directory) is a hack.
@@ -123,10 +123,10 @@
   [version second-party derived]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
-    (let [wdls [ukb/workflow-wdl xx/workflow-wdl]
-          warp-wdls [wgs/workflow-wdl aou/workflow-wdl]
-          clones (find-repos second-party)
-          sources (io/file derived "src" "wfl")
+    (let [wdls      [ukb/workflow-wdl]
+          warp-wdls [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
+          clones    (find-repos second-party)
+          sources   (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
           edn (merge version clones (into {} (map frob (concat wdls warp-wdls))))]
       (pprint edn)
