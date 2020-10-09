@@ -16,8 +16,8 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ExternalExomeReprocessing_v2.0.2"
-   :top     "pipelines/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
+  {:release "ExternalExomeReprocessing_v2.1.1"
+   :top     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
 (def reference-fasta-defaults
   {:ref_pac         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac"
