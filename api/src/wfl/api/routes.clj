@@ -25,7 +25,7 @@
     {:get  {:summary "Get the status of the server"
             :handler (handlers/success {:status "OK"})
             :responses {200 {:body {:status string?}}}
-            :swagger {:tags ["Information"]}}}]
+            :swagger {:tags ["Informational"]}}}]
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
             :handler (handlers/success (let [versions (wfl/get-the-version)
@@ -36,12 +36,12 @@
                                           :version (apply dissoc versions pipeline-versions-keys)}))
             :responses {200 {:body {:version map?
                                     :pipeline-versions map?}}}
-            :swagger {:tags ["Information"]}}}]
+            :swagger {:tags ["Informational"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
            :handler   (handlers/success {:oauth2-client-id @once/oauth-client-id})
            :responses {200 {:body {:oauth2-client-id string?}}}
-           :swagger   {:tags ["Information"]}}}]
+           :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/environments"
     {:get  {:summary "Get all of the environments the server knows"
             :parameters nil
@@ -92,8 +92,9 @@
                                                          :scopes {:openid  "Basic OpenID authorization"
                                                                   :email   "Read access to your email"
                                                                   :profile "Read access to your profile"}}}
+                     :tags [{:name "Informational"}
+                            {:name "Authenticated"}]
                      :basePath "/"} ;; prefix for all paths
-           :tags ["Information Authenticated"]
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
