@@ -164,12 +164,12 @@
   (let [{:keys [creator cromwell pipeline project output]} body
         {:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
-        probe-result (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
+        workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                      project pipeline release output])]
     (gcs/parse-gs-url output)
-    (if (seq probe-result)
+    (if (seq workloads)
       ;; if a table already exists, we return its uuid and the name
-      (let [[{:keys [uuid]}] probe-result]
+      (let [[{:keys [uuid]}] workloads]
         {:uuid uuid})
       ;; if the expected table doesn't exist, we create record + table and return uuid and name
       (let [[{:keys [id uuid]}]
