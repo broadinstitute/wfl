@@ -115,8 +115,8 @@
     other-labels))
 
 (defn active-or-done-objects
-  "Query by PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
-  [environment {:keys [analysis_version_number chip_well_barcode]}]
+  "Query by _PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
+  [environment {:keys [analysis_version_number chip_well_barcode] :as _primary-vals}]
   (prn (format "%s: querying Cromwell in %s" wfl/the-name environment))
   (let [primary-keys [:analysis_version_number
                       :chip_well_barcode]
