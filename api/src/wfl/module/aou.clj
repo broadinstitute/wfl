@@ -19,8 +19,8 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "Arrays_v2.0"
-   :top     "pipelines/arrays/single_sample/Arrays.wdl"})
+  {:release "Arrays_v2.3.0"
+   :top     "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
@@ -81,7 +81,9 @@
                        ;; cloud path of a thresholds file to be used with zCall
                        :zcall_thresholds_file
                        ;; cloud path of the Illumina gender cluster file
-                       :gender_cluster_file]
+                       :gender_cluster_file
+                       ;; arbitrary path to be used by BAFRegress
+                       :minor_allele_frequency_file]
         mandatory  (select-keys inputs mandatory-keys)
         optional   (select-keys inputs optional-keys)
         missing (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
