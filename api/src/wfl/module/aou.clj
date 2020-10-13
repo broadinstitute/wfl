@@ -81,7 +81,9 @@
                        ;; cloud path of a thresholds file to be used with zCall
                        :zcall_thresholds_file
                        ;; cloud path of the Illumina gender cluster file
-                       :gender_cluster_file]
+                       :gender_cluster_file
+                       ;; arbitrary path to be used by BAFRegress
+                       :minor_allele_frequency_file]
         mandatory  (select-keys inputs mandatory-keys)
         optional   (select-keys inputs optional-keys)
         missing (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
