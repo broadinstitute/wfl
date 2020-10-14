@@ -284,12 +284,12 @@
   [tx request]
   (->>
     (add-aou-workload! tx request)
-    (workloads/load-workload-for-uuid)))
+    (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
   (do
     (start-aou-workload! tx workload)
-    (workloads/load-workload-for-id id)))
+    (workloads/load-workload-for-id tx id)))
 

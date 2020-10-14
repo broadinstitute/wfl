@@ -106,16 +106,16 @@
         (succeed
           (mapv (partial go! tx)
             (if-let [uuid (-> request :parameters :query :uuid)]
-              (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
+              (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
                 [workload]
                 (throw (ex-info "No such workload" {:uuid uuid})))
-              (postgres/load-workloads tx))))))))
+              (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
   (letfn [(go! [tx {:keys [uuid]}]
-            (if-let [workload (postgres/load-workload-for-uuid tx uuid)]
+            (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
               (if (:started workload)
                 workload
                 (do
