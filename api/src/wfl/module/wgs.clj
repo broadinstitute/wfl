@@ -4,13 +4,14 @@
             [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging.readable :as logr]
+            [wfl.api.workloads :as workloads]
             [wfl.environments :as env]
+            [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
@@ -179,7 +180,7 @@
       (catch Exception cause
         (throw (ex-info "Error updating workload status" {} cause))))))
 
-(defn add-workload!
+(defn add-wgs-workload!
   "Use transaction TX to add the workload described by BODY."
   [tx {:keys [items] :as _workload}]
   (let [now          (OffsetDateTime/now)
@@ -193,7 +194,7 @@
   [body]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> body
-      (add-workload! tx)
+      (add-wgs-workload! tx)
       (conj ["SELECT * FROM workload WHERE uuid = ?"])
       (jdbc/query tx)
       first
@@ -221,7 +222,7 @@
         (keep #{in-gs})
         seq))))                    ; active?
 
-(defn start-workload!
+(defn start-wgs-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell input items output uuid] :as workload}]
   (let [env    (get-cromwell-wgs-environment (all/de-slashify cromwell))
@@ -245,3 +246,17 @@
             ids-uuids (map submit! workflows)]
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
         (run! (partial update! tx) ids-uuids)))))
+
+(defmethod workloads/create-workload!
+  pipeline
+  [tx request]
+  (->>
+    (add-wgs-workload! tx request)
+    (postgres/load-workload-for-uuid)))
+
+(defmethod workloads/start-workload!
+  pipeline
+  [tx {:keys [id] :as workload}]
+  (do
+    (start-wgs-workload! tx workload)
+    (postgres/load-workload-for-id id)))

@@ -1,6 +1,7 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [wfl.jdbc :as jdbc]
+  (:require [wfl.api.workloads :as workloads]
+            [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
@@ -24,16 +25,16 @@
     (util/make-options environment)
     {}))
 
-(defn add-workload!
+(defn add-copyfile-workload!
   "Use transaction TX to add the workload described by BODY."
   [tx {:keys [items] :as body}]
   (let [now   (OffsetDateTime/now)
         [uuid table] (all/add-workload-table! tx workflow-wdl body)
         idnow (fn [item id] (-> item (assoc :id id :updated now)))]
     (jdbc/insert-multi! tx table (map idnow items (rest (range))))
-    {:uuid uuid}))
+    uuid))
 
-(defn start-workload!
+(defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
   [tx {:keys [cromwell items uuid] :as _workload}]
   (let [env (first (all/cromwell-environments cromwell))
@@ -48,3 +49,17 @@
       (let [workflow (postgres/get-table tx items)]
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
         (run! (comp (partial update! tx) submit!) workflow)))))
+
+(defmethod workloads/create-workload!
+  pipeline
+  [tx request]
+  (->>
+    (add-copyfile-workload! tx request)
+    (postgres/load-workload-for-uuid)))
+
+(defmethod workloads/start-workload!
+  pipeline
+  [tx {:keys [id] :as workload}]
+  (do
+    (start-copyfile-workload! tx workload)
+    (postgres/load-workload-for-id id)))
