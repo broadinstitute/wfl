@@ -1,24 +1,31 @@
 (ns wfl.api.handlers
-    "Define handlers for API endpoints"
-    (:require [clojure.tools.logging :as log]
-              [clojure.tools.logging.readable :as logr]
-              [ring.util.response :as response]
-              [wfl.api.workloads :as workloads]
-              [wfl.module.aou :as aou]
-              [wfl.module.copyfile]
-              [wfl.module.wgs]
-              [wfl.jdbc :as jdbc]
-              [wfl.service.cromwell :as cromwell]
-              [wfl.service.postgres :as postgres]
-              [wfl.wfl :as wfl]
-              [wfl.service.gcs :as gcs]))
+  "Define handlers for API endpoints"
+  (:require [clojure.tools.logging :as log]
+            [clojure.tools.logging.readable :as logr]
+            [ring.util.response :as response]
+            [wfl.api.workloads :as workloads]
+            [wfl.module.aou :as aou]
+            [wfl.module.copyfile]
+            [wfl.module.wgs]
+            [wfl.jdbc :as jdbc]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.service.postgres :as postgres]
+            [wfl.wfl :as wfl]
+            [wfl.service.gcs :as gcs]))
 
 (defn fail
   "A failure response with BODY."
   [body]
-  (log/warn "Endpoint sent a 400 failure response:")
+  (log/warn "Endpoint returned 400 failure response:")
   (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
+
+(defn fail-with-response
+  "A failure RESPONSE with BODY."
+  [response body]
+  (log/warn "Endpoint returned 404 failure response:")
+  (log/warn body)
+  (-> body response (response/content-type "application/json")))
 
 (defmacro ^:private fail-on-error
   "Run BODY, printing any exception rises through it."
@@ -68,16 +75,6 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (succeed (aou/append-to-workload! tx body))))))
 
-(defn on-unknown-pipeline
-  "Fail this request returning BODY as result."
-  [_ body]
-  (fail {:add-workload-failed body}))
-
-(defmacro defoverload
-  "Register a method IMPL to MULTIFUN using DISPATCH_VAL"
-  [multifn dispatch-val impl]
-  `(defmethod ~multifn ~dispatch-val [& xs#] (apply ~impl xs#)))
-
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
@@ -86,9 +83,14 @@
           {:keys [email]} (gcs/userinfo request)]
       (logr/infof "post-create endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (succeed
-          (workloads/create-workload! tx
-            (assoc body :creator email)))))))
+        (try
+          (succeed
+            (workloads/create-workload! tx
+              (assoc body :creator email)))
+          (catch NoSuchMethodError _
+            (fail-with-response
+              response/not-found
+              (select-keys request :pipeline))))))))
 
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
@@ -131,9 +133,14 @@
   [request]
   (fail-on-error
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-        (workloads/execute-workload! tx
-          (assoc
-            (get-in request [:parameters :body])
-            :creator
-            (:email (gcs/userinfo request))))))))
+      (try
+        (succeed
+          (workloads/execute-workload! tx
+            (assoc
+              (get-in request [:parameters :body])
+              :creator
+              (:email (gcs/userinfo request)))))
+        (catch NoSuchMethodError _
+          (fail-with-response
+            response/not-found
+            (select-keys request :pipeline)))))))

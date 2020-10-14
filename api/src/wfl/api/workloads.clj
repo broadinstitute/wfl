@@ -25,13 +25,27 @@
   `(defmethod ~multifn ~dispatchval [& xs#] (apply ~impl xs#)))
 
 ;; :default implementations
+(defmethod create-workload!
+  :default
+  [_ body]
+  (throw
+    (NoSuchMethodError.
+      (format "No way to create workload for pipeline: %s" (:pipeline body)))))
+
+(defmethod create-workload!
+  :default
+  [_ body]
+  (throw
+    (NoSuchMethodError.
+      (format "No way to start workload for pipeline: %s" (:pipeline body)))))
+
 (defmethod execute-workload!
   :default
-  (fn [tx workload-request]
-    (start-workload! tx (create-workload! tx workload-request))))
+  [tx workload-request]
+  (start-workload! tx (create-workload! tx workload-request)))
 
 (defmethod update-workload!
   :default
-  (fn [tx workload]
-    (postgres/update-workload! tx workload)
-    (postgres/load-workload-for-id tx (:id workload))))
+  [tx workload]
+  (postgres/update-workload! tx workload)
+  (postgres/load-workload-for-id tx (:id workload)))

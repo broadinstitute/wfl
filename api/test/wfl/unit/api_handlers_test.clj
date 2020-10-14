@@ -1,23 +1,23 @@
 (ns wfl.unit.api-handlers-test
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
-            [wfl.api.handlers :refer [add-workload! start-workload!]]
+            [wfl.api.workloads :refer [create-workload! start-workload! execute-workload!]]
             [wfl.tools.fixtures :refer [method-overload-fixture]]))
 
 (def dummy-pipeline "unittest")
 (defn dummy-handler [_ x] x)
 
 (use-fixtures :once
-  (method-overload-fixture add-workload! dummy-pipeline dummy-handler)
+  (method-overload-fixture create-workload! dummy-pipeline dummy-handler)
   (method-overload-fixture start-workload! dummy-pipeline dummy-handler))
 
-(deftest test-add-workload!
-  (testing "add-workload! pipeline entry points are correctly called"
+(deftest test-create-workload!
+  (testing "create-workload! pipeline entry points are correctly called"
     (testing "dummy pipeline"
       (let [workload {:pipeline dummy-pipeline}]
-        (is (= workload (add-workload! nil workload)))))
+        (is (= workload (create-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (= 400 (:status (add-workload! nil workload))))))))
+        (is (thrown? NoSuchMethodError (create-workload! nil workload)))))))
 
 (deftest test-start-workload!
   (testing "start-workload! pipeline entry points are correctly called"
@@ -26,4 +26,13 @@
         (is (= workload (start-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (= 400 (:status (start-workload! nil workload))))))))
+        (is (thrown? NoSuchMethodError (start-workload! nil workload)))))))
+
+(deftest test-exec-workload!
+  (testing "execute-workload! pipeline entry points are correctly called"
+    (testing "dummy pipeline"
+      (let [workload {:pipeline dummy-pipeline}]
+        (is (= workload (execute-workload! nil workload)))))
+    (testing "illegal pipeline"
+      (let [workload {:pipeline "geoff"}]
+        (is (thrown? NoSuchMethodError (execute-workload! nil workload)))))))
