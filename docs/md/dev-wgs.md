@@ -1,14 +1,16 @@
 # ExternalWholeGenomeReprocessing workload
 
+## Inputs
 An `ExternalWholeGenomeReprocessing` workload
-requires the following inputs
-for each workflow in the workload.
+specifies the following inputs
+for each workflow:
 
-- input_cram
-- sample_name
+- input_cram (required)
+- sample_name (required)
 - base_file_name
 - final_gvcf_base_name
 - unmapped_bam_suffix
+- reference_fasta_prefix
 
 The `input_cram` is the path to a file
 relative to the `input` URL prefix
@@ -50,3 +52,177 @@ The `unmapped_bam_suffix`
 is almost always `.unmapped.bam`,
 so that is its default value
 unless it is specified.
+
+The `reference_fasta_prefix` can be used to override
+the [default value](https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7) used by this module: 
+"gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
+
+## Usage
+
+###Create Workload: `/api/v1/create`
+Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have
+at least read access to the input files.
+
+Request:
+```
+curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
+--header 'Authorization: Bearer '$(gcloud auth print-access-token) \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+  "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "project": "PO-1234",
+  "items": [{
+          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+          "sample_name": "TestSample1234"
+          }]}'
+```
+Response:
+```
+{
+  "creator": "sehsan@broadinstitute.org",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "release": "ExternalWholeGenomeReprocessing_v1.0",
+  "created": "2020-10-05T15:50:01Z",
+  "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+  "project": "PO-1234",
+  "id": 30,
+  "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+  "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+  "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+  "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
+  "items": "ExternalWholeGenomeReprocessing_000000030",
+  "version": "0.3.2"
+}
+```
+
+
+###Start Workload: `/api/v1/start`
+Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
+particular input cram, WFL will not re-submit that workflow.
+
+Request:
+```
+curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
+--header 'Authorization: Bearer '$(gcloud auth print-access-token) \
+--header 'Content-Type: application/json' \
+--data-raw '[{"uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e"}]'
+```
+Response:
+```
+[{
+  "started": "2020-10-05T15:50:51Z",
+  "creator": "username@broadinstitute.org",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "release": "ExternalWholeGenomeReprocessing_v1.0",
+  "created": "2020-10-05T15:50:01Z",
+  "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+  "workflows": [{
+    "updated": "2020-10-05T15:50:51Z",
+    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+    "sample_name": "TestSample1234",
+    "id": 1,
+    "uuid": "e12b2a43-2250-4e78-9261-f3d12b95d4d1"
+   }],
+  "project": "PO-1234",
+  "id": 30,
+  "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+  "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+  "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+  "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
+  "items": "ExternalWholeGenomeReprocessing_000000030",
+  "version": "0.3.2"
+}]
+```
+
+###Exec Workload: `/api/v1/exec`
+Creates and then starts a Cromwell workflow for each item in the workload.
+
+Request:
+```
+curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+--header 'Authorization: Bearer '$(gcloud auth print-access-token) \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+  "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "project": "PO-1234",
+  "items": [{
+          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+          "sample_name": "TestSample1234"
+          }]}'
+```
+Response:
+```
+{
+  "started": "2020-10-05T16:15:32Z",
+  "creator": "username@broadinstitute.org",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "release": "ExternalWholeGenomeReprocessing_v1.0",
+  "created": "2020-10-05T16:15:32Z",
+  "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+  "workflows": [ {
+    "updated": "2020-10-05T16:15:32Z",
+    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+    "sample_name": "TestSample1234",
+    "id": 1,
+    "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc"
+  } ],
+  "project": "PO-1234",
+  "id": 31,
+  "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+  "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+  "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+  "uuid": "3a13f732-9743-47a9-ab83-c467b3bf0ca4",
+  "items": "ExternalWholeGenomeReprocessing_000000031",
+  "version": "0.3.2"
+}
+```
+
+###Query Workload: `/api/v1/workload?uuid=<uuid>`
+Queries the WFL database for workloads. Specify the uuid to query for a specific workload.
+
+Request:
+```
+curl --location --request GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d' \
+--header 'Authorization: Bearer '$(gcloud auth print-access-token)
+```
+
+Response:
+```
+[{
+  "creator": "username",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+  "release": "ExternalWholeGenomeReprocessing_v1.0",
+  "created": "2020-08-27T16:26:59Z",
+  "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
+  "workflows": [{
+    "updated": "2020-08-27T16:26:59Z",
+    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+    "sample_name": "NA12878 PLUMBING",
+    "base_file_name": "saman",
+    "id": 1,
+    "final_gvcf_base_name": "saman"
+  }],
+  "project": "wgs-dev",
+  "id": 6,
+  "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
+  "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+  "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+  "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
+  "items": "ExternalWholeGenomeReprocessing_000000006",
+  "version": "0.1.7"
+}]
+```
+
+The "workflows" field lists out each Cromwell workflow that was started, and includes their
+status information. It is also possible to use the Job Manager to check workflow progress and
+easily see information about any workflow failures.
