@@ -60,7 +60,7 @@
     (NoSuchMethodError.
       (format "No way to create workload for pipeline: %s" (:pipeline body)))))
 
-(defmethod create-workload!
+(defmethod start-workload!
   :default
   [_ body]
   (throw
