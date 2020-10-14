@@ -55,11 +55,11 @@
   [tx request]
   (->>
     (add-copyfile-workload! tx request)
-    (postgres/load-workload-for-uuid)))
+    (postgres/load-workload-for-uuid tx)))
 
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
   (do
     (start-copyfile-workload! tx workload)
-    (postgres/load-workload-for-id id)))
+    (postgres/load-workload-for-id tx id)))

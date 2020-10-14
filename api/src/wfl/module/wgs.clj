@@ -187,7 +187,7 @@
         [uuid table] (all/add-workload-table! tx workflow-wdl _workload)]
     (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
       (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
-    {:uuid uuid}))
+    uuid))
 
 (defn create-workload
   "Remember the workload specified by BODY."
@@ -230,8 +230,7 @@
         output (all/slashify output)
         now    (OffsetDateTime/now)
         workload->label {:workload uuid}]
-    (letfn [(maybe [m k v] (if v (assoc m k v) m))
-            (submit! [{:keys [id input_cram uuid] :as workflow}]
+    (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
@@ -252,11 +251,11 @@
   [tx request]
   (->>
     (add-wgs-workload! tx request)
-    (postgres/load-workload-for-uuid)))
+    (workloads/load-workload-for-uuid tx)))
 
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
   (do
     (start-wgs-workload! tx workload)
-    (postgres/load-workload-for-id id)))
+    (workloads/load-workload-for-id tx id)))
