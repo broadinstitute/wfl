@@ -1,12 +1,13 @@
-* (ns wfl.api.handlers
+(ns wfl.api.handlers
     "Define handlers for API endpoints"
     (:require [clojure.tools.logging :as log]
               [clojure.tools.logging.readable :as logr]
               [ring.util.response :as response]
+              [wfl.api.workloads :as workloads]
               [wfl.module.aou :as aou]
-              [wfl.module.copyfile :as cp]
+              [wfl.module.copyfile]
+              [wfl.module.wgs]
               [wfl.jdbc :as jdbc]
-              [wfl.module.wgs :as wgs]
               [wfl.service.cromwell :as cromwell]
               [wfl.service.postgres :as postgres]
               [wfl.wfl :as wfl]
@@ -77,18 +78,6 @@
   [multifn dispatch-val impl]
   `(defmethod ~multifn ~dispatch-val [& xs#] (apply ~impl xs#)))
 
-(defmulti add-workload! (fn [_ body] (:pipeline body)))
-(defoverload add-workload! :default on-unknown-pipeline)
-(defoverload add-workload! aou/pipeline aou/add-workload!)
-(defoverload add-workload! cp/pipeline cp/add-workload!)
-(defoverload add-workload! wgs/pipeline wgs/add-workload!)
-
-(defmulti start-workload! (fn [_ body] (:pipeline body)))
-(defoverload start-workload! :default on-unknown-pipeline)
-(defoverload start-workload! aou/pipeline aou/start-workload!)
-(defoverload start-workload! cp/pipeline cp/start-workload!)
-(defoverload start-workload! wgs/pipeline wgs/start-workload!)
-
 (defn post-create
   "Create the workload described in BODY of REQUEST."
   [{:keys [parameters] :as request}]
@@ -97,23 +86,19 @@
           {:keys [email]} (gcs/userinfo request)]
       (logr/infof "post-create endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (->>
-          (assoc body :creator email)
-          (add-workload! tx)
-          :uuid
-          (postgres/load-workload-for-uuid tx)
-          succeed)))))
+        (succeed
+          (workloads/create-workload! tx
+            (assoc body :creator email)))))))
 
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
   [request]
-  (letfn [(go! [tx {:keys [uuid id] :as workload}]
+  (letfn [(go! [tx {:keys [uuid] :as workload}]
             (if (:finished workload)
               workload
               (do
                 (logr/infof "updating workload %s" uuid)
-                (postgres/update-workload! tx workload)
-                (postgres/load-workload-for-id tx id))))]
+                (workloads/update-workload! tx workload))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (succeed
@@ -133,8 +118,7 @@
                 workload
                 (do
                   (logr/infof "starting workload %s" uuid)
-                  (start-workload! tx workload)
-                  (postgres/load-workload-for-id tx (:id workload))))
+                  (workloads/start-workload! tx workload)))
               (throw (ex-info "No such workload" {:uuid uuid}))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -145,21 +129,11 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (letfn [(create! [tx workload-request]
-            (let [{:keys [uuid]} (add-workload! tx workload-request)]
-              (log/infof "created workload %s" uuid)
-              (postgres/load-workload-for-uuid tx uuid)))
-          (start! [tx {:keys [id uuid] :as workload}]
-            (log/infof "starting workload %s" uuid)
-            (start-workload! tx workload)
-            (postgres/load-workload-for-id tx id))
-          (exec! [tx workload-request]
-            (start! tx (create! tx workload-request)))]
-    (fail-on-error
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (succeed
-          (exec! tx
-            (assoc
-              (get-in request [:parameters :body])
-              :creator
-              (:email (gcs/userinfo request)))))))))
+  (fail-on-error
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (succeed
+        (workloads/execute-workload! tx
+          (assoc
+            (get-in request [:parameters :body])
+            :creator
+            (:email (gcs/userinfo request))))))))
