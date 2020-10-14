@@ -339,9 +339,79 @@
       
     
     
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Whole Genome
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
     <a href="./" class="md-nav__link md-nav__link--active">
       Whole Genome
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-apiv1create" class="md-nav__link">
+    Create Workload: /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-apiv1start" class="md-nav__link">
+    Start Workload: /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-apiv1exec" class="md-nav__link">
+    Exec Workload: /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -406,6 +476,62 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-apiv1create" class="md-nav__link">
+    Create Workload: /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-apiv1start" class="md-nav__link">
+    Start Workload: /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-apiv1exec" class="md-nav__link">
+    Exec Workload: /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -422,15 +548,17 @@
                 
                 
                 <h1 id="externalwholegenomereprocessing-workload">ExternalWholeGenomeReprocessing workload<a class="headerlink" href="#externalwholegenomereprocessing-workload" title="Permanent link">&para;</a></h1>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h2>
 <p>An <code>ExternalWholeGenomeReprocessing</code> workload
-requires the following inputs
-for each workflow in the workload.</p>
+specifies the following inputs
+for each workflow:</p>
 <ul>
-<li>input_cram</li>
-<li>sample_name</li>
+<li>input_cram (required)</li>
+<li>sample_name (required)</li>
 <li>base_file_name</li>
 <li>final_gvcf_base_name</li>
 <li>unmapped_bam_suffix</li>
+<li>reference_fasta_prefix</li>
 </ul>
 <p>The <code>input_cram</code> is the path to a file
 relative to the <code>input</code> URL prefix
@@ -467,6 +595,159 @@ The <code>unmapped_bam_suffix</code>
 is almost always <code>.unmapped.bam</code>,
 so that is its default value
 unless it is specified.</p>
+<p>The <code>reference_fasta_prefix</code> can be used to override
+the <a href="https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7">default value</a> used by this module: 
+"gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="create-workload-apiv1create">Create Workload: <code>/api/v1/create</code><a class="headerlink" href="#create-workload-apiv1create" title="Permanent link">&para;</a></h3>
+<p>Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have
+at least read access to the input files.</p>
+<p>Request:
+<div class="highlight"><pre><span></span><code>curl --location --request POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39; \
+--header &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+--header &#39;Content-Type: application/json&#39; \
+--data-raw &#39;{
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;project&quot;: &quot;PO-1234&quot;,
+  &quot;items&quot;: [{
+          &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+          &quot;sample_name&quot;: &quot;TestSample1234&quot;
+          }]}&#39;
+</code></pre></div>
+Response:
+<div class="highlight"><pre><span></span><code>{
+  &quot;creator&quot;: &quot;sehsan@broadinstitute.org&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,
+  &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
+  &quot;created&quot;: &quot;2020-10-05T15:50:01Z&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
+  &quot;project&quot;: &quot;PO-1234&quot;,
+  &quot;id&quot;: 30,
+  &quot;commit&quot;: &quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;,
+  &quot;wdl&quot;: &quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,
+  &quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;,
+  &quot;items&quot;: &quot;ExternalWholeGenomeReprocessing_000000030&quot;,
+  &quot;version&quot;: &quot;0.3.2&quot;
+}
+</code></pre></div></p>
+<h3 id="start-workload-apiv1start">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start" title="Permanent link">&para;</a></h3>
+<p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
+particular input cram, WFL will not re-submit that workflow.</p>
+<p>Request:
+<div class="highlight"><pre><span></span><code>curl --location --request POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39; \
+--header &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+--header &#39;Content-Type: application/json&#39; \
+--data-raw &#39;[{&quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;}]&#39;
+</code></pre></div>
+Response:
+<div class="highlight"><pre><span></span><code>[{
+  &quot;started&quot;: &quot;2020-10-05T15:50:51Z&quot;,
+  &quot;creator&quot;: &quot;username@broadinstitute.org&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,
+  &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
+  &quot;created&quot;: &quot;2020-10-05T15:50:01Z&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
+  &quot;workflows&quot;: [{
+    &quot;updated&quot;: &quot;2020-10-05T15:50:51Z&quot;,
+    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+    &quot;sample_name&quot;: &quot;TestSample1234&quot;,
+    &quot;id&quot;: 1,
+    &quot;uuid&quot;: &quot;e12b2a43-2250-4e78-9261-f3d12b95d4d1&quot;
+   }],
+  &quot;project&quot;: &quot;PO-1234&quot;,
+  &quot;id&quot;: 30,
+  &quot;commit&quot;: &quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;,
+  &quot;wdl&quot;: &quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,
+  &quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;,
+  &quot;items&quot;: &quot;ExternalWholeGenomeReprocessing_000000030&quot;,
+  &quot;version&quot;: &quot;0.3.2&quot;
+}]
+</code></pre></div></p>
+<h3 id="exec-workload-apiv1exec">Exec Workload: <code>/api/v1/exec</code><a class="headerlink" href="#exec-workload-apiv1exec" title="Permanent link">&para;</a></h3>
+<p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
+<p>Request:
+<div class="highlight"><pre><span></span><code>curl --location --request POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39; \
+--header &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+--header &#39;Content-Type: application/json&#39; \
+--data-raw &#39;{
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;project&quot;: &quot;PO-1234&quot;,
+  &quot;items&quot;: [{
+          &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+          &quot;sample_name&quot;: &quot;TestSample1234&quot;
+          }]}&#39;
+</code></pre></div>
+Response:
+<div class="highlight"><pre><span></span><code>{
+  &quot;started&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+  &quot;creator&quot;: &quot;username@broadinstitute.org&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,
+  &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
+  &quot;created&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
+  &quot;workflows&quot;: [ {
+    &quot;updated&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+    &quot;sample_name&quot;: &quot;TestSample1234&quot;,
+    &quot;id&quot;: 1,
+    &quot;uuid&quot;: &quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;
+  } ],
+  &quot;project&quot;: &quot;PO-1234&quot;,
+  &quot;id&quot;: 31,
+  &quot;commit&quot;: &quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;,
+  &quot;wdl&quot;: &quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,
+  &quot;uuid&quot;: &quot;3a13f732-9743-47a9-ab83-c467b3bf0ca4&quot;,
+  &quot;items&quot;: &quot;ExternalWholeGenomeReprocessing_000000031&quot;,
+  &quot;version&quot;: &quot;0.3.2&quot;
+}
+</code></pre></div></p>
+<h3 id="query-workload-apiv1workloaduuiduuid">Query Workload: <code>/api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-apiv1workloaduuiduuid" title="Permanent link">&para;</a></h3>
+<p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
+<p>Request:
+<div class="highlight"><pre><span></span><code>curl --location --request GET &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d&#39; \
+--header &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token)
+</code></pre></div></p>
+<p>Response:
+<div class="highlight"><pre><span></span><code>[{
+  &quot;creator&quot;: &quot;username&quot;,
+  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
+  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/&quot;,
+  &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
+  &quot;created&quot;: &quot;2020-08-27T16:26:59Z&quot;,
+  &quot;output&quot;: &quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;,
+  &quot;workflows&quot;: [{
+    &quot;updated&quot;: &quot;2020-08-27T16:26:59Z&quot;,
+    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+    &quot;sample_name&quot;: &quot;NA12878 PLUMBING&quot;,
+    &quot;base_file_name&quot;: &quot;saman&quot;,
+    &quot;id&quot;: 1,
+    &quot;final_gvcf_base_name&quot;: &quot;saman&quot;
+  }],
+  &quot;project&quot;: &quot;wgs-dev&quot;,
+  &quot;id&quot;: 6,
+  &quot;commit&quot;: &quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;,
+  &quot;wdl&quot;: &quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;,
+  &quot;input&quot;: &quot;gs://broad-gotc-test-storage/single_sample/plumbing/truth&quot;,
+  &quot;uuid&quot;: &quot;813e3c38-9c11-4410-9888-435569d91d1d&quot;,
+  &quot;items&quot;: &quot;ExternalWholeGenomeReprocessing_000000006&quot;,
+  &quot;version&quot;: &quot;0.1.7&quot;
+}]
+</code></pre></div></p>
+<p>The "workflows" field lists out each Cromwell workflow that was started, and includes their
+status information. It is also possible to use the Job Manager to check workflow progress and
+easily see information about any workflow failures.</p>
                 
               
               
