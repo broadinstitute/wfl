@@ -16,6 +16,7 @@
                          :extended_chip_manifest_file "foo"
                          :gender_cluster_file         "foo"
                          :green_idat_cloud_path       "foo"
+                         :minor_allele_frequency_file "foo"
                          :params_file                 "foo"
                          :red_idat_cloud_path         "foo"
                          :reported_gender             "foo"
@@ -39,6 +40,7 @@
                                             :extended_chip_manifest_file "foo"
                                             :gender_cluster_file         "foo"
                                             :green_idat_cloud_path       "foo"
+                                            :minor_allele_frequency_file "foo"
                                             :params_file                 "foo"
                                             :red_idat_cloud_path         "foo"
                                             :reported_gender             "foo"
@@ -60,6 +62,7 @@
                                              :Arrays.disk_size
                                              :Arrays.contamination_controls_vcf
                                              :Arrays.green_idat_cloud_path
+                                             :Arrays.minor_allele_frequency_file
                                              :Arrays.fingerprint_genotypes_vcf_index_file
                                              :Arrays.vault_token_path
                                              :Arrays.reported_gender

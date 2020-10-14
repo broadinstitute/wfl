@@ -10,7 +10,6 @@
             [reitit.ring.middleware.muuntaja    :as muuntaja]
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
-            [reitit.swagger-ui                  :as swagger-ui]
             [wfl.api.handlers                   :as handlers]
             [wfl.environments                   :as env]
             [wfl.api.spec                       :as spec]
@@ -26,7 +25,7 @@
     {:get  {:summary "Get the status of the server"
             :handler (handlers/success {:status "OK"})
             :responses {200 {:body {:status string?}}}
-            :swagger {:tags ["Information"]}}}]
+            :swagger {:tags ["Informational"]}}}]
    ["/version"
     {:get  {:summary "Get the versions of server and supported pipelines"
             :handler (handlers/success (let [versions (wfl/get-the-version)
@@ -37,12 +36,12 @@
                                           :version (apply dissoc versions pipeline-versions-keys)}))
             :responses {200 {:body {:version map?
                                     :pipeline-versions map?}}}
-            :swagger {:tags ["Information"]}}}]
+            :swagger {:tags ["Informational"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
            :handler   (handlers/success {:oauth2-client-id @once/oauth-client-id})
            :responses {200 {:body {:oauth2-client-id string?}}}
-           :swagger   {:tags ["Information"]}}}]
+           :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/environments"
     {:get  {:summary "Get all of the environments the server knows"
             :parameters nil
@@ -90,31 +89,39 @@
                      :securityDefinitions {:googleoauth {:type "oauth2"
                                                          :flow "implicit"
                                                          :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
-                                                         :scopes {:openid  "open id authorization"
-                                                                  :email   "email authorization"
-                                                                  :profile "profile authorization"}}}
+                                                         :scopes {:openid  "Basic OpenID authorization"
+                                                                  :email   "Read access to your email"
+                                                                  :profile "Read access to your profile"}}}
+                     :tags [{:name "Informational"}
+                            {:name "Authenticated"}]
                      :basePath "/"} ;; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
+
+(defn endpoint-swagger-auth-processor
+  "Use the same security-info across all /api endpoints."
+  [endpoints]
+  (let [security-info {:swagger {:tags ["Authenticated"]
+                                 :security [{:googleoauth []}]}}]
+    (letfn [(needs-security? [endpoint] (str/starts-with? (first endpoint) "/api"))
+            (write-security-info [method-description] (merge-with merge security-info method-description))
+            (modify-method [method] (zipmap (keys method) (map write-security-info (vals method))))]
+      (vec (map #(if (needs-security? %) (apply vector (first %) (map modify-method (rest %))) %)
+                endpoints)))))
 
 ;; :muuntaja is required for showing response body on swagger page.
 ;;
 (def routes
   (ring/ring-handler
-   (ring/router
-    endpoints
-    {:data {:coercion   reitit.coercion.spec/coercion
-            :muuntaja   muuntaja-core/instance
-            :middleware [parameters/parameters-middleware
-                         muuntaja/format-negotiate-middleware
-                         muuntaja/format-response-middleware
-                         exception/exception-middleware
-                         muuntaja/format-request-middleware
-                         coercion/coerce-response-middleware
-                         coercion/coerce-request-middleware
-                         coercion/coerce-exceptions-middleware
-                         multipart/multipart-middleware]}})
-   (ring/routes
-    (swagger-ui/create-swagger-ui-handler {:path "/swagger"
-                                           :url  "/swagger/swagger.json"
-                                           :root "swagger-ui"
-                                           :config {:jsonEditor false}}))))
+    (ring/router
+      (endpoint-swagger-auth-processor endpoints)
+      {:data {:coercion   reitit.coercion.spec/coercion
+              :muuntaja   muuntaja-core/instance
+              :middleware [parameters/parameters-middleware
+                           muuntaja/format-negotiate-middleware
+                           muuntaja/format-response-middleware
+                           exception/exception-middleware
+                           muuntaja/format-request-middleware
+                           coercion/coerce-response-middleware
+                           coercion/coerce-request-middleware
+                           coercion/coerce-exceptions-middleware
+                           multipart/multipart-middleware]}})))

@@ -1,3 +1,5 @@
+const CopyPlugin = require('copy-webpack-plugin');
+
 module.exports = {
     publicPath: process.env.NODE_ENV === 'production'
         ? ''
@@ -16,5 +18,18 @@ module.exports = {
     },
     "transpileDependencies": [
         "vuetify"
-    ]
+    ],
+    configureWebpack: {
+        plugins: [
+            new CopyPlugin({
+                patterns: [
+                    {
+                        from: 'node_modules/swagger-ui/dist/oauth2-redirect.html',
+                        flatten: true,
+                        force: true
+                    },
+                ],
+            }),
+        ],
+    }
 }
