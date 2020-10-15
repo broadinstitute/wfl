@@ -1,7 +1,8 @@
 (ns wfl.tools.endpoints
   (:require [clojure.data.json :as json]
             [clj-http.client :as client]
-            [wfl.once :as once]))
+            [wfl.once :as once]
+            [wfl.service.gcs :as gcs]))
 
 (def server
   "The WFL server URL to test."
@@ -13,6 +14,9 @@
   "Parse the json string STR into a keyword-string map"
   [str]
   (json/read-str str :key-fn keyword))
+
+(def userinfo
+  (delay (gcs/userinfo {:headers (once/get-auth-header)})))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
@@ -36,14 +40,6 @@
         response    (client/get (str server "/api/v1/workload")
                                 {:headers auth-header})]
     (parse-json-string (:body response))))
-
-(def get-pending-workloads
-  "Query the v1 api for the workloads that has not been started"
-  (comp (partial remove :started) get-workloads))
-
-(def first-pending-workload
-  "Query the v1 api for first workload that has not been started"
-  (comp first get-pending-workloads))
 
 (defn create-workload
   "Create workload defined by WORKLOAD"

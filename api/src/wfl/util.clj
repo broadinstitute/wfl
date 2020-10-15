@@ -173,6 +173,13 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
           (vals m)))
 
+(defn absent?
+  "Test if `coll` does not contain `key`.
+  See also `clojure.core/contains?`
+  "
+  [coll key]
+  (not (contains? coll key)))
+
 (defn exome-inputs
   "Exome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]

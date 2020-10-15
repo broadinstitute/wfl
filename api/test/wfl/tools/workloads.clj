@@ -1,13 +1,18 @@
 (ns wfl.tools.workloads
-  (:require [wfl.environments :refer [stuff]]
+  (:require [clojure.tools.logging.readable :as log]
+            [wfl.environments :refer [stuff]]
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
+            [wfl.module.aou :as aou]
+            [wfl.service.postgres :as postgres]
+            [wfl.service.cromwell :as cromwell]
             [wfl.util :refer [shell!]]
-            [wfl.module.aou :as aou]))
+            [wfl.util :as util])
+  (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
 
-(defn wgs-workload
+(defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
   (let [path "/single_sample/plumbing/truth"]
@@ -22,7 +27,7 @@
                  :final_gvcf_base_name "NA12878_PLUMBING",
                  :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
 
-(defn aou-workload
+(defn aou-workload-request
   "An allofus arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
@@ -53,7 +58,7 @@
    :environment   "aou-dev",
    :uuid          nil})
 
-(defn make-copyfile-workload
+(defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
@@ -62,3 +67,24 @@
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:src src :dst dst}]})
+
+(defn when-done
+  "Call `done!` when cromwell has finished executing `workload`'s workflows."
+  [{:keys [cromwell] :as workload} done!]
+  (letfn [(await-workflow [{:keys [uuid] :as workflow}]
+            (let [interval  10
+                  timeout   3600 ; 1 hour
+                  finished? (set cromwell/final-statuses)
+                  skipped?  #(-> % :uuid util/uuid-nil?)] ; see wgs. i die.
+              (loop [seconds 0]
+                (when (> seconds timeout)
+                  (throw (TimeoutException.
+                           (format "Timed out waiting for workflow %s" uuid))))
+                (let [status (postgres/cromwell-status cromwell uuid)]
+                  (when-not (or (skipped? workflow) (finished? status))
+                    (log/infof "%s: Sleeping on status: %s" uuid status)
+                    (util/sleep-seconds interval)
+                    (recur (+ seconds interval)))))))]
+    (run! await-workflow (:workflows workload))
+    (done!)
+    nil))

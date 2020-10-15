@@ -4,13 +4,14 @@
             [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging.readable :as logr]
+            [wfl.api.workloads :as workloads]
             [wfl.environments :as env]
+            [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
@@ -179,21 +180,21 @@
       (catch Exception cause
         (throw (ex-info "Error updating workload status" {} cause))))))
 
-(defn add-workload!
+(defn add-wgs-workload!
   "Use transaction TX to add the workload described by BODY."
   [tx {:keys [items] :as _workload}]
   (let [now          (OffsetDateTime/now)
         [uuid table] (all/add-workload-table! tx workflow-wdl _workload)]
     (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
       (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
-    {:uuid uuid}))
+    uuid))
 
 (defn create-workload
   "Remember the workload specified by BODY."
   [body]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> body
-      (add-workload! tx)
+      (add-wgs-workload! tx)
       (conj ["SELECT * FROM workload WHERE uuid = ?"])
       (jdbc/query tx)
       first
@@ -221,7 +222,7 @@
         (keep #{in-gs})
         seq))))                    ; active?
 
-(defn start-workload!
+(defn start-wgs-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [cromwell input items output uuid] :as workload}]
   (let [env    (get-cromwell-wgs-environment (all/de-slashify cromwell))
@@ -229,8 +230,7 @@
         output (all/slashify output)
         now    (OffsetDateTime/now)
         workload->label {:workload uuid}]
-    (letfn [(maybe [m k v] (if v (assoc m k v) m))
-            (submit! [{:keys [id input_cram uuid] :as workflow}]
+    (letfn [(submit! [{:keys [id input_cram uuid] :as workflow}]
               [id (or uuid
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
@@ -245,3 +245,17 @@
             ids-uuids (map submit! workflows)]
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
         (run! (partial update! tx) ids-uuids)))))
+
+(defmethod workloads/create-workload!
+  pipeline
+  [tx request]
+  (->>
+    (add-wgs-workload! tx request)
+    (workloads/load-workload-for-uuid tx)))
+
+(defmethod workloads/start-workload!
+  pipeline
+  [tx {:keys [id] :as workload}]
+  (do
+    (start-wgs-workload! tx workload)
+    (workloads/load-workload-for-id tx id)))

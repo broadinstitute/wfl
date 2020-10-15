@@ -77,34 +77,3 @@
           ["id = ?" id])))
     (catch Exception cause
       (throw (ex-info "Error updating workload status" {} cause)))))
-
-(defn- make-load-workload [load-workload tx identifier]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (if-let [workload (load-workload tx identifier)]
-      (->>
-        (get-table tx (:items workload))
-        (map unnilify)
-        (assoc workload :workflows)
-        unnilify))))
-
-(def load-workload-for-uuid
-  "Use transaction `tx` to load `workload` with `uuid`."
-  (partial make-load-workload
-    (fn [tx uuid]
-      (->> ["SELECT * FROM workload WHERE uuid = ?" uuid]
-        (jdbc/query tx)
-        first))))
-
-(def load-workload-for-id
-  "Use transaction `tx` to load `workload` with `id`."
-  (partial make-load-workload
-    (fn [tx id]
-      (->> ["SELECT * FROM workload WHERE id = ?" id]
-        (jdbc/query tx)
-        first))))
-
-(defn load-workloads
-  "Use transaction TX to load all known `workloads`"
-  [tx]
-  (let [do-load (partial make-load-workload (fn [_ x] x) tx)]
-    (map do-load (jdbc/query tx ["SELECT * FROM workload"]))))

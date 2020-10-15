@@ -4,14 +4,15 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.environments :as env]
+            [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
+            [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.gcs :as gcs]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl]
-            [wfl.service.gcs :as gcs]
-            [wfl.module.all :as all])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -163,8 +164,8 @@
 ;; AllOfUsArrays table, so far we cannot find a better way to bypass
 ;; https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
 ;;
-(defn add-workload!
-  "Use transaction TX to add the workload described by _BODY to the database DB.
+(defn add-aou-workload!
+  "Use transaction TX to add the workload described by BODY to the database DB.
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
@@ -177,7 +178,7 @@
     (when-not (<= 1 (count workloads))
       (log/warn "Found more than 1 workloads!")
       (log/error workloads))
-    (select-keys
+    (:id
       (if-let [workload (first workloads)]
         workload
         (let [workloads     (jdbc/insert! tx :workload {:commit   commit
@@ -201,10 +202,9 @@
               link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
           (jdbc/db-do-commands tx [kind idx work link-idx-work])
           (jdbc/update! tx :workload {:items table} ["id = ?" id])
-          (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))))
-      [:uuid])))
+          (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])))))))
 
-(defn start-workload!
+(defn start-aou-workload!
   "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
   [tx {:keys [uuid] :as _workload}]
@@ -277,3 +277,18 @@
         (let [submitted-uuids-pks (map submit! (vals to-be-submitted))]
           (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
           (doall (map (partial update! tx) submitted-uuids-pks)))))))
+
+(defmethod workloads/create-workload!
+  pipeline
+  [tx request]
+  (->>
+    (add-aou-workload! tx request)
+    (workloads/load-workload-for-id tx)))
+
+(defmethod workloads/start-workload!
+  pipeline
+  [tx {:keys [id] :as workload}]
+  (do
+    (start-aou-workload! tx workload)
+    (workloads/load-workload-for-id tx id)))
+
