@@ -4,6 +4,7 @@
             [wfl.once :as once]
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]))
+
 (def server
   "The WFL server URL to test."
   (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
@@ -34,7 +35,7 @@
   (let [auth-header (once/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
                       {:headers auth-header})]
-    (util/parse-json (:body response))))s
+    (util/parse-json (:body response))))
 
 (defn create-workload
   "Create workload defined by WORKLOAD"

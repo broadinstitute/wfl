@@ -2,15 +2,14 @@
   "Reprocess External Exomes, whatever they are."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
+            [wfl.api.workloads :as workloads]
+            [wfl.environments :as env]
+            [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.service.gcs :as gcs]
-            [wfl.util :as util]
-            [wfl.jdbc :as jdbc]
             [wfl.service.postgres :as postgres]
-            [clojure.data :as data]
-            [wfl.environments :as env])
-  (:import [java.time OffsetDateTime]
-           (java.util UUID)))
+            [wfl.util :as util])
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalExomeReprocessing")
 
@@ -109,7 +108,7 @@
 (defn submit-workflows! [environment workflows]
   (throw (NoSuchMethodError. "Not Implemented")))
 
-(defn add-workload!
+(defn create-xx-workload!
   [tx {:keys [output common_inputs items] :as request}]
   (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
     (letfn [(make-workflow-record [id items]
@@ -119,30 +118,45 @@
                 (assoc {:id id} :inputs)))]
       (->>
         (normalize-input-items items)
-        (map make-workflow-record (range))
+        (mapv make-workflow-record (range))
         (jdbc/insert-multi! tx table))
-      {:uuid uuid})))
+      (workloads/load-workload-for-uuid tx uuid))))
 
-(defn get-workload-for-uuid [tx workload-uuid]
-  (when-let [workload (postgres/load-workload-for-uuid tx workload-uuid)]
-    (let [environment  (get-cromwell-environment workload)
-          load-inputs! #(make-workflow-inputs environment (util/parse-json %))]
-      (update workload :workflows
-        (fn [workflows] (mapv #(update % :inputs load-inputs!) workflows))))))
-
-(defn start-workload!
+(defn start-xx-workload!
   [tx {:keys [items workflows id] :as workload}]
-  (when-not (:started workload)
-    (let [environment (get-cromwell-environment workload)
-          now         (OffsetDateTime/now)]
-      (letfn [(update-record!
-                [[id uuid status updated]]
-                (let [values {:uuid uuid :status status :updated updated}]
-                  (jdbc/update! tx items values ["id = ?" id])))]
-        (->>
-          (submit-workflows! environment workflows)
-          (run! update-record!))
-        (jdbc/update! tx :workload {:started now} ["id = ?" id])))))
+  (if (:started workload)
+    workload
+    (do
+      (let [environment (get-cromwell-environment workload)
+            now         (OffsetDateTime/now)]
+        (letfn [(update-record! [[id uuid status updated]]
+                  (let [values {:uuid uuid :status status :updated updated}]
+                    (jdbc/update! tx items values ["id = ?" id])))]
+          (run! update-record! (submit-workflows! environment workflows))
+          (jdbc/update! tx :workload {:started now} ["id = ?" id])))
+      (workloads/load-workload-for-id tx id))))
+
+(defmethod workloads/load-workload-impl
+  pipeline
+  [tx {:keys [items] :as workload}]
+  (let [unnilify     (fn [x] (into {} (filter second x)))
+        environment  (get-cromwell-environment workload)
+        load-inputs! #(make-workflow-inputs environment (util/parse-json %))]
+    (->>
+      (postgres/get-table tx items)
+      (mapv (comp #(update % :inputs load-inputs!) unnilify))
+      (assoc workload :workflows)
+      unnilify)))
+
+(workloads/defoverload
+  workloads/create-workload!
+  pipeline
+  create-xx-workload!)
+
+(workloads/defoverload
+  workloads/start-workload!
+  pipeline
+  start-xx-workload!)
 
 ;(def cromwell-label-map
 ;  "The WDL label applied to Cromwell metadata."

@@ -21,20 +21,13 @@
     (workloads/xx-workload-request id)
     (assoc :creator (:email @endpoints/userinfo))))
 
-(defn add-workload! [workload-request]
+(defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->>
-      (xx/add-workload! tx workload-request)
-      :uuid
-      (xx/get-workload-for-uuid tx))))
+    (wfl.api.workloads/create-workload! tx workload-request)))
 
-(defn start-workload!
-  [workload-uuid]
+(defn start-workload! [workload]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->>
-      (xx/get-workload-for-uuid tx workload-uuid)
-      (xx/start-workload! tx))
-    (xx/get-workload-for-uuid tx workload-uuid)))
+    (wfl.api.workloads/start-workload! tx workload)))
 
 (defn mock-submit-workflows [_ workflows]
   (let [now        (OffsetDateTime/now)
@@ -60,13 +53,13 @@
     (let [items {:fake (UUID/randomUUID)}]
       (is (= items (xx/normalize-input-items items))))))
 
-(deftest test-add-workload!
+(deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
             (is-not (:uuid workflow))
             (is-not (:status workflow))
             (is-not (:updated workflow)))
           (go! [workload-request]
-            (let [workload (add-workload! workload-request)]
+            (let [workload (create-workload! workload-request)]
               (do
                 (is (:created workload))
                 (is-not (:started workload))
@@ -76,19 +69,18 @@
       (go! (make-xx-workload-request (UUID/randomUUID))))
     (testing "make from bucket"
       (->
-        (UUID/randomUUID)
-        make-xx-workload-request
+        (make-xx-workload-request (UUID/randomUUID))
         (assoc :items "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/NWD101908.cram")
         go!))))
 
-(deftest test-add-workload-with-common-inputs
+(deftest test-create-workload-with-common-inputs
   (let [common-inputs    {:bait_set_name      "Geoff"
                           :bait_interval_list "gs://fake-input-bucket/interval-list"}
         workload-request (->
                            (UUID/randomUUID)
                            (make-xx-workload-request)
                            (assoc :common_inputs common-inputs))
-        workload         (add-workload! workload-request)]
+        workload         (create-workload! workload-request)]
     (letfn [(go [inputs]
               (letfn [(value-equal? [key] (= (key common-inputs) (key inputs)))]
                 (do
@@ -98,10 +90,10 @@
 
 (deftest test-start-workload!
   (with-redefs-fn {#'xx/submit-workflows! mock-submit-workflows}
-    #(let [workload-request (make-xx-workload-request (UUID/randomUUID))
-           {:keys [uuid]}   (add-workload! workload-request)
-           workload         (start-workload! uuid)]
-       (is (:started workload))
+    #(let [workload (->>
+                      (make-xx-workload-request (UUID/randomUUID))
+                      create-workload!
+                      start-workload!)]
        (letfn [(go! [workflow]
                  (do
                    (is (:uuid workflow))

@@ -7,6 +7,7 @@
             [wfl.module.aou :as aou]
             [wfl.module.copyfile]
             [wfl.module.wgs]
+            [wfl.module.xx]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]

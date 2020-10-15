@@ -54,6 +54,7 @@
       (get-existing-workload-uuids)
       [(workloads/wgs-workload-request (UUID/randomUUID))
        (workloads/aou-workload-request (UUID/randomUUID))
+       (workloads/xx-workload-request (UUID/randomUUID))
        (workloads/copyfile-workload-request
          "gs://fake-inputs/lolcats.txt"
          "gs://fake-outputs/copied.txt")])))
