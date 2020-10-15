@@ -9,23 +9,27 @@
     (is (= (aou/map-aou-environment :aou-prod) "prod"))))
 
 (deftest test-make-cromwell-labels
-  (let [sample {:analysis_version_number     1
-                :bead_pool_manifest_file     "foo"
-                :chip_well_barcode           "chip"
-                :cluster_file                "foo"
-                :extended_chip_manifest_file "foo"
-                :gender_cluster_file         "foo"
-                :green_idat_cloud_path       "foo"
-                :minor_allele_frequency_file "foo"
-                :params_file                 "foo"
-                :red_idat_cloud_path         "foo"
-                :reported_gender             "foo"
-                :sample_alias                "foo"
-                :sample_lsid                 "foo"
-                :zcall_thresholds_file       "foo"}
-        expected {:wfl "AllOfUsArrays", :analysis_version_number 1, :chip_well_barcode "chip"}]
+  (let [sample          {:analysis_version_number     1
+                         :bead_pool_manifest_file     "foo"
+                         :chip_well_barcode           "chip"
+                         :cluster_file                "foo"
+                         :extended_chip_manifest_file "foo"
+                         :gender_cluster_file         "foo"
+                         :green_idat_cloud_path       "foo"
+                         :minor_allele_frequency_file "foo"
+                         :params_file                 "foo"
+                         :red_idat_cloud_path         "foo"
+                         :reported_gender             "foo"
+                         :sample_alias                "foo"
+                         :sample_lsid                 "foo"
+                         :zcall_thresholds_file       "foo"}
+        workload->label {:workload "bogus-workload"}
+        expected        (merge {:wfl "AllOfUsArrays"
+                                :analysis_version_number 1
+                                :chip_well_barcode "chip"}
+                          workload->label)]
     (testing "make-labels can return correct workflow labels"
-      (is (= (aou/make-labels sample) expected) "label map is not made as expected"))))
+      (is (= (aou/make-labels sample workload->label) expected) "label map is not made as expected"))))
 
 (deftest test-aou-inputs-preparation
   (let [expected-per-sample-inputs         {:analysis_version_number     "foo"
