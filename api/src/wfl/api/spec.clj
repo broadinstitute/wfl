@@ -55,8 +55,9 @@
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
-(s/def ::items (s/or :aou (s/+ ::items-aou)
-                     :wgs (s/+ ::items-wgs)))
+(s/def ::items (s/+ (s/keys :opt-un [::inputs])))
+(s/def ::inputs (s/or :aou ::inputs-aou
+                     :wgs ::inputs-wgs))
 (s/def ::workflows (s/or :aou (s/* ::workflow-aou)
                          :wgs (s/+ ::workflow-wgs)))
 
@@ -72,7 +73,7 @@
                                                                ::analysis_version_number
                                                                ::chip_well_barcode]))))
 (s/def ::chip_well_barcode string?)
-(s/def ::items-aou (constantly true))     ; stub
+(s/def ::inputs-aou (constantly true))    ; stub
 (s/def ::notifications (s/* map?))
 (s/def ::workflow-aou map?)               ; stub
 
@@ -81,12 +82,12 @@
 (s/def ::final_gvcf_base_name string?)
 (s/def ::input_cram string?)
 (s/def ::reference_fasta_prefix string?)
-(s/def ::items-wgs (s/keys :opt-un [::base_file_name
-                                    ::final_gvcf_base_name
-                                    ::reference_fasta_prefix
-                                    ::sample_name
-                                    ::unmapped_bam_suffix]
-                           :req-un [::input_cram]))
+(s/def ::inputs-wgs (s/keys :opt-un [::base_file_name
+                                     ::final_gvcf_base_name
+                                     ::reference_fasta_prefix
+                                     ::sample_name
+                                     ::unmapped_bam_suffix]
+                            :req-un [::input_cram]))
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
 (s/def ::workflow-wgs (s/keys :opt-un [::base_file_name
