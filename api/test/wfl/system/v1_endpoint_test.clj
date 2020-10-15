@@ -7,7 +7,8 @@
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util]
             [wfl.service.cromwell :as cromwell])
-  (:import (java.util UUID)))
+  (:import (java.util UUID)
+           (clojure.lang ExceptionInfo)))
 
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
@@ -117,3 +118,12 @@
             (map (comp await :results)
               (endpoints/append-to-aou-workload
                 [(assoc workloads/aou-sample :uuid (:uuid workload))])))))))
+
+(deftest test-bad-pipeline
+  (let [request (assoc
+                  (workloads/copyfile-workload-request "gs:/fake/in" "gs:/fake/out")
+                  :pipeline "geoff")]
+    (testing "create-workload! fails with bad request"
+      (is (thrown? ExceptionInfo (endpoints/create-workload request))))
+    (testing "create-workload! fails with bad request"
+      (is (thrown? ExceptionInfo (endpoints/exec-workload request))))))

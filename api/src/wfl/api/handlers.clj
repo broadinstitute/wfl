@@ -20,13 +20,6 @@
   (log/warn body)
   (-> body response/bad-request (response/content-type "application/json")))
 
-(defn fail-with-response
-  "A failure RESPONSE with BODY."
-  [response body]
-  (log/warn "Endpoint returned 404 failure response:")
-  (log/warn body)
-  (-> body response (response/content-type "application/json")))
-
 (defmacro ^:private fail-on-error
   "Run BODY, printing any exception rises through it."
   [& body]
@@ -83,14 +76,10 @@
           {:keys [email]} (gcs/userinfo request)]
       (logr/infof "post-create endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (try
-          (succeed
-            (workloads/create-workload! tx
-              (assoc body :creator email)))
-          (catch NoSuchMethodError _
-            (fail-with-response
-              response/not-found
-              (select-keys request :pipeline))))))))
+        (succeed
+          (workloads/create-workload! tx
+            (assoc body :creator email)))))))
+
 
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
@@ -133,14 +122,9 @@
   [request]
   (fail-on-error
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (try
-        (succeed
-          (workloads/execute-workload! tx
-            (assoc
-              (get-in request [:parameters :body])
-              :creator
-              (:email (gcs/userinfo request)))))
-        (catch NoSuchMethodError _
-          (fail-with-response
-            response/not-found
-            (select-keys request :pipeline)))))))
+      (succeed
+        (workloads/execute-workload! tx
+          (assoc
+            (get-in request [:parameters :body])
+            :creator
+            (:email (gcs/userinfo request))))))))

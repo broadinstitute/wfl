@@ -17,7 +17,7 @@
         (is (= workload (create-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (thrown? NoSuchMethodError (create-workload! nil workload)))))))
+        (is (thrown? Exception (create-workload! nil workload)))))))
 
 (deftest test-start-workload!
   (testing "start-workload! pipeline entry points are correctly called"
@@ -26,7 +26,7 @@
         (is (= workload (start-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (thrown? NoSuchMethodError (start-workload! nil workload)))))))
+        (is (thrown? Exception (start-workload! nil workload)))))))
 
 (deftest test-exec-workload!
   (testing "execute-workload! pipeline entry points are correctly called"
@@ -35,4 +35,4 @@
         (is (= workload (execute-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (thrown? NoSuchMethodError (execute-workload! nil workload)))))))
+        (is (thrown? Exception (execute-workload! nil workload)))))))

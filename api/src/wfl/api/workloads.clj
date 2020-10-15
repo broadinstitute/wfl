@@ -57,15 +57,15 @@
   :default
   [_ body]
   (throw
-    (NoSuchMethodError.
-      (format "No way to create workload for pipeline: %s" (:pipeline body)))))
+    (ex-info "Failed to create workload - no such pipeline"
+      (select-keys body [:pipeline]))))
 
 (defmethod start-workload!
   :default
   [_ body]
   (throw
-    (NoSuchMethodError.
-      (format "No way to start workload for pipeline: %s" (:pipeline body)))))
+    (ex-info "Failed to start workload - no such pipeline"
+      (select-keys body [:pipeline]))))
 
 (defmethod execute-workload!
   :default
