@@ -29,12 +29,11 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/start-workload! tx workload)))
 
-(defn mock-submit-workflows [_ workflows]
+(defn mock-submit-workload [{:keys [workflows]}]
   (let [now        (OffsetDateTime/now)
-        do-submit! (fn [workflow] [(:id workflow)
-                                   (UUID/randomUUID)
-                                   "Submitted"
-                                   now])]
+        do-submit! #(assoc % :uuid (UUID/randomUUID)
+                             :status "Submitted"
+                             :updated now)]
     (map do-submit! workflows)))
 
 (deftest test-populating-input-items
@@ -89,7 +88,7 @@
       (run! (comp go :inputs) (:workflows workload)))))
 
 (deftest test-start-workload!
-  (with-redefs-fn {#'xx/submit-workflows! mock-submit-workflows}
+  (with-redefs-fn {#'xx/submit-workload! mock-submit-workload}
     #(let [workload (->>
                       (make-xx-workload-request (UUID/randomUUID))
                       create-workload!
@@ -101,3 +100,7 @@
                    (is (:updated workflow))))]
          (run! go! (:workflows workload))))))
 
+
+(deftest test-submit-workload!
+  (let [workload (create-workload! (make-xx-workload-request (UUID/randomUUID)))]
+    (run! #(is (:uuid %)) (xx/submit-workload! workload))))
