@@ -38,11 +38,6 @@
   [environment]
   (str (url environment) "/api/workflows/v1"))
 
-(defn batch
-  "API URL for GotC Cromwell API in ENVIRONMENT."
-  [environment]
-  (str (url environment) "/api/workflows/v1/batch"))
-
 (defn request-json
   "Response to REQUEST with :body parsed as JSON."
   [request]
@@ -219,17 +214,6 @@
          :headers   (once/get-auth-header)
          :multipart (map multipartify parts)}
         request-json #_debug/dump :body :id)))
-
-(defn post-workflows
-  "Assemble PARTS into a multipart HTML body and post it to the Cromwell
-  server in ENVIRONMENT, and return the workflow ID."
-  [environment parts]
-  (letfn [(multipartify [[k v]] {:name (name k) :content v})]
-    (-> {:method    :post               ; :debug true :debug-body true
-         :url       (batch environment)
-         :headers   (once/get-auth-header)
-         :multipart (map multipartify parts)}
-      request-json #_debug/dump :body :id)))
 
 (defn stringify-vals
   "Stringify all of the values of a Map."
