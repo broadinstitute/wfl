@@ -76,7 +76,7 @@
           (gcs/upload-file src))
         (run!
           go!
-          [(create-wgs-workload)
+          [#_(create-wgs-workload)
            (create-aou-workload)
            (create-xx-workload)
            (create-copyfile-workload src (str uri "output.txt"))])))))
