@@ -295,16 +295,10 @@
    LABELS      - Labels to apply to each workflow
 
   Return:
-   List {:id string :status string} for each workflow,
-   as reported by cromwell."
+   List of UUIDS for each workflow as reported by cromwell."
   [environment wdl imports-zip inputs options labels]
-  (post-workflow environment
-    (partify-workflow environment
-      wdl
-      imports-zip
-      inputs
-      options
-      labels)))
+  ; todo: call the batch endpoint
+  (mapv #(submit-workflow environment wdl imports-zip % options labels) inputs))
 
 (defn work-around-cromwell-fail-bug
   "Wait 2 seconds and ignore up to N times a bogus failure response from

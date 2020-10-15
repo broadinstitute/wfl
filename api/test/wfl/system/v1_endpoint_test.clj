@@ -15,6 +15,7 @@
 
 (def create-wgs-workload (make-create-workload workloads/wgs-workload-request))
 (def create-aou-workload (make-create-workload workloads/aou-workload-request))
+(def create-xx-workload (make-create-workload workloads/xx-workload-request))
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
@@ -77,6 +78,7 @@
           go!
           [(create-wgs-workload)
            (create-aou-workload)
+           (create-xx-workload)
            (create-copyfile-workload src (str uri "output.txt"))])))))
 
 (deftest test-exec-workload
@@ -105,6 +107,7 @@
           (get-existing-workload-uuids)
           [(workloads/wgs-workload-request (UUID/randomUUID))
            (workloads/aou-workload-request (UUID/randomUUID))
+           (workloads/xx-workload-request (UUID/randomUUID))
            (workloads/copyfile-workload-request src (str uri "output.txt"))])))))
 
 (deftest test-append-to-aou-workload

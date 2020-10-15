@@ -8,10 +8,20 @@
             [wfl.module.all :as all]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
-            [wfl.util :as util])
-  (:import [java.time OffsetDateTime]))
+            [wfl.util :as util]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.wdl :as wdl]
+            [clojure.tools.logging.readable :as logr]
+            [clojure.java.io :as io]
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime]
+           (java.util UUID)))
 
 (def pipeline "ExternalExomeReprocessing")
+
+(def cromwell-labels
+  "The WDL label applied to Cromwell metadata."
+  {(keyword wfl/the-name) pipeline})
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -105,8 +115,23 @@
     (merge (util/deep-merge workflow-defaults persisted-inputs))))
 
 ; visible for testing
-(defn submit-workflows! [environment workflows]
-  (throw (NoSuchMethodError. "Not Implemented")))
+(defn submit-workload! [{:keys [uuid workflows] :as workload}]
+  (letfn [(update-workflow [workflow cromwell-uuid]
+            (assoc workflow :uuid cromwell-uuid
+                            :status "Submitted" ; we've just submitted it
+                            :updated (OffsetDateTime/now)))]
+    (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+          environment (get-cromwell-environment workload)]
+      (logr/infof "submitting workload %s" uuid)
+      (mapv update-workflow
+        workflows
+        (cromwell/submit-workflows
+          environment
+          (io/file (:dir path) (path ".wdl"))
+          (io/file (:dir path) (path ".zip"))
+          (map :inputs workflows)
+          (util/make-options environment)
+          (merge cromwell-labels {:workload uuid}))))))
 
 (defn create-xx-workload!
   [tx {:keys [output common_inputs items] :as request}]
@@ -123,17 +148,15 @@
       (workloads/load-workload-for-uuid tx uuid))))
 
 (defn start-xx-workload!
-  [tx {:keys [items workflows id] :as workload}]
+  [tx {:keys [items id] :as workload}]
   (if (:started workload)
     workload
-    (do
-      (let [environment (get-cromwell-environment workload)
-            now         (OffsetDateTime/now)]
-        (letfn [(update-record! [[id uuid status updated]]
-                  (let [values {:uuid uuid :status status :updated updated}]
-                    (jdbc/update! tx items values ["id = ?" id])))]
-          (run! update-record! (submit-workflows! environment workflows))
-          (jdbc/update! tx :workload {:started now} ["id = ?" id])))
+    (letfn [(update-record! [{:keys [id] :as workflow}]
+              (let [values (select-keys workflow [:uuid :status :updated])]
+                (jdbc/update! tx items values ["id = ?" id])))]
+      (let [now (OffsetDateTime/now)]
+        (run! update-record! (submit-workload! workload))
+        (jdbc/update! tx :workload {:started now} ["id = ?" id]))
       (workloads/load-workload-for-id tx id))))
 
 (defmethod workloads/load-workload-impl
