@@ -109,19 +109,19 @@
       #{:gotc-dev :gotc-prod :gotc-staging}
       (:cromwell workload))))
 
-(defn- make-workflow-inputs [environment persisted-inputs]
+(defn- make-cromwell-inputs [environment inputs]
   (->
     (env/stuff environment)
     (select-keys [:google_account_vault_path :vault_token_path])
-    (merge (util/deep-merge workflow-defaults persisted-inputs))))
+    (merge inputs)
+    (util/prefix-keys (keyword pipeline))))
 
 ; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
   (letfn [(update-workflow [workflow cromwell-uuid]
             (assoc workflow :uuid cromwell-uuid
                             :status "Submitted"             ; we've just submitted it
-                            :updated (OffsetDateTime/now)))
-          (add-prefix [inputs] (util/prefix-keys inputs (keyword pipeline)))]
+                            :updated (OffsetDateTime/now)))]
     (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
           environment (get-cromwell-environment workload)]
       (logr/infof "submitting workload %s" uuid)
@@ -131,7 +131,7 @@
           environment
           (io/file (:dir path) (path ".wdl"))
           (io/file (:dir path) (path ".zip"))
-          (map (comp add-prefix :inputs) workflows)
+          (map (comp (partial make-cromwell-inputs environment) :inputs) workflows)
           (util/make-options environment)
           (merge cromwell-labels {:workload uuid}))))))
 
@@ -165,8 +165,7 @@
   pipeline
   [tx {:keys [items] :as workload}]
   (let [unnilify     (fn [x] (into {} (filter second x)))
-        environment  (get-cromwell-environment workload)
-        load-inputs! #(make-workflow-inputs environment (util/parse-json %))]
+        load-inputs! #(util/deep-merge workflow-defaults (util/parse-json %))]
     (->>
       (postgres/get-table tx items)
       (mapv (comp #(update % :inputs load-inputs!) unnilify))

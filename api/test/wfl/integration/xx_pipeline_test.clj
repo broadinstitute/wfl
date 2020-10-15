@@ -6,7 +6,8 @@
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc])
+            [wfl.jdbc :as jdbc]
+            [wfl.util :as util])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
@@ -104,3 +105,13 @@
 (deftest test-submit-workload!
   (let [workload (create-workload! (make-xx-workload-request (UUID/randomUUID)))]
     (run! #(is (:uuid %)) (xx/submit-workload! workload))))
+
+(deftest test-hidden-inputs
+  (testing "google_account_vault_path and vault_token_path are not in inputs"
+    (letfn [(go! [inputs]
+              (is (util/absent? inputs :vault_token_path))
+              (is (util/absent? inputs :google_account_vault_path)))]
+      (run! (comp go! :inputs)
+        (:workflows
+          (create-workload!
+            (make-xx-workload-request (UUID/randomUUID))))))))
