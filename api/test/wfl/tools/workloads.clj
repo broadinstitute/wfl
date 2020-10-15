@@ -73,9 +73,9 @@
   [{:keys [cromwell] :as workload} done!]
   (letfn [(await-workflow [{:keys [uuid] :as workflow}]
             (let [interval  10
-                  timeout   1200
+                  timeout   3600 ; 1 hour
                   finished? (set cromwell/final-statuses)
-                  skipped?  #(-> % :uuid util/uuid-nil?)]   ; see wgs. i die.
+                  skipped?  #(-> % :uuid util/uuid-nil?)] ; see wgs. i die.
               (loop [seconds 0]
                 (when (> seconds timeout)
                   (throw (TimeoutException.
