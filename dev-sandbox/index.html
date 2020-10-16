@@ -580,11 +580,11 @@ rm plan.out
 </code></pre></div>
 You'll also need to add the following URIs to the "Authorized redirect URIs": 
 <div class="highlight"><pre><span></span><code>https://{username}-wfl.gotc-dev.broadinstitute.org
-https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2_redirect.html
+https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2-redirect.html
 </code></pre></div>
 That latter one is used for authenticating the Swagger UI.</p>
 <h2 id="4-deploy-wfl">4. Deploy WFL<a class="headerlink" href="#4-deploy-wfl" title="Permanent link">&para;</a></h2>
-<p>See the <a href="/docs/md/README.md">Quickstart section</a> for more info on building WFL and pushing images. Assuming you've done that, run <code>./ops/cli.py gotc-dev {username}</code> to deploy the version in <code>./version</code> to your sandbox. The help text on <code>./ops/cli.py</code> has more options for customizing the deployment.</p>
+<p>See the <a href="/docs/md/README.md">Quickstart section</a> for more info on building WFL and pushing images. Assuming you've done that, run <code>./ops/cli.py deploy gotc-dev {username}</code> to deploy the version in <code>./version</code> to your sandbox. The help text on <code>./ops/cli.py</code> has more options for customizing the deployment.</p>
                 
               
               
