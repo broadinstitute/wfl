@@ -7,7 +7,9 @@
             [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
-            [wfl.util :as util])
+            [wfl.util :refer [shell!]]
+            [wfl.util :as util]
+            [wfl.tools.endpoints :as endpoints])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -40,23 +42,20 @@
 
 (def aou-sample
   "An aou arrays sample for testing."
-  {:cromwell      "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
-   :notifications [{:chip_well_barcode           "7991775143_R01C01",
-                    :bead_pool_manifest_file     "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
-                    :analysis_version_number     1,
-                    :call_rate_threshold         0.98
-                    :extended_chip_manifest_file "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
-                    :red_idat_cloud_path         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
-                    :zcall_thresholds_file       "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
-                    :reported_gender             "Female",
-                    :cluster_file                "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
-                    :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
-                    :sample_alias                "NA12878",
-                    :green_idat_cloud_path       "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
-                    :params_file                 "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
-                    :gender_cluster_file         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"}],
-   :environment   "aou-dev",
-   :uuid          nil})
+  {:chip_well_barcode           "7991775143_R01C01",
+   :bead_pool_manifest_file     "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.bpm",
+   :analysis_version_number     1,
+   :call_rate_threshold         0.98
+   :extended_chip_manifest_file "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExome-12v1-1_A.1.3.extended.csv",
+   :red_idat_cloud_path         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Red.idat",
+   :zcall_thresholds_file       "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/IBDPRISM_EX.egt.thresholds.txt",
+   :reported_gender             "Female",
+   :cluster_file                "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_CEPH_A.egt",
+   :sample_lsid                 "broadinstitute.org:bsp.dev.sample:NOTREAL.NA12878",
+   :sample_alias                "NA12878",
+   :green_idat_cloud_path       "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
+   :params_file                 "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
+   :gender_cluster_file         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"})
 
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
@@ -80,12 +79,12 @@
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
-  [{:keys [cromwell] :as workload} done!]
+  [done! {:keys [cromwell] :as workload}]
   (letfn [(await-workflow [{:keys [uuid] :as workflow}]
             (let [interval  10
-                  timeout   3600 ; 1 hour
+                  timeout   3600                            ; 1 hour
                   finished? (set cromwell/final-statuses)
-                  skipped?  #(-> % :uuid util/uuid-nil?)] ; see wgs. i die.
+                  skipped?  #(-> % :uuid util/uuid-nil?)]   ; see wgs. i die.
               (loop [seconds 0]
                 (when (> seconds timeout)
                   (throw (TimeoutException.
@@ -96,5 +95,5 @@
                     (util/sleep-seconds interval)
                     (recur (+ seconds interval)))))))]
     (run! await-workflow (:workflows workload))
-    (done!)
+    (done! (endpoints/get-workload-status (:uuid workload)))
     nil))

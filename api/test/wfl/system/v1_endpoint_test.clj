@@ -27,9 +27,8 @@
   (is (:uuid workflow))
   (is (= "Succeeded" (:status workflow))))
 
-(defn- verify-succeeded-workload [uuid]
-  (run! verify-succeeded-workflow
-    (:workflows (endpoints/get-workload-status uuid))))
+(defn- verify-succeeded-workload [workload]
+  (run! verify-succeeded-workflow (:workflows workload)))
 
 (deftest test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
@@ -69,8 +68,7 @@
                 (let [{:keys [workflows]} workload]
                   (is (every? :updated workflows))
                   (is (every? :uuid workflows)))
-                (workloads/when-done workload
-                  (partial verify-succeeded-workload uuid)))))]
+                (workloads/when-done verify-succeeded-workload workload))))]
     (with-temporary-gcs-folder uri
       (let [src (str uri "input.txt")]
         (->
@@ -97,8 +95,7 @@
                 (let [{:keys [workflows]} workload]
                   (is (every? :updated workflows))
                   (is (every? :uuid workflows)))
-                (workloads/when-done workload
-                  (partial verify-succeeded-workload uuid))
+                (workloads/when-done verify-succeeded-workload workload)
                 (conj uuids uuid))))]
     (with-temporary-gcs-folder uri
       (let [src (str uri "input.txt")]
@@ -115,18 +112,19 @@
 
 (deftest test-append-to-aou-workload
   (testing "The `append_to_aou` endpoint appends a new workflow to aou workload."
-    (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
-          workload (endpoints/exec-workload
-                     (workloads/aou-workload-request (UUID/randomUUID)))]
+    (let [await (partial cromwell/wait-for-workflow-complete :aou-dev)]
       (is (every? #{"Succeeded"}
-            (map (comp await :results)
-              (endpoints/append-to-aou-workload
-                [(assoc workloads/aou-sample :uuid (:uuid workload))])))))))
+            (->>
+              (workloads/aou-workload-request (UUID/randomUUID))
+              (endpoints/exec-workload)
+              (endpoints/append-to-aou-workload [workloads/aou-sample])
+              (map (comp await :uuid))))))))
 
 (deftest test-bad-pipeline
-  (let [request (assoc
-                  (workloads/copyfile-workload-request "gs:/fake/in" "gs:/fake/out")
-                  :pipeline "geoff")]
+  (let [request
+        (->
+          (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+          (assoc :pipeline "geoff"))]
     (testing "create-workload! fails with bad request"
       (is (thrown? ExceptionInfo (endpoints/create-workload request))))
     (testing "create-workload! fails with bad request"
