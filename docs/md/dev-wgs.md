@@ -61,7 +61,7 @@ the [default value](https://github.com/broadinstitute/wfl/blob/master/api/src/wf
 
 ###Create Workload: `/api/v1/create`
 Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have
-at least read access to the input files.
+at least read access to the input files. Each item in the "items" array will be an individual workflow.
 
 Request:
 ```
@@ -74,10 +74,15 @@ curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
   "project": "PO-1234",
-  "items": [{
-          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-          "sample_name": "TestSample1234"
-          }]}'
+  "items": [
+    {
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    }
+  ]
+}'
 ```
 Response:
 ```
@@ -153,10 +158,15 @@ curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
   "project": "PO-1234",
-  "items": [{
-          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-          "sample_name": "TestSample1234"
-          }]}'
+   "items": [
+    {
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    }
+  ]
+}'
 ```
 Response:
 ```
