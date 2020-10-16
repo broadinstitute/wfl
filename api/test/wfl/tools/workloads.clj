@@ -72,7 +72,7 @@
   "A whole genome sequencing workload used for testing."
   (let [gotc-test-exome-storage "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/"]
     {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
-     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
+     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
      :pipeline xx/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:input_cram (str gotc-test-exome-storage "NWD101908.cram")}]}))
