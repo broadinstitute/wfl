@@ -111,18 +111,19 @@
 
 (deftest test-append-to-aou-workload
   (testing "The `append_to_aou` endpoint appends a new workflow to aou workload."
-    (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
-          workload (endpoints/exec-workload
-                     (workloads/aou-workload-request (UUID/randomUUID)))]
+    (let [await (partial cromwell/wait-for-workflow-complete :aou-dev)]
       (is (every? #{"Succeeded"}
             (map (comp await :results)
-              (endpoints/append-to-aou-workload
-                [(assoc workloads/aou-sample :uuid (:uuid workload))])))))))
+              (->>
+                (workloads/aou-workload-request (UUID/randomUUID))
+                (endpoints/exec-workload)
+                (endpoints/append-to-aou-workload [workloads/aou-sample]))))))))
 
 (deftest test-bad-pipeline
-  (let [request (assoc
-                  (workloads/copyfile-workload-request "gs:/fake/in" "gs:/fake/out")
-                  :pipeline "geoff")]
+  (let [request
+        (->
+          (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+          (assoc :pipeline "geoff"))]
     (testing "create-workload! fails with bad request"
       (is (thrown? ExceptionInfo (endpoints/create-workload request))))
     (testing "create-workload! fails with bad request"

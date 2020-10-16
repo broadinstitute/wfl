@@ -66,10 +66,13 @@
     (first (parse-json-string (:body response)))))
 
 (defn append-to-aou-workload
-  "Append a or a few SAMPLES to the aou workload"
-  [samples]
+  "Append SAMPLES to the aou WORKLOAD"
+  [samples workload]
   (let [auth-header (once/get-auth-header)
-        payload     (json/write-str samples :escape-slash false)
+        payload     (->
+                      (select-keys workload [:cromwell :uuid])
+                      (assoc :notifications samples :environment :aou-dev)
+                      (json/write-str :escape-slash false))
         response    (client/post (str server "/api/v1/append_to_aou")
                                  {:headers      auth-header
                                   :content-type :json
