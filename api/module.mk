@@ -35,13 +35,13 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
-LOGFILE := $(DERIVED_MODULE_DIR)/test.log
+LOGFILE := $(DERIVED_MODULE_DIR)/unit.log
 $(UNIT): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
 	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE)
 	@$(TOUCH) $@
 
-LOGFILE := $(DERIVED_MODULE_DIR)/test.log
+LOGFILE := $(DERIVED_MODULE_DIR)/integration.log
 $(INTEGRATION): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
 	$(CLOJURE) $(CLJFLAGS) -A:test integration | $(TEE) $(LOGFILE)
