@@ -21,11 +21,11 @@
      :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
-     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
-                 :sample_name          "NA12878 PLUMBING",
-                 :base_file_name       "NA12878_PLUMBING",
-                 :final_gvcf_base_name "NA12878_PLUMBING",
-                 :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
+     :items    [{:inputs {:unmapped_bam_suffix  ".unmapped.bam",
+                          :sample_name          "NA12878 PLUMBING",
+                          :base_file_name       "NA12878_PLUMBING",
+                          :final_gvcf_base_name "NA12878_PLUMBING",
+                          :input_cram           "develop/20k/NA12878_PLUMBING.cram"}}]}))
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
@@ -66,7 +66,7 @@
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:src src :dst dst}]})
+   :items    [{:inputs {:src src :dst dst}}]})
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
