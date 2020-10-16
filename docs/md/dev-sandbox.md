@@ -75,9 +75,9 @@ https://{username}-wfl.gotc-dev.broadinstitute.org
 You'll also need to add the following URIs to the "Authorized redirect URIs": 
 ```
 https://{username}-wfl.gotc-dev.broadinstitute.org
-https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2_redirect.html
+https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2-redirect.html
 ```
 That latter one is used for authenticating the Swagger UI.
 
 ## 4. Deploy WFL
-See the [Quickstart section](/docs/md/README.md) for more info on building WFL and pushing images. Assuming you've done that, run `./ops/cli.py gotc-dev {username}` to deploy the version in `./version` to your sandbox. The help text on `./ops/cli.py` has more options for customizing the deployment.
+See the [Quickstart section](/docs/md/README.md) for more info on building WFL and pushing images. Assuming you've done that, run `./ops/cli.py deploy gotc-dev {username}` to deploy the version in `./version` to your sandbox. The help text on `./ops/cli.py` has more options for customizing the deployment.
