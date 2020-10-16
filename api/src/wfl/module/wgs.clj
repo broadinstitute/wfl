@@ -181,12 +181,13 @@
         (throw (ex-info "Error updating workload status" {} cause))))))
 
 (defn add-wgs-workload!
-  "Use transaction TX to add the workload described by BODY."
-  [tx {:keys [items] :as _workload}]
+  "Use transaction TX to add the workload described by _WORKLOAD-REQUEST."
+  [tx {:keys [items] :as _workload-request}]
   (let [now          (OffsetDateTime/now)
-        [uuid table] (all/add-workload-table! tx workflow-wdl _workload)]
+        [uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
+        item-inputs  (map :inputs items)]
     (letfn [(idnow [m id] (-> m (assoc :id id) (assoc :updated now)))]
-      (jdbc/insert-multi! tx table (map idnow items (rest (range)))))
+      (jdbc/insert-multi! tx table (map idnow item-inputs (rest (range)))))
     uuid))
 
 (defn create-workload
