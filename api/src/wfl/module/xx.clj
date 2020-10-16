@@ -103,11 +103,13 @@
       (util/assoc-when util/absent? :destination_cloud_path
         (str (all/slashify output-url) (util/dirname path))))))
 
-(defn- get-cromwell-environment [workload]
-  (first
-    (all/cromwell-environments
-      #{:gotc-dev :gotc-prod :gotc-staging}
-      (:cromwell workload))))
+(defn- get-cromwell-environment [{:keys [cromwell]}]
+  (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
+    (if-not (empty? envs) ; assuming prod and dev urls are different
+      (first envs)
+      (throw
+        (ex-info "No environment matching Cromwell URL."
+          {:cromwell cromwell})))))
 
 (defn- make-cromwell-inputs [environment inputs]
   (->
