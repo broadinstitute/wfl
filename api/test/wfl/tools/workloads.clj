@@ -70,12 +70,13 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  (let [gotc-test-exome-storage "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/"]
-    {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
-     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
-     :pipeline xx/pipeline
-     :project  (format "(Test) %s" @git-branch)
-     :items    [{:input_cram (str gotc-test-exome-storage "NWD101908.cram")}]}))
+  (let [test-storage "gs://broad-gotc-test-storage/exome/plumbing/truth/master/"]
+    {:cromwell      (get-in stuff [:gotc-dev :cromwell :url])
+     :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+     :pipeline      xx/pipeline
+     :project       (format "(Test) %s" @git-branch)
+     :common_inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}
+     :items         [{:input_cram (str test-storage "NA12878_PLUMBING.cram")}]}))
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
