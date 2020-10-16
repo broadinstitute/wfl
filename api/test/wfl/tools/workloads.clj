@@ -7,7 +7,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
             [wfl.util :refer [shell!]]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.tools.endpoints :as endpoints])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (shell! "git" "branch" "--show-current")))
@@ -67,7 +68,7 @@
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
-  [{:keys [cromwell] :as workload} done!]
+  [done! {:keys [cromwell] :as workload}]
   (letfn [(await-workflow [{:keys [uuid] :as workflow}]
             (let [interval  10
                   timeout   3600                            ; 1 hour
@@ -83,5 +84,5 @@
                     (util/sleep-seconds interval)
                     (recur (+ seconds interval)))))))]
     (run! await-workflow (:workflows workload))
-    (done!)
+    (done! (endpoints/get-workload-status (:uuid workload)))
     nil))
