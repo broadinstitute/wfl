@@ -27,7 +27,6 @@ MAKE_TARGETS := prebuild lint build unit integration check images
 PREBUILD    := $(DERIVED_MODULE_DIR)/prebuild.$(TIMESTAMP)
 LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)    
 BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
-CHECK       := $(DERIVED_MODULE_DIR)/check.$(TIMESTAMP)   
 UNIT        := $(DERIVED_MODULE_DIR)/unit.$(TIMESTAMP)  
 INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
 IMAGES      := $(DERIVED_MODULE_DIR)/images.$(TIMESTAMP)
@@ -42,6 +41,8 @@ $(BUILD):       $(LINT)
 $(UNIT):        $(BUILD)
 $(INTEGRATION): $(BUILD)
 $(IMAGES):      $(BUILD)
+
+check: unit integration
 
 # Top level `make` targets depend on their corresponding time stamp.
 $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TIMESTAMP)

@@ -47,8 +47,6 @@ $(INTEGRATION): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
-$(CHECK): $(UNIT) $(INTEGRATION)
-
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
 	$(CP) $(MODULE_DIR)/.dockerignore $(DERIVED_MODULE_DIR)
