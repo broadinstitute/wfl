@@ -70,7 +70,7 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  (let [test-storage "gs://broad-gotc-test-storage/exome/plumbing/truth/master/"]
+  (let [test-storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
     {:cromwell      (get-in stuff [:gotc-dev :cromwell :url])
      :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
      :pipeline      xx/pipeline
