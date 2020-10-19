@@ -39,8 +39,6 @@
                                            ::project]))
 (s/def ::workload-response (s/keys :opt-un [::finished
                                             ::input
-                                            ::options
-                                            ::pipeline
                                             ::started
                                             ::wdl
                                             ::workflows]
@@ -49,6 +47,7 @@
                                             ::creator
                                             ::cromwell
                                             ::output
+                                            ::pipeline
                                             ::project
                                             ::release
                                             ::uuid
