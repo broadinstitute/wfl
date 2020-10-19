@@ -1,7 +1,7 @@
 (ns wfl.references
   "Define shared static references.")
 
-(defn reference_fasta
+(defn reference-fasta
   "Default value for references.reference_fastas."
   ([ref-prefix]
    (let [default "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
@@ -17,7 +17,7 @@
         :ref_sa          (prefix ".fasta.64.sa")}))
   ([]
    (let [prefix "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"]
-     (reference_fasta prefix))))
+     (reference-fasta prefix))))
 
 (defn hg38-genome-references
   "HG38 reference files for genome reprocessing."
@@ -36,7 +36,7 @@
                                   (hg hsa  ".known_indels.vcf.gz.tbi")]
      :known_indels_sites_vcfs    [(hg gold ".vcf.gz")
                                   (hg hsa  ".known_indels.vcf.gz")]
-     :reference_fasta             (reference_fasta prefix)}))
+     :reference_fasta             (reference-fasta prefix)}))
 
 (def hg38-exome-references
   "HG38 reference files for exome reprocessing."
@@ -56,7 +56,7 @@
                                   (hg hsa  ".known_indels.vcf.gz.tbi")]
      :known_indels_sites_vcfs    [(hg gold ".vcf.gz")
                                   (hg hsa  ".known_indels.vcf.gz")]
-     :reference_fasta             (reference_fasta)}))
+     :reference_fasta             (reference-fasta)}))
 
 (def hg19-arrays-references
   "HG19 reference files for arrays processing."

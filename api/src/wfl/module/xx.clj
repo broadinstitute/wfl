@@ -9,6 +9,7 @@
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
+            [wfl.references :as references]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
@@ -28,17 +29,6 @@
   {:release "ExternalExomeReprocessing_v2.1.1"
    :top     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
-(def reference-fasta-defaults
-  {:ref_pac         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac"
-   :ref_bwt         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt"
-   :ref_dict        "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict"
-   :ref_ann         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann"
-   :ref_fasta_index "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
-   :ref_alt         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt"
-   :ref_fasta       "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
-   :ref_sa          "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa"
-   :ref_amb         "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb"})
-
 (def references-defaults
   {:calling_interval_list    "gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list"
    :contamination_sites_bed  "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed"
@@ -54,7 +44,7 @@
    :known_indels_sites_indices
                              ["gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi"
                               "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi"]
-   :reference_fasta          reference-fasta-defaults})
+   :reference_fasta          (references/reference-fasta)})
 
 (def scatter-settings-defaults
   {:haplotype_scatter_count     50
