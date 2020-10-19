@@ -147,7 +147,7 @@
                 (assoc {:id id} :inputs)))]
       (->>
         (normalize-input-items items)
-        (mapv make-workflow-record (range))
+        (map make-workflow-record (range))
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-uuid tx uuid))))
 
