@@ -74,10 +74,15 @@ curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
   "project": "PO-1234",
-  "items": [{
-          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-          "sample_name": "TestSample1234"
-          }]}'
+  "items": [
+    {
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    }
+  ]
+}'
 ```
 Response:
 ```
@@ -153,10 +158,15 @@ curl --location --request POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
   "project": "PO-1234",
-  "items": [{
-          "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-          "sample_name": "TestSample1234"
-          }]}'
+  "items": [
+    {
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    }
+  ]
+}'
 ```
 Response:
 ```
