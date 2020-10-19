@@ -20,7 +20,7 @@
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (set cromwell/statuses))
+(s/def ::status (conj (set cromwell/statuses) "skipped"))
 (s/def ::started inst?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
