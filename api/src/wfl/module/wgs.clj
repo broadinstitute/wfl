@@ -247,6 +247,17 @@
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
         (run! (partial update! tx) ids-uuids)))))
 
+(defmethod workloads/load-workload-impl
+  pipeline
+  [tx workload]
+  (workloads/load-workflow-with-structure
+    tx workload {:inputs [:base_file_name
+                          :final_gvcf_base_name
+                          :input_cram
+                          :reference_fasta_prefix
+                          :sample_name
+                          :unmapped_bam_suffix]}))
+
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
