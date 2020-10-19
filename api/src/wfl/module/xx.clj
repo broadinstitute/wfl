@@ -30,21 +30,20 @@
    :top     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
 (def references-defaults
-  {:calling_interval_list    "gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list"
-   :contamination_sites_bed  "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed"
-   :contamination_sites_mu   "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu"
-   :contamination_sites_ud   "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD"
-   :dbsnp_vcf                "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf"
-   :dbsnp_vcf_index          "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx"
-   :evaluation_interval_list "gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list"
-   :haplotype_database_file  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt"
-   :known_indels_sites_vcfs
-                             ["gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
-                              "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz"]
-   :known_indels_sites_indices
-                             ["gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi"
-                              "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi"]
-   :reference_fasta          (references/reference-fasta)})
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
+    {:calling_interval_list      (str hg38 "exome_calling_regions.v1.interval_list")
+     :contamination_sites_bed    (str hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed")
+     :contamination_sites_mu     (str hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu")
+     :contamination_sites_ud     (str hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD")
+     :dbsnp_vcf                  (str hg38 "Homo_sapiens_assembly38.dbsnp138.vcf")
+     :dbsnp_vcf_index            (str hg38 "Homo_sapiens_assembly38.dbsnp138.vcf.idx")
+     :evaluation_interval_list   (str hg38 "exome_evaluation_regions.v1.interval_list")
+     :haplotype_database_file    (str hg38 "Homo_sapiens_assembly38.haplotype_database.txt")
+     :known_indels_sites_vcfs    [(str hg38 "Mills_and_1000G_gold_standard.indels.hg38.vcf.gz")
+                                  (str hg38 "Homo_sapiens_assembly38.known_indels.vcf.gz")]
+     :known_indels_sites_indices [(str hg38 "Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi")
+                                  (str hg38 "Homo_sapiens_assembly38.known_indels.vcf.gz.tbi")]
+     :reference_fasta            (references/reference-fasta)}))
 
 (def scatter-settings-defaults
   {:haplotype_scatter_count     50
@@ -55,15 +54,16 @@
    :preemptible_tries     3})
 
 (def workflow-defaults
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
   {:unmapped_bam_suffix  ".unmapped.bam"
-   :cram_ref_fasta       "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
-   :cram_ref_fasta_index "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
+   :cram_ref_fasta       (str hg38 "Homo_sapiens_assembly38.fasta")
+   :cram_ref_fasta_index (str hg38 "Homo_sapiens_assembly38.fasta.fai")
    :bait_set_name        "whole_exome_illumina_coding_v1"
-   :bait_interval_list   "gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list"
-   :target_interval_list "gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list"
+   :bait_interval_list   (str hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list")
+   :target_interval_list (str hg38 "/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list")
    :references           references-defaults
    :scatter_settings     scatter-settings-defaults
-   :papi_settings        papi-settings-defaults})
+   :papi_settings        papi-settings-defaults}))
 
 (defn normalize-input-items
   "The `items` of this workload are either a bucket or a list of samples.
@@ -95,7 +95,7 @@
 
 (defn- get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
-    (if-not (empty? envs) ; assuming prod and dev urls are different
+    (if-not (empty? envs)                                   ; assuming prod and dev urls are different
       (first envs)
       (throw
         (ex-info "No environment matching Cromwell URL."
