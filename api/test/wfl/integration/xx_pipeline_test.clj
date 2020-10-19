@@ -7,7 +7,8 @@
             [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [clojure.string :as str])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
@@ -16,6 +17,13 @@
 (defmacro is-not
   ([form] `(is-not ~form nil))
   ([form msg] `(is (not ~form) ~msg)))
+
+(def exome-test-storage
+  (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-inputs"
+                 "external-reprocessing"
+                 "exome"
+                 "develop"
+                 ""]))
 
 (defn- make-xx-workload-request [id]
   (->
@@ -39,12 +47,12 @@
 
 (deftest test-populating-input-items
   (testing "create workload with google cloud storage url as `items`"
-    (let [items (xx/normalize-input-items "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/NWD101908.cram")]
+    (let [items (xx/normalize-input-items (str exome-test-storage "RP-929.NA12878/RP-929.NA12878.cram"))]
       (is (= 1 (count items)))
       (let [input (first items)]
         (is :input_cram input)
         (is-not (:input_bam input))))
-    (let [items (xx/normalize-input-items "gs://broad-gotc-test-storage/single_sample/full/bams/HJYFJCCXX.4.Pond-492100.unmapped.bam")]
+    (let [items (xx/normalize-input-items (str exome-test-storage "not-a-real.unmapped.bam"))]
       (is (= 1 (count items)))
       (let [input (first items)]
         (is :input_bam input)
@@ -70,7 +78,7 @@
     (testing "make from bucket"
       (->
         (make-xx-workload-request (UUID/randomUUID))
-        (assoc :items "gs://broad-gotc-test-storage/single_sample/load_50/truth/master/NWD101908.cram")
+        (assoc :items exome-test-storage)
         go!))))
 
 (deftest test-create-workload-with-common-inputs
