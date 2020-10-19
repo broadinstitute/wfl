@@ -87,3 +87,13 @@
       (map unnilify)
       (assoc workload :workflows)
       unnilify)))
+
+(defn load-workflow-with-structure
+  "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
+  [tx workload structure]
+  (letfn [(restructure-once [workflow new-key old-keys]
+            (assoc (apply dissoc workflow old-keys) new-key (select-keys workflow old-keys)))
+          (restructure-workflows [workflows]
+            (map #(reduce-kv restructure-once % structure) workflows))]
+    ;; We're calling clojure.lang.MultiFn's getMethod, not java.lang.Class's
+    (update ((.getMethod load-workload-impl :default) tx workload) :workflows restructure-workflows)))
