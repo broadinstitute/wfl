@@ -26,12 +26,13 @@
     {}))
 
 (defn add-copyfile-workload!
-  "Use transaction TX to add the workload described by BODY."
-  [tx {:keys [items] :as body}]
-  (let [now   (OffsetDateTime/now)
-        [uuid table] (all/add-workload-table! tx workflow-wdl body)
-        idnow (fn [item id] (-> item (assoc :id id :updated now)))]
-    (jdbc/insert-multi! tx table (map idnow items (rest (range))))
+  "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
+  [tx {:keys [items] :as _workload-request}]
+  (let [now          (OffsetDateTime/now)
+        [uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
+        item-inputs  (map :inputs items)]
+    (letfn [(add-id-and-now [m id] (-> m (assoc :id id) (assoc :updated now)))]
+      (jdbc/insert-multi! tx table (map add-id-and-now item-inputs (rest (range)))))
     uuid))
 
 (defn start-copyfile-workload!
