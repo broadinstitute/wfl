@@ -76,7 +76,7 @@
    :papi_settings        papi-settings-defaults})
 
 (defn normalize-input-items
-  "The `items` of this workload are either a bucket or a list of samples.
+  "The `items` of this workload are either a bucket or a list of samples as individual inputs.
   Normalise these `items` into a list of samples"
   [items]
   (if (string? items)
@@ -89,7 +89,7 @@
           (gcs/list-objects bucket object)
           (map bam-or-cram-ify)
           (remove nil?))))
-    items))
+    (map :inputs items)))
 
 (defn make-persisted-inputs [output-url common inputs]
   (let [sample-name (fn [basename] (first (str/split basename #"\.")))
