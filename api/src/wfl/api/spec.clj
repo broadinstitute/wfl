@@ -60,7 +60,7 @@
                      :xx  ::items-xx))
 (s/def ::workflows (s/or :aou (s/* ::workflow-aou)
                          :wgs (s/+ ::workflow-wgs)
-                         :xx  (s/+ ::workflow-xx)))
+                         :xx  (s/* ::workflow-xx)))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -99,16 +99,17 @@
                                        ::unmapped_bam_suffix
                                        ::updated
                                        ::uuid]
-                              :req-un [::input_cram
-                                       ::sample_name]))
+                              :req-un [::input_cram]))
 
 ;; xx (External Exome Reprocessing)
-(s/def ::url string?) ; ideally test that it's a valid url too
-(s/def ::bucket ::url)
-(s/def ::samples (s/+ ::url))
 (s/def ::input_bam string?)
-(s/def ::items-xx (s/or ::bucket [::xx-workflow-inputs]))
-(s/def ::xx-workflow-inputs map?)
+(s/def ::items-xx (s/or ::bucket string?
+                        ::xx-workflow-inputs-list list?))
+
+(s/def ::workflow-xx
+  (s/keys
+    :opt-un [::status ::updated ::uuid]
+    :req-un [::inputs]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)
