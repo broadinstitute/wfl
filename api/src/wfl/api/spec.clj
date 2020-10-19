@@ -55,12 +55,19 @@
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
-(s/def ::items (s/or :aou (s/+ ::items-aou)
-                     :wgs (s/+ ::items-wgs)
-                     :xx  ::items-xx))
-(s/def ::workflows (s/or :aou (s/* ::workflow-aou)
-                         :wgs (s/+ ::workflow-wgs)
-                         :xx  (s/+ ::workflow-xx)))
+(s/def ::items (s/or :filesystem ::filesystem-inputs
+                     :indivudual (s/+ ::individual-inputs)))
+(s/def ::filesystem-inputs (s/or :xx ::bucket))
+(s/def ::individual-inputs (s/keys :opt-un [::inputs]))
+
+(s/def ::workflows (s/* (s/keys :opt-un [::inputs
+                                         ::updated
+                                         ::uuid
+                                         ::status])))
+
+(s/def ::inputs (s/or :aou ::aou-workflow-inputs
+                      :wgs ::wgs-workflow-inputs
+                      :xx  ::xx-workflow-inputs))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -74,40 +81,28 @@
                                                                ::analysis_version_number
                                                                ::chip_well_barcode]))))
 (s/def ::chip_well_barcode string?)
-(s/def ::items-aou (constantly true))     ; stub
+(s/def ::aou-workflow-inputs (constantly true))     ; stub
 (s/def ::notifications (s/* map?))
-(s/def ::workflow-aou map?)               ; stub
 
 ;; wgs
 (s/def ::base_file_name string?)
 (s/def ::final_gvcf_base_name string?)
 (s/def ::input_cram string?)
 (s/def ::reference_fasta_prefix string?)
-(s/def ::items-wgs (s/keys :opt-un [::base_file_name
-                                    ::final_gvcf_base_name
-                                    ::reference_fasta_prefix
-                                    ::sample_name
-                                    ::unmapped_bam_suffix]
-                           :req-un [::input_cram]))
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
-(s/def ::workflow-wgs (s/keys :opt-un [::base_file_name
-                                       ::final_gvcf_base_name
-                                       ::reference_fasta_prefix
-                                       ::sample_name
-                                       ::status
-                                       ::unmapped_bam_suffix
-                                       ::updated
-                                       ::uuid]
-                              :req-un [::input_cram
-                                       ::sample_name]))
+(s/def ::wgs-workflow-inputs (s/keys :opt-un [::base_file_name
+                                              ::final_gvcf_base_name
+                                              ::reference_fasta_prefix
+                                              ::sample_name
+                                              ::unmapped_bam_suffix]
+                                     :req-un [::input_cram]))
 
 ;; xx (External Exome Reprocessing)
 (s/def ::url string?) ; ideally test that it's a valid url too
 (s/def ::bucket ::url)
 (s/def ::samples (s/+ ::url))
 (s/def ::input_bam string?)
-(s/def ::items-xx (s/or ::bucket [::xx-workflow-inputs]))
 (s/def ::xx-workflow-inputs map?)
 
 ;; /api/v1/workflows
