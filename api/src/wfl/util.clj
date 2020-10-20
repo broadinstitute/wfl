@@ -94,7 +94,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
     filename))
 
 (defn basename
-  "strip directory and suffix from `filename`."
+  "Strip directory and suffix from `filename`."
   [filename]
   (if (= "/" filename)
     filename
