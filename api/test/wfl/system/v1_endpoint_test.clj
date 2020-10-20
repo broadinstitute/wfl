@@ -107,14 +107,26 @@
            (workloads/copyfile-workload-request src (str uri "output.txt"))])))))
 
 (deftest test-append-to-aou-workload
-  (testing "The `append_to_aou` endpoint appends a new workflow to aou workload."
-    (let [await (partial cromwell/wait-for-workflow-complete :aou-dev)]
-      (is (every? #{"Succeeded"}
-            (->>
-              (workloads/aou-workload-request (UUID/randomUUID))
-              (endpoints/exec-workload)
-              (endpoints/append-to-aou-workload [workloads/aou-sample])
-              (map (comp await :uuid))))))))
+  (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
+        workload (endpoints/exec-workload
+                   (workloads/aou-workload-request (UUID/randomUUID)))]
+    (testing "appending sample successfully launches an aou workflow"
+      (is
+        (every? #{"Succeeded"}
+          (map (comp await :uuid)
+            (endpoints/append-to-aou-workload [workloads/aou-sample] workload)))))
+    (testing "same sample does not start a new workflow"
+      (is
+        (empty?
+          (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
+    (testing "bumping version number starts a new workflow"
+      (is (= 1
+            (count
+              (endpoints/append-to-aou-workload
+                [(assoc workloads/aou-sample :analysis_version_number 2)]
+                workload)))))
+    (testing "appending an empty list of samples fails"
+      (is (thrown? Exception (endpoints/append-to-aou-workload [] workload))))))
 
 (deftest test-bad-pipeline
   (let [request
