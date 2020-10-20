@@ -35,7 +35,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
 (defn parse-json [^String object]
-  "parse json `object` into keyword->object map recursively"
+  "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
 ;; `x#` used here since `_` will fail in a macro.
