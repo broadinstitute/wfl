@@ -18,3 +18,12 @@
                              #{:wgs-dev :wgs-prod :wgs-staging} url))))
     (testing "unknown url"
       (is (nil? (all/cromwell-environments "https://no.such.cromwell/"))))))
+
+(deftest wdl-verison-in-edn
+  (let [wdls [aou/workflow-wdl
+              wgs/workflow-wdl
+              ukb/workflow-wdl
+              xx/workflow-wdl]
+        edn  (wfl/get-the-version)]
+    (testing "WDLs have their versions in version.edn"
+      (is (every? #(= (:release %) (edn (last (str/split (:top %) #"/")))) wdls)))))
