@@ -7,7 +7,8 @@
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.jdbc :as jdbc])
   (:import [java.util UUID]))
 
 (defn method-overload-fixture
@@ -68,6 +69,13 @@
 (def testing-dbname
   (:db-name (postgres/wfl-db-config)))
 
+(defn- postgres-db-config []
+  (->
+    (postgres/wfl-db-config)
+    (dissoc :instance-name)
+    (merge {:connection-uri "jdbc:postgresql:postgres"
+            :db-name        "postgres"})))
+
 (defn- create-db
   "Create the ad-hoc testing database with DBNAME."
   [dbname]
@@ -75,7 +83,8 @@
     ; cloud
     (util/shell! "gcloud" "sql" "databases" "create" dbname "-i" "zero-postgresql")
     ; local
-    (util/shell! "createdb" dbname)))
+    (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
+      (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname)))))
 
 (defn setup-db
   "Setup te db by running liquibase migrations by DBNAME."
@@ -85,9 +94,9 @@
       (let [url     (cloud-db-url :gotc-dev "zero-postgresql" dbname)
             secrets (-> env/stuff test-env :server :vault util/vault-secrets)]
         (liquibase/run-liquibase url changelog (:username secrets) (:password secrets)))
-      (let [url      (format "jdbc:postgresql:%s" dbname)
-            username (System/getenv "USER")]
-        (liquibase/run-liquibase url changelog username)))))
+      (let [url (format "jdbc:postgresql:%s" dbname)
+            {:keys [user password]} (postgres/wfl-db-config)]
+        (liquibase/run-liquibase url changelog user password)))))
 
 (defn- destroy-db
   "Tear down the testing database by DBNAME."
@@ -96,14 +105,15 @@
     ; cloud
     (util/shell! "gcloud" "sql" "databases" "delete" dbname "-i" "zero-postgresql")
     ; local
-    (util/shell! "dropdb" dbname)))
+    (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
+      (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname)))))
 
 (defn clean-db-fixture [f]
   "Wrapper for F so it runs in a clean db per invocation.
   This assumes not database with name testing-dbname
   has been manually created in the current testing environment."
+  (create-db testing-dbname)
   (try
-    (create-db testing-dbname)
     (setup-db testing-dbname)
     (f)
     (finally

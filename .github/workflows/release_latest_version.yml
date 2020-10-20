@@ -10,6 +10,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     env:
       MODULES: api ui
 
@@ -54,26 +69,27 @@ jobs:
           chmod 600 ~/.ssh/warp_deploy_key
           chmod 600 ~/.ssh/wfl_deploy_key
 
-          echo """
-           Host dsde-pipelines.github.com
-           HostName github.com
-           User git
-           IdentityFile ~/.ssh/dsde_pipelines_deploy_key
+          cat << EOF > ~/.ssh/config
+            Host dsde-pipelines.github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/dsde_pipelines_deploy_key
 
-           Host pipeline-config.github.com
-           HostName github.com
-           User git
-           IdentityFile ~/.ssh/pipeline_config_deploy_key
+            Host pipeline-config.github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/pipeline_config_deploy_key
 
-           Host warp.github.com
-           HostName github.com
-           User git
-           IdentityFile ~/.ssh/warp_deploy_key
+            Host warp.github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/warp_deploy_key
 
-           Host wfl.github.com
-           HostName github.com
-           User git
-           IdentityFile ~/.ssh/wfl_deploy_key """ > ~/.ssh/config
+            Host wfl.github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/wfl_deploy_key
+          EOF
 
       - name: Docker Login
         run: |
@@ -131,8 +147,14 @@ jobs:
       - name: Build
         run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=build
 
-      - name: Check
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=check
+      - name: Unit Test
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=unit
+
+      - name: Integration Test
+        env:
+          WFL_POSTGRES_USERNAME: postgres
+          WFL_POSTGRES_PASSWORD: postgres
+        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=integration
 
       - name: Images
         run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=images
