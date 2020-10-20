@@ -57,7 +57,7 @@
 ;; compound
 (s/def ::items (s/or :filesystem ::filesystem-inputs
                      :indivudual (s/+ ::individual-inputs)))
-(s/def ::filesystem-inputs (s/or :xx ::bucket))
+(s/def ::filesystem-inputs string?)
 (s/def ::individual-inputs (s/keys :opt-un [::inputs]))
 
 (s/def ::workflows (s/* (s/keys :opt-un [::inputs
@@ -99,9 +99,6 @@
                                      :req-un [::input_cram]))
 
 ;; xx (External Exome Reprocessing)
-(s/def ::url string?) ; ideally test that it's a valid url too
-(s/def ::bucket ::url)
-(s/def ::samples (s/+ ::url))
 (s/def ::input_bam string?)
 (s/def ::xx-workflow-inputs map?)
 
