@@ -87,7 +87,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
     string))
 
 (defn remove-extension
-  "remove the (last) file extension from `filename`, if one exists."
+  "Remove the (last) file extension from `filename`, if one exists."
   [filename]
   (if-let [idx (str/last-index-of filename ".")]
     (subs filename 0 idx)
