@@ -23,6 +23,7 @@
   (->> (endpoints/get-workloads) (map :uuid) set))
 
 (defn- verify-succeeded-workflow [workflow]
+  (is (map? (:inputs workflow)) "Every workflow should have nested inputs")
   (is (:updated workflow))
   (is (:uuid workflow))
   (is (= "Succeeded" (:status workflow))))
