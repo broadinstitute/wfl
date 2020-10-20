@@ -56,7 +56,7 @@
 
 ;; compound
 (s/def ::items (s/or :filesystem ::filesystem-inputs
-                     :indivudual (s/+ ::individual-inputs)))
+                     :individual (s/+ ::individual-inputs)))
 (s/def ::filesystem-inputs string?)
 (s/def ::individual-inputs (s/keys :opt-un [::inputs]))
 
