@@ -278,6 +278,13 @@
           (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
           (doall (map (partial update! tx) submitted-uuids-pks)))))))
 
+(defmethod workloads/load-workload-impl
+  pipeline
+  [tx workload]
+  (workloads/load-workflow-with-structure
+    tx workload {:inputs [:analysis_version_number
+                          :chip_well_barcode]}))
+
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
