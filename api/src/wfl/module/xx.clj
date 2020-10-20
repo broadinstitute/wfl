@@ -67,7 +67,7 @@
 
 (defn- get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
-    (if-not (empty? envs)                                   ; assuming prod and dev urls are different
+    (if-not (empty? envs) ;; assuming prod and dev urls are different
       (first envs)
       (throw
         (ex-info "No environment matching Cromwell URL."
@@ -80,7 +80,7 @@
     (merge inputs)
     (util/prefix-keys (keyword pipeline))))
 
-; visible for testing
+;; visible for testing
 (defn normalize-input-items
   "The `items` of this workload are either a bucket or a list of samples.
   Normalise these `items` into a list of samples"
@@ -97,7 +97,7 @@
           (remove nil?))))
     items))
 
-; visible for testing
+;; visible for testing
 (defn make-persisted-inputs [output-url common inputs]
   (let [sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
@@ -110,11 +110,11 @@
       (util/assoc-when util/absent? :destination_cloud_path
         (str (all/slashify output-url) (util/dirname path))))))
 
-; visible for testing
+;; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
   (letfn [(update-workflow [workflow cromwell-uuid]
             (assoc workflow :uuid cromwell-uuid
-                            :status "Submitted"             ; we've just submitted it
+                            :status "Submitted" ;; we've just submitted it
                             :updated (OffsetDateTime/now)))]
     (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
           environment (get-cromwell-environment workload)]
