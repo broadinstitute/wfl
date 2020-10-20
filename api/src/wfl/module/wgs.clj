@@ -106,7 +106,7 @@
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references (make-references ref-prefix))
-                   #_(merge fingerprinting) ;; Uncomment to enable fingerprinting
+                   (merge fingerprinting) ;; Uncomment to enable fingerprinting
                    (merge cram-ref)
                    (merge (env-inputs environment)
                           hack-task-level-values))
