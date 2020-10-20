@@ -20,7 +20,7 @@
 
 (def pipeline "ExternalExomeReprocessing")
 
-(def cromwell-labels
+(def ^:private cromwell-labels
   "The WDL label applied to Cromwell metadata."
   {(keyword wfl/the-name) pipeline})
 
@@ -29,7 +29,7 @@
   {:release "ExternalExomeReprocessing_v2.1.1"
    :top     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
 
-(def references-defaults
+(def ^:private references-defaults
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
     {:calling_interval_list      (str hg38 "exome_calling_regions.v1.interval_list")
      :contamination_sites_bed    (str hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed")
@@ -45,26 +45,42 @@
                                   (str hg38 "Homo_sapiens_assembly38.known_indels.vcf.gz.tbi")]
      :reference_fasta            (references/reference-fasta)}))
 
-(def scatter-settings-defaults
+(def ^:private scatter-settings-defaults
   {:haplotype_scatter_count     50
    :break_bands_at_multiples_of 0})
 
-(def papi-settings-defaults
+(def ^:private papi-settings-defaults
   {:agg_preemptible_tries 3
    :preemptible_tries     3})
 
-(def workflow-defaults
+(def ^:private workflow-defaults
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
-  {:unmapped_bam_suffix  ".unmapped.bam"
-   :cram_ref_fasta       (str hg38 "Homo_sapiens_assembly38.fasta")
-   :cram_ref_fasta_index (str hg38 "Homo_sapiens_assembly38.fasta.fai")
-   :bait_set_name        "whole_exome_illumina_coding_v1"
-   :bait_interval_list   (str hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list")
-   :target_interval_list (str hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list")
-   :references           references-defaults
-   :scatter_settings     scatter-settings-defaults
-   :papi_settings        papi-settings-defaults}))
+    {:unmapped_bam_suffix  ".unmapped.bam"
+     :cram_ref_fasta       (str hg38 "Homo_sapiens_assembly38.fasta")
+     :cram_ref_fasta_index (str hg38 "Homo_sapiens_assembly38.fasta.fai")
+     :bait_set_name        "whole_exome_illumina_coding_v1"
+     :bait_interval_list   (str hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list")
+     :target_interval_list (str hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list")
+     :references           references-defaults
+     :scatter_settings     scatter-settings-defaults
+     :papi_settings        papi-settings-defaults}))
 
+(defn- get-cromwell-environment [{:keys [cromwell]}]
+  (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
+    (if-not (empty? envs)                                   ; assuming prod and dev urls are different
+      (first envs)
+      (throw
+        (ex-info "No environment matching Cromwell URL."
+          {:cromwell cromwell})))))
+
+(defn- make-cromwell-inputs [environment inputs]
+  (->
+    (env/stuff environment)
+    (select-keys [:google_account_vault_path :vault_token_path])
+    (merge inputs)
+    (util/prefix-keys (keyword pipeline))))
+
+; visible for testing
 (defn normalize-input-items
   "The `items` of this workload are either a bucket or a list of samples.
   Normalise these `items` into a list of samples"
@@ -81,6 +97,7 @@
           (remove nil?))))
     items))
 
+; visible for testing
 (defn make-persisted-inputs [output-url common inputs]
   (let [sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
@@ -92,21 +109,6 @@
       (util/assoc-when util/absent? :final_gvcf_base_name basename)
       (util/assoc-when util/absent? :destination_cloud_path
         (str (all/slashify output-url) (util/dirname path))))))
-
-(defn- get-cromwell-environment [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
-    (if-not (empty? envs)                                   ; assuming prod and dev urls are different
-      (first envs)
-      (throw
-        (ex-info "No environment matching Cromwell URL."
-          {:cromwell cromwell})))))
-
-(defn- make-cromwell-inputs [environment inputs]
-  (->
-    (env/stuff environment)
-    (select-keys [:google_account_vault_path :vault_token_path])
-    (merge inputs)
-    (util/prefix-keys (keyword pipeline))))
 
 ; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
@@ -127,8 +129,7 @@
           (util/make-options environment)
           (merge cromwell-labels {:workload uuid}))))))
 
-(defn create-xx-workload!
-  [tx {:keys [output common_inputs items] :as request}]
+(defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
   (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
     (letfn [(make-workflow-record [id items]
               (->>
@@ -141,8 +142,7 @@
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-uuid tx uuid))))
 
-(defn start-xx-workload!
-  [tx {:keys [items id] :as workload}]
+(defn start-xx-workload! [tx {:keys [items id] :as workload}]
   (if (:started workload)
     workload
     (letfn [(update-record! [{:keys [id] :as workflow}]
