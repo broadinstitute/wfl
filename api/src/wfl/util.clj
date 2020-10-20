@@ -110,7 +110,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       "")))
 
 (defn deep-merge
-  "merge two or maps recursively.
+  "Merge two or more maps recursively.
   From https://clojuredocs.org/clojure.core/merge#example-5c4874cee4b0ca44402ef622"
   [a & maps]
   (if (map? a)
