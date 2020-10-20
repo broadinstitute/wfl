@@ -4,7 +4,6 @@
             [wfl.environments :as env]
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
-            [wfl.module.ukb :as ukb]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.wfl :as wfl]))
@@ -22,7 +21,6 @@
 (deftest wdl-verison-in-edn
   (let [wdls [aou/workflow-wdl
               wgs/workflow-wdl
-              ukb/workflow-wdl
               xx/workflow-wdl]
         edn  (wfl/get-the-version)]
     (testing "WDLs have their versions in version.edn"
