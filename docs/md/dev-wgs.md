@@ -126,13 +126,17 @@ Response:
   "release": "ExternalWholeGenomeReprocessing_v1.0",
   "created": "2020-10-05T15:50:01Z",
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
-  "workflows": [{
-    "updated": "2020-10-05T15:50:51Z",
-    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-    "sample_name": "TestSample1234",
-    "id": 1,
-    "uuid": "e12b2a43-2250-4e78-9261-f3d12b95d4d1"
-   }],
+  "workflows": [ 
+    {
+      "id": 1,
+      "updated": "2020-10-05T16:15:32Z",
+      "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    } 
+  ],
   "project": "PO-1234",
   "id": 30,
   "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
@@ -178,13 +182,17 @@ Response:
   "release": "ExternalWholeGenomeReprocessing_v1.0",
   "created": "2020-10-05T16:15:32Z",
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
-  "workflows": [ {
-    "updated": "2020-10-05T16:15:32Z",
-    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-    "sample_name": "TestSample1234",
-    "id": 1,
-    "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc"
-  } ],
+  "workflows": [ 
+    {
+      "id": 1,
+      "updated": "2020-10-05T16:15:32Z",
+      "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    } 
+  ],
   "project": "PO-1234",
   "id": 31,
   "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
@@ -214,14 +222,17 @@ Response:
   "release": "ExternalWholeGenomeReprocessing_v1.0",
   "created": "2020-08-27T16:26:59Z",
   "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
-  "workflows": [{
-    "updated": "2020-08-27T16:26:59Z",
-    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-    "sample_name": "NA12878 PLUMBING",
-    "base_file_name": "saman",
-    "id": 1,
-    "final_gvcf_base_name": "saman"
-  }],
+  "workflows": [ 
+    {
+      "id": 1,
+      "updated": "2020-10-05T16:15:32Z",
+      "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    } 
+  ],
   "project": "wgs-dev",
   "id": 6,
   "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
