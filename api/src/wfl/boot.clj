@@ -128,7 +128,7 @@
           clones (find-repos second-party)
           sources (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
-          edn (merge version clones (into {} (map frob wdls)))]
+          edn (merge version clones (into {} (map frob (concat wdls warp-wdls))))]
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
