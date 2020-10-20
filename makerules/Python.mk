@@ -4,7 +4,7 @@
 # `distclean`
 # Example:
 # REQUIRED_2P_REPOSREQUIRED_PYTHON_ENVIRONMENTITORIES := requirements.txt
-# include $(MAKE_INCLUDE_DIR)/Makefile.module
+# include $(MAKE_INCLUDE_DIR)/modules.mk
 #
 # # Then use
 # $(call using-python-enviroment, echo `which python`)

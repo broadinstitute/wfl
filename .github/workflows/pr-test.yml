@@ -114,6 +114,7 @@ jobs:
           echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
           echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
+
       - name: WFL Unit Test
         run: |
           make api TARGET=check
