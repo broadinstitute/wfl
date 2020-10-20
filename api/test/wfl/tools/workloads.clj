@@ -14,6 +14,13 @@
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
+(def wgs-inputs
+  {:unmapped_bam_suffix  ".unmapped.bam",
+   :sample_name          "NA12878 PLUMBING",
+   :base_file_name       "NA12878_PLUMBING",
+   :final_gvcf_base_name "NA12878_PLUMBING",
+   :input_cram           "develop/20k/NA12878_PLUMBING.cram"})
+
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
@@ -23,11 +30,7 @@
      :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
-     :items    [{:inputs {:unmapped_bam_suffix  ".unmapped.bam",
-                          :sample_name          "NA12878 PLUMBING",
-                          :base_file_name       "NA12878_PLUMBING",
-                          :final_gvcf_base_name "NA12878_PLUMBING",
-                          :input_cram           "develop/20k/NA12878_PLUMBING.cram"}}]}))
+     :items    [{:inputs wgs-inputs}]}))
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
