@@ -101,7 +101,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
     (last (str/split filename #"/"))))
 
 (defn dirname
-  "strip basename from `filename`"
+  "Strip basename from `filename`"
   [filename]
   (if (= "/" filename)
     filename
