@@ -73,7 +73,7 @@
                                                                ::chip_well_barcode]))))
 (s/def ::chip_well_barcode string?)
 (s/def ::items-aou (constantly true))     ; stub
-(s/def ::notifications (s/* map?))
+(s/def ::notifications (s/+ map?))
 (s/def ::workflow-aou map?)               ; stub
 
 ;; wgs
