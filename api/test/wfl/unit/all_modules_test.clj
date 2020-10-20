@@ -1,7 +1,13 @@
 (ns wfl.unit.all-modules-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest testing is]]
             [wfl.environments :as env]
-            [wfl.module.all :as all]))
+            [wfl.module.all :as all]
+            [wfl.module.aou :as aou]
+            [wfl.module.ukb :as ukb]
+            [wfl.module.wgs :as wgs]
+            [wfl.module.xx :as xx]
+            [wfl.wfl :as wfl]))
 
 (deftest test-cromwell-environments
   (let [url (get-in env/gotc-dev [:cromwell :url])]
