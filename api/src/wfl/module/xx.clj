@@ -96,10 +96,9 @@
     items))
 
 ;; visible for testing
-(defn make-combined-inputs-to-save
-  "combine any `common-inputs` with the workflow-specific `inputs` to save
-  later in the database for later."
-  [output-url common-inputs inputs]
+;; Note: the database stores per-workflow inputs so we need to combine
+;; any `common-inputs` with these before we commit them to storage.
+(defn make-combined-inputs-to-save [output-url common-inputs inputs]
   (let [sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
         basename    (or (:base_file_name inputs) (util/basename path))]
