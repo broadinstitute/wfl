@@ -81,8 +81,8 @@
                                                                ::analysis_version_number
                                                                ::chip_well_barcode]))))
 (s/def ::chip_well_barcode string?)
-(s/def ::aou-workflow-inputs (constantly true))     ; stub
-(s/def ::notifications (s/* map?))
+(s/def ::aou-workflow-inputs (constantly true)) ; stub
+(s/def ::notifications (s/+ map?))
 
 ;; wgs
 (s/def ::base_file_name string?)

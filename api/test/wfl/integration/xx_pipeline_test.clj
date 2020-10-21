@@ -110,11 +110,6 @@
                    (is (:updated workflow))))]
          (run! go! (:workflows workload))))))
 
-
-(deftest test-submit-workload!
-  (let [workload (create-workload! (make-xx-workload-request (UUID/randomUUID)))]
-    (run! #(is (:uuid %)) (xx/submit-workload! workload))))
-
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
     (letfn [(go! [inputs]

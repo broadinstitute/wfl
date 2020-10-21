@@ -35,7 +35,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
 (defn parse-json [^String object]
-  "parse json `object` into keyword->object map recursively"
+  "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
 ;; `x#` used here since `_` will fail in a macro.
@@ -87,21 +87,21 @@ vault.client.http/http-client                               ; Keep :clint eastwo
     string))
 
 (defn remove-extension
-  "remove the (last) file extension from `filename`, if one exists."
+  "Remove the (last) file extension from `filename`, if one exists."
   [filename]
   (if-let [idx (str/last-index-of filename ".")]
     (subs filename 0 idx)
     filename))
 
 (defn basename
-  "strip directory and suffix from `filename`."
+  "Strip directory and suffix from `filename`."
   [filename]
   (if (= "/" filename)
     filename
     (last (str/split filename #"/"))))
 
 (defn dirname
-  "strip basename from `filename`"
+  "Strip basename from `filename`"
   [filename]
   (if (= "/" filename)
     filename
@@ -110,7 +110,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       "")))
 
 (defn deep-merge
-  "merge two or maps recursively.
+  "Merge two or more maps recursively.
   From https://clojuredocs.org/clojure.core/merge#example-5c4874cee4b0ca44402ef622"
   [a & maps]
   (if (map? a)

@@ -1,7 +1,7 @@
 # Makefile for the cloud_function module
 
 REQUIRED_PYTHON_ENVIRONMENT := dev-requirements.txt
-include $(MAKE_INCLUDE_DIR)/Makefile.module
+include $(MAKE_INCLUDE_DIR)/modules.mk
 
 SRC_DIR  := $(MODULE_DIR)
 TEST_DIR := $(MODULE_DIR)/tests

@@ -9,6 +9,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -43,7 +59,7 @@ jobs:
           chmod 600 ~/.ssh/warp_deploy_key
           chmod 600 ~/.ssh/wfl_deploy_key
 
-          echo """
+          cat << EOF > ~/.ssh/config
             Host dsde-pipelines.github.com
             HostName github.com
             User git
@@ -62,7 +78,8 @@ jobs:
             Host wfl.github.com
             HostName github.com
             User git
-            IdentityFile ~/.ssh/wfl_deploy_key """ > ~/.ssh/config
+            IdentityFile ~/.ssh/wfl_deploy_key
+          EOF
 
       - name: Pre-Build
         run: make api TARGET=prebuild
@@ -114,10 +131,15 @@ jobs:
           echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
           echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
-      - name: WFL Unit Test
-        run: |
-          make api TARGET=check
+
+      - name: Unit Test
+        run: make api TARGET=unit
+
+      - name: Integration Test
+        env:
+          WFL_POSTGRES_USERNAME: postgres
+          WFL_POSTGRES_PASSWORD: postgres
+        run: make api TARGET=integration
 
       - name: Cloud Function Unit Test
-        run: |
-          make cloud_function TARGET=check
+        run: make cloud_function TARGET=check

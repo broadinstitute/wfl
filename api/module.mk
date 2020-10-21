@@ -1,7 +1,7 @@
 # Makefile for the wfl/api module
 
 REQUIRED_2P_REPOSITORIES := dsde-pipelines pipeline-config warp
-include $(MAKE_INCLUDE_DIR)/Makefile.module
+include $(MAKE_INCLUDE_DIR)/modules.mk
 
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
 RESOURCES_DIR         := $(MODULE_DIR)/resources
@@ -35,10 +35,16 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
-LOGFILE := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
+$(UNIT): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
-	$(CLOJURE) $(CLJFLAGS) -A:test unit | $(TEE) $(LOGFILE)
+	$(CLOJURE) $(CLJFLAGS) -A:test unit | \
+	$(TEE) $(DERIVED_MODULE_DIR)/unit.log
+	@$(TOUCH) $@
+
+$(INTEGRATION): $(SCM_SRC) $(SCM_RESOURCES) $(CLOJURE_PROJECT)
+	$(EXPORT) CPCACHE=$(CPCACHE_DIR);                        \
+	$(CLOJURE) $(CLJFLAGS) -A:test integration | \
+	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
