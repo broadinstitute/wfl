@@ -57,10 +57,13 @@
 ;; compound
 (s/def ::items (s/or :aou (s/+ ::items-aou)
                      :wgs (s/+ ::items-wgs)
-                     :xx  ::items-xx))
+                     :xx (s/or
+                           ::bucket string?
+                           ::xx-items-list (s/* ::xx-items))))
+
 (s/def ::workflows (s/or :aou (s/* ::workflow-aou)
                          :wgs (s/+ ::workflow-wgs)
-                         :xx  (s/* ::workflow-xx)))
+                         :xx  (s/* ::xx-workflow)))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -103,13 +106,10 @@
 
 ;; xx (External Exome Reprocessing)
 (s/def ::input_bam string?)
-(s/def ::items-xx (s/or ::bucket string?
-                        ::xx-workflow-inputs-list list?))
-
-(s/def ::workflow-xx
-  (s/keys
-    :opt-un [::status ::updated ::uuid]
-    :req-un [::inputs]))
+(s/def ::xx-items (s/keys :req-un [(or ::input_bam ::input_cram)]))
+(s/def ::xx-workflow (s/keys
+                       :opt-un [::status ::updated ::uuid]
+                       :req-un [::inputs]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)
