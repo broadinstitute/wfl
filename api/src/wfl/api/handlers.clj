@@ -19,9 +19,9 @@
   (log/warn "Endpoint returned 400 failure response:")
   (log/warn body)
   (-> body
-      (.getMessage)
-      ;(Throwable->map)
-      ;(dissoc :trace :via :data)
+      ;(.getMessage)
+      (Throwable->map)
+      (dissoc :trace :via :data)
       (response/bad-request!)
       ))
 
