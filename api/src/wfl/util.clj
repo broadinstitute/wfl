@@ -31,8 +31,12 @@ vault.client.http/http-client                               ; Keep :clint eastwo
 
 ;; Parsers that will not throw.
 ;;
-(defn parse-int     [s] (do-or-nil (Integer/parseInt s)))
-(defn parse-boolean [s] (do-or-nil (Boolean/valueOf  s)))
+(defn parse-int [s] (do-or-nil (Integer/parseInt s)))
+(defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
+
+(defn parse-json [^String object]
+  "Parse json `object` into keyword->object map recursively"
+  (json/read-str object :key-fn keyword))
 
 ;; `x#` used here since `_` will fail in a macro.
 (defmacro do-or-nil-silently
@@ -46,8 +50,8 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "Nil or the JSON in FILE."
   [file]
   (do-or-nil
-   (with-open [^java.io.Reader in (io/reader file)]
-     (json/read in :key-fn keyword))))
+    (with-open [^java.io.Reader in (io/reader file)]
+      (json/read in :key-fn keyword))))
 
 (defn spit-json
   "Throw or write EDN CONTENT to FILE as JSON."
@@ -61,9 +65,9 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [path]
   (let [token-path (str (System/getProperty "user.home") "/.vault-token")]
     (try (vault/read-secret
-          (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token (slurp token-path)))
-          path)
+           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
+             (vault/authenticate! :token (slurp token-path)))
+           path)
          (catch Throwable e
            (log/warn e "Issue with Vault")
            (log/debug "Perhaps run 'vault login' and try again")))))
@@ -81,6 +85,45 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   (if (str/ends-with? string suffix)
     (subs string 0 (- (count string) (count suffix)))
     string))
+
+(defn remove-extension
+  "Remove the (last) file extension from `filename`, if one exists."
+  [filename]
+  (if-let [idx (str/last-index-of filename ".")]
+    (subs filename 0 idx)
+    filename))
+
+(defn basename
+  "Strip directory and suffix from `filename`."
+  [filename]
+  (if (= "/" filename)
+    filename
+    (last (str/split filename #"/"))))
+
+(defn dirname
+  "Strip basename from `filename`"
+  [filename]
+  (if (= "/" filename)
+    filename
+    (if-let [idx (str/last-index-of filename "/" (- (count filename) 2))]
+      (if (= idx 0) "/" (subs filename 0 idx))
+      "")))
+
+(defn deep-merge
+  "Merge two or more maps recursively.
+  From https://clojuredocs.org/clojure.core/merge#example-5c4874cee4b0ca44402ef622"
+  [a & maps]
+  (if (map? a)
+    (apply merge-with deep-merge a maps)
+    (apply merge-with deep-merge maps)))
+
+(defmacro assoc-when
+  "Associate `key` `value` mapping in `coll` when `pred key value`,
+  otherwise `coll`"
+  [coll pred key value]
+  `(if (~pred ~coll ~key)
+     (assoc ~coll ~key ~value)
+     ~coll))
 
 (defn delete-tree
   "Recursively delete a sequence of FILES."
@@ -124,9 +167,9 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   sequences for HTTP pagination callbacks and so on."
   [coll]
   (lazy-seq
-   (when (seq coll)
-     (cons (first coll)
-           (lazy-unchunk (rest coll))))))
+    (when (seq coll)
+      (cons (first coll)
+        (lazy-unchunk (rest coll))))))
 
 (defn keys-in
   "Return all keys used in any maps in TREE."
@@ -134,9 +177,9 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   (letfn [(follow? [node]
             (or (map? node) (vector? node) (set? node) (list? node)))]
     (reduce into #{}
-            (remove nil?
-                    (map (fn [node] (when (map? node) (keys node)))
-                         (tree-seq follow? identity tree))))))
+      (remove nil?
+        (map (fn [node] (when (map? node) (keys node)))
+          (tree-seq follow? identity tree))))))
 
 (defn fmap
   "Map the function F over the values in map M."
@@ -147,31 +190,31 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "The number of minutes from START to END."
   [start end]
   (. ChronoUnit/MINUTES between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+    (OffsetDateTime/parse start)
+    (OffsetDateTime/parse end)))
 
 (defn seconds-between
   "The number of seconds from START to END."
   [start end]
   (. ChronoUnit/SECONDS between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+    (OffsetDateTime/parse start)
+    (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."
   [commands]
   (let [indent (str/join (repeat 4 \space))]
     (apply concat
-           (for [[n f] (sort-by first commands)]
-             (let [{:keys [arglists doc]} (meta f)
-                   command (apply pr-str (first arglists))]
-               [(str/join " " [" " n command]) (str indent doc)])))))
+      (for [[n f] (sort-by first commands)]
+        (let [{:keys [arglists doc]} (meta f)
+              command (apply pr-str (first arglists))]
+          [(str/join " " [" " n command]) (str indent doc)])))))
 
 (defn prefix-keys
   "Prefix all keys in map M with P."
   [m p]
   (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
-          (vals m)))
+    (vals m)))
 
 (defn absent?
   "Test if `coll` does not contain `key`.
@@ -180,16 +223,26 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [coll key]
   (not (contains? coll key)))
 
+(defn on
+  "Apply the function `g` `on` the results of mapping the unary function `f`
+  over each of the input arguments in `xs`.
+  Example:
+  Consider two maps `a` and `b` with members `:uuid`:
+     (on = :uuid a b) === (= (:uuid a) (:uuid b))
+  "
+  [g f & xs]
+  (apply g (mapv f xs)))
+
 (defn exome-inputs
   "Exome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   (let [{:keys [google_account_vault_path vault_token_path]}
         (env/stuff environment)]
-    {:unmapped_bam_suffix ".unmapped.bam"
+    {:unmapped_bam_suffix       ".unmapped.bam"
      :google_account_vault_path google_account_vault_path
-     :vault_token_path vault_token_path
-     :papi_settings {:agg_preemptible_tries 3
-                     :preemptible_tries     3}}))
+     :vault_token_path          vault_token_path
+     :papi_settings             {:agg_preemptible_tries 3
+                                 :preemptible_tries     3}}))
 
 (def gatk-docker-inputs
   "This is silly."
@@ -198,12 +251,12 @@ vault.client.http/http-client                               ; Keep :clint eastwo
         br   (prefix-keys gatk :BaseRecalibrator)
         gbr  (prefix-keys gatk :GatherBqsrReports)]
     (-> (merge ab br gbr)
-        (prefix-keys :UnmappedBamToAlignedBam)
-        (prefix-keys :UnmappedBamToAlignedBam)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeReprocessing)
-        (prefix-keys :ExomeReprocessing))))
+      (prefix-keys :UnmappedBamToAlignedBam)
+      (prefix-keys :UnmappedBamToAlignedBam)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeReprocessing)
+      (prefix-keys :ExomeReprocessing))))
 
 (def gc_bias_metrics-inputs
   "This is silly too."
@@ -211,11 +264,11 @@ vault.client.http/http-client                               ; Keep :clint eastwo
         cam  (prefix-keys bias :CollectAggregationMetrics)
         qm   (prefix-keys bias :CollectReadgroupBamQualityMetrics)]
     (-> (merge cam qm)
-        (prefix-keys :AggregatedBamQC.AggregatedBamQC)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeGermlineSingleSample)
-        (prefix-keys :ExomeReprocessing)
-        (prefix-keys :ExomeReprocessing))))
+      (prefix-keys :AggregatedBamQC.AggregatedBamQC)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeGermlineSingleSample)
+      (prefix-keys :ExomeReprocessing)
+      (prefix-keys :ExomeReprocessing))))
 
 (defn seeded-shuffle
   "Randomize COLL consistently."
@@ -233,30 +286,30 @@ vault.client.http/http-client                               ; Keep :clint eastwo
           "us-east1"    "bcd"
           "us-east4"    "abc"
           "us-west1"    "abc"
-          #_#_"us-west2"  "abc"}
-         (mapcat spray)
-         seeded-shuffle
-         (str/join " "))))
+          #_#_"us-west2" "abc"}
+      (mapcat spray)
+      seeded-shuffle
+      (str/join " "))))
 
 (defn make-options
   "Make options to run the workflow in ENVIRONMENT."
   [environment]
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
-    (let [gcr    "us.gcr.io"
-          repo   "broad-gotc-prod"
-          image  "genomes-in-the-cloud:2.4.3-1564508330"
+    (let [gcr   "us.gcr.io"
+          repo  "broad-gotc-prod"
+          image "genomes-in-the-cloud:2.4.3-1564508330"
           {:keys [cromwell google]} (env/stuff environment)
           {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend           "PAPIv2"
-           :google_project    (rand-nth projects)
-           :jes_gcs_root      (rand-nth jes_roots)
-           :read_from_cache   true
-           :write_to_cache    true
+      (-> {:backend         "PAPIv2"
+           :google_project  (rand-nth projects)
+           :jes_gcs_root    (rand-nth jes_roots)
+           :read_from_cache true
+           :write_to_cache  true
            :default_runtime_attributes
-           {:docker    (str/join "/" [gcr repo image])
-            :zones     google-cloud-zones}}
-          (maybe :monitoring_script cromwell)
-          (maybe :noAddress noAddress)))))
+                            {:docker (str/join "/" [gcr repo image])
+                             :zones  google-cloud-zones}}
+        (maybe :monitoring_script cromwell)
+        (maybe :noAddress noAddress)))))
 
 (comment
   (make-options :gotc-dev))
@@ -267,8 +320,8 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   (let [result (parse-int int-string)]
     (when-not (nat-int? result)
       (throw (IllegalArgumentException.
-              (format "%s must be a non-negative integer"
-                      (if (nil? result) "" (format " (%s)" result))))))
+               (format "%s must be a non-negative integer"
+                 (if (nil? result) "" (format " (%s)" result))))))
     result))
 
 (defonce the-system-environment (delay (into {} (System/getenv))))
@@ -286,9 +339,9 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "Spit CONTENT into FILE as YAML, optionally adding COMMENTS."
   [file content & comments]
   (let [header (if (empty? comments) ""
-                   (str "# " (str/join "\n# " comments) "\n\n"))
-        yaml (yaml/generate-string content
-                                   :dumper-options {:flow-style :block})]
+                                     (str "# " (str/join "\n# " comments) "\n\n"))
+        yaml   (yaml/generate-string content
+                 :dumper-options {:flow-style :block})]
     (spit file (str header yaml))))
 
 (defn shell!
@@ -329,7 +382,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "True when UUID is UUID-NIL or its string representation."
   [uuid]
   (or (= uuid uuid-nil)
-      (= uuid (str uuid-nil))))
+    (= uuid (str uuid-nil))))
 
 (defn extract-resource
   "Extract the resource given by RESOURCE-NAME to a temporary folder

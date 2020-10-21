@@ -14,9 +14,9 @@
 (s/def ::cromwell string?)
 (s/def ::environment string?)
 (s/def ::finished inst?)
-(s/def ::id pos-int?)
 (s/def ::input string?)
 (s/def ::output string?)
+(s/def ::common_inputs map?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
@@ -30,14 +30,15 @@
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
-(s/def ::workload-request (s/keys :req-un [::cromwell
-                                           ::input
+(s/def ::workload-request (s/keys :opt-un [::input
+                                           ::common_inputs]
+                                  :req-un [::cromwell
                                            ::items
                                            ::output
                                            ::pipeline
                                            ::project]))
 (s/def ::workload-response (s/keys :opt-un [::finished
-                                            ::pipeline
+                                            ::input
                                             ::started
                                             ::wdl
                                             ::workflows]
@@ -45,9 +46,8 @@
                                             ::created
                                             ::creator
                                             ::cromwell
-                                            ::id
-                                            ::input
                                             ::output
+                                            ::pipeline
                                             ::project
                                             ::release
                                             ::uuid
@@ -56,9 +56,14 @@
 
 ;; compound
 (s/def ::items (s/or :aou (s/+ ::items-aou)
-                     :wgs (s/+ ::items-wgs)))
+                     :wgs (s/+ ::items-wgs)
+                     :xx (s/or
+                           ::bucket string?
+                           ::xx-items-list (s/* ::xx-items))))
+
 (s/def ::workflows (s/or :aou (s/* ::workflow-aou)
-                         :wgs (s/+ ::workflow-wgs)))
+                         :wgs (s/+ ::workflow-wgs)
+                         :xx  (s/* ::xx-workflow)))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -97,8 +102,14 @@
                                        ::unmapped_bam_suffix
                                        ::updated
                                        ::uuid]
-                              :req-un [::id
-                                       ::input_cram]))
+                              :req-un [::input_cram]))
+
+;; xx (External Exome Reprocessing)
+(s/def ::input_bam string?)
+(s/def ::xx-items (s/keys :req-un [(or ::input_bam ::input_cram)]))
+(s/def ::xx-workflow (s/keys
+                       :opt-un [::status ::updated ::uuid]
+                       :req-un [::inputs]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)

@@ -268,6 +268,22 @@
                                    options
                                    labels)))
 
+(defn submit-workflows
+  "Submit one or more workflows to cromwell.
+  Parameters:
+   ENVIRONMENT - Cromwell Deployment Environment
+   WDL         - Workflow WDL to be executed
+   IMPORTS-ZIP - Zip archive of WDL dependencies
+   INPUTS      - Sequence of workflow inputs
+   OPTIONS     - Workflow options for entire batch
+   LABELS      - Labels to apply to each workflow
+
+  Return:
+   List of UUIDS for each workflow as reported by cromwell."
+  [environment wdl imports-zip inputs options labels]
+  ; todo: call the batch endpoint
+  (mapv #(submit-workflow environment wdl imports-zip % options labels) inputs))
+
 (defn work-around-cromwell-fail-bug
   "Wait 2 seconds and ignore up to N times a bogus failure response from
   Cromwell for workflow ID in ENVIRONMENT.  Work around the 'sore spot'
