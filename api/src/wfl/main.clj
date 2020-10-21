@@ -45,7 +45,6 @@
                        wfl.metadata
                        wfl.module.ukb
                        wfl.module.wgs
-                       wfl.module.xx
                        wfl.server]]
       (assoc (zipmap (map namify namespaces) (map varify namespaces))
              "help"         #'help

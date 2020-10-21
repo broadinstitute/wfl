@@ -12,3 +12,51 @@
       (is (FileUtils/contentEquals (io/file "resources/wdl/copyfile.wdl") resource))))
   (testing "invalid resources should throw"
     (is (thrown? IOException (util/extract-resource "/foo/bar.baz")))))
+
+(defn testing-equality-on [transform]
+  (fn [[input expected]]
+    (is (= expected (transform input)))))
+
+(deftest test-basename
+  (let [go         (testing-equality-on util/basename)
+        parameters [["" ""]
+                    ["/" "/"]
+                    ["foo" "foo"]
+                    ["/path/to/foo" "foo"]
+                    ["path/to/foo" "foo"]
+                    ["./path/to/foo/" "foo"]]]
+    (run! go parameters)))
+
+(deftest test-remove-extension
+  (let [go         (testing-equality-on util/remove-extension)
+        parameters [["file" "file"]
+                    ["file.txt" "file"]
+                    ["file.tar.gz" "file.tar"]
+                    ["file." "file"]
+                    ["" ""]]]
+    (run! go parameters)))
+
+(deftest test-dirname
+  (let [go         (testing-equality-on util/dirname)
+        parameters [["" ""]
+                    ["/" "/"]
+                    ["foo.txt" ""]
+                    ["path/to/foo" "path/to"]
+                    ["/path/to/foo/" "/path/to"]]]
+    (run! go parameters)))
+
+(deftest test-deep-merge
+  (letfn [(go [[first second expected]]
+            (is (= expected (util/deep-merge first second))))]
+    (let [parameters [[nil nil nil]
+                      [nil {} {}]
+                      [{} nil {}]
+                      [{} {} {}]
+                      [{:a 0} {:b 1} {:a 0 :b 1}]
+                      [{:a 0} {:a 1} {:a 1}]
+                      [{:a {:b {:c 0}}} {:a {:b {:d 1}}} {:a {:b {:c 0 :d 1}}}]]]
+      (run! go parameters))))
+
+(deftest test-assoc-when
+  (is (= {:a 2} (util/assoc-when {:a 1} contains? :a 2)))
+  (is (= {:a 1} (util/assoc-when {:a 1} (constantly false) :a 2))))

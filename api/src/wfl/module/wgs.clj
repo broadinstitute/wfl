@@ -21,7 +21,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ExternalWholeGenomeReprocessing_v1.1.0"
+  {:release "ExternalWholeGenomeReprocessing_v1.1.1"
    :top     "pipelines/broad/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
 
 (def cromwell-label-map
@@ -38,14 +38,6 @@
   "Transduce Cromwell URL to a :wgs environment."
   (comp first (partial all/cromwell-environments
                 #{:wgs-dev :wgs-prod :wgs-staging})))
-
-(def fingerprinting
-  "Fingerprinting inputs for wgs."
-  (let [fp   (str "single_sample/plumbing/bams/20k/NA12878_PLUMBING"
-               ".hg38.reference.fingerprint")
-        storage "gs://broad-gotc-test-storage/"]
-    {:fingerprint_genotypes_file  (str storage fp ".vcf.gz")
-     :fingerprint_genotypes_index (str storage fp ".vcf.gz.tbi")}))
 
 (def cram-ref
   "Ref Fasta for CRAM."
@@ -72,10 +64,7 @@
          (-> {:disable_sanity_check true}
              (util/prefix-keys :CheckContamination)
              (util/prefix-keys :UnmappedBamToAlignedBam)
-             (util/prefix-keys :UnmappedBamToAlignedBam)
              (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeGermlineSingleSample)
-             (util/prefix-keys :WholeGenomeReprocessing)
              (util/prefix-keys :WholeGenomeReprocessing))))
 
 (defn env-inputs
@@ -106,7 +95,6 @@
                    (assoc input-key in-gs)
                    (assoc :destination_cloud_path (str out-gs out-dir))
                    (assoc :references (make-references ref-prefix))
-                   #_(merge fingerprinting) ;; Uncomment to enable fingerprinting
                    (merge cram-ref)
                    (merge (env-inputs environment)
                           hack-task-level-values))

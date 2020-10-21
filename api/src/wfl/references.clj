@@ -3,21 +3,19 @@
 
 (defn reference_fasta
   "Default value for references.reference_fastas."
-  ([ref-prefix]
-   (let [default "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
-         prefix (partial str (or ref-prefix default))]
-       {:ref_dict        (prefix ".dict")
-        :ref_fasta       (prefix ".fasta")
-        :ref_fasta_index (prefix ".fasta.fai")
-        :ref_ann         (prefix ".fasta.64.ann")
-        :ref_bwt         (prefix ".fasta.64.bwt")
-        :ref_pac         (prefix ".fasta.64.pac")
-        :ref_alt         (prefix ".fasta.64.alt")
-        :ref_amb         (prefix ".fasta.64.amb")
-        :ref_sa          (prefix ".fasta.64.sa")}))
+  ([prefix]
+   {:ref_dict        (str prefix ".dict")
+    :ref_fasta       (str prefix ".fasta")
+    :ref_fasta_index (str prefix ".fasta.fai")
+    :ref_ann         (str prefix ".fasta.64.ann")
+    :ref_bwt         (str prefix ".fasta.64.bwt")
+    :ref_pac         (str prefix ".fasta.64.pac")
+    :ref_alt         (str prefix ".fasta.64.alt")
+    :ref_amb         (str prefix ".fasta.64.amb")
+    :ref_sa          (str prefix ".fasta.64.sa")})
   ([]
-   (let [prefix "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"]
-     (reference_fasta prefix))))
+   (reference_fasta
+     "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38")))
 
 (defn hg38-genome-references
   "HG38 reference files for genome reprocessing."
