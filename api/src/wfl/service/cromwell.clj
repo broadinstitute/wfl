@@ -270,7 +270,7 @@
 
 (defn submit-workflows
   "Submit one or more workflows to cromwell.
-  Formal Parameters:
+  Parameters:
    ENVIRONMENT - Cromwell Deployment Environment
    WDL         - Workflow WDL to be executed
    IMPORTS-ZIP - Zip archive of WDL dependencies

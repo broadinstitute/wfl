@@ -100,7 +100,8 @@
 
 ;; xx (External Exome Reprocessing)
 (s/def ::input_bam string?)
-(s/def ::xx-workflow-inputs map?)
+(s/def ::xx-workflow-inputs (s/keys :opt-un [::input_bam
+                                             ::input_cram]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)

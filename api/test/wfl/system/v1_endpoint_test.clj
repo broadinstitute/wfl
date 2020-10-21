@@ -50,8 +50,7 @@
                 (let [include [:pipeline :cromwell :project]]
                   (is (= (select-keys request include) (select-keys workload include))))
                 (conj uuids uuid))))]
-    (reduce
-      go!
+    (reduce go!
       (get-existing-workload-uuids)
       [(workloads/wgs-workload-request (UUID/randomUUID))
        (workloads/aou-workload-request (UUID/randomUUID))
@@ -75,8 +74,7 @@
         (->
           (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
-        (run!
-          go!
+        (run! go!
           [(create-wgs-workload)
            (create-aou-workload)
            (create-xx-workload)
@@ -100,11 +98,9 @@
                 (conj uuids uuid))))]
     (with-temporary-gcs-folder uri
       (let [src (str uri "input.txt")]
-        (->
-          (str/join "/" ["test" "resources" "copy-me.txt"])
+        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
-        (reduce
-          go!
+        (reduce go!
           (get-existing-workload-uuids)
           [(workloads/wgs-workload-request (UUID/randomUUID))
            (workloads/aou-workload-request (UUID/randomUUID))
@@ -125,7 +121,7 @@
         (empty?
           (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
     (testing "bumping version number starts a new workflow"
-      (is (= 1
+      (is (== 1
             (count
               (endpoints/append-to-aou-workload
                 [(assoc workloads/aou-sample :analysis_version_number 2)]
@@ -135,8 +131,7 @@
 
 (deftest test-bad-pipeline
   (let [request
-        (->
-          (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+        (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
           (assoc :pipeline "geoff"))]
     (testing "create-workload! fails with bad request"
       (is (thrown? ExceptionInfo (endpoints/create-workload request))))

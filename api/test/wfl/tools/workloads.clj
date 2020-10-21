@@ -81,6 +81,17 @@
      :common_inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}
      :items         [{:inputs {:input_cram (str test-storage "NA12878_PLUMBING.cram")}}]}))
 
+(defn xx-workload-request
+  [identifier]
+  "A whole genome sequencing workload used for testing."
+  (let [test-storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
+    {:cromwell      (get-in stuff [:gotc-dev :cromwell :url])
+     :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+     :pipeline      xx/pipeline
+     :project       (format "(Test) %s" @git-branch)
+     :common_inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}
+     :items         [{:input_cram (str test-storage "NA12878_PLUMBING.cram")}]}))
+
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
   [done! {:keys [cromwell] :as workload}]

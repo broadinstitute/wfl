@@ -223,6 +223,16 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [coll key]
   (not (contains? coll key)))
 
+(defn on
+  "Apply the function `g` `on` the results of mapping the unary function `f`
+  over each of the input arguments in `xs`.
+  Example:
+  Consider two maps `a` and `b` with members `:uuid`:
+     (on = :uuid a b) === (= (:uuid a) (:uuid b))
+  "
+  [g f & xs]
+  (apply g (mapv f xs)))
+
 (defn exome-inputs
   "Exome inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
