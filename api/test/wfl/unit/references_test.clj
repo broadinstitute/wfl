@@ -5,8 +5,10 @@
 
 (deftest prefix-handling
   (testing "reference_fasta function"
-    (testing "treats nil as no arg"
-      (is (= (references/reference_fasta) (references/reference_fasta nil))))
+    (testing "treats nil/empty as no arg"
+      (is (= (references/reference_fasta)
+             (references/reference_fasta nil)
+             (references/reference_fasta ""))))
     (testing "supplies a bucket prefix if no arg"
       (run! #(is (str/starts-with? % "gs://")) (vals (references/reference_fasta))))
     (testing "uses a given prefix"
