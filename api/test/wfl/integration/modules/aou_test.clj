@@ -11,6 +11,7 @@
 (use-fixtures :once fixtures/clean-db-fixture)
 
 (defn mock-submit-workload [& _] (UUID/randomUUID))
+(def mock-cromwell-status (constantly "Succeeded"))
 
 (defn- make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
@@ -51,3 +52,17 @@
        (thrown? Exception
          (append-to-workload! [workloads/aou-sample]
            (workloads/create-workload! (make-aou-workload-request)))))))
+
+(deftest test-aou-cannot-be-stopped!
+  (with-redefs-fn {#'aou/submit-aou-workflow  mock-submit-workload
+                   #'postgres/cromwell-status mock-cromwell-status}
+    #(let [workload (-> (make-aou-workload-request)
+                      (workloads/execute-workload!)
+                      (workloads/update-workload!))]
+       (is (not (:finished workload)))
+       (append-to-workload! [workloads/aou-sample] workload)
+       (let [workload (workloads/load-workload-for-uuid (:uuid workload))]
+         (is (every? (comp #{"Submitted"} :status) (:workflows workload)))
+         (let [workload (workloads/update-workload! workload)]
+           (is (every? (comp #{"Succeeded"} :status) (:workflows workload)))
+           (is (not (:finished workload))))))))

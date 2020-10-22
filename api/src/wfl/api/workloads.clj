@@ -29,16 +29,18 @@
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
   [tx uuid]
-  (when-first [workload (jdbc/query tx
-                          ["SELECT * FROM workload WHERE uuid = ?" uuid])]
-    (load-workload-impl tx workload)))
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
+    (when (empty? workloads)
+      (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
+    (load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
-  (when-first [workload (jdbc/query tx
-                          ["SELECT * FROM workload WHERE id = ?" id])]
-    (load-workload-impl tx workload)))
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
+    (when (empty? workloads)
+      (throw (ex-info "No workload found matching id" {:id id})))
+    (load-workload-impl tx (first workloads))))
 
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
@@ -70,25 +72,37 @@
 (defmethod execute-workload!
   :default
   [tx workload-request]
-  (start-workload! tx (create-workload! tx workload-request)))
+  (try
+    (start-workload! tx (create-workload! tx workload-request))
+    (catch Throwable cause
+      (throw (ex-info "Error executing workload request"
+               {:workload-request workload-request} cause)))))
 
 (defmethod update-workload!
   :default
   [tx workload]
-  (postgres/update-workload! tx workload)
-  (load-workload-for-id tx (:id workload)))
+  (try
+    (postgres/update-workload! tx workload)
+    (load-workload-for-id tx (:id workload))
+    (catch Throwable cause
+      (throw (ex-info "Error updating workload"
+               {:workload workload} cause)))))
 
 (defmethod load-workload-impl
   :default
   [tx workload]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (->>
-      (postgres/get-table tx (:items workload))
-      (map unnilify)
-      (assoc workload :workflows)
-      unnilify)))
+  (try
+    (letfn [(unnilify [m] (into {} (filter second m)))]
+      (->>
+        (postgres/get-table tx (:items workload))
+        (map unnilify)
+        (assoc workload :workflows)
+        unnilify))
+    (catch Throwable cause
+      (throw (ex-info "Error loading workload"
+               {:workload workload} cause)))))
 
-(defn load-workflow-with-structure
+#_(defn load-workflow-with-structure
   "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
   [tx workload structure]
   (letfn [(restructure-once [workflow new-key old-keys]
@@ -97,3 +111,4 @@
             (map #(reduce-kv restructure-once % structure) workflows))]
     ;; We're calling clojure.lang.MultiFn's getMethod, not java.lang.Class's
     (update ((.getMethod load-workload-impl :default) tx workload) :workflows restructure-workflows)))
+

@@ -102,7 +102,6 @@
     (done! (endpoints/get-workload-status (:uuid workload)))
     nil))
 
-
 (defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/create-workload! tx workload-request)))
@@ -114,3 +113,11 @@
 (defn execute-workload! [workload-request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/execute-workload! tx workload-request)))
+
+(defn update-workload! [workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/update-workload! tx workload)))
+
+(defn load-workload-for-uuid [uuid]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/load-workload-for-uuid tx uuid)))

@@ -51,12 +51,6 @@
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
         (run! (comp (partial update! tx) submit!) workflow)))))
 
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (workloads/load-workflow-with-structure
-    tx workload {:inputs [:dst :src]}))
-
 (defmethod workloads/create-workload!
   pipeline
   [tx request]

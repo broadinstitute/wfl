@@ -12,7 +12,8 @@
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.service.postgres :as postgres])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -204,9 +205,6 @@
 (defn- get-existing-samples [tx samples table]
   (letfn [(extract-primary-values [xs]
             (reduce (partial map conj) [#{""} #{-1}] (map primary-values xs)))
-          (to-quoted-comma-separated-list [xs]
-            (letfn [(between [[first second] x] (str first x second))]
-              (between "()" (str/join "," (map (partial between "''") xs)))))
           (assemble-query [[barcodes versions]]
             (str/join " "
               ["SELECT chip_well_barcode, analysis_version_number FROM"
@@ -215,7 +213,7 @@
                (format "AND analysis_version_number in %s" versions)]))]
     (->> samples
       extract-primary-values
-      (map to-quoted-comma-separated-list)
+      (map util/to-quoted-comma-separated-list)
       assemble-query
       (jdbc/query tx)
       extract-primary-values)))
@@ -238,7 +236,7 @@
   "Use transaction `tx` to append `notifications` (or samples) to `workload`.
   Note:
   - The `workload` must be `started` in order to be append-able.
-  - All samples being appended be submitted immediately."
+  - All samples being appended will be submitted immediately."
   [tx notifications {:keys [uuid items output] :as workload}]
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
@@ -246,19 +244,14 @@
             (let [output-path (str output (str/join "/" (primary-values sample)))]
               (->> (submit-aou-workflow environment sample output-path {:workload uuid})
                 (assoc (select-keys sample primary-keys)
-                  :updated (OffsetDateTime/now) :uuid))))]
+                  :updated (OffsetDateTime/now)
+                  :status "Submitted"
+                  :uuid))))]
     (let [environment       (get-cromwell-environment! workload)
           submitted-samples (map (partial submit! environment)
                               (remove-existing-samples tx notifications items))]
       (jdbc/insert-multi! tx items submitted-samples)
       (mapv (fn [s] (update s :updated #(.toInstant %))) submitted-samples))))
-
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (workloads/load-workflow-with-structure
-    tx workload {:inputs [:analysis_version_number
-                          :chip_well_barcode]}))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -274,3 +267,14 @@
     (start-aou-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
 
+;; The arrays module is always "open" for appending workflows - once started,
+;; it cannot be stopped!
+(defmethod workloads/update-workload!
+  pipeline
+  [tx workload]
+  (try
+    (postgres/update-workflow-statuses! tx workload)
+    (workloads/load-workload-for-id tx (:id workload))
+    (catch Throwable cause
+      (throw (ex-info "Error updating aou workload"
+               {:workload workload} cause)))))

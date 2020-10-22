@@ -84,7 +84,6 @@
           (workloads/create-workload! tx
             (assoc body :creator email)))))))
 
-
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
   [request]
@@ -99,22 +98,19 @@
         (succeed
           (mapv (partial go! tx)
             (if-let [uuid (-> request :parameters :query :uuid)]
-              (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
-                [workload]
-                (throw (ex-info "No such workload" {:uuid uuid})))
+              [(workloads/load-workload-for-uuid tx uuid)]
               (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
   (letfn [(go! [tx {:keys [uuid]}]
-            (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
+            (let [workload (workloads/load-workload-for-uuid tx uuid)]
               (if (:started workload)
                 workload
                 (do
                   (logr/infof "starting workload %s" uuid)
-                  (workloads/start-workload! tx workload)))
-              (throw (ex-info "No such workload" {:uuid uuid}))))]
+                  (workloads/start-workload! tx workload)))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [uuids (-> request :parameters :body distinct)]
