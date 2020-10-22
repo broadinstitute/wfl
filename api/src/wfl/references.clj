@@ -34,7 +34,7 @@
                                   (hg hsa  ".known_indels.vcf.gz.tbi")]
      :known_indels_sites_vcfs    [(hg gold ".vcf.gz")
                                   (hg hsa  ".known_indels.vcf.gz")]
-     :reference_fasta             (reference_fasta prefix)}))
+     :reference_fasta             (if prefix (reference_fasta prefix) (reference_fasta))}))
 
 (def hg38-exome-references
   "HG38 reference files for exome reprocessing."
