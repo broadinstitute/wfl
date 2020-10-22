@@ -18,7 +18,8 @@
   clj-time                                  {:mvn/version "0.15.1"}
   javax.servlet/servlet-api                 {:mvn/version "2.5"}
   javax/javaee-api                          {:mvn/version "7.0"}
-  metosin/reitit                            {:mvn/version "0.3.2"}
+  metosin/reitit                            {:mvn/version "0.5.9" :exclusions [metosin/ring-swagger-ui]}
+  metosin/ring-http-response                {:mvn/version "0.9.1"}
   mysql/mysql-connector-java                {:mvn/version "8.0.12"}
   ojdbc14/ojdbc14                           {:mvn/version "10.2.0.1.0"}
   org.apache.activemq/activemq-core         {:mvn/version "5.7.0"}
