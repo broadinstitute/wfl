@@ -5,12 +5,18 @@
 
 (deftest prefix-handling
   (testing "reference_fasta function"
-    (testing "treats nil/empty as no arg"
-      (is (= (references/reference_fasta)
-             (references/reference_fasta nil)
-             (references/reference_fasta ""))))
     (testing "supplies a bucket prefix if no arg"
-      (run! #(is (str/starts-with? % "gs://")) (vals (references/reference_fasta))))
+      (run! #(is (str/starts-with? % "gs://"))
+            (vals (references/reference_fasta))))
     (testing "uses a given prefix"
       (let [prefix "foo"]
-        (run! #(is (str/starts-with? % prefix)) (vals (references/reference_fasta prefix)))))))
+        (run! #(is (str/starts-with? % prefix))
+              (vals (references/reference_fasta prefix))))))
+  (testing "hg38-genome-references function"
+    (testing "supplies a reference_fasta default if nil"
+      (run! #(is (str/starts-with? % "gs://"))
+            (vals (:reference_fasta (references/hg38-genome-references nil)))))
+    (testing "uses a given prefix for reference_fasta"
+      (let [prefix "bar"]
+        (run! #(is (str/starts-with? % prefix))
+              (vals (:reference_fasta (references/hg38-genome-references prefix))))))))
