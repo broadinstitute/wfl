@@ -32,7 +32,11 @@
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
-    (load-workload-impl tx (first workloads))))
+    (try
+      (load-workload-impl tx (first workloads))
+      (catch Throwable cause
+        (throw (ex-info "Error loading workload"
+                 {:workload (first workloads)} cause))))))
 
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
@@ -111,4 +115,3 @@
             (map #(reduce-kv restructure-once % structure) workflows))]
     ;; We're calling clojure.lang.MultiFn's getMethod, not java.lang.Class's
     (update ((.getMethod load-workload-impl :default) tx workload) :workflows restructure-workflows)))
-
