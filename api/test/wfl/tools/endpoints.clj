@@ -65,9 +65,8 @@
   "Append SAMPLES to the aou WORKLOAD"
   [samples workload]
   (let [auth-header (once/get-auth-header)
-        payload     (->
-                      (select-keys workload [:cromwell :uuid])
-                      (assoc :notifications samples :environment :aou-dev)
+        payload     (-> (select-keys workload [:uuid])
+                      (assoc :notifications samples)
                       (json/write-str :escape-slash false))
         response    (client/post (str server "/api/v1/append_to_aou")
                       {:headers      auth-header

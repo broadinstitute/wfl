@@ -61,13 +61,16 @@
         (succeed {:results (cromwell/query env query)})))))
 
 (defn append-to-aou-workload
-  "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
-  [{:keys [parameters] :as _request}]
+  "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
+  [request]
   (fail-on-error
-    (let [{:keys [body]} parameters]
+    (let [{:keys [notifications uuid] :as body}
+          (get-in request [:parameters :body])]
       (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (succeed (aou/append-to-workload! tx body))))))
+        (->> (workloads/load-workload-for-uuid tx uuid)
+          (aou/append-to-workload! tx notifications)
+          succeed)))))
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."

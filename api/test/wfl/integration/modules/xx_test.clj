@@ -1,12 +1,10 @@
-(ns wfl.integration.xx-pipeline-test
+(ns wfl.integration.modules.xx-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [wfl.service.cromwell :refer [wait-for-workflow-complete]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
-            [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]
             [wfl.util :refer [absent? on]]
             [clojure.string :as str])
   (:import (java.util UUID)
@@ -25,14 +23,6 @@
   (-> (UUID/randomUUID)
     workloads/xx-workload-request
     (assoc :creator (:email @endpoints/userinfo))))
-
-(defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/create-workload! tx workload-request)))
-
-(defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/start-workload! tx workload)))
 
 (defn mock-submit-workload [{:keys [workflows]}]
   (let [now       (OffsetDateTime/now)
@@ -64,7 +54,7 @@
             (is (absent? workflow :status))
             (is (absent? workflow :updated)))
           (go! [workload-request]
-            (let [workload (create-workload! workload-request)]
+            (let [workload (workloads/create-workload! workload-request)]
               (is (:created workload))
               (is (absent? workload :started))
               (is (absent? workload :finished))
@@ -83,25 +73,28 @@
                 (is (value-equal? :bait_interval_list))))]
       (run! (comp go! :inputs) (-> (make-xx-workload-request)
                                  (assoc :common_inputs common-inputs)
-                                 create-workload!
+                                 workloads/create-workload!
                                  :workflows)))))
 
 (deftest test-start-workload!
-  (with-redefs-fn {#'xx/submit-workload! mock-submit-workload}
-    #(let [workload (->> (make-xx-workload-request)
-                      create-workload!
-                      start-workload!)]
-       (letfn [(go! [workflow]
-                 (is (:uuid workflow))
-                 (is (:status workflow))
-                 (is (:updated workflow)))]
-         (run! go! (:workflows workload))))))
+  (letfn [(go! [workflow]
+            (is (:uuid workflow))
+            (is (:status workflow))
+            (is (:updated workflow)))]
+    (with-redefs-fn {#'xx/submit-workload! mock-submit-workload}
+      #(-> (make-xx-workload-request)
+         workloads/create-workload!
+         workloads/start-workload!
+         (as-> workload
+           (is (:started workload))
+           (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
     (letfn [(go! [inputs]
               (is (absent? inputs :vault_token_path))
               (is (absent? inputs :google_account_vault_path)))]
-      (run! (comp go! :inputs) (->> (make-xx-workload-request)
-                                 create-workload!
-                                 :workflows)))))
+      (->> (make-xx-workload-request)
+        workloads/create-workload!
+        :workflows
+        (run! (comp go! :inputs))))))

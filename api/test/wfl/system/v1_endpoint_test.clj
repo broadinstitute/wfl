@@ -71,8 +71,7 @@
                 (workloads/when-done verify-succeeded-workload workload))))]
     (with-temporary-gcs-folder uri
       (let [src (str uri "input.txt")]
-        (->
-          (str/join "/" ["test" "resources" "copy-me.txt"])
+        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
         (run! go!
           [(create-wgs-workload)
@@ -116,24 +115,14 @@
         (every? #{"Succeeded"}
           (map (comp await :uuid)
             (endpoints/append-to-aou-workload [workloads/aou-sample] workload)))))
-    (testing "same sample does not start a new workflow"
-      (is
-        (empty?
-          (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
-    (testing "bumping version number starts a new workflow"
-      (is (== 1
-            (count
-              (endpoints/append-to-aou-workload
-                [(assoc workloads/aou-sample :analysis_version_number 2)]
-                workload)))))
-    (testing "appending an empty list of samples fails"
-      (is (thrown? Exception (endpoints/append-to-aou-workload [] workload))))))
+    #_(testing "appending an empty list of samples fails"
+      (is (empty? (endpoints/append-to-aou-workload [] workload))))))
 
 (deftest test-bad-pipeline
-  (let [request
-        (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
-          (assoc :pipeline "geoff"))]
-    (testing "create-workload! fails with bad request"
-      (is (thrown? ExceptionInfo (endpoints/create-workload request))))
-    (testing "create-workload! fails with bad request"
-      (is (thrown? ExceptionInfo (endpoints/exec-workload request))))))
+  (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+    (assoc :pipeline "geoff")
+    (as-> request
+      (testing "create-workload! fails with bad request"
+        (is (thrown? ExceptionInfo (endpoints/create-workload request))))
+      (testing "create-workload! fails with bad request"
+        (is (thrown? ExceptionInfo (endpoints/exec-workload request)))))))
