@@ -202,7 +202,7 @@
 (defn- primary-values [sample]
   (mapv sample primary-keys))
 
-(defn- get-existing-samples [tx samples table]
+(defn ^:private get-existing-samples [tx table samples]
   (letfn [(extract-primary-values [xs]
             (reduce (partial map conj) [#{""} #{-1}] (map primary-values xs)))
           (assemble-query [[barcodes versions]]
@@ -218,19 +218,16 @@
       (jdbc/query tx)
       extract-primary-values)))
 
-(defn remove-existing-samples
-  "Return sequence of SAMPLEs that are not registered in workload TABLE using transaction TX."
-  [tx samples table]
+(defn ^:private remove-existing-samples
+  "Retain all `samples` with unique `known-keys`."
+  [samples known-keys]
   (letfn [(go [[known-values xs] sample]
             (let [values (primary-values sample)]
               [(map conj known-values values)
                (if-not (every? identity (map contains? known-values values))
                  (conj xs sample)
                  xs)]))]
-    (second
-      (reduce go
-        [(get-existing-samples tx samples table) []]
-        samples))))
+    (second (reduce go [known-keys []] samples))))
 
 (defn append-to-workload!
   "Use transaction `tx` to append `notifications` (or samples) to `workload`.
@@ -249,7 +246,8 @@
                   :uuid))))]
     (let [environment       (get-cromwell-environment! workload)
           submitted-samples (map (partial submit! environment)
-                              (remove-existing-samples tx notifications items))]
+                              (remove-existing-samples notifications
+                                (get-existing-samples tx items notifications)))]
       (jdbc/insert-multi! tx items submitted-samples)
       (mapv (fn [s] (update s :updated #(.toInstant %))) submitted-samples))))
 

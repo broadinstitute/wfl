@@ -19,7 +19,7 @@
                  "develop"
                  ""]))
 
-(defn- make-xx-workload-request []
+(defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
     workloads/xx-workload-request
     (assoc :creator (:email @endpoints/userinfo))))

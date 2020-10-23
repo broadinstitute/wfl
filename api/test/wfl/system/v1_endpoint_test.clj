@@ -114,9 +114,9 @@
       (is
         (every? #{"Succeeded"}
           (map (comp await :uuid)
-            (endpoints/append-to-aou-workload [workloads/aou-sample] workload)))))
-    #_(testing "appending an empty list of samples fails"
-      (is (empty? (endpoints/append-to-aou-workload [] workload))))))
+            (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
+      (->> (endpoints/get-workload-status (:uuid workload))
+        (workloads/when-done verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
   (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")

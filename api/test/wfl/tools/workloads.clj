@@ -121,3 +121,7 @@
 (defn load-workload-for-uuid [uuid]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workload-for-uuid tx uuid)))
+
+(defn append-to-workload! [samples workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (aou/append-to-workload! tx samples workload)))
