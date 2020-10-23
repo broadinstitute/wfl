@@ -76,7 +76,7 @@
 (s/def ::chip_well_barcode string?)
 (s/def ::aou-workflow-inputs-list nil?)
 (s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
-(s/def ::append-to-aou-response (constantly true)) ; stub
+(s/def ::append-to-aou-response (s/* ::aou-workflow))
 (s/def ::aou-workflow (s/keys :req-un [::analysis_version_number
                                        ::chip_well_barcode
                                        ::updated
