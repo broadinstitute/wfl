@@ -64,14 +64,11 @@ curl -X "POST" "http://localhost:8080/api/v1/create" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
      -d $'{"cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
-           "input": "aou-inputs-placeholder",
            "output": "aou-outputs-placeholder",
            "project": "gotc-dev",
            "creator": "rex",
-           "pipeline": "AllOfUsArrays",
-           "items": [
-             {}
-           ]}'
+           "pipeline": "AllOfUsArrays"
+          }'
 ```
 
 **GET /api/v1/workload/start**
@@ -94,8 +91,6 @@ curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
      -d $'{
-  "environment": "aou-dev",
-  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
   "uuid": "00000000-0000-0000-0000-000000000000",
   "notifications": [
     {
