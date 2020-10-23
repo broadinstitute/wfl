@@ -48,6 +48,7 @@
   [cromwell uuid]
   (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
     (http/get {:headers (once/get-auth-header)})
+    :body
     util/parse-json
     :status))
 

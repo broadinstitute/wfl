@@ -59,21 +59,24 @@
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]))
-(s/def ::inputs (s/or :aou ::aou-workflow-inputs
-                      :wgs ::wgs-workflow-inputs
+(s/def ::inputs (s/or :aou ::aou-workflow-inputs-list
+                      :copyfile ::copyfile-workflow-inputs-list
+                      :wgs ::wgs-workflow-inputs-list
                       :xx  (s/or
                              ::bucket string?
                              ::xx-workflow-inputs-list (s/* ::xx-workflow-inputs))))
 
 (s/def ::workflows (s/or :aou (s/* ::aou-workflow)
+                         :copyfile (s/* ::copyfile-workflow)
                          :wgs (s/* ::wgs-workflow)
-                         :xx  (s/* ::xx-workflow)))
+                         :xx (s/* ::xx-workflow)))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
 (s/def ::chip_well_barcode string?)
+(s/def ::aou-workflow-inputs-list nil?)
 (s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
-(s/def ::append-to-aou-response (s/* ::aou-workflow))
+(s/def ::append-to-aou-response (constantly true)) ; stub
 (s/def ::aou-workflow (s/keys :req-un [::analysis_version_number
                                        ::chip_well_barcode
                                        ::updated
@@ -83,17 +86,27 @@
 (s/def ::aou-sample (s/keys :req-un [::analysis_version_number
                                      ::chip_well_barcode]))
 
+;; copyfile
+(s/def ::copyfile-workflow-inputs-list (s/* ::copyfile-workflow-inputs))
+(s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
+(s/def ::copyfile-workflow (s/keys
+                             :req-un [::src ::dst]
+                             :opt-un [::status ::updated ::uuid]))
+(s/def ::dst string?)
+(s/def ::src string?)
+
 ;; wgs
 (s/def ::base_file_name string?)
 (s/def ::final_gvcf_base_name string?)
 (s/def ::reference_fasta_prefix string?)
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
+(s/def ::wgs-workflow-inputs-list (s/* ::wgs-workflow-inputs))
 (s/def ::wgs-workflow-inputs (s/keys :opt-un [::base_file_name
-                                              ::final_gvcf_base_name
                                               ::reference_fasta_prefix
-                                              ::sample_name
-                                              ::unmapped_bam_suffix]
+                                              ::final_gvcf_base_name
+                                              ::unmapped_bam_suffix
+                                              ::sample_name]
                                      :req-un [::input_cram]))
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
