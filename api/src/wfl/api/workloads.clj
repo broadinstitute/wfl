@@ -26,17 +26,20 @@
   within this namespace."
   (fn [_ body] (:pipeline body)))
 
+(defn ^:private try-load-workload-impl [tx workload]
+  (try
+    (load-workload-impl tx workload)
+    (catch Throwable cause
+      (throw (ex-info "Error loading workload"
+               {:workload workload} cause)))))
+
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
   [tx uuid]
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
-    (try
-      (load-workload-impl tx (first workloads))
-      (catch Throwable cause
-        (throw (ex-info "Error loading workload"
-                 {:workload (first workloads)} cause))))))
+    (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
@@ -44,7 +47,7 @@
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching id" {:id id})))
-    (load-workload-impl tx (first workloads))))
+    (try-load-workload-impl tx (first workloads))))
 
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
