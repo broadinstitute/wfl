@@ -1,5 +1,7 @@
 (ns wfl.integration.modules.aou-test
-  (:require [clojure.test :refer [testing is deftest use-fixtures]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.test :refer [testing is deftest use-fixtures]]
+            [wfl.api.spec]
             [wfl.module.aou :as aou]
             [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
@@ -23,21 +25,24 @@
 
 (deftest test-append-to-aou
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
-    #(let [workload           (workloads/execute-workload! (make-aou-workload-request))
+    #(let [workload            (workloads/execute-workload! (make-aou-workload-request))
            append-to-workload! (fn [xs] (workloads/append-to-workload! xs workload))]
        (testing "appending a sample to the workload"
-         (is (count=1? (append-to-workload! [workloads/aou-sample]))))
+         (let [response (append-to-workload! [workloads/aou-sample])]
+           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (count=1? response))))
        (testing "appending the same sample to the workload does nothing"
          (is (empty? (append-to-workload! [workloads/aou-sample]))))
        (testing "incrementing analysis_version_number starts a new workload"
-         (is (count=1?
-               (append-to-workload! [(inc-version workloads/aou-sample)]))))
+         (is (count=1? (append-to-workload! [(inc-version workloads/aou-sample)]))))
        (testing "only one workflow is started when there are multiple duplicates"
          (is (count=1?
                (append-to-workload!
                  (repeat 5 (inc-version (inc-version workloads/aou-sample)))))))
        (testing "appending empty workload"
-         (is (empty? (append-to-workload! [])))))))
+         (let [response (append-to-workload! [])]
+           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (empty? response)))))))
 
 (deftest test-append-to-aou-not-started
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}

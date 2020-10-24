@@ -119,6 +119,7 @@
     (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
     other-labels))
 
+; visible for testing
 (defn submit-aou-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    SAMPLE-OUTPUT-PATH and OTHER-LABELS."
@@ -240,6 +241,7 @@
   (letfn [(submit! [environment sample]
             (let [output-path (str output (str/join "/" (primary-values sample)))]
               (->> (submit-aou-workflow environment sample output-path {:workload uuid})
+                str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
                   :updated (OffsetDateTime/now)
                   :status "Submitted"
