@@ -65,7 +65,7 @@
   [request]
   (fail-on-error
     (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
-      (logr/infof "appending %d samples to workload %s" (count notifications) uuid)
+      (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> (workloads/load-workload-for-uuid tx uuid)
           (aou/append-to-workload! tx notifications)

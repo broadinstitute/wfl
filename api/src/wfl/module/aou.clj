@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.environments :as env]
-            [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
@@ -15,7 +15,8 @@
             [wfl.wfl :as wfl]
             [wfl.service.postgres :as postgres])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           (java.sql Timestamp)))
 
 (def pipeline "AllOfUsArrays")
 
@@ -192,7 +193,9 @@
    workload table to mark a workload as 'started' so it becomes append-able."
   [tx {:keys [id] :as workload}]
   (when-not (:started workload)
-    (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])))
+    (let [now {:started (Timestamp/from (.toInstant (OffsetDateTime/now)))}]
+      (jdbc/update! tx :workload now ["id = ?" id])
+      (merge workload now))))
 
 (def primary-keys
   "An AoU workflow can be uniquely identified by its `chip_well_barcode` and
@@ -243,15 +246,14 @@
               (->> (submit-aou-workflow environment sample output-path {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
-                  :updated (OffsetDateTime/now)
+                  :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
                   :status "Submitted"
                   :uuid))))]
     (let [environment       (get-cromwell-environment! workload)
           submitted-samples (map (partial submit! environment)
                               (remove-existing-samples notifications
                                 (get-existing-samples tx items notifications)))]
-      (jdbc/insert-multi! tx items submitted-samples)
-      (mapv (fn [s] (update s :updated #(.toInstant %))) submitted-samples))))
+      (jdbc/insert-multi! tx items submitted-samples))))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -260,12 +262,7 @@
     (add-aou-workload! tx request)
     (workloads/load-workload-for-id tx)))
 
-(defmethod workloads/start-workload!
-  pipeline
-  [tx {:keys [id] :as workload}]
-  (do
-    (start-aou-workload! tx workload)
-    (workloads/load-workload-for-id tx id)))
+(defoverload workloads/start-workload! pipeline start-aou-workload!)
 
 ;; The arrays module is always "open" for appending workflows - once started,
 ;; it cannot be stopped!
