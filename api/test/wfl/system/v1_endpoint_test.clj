@@ -119,10 +119,9 @@
         (workloads/when-done verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
-  (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
-    (assoc :pipeline "geoff")
-    (as-> request
-      (testing "create-workload! fails with bad request"
-        (is (thrown? ExceptionInfo (endpoints/create-workload request))))
-      (testing "create-workload! fails with bad request"
-        (is (thrown? ExceptionInfo (endpoints/exec-workload request)))))))
+  (let [request (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+                  (assoc :pipeline "geoff"))]
+    (testing "create-workload! fails with bad request"
+      (is (thrown? ExceptionInfo (endpoints/create-workload request))))
+    (testing "create-workload! fails with bad request"
+      (is (thrown? ExceptionInfo (endpoints/exec-workload request))))))

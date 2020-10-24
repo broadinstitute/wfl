@@ -64,7 +64,6 @@
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
-   :input    ""
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -93,11 +92,12 @@
                 (when (> seconds timeout)
                   (throw (TimeoutException.
                            (format "Timed out waiting for workflow %s" uuid))))
-                (let [status (postgres/cromwell-status cromwell uuid)]
-                  (when-not (or (skipped? workflow) (finished? status))
-                    (log/infof "%s: Sleeping on status: %s" uuid status)
-                    (util/sleep-seconds interval)
-                    (recur (+ seconds interval)))))))]
+                (when-not (skipped? workflow)
+                  (let [status (postgres/cromwell-status cromwell uuid)]
+                    (when-not (finished? status)
+                      (log/infof "%s: Sleeping on status: %s" uuid status)
+                      (util/sleep-seconds interval)
+                      (recur (+ seconds interval))))))))]
     (run! await-workflow (:workflows workload))
     (done! (endpoints/get-workload-status (:uuid workload)))
     nil))

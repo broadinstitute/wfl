@@ -32,70 +32,55 @@
 (defn get-workloads
   "Query v1 api for all workloads"
   []
-  (let [auth-header (once/get-auth-header)
-        response    (client/get (str server "/api/v1/workload")
-                      {:headers auth-header})]
+  (let [response (client/get (str server "/api/v1/workload")
+                   {:headers (once/get-auth-header)})]
     (util/parse-json (:body response))))
 
 (defn create-workload
   "Create workload defined by WORKLOAD"
   [workload]
-  (let [auth-header (once/get-auth-header)
-        payload     (json/write-str workload :escape-slash false)
-        response    (client/post (str server "/api/v1/create")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+  (let [payload  (json/write-str workload :escape-slash false)
+        response (client/post (str server "/api/v1/create")
+                   {:headers      (once/get-auth-header)
+                    :content-type :json
+                    :accept       :json
+                    :body         payload})]
     (util/parse-json (:body response))))
 
 (defn start-workload
   "Start processing WORKLOAD. WORKLOAD must be known to the server."
   [workload]
-  (let [auth-header (once/get-auth-header)
-        payload     (json/write-str [workload] :escape-slash false)
-        response    (client/post (str server "/api/v1/start")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+  (let [payload  (-> (select-keys workload [:uuid])
+                   list
+                   (json/write-str :escape-slash false))
+        response (client/post (str server "/api/v1/start")
+                   {:headers      (once/get-auth-header)
+                    :content-type :json
+                    :accept       :json
+                    :body         payload})]
     (first (util/parse-json (:body response)))))
 
 (defn append-to-aou-workload
   "Append SAMPLES to the aou WORKLOAD"
   [samples workload]
-  (let [auth-header (once/get-auth-header)
-        payload     (-> (select-keys workload [:uuid])
-                      (assoc :notifications samples)
-                      (json/write-str :escape-slash false))
-        response    (client/post (str server "/api/v1/append_to_aou")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
-    (util/parse-json (:body response))))
-
-(defn start-wgs-workflow
-  "Submit the WGS Reprocessing WORKFLOW"
-  [workflow]
-  (let [auth-header (once/get-auth-header)
-        payload     (json/write-str workflow :escape-slash false)
-        response    (client/post (str server "/api/v1/wgs")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+  (let [payload  (-> (select-keys workload [:uuid])
+                   (assoc :notifications samples)
+                   (json/write-str :escape-slash false))
+        response (client/post (str server "/api/v1/append_to_aou")
+                   {:headers      (once/get-auth-header)
+                    :content-type :json
+                    :accept       :json
+                    :body         payload})]
     (util/parse-json (:body response))))
 
 (defn exec-workload
   "Create and start workload defined by WORKLOAD"
-  [workload]
-  (let [auth-header (once/get-auth-header)
-        payload     (json/write-str workload :escape-slash false)
-        response    (client/post (str server "/api/v1/exec")
-                      {:headers      auth-header
-                       :content-type :json
-                       :accept       :json
-                       :body         payload})]
+  [workload-request]
+  (let [payload  (json/write-str workload-request :escape-slash false)
+        response (client/post (str server "/api/v1/exec")
+                   {:headers      (once/get-auth-header)
+                    :content-type :json
+                    :accept       :json
+                    :body         payload})]
     (util/parse-json (:body response))))
 

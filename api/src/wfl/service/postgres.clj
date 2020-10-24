@@ -1,7 +1,6 @@
 (ns wfl.service.postgres
   "Talk to the Postgres database."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.jdbc :as jdbc]
             [wfl.once :as once]
