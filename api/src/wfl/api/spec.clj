@@ -79,6 +79,7 @@
 (s/def ::append-to-aou-response (s/* ::aou-workflow))
 (s/def ::aou-workflow (s/keys :req-un [::analysis_version_number
                                        ::chip_well_barcode
+                                       ::status
                                        ::updated
                                        ::uuid]))
 
