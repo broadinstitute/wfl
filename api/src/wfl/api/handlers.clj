@@ -64,9 +64,8 @@
   "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
   [request]
   (fail-on-error
-    (let [{:keys [notifications uuid] :as body}
-          (get-in request [:parameters :body])]
-      (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
+    (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
+      (logr/infof "appending %d samples to workload %s" (count notifications) uuid)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> (workloads/load-workload-for-uuid tx uuid)
           (aou/append-to-workload! tx notifications)
@@ -122,9 +121,11 @@
   [request]
   (fail-on-error
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-        (workloads/execute-workload! tx
-          (assoc
-            (get-in request [:parameters :body])
-            :creator
-            (:email (gcs/userinfo request))))))))
+      (let [workload-request (get-in request [:parameters :body])]
+        (logr/info "executing workload-request: " workload-request)
+        (->>
+          (gcs/userinfo request)
+          :email
+          (assoc workload-request :creator)
+          (workloads/execute-workload! tx)
+          succeed)))))
