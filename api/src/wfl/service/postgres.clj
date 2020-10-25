@@ -52,7 +52,7 @@
     :status))
 
 (def ^:private finished?
-  "Test if a `workflow` is in a terminal state."
+  "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
 
 (defn update-workflow-statuses!
@@ -68,13 +68,13 @@
               ["id = ?" id]))]
     (->> workflows
       (remove (comp nil? :uuid))
-      (remove finished?)
+      (remove (comp finished? :status))
       (run! #(update! % (maybe-cromwell-status %))))))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id items] :as _workload}]
-  (let [query (format "SELECT COUNT(*) FROM %%s WHERE status NOT IN %s"
+  (let [query (format "SELECT id FROM %%s WHERE status NOT IN %s"
                 (util/to-quoted-comma-separated-list finished?))]
     (when (empty? (jdbc/query tx (format query items)))
       (jdbc/update! tx :workload

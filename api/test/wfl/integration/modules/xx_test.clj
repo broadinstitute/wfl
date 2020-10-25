@@ -6,7 +6,8 @@
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
             [wfl.util :refer [absent? on]]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [wfl.environments :as env])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
@@ -98,3 +99,14 @@
         workloads/create-workload!
         :workflows
         (run! (comp go! :inputs))))))
+
+(deftest test-create-empty-workload
+  (let [workload (->>
+                   {:cromwell (get-in env/stuff [:xx-dev :cromwell :url])
+                    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
+                    :pipeline xx/pipeline
+                    :project  (format "(Test) %s" @workloads/git-branch)
+                    :creator  (:email @endpoints/userinfo)}
+                   workloads/execute-workload!
+                   workloads/update-workload!)]
+    (is (:finished workload))))
