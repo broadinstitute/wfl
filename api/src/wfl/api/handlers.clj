@@ -2,7 +2,7 @@
   "Define handlers for API endpoints"
   (:require [clojure.tools.logging :as log]
             [clojure.tools.logging.readable :as logr]
-            [ring.util.http-response :as response]
+            [ring.util.response :as response]
             [wfl.api.workloads :as workloads]
             [wfl.module.aou :as aou]
             [wfl.module.copyfile]
@@ -19,12 +19,7 @@
   [body]
   (log/warn "Endpoint returned 400 failure response:")
   (log/warn body)
-  (-> body
-      (.getMessage)
-      ;(Throwable->map)
-      ;(dissoc :trace :via :data)
-      (response/bad-request!)
-      ))
+  (-> body response/bad-request (response/content-type "application/json")))
 
 (defmacro ^:private fail-on-error
   "Run BODY, printing any exception rises through it."
@@ -37,7 +32,7 @@
 (defn succeed
   "A successful response with BODY."
   [body]
-  (-> body response/ok (response/content-type "application/json")))
+  (-> body response/response (response/content-type "application/json")))
 
 (defn success
   "Respond successfully with BODY."
