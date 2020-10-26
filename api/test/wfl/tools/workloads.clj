@@ -14,6 +14,13 @@
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
+(def wgs-inputs
+  {:unmapped_bam_suffix  ".unmapped.bam",
+   :sample_name          "NA12878 PLUMBING",
+   :base_file_name       "NA12878_PLUMBING",
+   :final_gvcf_base_name "NA12878_PLUMBING",
+   :input_cram           "develop/20k/NA12878_PLUMBING.cram"})
+
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
@@ -23,11 +30,7 @@
      :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
      :project  (format "(Test) %s" @git-branch)
-     :items    [{:unmapped_bam_suffix  ".unmapped.bam",
-                 :sample_name          "NA12878 PLUMBING",
-                 :base_file_name       "NA12878_PLUMBING",
-                 :final_gvcf_base_name "NA12878_PLUMBING",
-                 :input_cram           "develop/20k/NA12878_PLUMBING.cram"}]}))
+     :items    [{:inputs wgs-inputs}]}))
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
@@ -65,7 +68,7 @@
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:src src :dst dst}]})
+   :items    [{:inputs {:src src :dst dst}}]})
 
 (defn xx-workload-request
   [identifier]
@@ -76,7 +79,7 @@
      :pipeline      xx/pipeline
      :project       (format "(Test) %s" @git-branch)
      :common_inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}
-     :items         [{:input_cram (str test-storage "NA12878_PLUMBING.cram")}]}))
+     :items         [{:inputs {:input_cram (str test-storage "NA12878_PLUMBING.cram")}}]}))
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
