@@ -628,10 +628,15 @@ at least read access to the input files.</p>
   &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
   &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
   &quot;project&quot;: &quot;PO-1234&quot;,
-  &quot;items&quot;: [{
-          &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
-          &quot;sample_name&quot;: &quot;TestSample1234&quot;
-          }]}&#39;
+  &quot;items&quot;: [
+    {
+      &quot;inputs&quot;: {
+        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+        &quot;sample_name&quot;: &quot;TestSample1234&quot;
+      }
+    }
+  ]
+}&#39;
 </code></pre></div>
 Response:
 <div class="highlight"><pre><span></span><code>{
@@ -669,13 +674,17 @@ Response:
   &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
   &quot;created&quot;: &quot;2020-10-05T15:50:01Z&quot;,
   &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
-  &quot;workflows&quot;: [{
-    &quot;updated&quot;: &quot;2020-10-05T15:50:51Z&quot;,
-    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
-    &quot;sample_name&quot;: &quot;TestSample1234&quot;,
-    &quot;id&quot;: 1,
-    &quot;uuid&quot;: &quot;e12b2a43-2250-4e78-9261-f3d12b95d4d1&quot;
-   }],
+  &quot;workflows&quot;: [ 
+    {
+      &quot;id&quot;: 1,
+      &quot;updated&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+      &quot;uuid&quot;: &quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;,
+      &quot;inputs&quot;: {
+        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+        &quot;sample_name&quot;: &quot;TestSample1234&quot;
+      }
+    } 
+  ],
   &quot;project&quot;: &quot;PO-1234&quot;,
   &quot;id&quot;: 30,
   &quot;commit&quot;: &quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;,
@@ -698,10 +707,15 @@ Response:
   &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
   &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,
   &quot;project&quot;: &quot;PO-1234&quot;,
-  &quot;items&quot;: [{
-          &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
-          &quot;sample_name&quot;: &quot;TestSample1234&quot;
-          }]}&#39;
+  &quot;items&quot;: [
+    {
+      &quot;inputs&quot;: {
+        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+        &quot;sample_name&quot;: &quot;TestSample1234&quot;
+      }
+    }
+  ]
+}&#39;
 </code></pre></div>
 Response:
 <div class="highlight"><pre><span></span><code>{
@@ -712,13 +726,17 @@ Response:
   &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
   &quot;created&quot;: &quot;2020-10-05T16:15:32Z&quot;,
   &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,
-  &quot;workflows&quot;: [ {
-    &quot;updated&quot;: &quot;2020-10-05T16:15:32Z&quot;,
-    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
-    &quot;sample_name&quot;: &quot;TestSample1234&quot;,
-    &quot;id&quot;: 1,
-    &quot;uuid&quot;: &quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;
-  } ],
+  &quot;workflows&quot;: [ 
+    {
+      &quot;id&quot;: 1,
+      &quot;updated&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+      &quot;uuid&quot;: &quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;,
+      &quot;inputs&quot;: {
+        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+        &quot;sample_name&quot;: &quot;TestSample1234&quot;
+      }
+    } 
+  ],
   &quot;project&quot;: &quot;PO-1234&quot;,
   &quot;id&quot;: 31,
   &quot;commit&quot;: &quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;,
@@ -743,14 +761,17 @@ Response:
   &quot;release&quot;: &quot;ExternalWholeGenomeReprocessing_v1.0&quot;,
   &quot;created&quot;: &quot;2020-08-27T16:26:59Z&quot;,
   &quot;output&quot;: &quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;,
-  &quot;workflows&quot;: [{
-    &quot;updated&quot;: &quot;2020-08-27T16:26:59Z&quot;,
-    &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
-    &quot;sample_name&quot;: &quot;NA12878 PLUMBING&quot;,
-    &quot;base_file_name&quot;: &quot;saman&quot;,
-    &quot;id&quot;: 1,
-    &quot;final_gvcf_base_name&quot;: &quot;saman&quot;
-  }],
+  &quot;workflows&quot;: [ 
+    {
+      &quot;id&quot;: 1,
+      &quot;updated&quot;: &quot;2020-10-05T16:15:32Z&quot;,
+      &quot;uuid&quot;: &quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;,
+      &quot;inputs&quot;: {
+        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,
+        &quot;sample_name&quot;: &quot;TestSample1234&quot;
+      }
+    } 
+  ],
   &quot;project&quot;: &quot;wgs-dev&quot;,
   &quot;id&quot;: 6,
   &quot;commit&quot;: &quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;,
