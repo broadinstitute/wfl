@@ -13,7 +13,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [clojure.data.json :as json])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            (java.sql Timestamp)))
@@ -103,15 +104,16 @@
         (get-per-sample-inputs per-sample-inputs))
     (util/prefix-keys :Arrays)))
 
-(defn make-options
-  "Return options for aou arrays pipeline."
-  [sample-output-path]
+(def ^:private default-options
   {; TODO: add :default_runtime_attributes {:maxRetries 3} here
-   :final_workflow_outputs_dir sample-output-path
    :use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
+
+(defn ^:private per-workflow-default-options
+  [sample-output-path]
+  {:final_workflow_outputs_dir sample-output-path})
 
 (defn make-labels
   "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
@@ -131,7 +133,7 @@
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
-      (make-options sample-output-path)
+      (per-workflow-default-options sample-output-path)
       (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
@@ -157,6 +159,10 @@
   (get-cromwell-environment! request)
   (let [{:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
+        workflow-options (->>
+                           (:workflow_options request)
+                           (util/deep-merge default-options)
+                           json/write-str)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release output])]
     (when (< 1 (count workloads))
@@ -164,15 +170,16 @@
       (log/error workloads))
     (if-let [workload (first workloads)]
       (:id workload)
-      (let [id            (->> {:commit   commit
-                                :creator  creator
-                                :cromwell cromwell
-                                :output   (all/slashify output)
-                                :project  project
-                                :release  release
-                                :uuid     (UUID/randomUUID)
-                                :version  version
-                                :wdl      top}
+      (let [id            (->> {:commit           commit
+                                :creator          creator
+                                :cromwell         cromwell
+                                :output           (all/slashify output)
+                                :project          project
+                                :release          release
+                                :uuid             (UUID/randomUUID)
+                                :version          version
+                                :wdl              top
+                                :workflow_options workflow-options}
                             (jdbc/insert! tx :workload)
                             first
                             :id)
