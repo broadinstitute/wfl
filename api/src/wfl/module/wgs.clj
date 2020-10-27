@@ -135,8 +135,8 @@
         set))))
 
 (defn really-submit-one-workflow
-  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OTHER-LABELS."
-  [environment in-gs out-gs sample other-labels]
+  "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OPTIONS and OTHER-LABELS."
+  [environment in-gs out-gs sample options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (logr/infof "submitting workflow with: in-gs: %s, out-gs: %s" in-gs out-gs)
     (cromwell/submit-workflow
@@ -144,20 +144,22 @@
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment out-gs in-gs sample)
-      (util/make-options environment)
+      options
       (make-labels other-labels))))
 
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as _workload-request}]
-  (let [default-options (-> (:cromwell _workload-request)
-                            all/de-slashify
-                            get-cromwell-wgs-environment
-                            util/make-options)
-        [uuid table]    (all/add-workload-table! tx workflow-wdl _workload-request default-options)
-        inputs (map :inputs items)]
+  (let [default-options   (-> (:cromwell _workload-request)
+                              all/de-slashify
+                              get-cromwell-wgs-environment
+                              util/make-options)
+        [uuid table opts] (all/add-workload-table! tx workflow-wdl _workload-request default-options)
+        to-row (fn [item] (assoc (:inputs item)
+                            :workflow_options
+                            (json/write-str (util/deep-merge opts (:workflow_options item)))))]
     (letfn [(add-id [m id] (assoc m :id id))]
-      (jdbc/insert-multi! tx table (map add-id inputs (rest (range)))))
+      (jdbc/insert-multi! tx table (map add-id (map to-row items) (rest (range)))))
     uuid))
 
 (defn skip-workflow?
@@ -189,12 +191,12 @@
         output          (all/slashify output)
         now             (OffsetDateTime/now)
         workload->label {:workload uuid}]
-    (letfn [(submit! [{:keys [id inputs uuid] :as workflow}]
+    (letfn [(submit! [{:keys [id inputs uuid workflow_options] :as workflow}]
               [id (or uuid
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
                       (really-submit-one-workflow
-                        env (str input (:input_cram inputs)) output inputs workload->label)))])
+                        env (str input (:input_cram inputs)) output inputs workflow_options workload->label)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
