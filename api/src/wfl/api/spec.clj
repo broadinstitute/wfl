@@ -123,6 +123,9 @@
 
 ;; xx (External Exome Reprocessing)
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
+(s/def ::xx-workflow (s/keys
+                       :opt-un [::status ::updated ::uuid]
+                       :req-un [::inputs]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)
