@@ -1,6 +1,7 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]))
+            [wfl.jdbc :as jdbc]
+            [wfl.util :as util]))
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
@@ -103,11 +104,14 @@
             (split-inputs [m]
               (let [keep [:id :finished :status :updated :uuid]]
                 (assoc (select-keys m keep)
-                  :inputs (unnilify (apply dissoc m keep)))))]
+                  :inputs (unnilify (apply dissoc m keep)))))
+            (unpack-options [m]
+              (update m :workflow_options #(util/parse-json (or % "{}"))))]
       (->> (postgres/get-table tx (:items workload))
         (mapv (comp unnilify split-inputs))
         (assoc workload :workflows)
-        unnilify))
+        unnilify
+        unpack-options))
     (catch Throwable cause
       (throw (ex-info "Error loading workload"
                {:workload workload} cause)))))
