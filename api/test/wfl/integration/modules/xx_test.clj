@@ -6,19 +6,11 @@
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
             [wfl.util :refer [absent? on]]
-            [clojure.string :as str]
             [wfl.environments :as env])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
 (clj-test/use-fixtures :once fixtures/clean-db-fixture)
-
-(def exome-test-storage
-  (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-inputs"
-                 "external-reprocessing"
-                 "exome"
-                 "develop"
-                 ""]))
 
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
