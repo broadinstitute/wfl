@@ -129,7 +129,7 @@
     (merge
       exception/default-handlers
       {;; ex-data with :type ::error
-       ::workloads/invalid-workload          (partial ex-handler 400 "Invalid Workload")
+       ::workloads/invalid-pipeline          (partial ex-handler 400 "Invalid Pipeline")
        ;; SQLException and all it's child classes
        SQLException                          (partial ex-handler 500 "SQL Error")
        ;; handle clj-http Slingshot stone exceptions
