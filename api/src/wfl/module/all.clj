@@ -84,7 +84,7 @@
   (pprint (count-files in-gs out-gs)))
 
 (defn add-workload-table!
-  "Return UUID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
+  "Return UUID, TABLE, and WORKFLOW-OPTIONS for _WORKFLOW-WDL in BODY under transaction TX."
   ([tx workflow-wdl body]
    (add-workload-table! tx workflow-wdl body {}))
   ([tx {:keys [release top] :as _workflow-wdl} body default-workflow-options]
@@ -112,7 +112,7 @@
      (jdbc/update! tx :workload {:items table} ["id = ?" id])
      (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
      (jdbc/db-do-commands tx [work])
-     [uuid table])))
+     [uuid table workflow-options])))
 
 (defn slashify
   "Ensure URL ends in a slash /."
