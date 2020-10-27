@@ -14,7 +14,8 @@
             [wfl.environments                   :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl]
-            [wfl.once                           :as once]))
+            [wfl.once                           :as once])
+  (:import (java.sql SQLException)))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -108,8 +109,36 @@
       (vec (map #(if (needs-security? %) (apply vector (first %) (map modify-method (rest %))) %)
                 endpoints)))))
 
-;; :muuntaja is required for showing response body on swagger page.
+;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
+(derive ::error ::exception)
+(derive ::failure ::exception)
+(derive ::horror ::exception)
+
+(defn server-error-handler [message exception request]
+  {:status 500
+   :body {:message message
+          :exception (.getClass exception)
+          :data (ex-data exception)
+          :uri (:uri request)}})
+
+(def exception-middleware
+  (exception/create-exception-middleware
+    (merge
+      exception/default-handlers
+      {;; ex-data with :type ::error
+       ::error             (partial server-error-handler "error")
+       ;; ex-data with ::exception or ::failure
+       ::exception         (partial server-error-handler "exception")
+       ;; SQLException and all it's child classes
+       SQLException        (partial server-error-handler "sql-exception")
+       ;; override the default handler
+       ::exception/default (partial server-error-handler "default")
+       ;; print stack-traces for all exceptions
+       ::exception/wrap    (fn [handler e request]
+                             (println "ERROR" (pr-str (:uri request)))
+                             (handler e request))})))
+
 (def routes
   (ring/ring-handler
     (ring/router
@@ -119,9 +148,13 @@
               :middleware [parameters/parameters-middleware
                            muuntaja/format-negotiate-middleware
                            muuntaja/format-response-middleware
-                           exception/exception-middleware
+                           exception-middleware
                            muuntaja/format-request-middleware
                            coercion/coerce-exceptions-middleware
                            coercion/coerce-request-middleware
                            coercion/coerce-response-middleware
-                           multipart/multipart-middleware]}})))
+                           multipart/multipart-middleware]}})
+    ;; get more correct http error responses on routes
+    (ring/create-default-handler
+      {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
+       :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))
