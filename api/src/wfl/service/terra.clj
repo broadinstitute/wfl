@@ -7,14 +7,14 @@
             [wfl.util :as util]))
 
 (defn workspace-api-url
-  [terra-url workspace-namespace workspace-name]
-  (str terra-url "/api/workspaces/" workspace-namespace "/" workspace-name))
+  [terra-url workspace]
+  (str terra-url "/api/workspaces/" workspace))
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [terra-url workspace-namespace workspace-name method-configuration-name
+  [terra-url workspace method-configuration-name
    method-configuration-namespace entity-type entity-name]
-  (let [workspace-url (workspace-api-url terra-url workspace-namespace workspace-name)
+  (let [workspace-url (workspace-api-url terra-url workspace)
         submission-url (str workspace-url "/submissions")]
     (->
       (http/post
@@ -35,8 +35,8 @@
 
 (defn get-submission
   "Get information about a Terra Cromwell submission."
-  [terra-url workspace-namespace workspace-name submission-id]
-  (let [workspace-url (workspace-api-url terra-url workspace-namespace workspace-name)
+  [terra-url workspace submission-id]
+  (let [workspace-url (workspace-api-url terra-url workspace)
         submission-url (str workspace-url "/submissions/" submission-id)
         response (http/get submission-url {:headers (once/get-auth-header)})]
       (util/parse-json (:body response))))
