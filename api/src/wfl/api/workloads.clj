@@ -102,13 +102,13 @@
   (try
     (letfn [(unnilify [m] (into {} (filter second m)))
             (split-inputs [workflow]
-              (let [keep [:id :finished :status :updated :uuid]]
+              (let [keep [:id :finished :status :updated :uuid :workflow_options]]
                 (assoc (select-keys workflow keep)
                   :inputs (unnilify (apply dissoc workflow keep)))))
             (unpack-options [m]
               (update m :workflow_options #(util/parse-json (or % "{}"))))]
       (->> (postgres/get-table tx (:items workload))
-        (mapv (comp unnilify split-inputs))
+        (mapv (comp unnilify split-inputs unpack-options))
         (assoc workload :workflows)
         unnilify
         unpack-options))
