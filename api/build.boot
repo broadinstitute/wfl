@@ -36,7 +36,7 @@
    [clj-time                                  "0.15.1"]
    [com.fasterxml.jackson.core/jackson-core   "2.10.0"]
    [metosin/muuntaja                          "0.6.6"]
-   [metosin/reitit                            "0.5.9" :exclusions [metosin/ring-swagger-ui]]
+   [metosin/reitit                            "0.5.10" :exclusions [metosin/ring-swagger-ui]]
    [metosin/ring-http-response                "0.9.1"]
    [org.apache.tika/tika-core                 "1.19.1"]
    [org.apache.logging.log4j/log4j-api        "2.13.3"]
