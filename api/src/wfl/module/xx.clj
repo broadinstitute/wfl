@@ -117,7 +117,8 @@
             (->> (make-combined-inputs-to-save output common_inputs inputs)
               json/write-str
               (assoc {:id id} :inputs)))]
-    (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
+    (let [default-options (util/make-options (get-cromwell-environment request))
+          [uuid table]    (all/add-workload-table! tx workflow-wdl request default-options)]
       (->> (map make-workflow-record (range) (map :inputs items))
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-uuid tx uuid))))
