@@ -34,7 +34,7 @@
   ring/ring-core                            {:mvn/version "1.7.1"}
   ring/ring-defaults                        {:mvn/version "0.3.2"}
   ring/ring-devel                           {:mvn/version "1.7.1"}
-  ring/ring-jetty-adapter                   {:mvn/version "1.7.1"}
+  ring/ring-jetty-adapter                   {:mvn/version "1.8.2"}
   ring/ring-json                            {:mvn/version "0.5.0"}
   ring/ring-servlet                         {:mvn/version "1.7.1"}
   com.google.auth/google-auth-library-oauth2-http         {:mvn/version "0.15.0"}
