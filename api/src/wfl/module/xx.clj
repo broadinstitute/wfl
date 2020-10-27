@@ -35,7 +35,6 @@
         hsa  "Homo_sapiens_assembly38"]
     (merge references/hg38-exome-references
       references/contamination-sites
-      references/exome-scatter-settings
       {:calling_interval_list (str hg38 "exome_calling_regions.v1.interval_list")
        :haplotype_database_file (str hg38 hsa ".haplotype_database.txt")})))
 
@@ -43,7 +42,8 @@
   (let [hg38          "gs://gcp-public-data--broad-references/hg38/v0/"
         hsa           "Homo_sapiens_assembly38"
         bait_set_name "whole_exome_illumina_coding_v1"
-        iv1           (str "HybSelOligos/" bait_set_name "/" "." hsa)]
+        HybSelOligos  (str/join "/" ["HybSelOligos" bait_set_name bait_set_name])
+        iv1           (str/join "." [HybSelOligos hsa])]
     {:unmapped_bam_suffix  ".unmapped.bam"
      :cram_ref_fasta       (str hg38 hsa ".fasta")
      :cram_ref_fasta_index (str hg38 hsa ".fasta.fai")
@@ -87,8 +87,8 @@
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
   (letfn [(update-workflow [workflow cromwell-uuid]
             (assoc workflow :uuid cromwell-uuid
-                            :status "Submitted"
-                            :updated (OffsetDateTime/now)))]
+              :status "Submitted"
+              :updated (OffsetDateTime/now)))]
     (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
           environment (get-cromwell-environment workload)]
       (logr/infof "submitting workload %s" uuid)
