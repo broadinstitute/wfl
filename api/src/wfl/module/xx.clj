@@ -80,22 +80,6 @@
     (util/prefix-keys (keyword pipeline))))
 
 ;; visible for testing
-(defn normalize-input-items
-  "The `items` of this workload are either a bucket or a list of maps with nested inputs.
-  Normalise these `items` into a list of maps."
-  [items]
-  (if (string? items)
-    (let [[bucket object] (gcs/parse-gs-url items)]
-      (letfn [(bam-or-cram-ify [{:keys [name]}]
-                (let [url (gcs/gs-url bucket name)]
-                  (cond (str/ends-with? name ".bam") {:input_bam url}
-                        (str/ends-with? name ".cram") {:input_cram url})))]
-        (->> (gcs/list-objects bucket object)
-          (map bam-or-cram-ify)
-          (remove nil?))))
-    (map :inputs items)))
-
-;; visible for testing
 ;; Note: the database stores per-workflow inputs so we need to combine
 ;; any `common-inputs` with these before we commit them to storage.
 (defn make-combined-inputs-to-save [output-url common-inputs inputs]
@@ -129,13 +113,12 @@
           (merge cromwell-labels {:workload uuid}))))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
-  (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
-    (letfn [(make-workflow-record [id inputs]
-              (->> (make-combined-inputs-to-save output common_inputs inputs)
-                json/write-str
-                (assoc {:id id} :inputs)))]
-      (->> (normalize-input-items items)
-        (map make-workflow-record (range))
+  (letfn [(make-workflow-record [id inputs]
+            (->> (make-combined-inputs-to-save output common_inputs inputs)
+              json/write-str
+              (assoc {:id id} :inputs)))]
+    (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
+      (->> (map make-workflow-record (range) (map :inputs items))
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-uuid tx uuid))))
 

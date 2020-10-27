@@ -15,12 +15,14 @@
 (s/def ::environment string?)
 (s/def ::finished inst?)
 (s/def ::input string?)
+(s/def ::input_bam string?)
+(s/def ::input_cram string?)
 (s/def ::output string?)
 (s/def ::common_inputs map?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (conj (set cromwell/statuses) "skipped"))
+(s/def ::status (set (conj cromwell/statuses "skipped")))
 (s/def ::started inst?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
@@ -30,12 +32,10 @@
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
-(s/def ::workflow_options map?)
 (s/def ::workload-request (s/keys :opt-un [::input
-                                           ::common_inputs
-                                           ::workflow_options]
-                                  :req-un [::cromwell
                                            ::items
+                                           ::common_inputs]
+                                  :req-un [::cromwell
                                            ::output
                                            ::pipeline
                                            ::project]))
@@ -53,44 +53,42 @@
                                             ::project
                                             ::release
                                             ::uuid
-                                            ::version
-                                            ::workflow_options]))
+                                            ::version]))
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
-(s/def ::items (s/or :filesystem ::filesystem-inputs
-                     :individual (s/+ ::individual-inputs)))
-(s/def ::filesystem-inputs string?)
-(s/def ::individual-inputs (s/keys :opt-un [::inputs]))
+(s/def ::items (s/* ::workload-inputs))
+(s/def ::workload-inputs (s/keys :req-un [::inputs]))
+(s/def ::inputs (s/or :aou      ::aou-workflow-inputs
+                      :copyfile ::copyfile-workflow-inputs
+                      :wgs      ::wgs-workflow-inputs
+                      :xx       ::xx-workflow-inputs))
 
-(s/def ::workflows (s/* (s/keys :opt-un [::inputs
-                                         ::updated
-                                         ::uuid
-                                         ::status])))
-
-(s/def ::inputs (s/or :aou ::aou-workflow-inputs
-                      :wgs ::wgs-workflow-inputs
-                      :xx  ::xx-workflow-inputs))
+(s/def ::workflows (s/* ::workflow))
+(s/def ::workflow
+  (s/keys :req-un [::inputs]
+          :opt-un [::status ::updated ::uuid]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
-(s/def ::append-to-aou-request (s/keys :req-un [::cromwell
-                                                ::environment
-                                                ::notifications
-                                                ::uuid]))
-(s/def ::append-to-aou-response (s/*
-                                  (s/or :none empty?
-                                        :more (s/keys :req-un [::uuid
-                                                               ::analysis_version_number
-                                                               ::chip_well_barcode]))))
 (s/def ::chip_well_barcode string?)
-(s/def ::aou-workflow-inputs (constantly true)) ; stub
-(s/def ::notifications (s/+ map?))
+(s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
+(s/def ::append-to-aou-response (s/* ::aou-workflow-inputs))
+(s/def ::aou-workflow-inputs (s/keys :req-un [::analysis_version_number
+                                              ::chip_well_barcode]))
+
+(s/def ::notifications (s/* ::aou-sample))
+(s/def ::aou-sample (s/keys :req-un [::analysis_version_number
+                                     ::chip_well_barcode]))
+
+;; copyfile
+(s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
+(s/def ::dst string?)
+(s/def ::src string?)
 
 ;; wgs
 (s/def ::base_file_name string?)
 (s/def ::final_gvcf_base_name string?)
-(s/def ::input_cram string?)
 (s/def ::reference_fasta_prefix string?)
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
@@ -102,7 +100,6 @@
                                      :req-un [::input_cram]))
 
 ;; xx (External Exome Reprocessing)
-(s/def ::input_bam string?)
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
 ;; /api/v1/workflows

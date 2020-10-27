@@ -1,7 +1,6 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]
-            [wfl.util :as util]))
+            [wfl.jdbc :as jdbc]))
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
@@ -27,19 +26,28 @@
   within this namespace."
   (fn [_ body] (:pipeline body)))
 
+(defn ^:private try-load-workload-impl [tx workload]
+  (try
+    (load-workload-impl tx workload)
+    (catch Throwable cause
+      (throw (ex-info "Error loading workload"
+               {:workload workload} cause)))))
+
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
   [tx uuid]
-  (when-first [workload (jdbc/query tx
-                          ["SELECT * FROM workload WHERE uuid = ?" uuid])]
-    (load-workload-impl tx workload)))
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
+    (when (empty? workloads)
+      (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
+    (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
-  (when-first [workload (jdbc/query tx
-                          ["SELECT * FROM workload WHERE id = ?" id])]
-    (load-workload-impl tx workload)))
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
+    (when (empty? workloads)
+      (throw (ex-info "No workload found matching id" {:id id})))
+    (try-load-workload-impl tx (first workloads))))
 
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
@@ -71,32 +79,35 @@
 (defmethod execute-workload!
   :default
   [tx workload-request]
-  (start-workload! tx (create-workload! tx workload-request)))
+  (try
+    (start-workload! tx (create-workload! tx workload-request))
+    (catch Throwable cause
+      (throw (ex-info "Error executing workload request"
+               {:workload-request workload-request} cause)))))
 
 (defmethod update-workload!
   :default
   [tx workload]
-  (postgres/update-workload! tx workload)
-  (load-workload-for-id tx (:id workload)))
+  (try
+    (postgres/update-workload! tx workload)
+    (load-workload-for-id tx (:id workload))
+    (catch Throwable cause
+      (throw (ex-info "Error updating workload"
+               {:workload workload} cause)))))
 
 (defmethod load-workload-impl
   :default
   [tx workload]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (update
-      (->>
-        (postgres/get-table tx (:items workload))
-        (map unnilify)
+  (try
+    (letfn [(unnilify [m] (into {} (filter second m)))
+            (split-inputs [m]
+              (let [keep [:id :finished :status :updated :uuid]]
+                (assoc (select-keys m keep)
+                  :inputs (unnilify (apply dissoc m keep)))))]
+      (->> (postgres/get-table tx (:items workload))
+        (mapv (comp unnilify split-inputs))
         (assoc workload :workflows)
-        unnilify)
-      :workflow_options #(util/parse-json (or % "{}")))))
-
-(defn load-workflow-with-structure
-  "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
-  [tx workload structure]
-  (letfn [(restructure-once [workflow new-key old-keys]
-            (assoc (apply dissoc workflow old-keys) new-key (select-keys workflow old-keys)))
-          (restructure-workflows [workflows]
-            (map #(reduce-kv restructure-once % structure) workflows))]
-    ;; We're calling clojure.lang.MultiFn's getMethod, not java.lang.Class's
-    (update ((.getMethod load-workload-impl :default) tx workload) :workflows restructure-workflows)))
+        unnilify))
+    (catch Throwable cause
+      (throw (ex-info "Error loading workload"
+               {:workload workload} cause)))))
