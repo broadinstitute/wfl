@@ -61,13 +61,15 @@
         (succeed {:results (cromwell/query env query)})))))
 
 (defn append-to-aou-workload
-  "Append new workflows to an existing started AoU workload describe in BODY of _REQUEST."
-  [{:keys [parameters] :as _request}]
+  "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
+  [request]
   (fail-on-error
-    (let [{:keys [body]} parameters]
-      (logr/infof "append-to-aou-workload endpoint called: body=%s" body)
+    (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
+      (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (succeed (aou/append-to-workload! tx body))))))
+        (->> (workloads/load-workload-for-uuid tx uuid)
+          (aou/append-to-workload! tx notifications)
+          succeed)))))
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."
@@ -80,7 +82,6 @@
         (succeed
           (workloads/create-workload! tx
             (assoc body :creator email)))))))
-
 
 (defn get-workload!
   "List all workloads or the workload with UUID in REQUEST."
@@ -96,36 +97,35 @@
         (succeed
           (mapv (partial go! tx)
             (if-let [uuid (-> request :parameters :query :uuid)]
-              (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
-                [workload]
-                (throw (ex-info "No such workload" {:uuid uuid})))
+              [(workloads/load-workload-for-uuid tx uuid)]
               (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workloads with UUIDs in REQUEST."
   [request]
-  (letfn [(go! [tx {:keys [uuid]}]
-            (if-let [workload (workloads/load-workload-for-uuid tx uuid)]
+  (letfn [(go! [tx uuid]
+            (let [workload (workloads/load-workload-for-uuid tx uuid)]
               (if (:started workload)
                 workload
                 (do
                   (logr/infof "starting workload %s" uuid)
-                  (workloads/start-workload! tx workload)))
-              (throw (ex-info "No such workload" {:uuid uuid}))))]
+                  (workloads/start-workload! tx workload)))))]
     (fail-on-error
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (let [uuids (-> request :parameters :body distinct)]
+        (let [uuids (map :uuid (distinct (get-in request [:parameters :body])))]
           (logr/infof "post-start endpoint called: uuids=%s" uuids)
-          (succeed (mapv #(go! tx %) uuids)))))))
+          (succeed (mapv (partial go! tx) uuids)))))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
   (fail-on-error
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-        (workloads/execute-workload! tx
-          (assoc
-            (get-in request [:parameters :body])
-            :creator
-            (:email (gcs/userinfo request))))))))
+      (let [workload-request (get-in request [:parameters :body])]
+        (logr/info "executing workload-request: " workload-request)
+        (->>
+          (gcs/userinfo request)
+          :email
+          (assoc workload-request :creator)
+          (workloads/execute-workload! tx)
+          succeed)))))

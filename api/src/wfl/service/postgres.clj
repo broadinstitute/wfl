@@ -1,7 +1,6 @@
 (ns wfl.service.postgres
   "Talk to the Postgres database."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.jdbc :as jdbc]
             [wfl.once :as once]
@@ -42,38 +41,48 @@
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
 ;; HACK: We don't have the workload environment here.
-;;
+;; visible for testing
 (defn cromwell-status
-  "NIL or the status of the workflow with UUID on CROMWELL."
+  "`status` of the workflow with UUID on CROMWELL."
   [cromwell uuid]
-  (-> {:method  :get                                        ; :debug true :debug-body true
-       :url     (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-       :headers (once/get-auth-header)}
-    http/request :body
-    (json/read-str :key-fn keyword)
-    :status util/do-or-nil))
+  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+    (http/get {:headers (once/get-auth-header)})
+    :body
+    util/parse-json
+    :status))
 
-(defn update-workflow-status!
-  "Use TX to update the status of WORKFLOW in ITEMS table."
-  [tx cromwell items {:keys [id uuid] :as _workflow}]
-  (letfn [(maybe [m k v] (if v (assoc m k v) m))]
-    (when uuid
-      (let [now    (OffsetDateTime/now)
-            status (if (util/uuid-nil? uuid) "skipped"
-                                             (cromwell-status cromwell uuid))]
-        (jdbc/update! tx items
-          (maybe {:updated now :uuid uuid} :status status)
-          ["id = ?" id])))))
+(def ^:private finished?
+  "Test if a workflow `:status` is in a terminal state."
+  (set (conj cromwell/final-statuses "skipped")))
+
+(defn update-workflow-statuses!
+  "Use `tx` to update `status` of `workflows` in `_workload`."
+  [tx {:keys [cromwell items workflows] :as _workload}]
+  (letfn [(maybe-cromwell-status [{:keys [uuid]}]
+            (if (util/uuid-nil? uuid)
+              "skipped"
+              (cromwell-status cromwell uuid)))
+          (update! [{:keys [id uuid]} status]
+            (jdbc/update! tx items
+              {:updated (OffsetDateTime/now) :uuid uuid :status status}
+              ["id = ?" id]))]
+    (->> workflows
+      (remove (comp nil? :uuid))
+      (remove (comp finished? :status))
+      (run! #(update! % (maybe-cromwell-status %))))))
+
+(defn update-workload-status!
+  "Use `tx` to mark `workload` finished when all `workflows` are finished."
+  [tx {:keys [id items] :as _workload}]
+  (let [query (format "SELECT id FROM %%s WHERE status NOT IN %s"
+                (util/to-quoted-comma-separated-list finished?))]
+    (when (empty? (jdbc/query tx (format query items)))
+      (jdbc/update! tx :workload
+        {:finished (OffsetDateTime/now)} ["id = ?" id]))))
 
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."
-  [tx {:keys [cromwell id items workflows] :as _workload}]
-  (try
-    (run! (partial update-workflow-status! tx cromwell items) workflows)
-    (let [finished? (set (conj cromwell/final-statuses "skipped"))]
-      (when (every? (comp finished? :status) workflows)
-        (jdbc/update! tx :workload
-          {:finished (OffsetDateTime/now)}
-          ["id = ?" id])))
-    (catch Exception cause
-      (throw (ex-info "Error updating workload status" {} cause)))))
+  [tx workload]
+  (do
+    (update-workflow-statuses! tx workload)
+    (update-workload-status! tx workload)))

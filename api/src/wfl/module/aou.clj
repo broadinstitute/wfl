@@ -4,17 +4,19 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.environments :as env]
-            [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
+            [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           (java.sql Timestamp)))
 
 (def pipeline "AllOfUsArrays")
 
@@ -73,20 +75,20 @@
                         :reported_gender
                         :sample_alias
                         :sample_lsid]
-        optional-keys [;; genotype concordance inputs
-                       :control_sample_vcf_file
-                       :control_sample_vcf_index_file
-                       :control_sample_intervals_file
-                       :control_sample_name
-                       ;; cloud path of a thresholds file to be used with zCall
-                       :zcall_thresholds_file
-                       ;; cloud path of the Illumina gender cluster file
-                       :gender_cluster_file
-                       ;; arbitrary path to be used by BAFRegress
-                       :minor_allele_frequency_file]
-        mandatory  (select-keys inputs mandatory-keys)
-        optional   (select-keys inputs optional-keys)
-        missing (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
+        optional-keys  [;; genotype concordance inputs
+                        :control_sample_vcf_file
+                        :control_sample_vcf_index_file
+                        :control_sample_intervals_file
+                        :control_sample_name
+                        ;; cloud path of a thresholds file to be used with zCall
+                        :zcall_thresholds_file
+                        ;; cloud path of the Illumina gender cluster file
+                        :gender_cluster_file
+                        ;; arbitrary path to be used by BAFRegress
+                        :minor_allele_frequency_file]
+        mandatory      (select-keys inputs mandatory-keys)
+        optional       (select-keys inputs optional-keys)
+        missing        (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
     (when (seq missing)
       (throw (Exception. (format "Missing per-sample inputs: %s" missing))))
     (merge optional mandatory)))
@@ -94,12 +96,12 @@
 (defn make-inputs
   "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
-  (let [inputs (merge references/hg19-arrays-references
-                      fingerprinting
-                      other-inputs
-                      (env-inputs environment)
-                      (get-per-sample-inputs per-sample-inputs))]
-    (util/prefix-keys inputs :Arrays)))
+  (-> (merge references/hg19-arrays-references
+        fingerprinting
+        other-inputs
+        (env-inputs environment)
+        (get-per-sample-inputs per-sample-inputs))
+    (util/prefix-keys :Arrays)))
 
 (defn make-options
   "Return options for aou arrays pipeline."
@@ -118,31 +120,8 @@
     (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
     other-labels))
 
-(defn active-or-done-objects
-  "Query by _PRIMARY-VALS to get a set of active or done objects from Cromwell in ENVIRONMENT."
-  [environment {:keys [analysis_version_number chip_well_barcode] :as _primary-vals}]
-  (prn (format "%s: querying Cromwell in %s" wfl/the-name environment))
-  (let [primary-keys [:analysis_version_number
-                      :chip_well_barcode]
-        md           (partial cromwell/metadata environment)]
-    (letfn [(active? [metadata]
-              (let [cromwell-id                       (metadata :id)
-                    analysis-version-chip-well-barcode (-> cromwell-id md :inputs
-                                                          (select-keys primary-keys))]
-                (when analysis-version-chip-well-barcode
-                  (let [found-analysis-version-number (:analysis_version_number analysis-version-chip-well-barcode)
-                        found-chip-well-barcode       (:chip_well_barcode analysis-version-chip-well-barcode)]
-                    (when (and (= found-analysis-version-number analysis_version_number)
-                               (= found-chip-well-barcode chip_well_barcode))
-                      analysis-version-chip-well-barcode)))))]
-      (->> {:label  cromwell-label
-            :status ["On Hold" "Running" "Submitted" "Succeeded"]}
-           (cromwell/query environment)
-           (keep active?)
-           (filter seq)
-           set))))
-
-(defn really-submit-one-workflow
+; visible for testing
+(defn submit-aou-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    SAMPLE-OUTPUT-PATH and OTHER-LABELS."
   [environment per-sample-inputs sample-output-path other-labels]
@@ -155,9 +134,13 @@
       (make-options sample-output-path)
       (make-labels per-sample-inputs other-labels))))
 
-#_(defn update-workload!
-    "Use transaction TX to update WORKLOAD statuses."
-    [tx workload])
+(defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
+  (let [envs (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
+    (when (not= 1 (count envs))
+      (throw (ex-info "no unique environment matching Cromwell URL."
+               {:cromwell     cromwell
+                :environments envs})))
+    (first envs)))
 
 ;; The table is named with the id generated by the jdbc/insert!
 ;; so this needs to update the workload table inline after creating the
@@ -169,121 +152,108 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator cromwell pipeline project output] :as _body}]
+  [tx {:keys [creator cromwell pipeline project output] :as request}]
   (gcs/parse-gs-url output)
+  (get-cromwell-environment! request)
   (let [{:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release output])]
-    (when-not (<= 1 (count workloads))
+    (when (< 1 (count workloads))
       (log/warn "Found more than 1 workloads!")
       (log/error workloads))
-    (:id
-      (if-let [workload (first workloads)]
-        workload
-        (let [workloads     (jdbc/insert! tx :workload {:commit   commit
-                                                        :creator  creator
-                                                        :cromwell cromwell
-                                                        :input    "aou-inputs-placeholder"
-                                                        :output   (all/de-slashify output)
-                                                        :project  project
-                                                        :release  release
-                                                        :uuid     (UUID/randomUUID)
-                                                        :version  version
-                                                        :wdl      top})
-              {:keys [id uuid]} (first workloads)
-              table         (format "%s_%09d" pipeline id)
-              table_seq     (format "%s_id_seq" table)
-              kind          (format (str/join " " ["UPDATE workload"
-                                                   "SET pipeline = '%s'::pipeline"
-                                                   "WHERE uuid = '%s'"]) pipeline uuid)
-              idx           (format "CREATE SEQUENCE %s AS bigint" table_seq)
-              work          (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
-              link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
-          (jdbc/db-do-commands tx [kind idx work link-idx-work])
-          (jdbc/update! tx :workload {:items table} ["id = ?" id])
-          (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])))))))
+    (if-let [workload (first workloads)]
+      (:id workload)
+      (let [id            (->> {:commit   commit
+                                :creator  creator
+                                :cromwell cromwell
+                                :output   (all/slashify output)
+                                :project  project
+                                :release  release
+                                :uuid     (UUID/randomUUID)
+                                :version  version
+                                :wdl      top}
+                            (jdbc/insert! tx :workload)
+                            first
+                            :id)
+            table         (format "%s_%09d" pipeline id)
+            table_seq     (format "%s_id_seq" table)
+            kind          (format (str/join " " ["UPDATE workload"
+                                                 "SET pipeline = '%s'::pipeline"
+                                                 "WHERE id = '%s'"]) pipeline id)
+            idx           (format "CREATE SEQUENCE %s AS bigint" table_seq)
+            work          (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
+            link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
+        (jdbc/db-do-commands tx [kind idx work link-idx-work])
+        (jdbc/update! tx :workload {:items table} ["id = ?" id])
+        id))))
 
 (defn start-aou-workload!
-  "Use transaction TX to start the WORKLOAD by UUID. This is simply updating the
+  "Use transaction TX to start the WORKLOAD. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
-  [tx {:keys [uuid] :as _workload}]
-  (let [result (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])
-        started (:started result)]
-    (when (nil? started)
-      (let [now (OffsetDateTime/now)]
-        (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
+  [tx {:keys [id] :as workload}]
+  (when-not (:started workload)
+    (let [now {:started (Timestamp/from (.toInstant (OffsetDateTime/now)))}]
+      (jdbc/update! tx :workload now ["id = ?" id])
+      (merge workload now))))
 
-(defn keep-primary-keys
-  "Only return the primary keys of a SAMPLE."
-  [sample]
-  (select-keys sample [:chip_well_barcode :analysis_version_number]))
+(def primary-keys
+  "An AoU workflow can be uniquely identified by its `chip_well_barcode` and
+  `analysis_version_number`. Consequently, these are the primary keys in the
+  database."
+  [:chip_well_barcode :analysis_version_number])
 
-(defn remove-existing-samples!
-  "Return set of SAMPLEs that are not registered in workload TABLE using transaction TX."
-  [tx samples table]
-  (letfn [(q [[left right]] (fn [it] (str left it right)))
-          (extract-key-groups [l] [(map :chip_well_barcode l) (map :analysis_version_number l)])
-          (make-query-group [v] (->> v (map (q "''")) (str/join ",") ((q "()"))))
-          (assemble-query [query l] (format query (first l) (last l)))]
-    (let [samples  (map keep-primary-keys samples)
-          existing (->> samples
-                        (extract-key-groups)
-                        (map make-query-group)
-                        (assemble-query (str/join " " ["SELECT * FROM" table "WHERE chip_well_barcode in %s"
-                                                       "AND analysis_version_number in %s"]))
-                        (jdbc/query tx)
-                        (map keep-primary-keys)
-                        set)]
-      (set (remove existing samples)))))
+(defn- primary-values [sample]
+  (mapv sample primary-keys))
+
+(defn ^:private get-existing-samples [tx table samples]
+  (letfn [(extract-primary-values [xs]
+            (reduce (partial map conj) [#{""} #{-1}] (map primary-values xs)))
+          (assemble-query [[barcodes versions]]
+            (str/join " "
+              ["SELECT chip_well_barcode, analysis_version_number FROM"
+               table
+               (format "WHERE chip_well_barcode in %s" barcodes)
+               (format "AND analysis_version_number in %s" versions)]))]
+    (->> samples
+      extract-primary-values
+      (map util/to-quoted-comma-separated-list)
+      assemble-query
+      (jdbc/query tx)
+      extract-primary-values)))
+
+(defn ^:private remove-existing-samples
+  "Retain all `samples` with unique `known-keys`."
+  [samples known-keys]
+  (letfn [(go [[known-values xs] sample]
+            (let [values (primary-values sample)]
+              [(map conj known-values values)
+               (if-not (every? identity (map contains? known-values values))
+                 (conj xs sample)
+                 xs)]))]
+    (second (reduce go [known-keys []] samples))))
 
 (defn append-to-workload!
-  "Use transaction TX to append the samples to a WORKLOAD identified by uuid.
-   The workload needs to be marked as 'started' in order to be append-able, and
-   any samples being added to the workload table will be submitted right away."
-  [tx {:keys [notifications uuid environment] :as _workload}]
-  (let [workload           (first (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid]))]
-    (when-not (:started workload)
-      (throw (Exception. (format "Workload %s is not started yet!" uuid))))
-    (let [now                         (OffsetDateTime/now)
-          environment                 (wfl/throw-or-environment-keyword! environment)
-          table                       (:items workload)
-          output-bucket               (:output workload)
-          primary-keys                (map keep-primary-keys notifications)
-          primary-keys-notifications  (zipmap primary-keys notifications)
-          new-samples                 (remove-existing-samples! tx primary-keys table)
-          to-be-submitted             (->> primary-keys-notifications
-                                        (keys)
-                                        (keep new-samples)
-                                        (select-keys primary-keys-notifications))
-          workload->label             {:workload uuid}]
-      (letfn [(sql-rize [m] (-> m
-                              (assoc :updated now)
-                              keep-primary-keys))
-              (submit! [sample]
-                (let [{:keys [chip_well_barcode analysis_version_number] :as sample-pks} (keep-primary-keys sample)
-                      output-path (str/join "/" [output-bucket chip_well_barcode analysis_version_number])]
-                  [(really-submit-one-workflow environment sample output-path workload->label) sample-pks]))
-              (update! [tx [uuid {:keys [analysis_version_number chip_well_barcode]}]]
-                (when uuid
-                  (jdbc/update! tx table
-                    {:updated now :uuid uuid}
-                    ["analysis_version_number = ? AND chip_well_barcode = ?" analysis_version_number
-                     chip_well_barcode])
-                  {:updated                 (str now)
-                   :uuid                    uuid
-                   :analysis_version_number analysis_version_number
-                   :chip_well_barcode       chip_well_barcode}))]
-        (let [submitted-uuids-pks (map submit! (vals to-be-submitted))]
-          (jdbc/insert-multi! tx table (map sql-rize (vals to-be-submitted)))
-          (doall (map (partial update! tx) submitted-uuids-pks)))))))
-
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (workloads/load-workflow-with-structure
-    tx workload {:inputs [:analysis_version_number
-                          :chip_well_barcode]}))
+  "Use transaction `tx` to append `notifications` (or samples) to `workload`.
+  Note:
+  - The `workload` must be `started` in order to be append-able.
+  - All samples being appended will be submitted immediately."
+  [tx notifications {:keys [uuid items output] :as workload}]
+  (when-not (:started workload)
+    (throw (Exception. (format "Workload %s is not started yet!" uuid))))
+  (letfn [(submit! [environment sample]
+            (let [output-path (str output (str/join "/" (primary-values sample)))]
+              (->> (submit-aou-workflow environment sample output-path {:workload uuid})
+                str ; coerce java.util.UUID -> string
+                (assoc (select-keys sample primary-keys)
+                  :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
+                  :status "Submitted"
+                  :uuid))))]
+    (let [environment       (get-cromwell-environment! workload)
+          submitted-samples (map (partial submit! environment)
+                              (remove-existing-samples notifications
+                                (get-existing-samples tx items notifications)))]
+      (jdbc/insert-multi! tx items submitted-samples))))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -292,10 +262,16 @@
     (add-aou-workload! tx request)
     (workloads/load-workload-for-id tx)))
 
-(defmethod workloads/start-workload!
-  pipeline
-  [tx {:keys [id] :as workload}]
-  (do
-    (start-aou-workload! tx workload)
-    (workloads/load-workload-for-id tx id)))
+(defoverload workloads/start-workload! pipeline start-aou-workload!)
 
+;; The arrays module is always "open" for appending workflows - once started,
+;; it cannot be stopped!
+(defmethod workloads/update-workload!
+  pipeline
+  [tx workload]
+  (try
+    (postgres/update-workflow-statuses! tx workload)
+    (workloads/load-workload-for-id tx (:id workload))
+    (catch Throwable cause
+      (throw (ex-info "Error updating aou workload"
+               {:workload workload} cause)))))
