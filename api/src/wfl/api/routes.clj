@@ -1,6 +1,8 @@
 (ns wfl.api.routes
   "Define routes for API endpoints"
   (:require [clojure.string                     :as str]
+            [reitit.ring.middleware.dev         :as dev]
+            [reitit.dev.pretty                  :as pretty]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -11,6 +13,7 @@
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
+            [wfl.api.workloads                  :as workloads]
             [wfl.environments                   :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl]
@@ -111,12 +114,8 @@
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
-(derive ::error ::exception)
-(derive ::failure ::exception)
-(derive ::horror ::exception)
-
-(defn server-error-handler [message exception request]
-  {:status 500
+(defn error-handler [status-code message exception request]
+  {:status status-code
    :body {:message message
           :exception (.getClass exception)
           :data (ex-data exception)
@@ -127,32 +126,41 @@
     (merge
       exception/default-handlers
       {;; ex-data with :type ::error
-       ::error             (partial server-error-handler "error")
-       ;; ex-data with ::exception or ::failure
-       ::exception         (partial server-error-handler "exception")
+       ::workloads/invalid-workload       (partial error-handler 400 "Invalid Workload")
        ;; SQLException and all it's child classes
-       SQLException        (partial server-error-handler "sql-exception")
+       SQLException                       (partial error-handler 500 "SQL Error")
+       ;; coercion exceptions
+       :reitit.coercion/request-coercion  (partial error-handler 400 "Coercion Error on request")
+       :reitit.coercion/response-coercion (partial error-handler 500 "Coercion Error on response")
        ;; override the default handler
-       ::exception/default (partial server-error-handler "default")
-       ;; print stack-traces for all exceptions
-       ::exception/wrap    (fn [handler e request]
-                             (println "ERROR" (pr-str (:uri request)))
-                             (handler e request))})))
+       ::exception/default                (partial error-handler 500 "Internal Server Error")
+       ;; print stack-traces for all exceptions in logs
+       ::exception/wrap                   (fn [handler e request]
+                                            (println "ERROR" (pr-str (:uri request)))
+                                            (handler e request))})))
 
 (def routes
   (ring/ring-handler
     (ring/router
       (endpoint-swagger-auth-processor endpoints)
-      {:data {:coercion   reitit.coercion.spec/coercion
+      {;; uncomment for easier debugging with coercion and middleware transformations
+       ;; :reitit.middleware/transform dev/print-request-diffs
+       ;; :exception pretty/exception
+       :data {:coercion   reitit.coercion.spec/coercion
               :muuntaja   muuntaja-core/instance
-              :middleware [parameters/parameters-middleware
+              :middleware [;; query-params & form-params
+                           parameters/parameters-middleware
+                           ;; content-negotiation
                            muuntaja/format-negotiate-middleware
+                           ;; encoding response body
                            muuntaja/format-response-middleware
                            exception-middleware
+                           ;; decoding request body
                            muuntaja/format-request-middleware
-                           coercion/coerce-exceptions-middleware
-                           coercion/coerce-request-middleware
+                           ;; coercing response bodys
                            coercion/coerce-response-middleware
+                           ;; coercing request parameters
+                           coercion/coerce-request-middleware
                            multipart/multipart-middleware]}})
     ;; get more correct http error responses on routes
     (ring/create-default-handler

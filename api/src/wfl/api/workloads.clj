@@ -2,6 +2,8 @@
   (:require [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc]))
 
+(derive ::invalid-workload ::exception)
+
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
   "(transaction workload-request) -> workload"
@@ -58,14 +60,16 @@
   [_ body]
   (throw
     (ex-info "Failed to create workload - no such pipeline"
-      (select-keys body [:pipeline]))))
+      {:cause (:pipeline body)
+       :type ::invalid-workload})))
 
 (defmethod start-workload!
   :default
   [_ body]
   (throw
     (ex-info "Failed to start workload - no such pipeline"
-      (select-keys body [:pipeline]))))
+      {:cause (:pipeline body)
+       :type ::invalid-workload})))
 
 (defmethod execute-workload!
   :default
