@@ -2,7 +2,8 @@
   (:require [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc]))
 
-(derive ::invalid-pipeline ::exception)
+;; always derive from base :wfl/exception
+(derive ::invalid-pipeline :wfl/exception)
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!

@@ -115,10 +115,11 @@
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
 (defn ex-handler
-  "Top level exception handler. Prefer to use status from EXCEPTION and fallback to the provided STATUS."
+  "Top level exception handler. Prefer to use status and message
+   from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
   {:status (or (:status (ex-data exception)) status)
-   :body {:message message
+   :body {:message (or (.getMessage exception) message)
           :exception (.getClass exception)
           :data (ex-data exception)
           :uri (:uri request)}})
@@ -128,8 +129,8 @@
   (exception/create-exception-middleware
     (merge
       exception/default-handlers
-      {;; ex-data with :type ::invalid-pipeline
-       ::workloads/invalid-pipeline          (partial ex-handler 400 "Invalid Pipeline")
+      {;; ex-data with :type ::invalid-pipeline of :wfl/exception
+       ::workloads/invalid-pipeline          (partial ex-handler 400 "")
        ;; SQLException and all it's child classes
        SQLException                          (partial ex-handler 500 "SQL Error")
        ;; handle clj-http Slingshot stone exceptions
