@@ -1,14 +1,9 @@
 (ns wfl.tools.fixtures
-  (:require [clj-http.client :as http]
-            [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.environments :as env]
-            [wfl.once :as once]
-            [wfl.service.gcs :as gcs]
+  (:require [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
-            [wfl.util :as util]
-            [wfl.jdbc :as jdbc])
+            [wfl.jdbc :as jdbc]
+            [clojure.string :as str])
   (:import [java.util UUID]))
 
 (defn method-overload-fixture
@@ -42,79 +37,49 @@
               (gcs/list-objects gcs-test-bucket name#)
               (run! (comp delete-test-object :name)))))))
 
-(defn cloud-db-url
-  "Return NIL or an URL for the CloudSQL instance containing DB-NAME."
-  [environment instance-name db-name]
-  (if-let [gcp (get-in env/stuff [environment :server :project])]
-    (letfn [(postgresql? [{:keys [instanceType name region]}]
-              (when (= [instanceType name]
-                      ["CLOUD_SQL_INSTANCE" instance-name])
-                (str "jdbc:postgresql://google/" db-name "?useSSL=false"
-                  "&socketFactory="
-                  "com.google.cloud.sql.postgres.SocketFactory"
-                  "&cloudSqlInstance="
-                  (str/join ":" [gcp region name]))))]
-      (-> {:method  :get
-           :url     (str "https://www.googleapis.com/sql/v1beta4/projects/"
-                      gcp "/instances")
-           :headers (merge {"Content-Type" "application/json"}
-                      (once/get-auth-header))}
-        http/request
-        :body
-        (json/read-str :key-fn keyword)
-        :items
-        (->> (keep postgresql?))
-        first))))
-
-(def testing-dbname
-  (:db-name (postgres/wfl-db-config)))
-
-(defn- postgres-db-config []
-  (->
-    (postgres/wfl-db-config)
+(defn ^:private postgres-db-config []
+  (-> (postgres/wfl-db-config)
     (dissoc :instance-name)
     (merge {:connection-uri "jdbc:postgresql:postgres"
             :db-name        "postgres"})))
 
+(def testing-db-config
+  (let [name (str "wfltest" (str/replace (UUID/randomUUID) "-" ""))]
+    (-> (postgres/wfl-db-config)
+      (dissoc :instance-name)
+      (merge {:connection-uri (str "jdbc:postgresql:" name)
+              :db-name        name})
+      constantly)))
+
 (defn- create-db
   "Create the ad-hoc testing database with DBNAME."
   [dbname]
-  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
-    ; cloud
-    (util/shell! "gcloud" "sql" "databases" "create" dbname "-i" "zero-postgresql")
-    ; local
-    (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
-      (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname)))))
+  (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
+    (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname))))
 
 (defn setup-db
   "Setup te db by running liquibase migrations by DBNAME."
   [dbname]
-  (let [changelog "../database/changelog.xml"]
-    (if-let [test-env (System/getenv "WFL_DEPLOY_ENVIRONMENT")]
-      (let [url     (cloud-db-url :gotc-dev "zero-postgresql" dbname)
-            secrets (-> env/stuff test-env :server :vault util/vault-secrets)]
-        (liquibase/run-liquibase url changelog (:username secrets) (:password secrets)))
-      (let [url (format "jdbc:postgresql:%s" dbname)
-            {:keys [user password]} (postgres/wfl-db-config)]
-        (liquibase/run-liquibase url changelog user password)))))
+  (let [changelog "../database/changelog.xml"
+        url       (format "jdbc:postgresql:%s" dbname)
+        {:keys [user password]} (postgres/wfl-db-config)]
+    (liquibase/run-liquibase url changelog user password)))
 
 (defn- destroy-db
   "Tear down the testing database by DBNAME."
   [dbname]
-  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
-    ; cloud
-    (util/shell! "gcloud" "sql" "databases" "delete" dbname "-i" "zero-postgresql")
-    ; local
-    (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
-      (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname)))))
+  ; local
+  (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
+    (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname))))
 
 (defn clean-db-fixture [f]
   "Wrapper for F so it runs in a clean db per invocation.
   This assumes not database with name testing-dbname
   has been manually created in the current testing environment."
-  (create-db testing-dbname)
-  (try
-    (setup-db testing-dbname)
-    (f)
-    (finally
-      (destroy-db testing-dbname))))
+  (let [name (:db-name (testing-db-config))]
+    (create-db name)
+    (try
+      (setup-db name)
+      (f)
+      (finally
+        (destroy-db name)))))
