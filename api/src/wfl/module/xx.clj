@@ -95,22 +95,25 @@
 
 ;; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
-  (letfn [(update-workflow [workflow cromwell-uuid]
-            (assoc workflow :uuid cromwell-uuid
-                            :status "Submitted"
-                            :updated (OffsetDateTime/now)))]
-    (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-          environment (get-cromwell-environment workload)]
-      (logr/infof "submitting workload %s" uuid)
-      (mapv update-workflow
-        workflows
-        (cromwell/submit-workflows
-          environment
-          (io/file (:dir path) (path ".wdl"))
-          (io/file (:dir path) (path ".zip"))
-          (map (comp (partial cromwellify-inputs environment) :inputs) workflows)
-          (util/make-options environment)
-          (merge cromwell-labels {:workload uuid}))))))
+  (let [path                 (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+        environment          (get-cromwell-environment workload)
+        ;; Batch calls have uniform options, so we must group by options to submit
+        workflows-by-options (seq (group-by :workflow_options workflows))]
+    (letfn [(update-workflow [workflow cromwell-uuid]
+              (assoc workflow :uuid cromwell-uuid
+                              :status "Submitted"
+                              :updated (OffsetDateTime/now)))
+            (submit-workflows-by-options [[options associated-workflows]]
+              (mapv update-workflow
+                    associated-workflows
+                    (cromwell/submit-workflows
+                      environment
+                      (io/file (:dir path) (path ".wdl"))
+                      (io/file (:dir path) (path ".zip"))
+                      (map (comp (partial cromwellify-inputs environment) :inputs) associated-workflows)
+                      options
+                      (merge cromwell-labels {:workload uuid}))))]
+      (apply conj (mapv submit-workflows-by-options workflows-by-options)))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
   (letfn [(make-workflow-record [workload-options id item]
