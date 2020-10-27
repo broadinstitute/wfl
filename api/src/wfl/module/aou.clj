@@ -125,15 +125,15 @@
 ; visible for testing
 (defn submit-aou-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
-   SAMPLE-OUTPUT-PATH and OTHER-LABELS."
-  [environment per-sample-inputs sample-output-path other-labels]
+   WORKFLOW-OPTIONS and OTHER-LABELS."
+  [environment per-sample-inputs workflow-options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
-      (per-workflow-default-options sample-output-path)
+      workflow-options
       (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
@@ -249,10 +249,13 @@
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
   (letfn [(submit! [environment sample]
-            (let [output-path (str output (str/join "/" (primary-values sample)))]
-              (->> (submit-aou-workflow environment sample output-path {:workload uuid})
+            (let [output-path      (str output (str/join "/" (primary-values sample)))
+                  workflow-options (util/deep-merge (:workflow_options workload)
+                                                    (per-workflow-default-options output-path))]
+              (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
+                  :workflow_options (json/write-str workflow-options)
                   :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
                   :status "Submitted"
                   :uuid))))]
