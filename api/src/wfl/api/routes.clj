@@ -114,30 +114,35 @@
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
-(defn error-handler [status-code message exception request]
-  {:status status-code
+(defn ex-handler
+  "Top level exception handler. Prefer to use status from EXCEPTION and fallback to the provided STATUS."
+  [status message exception request]
+  {:status (or (:status (ex-data exception)) status)
    :body {:message message
           :exception (.getClass exception)
           :data (ex-data exception)
           :uri (:uri request)}})
 
 (def exception-middleware
+  "Custom exception middleware, dispatch on fully qualified exception types."
   (exception/create-exception-middleware
     (merge
       exception/default-handlers
       {;; ex-data with :type ::error
-       ::workloads/invalid-workload       (partial error-handler 400 "Invalid Workload")
+       ::workloads/invalid-workload          (partial ex-handler 400 "Invalid Workload")
        ;; SQLException and all it's child classes
-       SQLException                       (partial error-handler 500 "SQL Error")
-       ;; coercion exceptions
-       :reitit.coercion/request-coercion  (partial error-handler 400 "Coercion Error on request")
-       :reitit.coercion/response-coercion (partial error-handler 500 "Coercion Error on response")
+       SQLException                          (partial ex-handler 500 "SQL Error")
+       ;; handle clj-http Slingshot stone exceptions
+       :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
        ;; override the default handler
-       ::exception/default                (partial error-handler 500 "Internal Server Error")
+       ::exception/default                   (partial ex-handler 500 "Internal Server Error")
        ;; print stack-traces for all exceptions in logs
-       ::exception/wrap                   (fn [handler e request]
-                                            (println "ERROR" (pr-str (:uri request)))
-                                            (handler e request))})))
+       ::exception/wrap                      (fn [handler e request]
+                                               (println "ERROR" (pr-str
+                                                                  ;; uncomment to log the full request body
+                                                                  ; request
+                                                                  (:uri request)))
+                                               (handler e request))})))
 
 (def routes
   (ring/ring-handler
