@@ -27,7 +27,11 @@
 (defn add-copyfile-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as _workload-request}]
-  (let [[uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
+  (let [default-options (-> (:cromwell _workload-request)
+                            all/cromwell-environments
+                            first
+                            util/make-options)
+        [uuid table]    (all/add-workload-table! tx workflow-wdl _workload-request default-options)
         inputs (map :inputs items)]
     (letfn [(add-id [m id] (assoc m :id id))]
       (jdbc/insert-multi! tx table (map add-id inputs (range))))
