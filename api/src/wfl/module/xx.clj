@@ -113,13 +113,14 @@
           (merge cromwell-labels {:workload uuid}))))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
-  (letfn [(make-workflow-record [id inputs]
-            (->> (make-combined-inputs-to-save output common_inputs inputs)
-              json/write-str
-              (assoc {:id id} :inputs)))]
-    (let [default-options (util/make-options (get-cromwell-environment request))
-          [uuid table]    (all/add-workload-table! tx workflow-wdl request default-options)]
-      (->> (map make-workflow-record (range) (map :inputs items))
+  (letfn [(make-workflow-record [workload-options id item]
+            (let [options-string (json/write-str (util/deep-merge workload-options (:workflow_options item)))]
+              (->> (make-combined-inputs-to-save output common_inputs (map :inputs item))
+                   json/write-str
+                   (assoc {:id id :workflow_options options-string} :inputs))))]
+    (let [default-options   (util/make-options (get-cromwell-environment request))
+          [uuid table opts] (all/add-workload-table! tx workflow-wdl request default-options)]
+      (->> (map (partial make-workflow-record opts) (range) items)
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-uuid tx uuid))))
 
