@@ -45,6 +45,7 @@
                 (is uuid "workloads should be been assigned a uuid")
                 (is (util/absent? uuids uuid))
                 (is (:created workload) "should have a created timestamp")
+                (is (:workflow_options workload) "should have non-null options")
                 (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
                 (is (not (:started workload)) "hasn't been started in cromwell")
                 (let [include [:pipeline :cromwell :project]]
@@ -88,6 +89,7 @@
                 (is (util/absent? uuids uuid) "must have a new unique id")
                 (is (:created workload) "should have a created timestamp")
                 (is (:started workload) "should have a started timestamp")
+                (is (:workflow_options workload) "should have non-null options")
                 (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
                 (let [include [:pipeline :cromwell :project]]
                   (is (= (select-keys request include) (select-keys workload include))))
