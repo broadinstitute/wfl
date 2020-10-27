@@ -155,10 +155,12 @@
   [tx {:keys [items] :as workload}]
   (let [unnilify     (fn [x] (into {} (filter second x)))
         load-inputs! #(util/deep-merge workflow-defaults (util/parse-json %))]
-    (->> (postgres/get-table tx items)
-      (mapv (comp #(update % :inputs load-inputs!) unnilify))
-      (assoc workload :workflows)
-      unnilify)))
+    (update
+      (->> (postgres/get-table tx items)
+           (mapv (comp #(update % :inputs load-inputs!) unnilify))
+           (assoc workload :workflows)
+           unnilify)
+      :workflow_options #(util/parse-json (or % "{}")))))
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)
