@@ -143,7 +143,7 @@
           (unpack-options [m]
             (update m :workflow_options #(util/parse-json (or % "{}"))))]
     (->> (postgres/get-table tx items)
-         (mapv (comp #(update % :inputs load-inputs!) unnilify))
+         (mapv (comp #(update % :inputs load-inputs!) unnilify unpack-options))
          (assoc workload :workflows)
          unnilify
          unpack-options)))
