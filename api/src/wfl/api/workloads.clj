@@ -1,6 +1,7 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]))
+            [wfl.jdbc :as jdbc]
+            [wfl.util :as util]))
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
@@ -82,11 +83,13 @@
   :default
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))]
-    (->>
-      (postgres/get-table tx (:items workload))
-      (map unnilify)
-      (assoc workload :workflows)
-      unnilify)))
+    (->
+      (->>
+        (postgres/get-table tx (:items workload))
+        (map unnilify)
+        (assoc workload :workflows)
+        unnilify)
+      (update :workflow_options #(util/parse-json (or % "{}"))))))
 
 (defn load-workflow-with-structure
   "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
