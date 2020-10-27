@@ -41,31 +41,30 @@
 
 (def cram-ref
   "Ref Fasta for CRAM."
-  {:cram_ref_fasta       "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
-   :cram_ref_fasta_index "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"})
+  (let [hg38           "gs://gcp-public-data--broad-references/hg38/v0/"
+        cram_ref_fasta (str hg38 "Homo_sapiens_assembly38.fasta")]
+    {:cram_ref_fasta        cram_ref_fasta
+     :cram_ref_fasta_index  (str cram_ref_fasta ".fai")}))
 
 (defn make-references
   "HG38 reference, calling interval, and contamination files."
   [prefix]
-  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
-        il   "wgs_calling_regions.hg38.interval_list"
-        p3   "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat"]
-    (merge (references/hg38-genome-references prefix)
-      {:calling_interval_list   (str hg38 il)
-       :contamination_sites_bed (str hg38 p3 ".bed")
-       :contamination_sites_mu  (str hg38 p3 ".mu")
-       :contamination_sites_ud  (str hg38 p3 ".UD")})))
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
+    (merge references/contamination-sites
+      (references/hg38-genome-references prefix)
+      {:calling_interval_list
+       (str hg38 "wgs_calling_regions.hg38.interval_list")})))
 
 (def hack-task-level-values
   "Hack to overload task-level values for wgs pipeline."
-  (merge {:wgs_coverage_interval_list
-          (str "gs://gcp-public-data--broad-references/"
-            "hg38/v0/wgs_coverage_regions.hg38.interval_list")}
-    (-> {:disable_sanity_check true}
-      (util/prefix-keys :CheckContamination)
-      (util/prefix-keys :UnmappedBamToAlignedBam)
-      (util/prefix-keys :WholeGenomeGermlineSingleSample)
-      (util/prefix-keys :WholeGenomeReprocessing))))
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
+    (merge {:wgs_coverage_interval_list
+            (str hg38 "wgs_coverage_regions.hg38.interval_list")}
+      (-> {:disable_sanity_check true}
+        (util/prefix-keys :CheckContamination)
+        (util/prefix-keys :UnmappedBamToAlignedBam)
+        (util/prefix-keys :WholeGenomeGermlineSingleSample)
+        (util/prefix-keys :WholeGenomeReprocessing)))))
 
 (defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."

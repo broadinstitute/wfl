@@ -18,7 +18,7 @@
   "Map WFL source repo names to their URLs.
   Primary URL should be tried first, and there's a second
   URL that works in GitHub actions to try as a backup."
-  (let [repos ["wfl" "pipeline-config"]
+  (let [repos ["warp" "wfl" "pipeline-config"]
         urls (fn [x] {:primary (str "git@github.com:broadinstitute/" x),
                       :actions-backup (str "git@" x ".github.com:broadinstitute/" x)})]
     (zipmap repos (map urls repos))))
