@@ -15,14 +15,14 @@
    :top     "wdl/copyfile.wdl"})
 
 (defn- submit-workflow
-  "Submit WORKFLOW to Cromwell in ENVIRONMENT."
-  [environment workflow labels]
+  "Submit WORKFLOW to Cromwell in ENVIRONMENT with OPTIONS and LABELS."
+  [environment workflow options labels]
   (cromwell/submit-workflow
     environment
     (util/extract-resource (:top workflow-wdl))
     nil
     (-> workflow (select-keys [:src :dst]) (util/prefix-keys pipeline))
-    (util/make-options environment)
+    options
     labels))
 
 (defn add-copyfile-workload!
@@ -44,8 +44,8 @@
   "Use transaction TX to start _WORKLOAD."
   [tx {:keys [cromwell items uuid] :as workload}]
   (let [env (first (all/cromwell-environments cromwell))]
-    (letfn [(submit! [{:keys [id inputs]}]
-              [id (submit-workflow env inputs {:workload uuid}) "Submitted"])
+    (letfn [(submit! [{:keys [id inputs workflow_options]}]
+              [id (submit-workflow env inputs workflow_options {:workload uuid}) "Submitted"])
             (update! [tx [id uuid status]]
               (jdbc/update! tx items
                 {:updated (OffsetDateTime/now) :uuid uuid :status status}
