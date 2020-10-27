@@ -14,9 +14,4 @@ export _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,addr
 "./wfl" server 3000 &
 popd
 
-declare OPEN=open
-test CharlesDarwin = Charles$(uname) || OPEN=xdg-open
-
-$OPEN http://localhost:8080/
-
 wait

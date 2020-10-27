@@ -9,7 +9,8 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.util :refer [shell!]]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.jdbc :as jdbc])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -25,7 +26,7 @@
   [identifier]
   "A whole genome sequencing workload used for testing."
   (let [path "/single_sample/plumbing/truth"]
-    {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
+    {:cromwell (get-in stuff [:wgs-dev :cromwell :url])
      :input    (str "gs://broad-gotc-dev-wfl-ptc-test-inputs" path)
      :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
      :pipeline wgs/pipeline
@@ -36,12 +37,11 @@
   "An allofus arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
+  {:cromwell (get-in stuff [:aou-dev :cromwell :url])
    :input    "aou-inputs-placeholder"
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output"
    :pipeline aou/pipeline
-   :project  (format "(Test) %s %s" @git-branch identifier)
-   :items    [{}]})
+   :project  (format "(Test) %s %s" @git-branch identifier)})
 
 (def aou-sample
   "An aou arrays sample for testing."
@@ -64,7 +64,6 @@
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:cromwell (get-in stuff [:gotc-dev :cromwell :url])
-   :input    ""
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -74,7 +73,7 @@
   [identifier]
   "A whole genome sequencing workload used for testing."
   (let [test-storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:cromwell      (get-in stuff [:gotc-dev :cromwell :url])
+    {:cromwell      (get-in stuff [:xx-dev :cromwell :url])
      :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
      :pipeline      xx/pipeline
      :project       (format "(Test) %s" @git-branch)
@@ -93,11 +92,36 @@
                 (when (> seconds timeout)
                   (throw (TimeoutException.
                            (format "Timed out waiting for workflow %s" uuid))))
-                (let [status (postgres/cromwell-status cromwell uuid)]
-                  (when-not (or (skipped? workflow) (finished? status))
-                    (log/infof "%s: Sleeping on status: %s" uuid status)
-                    (util/sleep-seconds interval)
-                    (recur (+ seconds interval)))))))]
+                (when-not (skipped? workflow)
+                  (let [status (postgres/cromwell-status cromwell uuid)]
+                    (when-not (finished? status)
+                      (log/infof "%s: Sleeping on status: %s" uuid status)
+                      (util/sleep-seconds interval)
+                      (recur (+ seconds interval))))))))]
     (run! await-workflow (:workflows workload))
     (done! (endpoints/get-workload-status (:uuid workload)))
     nil))
+
+(defn create-workload! [workload-request]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/create-workload! tx workload-request)))
+
+(defn start-workload! [workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/start-workload! tx workload)))
+
+(defn execute-workload! [workload-request]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/execute-workload! tx workload-request)))
+
+(defn update-workload! [workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/update-workload! tx workload)))
+
+(defn load-workload-for-uuid [uuid]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/load-workload-for-uuid tx uuid)))
+
+(defn append-to-workload! [samples workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (aou/append-to-workload! tx samples workload)))

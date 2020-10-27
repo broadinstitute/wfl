@@ -397,3 +397,12 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       (run! #(.deleteOnExit %) [temp file])
       (with-open [in (io/input-stream resource)] (io/copy in file))
       file)))
+
+(defn to-quoted-comma-separated-list
+  "Return the sequence `xs` composed into a comma-separated list string.
+  Example:
+    (to-quoted-comma-separated-list ['x 'y 'z])
+    => \"('x','y','z')\""
+  [xs]
+  (letfn [(between [[first second] x] (str first x second))]
+    (between "()" (str/join "," (map (partial between "''") xs)))))
