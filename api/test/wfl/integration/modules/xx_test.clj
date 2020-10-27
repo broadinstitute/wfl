@@ -32,23 +32,6 @@
                             :updated now)]
     (map do-submit workflows)))
 
-(deftest test-populating-input-items
-  (testing "create workload with google cloud storage url as `items`"
-    (let [items (xx/normalize-input-items (str exome-test-storage "RP-929.NA12878/RP-929.NA12878.cram"))]
-      (is (== 1 (count items)))
-      (let [input (first items)]
-        (is :input_cram input)
-        (is (absent? input :input_bam))))
-    (let [items (xx/normalize-input-items (str exome-test-storage "not-a-real.unmapped.bam"))]
-      (is (== 1 (count items)))
-      (let [input (first items)]
-        (is :input_bam input)
-        (is (absent? input :input_cram)))))
-  (testing "`items` maps are un-nested'"
-    (let [uuids (take 3 (repeatedly #(UUID/randomUUID)))
-          items (map (fn [uuid] {:inputs {:some-input uuid}}) uuids)]
-      (is (every? identity (map #(= %1 (:some-input %2)) uuids (xx/normalize-input-items items)))))))
-
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
             (is (absent? workflow :uuid))
@@ -61,9 +44,7 @@
               (is (absent? workload :finished))
               (run! verify-workflow (:workflows workload))))]
     (testing "single-sample workload-request"
-      (go! (make-xx-workload-request)))
-    (testing "make from bucket"
-      (go! (assoc (make-xx-workload-request) :items exome-test-storage)))))
+      (go! (make-xx-workload-request)))))
 
 (deftest test-create-workload-with-common-inputs
   (let [common-inputs {:bait_set_name      "Geoff"
@@ -101,12 +82,11 @@
         (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->>
-                   {:cromwell (get-in env/stuff [:xx-dev :cromwell :url])
-                    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
-                    :pipeline xx/pipeline
-                    :project  (format "(Test) %s" @workloads/git-branch)
-                    :creator  (:email @endpoints/userinfo)}
+  (let [workload (->> {:cromwell (get-in env/stuff [:xx-dev :cromwell :url])
+                       :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
+                       :pipeline xx/pipeline
+                       :project  (format "(Test) %s" @workloads/git-branch)
+                       :creator  (:email @endpoints/userinfo)}
                    workloads/execute-workload!
                    workloads/update-workload!)]
     (is (:finished workload))))

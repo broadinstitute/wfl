@@ -99,22 +99,15 @@
   :default
   [tx workload]
   (try
-    (letfn [(unnilify [m] (into {} (filter second m)))]
-      (->>
-        (postgres/get-table tx (:items workload))
-        (map unnilify)
+    (letfn [(unnilify [m] (into {} (filter second m)))
+            (split-inputs [m]
+              (let [keep [:id :finished :status :updated :uuid]]
+                (assoc (select-keys m keep)
+                  :inputs (unnilify (apply dissoc m keep)))))]
+      (->> (postgres/get-table tx (:items workload))
+        (mapv (comp unnilify split-inputs))
         (assoc workload :workflows)
         unnilify))
     (catch Throwable cause
       (throw (ex-info "Error loading workload"
                {:workload workload} cause)))))
-
-#_(defn load-workflow-with-structure
-  "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
-  [tx workload structure]
-  (letfn [(restructure-once [workflow new-key old-keys]
-            (assoc (apply dissoc workflow old-keys) new-key (select-keys workflow old-keys)))
-          (restructure-workflows [workflows]
-            (map #(reduce-kv restructure-once % structure) workflows))]
-    ;; We're calling clojure.lang.MultiFn's getMethod, not java.lang.Class's
-    (update ((.getMethod load-workload-impl :default) tx workload) :workflows restructure-workflows)))

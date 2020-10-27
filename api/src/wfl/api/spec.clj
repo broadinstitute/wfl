@@ -59,40 +59,30 @@
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]))
-(s/def ::inputs (s/or :aou ::aou-workflow-inputs-list
-                      :copyfile ::copyfile-workflow-inputs-list
-                      :wgs ::wgs-workflow-inputs-list
-                      :xx  (s/or
-                             ::bucket string?
-                             ::xx-workflow-inputs-list (s/* ::xx-workflow-inputs))))
+(s/def ::inputs (s/or :aou      ::aou-workflow-inputs
+                      :copyfile ::copyfile-workflow-inputs
+                      :wgs      ::wgs-workflow-inputs
+                      :xx       ::xx-workflow-inputs))
 
-(s/def ::workflows (s/or :aou (s/* ::aou-workflow)
-                         :copyfile (s/* ::copyfile-workflow)
-                         :wgs (s/* ::wgs-workflow)
-                         :xx (s/* ::xx-workflow)))
+(s/def ::workflows (s/* ::workflow))
+(s/def ::workflow
+  (s/keys :req-un [::inputs]
+          :opt-un [::status ::updated ::uuid]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
 (s/def ::chip_well_barcode string?)
-(s/def ::aou-workflow-inputs-list nil?)
 (s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
-(s/def ::append-to-aou-response (s/* ::aou-workflow))
-(s/def ::aou-workflow (s/keys :req-un [::analysis_version_number
-                                       ::chip_well_barcode
-                                       ::status
-                                       ::updated
-                                       ::uuid]))
+(s/def ::append-to-aou-response (s/* ::aou-workflow-inputs))
+(s/def ::aou-workflow-inputs (s/keys :req-un [::analysis_version_number
+                                              ::chip_well_barcode]))
 
 (s/def ::notifications (s/* ::aou-sample))
 (s/def ::aou-sample (s/keys :req-un [::analysis_version_number
                                      ::chip_well_barcode]))
 
 ;; copyfile
-(s/def ::copyfile-workflow-inputs-list (s/* ::copyfile-workflow-inputs))
 (s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
-(s/def ::copyfile-workflow (s/keys
-                             :req-un [::src ::dst]
-                             :opt-un [::status ::updated ::uuid]))
 (s/def ::dst string?)
 (s/def ::src string?)
 
@@ -102,30 +92,15 @@
 (s/def ::reference_fasta_prefix string?)
 (s/def ::sample_name string?)
 (s/def ::unmapped_bam_suffix string?)
-(s/def ::wgs-workflow-inputs-list (s/* ::wgs-workflow-inputs))
 (s/def ::wgs-workflow-inputs (s/keys :opt-un [::base_file_name
-                                              ::reference_fasta_prefix
                                               ::final_gvcf_base_name
-                                              ::unmapped_bam_suffix
-                                              ::sample_name]
+                                              ::reference_fasta_prefix
+                                              ::sample_name
+                                              ::unmapped_bam_suffix]
                                      :req-un [::input_cram]))
-(s/def ::sample_name string?)
-(s/def ::unmapped_bam_suffix string?)
-(s/def ::wgs-workflow (s/keys :opt-un [::base_file_name
-                                       ::final_gvcf_base_name
-                                       ::reference_fasta_prefix
-                                       ::sample_name
-                                       ::status
-                                       ::unmapped_bam_suffix
-                                       ::updated
-                                       ::uuid]
-                              :req-un [::input_cram]))
 
 ;; xx (External Exome Reprocessing)
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
-(s/def ::xx-workflow (s/keys
-                       :opt-un [::status ::updated ::uuid]
-                       :req-un [::inputs]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)

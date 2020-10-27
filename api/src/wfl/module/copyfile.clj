@@ -4,7 +4,6 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
@@ -16,40 +15,37 @@
 
 (defn- submit-workflow
   "Submit WORKFLOW to Cromwell in ENVIRONMENT."
-  [environment workflow]
+  [environment workflow labels]
   (cromwell/submit-workflow
     environment
     (util/extract-resource (:top workflow-wdl))
     nil
     (-> workflow (select-keys [:src :dst]) (util/prefix-keys pipeline))
     (util/make-options environment)
-    {}))
+    labels))
 
 (defn add-copyfile-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as _workload-request}]
-  (let [now          (OffsetDateTime/now)
-        [uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
-        item-inputs  (map :inputs items)]
-    (letfn [(add-id-and-now [m id] (-> m (assoc :id id) (assoc :updated now)))]
-      (jdbc/insert-multi! tx table (map add-id-and-now item-inputs (rest (range)))))
+  (let [[uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
+        inputs (map :inputs items)]
+    (letfn [(add-id [m id] (assoc m :id id))]
+      (jdbc/insert-multi! tx table (map add-id inputs (range))))
     uuid))
 
 (defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
-  [tx {:keys [cromwell items uuid] :as _workload}]
-  (let [env (first (all/cromwell-environments cromwell))
-        now (OffsetDateTime/now)]
-    (letfn [(submit! [{:keys [id uuid] :as workflow}]
-              [id (or uuid (submit-workflow env workflow))])
-            (update! [tx [id uuid]]
-              (when uuid
-                (jdbc/update! tx items
-                  {:updated now :uuid uuid}
-                  ["id = ?" id])))]
-      (let [workflow (postgres/get-table tx items)]
-        (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])
-        (run! (comp (partial update! tx) submit!) workflow)))))
+  [tx {:keys [cromwell items uuid] :as workload}]
+  (let [env (first (all/cromwell-environments cromwell))]
+    (letfn [(submit! [{:keys [id inputs]}]
+              [id (submit-workflow env inputs {:workload uuid}) "Submitted"])
+            (update! [tx [id uuid status]]
+              (jdbc/update! tx items
+                {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                ["id = ?" id]))]
+      (run! (comp (partial update! tx) submit!) (:workflows workload))
+      (jdbc/update! tx :workload
+        {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
 (defmethod workloads/create-workload!
   pipeline
