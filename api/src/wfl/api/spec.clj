@@ -61,7 +61,8 @@
 
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
-(s/def ::workload-inputs (s/keys :req-un [::inputs]))
+(s/def ::workload-inputs (s/keys :req-un [::inputs]
+                                 :opt-un [::workflow_options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
@@ -69,7 +70,7 @@
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
-  (s/keys :req-un [::inputs]
+  (s/keys :req-un [::inputs ::workflow_options]
           :opt-un [::status ::updated ::uuid]))
 
 ;; aou
