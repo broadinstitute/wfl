@@ -128,7 +128,7 @@
   (exception/create-exception-middleware
     (merge
       exception/default-handlers
-      {;; ex-data with :type ::error
+      {;; ex-data with :type ::invalid-pipeline
        ::workloads/invalid-pipeline          (partial ex-handler 400 "Invalid Pipeline")
        ;; SQLException and all it's child classes
        SQLException                          (partial ex-handler 500 "SQL Error")
