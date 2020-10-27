@@ -32,9 +32,11 @@
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
+(s/def ::workflow_options map?)
 (s/def ::workload-request (s/keys :opt-un [::input
                                            ::items
-                                           ::common_inputs]
+                                           ::common_inputs
+                                           ::workflow_options]
                                   :req-un [::cromwell
                                            ::output
                                            ::pipeline
@@ -53,7 +55,8 @@
                                             ::project
                                             ::release
                                             ::uuid
-                                            ::version]))
+                                            ::version
+                                            ::workflow_options]))
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
