@@ -81,7 +81,7 @@
 
 ;; visible for testing
 (defn normalize-input-items
-  "The `items` of this workload are either a bucket or a list of maps of inputs.
+  "The `items` of this workload are either a bucket or a list of maps with nested inputs.
   Normalise these `items` into a list of maps."
   [items]
   (if (string? items)
@@ -93,7 +93,7 @@
         (->> (gcs/list-objects bucket object)
           (map bam-or-cram-ify)
           (remove nil?))))
-    items))
+    (map :inputs items)))
 
 ;; visible for testing
 ;; Note: the database stores per-workflow inputs so we need to combine

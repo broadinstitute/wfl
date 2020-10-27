@@ -53,9 +53,10 @@
       (let [input (first items)]
         (is :input_bam input)
         (is (absent? input :input_cram)))))
-  (testing "supplying `items` maps is identity"
-    (let [items {:fake (UUID/randomUUID)}]
-      (is (= items (xx/normalize-input-items items))))))
+  (testing "`items` maps are un-nested'"
+    (let [uuids (take 3 (repeatedly #(UUID/randomUUID)))
+          items (map (fn [uuid] {:inputs {:some-input uuid}}) uuids)]
+      (is (every? identity (map #(= %1 (:some-input %2)) uuids (xx/normalize-input-items items)))))))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
