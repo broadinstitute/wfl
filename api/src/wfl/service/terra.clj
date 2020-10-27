@@ -17,21 +17,19 @@
   (let [workspace-url (workspace-api-url terra-url workspace)
         submission-url (str workspace-url "/submissions")]
     (->
-      (http/post
-        submission-url
-        {:content-type :application/json
-         :headers   (once/get-auth-header)
-         :body      (json/write-str
-                      {
-                       :methodConfigurationNamespace method-configuration-namespace
-                       :methodConfigurationName method-configuration-name
-                       :entityType entity-type
-                       :entityName entity-name
-                       :useCallCache true
-                       } :escape-slash false)})
-      :body
-      (util/parse-json)
-      :submissionId)))
+     (http/post
+      submission-url
+      {:content-type :application/json
+       :headers   (once/get-auth-header)
+       :body      (json/write-str
+                   {:methodConfigurationNamespace method-configuration-namespace
+                    :methodConfigurationName method-configuration-name
+                    :entityType entity-type
+                    :entityName entity-name
+                    :useCallCache true} :escape-slash false)})
+     :body
+     (util/parse-json)
+     :submissionId)))
 
 (defn get-submission
   "Get information about a Terra Cromwell submission."
@@ -39,5 +37,5 @@
   (let [workspace-url (workspace-api-url terra-url workspace)
         submission-url (str workspace-url "/submissions/" submission-id)
         response (http/get submission-url {:headers (once/get-auth-header)})]
-      (util/parse-json (:body response))))
+    (util/parse-json (:body response))))
 
