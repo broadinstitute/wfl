@@ -3,7 +3,8 @@
             [wfl.jdbc :as jdbc]))
 
 ;; always derive from base :wfl/exception
-(derive ::invalid-pipeline :wfl/exception)
+(derive ::invalid-pipeline   :wfl/exception)
+(derive ::workload-not-found :wfl/exception)
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
@@ -41,7 +42,9 @@
   [tx uuid]
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
-      (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
+      (throw (ex-info "No workload found matching uuid"
+               {:cause {:uuid uuid}
+                :type ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
@@ -49,7 +52,9 @@
   [tx id]
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
-      (throw (ex-info "No workload found matching id" {:id id})))
+      (throw (ex-info "No workload found matching id"
+               {:cause {:id id}
+                :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workloads

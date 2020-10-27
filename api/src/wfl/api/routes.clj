@@ -129,8 +129,9 @@
   (exception/create-exception-middleware
     (merge
       exception/default-handlers
-      {;; ex-data with :type ::invalid-pipeline of :wfl/exception
+      {;; ex-data with :type :wfl/exception
        ::workloads/invalid-pipeline          (partial ex-handler 400 "")
+       ::workloads/workload-not-found        (partial ex-handler 404 "")
        ;; SQLException and all it's child classes
        SQLException                          (partial ex-handler 500 "SQL Error")
        ;; handle clj-http Slingshot stone exceptions
