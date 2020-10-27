@@ -51,7 +51,8 @@
      :bait_interval_list   (str hg38 iv1 ".baits.interval_list")
      :target_interval_list (str hg38 iv1 ".targets.interval_list")
      :references           references-defaults
-     :scatter_settings     references/exome-scatter-settings
+     :scatter_settings     {:break_bands_at_multiples_of  0
+                            :haplotype_scatter_count     50}
      :papi_settings        {:agg_preemptible_tries 3
                             :preemptible_tries     3}}))
 

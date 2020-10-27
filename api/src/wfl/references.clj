@@ -43,11 +43,6 @@
      :contamination_sites_mu  (str hg38 dat ".mu")
      :contamination_sites_ud  (str hg38 dat ".UD")}))
 
-(def exome-scatter-settings
-  "The default scatter_settings for exomes."
-  {:break_bands_at_multiples_of  0
-   :haplotype_scatter_count     50})
-
 (def hg38-exome-references
   "HG38 reference files for exome reprocessing."
   (let [hg38    "gs://gcp-public-data--broad-references/hg38/v0/"
