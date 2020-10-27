@@ -83,13 +83,13 @@
   :default
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))]
-    (->
+    (update
       (->>
         (postgres/get-table tx (:items workload))
         (map unnilify)
         (assoc workload :workflows)
         unnilify)
-      (update :workflow_options #(util/parse-json (or % "{}"))))))
+      :workflow_options #(util/parse-json (or % "{}")))))
 
 (defn load-workflow-with-structure
   "Load WORKLOAD via TX like :default, then nesting values in workflows based on STRUCTURE."
