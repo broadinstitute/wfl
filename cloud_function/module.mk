@@ -15,10 +15,9 @@ TEST_SCM_SRC = \
 	$(MODULE_DIR)/pytest.ini
 
 LOGFILE := $(DERIVED_MODULE_DIR)/test.log
-$(CHECK): $(SCM_SRC) $(TEST_SCM_SRC)
-	$(call using-python-environment,                                      \
-		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py | $(TEE) $(LOGFILE) \
-	)
+$(UNIT): $(SCM_SRC) $(TEST_SCM_SRC)
+	$(call using-python-environment, \
+		$(PYTHON) -m pytest $(TEST_DIR)/unit_tests.py | $(TEE) $(LOGFILE))
 	@$(TOUCH) $@
 
 # Remove any python caches

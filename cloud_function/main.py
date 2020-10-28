@@ -38,11 +38,9 @@ def get_manifest_path(object_name):
 def get_or_create_workload(headers):
     payload = {
         "cromwell": CROMWELL_URL,
-        "input": "aou-inputs-placeholder",
         "output": OUTPUT_BUCKET,
         "pipeline": "AllOfUsArrays",
-        "project": WFL_ENVIRONMENT,
-        "items": [{}]
+        "project": WFL_ENVIRONMENT
     }
     response = requests.post(
         url=f"{WFL_URL}/api/v1/exec",
@@ -53,8 +51,6 @@ def get_or_create_workload(headers):
 
 def update_workload(headers, workload_uuid, input_data):
     input_data['uuid'] = workload_uuid
-    input_data['cromwell'] = CROMWELL_URL
-    input_data['environment'] = WFL_ENVIRONMENT
     print(f"Updating workload {workload_uuid}")
     response = requests.post(
         url=f"{WFL_URL}/api/v1/append_to_aou",
