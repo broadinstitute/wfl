@@ -89,7 +89,7 @@
                              (update :items (fn [existing]
                                               (mapv #(assoc %1 :workflow_options {%2 "some value"})
                                                     (repeat (first existing)) option-sequence)))
-                             (update :workflow_options (fn [_] {:c "some other value"})))
+                             (assoc :workflow_options {:c "some other value"}))
         submitted-option-counts (atom {})
         ;; Mock cromwell/submit-workflows (note the plural), count observed option keys per workflow
         pretend-submit (fn [_ _ _ inputs options _]
