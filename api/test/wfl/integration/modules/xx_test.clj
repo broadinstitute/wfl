@@ -10,7 +10,7 @@
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
-(clj-test/use-fixtures :once fixtures/clean-db-fixture)
+(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
