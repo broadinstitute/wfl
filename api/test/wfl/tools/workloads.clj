@@ -10,7 +10,8 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.util :refer [shell!]]
             [wfl.util :as util]
-            [wfl.jdbc :as jdbc])
+            [wfl.jdbc :as jdbc]
+            [wfl.tools.fixtures :as fixtures])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -38,7 +39,6 @@
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
   {:cromwell (get-in stuff [:aou-dev :cromwell :url])
-   :input    "aou-inputs-placeholder"
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -103,25 +103,25 @@
     nil))
 
 (defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/create-workload! tx workload-request)))
 
 (defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/start-workload! tx workload)))
 
 (defn execute-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/execute-workload! tx workload-request)))
 
 (defn update-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/update-workload! tx workload)))
 
 (defn load-workload-for-uuid [uuid]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/load-workload-for-uuid tx uuid)))
 
 (defn append-to-workload! [samples workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (aou/append-to-workload! tx samples workload)))

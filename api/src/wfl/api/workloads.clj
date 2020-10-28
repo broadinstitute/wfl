@@ -3,6 +3,10 @@
             [wfl.jdbc :as jdbc]
             [wfl.util :as util]))
 
+;; always derive from base :wfl/exception
+(derive ::invalid-pipeline   :wfl/exception)
+(derive ::workload-not-found :wfl/exception)
+
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
   "(transaction workload-request) -> workload"
@@ -39,7 +43,9 @@
   [tx uuid]
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
-      (throw (ex-info "No workload found matching uuid" {:uuid uuid})))
+      (throw (ex-info "No workload found matching uuid"
+               {:cause {:uuid uuid}
+                :type ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
@@ -47,7 +53,9 @@
   [tx id]
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
-      (throw (ex-info "No workload found matching id" {:id id})))
+      (throw (ex-info "No workload found matching id"
+               {:cause {:id id}
+                :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workloads
@@ -68,14 +76,16 @@
   [_ body]
   (throw
     (ex-info "Failed to create workload - no such pipeline"
-      (select-keys body [:pipeline]))))
+      {:cause body
+       :type ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default
   [_ body]
   (throw
     (ex-info "Failed to start workload - no such pipeline"
-      (select-keys body [:pipeline]))))
+      {:cause body
+       :type ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
