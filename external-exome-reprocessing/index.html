@@ -594,7 +594,7 @@ below for all options.</p>
 <p>Create a new workload. Ensure that <code>workflow-launcher</code> and <code>cromwell</code>'s service
 accounts have at least read access to the input files.</p>
 <p>Request:
-<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://workflow-launcher.broadinstitute.org/api/v1/create&#39; \
+<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39; \
   -H &quot;Authorization: Bearer $(gcloud auth print-access-token)&quot; \
   -H &#39;Content-Type: application/json&#39; \
   -d &#39;{
@@ -603,7 +603,9 @@ accounts have at least read access to the input files.</p>
         &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,
         &quot;project&quot;: &quot;PO-1234&quot;,
         &quot;items&quot;: [{
-          &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;
+            &quot;inputs&quot;: {
+                &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;
+            }
         }]
       }&#39;
 </code></pre></div>
@@ -672,7 +674,7 @@ Response:
 <p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.</p>
 <p>Request:
-<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://workflow-launcher.broadinstitute.org/api/v1/start&#39; \
+<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39; \
  -H &quot;Authorization: Bearer $(gcloud auth print-access-token)&quot; \
  -H &#39;Content-Type: application/json&#39; \
  -d &#39;[{&quot;uuid&quot;: &quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;}]&#39;
@@ -745,7 +747,7 @@ Response:
 <h3 id="exec-workload-apiv1exec">Exec Workload: <code>/api/v1/exec</code><a class="headerlink" href="#exec-workload-apiv1exec" title="Permanent link">&para;</a></h3>
 <p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
 <p>Request:
-<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://workflow-launcher.broadinstitute.org/api/v1/exec&#39; \
+<div class="highlight"><pre><span></span><code>curl -X POST &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39; \
   -H &quot;Authorization: Bearer $(gcloud auth print-access-token)&quot; \
   -H &#39;Content-Type: application/json&#39; \
   -d &#39;{
@@ -754,7 +756,9 @@ Response:
         &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,
         &quot;project&quot;: &quot;PO-1234&quot;,
         &quot;items&quot;: [{
-          &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;
+            &quot;inputs&quot;: {
+                &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;
+            }
         }]
       }&#39;
 </code></pre></div>
@@ -826,7 +830,7 @@ Response:
 <h3 id="query-workload-apiv1workloaduuiduuid">Query Workload: <code>/api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-apiv1workloaduuiduuid" title="Permanent link">&para;</a></h3>
 <p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
 <p>Request:
-<div class="highlight"><pre><span></span><code>curl -X GET &#39;https://workflow-launcher.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c&#39; \
+<div class="highlight"><pre><span></span><code>curl -X GET &#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c&#39; \
   -H &quot;Authorization: Bearer $(gcloud auth print-access-token)&quot;
 </code></pre></div></p>
 <p>Response:
@@ -945,8 +949,8 @@ failures.</p>
          &quot;fingerprint_genotypes_file&quot;: &quot;string&quot;,
          &quot;fingerprint_genotypes_index&quot;: &quot;string&quot;,
      },
-     &quot;items&quot;: [
-         {
+     &quot;items&quot;: [{
+         &quot;inputs&quot;: {
              // required - specify either &quot;input_bam&quot; or &quot;input_cram&quot;
              &quot;input_bam&quot;:  &quot;string&quot;,
              &quot;input_cram&quot;: &quot;string&quot;,
@@ -991,11 +995,11 @@ failures.</p>
                  &quot;agg_preemptible_tries&quot;: int,
                  &quot;preemptible_tries&quot;:     int
              },
-             &quot;fingerprint_genotypes_file&quot;: &quot;string&quot;,
+             &quot;fingerprint_genotypes_file&quot;:  &quot;string&quot;,
              &quot;fingerprint_genotypes_index&quot;: &quot;string&quot;,
-             &quot;destination_cloud_path&quot;: &quot;string&quot;
+             &quot;destination_cloud_path&quot;:      &quot;string&quot;
          }
-      ]
+     }]
 }
 </code></pre></div>
                 
