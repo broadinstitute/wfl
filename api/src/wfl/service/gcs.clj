@@ -1,13 +1,14 @@
 (ns wfl.service.gcs
   "Talk to Google Cloud Storage for some reason..."
-  (:require [clojure.data.json  :as json]
-            [clojure.java.io    :as io]
-            [clojure.set        :as set]
-            [clojure.spec.alpha :as s]
-            [clojure.string     :as str]
-            [clj-http.client    :as http]
-            [clj-http.util      :as http-util]
-            [wfl.once          :as once])
+  (:require [clojure.data.json              :as json]
+            [clojure.java.io                :as io]
+            [clojure.set                    :as set]
+            [clojure.spec.alpha             :as s]
+            [clojure.string                 :as str]
+            [clojure.tools.logging.readable :as logr]
+            [clj-http.client                :as http]
+            [clj-http.util                  :as http-util]
+            [wfl.once                       :as once])
   (:import [org.apache.tika Tika]))
 
 (def api-url
@@ -248,4 +249,8 @@
     (let [response (http/get (str api-url "oauth2/v3/userinfo")
                      {:headers {"Authorization" auth-token}})]
       (json/read-str (:body response) :key-fn keyword))
-    (throw (IllegalArgumentException. "no auth header in request"))))
+    (do
+      (logr/error "No auth header in request")
+      (throw
+        (ex-info "No auth header in request"
+          {:type :clj-http.client/unexceptional-status})))))
