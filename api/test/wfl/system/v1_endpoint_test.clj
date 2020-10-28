@@ -3,7 +3,7 @@
             [clojure.test :refer [deftest testing is]]
             [wfl.service.gcs :as gcs]
             [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder clean-db-fixture]]
+            [wfl.tools.fixtures :refer [with-temporary-gcs-folder temporary-postgresql-database]]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util]
             [wfl.service.cromwell :as cromwell])

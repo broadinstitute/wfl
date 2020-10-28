@@ -51,35 +51,46 @@
               :db-name        name})
       constantly)))
 
-(defn- create-db
-  "Create the ad-hoc testing database with DBNAME."
+(defn ^:private create-local-database
+  "Create a local PostgreSQL database with DBNAME."
   [dbname]
   (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
     (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname))))
 
-(defn setup-db
-  "Setup te db by running liquibase migrations by DBNAME."
+(defn ^:private setup-local-database
+  "Run liquibase migrations on the local PostgreSQL database `dbname`."
   [dbname]
   (let [changelog "../database/changelog.xml"
         url       (format "jdbc:postgresql:%s" dbname)
         {:keys [user password]} (postgres/wfl-db-config)]
     (liquibase/run-liquibase url changelog user password)))
 
-(defn- destroy-db
-  "Tear down the testing database by DBNAME."
+(defn ^:private drop-local-db
+  "Drop the local PostgreSQL database `dbname`."
   [dbname]
-  ; local
   (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
     (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname))))
 
-(defn clean-db-fixture [f]
-  "Wrapper for F so it runs in a clean db per invocation.
-  This assumes not database with name testing-dbname
-  has been manually created in the current testing environment."
+(defn temporary-postgresql-database [f]
+  "Create a temporary PostgreSQL database whose configuration is
+  `testing-db-config` for testing. Assumes that the database does not
+  already exist.
+
+  Example
+  -------
+  ;; Use a clean PostgresSQL database in this test namespace.
+  ;; `:once` creates the database once for the duration of the tests.
+  (clj-test/use-fixtures :once temporary-postgresql-database)
+
+  (deftest test-requiring-database-access
+    (jdbc/with-db-transaction [tx (testing-db-config)]
+      ;; use tx
+    ))
+  "
   (let [name (:db-name (testing-db-config))]
-    (create-db name)
+    (create-local-database name)
     (try
-      (setup-db name)
+      (setup-local-database name)
       (f)
       (finally
-        (destroy-db name)))))
+        (drop-local-db name)))))

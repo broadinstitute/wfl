@@ -7,7 +7,7 @@
             [wfl.module.wgs :as wgs])
   (:import (java.util UUID)))
 
-(clj-test/use-fixtures :once fixtures/clean-db-fixture)
+(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn- mock-really-submit-one-workflow
   [& _]

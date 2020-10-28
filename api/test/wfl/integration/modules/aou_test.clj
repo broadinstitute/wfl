@@ -9,7 +9,7 @@
             [wfl.tools.endpoints :as endpoints])
   (:import (java.util UUID)))
 
-(use-fixtures :once fixtures/clean-db-fixture)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn mock-submit-workload [& _] (UUID/randomUUID))
 (def mock-cromwell-status (constantly "Succeeded"))
