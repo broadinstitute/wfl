@@ -120,7 +120,7 @@
     (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
     other-labels))
 
-; visible for testing
+;; visible for testing
 (defn submit-aou-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    SAMPLE-OUTPUT-PATH and OTHER-LABELS."
@@ -226,11 +226,11 @@
   "Retain all `samples` with unique `known-keys`."
   [samples known-keys]
   (letfn [(go [[known-values xs] sample]
-            (let [values (primary-values sample)]
-              [(map conj known-values values)
-               (if-not (every? identity (map contains? known-values values))
-                 (conj xs sample)
-                 xs)]))]
+              (let [values (primary-values sample)]
+                [(map conj known-values values)
+                 (if-not (every? identity (map contains? known-values values))
+                   (conj xs sample)
+                   xs)]))]
     (second (reduce go [known-keys []] samples))))
 
 (defn append-to-workload!
@@ -259,7 +259,7 @@
   pipeline
   [tx request]
   (->>
-    (add-aou-workload! tx request)
+      (add-aou-workload! tx request)
     (workloads/load-workload-for-id tx)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)

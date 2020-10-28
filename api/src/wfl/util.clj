@@ -366,19 +366,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       (throw (Exception. (format "%s: %s exit status from: %s"
                            wfl/the-name exit args))))))
 
-(defn create-jwt
-  "Sign a JSON Web Token with OAuth secrets from environment ENV."
-  [env]
-  (let [{:keys [oauth2_client_id oauth2_client_secret]}
-        (vault-secrets (get-in env/stuff [env :server :vault]))
-        iat (quot (System/currentTimeMillis) 1000)]
-    (jwt/sign {:hd    "broadinstitute.org"
-               :iss   "https://accounts.google.com"
-               :aud   oauth2_client_id
-               :iat   iat
-               :exp   (+ iat 3600000)
-               :scope ["openid" "email"]} oauth2_client_secret)))
-
 (def uuid-nil
   "The nil UUID."
   (UUID/fromString "00000000-0000-0000-0000-000000000000"))
@@ -406,8 +393,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
 (defn to-quoted-comma-separated-list
   "Return the sequence `xs` composed into a comma-separated list string.
   Example:
-    (to-quoted-comma-separated-list ['x 'y 'z])
-    => \"('x','y','z')\""
+    (to-quoted-comma-separated-list '[x y z]) => \"('x','y','z')\""
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))

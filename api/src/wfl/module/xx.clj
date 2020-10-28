@@ -27,43 +27,34 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "ExternalExomeReprocessing_v2.1.1"
-   :top     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl"})
+   :top     (str "pipelines/broad/reprocessing/external/exome/"
+              "ExternalExomeReprocessing.wdl")})
 
 (def ^:private references-defaults
-  (let [hg38 (partial str "gs://gcp-public-data--broad-references/hg38/v0/")]
-    {:calling_interval_list      (hg38 "exome_calling_regions.v1.interval_list")
-     :contamination_sites_bed    (hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed")
-     :contamination_sites_mu     (hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu")
-     :contamination_sites_ud     (hg38 "contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD")
-     :dbsnp_vcf                  (hg38 "Homo_sapiens_assembly38.dbsnp138.vcf")
-     :dbsnp_vcf_index            (hg38 "Homo_sapiens_assembly38.dbsnp138.vcf.idx")
-     :evaluation_interval_list   (hg38 "exome_evaluation_regions.v1.interval_list")
-     :haplotype_database_file    (hg38 "Homo_sapiens_assembly38.haplotype_database.txt")
-     :known_indels_sites_vcfs    [(hg38 "Mills_and_1000G_gold_standard.indels.hg38.vcf.gz")
-                                  (hg38 "Homo_sapiens_assembly38.known_indels.vcf.gz")]
-     :known_indels_sites_indices [(hg38 "Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi")
-                                  (hg38 "Homo_sapiens_assembly38.known_indels.vcf.gz.tbi")]
-     :reference_fasta            (references/reference_fasta)}))
-
-(def ^:private scatter_settings-defaults
-  {:haplotype_scatter_count     50
-   :break_bands_at_multiples_of 0})
-
-(def ^:private papi_settings-defaults
-  {:agg_preemptible_tries 3
-   :preemptible_tries     3})
+  (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
+        hsa  "Homo_sapiens_assembly38"]
+    (merge references/hg38-exome-references
+      references/contamination-sites
+      {:calling_interval_list (str hg38 "exome_calling_regions.v1.interval_list")
+       :haplotype_database_file (str hg38 hsa ".haplotype_database.txt")})))
 
 (def ^:private workflow-defaults
-  (let [hg38 (partial str "gs://gcp-public-data--broad-references/hg38/v0/")]
+  (let [hg38          "gs://gcp-public-data--broad-references/hg38/v0/"
+        hsa           "Homo_sapiens_assembly38"
+        bait_set_name "whole_exome_illumina_coding_v1"
+        HybSelOligos  (str/join "/" ["HybSelOligos" bait_set_name bait_set_name])
+        iv1           (str/join "." [HybSelOligos hsa])]
     {:unmapped_bam_suffix  ".unmapped.bam"
-     :cram_ref_fasta       (hg38 "Homo_sapiens_assembly38.fasta")
-     :cram_ref_fasta_index (hg38 "Homo_sapiens_assembly38.fasta.fai")
-     :bait_set_name        "whole_exome_illumina_coding_v1"
-     :bait_interval_list   (hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list")
-     :target_interval_list (hg38 "HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list")
+     :cram_ref_fasta       (str hg38 hsa ".fasta")
+     :cram_ref_fasta_index (str hg38 hsa ".fasta.fai")
+     :bait_set_name        bait_set_name
+     :bait_interval_list   (str hg38 iv1 ".baits.interval_list")
+     :target_interval_list (str hg38 iv1 ".targets.interval_list")
      :references           references-defaults
-     :scatter_settings     scatter_settings-defaults
-     :papi_settings        papi_settings-defaults}))
+     :scatter_settings     {:break_bands_at_multiples_of  0
+                            :haplotype_scatter_count     50}
+     :papi_settings        {:agg_preemptible_tries 3
+                            :preemptible_tries     3}}))
 
 (defn ^:private get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
@@ -97,8 +88,8 @@
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
   (letfn [(update-workflow [workflow cromwell-uuid]
             (assoc workflow :uuid cromwell-uuid
-                            :status "Submitted"
-                            :updated (OffsetDateTime/now)))]
+              :status "Submitted"
+              :updated (OffsetDateTime/now)))]
     (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
           environment (get-cromwell-environment workload)]
       (logr/infof "submitting workload %s" uuid)

@@ -59,22 +59,15 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          echo "${{ secrets.dsde_pipelines_deploy_key }}" > ~/.ssh/dsde_pipelines_deploy_key
           echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
           echo "${{ secrets.warp_deploy_key }}" > ~/.ssh/warp_deploy_key
           echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
 
-          chmod 600 ~/.ssh/dsde_pipelines_deploy_key
           chmod 600 ~/.ssh/pipeline_config_deploy_key
           chmod 600 ~/.ssh/warp_deploy_key
           chmod 600 ~/.ssh/wfl_deploy_key
 
           cat << EOF > ~/.ssh/config
-            Host dsde-pipelines.github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/dsde_pipelines_deploy_key
-
             Host pipeline-config.github.com
             HostName github.com
             User git
