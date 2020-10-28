@@ -46,6 +46,11 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   `(try (do ~@body)
         (catch Exception x#)))
 
+(defn parse-json
+  "Parse the json string STR into a keyword-string map"
+  [str]
+  (json/read-str str :key-fn keyword))
+
 (defn slurp-json
   "Nil or the JSON in FILE."
   [file]
