@@ -90,10 +90,7 @@
   ([tx {:keys [release top] :as _workflow-wdl} body default-workflow-options]
    (let [{:keys [creator cromwell input output pipeline project]} body
          {:keys [commit version]} (wfl/get-the-version)
-         workflow-options (->>
-                            (:workflow_options body)
-                            (util/deep-merge default-workflow-options)
-                            json/write-str)
+         workflow-options (util/deep-merge default-workflow-options (:workflow_options body))
          [{:keys [id uuid]}]
          (jdbc/insert! tx :workload {:commit           commit
                                      :creator          creator
@@ -105,7 +102,7 @@
                                      :uuid             (UUID/randomUUID)
                                      :version          version
                                      :wdl              top
-                                     :workflow_options workflow-options})
+                                     :workflow_options (json/write-str workflow-options)})
          table (format "%s_%09d" pipeline id)
          work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                       table pipeline)]

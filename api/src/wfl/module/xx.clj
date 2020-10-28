@@ -97,7 +97,7 @@
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
   (let [path                 (wdl/hack-unpack-resources-hack (:top workflow-wdl))
         environment          (get-cromwell-environment workload)
-        ;; Batch calls have uniform options, so we must group by options to submit
+        ;; Batch calls have uniform options, so we must group by discrete options to submit
         workflows-by-options (seq (group-by :workflow_options workflows))]
     (letfn [(update-workflow [workflow cromwell-uuid]
               (assoc workflow :uuid cromwell-uuid
@@ -113,12 +113,12 @@
                       (map (comp (partial cromwellify-inputs environment) :inputs) associated-workflows)
                       options
                       (merge cromwell-labels {:workload uuid}))))]
-      (apply conj (mapv submit-workflows-by-options workflows-by-options)))))
+      (apply concat (mapv submit-workflows-by-options workflows-by-options)))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
   (letfn [(make-workflow-record [workload-options id item]
             (let [options-string (json/write-str (util/deep-merge workload-options (:workflow_options item)))]
-              (->> (make-combined-inputs-to-save output common_inputs (map :inputs item))
+              (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
                    json/write-str
                    (assoc {:id id :workflow_options options-string} :inputs))))]
     (let [default-options   (util/make-options (get-cromwell-environment request))
