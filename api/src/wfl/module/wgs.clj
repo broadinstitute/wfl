@@ -155,9 +155,9 @@
                               get-cromwell-wgs-environment
                               util/make-options)
         [uuid table opts] (all/add-workload-table! tx workflow-wdl _workload-request default-options)
-        to-row (fn [item] (assoc (:inputs item)
-                            :workflow_options
-                            (json/write-str (util/deep-merge opts (:workflow_options item)))))]
+        to-row (fn [item] (-> item
+                              (select-keys [:inputs :workflow_options])
+                              (update :workflow_options #(json/write-str (util/deep-merge opts %)))))]
     (letfn [(add-id [m id] (assoc m :id id))]
       (jdbc/insert-multi! tx table (map add-id (map to-row items) (rest (range)))))
     uuid))
