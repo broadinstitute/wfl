@@ -3,6 +3,7 @@
             [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
             [wfl.module.aou :as aou]
+            [wfl.service.cromwell :refer [submit-workflow]]
             [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -64,3 +65,31 @@
          (let [workload (workloads/update-workload! workload)]
            (is (every? (comp #{"Succeeded"} :status) (:workflows workload)))
            (is (not (:finished workload))))))))
+
+(deftest test-workflow-options
+  (let [workload (-> (make-aou-workload-request)
+                             (assoc :workflow_options {:a "some value"})
+                     workloads/execute-workload!)
+        append-to-workload! (fn [xs] (workloads/append-to-workload! xs workload))
+        submitted-option-counts (atom {})
+        ;; Mock cromwell/submit-workflow, count observed option keys per workflow
+        pretend-submit (fn [_ _ _ _ options _]
+                         (run! #(swap! submitted-option-counts update % (fnil inc 0))
+                               (keys options))
+                         (str (UUID/randomUUID)))]
+    (with-redefs-fn {#'submit-workflow pretend-submit
+                     #'postgres/cromwell-status mock-cromwell-status}
+      #(do (testing "Options in initial server response"
+             (is (get-in workload [:workflow_options :a])))
+           (append-to-workload! [workloads/aou-sample])
+           (testing "Options in subsequent server response"
+             ;; :final_workflow_outputs_dir is special because it is a WFL-calculated per-workflow option
+             (is (get-in workload [:workflow_options :a]))
+             (as-> (workloads/update-workload! workload) response
+                   (run! (fn [opts] (and (contains? opts :a)
+                                         (contains? opts :final_workflow_outputs_dir)))
+                         (map :workflow_options (:workflows response)))))))
+    (testing "Options sent to Cromwell"
+      (is (= 1
+             (:a @submitted-option-counts)
+             (:final_workflow_outputs_dir @submitted-option-counts))))))

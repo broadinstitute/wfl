@@ -101,7 +101,7 @@
            workloads/execute-workload!
            (as-> workload
                  (testing "Options in server response"
-                   (is (:workflow_options workload))
+                   (is (get-in workload [:workflow_options :c]))
                    (is (= (count option-sequence)
                           (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
                    (is (= (count (filter (partial = :a) option-sequence))
