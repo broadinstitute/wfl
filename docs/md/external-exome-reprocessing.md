@@ -442,6 +442,6 @@ failures.
              "fingerprint_genotypes_index": "string",
              "destination_cloud_path":      "string"
          }
-     ]}
+     }]
 }
 ```
