@@ -7,7 +7,7 @@
 
 (defn add-workload-table!
   "Create row in workload table for `workload-request` using transaction `tx`.
-  Instantiate a BatchWorkload table for the workload.
+  Instantiate a CromwellWorkflow table for the workload.
   Returns: [id table-name]"
   [tx
    {:keys [release top] :as _workflow-wdl}
@@ -22,7 +22,7 @@
     (jdbc/execute! tx
       ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
     (jdbc/db-do-commands tx
-      (map #(format "CREATE TABLE %s OF BatchWorkflow (PRIMARY KEY (id))" %)
+      (map #(format "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))" %)
         [table]))
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
     [id table]))

@@ -10,13 +10,13 @@
     <changeSet author="ehigham@broadinstitute.org"
                dbms="postgresql"
                id="20201029"
-               logicalFilePath="20201029_BatchWorkload.xml"
+               logicalFilePath="20201029_CromwellWorkload.xml"
                runInTransaction="false">
         <sql>
             ALTER TABLE workload ALTER COLUMN input DROP NOT NULL
         </sql>
         <sql>
-            CREATE Type BatchWorkflow AS (
+            CREATE Type CromwellWorkflow AS (
                 id         bigint,      -- primary key
                 status     text,        -- Cromwell workflow status
                 updated    timestamptz, -- status update time
