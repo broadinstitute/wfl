@@ -116,12 +116,12 @@
                 (assoc (select-keys workflow keep)
                   :inputs (unnilify (apply dissoc workflow keep)))))
             (unpack-options [m]
-              (update m :workflow_options #(util/parse-json (or % "{}"))))]
+              (update m :workflow_options #(when % (util/parse-json %))))]
       (->> (postgres/get-table tx (:items workload))
         (mapv (comp unnilify split-inputs unpack-options))
         (assoc workload :workflows)
-        unnilify
-        unpack-options))
+        unpack-options
+        unnilify))
     (catch Throwable cause
       (throw (ex-info "Error loading workload"
                {:workload workload} cause)))))

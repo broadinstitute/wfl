@@ -45,7 +45,8 @@
                                             ::input
                                             ::started
                                             ::wdl
-                                            ::workflows]
+                                            ::workflows
+                                            ::workflow_options]
                                    :req-un [::commit
                                             ::created
                                             ::creator
@@ -55,8 +56,7 @@
                                             ::project
                                             ::release
                                             ::uuid
-                                            ::version
-                                            ::workflow_options]))
+                                            ::version]))
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
@@ -70,8 +70,8 @@
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
-  (s/keys :req-un [::inputs ::workflow_options]
-          :opt-un [::status ::updated ::uuid]))
+  (s/keys :req-un [::inputs]
+          :opt-un [::status ::updated ::uuid ::workflow_options]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
