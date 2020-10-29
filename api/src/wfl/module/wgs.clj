@@ -149,17 +149,17 @@
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as _workload-request}]
-  (let [default-options   (-> (:cromwell _workload-request)
-                              all/de-slashify
-                              get-cromwell-wgs-environment
-                              util/make-options)
-        [uuid table opts] (all/add-workload-table! tx workflow-wdl _workload-request default-options)
+  (let [default-options (-> (:cromwell _workload-request)
+                            all/de-slashify
+                            get-cromwell-wgs-environment
+                            util/make-options)
+        [id table opts] (all/add-workload-table! tx workflow-wdl _workload-request default-options)
         to-row (fn [item] (assoc (:inputs item)
                             :workflow_options
                             (json/write-str (util/deep-merge opts (:workflow_options item)))))]
     (letfn [(add-id [m id] (assoc m :id id))]
       (jdbc/insert-multi! tx table (map add-id (map to-row items) (rest (range)))))
-    uuid))
+    id))
 
 (defn skip-workflow?
   "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
@@ -210,7 +210,7 @@
   [tx request]
   (->>
     (add-wgs-workload! tx request)
-    (workloads/load-workload-for-uuid tx)))
+    (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
