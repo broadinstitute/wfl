@@ -96,14 +96,14 @@
               (assoc workflow :uuid cromwell-uuid
                               :status "Submitted"
                               :updated (OffsetDateTime/now)))
-            (submit-workflows-by-options [[options workflows-with-those-options]]
+            (submit-workflows-by-options [[options ws]]
               (mapv update-workflow
-                    workflows-with-those-options
+                    ws
                     (cromwell/submit-workflows
                       environment
                       (io/file (:dir path) (path ".wdl"))
                       (io/file (:dir path) (path ".zip"))
-                      (map (comp (partial cromwellify-inputs environment) :inputs) workflows-with-those-options)
+                      (map (comp (partial cromwellify-inputs environment) :inputs) ws)
                       options
                       (merge cromwell-labels {:workload uuid}))))]
       (apply concat (mapv submit-workflows-by-options workflows-by-options)))))
