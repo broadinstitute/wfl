@@ -9,8 +9,8 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="jwarren@broadinstitute.org"
                dbms="postgresql"
-               id="20201027"
-               logicalFilePath="20201027_WorkflowOptions.xml">
+               id="20201031"
+               logicalFilePath="20201031_WorkflowOptions.xml">
         <comment>
             Add workflow options attributes to existing workflow types
         </comment>
@@ -27,7 +27,7 @@
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>
         <sql>
-            ALTER TYPE ExternalExomeReprocessing
+            ALTER TYPE CromwellWorkflow
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>
         <comment>
