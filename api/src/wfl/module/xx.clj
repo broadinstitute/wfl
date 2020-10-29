@@ -115,7 +115,7 @@
                    json/write-str
                    (assoc {:id id :workflow_options options-string} :inputs))))]
     (let [default-options (util/make-options (get-cromwell-environment request))
-          [id table opts] (batch/add-workload-table! tx workflow-wdl request)]
+          [id table opts] (batch/add-workload-table! tx workflow-wdl request default-options)]
       (->> (map (partial make-workflow-record opts) (range) items)
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-id tx id))))
