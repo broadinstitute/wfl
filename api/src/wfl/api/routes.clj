@@ -79,7 +79,7 @@
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
             :parameters {:body ::spec/uuid-kv}
-            :responses  {200 {:body ::spec/workload-responses}}
+            :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/exec"
     {:post {:summary    "Create and start a new workload."
