@@ -1,10 +1,10 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.data.json :as json]
+            [clojure.pprint :refer [pprint]]
             [wfl.jdbc :as jdbc]
             [wfl.wfl :as wfl]
-            [wfl.util :as util]
-            [clojure.data.json :as json])
+            [wfl.util :as util])
   (:import [java.util UUID]))
 
 (defn add-workload-table!
@@ -12,7 +12,7 @@
   Instantiate a CromwellWorkflow table for the workload.
   Returns: [id table-name]"
   ([tx workflow-wdl workload-request]
-  (add-workload-table! tx workflow-wdl workload-request {}))
+   (add-workload-table! tx workflow-wdl workload-request {}))
   ([tx
    {:keys [release top] :as _workflow-wdl}
    {:keys [pipeline] :as workload-request}
