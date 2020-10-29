@@ -77,6 +77,13 @@ workflows, for the entire workload, or both:
   }
 }
 ```
+???+ info
+    Note that for modules that don't use individual workflows
+    configured via `/create` or `/exec`, options can only be
+    configured at the workload level. For example, the All of
+    Us module configures workflows via a different endpoint
+    and thus only the per-workload field here is respected.
+
 To recap, in the above example the following workflow options will be set:
 - "my_option" will have different strings for the different samples
 - "another_option" will be an object just set for the latter sample
