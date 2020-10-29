@@ -26,7 +26,7 @@ It supports the following API endpoints:
 | GET    | `/api/v1/workload`             | List all workloads                                             |
 | GET    | `/api/v1/workload/{uuid}`      | Query for a workload by its UUID                               |
 | POST   | `/api/v1/create`               | Create a new workload                                          |
-| POST   | `/api/v1/start`                | Start a or multiple workload(s)                                |
+| POST   | `/api/v1/start`                | Start a workload                                |
 | POST   | `/api/v1/append_to_aou`        | Append a new or multiple sample(s) to an existing AOU workload |
 
 Different from the fixed workload types that caller only needs to create a workload with a series of sample inputs and
@@ -77,11 +77,9 @@ curl -X "POST" "http://localhost:8080/api/v1/create" \
 curl -X "POST" "http://localhost:8080/api/v1/start" \
      -H 'Accept: application/json' \
      -H 'Content-Type: application/json' \
-     -d $'[
-  {
-    "uuid": "00000000-0000-0000-0000-000000000000"
-  }
-]'
+     -d $'{
+            "uuid": "00000000-0000-0000-0000-000000000000"
+          }'
 ```
 
 **GET /api/v1/workload/append_to_aou**
