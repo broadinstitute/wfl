@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="ehigham@broadinstitute.org"
+               dbms="postgresql"
+               id="20201029"
+               logicalFilePath="20201029_BatchWorkload.xml"
+               runInTransaction="false">
+        <sql>
+            ALTER TABLE workload ALTER COLUMN input DROP NOT NULL
+        </sql>
+        <sql>
+            CREATE Type BatchWorkflow AS (
+                id         bigint,      -- primary key
+                status     text,        -- Cromwell workflow status
+                updated    timestamptz, -- status update time
+                uuid       text,        -- Cromwell workflow UUID
+                inputs     text         -- JSON string of non-default workflow inputs
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>

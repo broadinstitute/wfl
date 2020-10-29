@@ -9,6 +9,7 @@
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
+            [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
@@ -108,10 +109,10 @@
             (->> (make-combined-inputs-to-save output common_inputs inputs)
               json/write-str
               (assoc {:id id} :inputs)))]
-    (let [[uuid table] (all/add-workload-table! tx workflow-wdl request)]
+    (let [[uuid table] (batch/add-workload-table! tx workflow-wdl request)]
       (->> (map make-workflow-record (range) (map :inputs items))
         (jdbc/insert-multi! tx table))
-      (workloads/load-workload-for-uuid tx uuid))))
+      (workloads/load-workload-for-id tx uuid))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]
   (if (:started workload)

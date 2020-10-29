@@ -9,23 +9,11 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="ehigham@broadinstitute.org"
                dbms="postgresql"
-               id="20200909"
-               logicalFilePath="20200909_ExternalExomeReprocessing.xml"
+               id="20201030"
+               logicalFilePath="20201030_ExternalExomeReprocessing.xml"
                runInTransaction="false">
         <sql>
             ALTER TYPE pipeline ADD VALUE 'ExternalExomeReprocessing'
-        </sql>
-        <sql>
-            ALTER TABLE workload ALTER COLUMN input DROP NOT NULL
-        </sql>
-        <sql>
-            CREATE Type ExternalExomeReprocessing AS (
-                id                          bigint,      -- primary key
-                status                      text,        -- Cromwell workflow status
-                updated                     timestamptz, -- status update time
-                uuid                        text,        -- Cromwell workflow UUID
-                inputs                      text         -- JSON string of non-default workflow inputs
-            )
         </sql>
     </changeSet>
 </databaseChangeLog>
