@@ -104,7 +104,8 @@
         (get-per-sample-inputs per-sample-inputs))
     (util/prefix-keys :Arrays)))
 
-(def ^:private default-options
+;; visible for testing
+(def default-options
   {; TODO: add :default_runtime_attributes {:maxRetries 3} here
    :use_relative_output_paths  true
    :read_from_cache            true
