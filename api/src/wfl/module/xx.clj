@@ -109,10 +109,10 @@
             (->> (make-combined-inputs-to-save output common_inputs inputs)
               json/write-str
               (assoc {:id id} :inputs)))]
-    (let [[uuid table] (batch/add-workload-table! tx workflow-wdl request)]
+    (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (->> (map make-workflow-record (range) (map :inputs items))
         (jdbc/insert-multi! tx table))
-      (workloads/load-workload-for-id tx uuid))))
+      (workloads/load-workload-for-id tx id))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]
   (if (:started workload)
