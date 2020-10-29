@@ -84,18 +84,8 @@
 (s/def ::dst string?)
 (s/def ::src string?)
 
-;; wgs
-(s/def ::base_file_name string?)
-(s/def ::final_gvcf_base_name string?)
-(s/def ::reference_fasta_prefix string?)
-(s/def ::sample_name string?)
-(s/def ::unmapped_bam_suffix string?)
-(s/def ::wgs-workflow-inputs (s/keys :opt-un [::base_file_name
-                                              ::final_gvcf_base_name
-                                              ::reference_fasta_prefix
-                                              ::sample_name
-                                              ::unmapped_bam_suffix]
-                                     :req-un [::input_cram]))
+;; wgs (External Whole Genome Reprocessing)
+(s/def ::wgs-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
 ;; xx (External Exome Reprocessing)
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
