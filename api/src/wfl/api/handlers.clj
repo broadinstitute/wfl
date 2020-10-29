@@ -81,21 +81,18 @@
             (workloads/load-workloads tx)))))))
 
 (defn post-start
-  "Start the workload with UUID in REQUEST.
-   Can take either a single UUID or a map with UUID as key."
+  "Start the workload with UUID in REQUEST."
   [request]
-  (letfn [(go! [tx uuid]
-            (let [workload (workloads/load-workload-for-uuid tx uuid)]
-              (if (:started workload)
-                workload
-                (do
-                  (logr/infof "starting workload %s" uuid)
-                  (workloads/start-workload! tx workload)))))]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [body  (get-in request [:parameters :body])
-            {uuid :uuid :or {uuid body}} body]
-        (logr/infof "post-start endpoint called: uuid=%s" uuid)
-        (succeed (go! tx uuid))))))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (let [{uuid :uuid} (get-in request [:parameters :body])]
+      (logr/infof "post-start endpoint called: uuid=%s" uuid)
+      (let [workload (workloads/load-workload-for-uuid tx uuid)]
+        (->> (if (:started workload)
+               workload
+               (do
+                 (logr/infof "starting workload %s" uuid)
+                 (workloads/start-workload! tx workload)))
+          (succeed))))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"

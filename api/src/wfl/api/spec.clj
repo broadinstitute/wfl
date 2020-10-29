@@ -106,8 +106,3 @@
 (s/def ::workflow-request (s/keys :req-un [::end
                                            ::environment
                                            ::start]))
-
-;; /api/v1/start
-(s/def ::start-workfload-request (s/or
-                                   :uuid ::uuid
-                                   :uuid-kv ::uuid-kv))
