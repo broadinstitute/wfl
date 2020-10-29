@@ -87,11 +87,12 @@
     (let [{uuid :uuid} (get-in request [:parameters :body])]
       (logr/infof "post-start endpoint called: uuid=%s" uuid)
       (let [workload (workloads/load-workload-for-uuid tx uuid)]
-        (->> (if (:started workload)
-               workload
-               (do
-                 (logr/infof "starting workload %s" uuid)
-                 (workloads/start-workload! tx workload)))
+        (->>
+          (if (:started workload)
+            workload
+            (do
+              (logr/infof "starting workload %s" uuid)
+              (workloads/start-workload! tx workload)))
           succeed)))))
 
 (defn post-exec
