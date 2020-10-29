@@ -92,7 +92,7 @@
                (do
                  (logr/infof "starting workload %s" uuid)
                  (workloads/start-workload! tx workload)))
-          (succeed))))))
+          succeed)))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
