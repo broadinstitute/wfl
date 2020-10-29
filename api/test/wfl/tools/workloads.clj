@@ -102,6 +102,13 @@
     (done! (endpoints/get-workload-status (:uuid workload)))
     nil))
 
+(defn baseline-options-across-workload
+  "True if OPTIONS are present across the entire WORKLOAD."
+  [options workload]
+  (let [unique-options (distinct (conj (map :workflow_options (:workflows workload))
+                                       (:workflow_options workload)))]
+    (every? #(= % (util/deep-merge % options)) unique-options)))
+
 (defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/create-workload! tx workload-request)))
