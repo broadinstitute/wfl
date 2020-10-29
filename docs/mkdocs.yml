@@ -28,6 +28,7 @@ nav:
     - Frontend: dev-frontend.md
   - Modules:
     - General: modules-general.md
+    - Workflow Options: workflow-options.md
     - Arrays: modules-arrays.md
     - Whole Genome: dev-wgs.md
     - External Exome: external-exome-reprocessing.md
