@@ -9,6 +9,7 @@
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
+            [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
@@ -113,11 +114,11 @@
               (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
                    json/write-str
                    (assoc {:id id :workflow_options options-string} :inputs))))]
-    (let [default-options   (util/make-options (get-cromwell-environment request))
-          [uuid table opts] (all/add-workload-table! tx workflow-wdl request default-options)]
+    (let [default-options (util/make-options (get-cromwell-environment request))
+          [id table opts] (batch/add-workload-table! tx workflow-wdl request)]
       (->> (map (partial make-workflow-record opts) (range) items)
         (jdbc/insert-multi! tx table))
-      (workloads/load-workload-for-uuid tx uuid))))
+      (workloads/load-workload-for-id tx id))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]
   (if (:started workload)
