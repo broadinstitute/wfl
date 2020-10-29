@@ -5,7 +5,7 @@
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
-            [wfl.util :refer [absent? on]]
+            [wfl.util :refer [absent? on make-options]]
             [wfl.environments :as env])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
@@ -107,7 +107,10 @@
                    (is (= (count (filter (partial = :a) option-sequence))
                           (count (filter (fn [w] (get-in w [:workflow_options :a])) (:workflows workload)))))
                    (is (= (count (filter (partial = :b) option-sequence))
-                          (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))))))
+                          (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))
+                   (is (workloads/baseline-options-across-workload
+                         (make-options (xx/get-cromwell-environment workload))
+                         workload))))))
     (testing "Options sent to Cromwell"
       (is (= (count option-sequence)
              (:c @submitted-option-counts)))

@@ -4,7 +4,8 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs])
+            [wfl.module.wgs :as wgs]
+            [wfl.util :as util])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -56,7 +57,10 @@
                    (is (= (count (filter (partial = :a) option-sequence))
                           (count (filter (fn [w] (get-in w [:workflow_options :a])) (:workflows workload)))))
                    (is (= (count (filter (partial = :b) option-sequence))
-                          (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))))))
+                          (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))
+                   (is (workloads/baseline-options-across-workload
+                         (util/make-options (wgs/get-cromwell-wgs-environment (:cromwell workload)))
+                         workload))))))
     (testing "Options sent to Cromwell"
       (is (= (count option-sequence)
              (:c @submitted-option-counts)))
