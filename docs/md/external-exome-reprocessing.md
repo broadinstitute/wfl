@@ -21,7 +21,7 @@ accounts have at least read access to the input files.
 Request:
 
 ```bash
-curl -X POST 'https://workflow-launcher.broadinstitute.org/api/v1/create' \
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -30,7 +30,9 @@ curl -X POST 'https://workflow-launcher.broadinstitute.org/api/v1/create' \
         "pipeline": "ExternalExomeReprocessing",
         "project": "PO-1234",
         "items": [{
-          "input_cram": "gs://path/to/a.cram"
+            "inputs": {
+                "input_cram": "gs://path/to/a.cram"
+            }
         }]
       }'
 ```
@@ -106,7 +108,7 @@ particular input cram, WFL will not re-submit that workflow.
 Request:
 
 ```bash
-curl -X POST 'https://workflow-launcher.broadinstitute.org/api/v1/start' \
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
  -H 'Content-Type: application/json' \
  -d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'
@@ -185,8 +187,9 @@ Response:
 Creates and then starts a Cromwell workflow for each item in the workload.
 
 Request:
+
 ```bash
-curl -X POST 'https://workflow-launcher.broadinstitute.org/api/v1/exec' \
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -195,7 +198,9 @@ curl -X POST 'https://workflow-launcher.broadinstitute.org/api/v1/exec' \
         "pipeline": "ExternalExomeReprocessing",
         "project": "PO-1234",
         "items": [{
-          "input_cram": "gs://path/to/a.cram"
+            "inputs": {
+                "input_cram": "gs://path/to/a.cram"
+            }
         }]
       }'
 ```
@@ -275,7 +280,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
 Request:
 
 ```bash
-curl -X GET 'https://workflow-launcher.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
+curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
   -H "Authorization: Bearer $(gcloud auth print-access-token)"
 ```
 
@@ -400,8 +405,8 @@ failures.
          "fingerprint_genotypes_file": "string",
          "fingerprint_genotypes_index": "string",
      },
-     "items": [
-         {
+     "items": [{
+         "inputs": {
              // required - specify either "input_bam" or "input_cram"
              "input_bam":  "string",
              "input_cram": "string",
@@ -446,10 +451,10 @@ failures.
                  "agg_preemptible_tries": int,
                  "preemptible_tries":     int
              },
-             "fingerprint_genotypes_file": "string",
+             "fingerprint_genotypes_file":  "string",
              "fingerprint_genotypes_index": "string",
-             "destination_cloud_path": "string"
+             "destination_cloud_path":      "string"
          }
-      ]
+     }]
 }
 ```
