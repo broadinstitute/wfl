@@ -85,8 +85,7 @@
   (deftest test-requiring-database-access
     (jdbc/with-db-transaction [tx (testing-db-config)]
       ;; use tx
-    ))
-  "
+    ))"
   (let [name (:db-name (testing-db-config))]
     (create-local-database name)
     (try
@@ -94,3 +93,15 @@
       (f)
       (finally
         (drop-local-db name)))))
+
+(defn create-local-database-for-testing
+  "Create and run liquibase on a PostgreSQL database whose configuration is
+   `config` for testing. Assumes that the database `(:db-name config)` does
+   not already exist.
+   Notes:
+   - This is intended for interactive development in a REPL.
+   - The new database will NOT be cleaned up automatically."
+  [config]
+  (let [name (:db-name config)]
+    (create-local-database name)
+    (setup-local-database name)))

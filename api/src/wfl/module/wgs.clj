@@ -14,7 +14,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.module.batch :as batch])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -43,8 +44,8 @@
   "Ref Fasta for CRAM."
   (let [hg38           "gs://gcp-public-data--broad-references/hg38/v0/"
         cram_ref_fasta (str hg38 "Homo_sapiens_assembly38.fasta")]
-    {:cram_ref_fasta        cram_ref_fasta
-     :cram_ref_fasta_index  (str cram_ref_fasta ".fai")}))
+    {:cram_ref_fasta       cram_ref_fasta
+     :cram_ref_fasta_index (str cram_ref_fasta ".fai")}))
 
 (defn make-references
   "HG38 reference, calling interval, and contamination files."
@@ -109,30 +110,6 @@
   (merge cromwell-label-map
     other-labels))
 
-(defn active-objects
-  "GCS object names of BAMs or CRAMs from IN-GS-URL now active in ENVIRONMENT."
-  [environment in-gs-url]
-  (prn (format "%s: querying Cromwell in %s" wfl/the-name environment))
-  (let [input-keys [:ExternalWholeGenomeReprocessing.input_bam
-                    :ExternalWholeGenomeReprocessing.input_cram]
-        md         (partial cromwell/metadata environment)]
-    (letfn [(active? [metadata]
-              (let [url (-> metadata :id md :submittedFiles :inputs
-                          (json/read-str :key-fn keyword)
-                          (some input-keys))]
-                (when url
-                  (let [[bucket object] (gcs/parse-gs-url url)
-                        [_ unsuffixed _] (all/bam-or-cram? object)
-                        [in-bucket in-object] (gcs/parse-gs-url in-gs-url)]
-                    (when (and (= in-bucket bucket)
-                            (str/starts-with? object in-object))
-                      unsuffixed)))))]
-      (->> {:label  cromwell-label
-            :status ["On Hold" "Running" "Submitted"]}
-        (cromwell/query environment)
-        (keep active?)
-        set))))
-
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OTHER-LABELS."
   [environment in-gs out-gs sample other-labels]
@@ -148,12 +125,11 @@
 
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
-  [tx {:keys [items] :as _workload-request}]
-  (let [[uuid table] (all/add-workload-table! tx workflow-wdl _workload-request)
-        inputs (map :inputs items)]
-    (letfn [(add-id [m id] (assoc m :id id))]
-      (jdbc/insert-multi! tx table (map add-id inputs (rest (range)))))
-    uuid))
+  [tx {:keys [items] :as workload-request}]
+  (let [[id table] (batch/add-workload-table! tx workflow-wdl workload-request)]
+    (letfn [(form [m id] (-> m (update :inputs json/write-str) (assoc :id id)))]
+      (jdbc/insert-multi! tx table (map form items (range)))
+      id)))
 
 (defn skip-workflow?
   "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
@@ -189,7 +165,7 @@
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
                       (really-submit-one-workflow
-                        env (str input (:input_cram inputs)) output inputs workload->label)))])
+                        env (str input (some inputs [:input_bam :input_cram])) output inputs workload->label)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
@@ -204,7 +180,7 @@
   [tx request]
   (->>
     (add-wgs-workload! tx request)
-    (workloads/load-workload-for-uuid tx)))
+    (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
@@ -212,3 +188,19 @@
   (do
     (start-wgs-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
+
+;; visible for testing
+(defn uses-cromwell-workload-table? [{:keys [version]}]
+  (let [[major minor & _] (mapv util/parse-int (str/split version #"\."))]
+    (or (< 0 major) (< 3 minor))))
+
+(defmethod workloads/load-workload-impl
+  pipeline
+  [tx {:keys [items] :as workload}]
+  (if-not (uses-cromwell-workload-table? workload)
+    (workloads/default-load-workload-impl tx workload)
+    (let [unnilify #(into {} (filter second %))]
+      (->> (postgres/get-table tx items)
+        (mapv (comp #(update % :inputs util/parse-json) unnilify))
+        (assoc workload :workflows)
+        unnilify))))
