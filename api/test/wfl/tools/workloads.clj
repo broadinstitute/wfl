@@ -129,6 +129,10 @@
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/load-workload-for-uuid tx uuid)))
 
+(defn load-workload-for-id [id]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+    (wfl.api.workloads/load-workload-for-id tx id)))
+
 (defn append-to-workload! [samples workload]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (aou/append-to-workload! tx samples workload)))
