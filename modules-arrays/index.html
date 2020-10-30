@@ -540,7 +540,7 @@ caller.</p>
 <tr>
 <td>POST</td>
 <td><code>/api/v1/start</code></td>
-<td>Start a or multiple workload(s)</td>
+<td>Start a workload</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -585,11 +585,9 @@ analyzed, processed and submitted to Cromwell as long as it has valid informatio
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/start&quot;</span> <span class="se">\</span>
      -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
      -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">$&#39;[</span>
-<span class="s1">  {</span>
-<span class="s1">    &quot;uuid&quot;: &quot;00000000-0000-0000-0000-000000000000&quot;</span>
-<span class="s1">  }</span>
-<span class="s1">]&#39;</span>
+     -d <span class="s1">$&#39;{</span>
+<span class="s1">            &quot;uuid&quot;: &quot;00000000-0000-0000-0000-000000000000&quot;</span>
+<span class="s1">          }&#39;</span>
 </code></pre></div>
 <p><strong>GET /api/v1/workload/append_to_aou</strong></p>
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/append_to_aou&quot;</span> <span class="se">\</span>
