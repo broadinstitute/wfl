@@ -57,7 +57,7 @@
                     :content-type :json
                     :accept       :json
                     :body         payload})]
-    (first (util/parse-json (:body response)))))
+    (util/parse-json (:body response))))
 
 (defn append-to-aou-workload
   "Append SAMPLES to the aou WORKLOAD"
