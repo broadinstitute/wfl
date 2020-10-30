@@ -30,7 +30,10 @@ jobs:
       MODULES: api ui
 
     steps:
-      - uses: actions/checkout@v2
+      - name: prepare sources
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - name: Configure Git
         run: |
