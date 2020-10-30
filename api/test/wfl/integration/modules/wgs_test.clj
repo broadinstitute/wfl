@@ -62,12 +62,12 @@
               #(-> %
                  (dissoc :input_cram)
                  (assoc :input_bam "gs://inputs/fake.bam"))))
-          (verify-use_input_bam! [env in out inputs labels]
+          (verify-use_input_bam! [env in out inputs options labels]
             (is (str/ends-with? in ".bam"))
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
             (is (contains? labels :workload))
-            [env in out inputs labels])]
+            [env in out inputs options labels])]
     (with-redefs-fn
       {#'wgs/really-submit-one-workflow
        (comp mock-really-submit-one-workflow verify-use_input_bam!)}
