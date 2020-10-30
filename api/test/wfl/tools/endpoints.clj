@@ -51,14 +51,13 @@
   "Start processing WORKLOAD. WORKLOAD must be known to the server."
   [workload]
   (let [payload  (-> (select-keys workload [:uuid])
-                   list
                    (json/write-str :escape-slash false))
         response (client/post (str server "/api/v1/start")
                    {:headers      (once/get-auth-header)
                     :content-type :json
                     :accept       :json
                     :body         payload})]
-    (first (util/parse-json (:body response)))))
+    (util/parse-json (:body response))))
 
 (defn append-to-aou-workload
   "Append SAMPLES to the aou WORKLOAD"

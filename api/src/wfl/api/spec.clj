@@ -26,9 +26,7 @@
 (s/def ::started inst?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
-(s/def ::uuids (s/* ::uuid))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
-(s/def ::uuid-kvs (s/* ::uuid-kv))
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
@@ -66,8 +64,8 @@
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
-  (s/keys :req-un [::inputs]
-          :opt-un [::status ::updated ::uuid]))
+(s/keys :req-un [::inputs]
+        :opt-un [::status ::updated ::uuid]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
