@@ -1,11 +1,12 @@
 name: Release Latest Version
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - version
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: branch, tag or SHA to checkout.
+        required: false
+        default: 'master'
 
 jobs:
   build:
