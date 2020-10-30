@@ -9,7 +9,8 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [clojure.string :as str]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [clojure.data.json :as json])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -36,21 +37,34 @@
                    "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
 
-(defn ^:private old-create-wgs-workload! []
-  (let [request (make-wgs-workload-request)]
-    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-      (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
-            add-id (fn [m id] (assoc (:inputs m) :id id))]
-        (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
-        (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
-        id))))
+(defn ^:private old-create-wgs-workload!
+  ([] (old-create-wgs-workload! nil))
+  ([workflow-options]
+   (let [request (make-wgs-workload-request)]
+     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+       (let [[id table opts] (all/add-workload-table! tx wgs/workflow-wdl request workflow-options)
+             to-row (fn [m id] (assoc (:inputs m)
+                                 :id id
+                                 :workflow_options (when opts (json/write-str opts))))]
+         (jdbc/insert-multi! tx table (map to-row (:items request) (range)))
+         (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
+         id)))))
 
 (deftest test-loading-old-wgs-workload
-  (let [id (old-create-wgs-workload!)]
-    (testing "loading a wgs workload saved in a previous release"
-      (let [workload (workloads/load-workload-for-id id)]
-        (is (= id (:id workload)))
-        (is (= wgs/pipeline (:pipeline workload)))))))
+  (testing "loading a wgs workload saved in a previous release"
+    (let [id (old-create-wgs-workload!)
+          workload (workloads/load-workload-for-id id)]
+      (is (= id (:id workload)))
+      (is (= wgs/pipeline (:pipeline workload)))
+      (is (util/absent? workload :workflow_options))))
+  (testing "loading a wgs workload saved in a previous release but with options"
+    ;; Not sure this can happen in reality but it works regardless
+    (let [id (old-create-wgs-workload! {:foo "bar"})
+          workload (workloads/load-workload-for-id id)]
+      (is (= id (:id workload)))
+      (is (= wgs/pipeline (:pipeline workload)))
+      (is (= (get-in workload [:workflow_options :foo]) "bar"))
+      (run! #(is (= (get-in % [:workflow_options :foo]) "bar")) (:workflows workload)))))
 
 (deftest test-exec-with-input_bam
   (letfn [(go! [workflow]
