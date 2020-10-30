@@ -1,7 +1,7 @@
 (ns wfl.integration.modules.wgs-test
   (:require [clojure.set :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete]]
+            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflow]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -39,17 +39,17 @@
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-      (let [[uuid table] (all/add-workload-table! tx wgs/workflow-wdl request)
+      (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
             add-id (fn [m id] (assoc (:inputs m) :id id))]
         (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
-        (jdbc/update! tx :workload {:version "0.3.8"} ["uuid = ?" uuid])
-        uuid))))
+        (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
+        id))))
 
 (deftest test-loading-old-wgs-workload
-  (let [uuid (old-create-wgs-workload!)]
+  (let [id (old-create-wgs-workload!)]
     (testing "loading a wgs workload saved in a previous release"
-      (let [workload (workloads/load-workload-for-uuid uuid)]
-        (is (= uuid (:uuid workload)))
+      (let [workload (workloads/load-workload-for-id id)]
+        (is (= id (:id workload)))
         (is (= wgs/pipeline (:pipeline workload)))))))
 
 (deftest test-exec-with-input_bam
