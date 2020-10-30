@@ -1,10 +1,9 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]
-            [wfl.util :as util]))
+            [wfl.jdbc :as jdbc]))
 
 ;; always derive from base :wfl/exception
-(derive ::invalid-pipeline   :wfl/exception)
+(derive ::invalid-pipeline :wfl/exception)
 (derive ::workload-not-found :wfl/exception)
 
 ;; creating and dispatching workloads to cromwell
@@ -45,7 +44,7 @@
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid"
                {:cause {:uuid uuid}
-                :type ::workload-not-found})))
+                :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
@@ -77,7 +76,7 @@
   (throw
     (ex-info "Failed to create workload - no such pipeline"
       {:cause body
-       :type ::invalid-pipeline})))
+       :type  ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default
@@ -85,7 +84,7 @@
   (throw
     (ex-info "Failed to start workload - no such pipeline"
       {:cause body
-       :type ::invalid-pipeline})))
+       :type  ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
@@ -106,22 +105,20 @@
       (throw (ex-info "Error updating workload"
                {:workload workload} cause)))))
 
-(defmethod load-workload-impl
-  :default
+(defn default-load-workload-impl
   [tx workload]
-  (try
-    (letfn [(unnilify [m] (into {} (filter second m)))
-            (split-inputs [workflow]
-              (let [keep [:id :finished :status :updated :uuid :workflow_options]]
-                (assoc (select-keys workflow keep)
-                  :inputs (unnilify (apply dissoc workflow keep)))))
-            (unpack-options [m]
-              (update m :workflow_options #(when % (util/parse-json %))))]
+  (letfn [(unnilify [m] (into {} (filter second m)))
+          (split-inputs [m]
+            (let [keep [:id :finished :status :updated :uuid]]
+              (assoc (select-keys m keep)
+                :inputs (unnilify (apply dissoc m keep)))))]
+    (try
       (->> (postgres/get-table tx (:items workload))
-        (mapv (comp unnilify split-inputs unpack-options))
+        (mapv (comp unnilify split-inputs))
         (assoc workload :workflows)
-        unpack-options
-        unnilify))
-    (catch Throwable cause
-      (throw (ex-info "Error loading workload"
-               {:workload workload} cause)))))
+        unnilify)
+      (catch Throwable cause
+        (throw (ex-info "Error loading workload"
+                 {:workload workload} cause))))))
+
+(defoverload load-workload-impl :default default-load-workload-impl)

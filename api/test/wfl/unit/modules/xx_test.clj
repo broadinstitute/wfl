@@ -1,4 +1,4 @@
-(ns wfl.unit.xx-test
+(ns wfl.unit.modules.xx-test
   (:require [clojure.test :refer :all]
             [wfl.module.xx :as xx]))
 

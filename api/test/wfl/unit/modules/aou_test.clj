@@ -1,4 +1,4 @@
-(ns wfl.unit.aou-module-test
+(ns wfl.unit.modules.aou-test
   (:require [clojure.test :refer :all]
             [clojure.set  :as set]
             [wfl.module.aou :as aou]))

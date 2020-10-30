@@ -1,4 +1,4 @@
-(ns wfl.unit.all-modules-test
+(ns wfl.unit.modules.all-test
   (:require [clojure.test :refer [deftest testing is]]
             [wfl.environments :as env]
             [wfl.module.all :as all]
