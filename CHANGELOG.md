@@ -1,5 +1,4 @@
 # Release 0.4.0
-- Add a command to cli.py to generate changelog for us.
 - [GH-1022] make wgs use `CromwellWorkflow` table. (#204)
 - disable automatic release action (#205)
 - [GH-1024] Make start workload endpoint take a single UUID (#202)
