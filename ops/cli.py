@@ -38,6 +38,7 @@ class WflInstanceConfig:
     rendered_values_file: str = None
     vault_token_path: str = None
     wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}/.."
+    current_changelog: str = None
 
 
 def check_env_instance_present(config: WflInstanceConfig) -> None:
@@ -279,7 +280,41 @@ def check_git_tag(config: WflInstanceConfig) -> None:
         exit(1)
 
 
+def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
+    "Read commit messages since last tag, store to config and print."
+    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 @^)..@'
+    info("=>  Reading commit messages from git log")
+    lines = subprocess.check_output(command, shell=True, encoding="utf-8").strip().split("\n")
+    info("=>  Markdown-rize log messages")
+    current_changelog = "\n".join([f"- {line}" for line in lines])
+    config.current_changelog = current_changelog
+    info("=>  Current changelog crafted")
+    info(current_changelog)
+
+
+def write_changelog(config: WflInstanceConfig) -> None:
+    "Append current changelog info to the changelog file at start position."
+    content = f"# Release {config.version}\n" + config.current_changelog
+    changelog_location = f"{config.wfl_root_folder}/CHANGELOG.md"
+
+    info("=>  Loading changelog from file at `./CHANGELOG.md`")
+    with open(changelog_location, "r") as fp:
+        existing = fp.read().strip()
+
+    with open(changelog_location, "w") as fp:
+        fp.write(content)
+        fp.write("\n\n")
+        fp.write(existing)
+    success(f"Changelog is successfully written to {changelog_location}")
+
+
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
+    "release": [
+        read_version,
+        get_git_commits_since_last_tag,
+        exit_if_dry_run,
+        write_changelog
+    ],
     "info": [
         check_env_instance_present,
         read_version,
