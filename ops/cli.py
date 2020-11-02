@@ -7,6 +7,7 @@ usage: python3 cli.py -h
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -280,13 +281,21 @@ def check_git_tag(config: WflInstanceConfig) -> None:
         exit(1)
 
 
+def _markdownify_commit_msg(commit: str) -> str:
+    "Turn a single commit message to markdown style."
+    regex = re.compile("\#[0-9][0-9][0-9]")
+    num_pr = regex.search(commit)[0]
+    marked_commit = regex.sub(f"[\g<0>](https://github.com/broadinstitute/wfl/pull/{num_pr[1:]})", commit)
+    marked_commit = f'- {marked_commit}'
+    return marked_commit
+
 def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
     "Read commit messages since last tag, store to config and print."
     command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
     info("=>  Reading commit messages from git log")
     lines = shell(command).split("\n")
     info("=>  Markdown-rize log messages")
-    current_changelog = "\n".join([f"- {line}" for line in lines])
+    current_changelog = "\n".join([_markdownify_commit_msg(line) for line in lines])
     config.current_changelog = current_changelog
     info("=>  Current changelog crafted")
     info(current_changelog)
