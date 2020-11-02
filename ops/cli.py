@@ -289,6 +289,7 @@ def _markdownify_commit_msg(commit: str) -> str:
     marked_commit = f'- {marked_commit}'
     return marked_commit
 
+
 def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
     "Read commit messages since last tag, store to config and print."
     command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
