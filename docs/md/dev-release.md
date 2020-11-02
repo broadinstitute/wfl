@@ -12,7 +12,7 @@ of the repo.
 to generate the changelog for this release. (`-d` flag can
 be used to do a dry run without writing to the `CHANGELOG.md`
 file)
-4. Once the release PR is reviewed by merged to `master`
+4. Once the release PR is reviewed and merged to `master`
 branch, developers can go to Github Action
 [Release Latest Version](https://github.com/broadinstitute/wfl/actions?query=workflow%3A%22Release+Latest+Version%22)
 and manually tirgger a run with the `Run workflow` button to build and push the tagged docker images of WFL to
