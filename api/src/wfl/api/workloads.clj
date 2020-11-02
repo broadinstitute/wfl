@@ -1,7 +1,8 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util]))
+            [wfl.util :as util]
+            [wfl.api.common :as common]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -33,7 +34,9 @@
 
 (defn ^:private try-load-workload-impl [tx workload]
   (try
-    (load-workload-impl tx workload)
+    (->> workload
+         (load-workload-impl tx)
+         (common/load-common-into-workload tx))
     (catch Throwable cause
       (throw (ex-info "Error loading workload"
                {:workload workload} cause)))))
@@ -119,7 +122,6 @@
       (->> (postgres/get-table tx (:items workload))
         (mapv (comp unnilify split-inputs unpack-options))
         (assoc workload :workflows)
-        unpack-options
         unnilify)
       (catch Throwable cause
         (throw (ex-info "Error loading workload"

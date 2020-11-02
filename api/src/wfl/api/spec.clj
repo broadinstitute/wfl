@@ -31,10 +31,11 @@
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::workflow_options map?)
+(s/def ::common (s/keys :opt-un [::workflow_options]))
 (s/def ::workload-request (s/keys :opt-un [::input
                                            ::items
                                            ::common_inputs
-                                           ::workflow_options]
+                                           ::common]
                                   :req-un [::cromwell
                                            ::output
                                            ::pipeline
@@ -44,7 +45,7 @@
                                             ::started
                                             ::wdl
                                             ::workflows
-                                            ::workflow_options]
+                                            ::common]
                                    :req-un [::commit
                                             ::created
                                             ::creator

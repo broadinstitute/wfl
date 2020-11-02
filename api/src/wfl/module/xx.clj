@@ -16,7 +16,8 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.api.common :as common])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalExomeReprocessing")
@@ -109,16 +110,16 @@
       (apply concat (mapv submit-workflows-by-options workflows-by-options)))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
-  (letfn [(make-workflow-record [workload-options id item]
-            (let [options-string (json/write-str (util/deep-merge workload-options (:workflow_options item)))]
+  (letfn [(make-workflow-record [id item]
+            (let [options-string (json/write-str (:workflow_options item))]
               (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
                    json/write-str
                    (assoc {:id id :workflow_options options-string} :inputs))))]
-    (let [workflow-options (util/deep-merge (util/make-options (get-cromwell-environment request))
-                                            (:workflow_options request))
-          [id table]       (batch/add-workload-table! tx workflow-wdl request workflow-options)]
-      (->> (map (partial make-workflow-record workflow-options) (range) items)
-        (jdbc/insert-multi! tx table))
+    (let [default-options (util/make-options (get-cromwell-environment request))
+          [id table]      (batch/add-workload-table! tx workflow-wdl request)]
+      (common/store-common tx id (util/deep-merge {:workflow_options default-options}
+                                                  (:common request)))
+      (jdbc/insert-multi! tx table (map make-workflow-record (range) items))
       (workloads/load-workload-for-id tx id))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]

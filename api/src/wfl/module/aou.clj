@@ -14,7 +14,8 @@
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [wfl.api.common :as common])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            (java.sql Timestamp)))
@@ -156,10 +157,6 @@
   (get-cromwell-environment! request)
   (let [{:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
-        workflow-options (->>
-                           (:workflow_options request)
-                           (util/deep-merge default-options)
-                           json/write-str)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release output])]
     (when (< 1 (count workloads))
@@ -175,8 +172,7 @@
                                 :release          release
                                 :uuid             (UUID/randomUUID)
                                 :version          version
-                                :wdl              top
-                                :workflow_options workflow-options}
+                                :wdl              top}
                             (jdbc/insert! tx :workload)
                             first
                             :id)
@@ -189,6 +185,8 @@
             work          (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
             link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
         (jdbc/db-do-commands tx [kind idx work link-idx-work])
+        (common/store-common tx id (util/deep-merge {:workflow_options default-options}
+                                                    (:common request)))
         (jdbc/update! tx :workload {:items table} ["id = ?" id])
         id))))
 
@@ -242,17 +240,20 @@
   Note:
   - The `workload` must be `started` in order to be append-able.
   - All samples being appended will be submitted immediately."
-  [tx notifications {:keys [uuid items output] :as workload}]
+  [tx notifications {:keys [uuid items output common] :as workload}]
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
   (letfn [(submit! [environment sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
-                  workflow-options (util/deep-merge (:workflow_options workload)
-                                                    {:final_workflow_outputs_dir output-path})]
-              (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
+                  sample-options   {:final_workflow_outputs_dir output-path}]
+              (->> (submit-aou-workflow
+                     environment
+                     sample
+                     (util/deep-merge (:workflow_options common) sample-options)
+                     {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
-                  :workflow_options (json/write-str workflow-options)
+                  :workflow_options (json/write-str sample-options)
                   :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
                   :status "Submitted"
                   :uuid))))]

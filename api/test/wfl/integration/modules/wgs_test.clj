@@ -10,7 +10,8 @@
             [wfl.module.all :as all]
             [clojure.string :as str]
             [wfl.util :as util]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [wfl.api.common :as common])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -42,10 +43,11 @@
   ([workflow-options]
    (let [request (make-wgs-workload-request)]
      (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request workflow-options)
+       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
              to-row (fn [m id] (assoc (:inputs m)
                                  :id id
                                  :workflow_options (when workflow-options (json/write-str workflow-options))))]
+         (common/store-common tx id {:workflow_options workflow-options})
          (jdbc/insert-multi! tx table (map to-row (:items request) (range)))
          (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
          id)))))
@@ -56,14 +58,14 @@
           workload (workloads/load-workload-for-id id)]
       (is (= id (:id workload)))
       (is (= wgs/pipeline (:pipeline workload)))
-      (is (util/absent? workload :workflow_options))))
+      (is (util/absent? workload :common))))
   (testing "loading a wgs workload saved in a previous release but with options"
     ;; Not sure this can happen in reality but it works regardless
     (let [id (old-create-wgs-workload! {:foo "bar"})
           workload (workloads/load-workload-for-id id)]
       (is (= id (:id workload)))
       (is (= wgs/pipeline (:pipeline workload)))
-      (is (= (get-in workload [:workflow_options :foo]) "bar"))
+      (is (= (get-in workload [:common :workflow_options :foo]) "bar"))
       (run! #(is (= (get-in % [:workflow_options :foo]) "bar")) (:workflows workload)))))
 
 (deftest test-exec-with-input_bam
@@ -98,7 +100,7 @@
                              (update :items (fn [existing]
                                               (mapv #(assoc %1 :workflow_options {%2 "some value"})
                                                     (repeat (first existing)) option-sequence)))
-                             (assoc :workflow_options {:c "some other value"}))
+                             (assoc :common {:workflow_options {:c "some other value"}}))
         submitted-option-counts (atom {})
         ;; Mock cromwell/submit-workflow, count observed option keys per workflow
         pretend-submit (fn [_ _ _ _ options _]
@@ -110,7 +112,7 @@
            workloads/execute-workload!
            (as-> workload
                  (testing "Options in server response"
-                   (is (get-in workload [:workflow_options :c]))
+                   (is (get-in workload [:common :workflow_options :c]))
                    (is (= (count option-sequence)
                           (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
                    (is (= (count (filter (partial = :a) option-sequence))

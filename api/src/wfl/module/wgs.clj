@@ -15,7 +15,8 @@
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
-            [wfl.module.batch :as batch])
+            [wfl.module.batch :as batch]
+            [wfl.api.common :as common])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -126,18 +127,19 @@
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as workload-request}]
-  (let [workflow-options (-> (:cromwell workload-request)
-                             all/de-slashify
-                             get-cromwell-wgs-environment
-                             util/make-options
-                             (util/deep-merge (:workflow_options workload-request)))
-        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request workflow-options)]
+  (let [default-options (-> (:cromwell workload-request)
+                            all/de-slashify
+                            get-cromwell-wgs-environment
+                            util/make-options)
+        [id table]      (batch/add-workload-table! tx workflow-wdl workload-request)]
+    (common/store-common tx id (util/deep-merge {:workflow_options default-options}
+                                                (:common workload-request)))
     (letfn [(form [m id] (-> m
                              (update :inputs json/write-str)
-                             (update :workflow_options #(json/write-str (util/deep-merge workflow-options %)))
+                             (update :workflow_options json/write-str)
                              (assoc :id id)))]
-      (jdbc/insert-multi! tx table (map form items (range)))
-      id)))
+      (jdbc/insert-multi! tx table (map form items (range))))
+    id))
 
 (defn skip-workflow?
   "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
@@ -220,5 +222,4 @@
                        #(update % :inputs util/parse-json)
                        unnilify))
            (assoc workload :workflows)
-           unpack-options
            unnilify))))

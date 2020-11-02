@@ -22,4 +22,5 @@
     <include file="changesets/20201029_CromwellWorkflow.xml"                     relativeToChangelogFile="true"/>
     <include file="changesets/20201030_ExternalExomeReprocessing.xml"            relativeToChangelogFile="true"/>
     <include file="changesets/20201031_WorkflowOptions.xml"                      relativeToChangelogFile="true"/>
+    <include file="changesets/20201101_CommonTable.xml"                          relativeToChangelogFile="true"/>
 </databaseChangeLog>

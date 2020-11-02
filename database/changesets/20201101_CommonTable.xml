@@ -1,0 +1,27 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="jwarren@broadinstitute.org"
+               dbms="postgresql"
+               id="20201101"
+               logicalFilePath="20201101_CommonTable.xml">
+        <comment>
+            A table containing content common within workflows in a workload.
+        </comment>
+        <createTable tableName="common_within_workload">
+            <column name="workload_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" unique="true"
+                             foreignKeyName="FK_workload_id" references="workload(id)"/>
+            </column>
+            <column name="workflow_options" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

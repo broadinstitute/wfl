@@ -89,7 +89,7 @@
                              (update :items (fn [existing]
                                               (mapv #(assoc %1 :workflow_options {%2 "some value"})
                                                     (repeat (first existing)) option-sequence)))
-                             (assoc :workflow_options {:c "some other value"}))
+                             (assoc :common {:workflow_options {:c "some other value"}}))
         submitted-option-counts (atom {})
         ;; Mock cromwell/submit-workflows (note the plural), count observed option keys per workflow
         pretend-submit (fn [_ _ _ inputs options _]
@@ -101,7 +101,7 @@
            workloads/execute-workload!
            (as-> workload
                  (testing "Options in server response"
-                   (is (get-in workload [:workflow_options :c]))
+                   (is (get-in workload [:common :workflow_options :c]))
                    (is (= (count option-sequence)
                           (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
                    (is (= (count (filter (partial = :a) option-sequence))

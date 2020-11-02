@@ -68,7 +68,7 @@
 
 (deftest test-workflow-options
   (let [workload (-> (make-aou-workload-request)
-                     (assoc :workflow_options {:a "some value"})
+                     (assoc :common {:workflow_options {:a "some value"}})
                      workloads/execute-workload!)
         append-to-workload! (fn [xs] (workloads/append-to-workload! xs workload))
         submitted-option-counts (atom {})
@@ -80,14 +80,14 @@
     (with-redefs-fn {#'submit-workflow          pretend-submit
                      #'postgres/cromwell-status mock-cromwell-status}
       #(do (testing "Options in initial server response"
-             (is (get-in workload [:workflow_options :a]))
+             (is (get-in workload [:common :workflow_options :a]))
              (is (workloads/baseline-options-across-workload
                    aou/default-options
                    workload)))
            (append-to-workload! [workloads/aou-sample])
            (testing "Options in subsequent server response"
              (let [response (workloads/update-workload! workload)]
-               (is (get-in response [:workflow_options :a]))
+               (is (get-in response [:common :workflow_options :a]))
                (is (workloads/baseline-options-across-workload
                      aou/default-options
                      response))

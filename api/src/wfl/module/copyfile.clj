@@ -5,7 +5,8 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.api.common :as common])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
@@ -27,17 +28,18 @@
 
 (defn add-copyfile-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
-  [tx {:keys [items] :as _workload-request}]
-  (let [workflow-options (-> (:cromwell _workload-request)
-                             all/cromwell-environments
-                             first
-                             util/make-options
-                             (util/deep-merge (:workflow_options _workload-request)))
-        [id table]       (all/add-workload-table! tx workflow-wdl _workload-request workflow-options)
-        to-row (fn [item] (assoc (:inputs item)
-                            :workflow_options
-                            (json/write-str (util/deep-merge workflow-options (:workflow_options item)))))]
-    (letfn [(add-id [m id] (assoc m :id id))]
+  [tx {:keys [items] :as workload-request}]
+  (let [default-options (-> (:cromwell workload-request)
+                            all/cromwell-environments
+                            first
+                            util/make-options)
+        [id table]      (all/add-workload-table! tx workflow-wdl workload-request)]
+    (common/store-common tx id (util/deep-merge {:workflow_options default-options}
+                                                (:common workload-request)))
+    (letfn [(add-id [m id] (assoc m :id id))
+            (to-row [item] (assoc (:inputs item)
+                         :workflow_options
+                         (json/write-str (:workflow_options item))))]
       (jdbc/insert-multi! tx table (map add-id (map to-row items) (range))))
     id))
 
