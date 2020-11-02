@@ -114,9 +114,10 @@
               (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
                    json/write-str
                    (assoc {:id id :workflow_options options-string} :inputs))))]
-    (let [default-options (util/make-options (get-cromwell-environment request))
-          [id table opts] (batch/add-workload-table! tx workflow-wdl request default-options)]
-      (->> (map (partial make-workflow-record opts) (range) items)
+    (let [workflow-options (util/deep-merge (util/make-options (get-cromwell-environment request))
+                                            (:workflow_options request))
+          [id table]       (batch/add-workload-table! tx workflow-wdl request workflow-options)]
+      (->> (map (partial make-workflow-record workflow-options) (range) items)
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-id tx id))))
 

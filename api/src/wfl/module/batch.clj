@@ -16,9 +16,8 @@
   ([tx
     {:keys [release top] :as _workflow-wdl}
     {:keys [pipeline] :as workload-request}
-    default-workflow-options]
-   (let [workflow-options (util/deep-merge default-workflow-options (:workflow_options workload-request))
-         [{:keys [id]}]
+    workflow-options]
+   (let [[{:keys [id]}]
          (-> workload-request
              (select-keys [:creator :cromwell :input :output :project])
              (merge (-> (wfl/get-the-version) (select-keys [:commit :version])))
@@ -34,4 +33,4 @@
                           (map #(format "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))" %)
                                [table]))
      (jdbc/update! tx :workload {:items table} ["id = ?" id])
-     [id table workflow-options])))
+     [id table])))

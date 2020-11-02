@@ -42,10 +42,10 @@
   ([workflow-options]
    (let [request (make-wgs-workload-request)]
      (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-       (let [[id table opts] (all/add-workload-table! tx wgs/workflow-wdl request workflow-options)
+       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request workflow-options)
              to-row (fn [m id] (assoc (:inputs m)
                                  :id id
-                                 :workflow_options (when opts (json/write-str opts))))]
+                                 :workflow_options (when workflow-options (json/write-str workflow-options))))]
          (jdbc/insert-multi! tx table (map to-row (:items request) (range)))
          (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
          id)))))

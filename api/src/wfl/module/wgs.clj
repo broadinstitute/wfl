@@ -126,14 +126,15 @@
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as workload-request}]
-  (let [default-options (-> (:cromwell workload-request)
-                            all/de-slashify
-                            get-cromwell-wgs-environment
-                            util/make-options)
-        [id table opts] (batch/add-workload-table! tx workflow-wdl workload-request default-options)]
+  (let [workflow-options (-> (:cromwell workload-request)
+                             all/de-slashify
+                             get-cromwell-wgs-environment
+                             util/make-options
+                             (util/deep-merge (:workflow_options workload-request)))
+        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request workflow-options)]
     (letfn [(form [m id] (-> m
                              (update :inputs json/write-str)
-                             (update :workflow_options #(json/write-str (util/deep-merge opts %)))
+                             (update :workflow_options #(json/write-str (util/deep-merge workflow-options %)))
                              (assoc :id id)))]
       (jdbc/insert-multi! tx table (map form items (range)))
       id)))
