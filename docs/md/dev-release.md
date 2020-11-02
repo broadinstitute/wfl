@@ -13,8 +13,10 @@ to generate the changelog for this release. (`-d` flag can
 be used to do a dry run without writing to the `CHANGELOG.md`
 file)
 4. Once the release PR is reviewed by merged to `master`
-branch, the Github Action
+branch, developers can go to Github Action
 [Release Latest Version](https://github.com/broadinstitute/wfl/actions?query=workflow%3A%22Release+Latest+Version%22)
-will get triggered to build and push the tagged docker images of WFL to
+and manually tirgger a run with the `Run workflow` button to build and push the tagged docker images of WFL to
 [DockerHub](https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api).
-Note it can take up to 30 minutes for the Github Action to finish the build and push.
+
+!!! tip
+    Note it can take up to 30 minutes for the Github Action to finish the build and push.
