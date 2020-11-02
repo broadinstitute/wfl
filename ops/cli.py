@@ -294,7 +294,7 @@ def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
     command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
     info("=>  Reading commit messages from git log")
     lines = shell(command).split("\n")
-    info("=>  Markdown-rize log messages")
+    info("=>  Markdown-ify log messages")
     current_changelog = "\n".join([_markdownify_commit_msg(line) for line in lines])
     config.current_changelog = current_changelog
     info("=>  Current changelog crafted")
