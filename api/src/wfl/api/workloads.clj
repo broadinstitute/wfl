@@ -119,7 +119,6 @@
       (->> (postgres/get-table tx (:items workload))
         (mapv (comp unnilify split-inputs unpack-options))
         (assoc workload :workflows)
-        unpack-options
         unnilify)
       (catch Throwable cause
         (throw (ex-info "Error loading workload"

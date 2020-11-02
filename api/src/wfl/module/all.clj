@@ -1,7 +1,6 @@
 (ns wfl.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.data.json :as json]
-            [clojure.pprint :refer [pprint]]
+  (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
@@ -84,31 +83,28 @@
   (pprint (count-files in-gs out-gs)))
 
 (defn add-workload-table!
-  "Return ID and TABLE for _WORKFLOW-WDL with WORKFLOW-OPTIONS in BODY under transaction TX."
-  ([tx workflow-wdl body]
-   (add-workload-table! tx workflow-wdl body {}))
-  ([tx {:keys [release top] :as _workflow-wdl} body workflow-options]
-   (let [{:keys [creator cromwell input output pipeline project]} body
-         {:keys [commit version]} (wfl/get-the-version)
-         [{:keys [id]}]
-         (jdbc/insert! tx :workload {:commit           commit
-                                     :creator          creator
-                                     :cromwell         cromwell
-                                     :input            input
-                                     :output           output
-                                     :project          project
-                                     :release          release
-                                     :uuid             (UUID/randomUUID)
-                                     :version          version
-                                     :wdl              top
-                                     :workflow_options (json/write-str workflow-options)})
-         table (format "%s_%09d" pipeline id)
-         work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                      table pipeline)]
-     (jdbc/update! tx :workload {:items table} ["id = ?" id])
-     (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
-     (jdbc/db-do-commands tx [work])
-     [id table])))
+  "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
+  [tx {:keys [release top] :as _workflow-wdl} body]
+  (let [{:keys [creator cromwell input output pipeline project]} body
+        {:keys [commit version]} (wfl/get-the-version)
+        [{:keys [id]}]
+        (jdbc/insert! tx :workload {:commit   commit
+                                    :creator  creator
+                                    :cromwell cromwell
+                                    :input    input
+                                    :output   output
+                                    :project  project
+                                    :release  release
+                                    :uuid     (UUID/randomUUID)
+                                    :version  version
+                                    :wdl      top})
+        table (format "%s_%09d" pipeline id)
+        work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+                     table pipeline)]
+    (jdbc/update! tx :workload {:items table} ["id = ?" id])
+    (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
+    (jdbc/db-do-commands tx [work])
+    [id table]))
 
 (defn slashify
   "Ensure URL ends in a slash /."

@@ -33,7 +33,7 @@
                              first
                              util/make-options
                              (util/deep-merge (:workflow_options _workload-request)))
-        [id table]       (all/add-workload-table! tx workflow-wdl _workload-request workflow-options)
+        [id table]       (all/add-workload-table! tx workflow-wdl _workload-request)
         to-row (fn [item] (assoc (:inputs item)
                             :workflow_options
                             (json/write-str (util/deep-merge workflow-options (:workflow_options item)))))]

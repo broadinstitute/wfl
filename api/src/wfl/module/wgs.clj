@@ -131,7 +131,7 @@
                              get-cromwell-wgs-environment
                              util/make-options
                              (util/deep-merge (:workflow_options workload-request)))
-        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request workflow-options)]
+        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request)]
     (letfn [(form [m id] (-> m
                              (update :inputs json/write-str)
                              (update :workflow_options #(json/write-str (util/deep-merge workflow-options %)))

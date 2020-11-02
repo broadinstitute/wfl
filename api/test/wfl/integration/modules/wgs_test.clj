@@ -42,7 +42,7 @@
   ([workflow-options]
    (let [request (make-wgs-workload-request)]
      (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request workflow-options)
+       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
              to-row (fn [m id] (assoc (:inputs m)
                                  :id id
                                  :workflow_options (when workflow-options (json/write-str workflow-options))))]
@@ -55,15 +55,13 @@
     (let [id (old-create-wgs-workload!)
           workload (workloads/load-workload-for-id id)]
       (is (= id (:id workload)))
-      (is (= wgs/pipeline (:pipeline workload)))
-      (is (util/absent? workload :workflow_options))))
+      (is (= wgs/pipeline (:pipeline workload)))))
   (testing "loading a wgs workload saved in a previous release but with options"
     ;; Not sure this can happen in reality but it works regardless
     (let [id (old-create-wgs-workload! {:foo "bar"})
           workload (workloads/load-workload-for-id id)]
       (is (= id (:id workload)))
       (is (= wgs/pipeline (:pipeline workload)))
-      (is (= (get-in workload [:workflow_options :foo]) "bar"))
       (run! #(is (= (get-in % [:workflow_options :foo]) "bar")) (:workflows workload)))))
 
 (deftest test-exec-with-input_bam
@@ -110,7 +108,6 @@
            workloads/execute-workload!
            (as-> workload
                  (testing "Options in server response"
-                   (is (get-in workload [:workflow_options :c]))
                    (is (= (count option-sequence)
                           (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
                    (is (= (count (filter (partial = :a) option-sequence))

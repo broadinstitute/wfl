@@ -156,10 +156,6 @@
   (get-cromwell-environment! request)
   (let [{:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
-        workflow-options (->>
-                           (:workflow_options request)
-                           (util/deep-merge default-options)
-                           json/write-str)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release output])]
     (when (< 1 (count workloads))
@@ -167,16 +163,15 @@
       (log/error workloads))
     (if-let [workload (first workloads)]
       (:id workload)
-      (let [id            (->> {:commit           commit
-                                :creator          creator
-                                :cromwell         cromwell
-                                :output           (all/slashify output)
-                                :project          project
-                                :release          release
-                                :uuid             (UUID/randomUUID)
-                                :version          version
-                                :wdl              top
-                                :workflow_options workflow-options}
+      (let [id            (->> {:commit   commit
+                                :creator  creator
+                                :cromwell cromwell
+                                :output   (all/slashify output)
+                                :project  project
+                                :release  release
+                                :uuid     (UUID/randomUUID)
+                                :version  version
+                                :wdl      top}
                             (jdbc/insert! tx :workload)
                             first
                             :id)
@@ -247,7 +242,7 @@
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
   (letfn [(submit! [environment sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
-                  workflow-options (util/deep-merge (:workflow_options workload)
+                  workflow-options (util/deep-merge default-options
                                                     {:final_workflow_outputs_dir output-path})]
               (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
                 str ; coerce java.util.UUID -> string

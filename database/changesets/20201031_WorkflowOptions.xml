@@ -30,11 +30,5 @@
             ALTER TYPE CromwellWorkflow
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>
-        <comment>
-            Add workflow options column to overall workload table
-        </comment>
-        <sql>
-            ALTER TABLE workload ADD workflow_options text
-        </sql>
     </changeSet>
 </databaseChangeLog>

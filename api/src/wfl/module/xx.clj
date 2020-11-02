@@ -116,7 +116,7 @@
                    (assoc {:id id :workflow_options options-string} :inputs))))]
     (let [workflow-options (util/deep-merge (util/make-options (get-cromwell-environment request))
                                             (:workflow_options request))
-          [id table]       (batch/add-workload-table! tx workflow-wdl request workflow-options)]
+          [id table]       (batch/add-workload-table! tx workflow-wdl request)]
       (->> (map (partial make-workflow-record workflow-options) (range) items)
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-id tx id))))
@@ -143,8 +143,7 @@
     (->> (postgres/get-table tx items)
          (mapv (comp #(update % :inputs load-inputs!) unnilify unpack-options))
          (assoc workload :workflows)
-         unnilify
-         unpack-options)))
+         unnilify)))
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)

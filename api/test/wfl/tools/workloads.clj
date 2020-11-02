@@ -105,8 +105,7 @@
 (defn baseline-options-across-workload
   "True if OPTIONS are present across the entire WORKLOAD."
   [options workload]
-  (let [unique-options (distinct (conj (map :workflow_options (:workflows workload))
-                                       (:workflow_options workload)))]
+  (let [unique-options (distinct (map :workflow_options (:workflows workload)))]
     (every? #(= % (util/deep-merge % options)) unique-options)))
 
 (defn create-workload! [workload-request]

@@ -43,8 +43,7 @@
                                             ::input
                                             ::started
                                             ::wdl
-                                            ::workflows
-                                            ::workflow_options]
+                                            ::workflows]
                                    :req-un [::commit
                                             ::created
                                             ::creator
