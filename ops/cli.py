@@ -282,9 +282,9 @@ def check_git_tag(config: WflInstanceConfig) -> None:
 
 def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
     "Read commit messages since last tag, store to config and print."
-    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 @^)..@'
+    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
     info("=>  Reading commit messages from git log")
-    lines = subprocess.check_output(command, shell=True, encoding="utf-8").strip().split("\n")
+    lines = shell(command).split("\n")
     info("=>  Markdown-rize log messages")
     current_changelog = "\n".join([f"- {line}" for line in lines])
     config.current_changelog = current_changelog
@@ -298,6 +298,7 @@ def write_changelog(config: WflInstanceConfig) -> None:
     changelog_location = f"{config.wfl_root_folder}/CHANGELOG.md"
 
     info("=>  Loading changelog from file at `./CHANGELOG.md`")
+    shell(f"touch {changelog_location}")
     with open(changelog_location, "r") as fp:
         existing = fp.read().strip()
 
