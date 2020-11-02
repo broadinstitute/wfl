@@ -247,7 +247,6 @@
               (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
-                  :workflow_options (json/write-str workflow-options)
                   :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
                   :status "Submitted"
                   :uuid))))]

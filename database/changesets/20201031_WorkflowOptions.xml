@@ -15,10 +15,6 @@
             Add workflow options attributes to existing workflow types
         </comment>
         <sql>
-            ALTER TYPE AllOfUsArrays
-                ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
-        </sql>
-        <sql>
             ALTER TYPE copyfile
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>
