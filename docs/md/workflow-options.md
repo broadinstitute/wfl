@@ -92,9 +92,12 @@ To recap, in the above example the following workflow options will be set:
 In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
 response, which includes all workflow options:
+
+???+ info
+    Some fields omitted for brevity
+
 ```json
 {
-  // Some fields omitted for brevity!
   "pipeline": "ExternalWholeGenomeReprocessing",
   "created": "2020-10-05T15:50:01Z",
   "workflows": [
