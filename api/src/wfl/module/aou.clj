@@ -112,10 +112,6 @@
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
-(defn ^:private per-workflow-default-options
-  [sample-output-path]
-  {:final_workflow_outputs_dir sample-output-path})
-
 (defn make-labels
   "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
   [per-sample-inputs other-labels]
@@ -252,7 +248,7 @@
   (letfn [(submit! [environment sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
                   workflow-options (util/deep-merge (:workflow_options workload)
-                                                    (per-workflow-default-options output-path))]
+                                                    {:final_workflow_outputs_dir output-path})]
               (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
