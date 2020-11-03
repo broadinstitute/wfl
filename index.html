@@ -9,7 +9,7 @@
       
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.2">
     
     
       
@@ -17,10 +17,10 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.bc7e593a.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.19190aaf.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab28b872.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.24b84193.min.css">
         
           
           
@@ -367,6 +367,18 @@
 
 
   <li class="md-nav__item">
+    <a href="dev-release/" class="md-nav__link">
+      Release Process
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="dev-sandbox/" class="md-nav__link">
       Local Development SandBox
     </a>
@@ -662,16 +674,17 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/README.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
                 <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">&para;</a></h1>
-<p><a href="https://internal.broadinstitute.org/~jwarren/green-hornet-status.html">To the Build Board</a></p>
+<p><a href="https://internal.broadinstitute.org/~jwarren/green-hornet-status.html"><img alt="Build Board" src="https://img.shields.io/badge/-The%20Build%20Boad%20(VPN)-blue" /></a>
+<img alt="Docsite Build" src="https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master" />
+<img alt="Build on Master" src="https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master" />
+<a href="https://github.com/broadinstitute/wfl/blob/master/CHANGELOG.md"><img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release" /></a></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><img alt="Docsite Build" src="https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master" />
-<img alt=" Build on Master " src="https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master" /></p>
 <p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a>
 is a workload manager.</p>
 <p>For example, a workload could be a set of Whole Genome samples to be reprocessed in a
@@ -688,8 +701,8 @@ see <a href="/docs/md/terra.md">Workflow Launcher's role in Terra</a>.</p>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
 <details class="tip" open="open"><summary>Tip</summary><p>This is the Quickstart section, which should cover the most frequent
 uses cases that interact with WFL. For more detailed information, please
-check other sections such as the <a href="/docs/md/dev.md">development guide</a>
-or <a href="/docs/md/module.md">modules design principles</a>.</p>
+check other sections such as the <a href="/docs/md/dev-process.md">development guide</a>
+or <a href="/docs/md/modules-general.md">modules design principles</a>.</p>
 </details>
 <h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h3>
 <p>The easiest way to build WFL is via <code>make</code> (or <code>gmake</code> on macOS), in addition, the
@@ -779,13 +792,9 @@ before they can be run, namely, they require a <code>wfl</code> server running l
 </code></pre></div>
 <h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
 <p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
-When it's time to deploy WFL, developers need to bump the version string
-in the <code>version</code> file at the root of repo, which could be done either in
-a standalone PR or along with a feature PR. After having done that, the Github Action
-<a href="https://github.com/broadinstitute/wfl/actions?query=workflow%3A%22Release+Latest+Version%22">Release Latest Version</a>
-will get triggered to build and push the tagged docker images of WFL to
-<a href="https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api">DockerHub</a>.</p>
-<p>From here, the developers who have broad VPN connected can go to the
+When it's time to deploy WFL, for most of the time developers need to
+release a new version following the steps in <a href="/docs/md/dev-release.md">Release Guide</a></p>
+<p>After which, the developers who have broad VPN connected can go to the
 <a href="https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec">Jenkins Page</a>
 to deploy applicable versions of WFL to various available cloud projects.</p>
 <div class="admonition warning">
@@ -802,7 +811,7 @@ function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for ins
 <p>Learn more about the deployment details in
 <a href="/docs/md/dev-deployment.md">Deployment of WorkFlow Launcher</a>.</p>
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
-<p>For frontend details, check <a href="/docs/md/frontend.md">Frontend Section</a></p>
+<p>For frontend details, check <a href="/docs/md/dev-frontend.md">Frontend Section</a></p>
 <h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h3>
 <p>After cloning a new WFL repo, the top-level files are:
 <div class="highlight"><pre><span></span><code>.
@@ -994,8 +1003,8 @@ the services WFL talks to, and are named accordingly.</p>
       
     </div>
     
-      <script src="assets/javascripts/vendor.6a3d08fc.min.js"></script>
-      <script src="assets/javascripts/bundle.71201edf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="assets/javascripts/vendor.7e0ee788.min.js"></script>
+      <script src="assets/javascripts/bundle.c1ccee15.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
