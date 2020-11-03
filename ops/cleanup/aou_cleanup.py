@@ -1,7 +1,7 @@
-# Get list of files at the input_bucket/prefix path (e.g. dev-aou-arrays-input/HumanExome-12v1-1_A)
-# Remove latest analysis versions
+""" This script will get a list of files at the input_bucket/prefix path (e.g. dev-aou-arrays-input/HumanExome-12v1-1_A)
+# Remove latest analysis versions for every chip well barcode
 # Remove files being used by any running aou workflows
-# Move remaining files to a "trash" bucket that has a lifecycle policy for deletion
+# Move remaining files to a "trash" bucket that has a lifecycle policy for deletion"""
 
 import argparse
 from collections import defaultdict
@@ -10,11 +10,16 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import google.auth.transport.requests
 
-def get_bearer_token(service_account_key):
+CROMWELL_SCOPES = ['email', 'openid', 'profile']
+STORAGE_SCOPES = ['https://www.googleapis.com/auth/devstorage.full_control',
+                  'https://www.googleapis.com/auth/devstorage.read_only',
+                  'https://www.googleapis.com/auth/devstorage.read_write']
+
+
+def get_credentials(service_account_key_path, scopes):
     """Get Google OAuth Credentials given the path to a JSON service account key file"""
-    scopes = ['email', 'openid', 'profile']
     credentials = service_account.Credentials.from_service_account_file(
-        service_account_key, scopes=scopes
+        service_account_key_path, scopes=scopes
     )
     if not credentials.valid:
         credentials.refresh(google.auth.transport.requests.Request())
@@ -38,18 +43,18 @@ def get_latest_analysis_inputs(files):
             lastest_analysis_inputs.extend(versions[latest_version])
     return lastest_analysis_inputs
 
-def check_active_workflows(cromwell_url, service_account_key):
+def check_active_workflows(cromwell_url, service_account_key_path):
     """Query Cromwell for submitted or running Arrays workflows."""
     query_url = f'{cromwell_url}/api/workflows/v1/query?name=Arrays&status=Submitted&status=Running&additionalQueryResultFields=labels'
-    credentials = get_bearer_token(service_account_key)
+    credentials = get_credentials(service_account_key_path, scopes=CROMWELL_SCOPES)
     headers = {'Authorization': f'Bearer {credentials.token}'}
     workflows = requests.get(query_url, headers=headers)
     return workflows.json().get('results')
 
-def get_active_analysis_inputs(files, cromwell_url, service_account_key="/etc/gotc/dev/wfl-non-prod.json"):
+def get_active_analysis_inputs(files, cromwell_url, service_account_key_path):
     """Get input files that are currently in use by an Arrays workflow in Cromwell."""
     active_files = []
-    active_workflows = check_active_workflows(cromwell_url, service_account_key)
+    active_workflows = check_active_workflows(cromwell_url, service_account_key_path)
     for wf in active_workflows:
         labels = wf.get('labels')
         if labels:
@@ -61,7 +66,7 @@ def get_active_analysis_inputs(files, cromwell_url, service_account_key="/etc/go
                   active_files.extend(_files)
     return active_files
 
-def main(env, service_account_key_path=None, prefix=None, dry_run=True):
+def main(env, service_account_key_path, prefix=None, dry_run=True):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
         bucket_name = "broad-aou-arrays-input"
@@ -71,8 +76,8 @@ def main(env, service_account_key_path=None, prefix=None, dry_run=True):
         bucket_name = "dev-aou-arrays-input"
         cleanup_bucket = "dev-aou-arrays-trash"
 
-    #credentials = get_bearer_token(service_account_key_path)
-    client = storage.Client()
+    credentials = get_credentials(service_account_key_path, scopes=STORAGE_SCOPES)
+    client = storage.Client(credentials=credentials)
     file_blobs = client.list_blobs(bucket_name, prefix=prefix)
     file_names = []
     files = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -82,7 +87,7 @@ def main(env, service_account_key_path=None, prefix=None, dry_run=True):
         file_names.append(blob.name)
 
     keep_files = get_latest_analysis_inputs(files)
-    active_files = get_active_analysis_inputs(files, cromwell_url, "/etc/gotc/dev/wfl-non-prod.json")
+    active_files = get_active_analysis_inputs(files, cromwell_url, service_account_key_path)
     keep_files.extend(active_files)
 
     move_files = [f for f in file_names if f not in set(keep_files)]
@@ -96,9 +101,13 @@ def main(env, service_account_key_path=None, prefix=None, dry_run=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", default="dev")
-    # parser.add_argument("--prefix") #e.g. "HumanExome-12v1-1_A"
-    # parser.add_argument("--service_account_key_path")
+    parser.add_argument("--env",
+                        default="dev",
+                        help="Which environment's input bucket to clean up. Options: dev, prod")
+    parser.add_argument("--service_account_key_path",
+                        help="A service account with access to the input and clean-up buckets and Cromwell")
+    parser.add_argument("--prefix",
+                        help="An optional file path prefix to narrow down which files to clean-up within a bucket, e.g. HumanExome-12v1-1_A")
     parser.add_argument("--dry_run", default=True)
     args = parser.parse_args()
-    main(args.env)
+    main(args.env, args.service_account_key_path, args.prefix, args.dry_run)
