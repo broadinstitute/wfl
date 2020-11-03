@@ -1,7 +1,8 @@
-""" This script will get a list of files at the input_bucket/prefix path (e.g. dev-aou-arrays-input/HumanExome-12v1-1_A)
-# Remove latest analysis versions for every chip well barcode
-# Remove files being used by any running aou workflows
-# Move remaining files to a "trash" bucket that has a lifecycle policy for deletion"""
+""" This script cleans up AoU input files by moving them from the input bucket to a "trash" bucket
+that has a lifecycle policy for deletion. The following files are excluded from this operation:
+1) Inputs for the latest analysis version of every chip well barcode
+2) Inputs being used by an AoU workflow that is still running
+3) TODO: Inputs that are explicitly excluded """
 
 import argparse
 from collections import defaultdict
@@ -36,19 +37,21 @@ def move_blob(client, bucket_name, blob_name, destination_bucket_name):
 
 def get_latest_analysis_inputs(files):
     """Get input files for the latest analysis version number of each chip_well_barcode."""
-    lastest_analysis_inputs = []
+    latest_analysis_inputs = []
     for chip_name, chip_well_barcode in files.items():
         for barcode, versions in chip_well_barcode.items():
             latest_version = sorted(versions.keys(), key=lambda x: int(x))[-1]
-            lastest_analysis_inputs.extend(versions[latest_version])
-    return lastest_analysis_inputs
+            latest_analysis_inputs.extend(versions[latest_version])
+    return latest_analysis_inputs
 
 def check_active_workflows(cromwell_url, service_account_key_path):
     """Query Cromwell for submitted or running Arrays workflows."""
-    query_url = f'{cromwell_url}/api/workflows/v1/query?name=Arrays&status=Submitted&status=Running&additionalQueryResultFields=labels'
+    query_url = f'{cromwell_url}/api/workflows/v1/query'
+    params = [{"name": "Arrays"}, {"status": "Submitted"}, {"status": "Running"},
+              {"additionalQueryResultFields": "labels"}]
     credentials = get_credentials(service_account_key_path, scopes=CROMWELL_SCOPES)
     headers = {'Authorization': f'Bearer {credentials.token}'}
-    workflows = requests.get(query_url, headers=headers)
+    workflows = requests.post(query_url, headers=headers, json=params)
     return workflows.json().get('results')
 
 def get_active_analysis_inputs(files, cromwell_url, service_account_key_path):
@@ -97,17 +100,22 @@ def main(env, service_account_key_path, prefix=None, dry_run=True):
         if not dry_run:
             move_blob(client, bucket_name, file, cleanup_bucket)
 
-    print(f"The following files are currently in use and will NOT be deleted: {active_files}")
+    if active_files:
+        print(f"The following files are currently in use by Cromwell and will NOT be deleted: {active_files}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env",
+    parser = argparse.ArgumentParser(description="Clean up outdated AOU input files.",
+                                     usage="%(prog)s [-h] [ENV SERVICE_ACCOUNT_KEY_PATH] [...]")
+    parser.add_argument("env",
                         default="dev",
                         help="Which environment's input bucket to clean up. Options: dev, prod")
-    parser.add_argument("--service_account_key_path",
-                        help="A service account with access to the input and clean-up buckets and Cromwell")
+    parser.add_argument("service_account_key_path",
+                        help="A service account with access to the buckets and to Cromwell")
     parser.add_argument("--prefix",
-                        help="An optional file path prefix to narrow down which files to clean-up within a bucket, e.g. HumanExome-12v1-1_A")
-    parser.add_argument("--dry_run", default=True)
+                        help="An file object prefix to narrow down which files to clean-up within a bucket, e.g. HumanExome-12v1-1_A")
+    parser.add_argument("--dry_run",
+                        default=True,
+                        help="Preview any changes before applying them. Defaults to True.")
     args = parser.parse_args()
     main(args.env, args.service_account_key_path, args.prefix, args.dry_run)
