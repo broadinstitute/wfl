@@ -68,13 +68,7 @@ make pull requests,
 ask for reviews
 and merge back to `master` on Github.
 
-Currently we always deploy the latest master
-to the development environment after merge,
-but in the future we might need
-to cut off releases on master
-and deploy the released versions
-to the server only.
-It's not decided yet.
+For the release process, please refer to the [release guide](/docs/md/dev-release.md)
 
 1. Clone the repo
     ```

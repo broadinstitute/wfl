@@ -19,9 +19,10 @@ extra:
       link: 'https://github.com/broadinstitute/wfl'
 
 nav:
-  - Get Started: README.md
+  - Get Started: index.md
   - Development Guide:
     - Development Process and Tips: dev-process.md
+    - Release Process: dev-release.md
     - Local Development SandBox: dev-sandbox.md
     - Logging: dev-logging.md
     - Deployment: dev-deployment.md

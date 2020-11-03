@@ -1,12 +1,11 @@
 # Welcome to WorkFlow Launcher
 
-
-[To the Build Board](https://internal.broadinstitute.org/~jwarren/green-hornet-status.html)
+[![Build Board](https://img.shields.io/badge/-The%20Build%20Boad%20(VPN)-blue)](https://internal.broadinstitute.org/~jwarren/green-hornet-status.html)
+![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
+![Build on Master](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release)](https://github.com/broadinstitute/wfl/blob/master/CHANGELOG.md)
 
 ## Overview
-
-![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
-![ Build on Master ](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
 is a workload manager.
@@ -30,8 +29,8 @@ on Kubernetes clusters.
 ???+ tip
     This is the Quickstart section, which should cover the most frequent
     uses cases that interact with WFL. For more detailed information, please
-    check other sections such as the [development guide](/docs/md/dev.md)
-    or [modules design principles](/docs/md/module.md).
+    check other sections such as the [development guide](/docs/md/dev-process.md)
+    or [modules design principles](/docs/md/modules-general.md).
 
 ### Build
 
@@ -155,14 +154,10 @@ before they can be run, namely, they require a `wfl` server running locally:
 ### Deploy
 
 Currently, we mainly deploy WFL to `broad-gotc-dev` and `broad-gotc-prod` projects.
-When it's time to deploy WFL, developers need to bump the version string
-in the `version` file at the root of repo, which could be done either in
-a standalone PR or along with a feature PR. After having done that, the Github Action
-[Release Latest Version](https://github.com/broadinstitute/wfl/actions?query=workflow%3A%22Release+Latest+Version%22)
-will get triggered to build and push the tagged docker images of WFL to
-[DockerHub](https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api).
+When it's time to deploy WFL, for most of the time developers need to
+release a new version following the steps in [Release Guide](/docs/md/dev-release.md)
 
-From here, the developers who have broad VPN connected can go to the
+After which, the developers who have broad VPN connected can go to the
 [Jenkins Page](https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec)
 to deploy applicable versions of WFL to various available cloud projects.
 
@@ -184,7 +179,7 @@ Learn more about the deployment details in
 
 ## Implementation
 
-For frontend details, check [Frontend Section](/docs/md/frontend.md)
+For frontend details, check [Frontend Section](/docs/md/dev-frontend.md)
 
 ### Top-level files
 

@@ -7,6 +7,7 @@ usage: python3 cli.py -h
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -38,6 +39,7 @@ class WflInstanceConfig:
     rendered_values_file: str = None
     vault_token_path: str = None
     wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}/.."
+    current_changelog: str = None
 
 
 def check_env_instance_present(config: WflInstanceConfig) -> None:
@@ -279,7 +281,51 @@ def check_git_tag(config: WflInstanceConfig) -> None:
         exit(1)
 
 
+def _markdownify_commit_msg(commit: str) -> str:
+    "Turn a single commit message to markdown style."
+    regex = re.compile("\#[0-9][0-9][0-9]")
+    num_pr = regex.search(commit)[0]
+    marked_commit = regex.sub(f"[\g<0>](https://github.com/broadinstitute/wfl/pull/{num_pr[1:]})", commit)
+    marked_commit = f'- {marked_commit}'
+    return marked_commit
+
+
+def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
+    "Read commit messages since last tag, store to config and print."
+    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
+    info("=>  Reading commit messages from git log")
+    lines = shell(command).split("\n")
+    info("=>  Markdown-ify log messages")
+    current_changelog = "\n".join([_markdownify_commit_msg(line) for line in lines])
+    config.current_changelog = current_changelog
+    info("=>  Current changelog crafted")
+    info(current_changelog)
+
+
+def write_changelog(config: WflInstanceConfig) -> None:
+    "Append current changelog info to the changelog file at start position."
+    content = f"# Release {config.version}\n" + config.current_changelog
+    changelog_location = f"{config.wfl_root_folder}/CHANGELOG.md"
+
+    info("=>  Loading changelog from file at `./CHANGELOG.md`")
+    shell(f"touch {changelog_location}")
+    with open(changelog_location, "r") as fp:
+        existing = fp.read().strip()
+
+    with open(changelog_location, "w") as fp:
+        fp.write(content)
+        fp.write("\n\n")
+        fp.write(existing)
+    success(f"Changelog is successfully written to {changelog_location}")
+
+
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
+    "release": [
+        read_version,
+        get_git_commits_since_last_tag,
+        exit_if_dry_run,
+        write_changelog
+    ],
     "info": [
         check_env_instance_present,
         read_version,
