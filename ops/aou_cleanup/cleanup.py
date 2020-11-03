@@ -73,7 +73,7 @@ def main(env, service_account_key_path, prefix=None, dry_run=True):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
         bucket_name = "broad-aou-arrays-input"
-        cleanup_bucket = "aou-arrays-trash"
+        cleanup_bucket = "broad-aou-arrays-trash"
     else:
         cromwell_url = "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
         bucket_name = "dev-aou-arrays-input"
