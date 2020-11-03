@@ -23,10 +23,6 @@
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>
         <sql>
-            ALTER TYPE ExternalWholeGenomeReprocessing
-                ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
-        </sql>
-        <sql>
             ALTER TYPE CromwellWorkflow
                 ADD ATTRIBUTE workflow_options   text  CASCADE   -- workflow options to be passed to Cromwell
         </sql>

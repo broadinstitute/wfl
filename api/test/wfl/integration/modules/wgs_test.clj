@@ -38,19 +38,14 @@
                    "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
 
-(defn ^:private old-create-wgs-workload!
-  ([] (old-create-wgs-workload! nil))
-  ([workflow-options]
-   (let [request (make-wgs-workload-request)]
-     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
-             to-row (fn [m id] (assoc (:inputs m)
-                                 :id id
-                                 :workflow_options (when workflow-options (json/write-str workflow-options))))]
-         (common/store-common tx id {:workflow_options workflow-options})
-         (jdbc/insert-multi! tx table (map to-row (:items request) (range)))
-         (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
-         id)))))
+(defn ^:private old-create-wgs-workload! []
+  (let [request (make-wgs-workload-request)]
+    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+      (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
+            add-id (fn [m id] (assoc (:inputs m) :id id))]
+        (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
+        (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
+        id))))
 
 (deftest test-loading-old-wgs-workload
   (testing "loading a wgs workload saved in a previous release"
@@ -58,15 +53,7 @@
           workload (workloads/load-workload-for-id id)]
       (is (= id (:id workload)))
       (is (= wgs/pipeline (:pipeline workload)))
-      (is (util/absent? workload :common))))
-  (testing "loading a wgs workload saved in a previous release but with options"
-    ;; Not sure this can happen in reality but it works regardless
-    (let [id (old-create-wgs-workload! {:foo "bar"})
-          workload (workloads/load-workload-for-id id)]
-      (is (= id (:id workload)))
-      (is (= wgs/pipeline (:pipeline workload)))
-      (is (= (get-in workload [:common :workflow_options :foo]) "bar"))
-      (run! #(is (= (get-in % [:workflow_options :foo]) "bar")) (:workflows workload)))))
+      (is (util/absent? workload :common)))))
 
 (deftest test-exec-with-input_bam
   (letfn [(go! [workflow]
