@@ -14,14 +14,19 @@
         <comment>
             A table containing content common within workflows in a workload.
         </comment>
-        <createTable tableName="common_within_workload">
-            <column name="workload_id" type="bigint">
-                <constraints nullable="false" primaryKey="true" unique="true"
-                             foreignKeyName="FK_workload_id" references="workload(id)"/>
-            </column>
-            <column name="workflow_options" type="text">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
+        <sql>
+            CREATE TABLE common_within_workload (
+                workload_id bigint NOT NULL,
+                workflow_options text NULL,
+
+                CONSTRAINT fk_workload_id
+                    FOREIGN KEY (workload_id)
+                    REFERENCES workload (id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE,
+                CONSTRAINT workload_id_unique
+                    UNIQUE (workload_id)
+            );
+        </sql>
     </changeSet>
 </databaseChangeLog>
