@@ -43,7 +43,7 @@ Suppose the following valid workload request that you might `POST` to `/create` 
 }
 ```
 You may optionally add arbitrary JSON objects as `workflow_options` either for individual
-workflows, for the entire workload, or both:
+workflows, for the entire workload (within the `common` object), or both:
 ```json
 {
   "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
@@ -72,17 +72,20 @@ workflows, for the entire workload, or both:
       }
     }
   ],
-  "workflow_options": {
-    "yet_another_option": "something for both of the samples"  
+  "common": {
+    "workflow_options": {
+      "yet_another_option": "something for both of the samples"  
+    }
   }
 }
 ```
 ???+ info
     Note that for modules that don't use individual workflows
     configured via `/create` or `/exec`, options can only be
-    configured at the workload level. For example, the All of
-    Us module configures workflows via a different endpoint
-    and thus only the per-workload field here is respected.
+    configured at the workload level via the `common` object.
+    For example, the All of Us module configures workflows via
+    a different endpoint and thus only the `common` object's
+    `workflow_options` is respected.
 
 To recap, in the above example the following workflow options will be set:
 - "my_option" will have different strings for the different samples
@@ -125,8 +128,10 @@ response, which includes all workflow options:
       }
     }
   ],
-  "workflow_options": {
-    "yet_another_option": "something for both of the samples"  
+  "common": {
+    "workflow_options": {
+      "yet_another_option": "something for both of the samples"  
+    }
   }
 }
 ```
