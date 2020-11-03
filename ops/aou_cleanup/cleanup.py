@@ -108,8 +108,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Clean up outdated AOU input files.",
                                      usage="%(prog)s [-h] [ENV SERVICE_ACCOUNT_KEY_PATH] [...]")
     parser.add_argument("env",
-                        default="dev",
-                        help="Which environment's input bucket to clean up. Options: dev, prod")
+                        metavar="env",
+                        choices=["dev", "prod"],
+                        help="Which environment's input bucket to clean up. Options: [%(choices)s]")
     parser.add_argument("service_account_key_path",
                         help="A service account with access to the buckets and to Cromwell")
     parser.add_argument("--prefix",
