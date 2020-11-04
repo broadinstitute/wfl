@@ -78,11 +78,7 @@ workflows, for the entire workload, or both:
 }
 ```
 ???+ info
-    Note that for modules that don't use individual workflows
-    configured via `/create` or `/exec`, options can only be
-    configured at the workload level. For example, the All of
-    Us module configures workflows via a different endpoint
-    and thus only the per-workload field here is respected.
+    This behavior isn't supported for All-of-Us-related processing.
 
 To recap, in the above example the following workflow options will be set:
 - "my_option" will have different strings for the different samples
@@ -91,7 +87,7 @@ To recap, in the above example the following workflow options will be set:
 
 In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
-response, which includes all workflow options:
+response, which includes all workflow options calculated for each workflow:
 
 ???+ info
     Some fields omitted for brevity
@@ -124,18 +120,13 @@ response, which includes all workflow options:
         "yet_another_option": "something for both of the samples"     
       }
     }
-  ],
-  "workflow_options": {
-    "yet_another_option": "something for both of the samples"  
-  }
+  ]
 }
 ```
 
-Note that the per-workflow options visible in the response reflect WFL's
-merging of the per-workload options.
-
-Another note is that WFL already has some default values it passes for
-workflow options, and these defaults will also be visible in the response.
+One note is that WFL already has some default values it passes for
+workflow options and you'll see those defaults when you look at the
+returned options for a given workflow.
 See below for more information.
 
 ## Behavior
