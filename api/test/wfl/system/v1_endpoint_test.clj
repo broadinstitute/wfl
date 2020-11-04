@@ -45,7 +45,6 @@
                 (is uuid "workloads should be been assigned a uuid")
                 (is (util/absent? uuids uuid))
                 (is (:created workload) "should have a created timestamp")
-                (is (:workflow_options workload) "should have non-null options")
                 (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
                 (is (not (:started workload)) "hasn't been started in cromwell")
                 (let [include [:pipeline :cromwell :project]]
