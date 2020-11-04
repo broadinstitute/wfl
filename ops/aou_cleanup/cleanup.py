@@ -78,15 +78,17 @@ def get_files_to_keep(env):
 def main(env, service_account_key_path, prefix=None, dry_run=True):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
+        google_project = "broad-aou-storage"
         bucket_name = "broad-aou-arrays-input"
         cleanup_bucket = "broad-aou-arrays-trash"
     else:
         cromwell_url = "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+        google_project = "broad-gotc-dev-storage"
         bucket_name = "dev-aou-arrays-input"
         cleanup_bucket = "dev-aou-arrays-trash"
 
     credentials = get_credentials(service_account_key_path, scopes=STORAGE_SCOPES)
-    client = storage.Client(credentials=credentials)
+    client = storage.Client(project=google_project, credentials=credentials)
     file_blobs = client.list_blobs(bucket_name, prefix=prefix)
     file_names = []
     files = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
