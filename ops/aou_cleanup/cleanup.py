@@ -2,7 +2,7 @@
 that has a lifecycle policy for deletion. The following files are excluded from this operation:
 1) Inputs for the latest analysis version of every chip well barcode
 2) Inputs being used by an AoU workflow that is still running
-3) Inputs that are listed in excluded_files.json """
+3) Inputs that are listed in keep_files.json """
 
 import argparse
 from collections import defaultdict
@@ -70,8 +70,8 @@ def get_active_analysis_inputs(files, cromwell_url, service_account_key_path):
                   active_files.extend(_files)
     return active_files
 
-def get_excluded_files(env):
-    with open("excluded_files.json") as f:
+def get_files_to_keep(env):
+    with open("keep_files.json") as f:
         files = json.load(f)
     return files.get(env, [])
 
@@ -95,11 +95,11 @@ def main(env, service_account_key_path, prefix=None, dry_run=True):
         files[chip_name][chip_well_barcode][analysis_version_number].append(blob.name)
         file_names.append(blob.name)
 
-    keep_files = get_latest_analysis_inputs(files)
+    keep_files = get_files_to_keep(env)
+    latest_analysis_files = get_latest_analysis_inputs(files)
     active_files = get_active_analysis_inputs(files, cromwell_url, service_account_key_path)
-    excluded_files = get_excluded_files(env)
+    keep_files.extend(latest_analysis_files)
     keep_files.extend(active_files)
-    keep_files.extend(excluded_files)
 
     move_files = [f for f in file_names if f not in set(keep_files)]
     print(f"The following files will be moved to {cleanup_bucket} and deleted after 30 days:")
