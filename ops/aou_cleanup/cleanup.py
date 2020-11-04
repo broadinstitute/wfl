@@ -75,7 +75,7 @@ def get_files_to_keep(env):
         files = json.load(f)
     return files.get(env, [])
 
-def main(env, service_account_key_path, prefix=None, dry_run=True):
+def main(env, service_account_key_path, prefix=None, apply=False):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
         google_project = "broad-aou-storage"
@@ -107,7 +107,7 @@ def main(env, service_account_key_path, prefix=None, dry_run=True):
     print(f"The following files will be moved to {cleanup_bucket} and deleted after 30 days:")
     for file in move_files:
         print(file)
-        if not dry_run:
+        if apply:
             move_blob(client, bucket_name, file, cleanup_bucket)
 
     if active_files:
@@ -125,8 +125,8 @@ if __name__ == "__main__":
                         help="A service account with access to the buckets and to Cromwell")
     parser.add_argument("--prefix",
                         help="An file object prefix to narrow down which files to clean-up within a bucket, e.g. HumanExome-12v1-1_A")
-    parser.add_argument("--dry_run",
-                        default=True,
-                        help="Preview any changes before applying them. Defaults to True.")
+    parser.add_argument("--apply",
+                        action="store_true",
+                        help="Apply the changes.")
     args = parser.parse_args()
-    main(args.env, args.service_account_key_path, args.prefix, args.dry_run)
+    main(args.env, args.service_account_key_path, args.prefix, args.apply)
