@@ -2,10 +2,11 @@
 that has a lifecycle policy for deletion. The following files are excluded from this operation:
 1) Inputs for the latest analysis version of every chip well barcode
 2) Inputs being used by an AoU workflow that is still running
-3) TODO: Inputs that are explicitly excluded """
+3) Inputs that are listed in excluded_files.json """
 
 import argparse
 from collections import defaultdict
+import json
 import requests
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -69,6 +70,11 @@ def get_active_analysis_inputs(files, cromwell_url, service_account_key_path):
                   active_files.extend(_files)
     return active_files
 
+def get_excluded_files(env):
+    with open("excluded_files.json") as f:
+        files = json.load(f)
+    return files.get(env, [])
+
 def main(env, service_account_key_path, prefix=None, dry_run=True):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
@@ -91,7 +97,9 @@ def main(env, service_account_key_path, prefix=None, dry_run=True):
 
     keep_files = get_latest_analysis_inputs(files)
     active_files = get_active_analysis_inputs(files, cromwell_url, service_account_key_path)
+    excluded_files = get_excluded_files(env)
     keep_files.extend(active_files)
+    keep_files.extend(excluded_files)
 
     move_files = [f for f in file_names if f not in set(keep_files)]
     print(f"The following files will be moved to {cleanup_bucket} and deleted after 30 days:")
