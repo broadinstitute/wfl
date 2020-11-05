@@ -3,6 +3,7 @@
             [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
             [wfl.module.aou :as aou]
+            [wfl.service.cromwell :refer [submit-workflow]]
             [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]

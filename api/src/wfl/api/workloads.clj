@@ -1,6 +1,7 @@
 (ns wfl.api.workloads
   (:require [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc]))
+            [wfl.jdbc :as jdbc]
+            [wfl.util :as util]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -109,12 +110,14 @@
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
-            (let [keep [:id :finished :status :updated :uuid]]
+            (let [keep [:id :finished :status :updated :uuid :workflow_options]]
               (assoc (select-keys m keep)
-                :inputs (unnilify (apply dissoc m keep)))))]
+                :inputs (unnilify (apply dissoc m keep)))))
+          (unpack-options [m]
+            (update m :workflow_options #(when % (util/parse-json %))))]
     (try
       (->> (postgres/get-table tx (:items workload))
-        (mapv (comp unnilify split-inputs))
+        (mapv (comp unnilify split-inputs unpack-options))
         (assoc workload :workflows)
         unnilify)
       (catch Throwable cause

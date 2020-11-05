@@ -13,7 +13,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [clojure.data.json :as json])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            (java.sql Timestamp)))
@@ -103,11 +104,9 @@
         (get-per-sample-inputs per-sample-inputs))
     (util/prefix-keys :Arrays)))
 
-(defn make-options
-  "Return options for aou arrays pipeline."
-  [sample-output-path]
+;; visible for testing
+(def default-options
   {; TODO: add :default_runtime_attributes {:maxRetries 3} here
-   :final_workflow_outputs_dir sample-output-path
    :use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
@@ -123,15 +122,15 @@
 ;; visible for testing
 (defn submit-aou-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
-   SAMPLE-OUTPUT-PATH and OTHER-LABELS."
-  [environment per-sample-inputs sample-output-path other-labels]
+   WORKFLOW-OPTIONS and OTHER-LABELS."
+  [environment per-sample-inputs workflow-options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
       environment
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment per-sample-inputs)
-      (make-options sample-output-path)
+      workflow-options
       (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
@@ -242,8 +241,10 @@
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
   (letfn [(submit! [environment sample]
-            (let [output-path (str output (str/join "/" (primary-values sample)))]
-              (->> (submit-aou-workflow environment sample output-path {:workload uuid})
+            (let [output-path      (str output (str/join "/" (primary-values sample)))
+                  workflow-options (util/deep-merge default-options
+                                                    {:final_workflow_outputs_dir output-path})]
+              (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
                 str ; coerce java.util.UUID -> string
                 (assoc (select-keys sample primary-keys)
                   :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))

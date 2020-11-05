@@ -57,7 +57,8 @@
      :papi_settings        {:agg_preemptible_tries 3
                             :preemptible_tries     3}}))
 
-(defn ^:private get-cromwell-environment [{:keys [cromwell]}]
+;; visible for testing
+(defn get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
@@ -87,30 +88,36 @@
 
 ;; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
-  (letfn [(update-workflow [workflow cromwell-uuid]
-            (assoc workflow :uuid cromwell-uuid
-              :status "Submitted"
-              :updated (OffsetDateTime/now)))]
-    (let [path        (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-          environment (get-cromwell-environment workload)]
-      (logr/infof "submitting workload %s" uuid)
-      (mapv update-workflow
-        workflows
-        (cromwell/submit-workflows
-          environment
-          (io/file (:dir path) (path ".wdl"))
-          (io/file (:dir path) (path ".zip"))
-          (map (comp (partial cromwellify-inputs environment) :inputs) workflows)
-          (util/make-options environment)
-          (merge cromwell-labels {:workload uuid}))))))
+  (let [path                 (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+        environment          (get-cromwell-environment workload)
+        ;; Batch calls have uniform options, so we must group by discrete options to submit
+        workflows-by-options (seq (group-by :workflow_options workflows))]
+    (letfn [(update-workflow [workflow cromwell-uuid]
+              (assoc workflow :uuid cromwell-uuid
+                              :status "Submitted"
+                              :updated (OffsetDateTime/now)))
+            (submit-workflows-by-options [[options ws]]
+              (mapv update-workflow
+                    ws
+                    (cromwell/submit-workflows
+                      environment
+                      (io/file (:dir path) (path ".wdl"))
+                      (io/file (:dir path) (path ".zip"))
+                      (map (comp (partial cromwellify-inputs environment) :inputs) ws)
+                      options
+                      (merge cromwell-labels {:workload uuid}))))]
+      (apply concat (mapv submit-workflows-by-options workflows-by-options)))))
 
 (defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
-  (letfn [(make-workflow-record [id inputs]
-            (->> (make-combined-inputs-to-save output common_inputs inputs)
-              json/write-str
-              (assoc {:id id} :inputs)))]
-    (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
-      (->> (map make-workflow-record (range) (map :inputs items))
+  (letfn [(make-workflow-record [workload-options id item]
+            (let [options-string (json/write-str (util/deep-merge workload-options (:workflow_options item)))]
+              (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
+                   json/write-str
+                   (assoc {:id id :workflow_options options-string} :inputs))))]
+    (let [workflow-options (util/deep-merge (util/make-options (get-cromwell-environment request))
+                                            (:workflow_options request))
+          [id table]       (batch/add-workload-table! tx workflow-wdl request)]
+      (->> (map (partial make-workflow-record workflow-options) (range) items)
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-id tx id))))
 
@@ -128,12 +135,15 @@
 (defmethod workloads/load-workload-impl
   pipeline
   [tx {:keys [items] :as workload}]
-  (let [unnilify     (fn [x] (into {} (filter second x)))
-        load-inputs! #(util/deep-merge workflow-defaults (util/parse-json %))]
+  (letfn [(unnilify [m] (into {} (filter second m)))
+          (load-inputs! [workflow]
+            (util/deep-merge workflow-defaults (util/parse-json workflow)))
+          (unpack-options [m]
+            (update m :workflow_options #(util/parse-json (or % "{}"))))]
     (->> (postgres/get-table tx items)
-      (mapv (comp #(update % :inputs load-inputs!) unnilify))
-      (assoc workload :workflows)
-      unnilify)))
+         (mapv (comp #(update % :inputs load-inputs!) unnilify unpack-options))
+         (assoc workload :workflows)
+         unnilify)))
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)

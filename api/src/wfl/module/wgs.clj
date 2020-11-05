@@ -112,7 +112,7 @@
 
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OTHER-LABELS."
-  [environment in-gs out-gs sample other-labels]
+  [environment in-gs out-gs sample options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (logr/infof "submitting workflow with: in-gs: %s, out-gs: %s" in-gs out-gs)
     (cromwell/submit-workflow
@@ -120,14 +120,22 @@
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
       (make-inputs environment out-gs in-gs sample)
-      (util/make-options environment)
+      options
       (make-labels other-labels))))
 
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
   [tx {:keys [items] :as workload-request}]
-  (let [[id table] (batch/add-workload-table! tx workflow-wdl workload-request)]
-    (letfn [(form [m id] (-> m (update :inputs json/write-str) (assoc :id id)))]
+  (let [workflow-options (-> (:cromwell workload-request)
+                             all/de-slashify
+                             get-cromwell-wgs-environment
+                             util/make-options
+                             (util/deep-merge (:workflow_options workload-request)))
+        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request)]
+    (letfn [(form [m id] (-> m
+                             (update :inputs json/write-str)
+                             (update :workflow_options #(json/write-str (util/deep-merge workflow-options %)))
+                             (assoc :id id)))]
       (jdbc/insert-multi! tx table (map form items (range)))
       id)))
 
@@ -160,12 +168,17 @@
         output          (all/slashify output)
         now             (OffsetDateTime/now)
         workload->label {:workload uuid}]
-    (letfn [(submit! [{:keys [id inputs uuid] :as workflow}]
+    (letfn [(submit! [{:keys [id inputs uuid workflow_options] :as workflow}]
               [id (or uuid
                     (if (skip-workflow? env workload workflow)
                       util/uuid-nil
                       (really-submit-one-workflow
-                        env (str input (some inputs [:input_bam :input_cram])) output inputs workload->label)))])
+                        env
+                        (str input (some inputs [:input_bam :input_cram]))
+                        output
+                        inputs
+                        workflow_options
+                        workload->label)))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
@@ -199,8 +212,13 @@
   [tx {:keys [items] :as workload}]
   (if-not (uses-cromwell-workload-table? workload)
     (workloads/default-load-workload-impl tx workload)
-    (let [unnilify #(into {} (filter second %))]
+    (letfn [(unnilify [m] (into {} (filter second m)))
+            (unpack-options [m]
+              (update m :workflow_options #(when % (util/parse-json %))))]
       (->> (postgres/get-table tx items)
-        (mapv (comp #(update % :inputs util/parse-json) unnilify))
-        (assoc workload :workflows)
-        unnilify))))
+           (mapv (comp unpack-options
+                       #(update % :inputs util/parse-json)
+                       unnilify))
+           (assoc workload :workflows)
+           unpack-options
+           unnilify))))

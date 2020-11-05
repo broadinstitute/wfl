@@ -16,16 +16,16 @@
   (let [[bucket object] (gcs/parse-gs-url gs-output-url)]
     (when (first (gcs/list-objects bucket object))
       (throw
-       (IllegalArgumentException.
-        (format "%s: output already exists: %s"
-          wfl/the-name gs-output-url))))))
+        (IllegalArgumentException.
+          (format "%s: output already exists: %s"
+                  wfl/the-name gs-output-url))))))
 
 (defn bam-or-cram?
   "Nil or a vector with root of PATH and the matching suffix."
   [path]
   (or (let [bam (util/unsuffix path ".bam")]
         (when (not= bam path)
-          [:input_bam  bam  ".bam"]))
+          [:input_bam bam ".bam"]))
       (let [cram (util/unsuffix path ".cram")]
         (when (not= cram path)
           [:input_cram cram ".cram"]))))
@@ -39,7 +39,7 @@
               (util/do-or-nil (gcs/list-objects bucket prefix)))]
       (when-not (ok? result prefix)
         (throw (IllegalArgumentException.
-                (format "%s must be readable" gs-url)))))
+                 (format "%s must be readable" gs-url)))))
     result))
 
 (defn processed-crams
@@ -65,7 +65,7 @@
                          (apply gcs/list-objects)
                          (keep (comp bam-or-cram? :name))
                          count)])]
-    (let [gs-urls   (into (array-map) (map crams [in-gs out-gs]))
+    (let [gs-urls (into (array-map) (map crams [in-gs out-gs]))
           remaining (apply - (map gs-urls [in-gs out-gs]))]
       (into gs-urls [[:remaining remaining]]))))
 
@@ -73,7 +73,7 @@
   "Get the status of workflows in ENVIRONMENT."
   [environment label]
   (prn (format "%s: querying %s Cromwell: %s"
-         wfl/the-name environment (cromwell/url environment)))
+               wfl/the-name environment (cromwell/url environment)))
   (cromwell/status-counts environment {:label label}))
 
 (defn report-status
@@ -83,11 +83,11 @@
   (pprint (count-files in-gs out-gs)))
 
 (defn add-workload-table!
-  "Return UUID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
+  "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
   [tx {:keys [release top] :as _workflow-wdl} body]
   (let [{:keys [creator cromwell input output pipeline project]} body
         {:keys [commit version]} (wfl/get-the-version)
-        [{:keys [id uuid]}]
+        [{:keys [id]}]
         (jdbc/insert! tx :workload {:commit   commit
                                     :creator  creator
                                     :cromwell cromwell
@@ -99,12 +99,12 @@
                                     :version  version
                                     :wdl      top})
         table (format "%s_%09d" pipeline id)
-        work  (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
-                      table pipeline)]
+        work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
+                     table pipeline)]
     (jdbc/update! tx :workload {:items table} ["id = ?" id])
     (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
     (jdbc/db-do-commands tx [work])
-    [uuid table]))
+    [id table]))
 
 (defn slashify
   "Ensure URL ends in a slash /."
