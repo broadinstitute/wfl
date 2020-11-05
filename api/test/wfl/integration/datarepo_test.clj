@@ -14,6 +14,7 @@
 (def dataset "f359303e-15d7-4cd8-a4c7-c50499c90252")
 (def profile "390e7a85-d47f-4531-b612-165fc977d3bd")
 
+;; rr: GH-1048
 (deftest ^:excluded delivery
   (with-temporary-gcs-folder uri
     (testing "delivery succeeds"
