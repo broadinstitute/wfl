@@ -6,19 +6,20 @@
     though WDLs can customize them too. For more information see 
     [Cromwell's documentation](https://cromwell.readthedocs.io/en/stable/wf_options/Overview/).
     
-???+ tip
     Another important piece of context for this page is the difference between a workflow
     that actually gets run on Cromwell versus a workload (a WFL-managed set of individual
     workflows).
+    
     
 ## Usage
 
 !!! info "Summary"
     - Workflow options are an arbitrary JSON object stored in a key of `workflow_options`
     - Can be provided either per-workflow or for an entire workload (or both)
-    - Optional when you make requests but will always be included in responses
+    - Optional when you make requests but will always be included in WFL's responses
 
 Suppose the following valid workload request that you might `POST` to `/create` or `/exec`:
+
 ```json
 {
   "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
@@ -42,8 +43,10 @@ Suppose the following valid workload request that you might `POST` to `/create` 
   ]
 }
 ```
+
 You may optionally add arbitrary JSON objects as `workflow_options` either for individual
 workflows, for the entire workload, or both:
+
 ```json
 {
   "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
@@ -77,10 +80,12 @@ workflows, for the entire workload, or both:
   }
 }
 ```
+
 ???+ info
     This behavior isn't supported for All-of-Us-related processing.
 
 To recap, in the above example the following workflow options will be set:
+
 - "my_option" will have different strings for the different samples
 - "another_option" will be an object just set for the latter sample
 - "yet_another_option" will be the same string for all samples
@@ -130,6 +135,7 @@ returned options for a given workflow.
 See below for more information.
 
 ## Behavior
+
 The diagram below lists the different sources of options for a particular
 workflow. Precedence is from the bottom up, so "higher" sources override
 lower ones.
@@ -141,12 +147,11 @@ via `workflow_options`, the white "sources" are where WFL may create and
 supply options by default, and the gray "sources" are outside of WFL's
 visibility but can still affect the result.
 
-WFL supplies its own default options usually on a per-module basis
-(meaning different pipelines that make use of different modules may
-have different default options). As the diagram notes, this can
-happen on an automatic per-workflow basis (like basing an option on
-some WDL input) or over an entire workload (like basing options
-on the Cromwell instance being used). Individual module documentation
-can help provide more info, as will simply looking at WFL's response
-from the `/create` or `/exec` endpoints, which includes those defaults.
+WFL supplies its own derived options usually on a per-module basis,
+meaning different pipelines that make use of different modules may
+have different options they derive and supply by default. 
+
+Individual module documentation can help provide more info, as will
+simply looking at WFL's response from the `/create` or `/exec` endpoints,
+which includes those defaults.
     
