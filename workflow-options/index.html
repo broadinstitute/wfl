@@ -524,8 +524,7 @@
 <em>inputs</em> passed to the WDL. Workflow options are interpreted directly by Cromwell,
 though WDLs can customize them too. For more information see 
 <a href="https://cromwell.readthedocs.io/en/stable/wf_options/Overview/">Cromwell's documentation</a>.</p>
-</details>
-<details class="tip" open="open"><summary>Tip</summary><p>Another important piece of context for this page is the difference between a workflow
+<p>Another important piece of context for this page is the difference between a workflow
 that actually gets run on Cromwell versus a workload (a WFL-managed set of individual
 workflows).</p>
 </details>
@@ -535,15 +534,74 @@ workflows).</p>
 <ul>
 <li>Workflow options are an arbitrary JSON object stored in a key of <code>workflow_options</code></li>
 <li>Can be provided either per-workflow or for an entire workload (or both)</li>
-<li>Optional when you make requests but will always be included in responses</li>
+<li>Optional when you make requests but will always be included in WFL's responses</li>
 </ul>
 </div>
+<p>Suppose the following valid workload request that you might <code>POST</code> to <code>/create</code> or <code>/exec</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;cromwell&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You may optionally add arbitrary JSON objects as <code>workflow_options</code> either for individual
+workflows, for the entire workload, or both:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;cromwell&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
+      <span class="p">},</span>
+      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span>      
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
+      <span class="p">},</span>
+      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something different for sample 5678&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;another_option&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;foo&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">}</span>      
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;yet_another_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for both of the samples&quot;</span>  
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
 <details class="info" open="open"><summary>Info</summary><p>This behavior isn't supported for All-of-Us-related processing.</p>
 </details>
-<p>To recap, in the above example the following workflow options will be set:
-- "my_option" will have different strings for the different samples
-- "another_option" will be an object just set for the latter sample
-- "yet_another_option" will be the same string for all samples</p>
+<p>To recap, in the above example the following workflow options will be set:</p>
+<ul>
+<li>"my_option" will have different strings for the different samples</li>
+<li>"another_option" will be an object just set for the latter sample</li>
+<li>"yet_another_option" will be the same string for all samples</li>
+</ul>
 <p>In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
 response, which includes all workflow options calculated for each workflow:</p>
@@ -592,14 +650,12 @@ lower ones.</p>
 via <code>workflow_options</code>, the white "sources" are where WFL may create and
 supply options by default, and the gray "sources" are outside of WFL's
 visibility but can still affect the result.</p>
-<p>WFL supplies its own default options usually on a per-module basis
-(meaning different pipelines that make use of different modules may
-have different default options). As the diagram notes, this can
-happen on an automatic per-workflow basis (like basing an option on
-some WDL input) or over an entire workload (like basing options
-on the Cromwell instance being used). Individual module documentation
-can help provide more info, as will simply looking at WFL's response
-from the <code>/create</code> or <code>/exec</code> endpoints, which includes those defaults.</p>
+<p>WFL supplies its own derived options usually on a per-module basis,
+meaning different pipelines that make use of different modules may
+have different options they derive and supply by default. </p>
+<p>Individual module documentation can help provide more info, as will
+simply looking at WFL's response from the <code>/create</code> or <code>/exec</code> endpoints,
+which includes those defaults.</p>
                 
               
               
