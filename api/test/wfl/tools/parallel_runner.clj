@@ -1,11 +1,14 @@
 (ns wfl.tools.parallel-runner
-  (:require [clojure.test :as test]))
+  (:require [clojure.test :as test])
+  (:import (java.io OutputStreamWriter StringWriter OutputStream)))
 
 (defn -main
   [& args]
   (letfn [(go! [& tests]
-            (let [output (new java.io.StringWriter)]
-              (binding [test/*test-out* output
+            (let [null   (new OutputStreamWriter (OutputStream/nullOutputStream)) ;; Java 11+
+                  output (new StringWriter)]
+              (binding [*out* null
+                        test/*test-out* output
                         test/*report-counters* (ref test/*initial-report-counters*)]
                 (doseq [t tests] (t))
                 [@test/*report-counters* (str output)])))]
