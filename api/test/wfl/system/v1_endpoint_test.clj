@@ -5,7 +5,6 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :refer [with-temporary-gcs-folder temporary-postgresql-database]]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util]
             [wfl.service.cromwell :as cromwell])
   (:import (java.util UUID)
            (clojure.lang ExceptionInfo)))
@@ -18,9 +17,6 @@
 (def create-xx-workload (make-create-workload workloads/xx-workload-request))
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
-
-(defn- get-existing-workload-uuids []
-  (->> (endpoints/get-workloads) (map :uuid) set))
 
 (defn- verify-succeeded-workflow [workflow]
   (is (map? (:inputs workflow)) "Every workflow should have nested inputs")
@@ -113,7 +109,7 @@
           dst (str uri "output.txt")]
       (-> (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
-      (workloads/copyfile-workload-request src dst))))
+      (test-exec-workload (workloads/copyfile-workload-request src dst)))))
 
 (deftest test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
