@@ -18,7 +18,6 @@
 (s/def ::input_bam string?)
 (s/def ::input_cram string?)
 (s/def ::output string?)
-(s/def ::common_inputs map?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
@@ -30,11 +29,12 @@
 (s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
-(s/def ::workflow_options map?)
-(s/def ::workload-request (s/keys :opt-un [::input
-                                           ::items
-                                           ::common_inputs
-                                           ::workflow_options]
+(s/def ::options map?)
+(s/def ::inputs map?)
+(s/def ::common (s/keys :opt-un [::inputs ::options]))
+(s/def ::workload-request (s/keys :opt-un [::common
+                                           ::input
+                                           ::items]
                                   :req-un [::cromwell
                                            ::output
                                            ::pipeline
@@ -59,16 +59,17 @@
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
-                                 :opt-un [::workflow_options]))
+                                 :opt-un [::options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
-                      :xx       ::xx-workflow-inputs))
+                      :xx       ::xx-workflow-inputs
+                      :any      map?))
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
   (s/keys :req-un [::inputs]
-          :opt-un [::status ::updated ::uuid ::workflow_options]))
+          :opt-un [::status ::updated ::uuid ::options]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)

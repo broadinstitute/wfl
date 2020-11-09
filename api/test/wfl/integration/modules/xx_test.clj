@@ -6,7 +6,8 @@
             [wfl.tools.workloads :as workloads]
             [wfl.module.xx :as xx]
             [wfl.util :refer [absent? on make-options]]
-            [wfl.environments :as env])
+            [wfl.environments :as env]
+            [wfl.util :as util])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
@@ -84,36 +85,24 @@
     (is (:finished workload))))
 
 (deftest test-workflow-options
-  (let [option-sequence [:a :a :b]
-        workload-request (-> (make-xx-workload-request)
-                             (update :items (fn [existing]
-                                              (mapv #(assoc %1 :workflow_options {%2 "some value"})
-                                                    (repeat (first existing)) option-sequence)))
-                             (assoc :workflow_options {:c "some other value"}))
-        submitted-option-counts (atom {})
-        ;; Mock cromwell/submit-workflows (note the plural), count observed option keys per workflow
-        pretend-submit (fn [_ _ _ inputs options _]
-                         (run! #(swap! submitted-option-counts update % (fnil (partial + (count inputs)) 0))
-                               (keys options))
-                         (repeatedly (count inputs) #(str (UUID/randomUUID))))]
-    (with-redefs-fn {#'submit-workflows pretend-submit}
-      #(-> workload-request
-           workloads/execute-workload!
-           (as-> workload
-                 (testing "Options in server response"
-                   (is (= (count option-sequence)
-                          (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
-                   (is (= (count (filter (partial = :a) option-sequence))
-                          (count (filter (fn [w] (get-in w [:workflow_options :a])) (:workflows workload)))))
-                   (is (= (count (filter (partial = :b) option-sequence))
-                          (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))
-                   (is (workloads/baseline-options-across-workload
-                         (make-options (xx/get-cromwell-environment workload))
-                         workload))))))
-    (testing "Options sent to Cromwell"
-      (is (= (count option-sequence)
-             (:c @submitted-option-counts)))
-      (is (= (count (filter (partial = :a) option-sequence))
-             (:a @submitted-option-counts)))
-      (is (= (count (filter (partial = :b) option-sequence))
-             (:b @submitted-option-counts))))))
+  (letfn [(verify-workflow-options [options]
+            (is (:supports_common_options options))
+            (is (:supports_options options))
+            (is (:overwritten options)))
+          (verify-submitted-options [env _ _ inputs options _]
+            (let [defaults (util/make-options env)]
+              (verify-workflow-options options)
+              (is (= defaults (select-keys options (keys defaults))))
+              (map (fn [_] (UUID/randomUUID)) inputs)))]
+    (with-redefs-fn {#'submit-workflows verify-submitted-options}
+      (fn []
+        (->
+          (make-xx-workload-request)
+          (assoc-in [:common :options] {:supports_common_options true
+                                        :overwritten             false})
+          (update :items (partial map #(assoc % :options
+                                                {:supports_options true
+                                                 :overwritten      true})))
+          workloads/execute-workload!
+          :workflows
+          (->> (map (comp verify-workflow-options :options))))))))

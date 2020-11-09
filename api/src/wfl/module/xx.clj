@@ -3,7 +3,6 @@
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.tools.logging.readable :as logr]
             [wfl.api.workloads :refer [defoverload]]
             [wfl.api.workloads :as workloads]
             [wfl.environments :as env]
@@ -36,7 +35,7 @@
         hsa  "Homo_sapiens_assembly38"]
     (merge references/hg38-exome-references
       references/contamination-sites
-      {:calling_interval_list (str hg38 "exome_calling_regions.v1.interval_list")
+      {:calling_interval_list   (str hg38 "exome_calling_regions.v1.interval_list")
        :haplotype_database_file (str hg38 hsa ".haplotype_database.txt")})))
 
 (def ^:private workflow-defaults
@@ -52,7 +51,7 @@
      :bait_interval_list   (str hg38 iv1 ".baits.interval_list")
      :target_interval_list (str hg38 iv1 ".targets.interval_list")
      :references           references-defaults
-     :scatter_settings     {:break_bands_at_multiples_of  0
+     :scatter_settings     {:break_bands_at_multiples_of 0
                             :haplotype_scatter_count     50}
      :papi_settings        {:agg_preemptible_tries 3
                             :preemptible_tries     3}}))
@@ -66,20 +65,18 @@
                 :environments envs})))
     (first envs)))
 
-(defn ^:private cromwellify-inputs [environment inputs]
+(defn ^:private cromwellify-workflow-inputs [environment {:keys [inputs]}]
   (-> (env/stuff environment)
     (select-keys [:google_account_vault_path :vault_token_path])
     (merge inputs)
     (util/prefix-keys (keyword pipeline))))
 
 ;; visible for testing
-;; Note: the database stores per-workflow inputs so we need to combine
-;; any `common-inputs` with these before we commit them to storage.
-(defn make-combined-inputs-to-save [output-url common-inputs inputs]
+(defn make-inputs-to-save [output-url inputs]
   (let [sample-name (fn [basename] (first (str/split basename #"\.")))
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
         basename    (or (:base_file_name inputs) (util/basename path))]
-    (-> (util/deep-merge common-inputs inputs)
+    (-> inputs
       (assoc :base_file_name basename)
       (util/assoc-when util/absent? :sample_name (sample-name basename))
       (util/assoc-when util/absent? :final_gvcf_base_name basename)
@@ -88,62 +85,65 @@
 
 ;; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
-  (let [path                 (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-        environment          (get-cromwell-environment workload)
-        ;; Batch calls have uniform options, so we must group by discrete options to submit
-        workflows-by-options (seq (group-by :workflow_options workflows))]
+  (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+        environment     (get-cromwell-environment workload)
+        default-options (util/make-options environment)]
     (letfn [(update-workflow [workflow cromwell-uuid]
               (assoc workflow :uuid cromwell-uuid
                               :status "Submitted"
                               :updated (OffsetDateTime/now)))
-            (submit-workflows-by-options [[options ws]]
-              (mapv update-workflow
-                    ws
-                    (cromwell/submit-workflows
-                      environment
-                      (io/file (:dir path) (path ".wdl"))
-                      (io/file (:dir path) (path ".zip"))
-                      (map (comp (partial cromwellify-inputs environment) :inputs) ws)
-                      options
-                      (merge cromwell-labels {:workload uuid}))))]
-      (apply concat (mapv submit-workflows-by-options workflows-by-options)))))
+            (submit-batch! [[options workflows]]
+              (map update-workflow
+                workflows
+                (cromwell/submit-workflows
+                  environment
+                  (io/file (:dir path) (path ".wdl"))
+                  (io/file (:dir path) (path ".zip"))
+                  (map (partial cromwellify-workflow-inputs environment) workflows)
+                  (util/deep-merge default-options options)
+                  (merge cromwell-labels {:workload uuid}))))]
+      ;; Group by discrete options to batch submit
+      (mapcat submit-batch! (group-by :options workflows)))))
 
-(defn create-xx-workload! [tx {:keys [output common_inputs items] :as request}]
-  (letfn [(make-workflow-record [workload-options id item]
-            (let [options-string (json/write-str (util/deep-merge workload-options (:workflow_options item)))]
-              (->> (make-combined-inputs-to-save output common_inputs (:inputs item))
-                   json/write-str
-                   (assoc {:id id :workflow_options options-string} :inputs))))]
-    (let [workflow-options (util/deep-merge (util/make-options (get-cromwell-environment request))
-                                            (:workflow_options request))
-          [id table]       (batch/add-workload-table! tx workflow-wdl request)]
-      (->> (map (partial make-workflow-record workflow-options) (range) items)
+(defn create-xx-workload!
+  [tx {:keys [items output common] :as request}]
+  (letfn [(merge-to-json [shared specific]
+            (json/write-str (util/deep-merge shared specific)))
+          (make-workflow-record [id item]
+            (-> item
+              (assoc :id id)
+              (update :options #(merge-to-json (:options common) %))
+              (update :inputs #(merge-to-json (:inputs common)
+                                 (make-inputs-to-save output %)))))]
+    (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
+      (->> items
+        (map make-workflow-record (range))
         (jdbc/insert-multi! tx table))
       (workloads/load-workload-for-id tx id))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]
-  (if (:started workload)
-    workload
-    (letfn [(update-record! [{:keys [id] :as workflow}]
-              (let [values (select-keys workflow [:uuid :status :updated])]
-                (jdbc/update! tx items values ["id = ?" id])))]
-      (let [now (OffsetDateTime/now)]
-        (run! update-record! (submit-workload! workload))
-        (jdbc/update! tx :workload {:started now} ["id = ?" id]))
-      (workloads/load-workload-for-id tx id))))
+  (letfn [(update-record! [{:keys [id] :as workflow}]
+            (let [values (select-keys workflow [:uuid :status :updated])]
+              (jdbc/update! tx items values ["id = ?" id])))]
+    (let [now (OffsetDateTime/now)]
+      (run! update-record! (submit-workload! workload))
+      (jdbc/update! tx :workload {:started now} ["id = ?" id]))
+    (workloads/load-workload-for-id tx id)))
 
 (defmethod workloads/load-workload-impl
   pipeline
   [tx {:keys [items] :as workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
-          (load-inputs! [workflow]
-            (util/deep-merge workflow-defaults (util/parse-json workflow)))
-          (unpack-options [m]
-            (update m :workflow_options #(util/parse-json (or % "{}"))))]
+          (load-inputs [m]
+            (update m :inputs
+              #(->> % util/parse-json (util/deep-merge workflow-defaults))))
+          (load-options [m]
+            (update m :options
+              #(when % (util/parse-json %))))]
     (->> (postgres/get-table tx items)
-         (mapv (comp #(update % :inputs load-inputs!) unnilify unpack-options))
-         (assoc workload :workflows)
-         unnilify)))
+      (mapv (comp unnilify load-inputs load-options))
+      (assoc workload :workflows)
+      unnilify)))
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)

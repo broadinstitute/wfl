@@ -21,7 +21,8 @@
                 status     text,        -- Cromwell workflow status
                 updated    timestamptz, -- status update time
                 uuid       text,        -- Cromwell workflow UUID
-                inputs     text         -- JSON string of non-default workflow inputs
+                inputs     text,        -- JSON string of non-default workflow inputs
+                options    text         -- JSON string of Cromwell workflow options
             )
         </sql>
     </changeSet>

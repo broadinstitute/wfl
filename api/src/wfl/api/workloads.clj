@@ -1,6 +1,7 @@
 (ns wfl.api.workloads
-  (:require [wfl.service.postgres :as postgres]
+  (:require [clojure.string :as str]
             [wfl.jdbc :as jdbc]
+            [wfl.service.postgres :as postgres]
             [wfl.util :as util]))
 
 ;; always derive from base :wfl/exception
@@ -110,11 +111,10 @@
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
-            (let [keep [:id :finished :status :updated :uuid :workflow_options]]
-              (assoc (select-keys m keep)
-                :inputs (unnilify (apply dissoc m keep)))))
+            (let [keep [:id :finished :status :updated :uuid :options]]
+              (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (unpack-options [m]
-            (update m :workflow_options #(when % (util/parse-json %))))]
+            (update m :options #(when % (util/parse-json %))))]
     (try
       (->> (postgres/get-table tx (:items workload))
         (mapv (comp unnilify split-inputs unpack-options))
@@ -125,3 +125,12 @@
                  {:workload workload} cause))))))
 
 (defoverload load-workload-impl :default default-load-workload-impl)
+
+;; Common workload operations
+(defn saved-before?
+  "Test if the `_workload` was saved before the `reference` version string."
+  [reference {:keys [version] :as _workload}]
+  (letfn [(decode [v] (map util/parse-int (str/split v #"\.")))
+          (lt? [[x & xs] [y & ys]]
+            (or (< x y) (and (== x y) (every? some? [xs ys]) (lt? xs ys))))]
+    (lt? (decode version) (decode reference))))
