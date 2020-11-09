@@ -31,7 +31,7 @@
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::options map?)
-(s/def ::common (s/keys :opt-un [::inputs ::options]))
+(s/def ::common map?)
 (s/def ::workload-request (s/keys :opt-un [::common
                                            ::input
                                            ::items]
@@ -63,8 +63,7 @@
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
-                      :xx       ::xx-workflow-inputs
-                      :any      map?))
+                      :xx       ::xx-workflow-inputs))
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
