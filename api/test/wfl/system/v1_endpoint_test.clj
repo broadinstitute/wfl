@@ -16,6 +16,7 @@
 (def create-wgs-workload (make-create-workload workloads/wgs-workload-request))
 (def create-aou-workload (make-create-workload workloads/aou-workload-request))
 (def create-xx-workload (make-create-workload workloads/xx-workload-request))
+(def create-arrays-workload (make-create-workload workloads/arrays-workload-request))
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
@@ -59,6 +60,8 @@
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest test-create-aou-workload
   (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
+(deftest test-create-aou-workload
+  (test-create-workload (workloads/arrays-workload-request (UUID/randomUUID))))
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest test-create-copyfile-workload
@@ -82,6 +85,8 @@
   (test-start-workload (create-wgs-workload)))
 (deftest ^:parallel test-start-aou-workload
   (test-start-workload (create-aou-workload)))
+(deftest ^:parallel test-start-arrays-workload
+  (test-start-workload (create-arrays-workload)))
 (deftest ^:parallel test-start-xx-workload
   (test-start-workload (create-xx-workload)))
 (deftest ^:parallel test-start-copyfile-workload
@@ -112,6 +117,8 @@
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-arrays-workload
+  (test-exec-workload (workloads/arrays-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-copyfile-workload
