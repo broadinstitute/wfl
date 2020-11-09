@@ -106,7 +106,7 @@
       (mapcat submit-batch! (group-by :options workflows)))))
 
 (defn create-xx-workload!
-  [tx {:keys [items output common] :as request}]
+  [tx {:keys [common items output] :as request}]
   (letfn [(merge-to-json [shared specific]
             (json/write-str (util/deep-merge shared specific)))
           (make-workflow-record [id item]

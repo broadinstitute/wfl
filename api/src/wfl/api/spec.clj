@@ -30,7 +30,6 @@
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::options map?)
-(s/def ::inputs map?)
 (s/def ::common (s/keys :opt-un [::inputs ::options]))
 (s/def ::workload-request (s/keys :opt-un [::common
                                            ::input
