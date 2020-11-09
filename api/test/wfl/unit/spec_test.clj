@@ -12,12 +12,14 @@
       (run! valid? (map #(% (UUID/randomUUID))
                         [workloads/wgs-workload-request
                          workloads/aou-workload-request
-                         workloads/xx-workload-request]))))
+                         workloads/xx-workload-request])))))
+
+(deftest request-spec-negative-test
   (testing "Mismatched cram/bam inputs cannot pass spec validation"
-    (letfn [(valid? [req] (is (not (s/valid? ::spec/workload-request req))))]
+    (letfn [(invalid? [req] (is (not (s/valid? ::spec/workload-request req))))]
       (let [requests (map #(% (UUID/randomUUID))
                           [workloads/wgs-workload-request
                            workloads/xx-workload-request])
             mismatched-requests (map #(walk/postwalk-replace {:input_cram :input_bam} %)
                                      requests)]
-        (run! valid? mismatched-requests)))))
+        (run! invalid? mismatched-requests)))))
