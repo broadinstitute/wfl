@@ -43,11 +43,11 @@
   (let [common-inputs {:bait_set_name      "Geoff"
                        :bait_interval_list "gs://fake-input-bucket/interval-list"}]
     (letfn [(go! [inputs]
-              (letfn [(value-equal? [key] (partial on = key common-inputs inputs))]
+              (letfn [(value-equal? [key] (= (key common-inputs) (key inputs)))]
                 (is (value-equal? :bait_set_name))
                 (is (value-equal? :bait_interval_list))))]
       (run! (comp go! :inputs) (-> (make-xx-workload-request)
-                                 (assoc :common_inputs common-inputs)
+                                 (assoc-in [:common :inputs] common-inputs)
                                  workloads/create-workload!
                                  :workflows)))))
 

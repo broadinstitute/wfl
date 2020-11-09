@@ -8,7 +8,8 @@
             [wfl.module.wgs :as wgs]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.references :as references])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -20,6 +21,33 @@
   (-> (UUID/randomUUID)
     workloads/wgs-workload-request
     (assoc :creator (:email @endpoints/userinfo))))
+
+(deftest test-create-with-common-reference-fasta-prefix
+  (let [prefix "gs://fake-input-bucket/ref-fasta"]
+    (letfn [(verify-reference-fasta [reference-fasta]
+              (is (= reference-fasta (references/reference_fasta prefix))))
+            (go! [inputs]
+              (verify-reference-fasta
+                (get-in inputs [:references :reference_fasta])))]
+      (run! (comp go! :inputs)
+        (-> (make-wgs-workload-request)
+          (assoc-in [:common :inputs] {:reference_fasta_prefix prefix})
+          workloads/create-workload!
+          :workflows)))))
+
+(deftest test-create-with-reference-fasta-prefix-override
+  (let [prefix "gs://fake-input-bucket/ref-fasta"]
+    (letfn [(verify-reference-fasta [reference-fasta]
+              (is (= reference-fasta (references/reference_fasta prefix))))
+            (go! [inputs]
+              (verify-reference-fasta
+                (get-in inputs [:references :reference_fasta])))]
+      (run! (comp go! :inputs)
+        (-> (make-wgs-workload-request)
+          (assoc-in [:common :inputs] {:reference_fasta_prefix "gs://ignore/this/ref-fasta"})
+          (update :items (partial map #(update % :inputs (fn [xs] (assoc xs :reference_fasta_prefix prefix)))))
+          workloads/create-workload!
+          :workflows)))))
 
 (deftest test-start-wgs-workload!
   (with-redefs-fn {#'wgs/really-submit-one-workflow mock-really-submit-one-workflow}

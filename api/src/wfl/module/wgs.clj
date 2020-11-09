@@ -97,8 +97,7 @@
       (util/assoc-when util/absent? :sample_name leaf)
       (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
       (util/assoc-when util/absent? :final_gvcf_base_name leaf)
-      (assoc :destination_cloud_path (str out-gs out-dir))
-      normalize-references)))
+      (assoc :destination_cloud_path (str out-gs out-dir)))))
 
 (defn ^:private make-cromwell-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
@@ -128,14 +127,15 @@
 (defn add-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items output common] :as request}]
-  (letfn [(merge-to-json [shared specific]
-            (json/write-str (util/deep-merge shared specific)))
-          (serialize [workflow id]
+  (letfn [(serialize [workflow id]
             (-> (assoc workflow :id id)
-              (update :options #(merge-to-json (:options common) %))
-              (update :inputs #(merge-to-json
-                                 (normalize-references (:inputs common))
-                                 (make-inputs-to-save output %)))))]
+              (update :options #(json/write-str
+                                  (util/deep-merge (:options common) %)))
+              (update :inputs #(json/write-str
+                                 (normalize-references
+                                   (util/deep-merge
+                                     (:inputs common)
+                                     (make-inputs-to-save output %)))))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
       id)))
