@@ -2,7 +2,8 @@
   "Define specs used in routes"
   (:require [wfl.service.cromwell :as cromwell]
             [clojure.spec.alpha :as s]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [clojure.string :as str])
   (:import [java.util UUID]))
 
 (defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
@@ -15,8 +16,8 @@
 (s/def ::environment string?)
 (s/def ::finished inst?)
 (s/def ::input string?)
-(s/def ::input_bam string?)
-(s/def ::input_cram string?)
+(s/def ::input_bam #(str/ends-with? % ".bam"))
+(s/def ::input_cram #(str/ends-with? % ".cram"))
 (s/def ::output string?)
 (s/def ::pipeline string?)
 (s/def ::project string?)

@@ -134,7 +134,8 @@
       (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
+  (let [cromwell (all/de-slashify cromwell)
+        envs     (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
                {:cromwell     cromwell

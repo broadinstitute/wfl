@@ -1,14 +1,16 @@
 #kaocha/v1
     {:tests [{:id           :integration
-              :skip-meta    [:exclude]
+              :skip-meta    [:excluded]
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
               :ns-patterns  ["wfl\\.integration\\..*-test$"]}
              {:id           :unit
+              :skip-meta    [:excluded]
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
               :ns-patterns  ["wfl\\.unit\\..*-test$"]}
              {:id           :system
+              :skip-meta    [:excluded]
               :source-paths ["../derived/api/src" "src"]
               :test-paths   ["test"]
               :ns-patterns  ["wfl\\.system\\..*-test$"]}]
