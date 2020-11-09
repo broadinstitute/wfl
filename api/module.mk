@@ -29,21 +29,7 @@ JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 SYSTEM_TESTS := \
-	test-oauth2-endpoint
-	test-create-wgs-workload
-	test-create-aou-workload
-	test-create-xx-workload
-	test-create-copyfile-workload
-	test-start-wgs-workload
-	test-start-aou-workload
-	test-start-xx-workload
-	test-start-copyfile-workload
-	test-exec-wgs-workload
-	test-exec-aou-workload
-	test-exec-xx-workload
-	test-exec-copyfile-workload
 	test-append-to-aou-workload
-	test-bad-pipeline
 
 $(PREBUILD): $(MODULE_DIR)/wfl
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
