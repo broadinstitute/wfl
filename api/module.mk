@@ -28,9 +28,6 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
-SYSTEM_TESTS := \
-	test-append-to-aou-workload
-
 $(PREBUILD): $(MODULE_DIR)/wfl
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
 	$(BOOT) prebuild
@@ -57,12 +54,14 @@ $(INTEGRATION): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
-.PHONY: SYSTEM_TESTS
-$(SYSTEM): $(SYSTEM_TESTS)
+SYSTEM_FOCUSES := some-focus another-focus
+.PHONY: $(SYSTEM_FOCUSES)
+$(SYSTEM): $(SYSTEM_FOCUSES)
 	@$(TOUCH) $@
-$(SYSTEM_TESTS): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
+
+$(SYSTEM_FOCUSES): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);            \
-    $(CLOJURE) $(CLJFLAGS) -A:test system --focus wfl.system.v1-endpoint-test/$@
+    $(CLOJURE) $(CLJFLAGS) -A:test system --focus=$@
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
