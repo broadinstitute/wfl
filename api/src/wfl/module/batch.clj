@@ -34,13 +34,10 @@
   stored in a CromwellWorkflow table."
   [tx {:keys [items] :as workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
-          (load-inputs [workflow]
-            (update workflow :inputs util/parse-json))
-          (unpack-options [workflow]
-            (update workflow
-              :options #(when % (util/parse-json %))))]
+          (load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
-      (mapv (comp unpack-options load-inputs unnilify))
+      (mapv (comp unnilify load-options load-inputs))
       (assoc workload :workflows)
-      unpack-options
+      load-options
       unnilify)))

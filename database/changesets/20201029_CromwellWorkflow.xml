@@ -16,13 +16,14 @@
             ALTER TABLE workload ALTER COLUMN input DROP NOT NULL
         </sql>
         <sql>
-            CREATE Type CromwellWorkflow AS (
-                id         bigint,      -- primary key
-                status     text,        -- Cromwell workflow status
-                updated    timestamptz, -- status update time
-                uuid       text,        -- Cromwell workflow UUID
-                inputs     text,        -- JSON string of non-default workflow inputs
-                options    text         -- JSON string of Cromwell workflow options
+            CREATE Type CromwellWorkflow AS
+            (
+                id      bigint      -- primary key
+            ,   status  text        -- Cromwell workflow status
+            ,   updated timestamptz -- status update time
+            ,   uuid    text        -- Cromwell workflow UUID
+            ,   inputs  text        -- JSON string of non-default workflow inputs
+            ,   options text        -- JSON string of Cromwell workflow options
             )
         </sql>
     </changeSet>

@@ -137,9 +137,7 @@
           (load-inputs [m]
             (update m :inputs
               #(->> % util/parse-json (util/deep-merge workflow-defaults))))
-          (load-options [m]
-            (update m :options
-              #(when % (util/parse-json %))))]
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
       (mapv (comp unnilify load-inputs load-options))
       (assoc workload :workflows)
