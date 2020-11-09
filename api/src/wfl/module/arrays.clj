@@ -37,9 +37,7 @@
 
 (def fingerprinting
   "Fingerprinting inputs for arrays."
-  {:fingerprint_genotypes_vcf_file       nil
-   :fingerprint_genotypes_vcf_index_file nil
-   :haplotype_database_file              "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.haplotype_database.txt"
+  {:haplotype_database_file              "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.haplotype_database.txt"
    :variant_rsids_file                   "gs://broad-references-private/hg19/v0/Homo_sapiens_assembly19.haplotype_database.snps.list"})
 
 (def other-inputs
@@ -69,6 +67,8 @@
                         :chip_well_barcode
                         :cluster_file
                         :extended_chip_manifest_file
+                        :fingerprint_genotypes_vcf_file
+                        :fingerprint_genotypes_vcf_index_file
                         :green_idat_cloud_path
                         :params_file
                         :red_idat_cloud_path
