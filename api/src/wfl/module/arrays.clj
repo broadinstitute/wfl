@@ -7,6 +7,7 @@
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
+            [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
@@ -15,8 +16,7 @@
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
             [clojure.data.json :as json])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "GPArrays")
 
@@ -80,6 +80,7 @@
                         :control_sample_vcf_index_file
                         :control_sample_intervals_file
                         :control_sample_name
+                        :genotype_concordance_threshold
                         ;; cloud path of a thresholds file to be used with zCall
                         :zcall_thresholds_file
                         ;; cloud path of the Illumina gender cluster file
@@ -147,42 +148,15 @@
 ;;
 (defn add-arrays-workload!
   "Use transaction TX to add the workload described by REQUEST."
-  [tx {:keys [creator cromwell pipeline project items output] :as request}]
+  [tx {:keys [items output] :as request}]
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
-  (let [{:keys [release top]} workflow-wdl
-        {:keys [commit version]} (wfl/get-the-version)]
-      (let [id            (->> {:commit   commit
-                                :creator  creator
-                                :cromwell cromwell
-                                :output   (all/slashify output)
-                                :project  project
-                                :release  release
-                                :uuid     (UUID/randomUUID)
-                                :version  version
-                                :wdl      top}
-                               (jdbc/insert! tx :workload)
-                               first
-                               :id)
-            table         (format "%s_%09d" pipeline id)
-            table_seq     (format "%s_id_seq" table)
-            kind          (format (str/join " " ["UPDATE workload"
-                                                 "SET pipeline = '%s'::pipeline"
-                                                 "WHERE id = '%s'"]) pipeline id)
-            idx           (format "CREATE SEQUENCE %s AS bigint" table_seq)
-            work          (format "CREATE TABLE %s OF %s (PRIMARY KEY (analysis_version_number, chip_well_barcode), id WITH OPTIONS NOT NULL DEFAULT nextval('%s'))" table pipeline table_seq)
-            link-idx-work (format "ALTER SEQUENCE %s OWNED BY %s.id" table_seq table)]
-        (jdbc/db-do-commands tx [kind idx work link-idx-work])
-        (jdbc/update! tx :workload {:items table} ["id = ?" id])
-        (letfn [(form [m id] (let [chip_well_barcode (get-in m [:inputs :chip_well_barcode])
-                                   analysis_version_number (get-in m [:inputs :analysis_version_number])]
-                              (-> m
-                                 (assoc :chip_well_barcode chip_well_barcode)
-                                 (assoc :analysis_version_number analysis_version_number)
+  (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
+        (letfn [(form [m id] (-> m
                                  (update :inputs json/write-str)
-                                 (assoc :id id))))]
+                                 (assoc :id id)))]
           (jdbc/insert-multi! tx table (map form items (range))))
-        id)))
+        id))
 
 (def primary-keys
   "An AoU workflow can be uniquely identified by its `chip_well_barcode` and

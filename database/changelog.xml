@@ -23,5 +23,4 @@
     <include file="changesets/20201030_ExternalExomeReprocessing.xml"            relativeToChangelogFile="true"/>
     <include file="changesets/20201031_WorkflowOptions.xml"                      relativeToChangelogFile="true"/>
     <include file="changesets/20201105_GPArraysEnum.xml"                         relativeToChangelogFile="true"/>
-    <include file="changesets/20201106_GPArraysTable.xml"                        relativeToChangelogFile="true"/>
 </databaseChangeLog>
