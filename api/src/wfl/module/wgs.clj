@@ -79,6 +79,12 @@
      :scatter_settings          {:haplotype_scatter_count     10
                                  :break_bands_at_multiples_of 100000}}))
 
+(defn ^:private normalize-references [inputs]
+  (update inputs :references
+    #(util/deep-merge
+       (-> inputs :reference_fasta_prefix make-references)
+       %)))
+
 (defn ^:private make-inputs-to-save
   "Return inputs for reprocessing IN-GS into OUT-GS."
   [out-gs inputs]
@@ -92,7 +98,7 @@
       (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
       (util/assoc-when util/absent? :final_gvcf_base_name leaf)
       (assoc :destination_cloud_path (str out-gs out-dir))
-      (assoc :references (-> inputs :reference_fasta_prefix make-references)))))
+      normalize-references)))
 
 (defn ^:private make-cromwell-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
@@ -127,7 +133,8 @@
           (serialize [workflow id]
             (-> (assoc workflow :id id)
               (update :options #(merge-to-json (:options common) %))
-              (update :inputs #(merge-to-json (:inputs common)
+              (update :inputs #(merge-to-json
+                                 (normalize-references (:inputs common))
                                  (make-inputs-to-save output %)))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
