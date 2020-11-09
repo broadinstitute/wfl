@@ -23,14 +23,14 @@
                 :environments envs})))
     (first envs)))
 
-(defn- submit-workflow
+(defn ^:private submit-workflow
   "Submit WORKFLOW to Cromwell in ENVIRONMENT with OPTIONS and LABELS."
-  [environment workflow options labels]
+  [environment inputs options labels]
   (cromwell/submit-workflow
     environment
     (util/extract-resource (:top workflow-wdl))
     nil
-    (-> workflow :inputs (util/prefix-keys pipeline))
+    (-> inputs (util/prefix-keys pipeline))
     options
     labels))
 
