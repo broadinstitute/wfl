@@ -14,7 +14,7 @@ DERIVED_MODULE_DIR := $(DERIVED_DIR)/$(MODULE)
 export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 # Top level `make` targets for the module
-MAKE_TARGETS := prebuild lint build unit integration check system images
+MAKE_TARGETS := prebuild lint build unit integration check images
 
 # Timestamps for the top level make targets in a loose order of their timeings.
 # Implementers should write module make-targets against these, ensuring that
@@ -29,7 +29,6 @@ LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)
 BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
 UNIT        := $(DERIVED_MODULE_DIR)/unit.$(TIMESTAMP)  
 INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
-SYSTEM      := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
 IMAGES      := $(DERIVED_MODULE_DIR)/images.$(TIMESTAMP)
 
 .PHONY:	all $(MAKE_TARGETS)

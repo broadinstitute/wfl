@@ -54,15 +54,6 @@ $(INTEGRATION): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
-SYSTEM_FOCUSES := some-focus another-focus
-.PHONY: $(SYSTEM_FOCUSES)
-$(SYSTEM): $(SYSTEM_FOCUSES)
-	@$(TOUCH) $@
-
-$(SYSTEM_FOCUSES): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
-	$(EXPORT) CPCACHE=$(CPCACHE_DIR);            \
-    $(CLOJURE) $(CLJFLAGS) -A:test system --focus=$@
-
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
 	$(CP) $(MODULE_DIR)/.dockerignore $(DERIVED_MODULE_DIR)
