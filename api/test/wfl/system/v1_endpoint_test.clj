@@ -111,7 +111,7 @@
           (gcs/upload-file src))
       (test-exec-workload (workloads/copyfile-workload-request src dst)))))
 
-(deftest test-append-to-aou-workload
+(deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
         workload (endpoints/exec-workload
                    (workloads/aou-workload-request (UUID/randomUUID)))]
