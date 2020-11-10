@@ -68,7 +68,7 @@
         (is (every? :uuid workflows)))
       (workloads/when-done verify-succeeded-workload workload))))
 
-(deftest ^:parallel test-start-wgs-workload
+(deftest test-start-wgs-workload
   (test-start-workload (create-wgs-workload)))
 (deftest ^:parallel test-start-aou-workload
   (test-start-workload (create-aou-workload)))
@@ -97,7 +97,7 @@
         (is (every? :uuid workflows)))
       (workloads/when-done verify-succeeded-workload workload))))
 
-(deftest ^:parallel test-exec-wgs-workload
+(deftest test-exec-wgs-workload
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
