@@ -17,7 +17,7 @@
         (-> workload-request
           (select-keys [:creator :cromwell :input :output :project])
           (update :cromwell all/de-slashify)
-          (merge (-> (wfl/get-the-version) (select-keys [:commit :version])))
+          (merge (select-keys (wfl/get-the-version) [:commit :version]))
           (assoc :release release :wdl top :uuid (UUID/randomUUID))
           (->> (jdbc/insert! tx :workload)))
         table (format "%s_%09d" pipeline id)]
