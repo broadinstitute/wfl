@@ -47,16 +47,16 @@
    :disk_size                        100
    :preemptible_tries                3})
 
-(defn map-aou-environment
-  "Map AOU-ENV to environment for inputs preparation."
-  [aou-env]
-  ({:aou-dev "dev" :aou-prod "prod"} aou-env))
+(defn map-arrays-environment
+  "Map ARRAYS-ENV to environment for inputs preparation."
+  [arrays-env]
+  ({:arrays-dev "dev" :arrays-prod "prod"} arrays-env))
 
 (defn env-inputs
   "Array inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   {:vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :environment      (map-aou-environment environment)})
+   :environment      (map-arrays-environment environment)})
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
@@ -134,7 +134,7 @@
       (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
+  (let [envs (all/cromwell-environments #{:arrays-dev :arrays-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
                       {:cromwell     cromwell
