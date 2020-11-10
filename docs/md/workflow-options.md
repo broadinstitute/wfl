@@ -14,7 +14,7 @@
 ## Usage
 
 !!! info "Summary"
-    - Workflow options are an arbitrary JSON object stored in a key of `workflow_options`
+    - Workflow options are an arbitrary JSON object stored in a key of `options`
     - Can be provided either per-workflow or for an entire workload (or both)
     - Optional when you make requests but will always be included in WFL's responses
 
@@ -44,7 +44,7 @@ Suppose the following valid workload request that you might `POST` to `/create` 
 }
 ```
 
-You may optionally add arbitrary JSON objects as `workflow_options` either for individual
+You may optionally add arbitrary JSON objects as `options` either for individual
 workflows, for the entire workload, or both:
 
 ```json
@@ -54,13 +54,19 @@ workflows, for the entire workload, or both:
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
   "project": "PO-1234",
+  "common": {
+    "options": {
+        "global_option": "something for all of the samples",
+        "overwritten_option": "overwrite me for sample 5678"
+    }
+  },
   "items": [
     {
       "inputs": {
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample1234"
       },
-      "workflow_options": {
+      "options": {
         "my_option": "something for sample 1234"      
       }
     },
@@ -69,15 +75,13 @@ workflows, for the entire workload, or both:
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample5678"
       },
-      "workflow_options": {
+      "options": {
         "my_option": "something different for sample 5678",
-        "another_option": {"foo": "bar"}      
+        "another_option": {"foo": "bar"},
+        "overwritten_option": "use this value instead"
       }
     }
-  ],
-  "workflow_options": {
-    "yet_another_option": "something for both of the samples"  
-  }
+  ]
 }
 ```
 
@@ -108,7 +112,7 @@ response, which includes all workflow options calculated for each workflow:
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample1234"
       },
-      "workflow_options": {
+      "options": {
         "my_option": "something for sample 1234",
         "yet_another_option": "something for both of the samples"     
       }
@@ -119,7 +123,7 @@ response, which includes all workflow options calculated for each workflow:
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample5678"
       },
-      "workflow_options": {
+      "options": {
         "my_option": "something different for sample 5678",
         "another_option": {"foo": "bar"},
         "yet_another_option": "something for both of the samples"     
@@ -143,7 +147,7 @@ lower ones.
 ![](./assets/option-precedence.svg)
 
 The green "sources" are where you may optionally provide configuration
-via `workflow_options`, the white "sources" are where WFL may create and
+via `options`, the white "sources" are where WFL may create and
 supply options by default, and the gray "sources" are outside of WFL's
 visibility but can still affect the result.
 
@@ -154,4 +158,3 @@ have different options they derive and supply by default.
 Individual module documentation can help provide more info, as will
 simply looking at WFL's response from the `/create` or `/exec` endpoints,
 which includes those defaults.
-    

@@ -5,7 +5,7 @@ An `ExternalWholeGenomeReprocessing` workload
 specifies the following inputs
 for each workflow:
 
-- input_cram (required)
+- input_cram or input_bam (required)
 - sample_name (required)
 - base_file_name
 - final_gvcf_base_name
@@ -57,6 +57,9 @@ The `reference_fasta_prefix` can be used to override
 the [default value](https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7) used by this module:
 "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
 
+Note that this pipeline supports specifying arbitrary WDL inputs, either
+at the workload level through `common` or individually via `items`.
+
 ## Usage
 
 ### Create Workload: `/api/v1/create`
@@ -107,6 +110,9 @@ Response:
 }
 ```
 
+Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
+cromwell "workflowOptions" via the `options` map. See the
+[reference page](/docs/md/workflow-options.md) for more information.
 
 ### Start Workload: `/api/v1/start`
 
