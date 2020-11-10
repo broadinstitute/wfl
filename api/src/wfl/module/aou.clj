@@ -106,11 +106,11 @@
 
 ;; visible for testing
 (def default-options
-  {; TODO: add :default_runtime_attributes {:maxRetries 3} here
-   :use_relative_output_paths  true
+  {:use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
-   :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
+   :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
+                                :maxRetries 1}})
 
 (defn make-labels
   "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."

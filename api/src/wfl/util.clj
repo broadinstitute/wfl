@@ -312,7 +312,8 @@ vault.client.http/http-client                               ; Keep :clint eastwo
            :write_to_cache  true
            :default_runtime_attributes
                             {:docker (str/join "/" [gcr repo image])
-                             :zones  google-cloud-zones}}
+                             :zones  google-cloud-zones
+                             :maxRetries 1}}
         (maybe :monitoring_script cromwell)
         (maybe :noAddress noAddress)))))
 
