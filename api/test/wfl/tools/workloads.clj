@@ -33,7 +33,12 @@
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs wgs-inputs}]})
+   :items    [{:inputs wgs-inputs}]
+   :common   {:inputs (-> {:disable_sanity_check true}
+                        (util/prefix-keys :CheckContamination)
+                        (util/prefix-keys :UnmappedBamToAlignedBam)
+                        (util/prefix-keys :WholeGenomeGermlineSingleSample)
+                        (util/prefix-keys :WholeGenomeReprocessing))}})
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
@@ -70,16 +75,23 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs {:src src :dst dst}}]})
 
+(def xx-inputs
+  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
+    {:input_cram (str storage "NA12878_PLUMBING.cram")}))
+
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  (let [test-storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:cromwell      (get-in stuff [:xx-dev :cromwell :url])
-     :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
-     :pipeline      xx/pipeline
-     :project       (format "(Test) %s" @git-branch)
-     :common        {:inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}}
-     :items         [{:inputs {:input_cram (str test-storage "NA12878_PLUMBING.cram")}}]}))
+  {:cromwell (get-in stuff [:xx-dev :cromwell :url])
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+   :pipeline xx/pipeline
+   :project  (format "(Test) %s" @git-branch)
+   :items    [{:inputs xx-inputs}]
+   :common {:inputs (-> {:disable_sanity_check true}
+                      (util/prefix-keys :CheckContamination)
+                      (util/prefix-keys :UnmappedBamToAlignedBam)
+                      (util/prefix-keys :ExomeGermlineSingleSample)
+                      (util/prefix-keys :ExomeReprocessing))}})
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."

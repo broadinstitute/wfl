@@ -59,13 +59,8 @@
 (def hack-task-level-values
   "Hack to overload task-level values for wgs pipeline."
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
-    (merge {:wgs_coverage_interval_list
-            (str hg38 "wgs_coverage_regions.hg38.interval_list")}
-      (-> {:disable_sanity_check true}
-        (util/prefix-keys :CheckContamination)
-        (util/prefix-keys :UnmappedBamToAlignedBam)
-        (util/prefix-keys :WholeGenomeGermlineSingleSample)
-        (util/prefix-keys :WholeGenomeReprocessing)))))
+    {:wgs_coverage_interval_list
+            (str hg38 "wgs_coverage_regions.hg38.interval_list")}))
 
 (defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
