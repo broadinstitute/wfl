@@ -2,32 +2,30 @@
   (:require [clojure.test :as test]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.impl :refer [disabled-logger-factory]])
-  (:import (java.io OutputStreamWriter StringWriter)
-           (org.apache.tika.io NullOutputStream)))
+  (:import (java.io StringWriter)))
 
 (defn -main
-  "Load given namespaces and run tests marked with ^:parallel in concurrent threads.
-
-  Does not support fixtures. Will run tests without ^:parallel sequentially.
-  Output will be held until all threads complete."
-  [& args]
-  (letfn [(go! [& tests]
-            (let [null   (new OutputStreamWriter (NullOutputStream/nullOutputStream))
-                  output (new StringWriter)]
-              (binding [*out*                  null
-                        test/*test-out*        output
-                        test/*report-counters* (ref test/*initial-report-counters*)
+  "Concurrently run tests marked with ^:parallel in NAMESPACES.
+  Run tests without ^:parallel sequentially and ignore fixtures.
+  Hold output until all tests complete."
+  [& namespaces]
+  (let [symbols  (map symbol namespaces)
+        counters (ref test/*initial-report-counters*)]
+    (letfn [(run-test! [test]
+              (binding [*out*                  (StringWriter.)
+                        test/*test-out*        (StringWriter.)
+                        test/*report-counters* counters
                         log/*logger-factory*   disabled-logger-factory]
-                (doseq [t tests] (t))
-                [@test/*report-counters* (str output)])))]
-    (let [ns      (map symbol args)
-          _       (run! use ns)
-          tests   (filter (comp :test meta) (apply concat (map (comp vals ns-interns the-ns) ns)))
-          grouped (group-by (comp #(contains? % :parallel) meta) tests)
-          futures (doall (map #(future (go! %)) (grouped true)))
-          results (apply list (apply go! (grouped false)) (map deref futures))
-          summary (assoc (apply merge-with + (map first results))
-                    :type :summary)]
-      (run! println (filter not-empty (map second results)))
-      (test/do-report summary)
-      (System/exit (if (test/successful? summary) 0 1)))))
+                (test)
+                (str test/*test-out*)))]
+      (run! use symbols)
+      (let [{parallel true, sequential false}
+            (->> symbols
+                 (mapcat (comp vals ns-interns the-ns))
+                 (filter (comp :test meta))
+                 (group-by (comp boolean :parallel meta)))
+            futures (doall (map #(future (run-test! %)) parallel))
+            results (concat (map run-test! sequential) (map deref futures))]
+        (run! println (filter not-empty results))
+        (test/do-report (assoc @counters :type :summary))
+        (System/exit (if (test/successful? @counters) 0 1))))))
