@@ -170,16 +170,17 @@
         default-options (util/make-options env)
         workload->label {:workload uuid}]
     (letfn [(submit! [{:keys [id inputs options] :as workflow}]
-              [id (if (skip-workflow? env workload workflow)
-                    util/uuid-nil
-                    (really-submit-one-workflow
-                      env
-                      inputs
-                      (util/deep-merge default-options options)
-                      workload->label))])
-            (update! [tx [id uuid]]
+              (if (skip-workflow? env workload workflow)
+                [id "skipped" util/uuid-nil]
+                [id "Submitted"
+                 (really-submit-one-workflow
+                   env
+                   inputs
+                   (util/deep-merge default-options options)
+                   workload->label)]))
+            (update! [tx [id status uuid]]
               (jdbc/update! tx items
-                {:status "Submitted" :updated (OffsetDateTime/now) :uuid uuid}
+                {:status status :updated (OffsetDateTime/now) :uuid uuid}
                 ["id = ?" id]))]
       (let [now (OffsetDateTime/now)]
         (run! (comp (partial update! tx) submit!) (:workflows workload))
