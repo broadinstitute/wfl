@@ -2,7 +2,7 @@
   "Reprocess (External) Whole Genomes."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
@@ -124,30 +124,32 @@
       options
       (make-labels other-labels))))
 
-(defn add-wgs-workload!
+(defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items output common] :as request}]
   (letfn [(serialize [workflow id]
             (-> (assoc workflow :id id)
-              (update :options #(json/write-str
-                                  (util/deep-merge (:options common) %)))
-              (update :inputs #(json/write-str
-                                 (normalize-references
-                                   (util/deep-merge
-                                     (:inputs common)
-                                     (make-inputs-to-save output %)))))))]
+              (update :options
+                #(json/write-str (util/deep-merge (:options common) %)))
+              (update :inputs
+                #(json/write-str
+                   (normalize-references
+                     (util/deep-merge
+                       (:inputs common)
+                       (make-inputs-to-save output %)))))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
-      id)))
+      (workloads/load-workload-for-id tx id))))
 
 (defn skip-workflow?
   "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
   [env
    {:keys [output] :as _workload}
    {:keys [inputs] :as _workflow}]
-  (letfn [(exists? [out-gs]
-            (seq (util/do-or-nil
-                   (->> out-gs gcs/parse-gs-url (apply gcs/list-objects)))))
+  (letfn [(exists? [out-gs] (->> (gcs/parse-gs-url out-gs)
+                              (apply gcs/list-objects)
+                              util/do-or-nil
+                              seq))
           (processing? [in-gs]
             (->> {:label cromwell-label :status cromwell/active-statuses}
               (cromwell/query :gotc-dev)
@@ -183,12 +185,7 @@
         (run! (comp (partial update! tx) submit!) (:workflows workload))
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
 
-(defmethod workloads/create-workload!
-  pipeline
-  [tx request]
-  (->>
-    (add-wgs-workload! tx request)
-    (workloads/load-workload-for-id tx)))
+(defoverload workloads/create-workload! pipeline create-wgs-workload!)
 
 (defmethod workloads/start-workload!
   pipeline

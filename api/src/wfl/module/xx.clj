@@ -110,16 +110,14 @@
   [tx {:keys [common items output] :as request}]
   (letfn [(merge-to-json [shared specific]
             (json/write-str (util/deep-merge shared specific)))
-          (make-workflow-record [id item]
+          (serialize [item id]
             (-> item
               (assoc :id id)
               (update :options #(merge-to-json (:options common) %))
               (update :inputs #(merge-to-json (:inputs common)
                                  (make-inputs-to-save output %)))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
-      (->> items
-        (map make-workflow-record (range))
-        (jdbc/insert-multi! tx table))
+      (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
 
 (defn start-xx-workload! [tx {:keys [items id] :as workload}]
@@ -137,7 +135,7 @@
   (letfn [(unnilify [m] (into {} (filter second m)))
           (load-inputs [m]
             (update m :inputs
-              #(->> % util/parse-json (util/deep-merge workflow-defaults))))
+              #(util/deep-merge workflow-defaults (util/parse-json %))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
       (mapv (comp unnilify load-inputs load-options))

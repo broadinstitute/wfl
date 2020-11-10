@@ -9,7 +9,8 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.util :as util]
-            [wfl.references :as references])
+            [wfl.references :as references]
+            [clojure.string :as str])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -101,6 +102,31 @@
            (is (:started workload))
            (run! go! (:workflows workload)))))))
 
+(deftest test-submitted-workflow-inputs
+  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
+          (strip-prefix [[k v]]
+            [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing."))
+             v])
+          (verify-workflow-inputs [inputs]
+            (is (:supports_common_inputs inputs))
+            (is (:supports_inputs inputs))
+            (is (:overwritten inputs)))
+          (verify-submitted-inputs [_ _ _ inputs _ _]
+            (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys inputs)))
+            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
+            (UUID/randomUUID))]
+    (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
+      (fn []
+        (->
+          (make-wgs-workload-request)
+          (assoc-in [:common :inputs]
+            {:supports_common_inputs true :overwritten false})
+          (update :items
+            (partial map
+              #(update % :inputs
+                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+          workloads/execute-workload!)))))
+
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
             (is (:supports_common_options options))
@@ -115,11 +141,11 @@
       (fn []
         (->
           (make-wgs-workload-request)
-          (assoc-in [:common :options] {:supports_common_options true
-                                        :overwritten             false})
-          (update :items (partial map #(assoc % :options
-                                                {:supports_options true
-                                                 :overwritten      true})))
+          (assoc-in [:common :options]
+            {:supports_common_options true :overwritten false})
+          (update :items
+            (partial map
+              #(assoc % :options {:supports_options true :overwritten true})))
           workloads/execute-workload!
           :workflows
           (->> (map (comp verify-workflow-options :options))))))))

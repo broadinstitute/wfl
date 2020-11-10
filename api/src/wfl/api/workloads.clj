@@ -113,11 +113,10 @@
           (split-inputs [m]
             (let [keep [:id :finished :status :updated :uuid :options]]
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
-          (unpack-options [m]
-            (update m :options #(when % (util/parse-json %))))]
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (try
       (->> (postgres/get-table tx (:items workload))
-        (mapv (comp unnilify split-inputs unpack-options))
+        (mapv (comp unnilify split-inputs load-options))
         (assoc workload :workflows)
         unnilify)
       (catch Throwable cause

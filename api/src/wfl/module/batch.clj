@@ -2,10 +2,10 @@
   "Some utilities shared between batch workloads in cromwell."
   (:require [clojure.pprint :refer [pprint]]
             [wfl.jdbc :as jdbc]
-            [wfl.wfl :as wfl]
-            [wfl.util :as util]
+            [wfl.module.all :as all]
             [wfl.service.postgres :as postgres]
-            [wfl.module.all :as all])
+            [wfl.util :as util]
+            [wfl.wfl :as wfl])
   (:import [java.util UUID]))
 
 (defn add-workload-table!

@@ -1,15 +1,15 @@
 (ns wfl.integration.modules.xx-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
+            [clojure.string :as str]
+            [wfl.environments :as env]
+            [wfl.module.xx :as xx]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.xx :as xx]
-            [wfl.util :refer [absent? on make-options]]
-            [wfl.environments :as env]
-            [wfl.util :as util])
-  (:import (java.util UUID)
-           (java.time OffsetDateTime)))
+            [wfl.util :as util :refer [absent? make-options]])
+  (:import (java.time OffsetDateTime)
+           (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -84,6 +84,34 @@
                    workloads/update-workload!)]
     (is (:finished workload))))
 
+(deftest test-submitted-workflow-inputs
+  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
+          (strip-prefix [[k v]]
+            [(keyword (util/unprefix (str k) ":ExternalExomeReprocessing."))
+             v])
+          (verify-workflow-inputs [inputs]
+            (is (:supports_common_inputs inputs))
+            (is (:supports_inputs inputs))
+            (is (:overwritten inputs)))
+          (verify-submitted-inputs [_ _ _ inputs _ _]
+            (map
+              (fn [in]
+                (is (every? #(prefixed? :ExternalExomeReprocessing %) (keys in)))
+                (verify-workflow-inputs (into {} (map strip-prefix in)))
+                (UUID/randomUUID))
+              inputs))]
+    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+      (fn []
+        (->
+          (make-xx-workload-request)
+          (assoc-in [:common :inputs]
+            {:supports_common_inputs true :overwritten false})
+          (update :items
+            (partial map
+              #(update % :inputs
+                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+          workloads/execute-workload!)))))
+
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
             (is (:supports_common_options options))
@@ -98,11 +126,11 @@
       (fn []
         (->
           (make-xx-workload-request)
-          (assoc-in [:common :options] {:supports_common_options true
-                                        :overwritten             false})
-          (update :items (partial map #(assoc % :options
-                                                {:supports_options true
-                                                 :overwritten      true})))
+          (assoc-in [:common :options]
+            {:supports_common_options true :overwritten false})
+          (update :items
+            (partial map
+              #(assoc % :options {:supports_options true :overwritten true})))
           workloads/execute-workload!
           :workflows
           (->> (map (comp verify-workflow-options :options))))))))

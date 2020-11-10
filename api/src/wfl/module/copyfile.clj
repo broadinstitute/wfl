@@ -1,7 +1,7 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
   (:require [clojure.data.json :as json]
-            [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.module.batch :as batch]
@@ -34,7 +34,7 @@
     options
     labels))
 
-(defn add-copyfile-workload!
+(defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items common] :as request}]
   (letfn [(merge-to-json [shared specific]
@@ -46,7 +46,7 @@
               (update :options #(merge-to-json (:options common) %))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
-      id)))
+      (workloads/load-workload-for-id tx id))))
 
 (defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
@@ -65,12 +65,7 @@
       (jdbc/update! tx :workload
         {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
-(defmethod workloads/create-workload!
-  pipeline
-  [tx request]
-  (->>
-    (add-copyfile-workload! tx request)
-    (workloads/load-workload-for-id tx)))
+(defoverload workloads/create-workload! pipeline create-copyfile-workload!)
 
 (defmethod workloads/start-workload!
   pipeline

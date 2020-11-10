@@ -1,5 +1,6 @@
 (ns wfl.integration.modules.copyfile-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
+            [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.module.copyfile :as copyfile]
@@ -46,11 +47,36 @@
       (fn []
         (->
           (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
-          (assoc-in [:common :options] {:supports_common_options true
-                                        :overwritten             false})
-          (update :items (partial map #(assoc % :options
-                                                {:supports_options true
-                                                 :overwritten      true})))
+          (assoc-in [:common :options]
+            {:supports_common_options true :overwritten false})
+          (update :items
+            (partial map
+              #(assoc % :options {:supports_options true :overwritten true})))
           workloads/execute-workload!
           :workflows
           (->> (map (comp verify-workflow-options :options))))))))
+
+(deftest test-submitted-workflow-inputs
+  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
+          (strip-prefix [[k v]]
+            [(keyword (util/unprefix (str k) ":copyfile."))
+             v])
+          (verify-workflow-inputs [inputs]
+            (is (:supports_common_inputs inputs))
+            (is (:supports_inputs inputs))
+            (is (:overwritten inputs)))
+          (verify-submitted-inputs [_ _ _ inputs _ _]
+            (is (every? #(prefixed? :copyfile %) (keys inputs)))
+            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
+            (UUID/randomUUID))]
+    (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
+      (fn []
+        (->
+          (make-copyfile-workload-request "gs://fake/foo" "gs://fake/bar")
+          (assoc-in [:common :inputs]
+            {:supports_common_inputs true :overwritten false})
+          (update :items
+            (partial map
+              #(update % :inputs
+                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+          workloads/execute-workload!)))))
