@@ -47,12 +47,11 @@
     {:cram_ref_fasta       cram_ref_fasta
      :cram_ref_fasta_index (str cram_ref_fasta ".fai")}))
 
-(defn make-references
+(def ^:private default-references
   "HG38 reference, calling interval, and contamination files."
-  [prefix]
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
     (merge references/contamination-sites
-      (references/hg38-genome-references prefix)
+      (references/hg38-genome-references nil)
       {:calling_interval_list
        (str hg38 "wgs_calling_regions.hg38.interval_list")})))
 
@@ -60,7 +59,7 @@
   "Hack to overload task-level values for wgs pipeline."
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
     {:wgs_coverage_interval_list
-            (str hg38 "wgs_coverage_regions.hg38.interval_list")}))
+     (str hg38 "wgs_coverage_regions.hg38.interval_list")}))
 
 (defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
@@ -74,11 +73,12 @@
      :scatter_settings          {:haplotype_scatter_count     10
                                  :break_bands_at_multiples_of 100000}}))
 
-(defn ^:private normalize-references [inputs]
-  (update inputs :references
-    #(util/deep-merge
-       (-> inputs :reference_fasta_prefix make-references)
-       %)))
+(defn ^:private normalize-reference-fasta [inputs]
+  (if-let [prefix (:reference_fasta_prefix inputs)]
+    (-> (update-in inputs [:references :reference_fasta]
+          #(util/deep-merge (references/reference_fasta prefix) %))
+      (dissoc :reference_fasta_prefix))
+    inputs))
 
 (defn ^:private make-inputs-to-save
   "Return inputs for reprocessing IN-GS into OUT-GS."
@@ -98,6 +98,7 @@
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
   [environment workflow-inputs]
   (-> (util/deep-merge cram-ref hack-task-level-values)
+    (util/deep-merge {:references default-references})
     (util/deep-merge (env-inputs environment))
     (util/deep-merge workflow-inputs)
     (util/prefix-keys (keyword pipeline))))
@@ -128,7 +129,7 @@
                 #(json/write-str (util/deep-merge (:options common) %)))
               (update :inputs
                 #(json/write-str
-                   (normalize-references
+                   (normalize-reference-fasta
                      (util/deep-merge
                        (:inputs common)
                        (make-inputs-to-save output %)))))))]

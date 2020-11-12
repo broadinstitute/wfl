@@ -29,7 +29,9 @@
               (is (= reference-fasta (references/reference_fasta prefix))))
             (go! [inputs]
               (verify-reference-fasta
-                (get-in inputs [:references :reference_fasta])))]
+                (get-in inputs [:references :reference_fasta]))
+              (is (empty? (-> inputs :references (dissoc :reference_fasta))))
+              (is (util/absent? inputs :reference_fasta_prefix)))]
       (run! (comp go! :inputs)
         (-> (make-wgs-workload-request)
           (assoc-in [:common :inputs] {:reference_fasta_prefix prefix})
@@ -42,7 +44,9 @@
               (is (= reference-fasta (references/reference_fasta prefix))))
             (go! [inputs]
               (verify-reference-fasta
-                (get-in inputs [:references :reference_fasta])))]
+                (get-in inputs [:references :reference_fasta]))
+              (is (empty? (-> inputs :references (dissoc :reference_fasta))))
+              (is (util/absent? inputs :reference_fasta_prefix)))]
       (run! (comp go! :inputs)
         (-> (make-wgs-workload-request)
           (assoc-in [:common :inputs] {:reference_fasta_prefix "gs://ignore/this/ref-fasta"})
@@ -110,7 +114,8 @@
           (verify-workflow-inputs [inputs]
             (is (:supports_common_inputs inputs))
             (is (:supports_inputs inputs))
-            (is (:overwritten inputs)))
+            (is (:overwritten inputs))
+            (is (not-empty (-> inputs :references (dissoc :reference_fasta)))))
           (verify-submitted-inputs [_ _ _ inputs _ _]
             (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys inputs)))
             (verify-workflow-inputs (into {} (map strip-prefix inputs)))
