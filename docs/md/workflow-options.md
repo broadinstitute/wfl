@@ -92,7 +92,8 @@ To recap, in the above example the following workflow options will be set:
 
 - "my_option" will have different strings for the different samples
 - "another_option" will be an object just set for the latter sample
-- "yet_another_option" will be the same string for all samples
+- "global_option" will be the same string for all samples
+- "overwritten_option" is different for the latter sample
 
 In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
@@ -114,7 +115,8 @@ response, which includes all workflow options calculated for each workflow:
       },
       "options": {
         "my_option": "something for sample 1234",
-        "yet_another_option": "something for both of the samples"     
+        "global_option": "something for all of the samples",
+        "overwritten_option": "overwrite me for sample 5678"  
       }
     },
     {
@@ -126,7 +128,8 @@ response, which includes all workflow options calculated for each workflow:
       "options": {
         "my_option": "something different for sample 5678",
         "another_option": {"foo": "bar"},
-        "yet_another_option": "something for both of the samples"     
+        "global_option": "something for all of the samples",
+        "overwritten_option": "use this value instead"
       }
     }
   ]
