@@ -2,16 +2,13 @@
   "Reprocess (External) Whole Genomes."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.tools.logging.readable :as logr]
-            [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
-            [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
@@ -35,10 +32,13 @@
   (let [[key value] (first cromwell-label-map)]
     (str (name key) ":" value)))
 
-(def get-cromwell-wgs-environment
-  "Transduce Cromwell URL to a :wgs environment."
-  (comp first (partial all/cromwell-environments
-                #{:wgs-dev :wgs-prod :wgs-staging})))
+(defn ^:private get-cromwell-environment [{:keys [cromwell]}]
+  (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
+    (when (not= 1 (count envs))
+      (throw (ex-info "no unique environment matching Cromwell URL."
+               {:cromwell     cromwell
+                :environments envs})))
+    (first envs)))
 
 (def cram-ref
   "Ref Fasta for CRAM."
@@ -59,13 +59,8 @@
 (def hack-task-level-values
   "Hack to overload task-level values for wgs pipeline."
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
-    (merge {:wgs_coverage_interval_list
-            (str hg38 "wgs_coverage_regions.hg38.interval_list")}
-      (-> {:disable_sanity_check true}
-        (util/prefix-keys :CheckContamination)
-        (util/prefix-keys :UnmappedBamToAlignedBam)
-        (util/prefix-keys :WholeGenomeGermlineSingleSample)
-        (util/prefix-keys :WholeGenomeReprocessing)))))
+    {:wgs_coverage_interval_list
+            (str hg38 "wgs_coverage_regions.hg38.interval_list")}))
 
 (defn env-inputs
   "Genome inputs for ENVIRONMENT that do not depend on the input file."
@@ -79,121 +74,114 @@
      :scatter_settings          {:haplotype_scatter_count     10
                                  :break_bands_at_multiples_of 100000}}))
 
-(defn make-inputs
+(defn ^:private normalize-references [inputs]
+  (update inputs :references
+    #(util/deep-merge
+       (-> inputs :reference_fasta_prefix make-references)
+       %)))
+
+(defn ^:private make-inputs-to-save
+  "Return inputs for reprocessing IN-GS into OUT-GS."
+  [out-gs inputs]
+  (let [sample (some inputs [:input_bam :input_cram])
+        [_ base _] (all/bam-or-cram? sample)
+        leaf   (util/basename base)
+        [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))]
+    (-> inputs
+      (util/assoc-when util/absent? :base_file_name leaf)
+      (util/assoc-when util/absent? :sample_name leaf)
+      (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
+      (util/assoc-when util/absent? :final_gvcf_base_name leaf)
+      (assoc :destination_cloud_path (str out-gs out-dir)))))
+
+(defn ^:private make-cromwell-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
-  [environment out-gs in-gs sample]
-  (let [[input-key base _] (all/bam-or-cram? in-gs)
-        leaf                 (last (str/split base #"/"))
-        [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))
-        ref-prefix           (get sample :reference_fasta_prefix)
-        final_gvcf_base_name (or (:final_gvcf_base_name sample) leaf)
-        inputs               (-> {}
-                               (assoc :base_file_name (or (:base_file_name sample) leaf))
-                               (assoc :sample_name (or (:sample_name sample) leaf))
-                               (assoc :unmapped_bam_suffix (or (:unmapped_bam_suffix sample) ".unmapped.bam"))
-                               (assoc :final_gvcf_base_name final_gvcf_base_name)
-                               (assoc input-key in-gs)
-                               (assoc :destination_cloud_path (str out-gs out-dir))
-                               (assoc :references (make-references ref-prefix))
-                               (merge cram-ref)
-                               (merge (env-inputs environment)
-                                 hack-task-level-values))
-        output               (str (:destination_cloud_path inputs)
-                               final_gvcf_base_name
-                               ".cram")]
-    (all/throw-when-output-exists-already! output)
-    (util/prefix-keys inputs :ExternalWholeGenomeReprocessing)))
+  [environment workflow-inputs]
+  (-> (util/deep-merge cram-ref hack-task-level-values)
+    (util/deep-merge (env-inputs environment))
+    (util/deep-merge workflow-inputs)
+    (util/prefix-keys (keyword pipeline))))
 
 (defn make-labels
   "Return labels for wgs pipeline from OTHER-LABELS."
   [other-labels]
-  (merge cromwell-label-map
-    other-labels))
+  (merge cromwell-label-map other-labels))
 
 (defn really-submit-one-workflow
   "Submit IN-GS for reprocessing into OUT-GS in ENVIRONMENT given OTHER-LABELS."
-  [environment in-gs out-gs sample options other-labels]
+  [environment inputs options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
-    (logr/infof "submitting workflow with: in-gs: %s, out-gs: %s" in-gs out-gs)
     (cromwell/submit-workflow
       environment
       (io/file (:dir path) (path ".wdl"))
       (io/file (:dir path) (path ".zip"))
-      (make-inputs environment out-gs in-gs sample)
+      (make-cromwell-inputs environment inputs)
       options
       (make-labels other-labels))))
 
-(defn add-wgs-workload!
-  "Use transaction TX to add the workload described by WORKLOAD-REQUEST."
-  [tx {:keys [items] :as workload-request}]
-  (let [workflow-options (-> (:cromwell workload-request)
-                             all/de-slashify
-                             get-cromwell-wgs-environment
-                             util/make-options
-                             (util/deep-merge (:workflow_options workload-request)))
-        [id table]       (batch/add-workload-table! tx workflow-wdl workload-request)]
-    (letfn [(form [m id] (-> m
-                             (update :inputs json/write-str)
-                             (update :workflow_options #(json/write-str (util/deep-merge workflow-options %)))
-                             (assoc :id id)))]
-      (jdbc/insert-multi! tx table (map form items (range)))
-      id)))
+(defn create-wgs-workload!
+  "Use transaction TX to add the workload described by REQUEST."
+  [tx {:keys [items output common] :as request}]
+  (letfn [(serialize [workflow id]
+            (-> (assoc workflow :id id)
+              (update :options
+                #(json/write-str (util/deep-merge (:options common) %)))
+              (update :inputs
+                #(json/write-str
+                   (normalize-references
+                     (util/deep-merge
+                       (:inputs common)
+                       (make-inputs-to-save output %)))))))]
+    (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
+      (jdbc/insert-multi! tx table (map serialize items (range)))
+      (workloads/load-workload-for-id tx id))))
 
 (defn skip-workflow?
   "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
   [env
-   {:keys [input output] :as _workload}
-   {:keys [input_cram] :as _workflow}]
-  (let [in-gs  (str (all/slashify input) input_cram)
-        out-gs (str (all/slashify output) input_cram)]
-    (or (->> out-gs gcs/parse-gs-url
-          (apply gcs/list-objects)
-          util/do-or-nil seq)                               ; done?
-      (->> {:label  cromwell-label
-            :status ["On Hold" "Running" "Submitted"]}
-        (cromwell/query env)
-        (map (comp :ExternalWholeGenomeReprocessing.input_cram
-               (fn [it] (json/read-str it :key-fn keyword))
-               :inputs :submittedFiles
-               (partial cromwell/metadata env)
-               :id))
-        (keep #{in-gs})
-        seq))))                                             ; active?
+   {:keys [output] :as _workload}
+   {:keys [inputs] :as _workflow}]
+  (letfn [(exists? [out-gs] (->> (gcs/parse-gs-url out-gs)
+                              (apply gcs/list-objects)
+                              util/do-or-nil
+                              seq))
+          (processing? [in-gs]
+            (->> {:label cromwell-label :status cromwell/active-statuses}
+              (cromwell/query :gotc-dev)
+              (filter #(= pipeline (:name %)))
+              (map #(->> % :id (cromwell/metadata env) :inputs))
+              (map #(some % [:input_bam :input_cram]))
+              (filter #{in-gs})
+              seq))]
+    (let [in-gs  (some inputs [:input_bam :input_cram])
+          [_ object] (gcs/parse-gs-url in-gs)
+          out-gs (str (all/slashify output) object)]
+      (or (exists? out-gs) (processing? in-gs)))))
 
 (defn start-wgs-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [cromwell input items output uuid] :as workload}]
-  (let [env             (get-cromwell-wgs-environment (all/de-slashify cromwell))
-        input           (all/slashify input)
-        output          (all/slashify output)
-        now             (OffsetDateTime/now)
+  [tx {:keys [items uuid] :as workload}]
+  (let [env             (get-cromwell-environment workload)
+        default-options (util/make-options env)
         workload->label {:workload uuid}]
-    (letfn [(submit! [{:keys [id inputs uuid workflow_options] :as workflow}]
-              [id (or uuid
-                    (if (skip-workflow? env workload workflow)
-                      util/uuid-nil
-                      (really-submit-one-workflow
-                        env
-                        (str input (some inputs [:input_bam :input_cram]))
-                        output
-                        inputs
-                        workflow_options
-                        workload->label)))])
-            (update! [tx [id uuid]]
-              (when uuid
-                (jdbc/update! tx items
-                  {:updated now :uuid uuid}
-                  ["id = ?" id])))]
-      (let [ids-uuids (map submit! (:workflows workload))]
-        (run! (partial update! tx) ids-uuids)
+    (letfn [(submit! [{:keys [id inputs options] :as workflow}]
+              (if (skip-workflow? env workload workflow)
+                [id "skipped" util/uuid-nil]
+                [id "Submitted"
+                 (really-submit-one-workflow
+                   env
+                   inputs
+                   (util/deep-merge default-options options)
+                   workload->label)]))
+            (update! [tx [id status uuid]]
+              (jdbc/update! tx items
+                {:status status :updated (OffsetDateTime/now) :uuid uuid}
+                ["id = ?" id]))]
+      (let [now (OffsetDateTime/now)]
+        (run! (comp (partial update! tx) submit!) (:workflows workload))
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
 
-(defmethod workloads/create-workload!
-  pipeline
-  [tx request]
-  (->>
-    (add-wgs-workload! tx request)
-    (workloads/load-workload-for-id tx)))
+(defoverload workloads/create-workload! pipeline create-wgs-workload!)
 
 (defmethod workloads/start-workload!
   pipeline
@@ -202,23 +190,9 @@
     (start-wgs-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
 
-;; visible for testing
-(defn uses-cromwell-workload-table? [{:keys [version]}]
-  (let [[major minor & _] (mapv util/parse-int (str/split version #"\."))]
-    (or (< 0 major) (< 3 minor))))
-
 (defmethod workloads/load-workload-impl
   pipeline
-  [tx {:keys [items] :as workload}]
-  (if-not (uses-cromwell-workload-table? workload)
+  [tx workload]
+  (if (workloads/saved-before? "0.4.0" workload)
     (workloads/default-load-workload-impl tx workload)
-    (letfn [(unnilify [m] (into {} (filter second m)))
-            (unpack-options [m]
-              (update m :workflow_options #(when % (util/parse-json %))))]
-      (->> (postgres/get-table tx items)
-           (mapv (comp unpack-options
-                       #(update % :inputs util/parse-json)
-                       unnilify))
-           (assoc workload :workflows)
-           unpack-options
-           unnilify))))
+    (batch/load-batch-workload-impl tx workload)))

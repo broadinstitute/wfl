@@ -1,11 +1,14 @@
 (ns wfl.integration.modules.copyfile-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
+            [clojure.string :as str]
+            [wfl.jdbc :as jdbc]
+            [wfl.module.all :as all]
+            [wfl.module.copyfile :as copyfile]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflow]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util]
-            [wfl.module.all :as all])
+            [wfl.util :as util])
   (:import (java.util UUID)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
@@ -13,46 +16,67 @@
 (defn ^:private make-copyfile-workload-request
   [src dst]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo))))
+    (assoc :creator (:email @endpoints/userinfo))))
+
+(defn ^:private old-create-wgs-workload! []
+  (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
+    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+      (let [[id table] (all/add-workload-table! tx copyfile/workflow-wdl request)
+            add-id (fn [m id] (assoc (:inputs m) :id id))]
+        (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
+        (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
+        id))))
+
+(deftest test-loading-old-copyfile-workload
+  (let [id       (old-create-wgs-workload!)
+        workload (workloads/load-workload-for-id id)]
+    (is (= id (:id workload)))
+    (is (= copyfile/pipeline (:pipeline workload)))))
 
 (deftest test-workflow-options
-  (fixtures/with-temporary-gcs-folder
-    uri
-    (let [src (str uri "input.txt")
-          dst (str uri "output.txt")
-          option-sequence [:a :a :b]
-          workload-request (-> (make-copyfile-workload-request src dst)
-                               (update :items (fn [existing]
-                                                (mapv #(assoc %1 :workflow_options {%2 "some value"})
-                                                      (repeat (first existing)) option-sequence)))
-                               (assoc :workflow_options {:c "some other value"}))
-          submitted-option-counts (atom {})
-          ;; Mock cromwell/submit-workflow, count observed option keys per workflow
-          pretend-submit (fn [_ _ _ _ options _]
-                           (run! #(swap! submitted-option-counts update % (fnil inc 0))
-                                 (keys options))
-                           (str (UUID/randomUUID)))]
-      (with-redefs-fn {#'submit-workflow pretend-submit}
-        #(-> workload-request
-             workloads/execute-workload!
-             (as-> workload
-                   (testing "Options in server response"
-                     (is (= (count option-sequence)
-                            (count (filter (fn [w] (get-in w [:workflow_options :c])) (:workflows workload)))))
-                     (is (= (count (filter (partial = :a) option-sequence))
-                            (count (filter (fn [w] (get-in w [:workflow_options :a])) (:workflows workload)))))
-                     (is (= (count (filter (partial = :b) option-sequence))
-                            (count (filter (fn [w] (get-in w [:workflow_options :b])) (:workflows workload)))))
-                     (is (workloads/baseline-options-across-workload
-                           (-> (:cromwell workload)
-                               all/cromwell-environments
-                               first
-                               util/make-options)
-                           workload))))))
-      (testing "Options sent to Cromwell"
-        (is (= (count option-sequence)
-               (:c @submitted-option-counts)))
-        (is (= (count (filter (partial = :a) option-sequence))
-               (:a @submitted-option-counts)))
-        (is (= (count (filter (partial = :b) option-sequence))
-               (:b @submitted-option-counts)))))))
+  (letfn [(verify-workflow-options [options]
+            (is (:supports_common_options options))
+            (is (:supports_options options))
+            (is (:overwritten options)))
+          (verify-submitted-options [env _ _ _ options _]
+            (let [defaults (util/make-options env)]
+              (verify-workflow-options options)
+              (is (= defaults (select-keys options (keys defaults))))
+              (UUID/randomUUID)))]
+    (with-redefs-fn {#'submit-workflow verify-submitted-options}
+      (fn []
+        (->
+          (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
+          (assoc-in [:common :options]
+            {:supports_common_options true :overwritten false})
+          (update :items
+            (partial map
+              #(assoc % :options {:supports_options true :overwritten true})))
+          workloads/execute-workload!
+          :workflows
+          (->> (map (comp verify-workflow-options :options))))))))
+
+(deftest test-submitted-workflow-inputs
+  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
+          (strip-prefix [[k v]]
+            [(keyword (util/unprefix (str k) ":copyfile."))
+             v])
+          (verify-workflow-inputs [inputs]
+            (is (:supports_common_inputs inputs))
+            (is (:supports_inputs inputs))
+            (is (:overwritten inputs)))
+          (verify-submitted-inputs [_ _ _ inputs _ _]
+            (is (every? #(prefixed? :copyfile %) (keys inputs)))
+            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
+            (UUID/randomUUID))]
+    (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
+      (fn []
+        (->
+          (make-copyfile-workload-request "gs://fake/foo" "gs://fake/bar")
+          (assoc-in [:common :inputs]
+            {:supports_common_inputs true :overwritten false})
+          (update :items
+            (partial map
+              #(update % :inputs
+                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+          workloads/execute-workload!)))))

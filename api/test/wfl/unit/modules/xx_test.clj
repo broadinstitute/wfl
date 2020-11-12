@@ -2,38 +2,42 @@
   (:require [clojure.test :refer :all]
             [wfl.module.xx :as xx]))
 
-(deftest test-make-inputs
-  (testing "make-inputs from cram"
-    (let [output "gs://output"
-          items  {:input_cram "gs://input/sample.cram"}]
-      (is (xx/make-combined-inputs-to-save output {} items))))
-  (testing "make-inputs from bam"
-    (let [output "gs://output"
-          items  {:input_bam "gs://input/sample.bam"}]
-      (is (xx/make-combined-inputs-to-save output {} items)))))
+(def ^:private output-url "gs://fake-output-bucket/")
 
-(deftest test-common-inputs
-  (testing "add common overrides to the workflows"
-    (let [common {:bait_set_name "frank"}
-          output "gs://output"
-          items  {:input_cram "gs://input/sample.cram"}]
-      (is (= "frank" (:bait_set_name (xx/make-combined-inputs-to-save output common items)))))))
+(deftest test-make-inputs-from-cram
+  (let [sample "gs://fake-input-bucket/folder/sample.cram"
+        inputs (xx/make-inputs-to-save output-url {:input_cram sample})]
+    (is (= sample (:input_cram inputs)))
+    (is (= "sample" (:sample_name inputs)))
+    (is (= "sample.cram" (:base_file_name inputs)))
+    (is (= "sample.cram" (:final_gvcf_base_name inputs)))
+    (is (= (str output-url "folder") (:destination_cloud_path inputs)))))
 
-(deftest test-override-precedence
-  (testing "add common overrides to the workflows"
-    (let [common {:bait_set_name "frank"}
-          output "gs://output"
-          items  {:input_cram    "gs://input/sample.cram"
-                  :bait_set_name "geoff"}]
-      (is (= "geoff" (:bait_set_name (xx/make-combined-inputs-to-save output common items)))))))
+(deftest test-make-inputs-from-bam
+  (let [sample "gs://fake-input-bucket/folder/sample.bam"
+        inputs (xx/make-inputs-to-save output-url {:input_bam sample})]
+    (is (= sample (:input_bam inputs)))
+    (is (= "sample" (:sample_name inputs)))
+    (is (= "sample.bam" (:base_file_name inputs)))
+    (is (= "sample.bam" (:final_gvcf_base_name inputs)))
+    (is (= (str output-url "folder") (:destination_cloud_path inputs)))))
 
-(deftest sample-name-behaviour
-  (testing "specifying sample name"
-    (let [output "gs://output"
-          items  {:input_cram  "gs://input/sample.cram"
-                  :sample_name "dave"}]
-      (is (= "dave" (:sample_name (xx/make-combined-inputs-to-save output {} items))))))
-  (testing "computing the sample name"
-    (let [output "gs://output"
-          items  {:input_cram "gs://input/sample.foo.bar.baz.cram"}]
-      (is (= "sample" (:sample_name (xx/make-combined-inputs-to-save output {} items)))))))
+(deftest test-specifying-destination_cloud_path
+  (let [destination "gs://some-bucket/in-the-middle/of-nowhere.out"
+        inputs      (xx/make-inputs-to-save output-url
+                      {:input_bam              "gs://fake-input-bucket/sample.bam"
+                       :destination_cloud_path destination})]
+    (is (= destination (:destination_cloud_path inputs)))))
+
+(deftest test-specifying-sample_name
+  (let [name   "geoff"
+        inputs (xx/make-inputs-to-save output-url
+                 {:input_bam   "gs://fake-input-bucket/sample.bam"
+                  :sample_name name})]
+    (is (= name (:sample_name inputs)))))
+
+(deftest test-specifying-arbitrary-workflow-inputs
+  (is (:arbitrary
+        (xx/make-inputs-to-save output-url
+          {:input_bam "gs://fake-input-bucket/sample.bam"
+           :arbitrary "hai"}))))

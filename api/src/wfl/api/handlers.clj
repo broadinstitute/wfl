@@ -84,7 +84,7 @@
   "Start the workload with UUID in REQUEST."
   [request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [{uuid :uuid} (get-in request [:parameters :body])]
+    (let [{uuid :uuid} (:body-params request)]
       (logr/infof "post-start endpoint called: uuid=%s" uuid)
       (let [workload (workloads/load-workload-for-uuid tx uuid)]
         (->>
@@ -99,7 +99,7 @@
   "Create and start workload described in BODY of REQUEST"
   [request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [workload-request (get-in request [:parameters :body])]
+    (let [workload-request (:body-params request)]
       (logr/info "executing workload-request: " workload-request)
       (->>
         (gcs/userinfo request)

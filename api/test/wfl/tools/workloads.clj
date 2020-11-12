@@ -1,6 +1,8 @@
 (ns wfl.tools.workloads
-  (:require [clojure.tools.logging.readable :as log]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging.readable :as log]
             [wfl.environments :refer [stuff]]
+            [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
@@ -8,31 +10,35 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
-            [wfl.util :refer [shell!]]
-            [wfl.util :as util]
-            [wfl.jdbc :as jdbc]
-            [wfl.tools.fixtures :as fixtures])
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.util :as util :refer [shell!]])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
 (def wgs-inputs
-  {:unmapped_bam_suffix  ".unmapped.bam",
-   :sample_name          "NA12878 PLUMBING",
-   :base_file_name       "NA12878_PLUMBING",
-   :final_gvcf_base_name "NA12878_PLUMBING",
-   :input_cram           "develop/20k/NA12878_PLUMBING.cram"})
+  (let [input-folder
+        (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-inputs"
+                       "single_sample/plumbing/truth/develop/20k/"])]
+    {:unmapped_bam_suffix  ".unmapped.bam",
+     :sample_name          "NA12878 PLUMBING",
+     :base_file_name       "NA12878_PLUMBING",
+     :final_gvcf_base_name "NA12878_PLUMBING",
+     :input_cram           (str input-folder "NA12878_PLUMBING.cram")}))
 
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  (let [path "/single_sample/plumbing/truth"]
-    {:cromwell (get-in stuff [:wgs-dev :cromwell :url])
-     :input    (str "gs://broad-gotc-dev-wfl-ptc-test-inputs" path)
-     :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
-     :pipeline wgs/pipeline
-     :project  (format "(Test) %s" @git-branch)
-     :items    [{:inputs wgs-inputs}]}))
+  {:cromwell (get-in stuff [:wgs-dev :cromwell :url])
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
+   :pipeline wgs/pipeline
+   :project  (format "(Test) %s" @git-branch)
+   :items    [{:inputs wgs-inputs}]
+   :common   {:inputs (-> {:disable_sanity_check true}
+                        (util/prefix-keys :CheckContamination)
+                        (util/prefix-keys :UnmappedBamToAlignedBam)
+                        (util/prefix-keys :WholeGenomeGermlineSingleSample)
+                        (util/prefix-keys :WholeGenomeReprocessing))}})
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
@@ -69,16 +75,23 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs {:src src :dst dst}}]})
 
+(def xx-inputs
+  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
+    {:input_cram (str storage "NA12878_PLUMBING.cram")}))
+
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  (let [test-storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:cromwell      (get-in stuff [:xx-dev :cromwell :url])
-     :output        (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
-     :pipeline      xx/pipeline
-     :project       (format "(Test) %s" @git-branch)
-     :common_inputs {:ExomeReprocessing.ExomeGermlineSingleSample.UnmappedBamToAlignedBam.CheckContamination.disable_sanity_check true}
-     :items         [{:inputs {:input_cram (str test-storage "NA12878_PLUMBING.cram")}}]}))
+  {:cromwell (get-in stuff [:xx-dev :cromwell :url])
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+   :pipeline xx/pipeline
+   :project  (format "(Test) %s" @git-branch)
+   :items    [{:inputs xx-inputs}]
+   :common {:inputs (-> {:disable_sanity_check true}
+                      (util/prefix-keys :CheckContamination)
+                      (util/prefix-keys :UnmappedBamToAlignedBam)
+                      (util/prefix-keys :ExomeGermlineSingleSample)
+                      (util/prefix-keys :ExomeReprocessing))}})
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
@@ -101,12 +114,6 @@
     (run! await-workflow (:workflows workload))
     (done! (endpoints/get-workload-status (:uuid workload)))
     nil))
-
-(defn baseline-options-across-workload
-  "True if OPTIONS are present across the entire WORKLOAD."
-  [options workload]
-  (let [unique-options (distinct (map :workflow_options (:workflows workload)))]
-    (every? #(= % (util/deep-merge % options)) unique-options)))
 
 (defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
