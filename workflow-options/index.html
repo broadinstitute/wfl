@@ -533,7 +533,7 @@ workflows).</p>
 <div class="admonition info">
 <p class="admonition-title">Summary</p>
 <ul>
-<li>Workflow options are an arbitrary JSON object stored in a key of <code>workflow_options</code></li>
+<li>Workflow options are an arbitrary JSON object stored in a key of <code>options</code></li>
 <li>Can be provided either per-workflow or for an entire workload (or both)</li>
 <li>Optional when you make requests but will always be included in WFL's responses</li>
 </ul>
@@ -561,7 +561,7 @@ workflows).</p>
   <span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>You may optionally add arbitrary JSON objects as <code>workflow_options</code> either for individual
+<p>You may optionally add arbitrary JSON objects as <code>options</code> either for individual
 workflows, for the entire workload, or both:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;cromwell&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
@@ -569,13 +569,19 @@ workflows, for the entire workload, or both:</p>
   <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
   <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;common&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;global_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for all of the samples&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;overwrite me for sample 5678&quot;</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
   <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">},</span>
-      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span>      
       <span class="p">}</span>
     <span class="p">},</span>
@@ -584,15 +590,13 @@ workflows, for the entire workload, or both:</p>
         <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
       <span class="p">},</span>
-      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something different for sample 5678&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;another_option&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;foo&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">}</span>      
+        <span class="nt">&quot;another_option&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;foo&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">},</span>
+        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;use this value instead&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
-  <span class="p">],</span>
-  <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;yet_another_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for both of the samples&quot;</span>  
-  <span class="p">}</span>
+  <span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
 <details class="info" open="open"><summary>Info</summary><p>This behavior isn't supported for All-of-Us-related processing.</p>
@@ -601,7 +605,8 @@ workflows, for the entire workload, or both:</p>
 <ul>
 <li>"my_option" will have different strings for the different samples</li>
 <li>"another_option" will be an object just set for the latter sample</li>
-<li>"yet_another_option" will be the same string for all samples</li>
+<li>"global_option" will be the same string for all samples</li>
+<li>"overwritten_option" is different for the latter sample</li>
 </ul>
 <p>In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
@@ -618,9 +623,10 @@ response, which includes all workflow options calculated for each workflow:</p>
         <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">},</span>
-      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;yet_another_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for both of the samples&quot;</span>     
+        <span class="nt">&quot;global_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for all of the samples&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;overwrite me for sample 5678&quot;</span>  
       <span class="p">}</span>
     <span class="p">},</span>
     <span class="p">{</span>
@@ -629,10 +635,11 @@ response, which includes all workflow options calculated for each workflow:</p>
         <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
       <span class="p">},</span>
-      <span class="nt">&quot;workflow_options&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something different for sample 5678&quot;</span><span class="p">,</span>
         <span class="nt">&quot;another_option&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;foo&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">},</span>
-        <span class="nt">&quot;yet_another_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for both of the samples&quot;</span>     
+        <span class="nt">&quot;global_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for all of the samples&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;use this value instead&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">]</span>
@@ -648,7 +655,7 @@ workflow. Precedence is from the bottom up, so "higher" sources override
 lower ones.</p>
 <p><img alt="" src="../assets/option-precedence.svg" /></p>
 <p>The green "sources" are where you may optionally provide configuration
-via <code>workflow_options</code>, the white "sources" are where WFL may create and
+via <code>options</code>, the white "sources" are where WFL may create and
 supply options by default, and the gray "sources" are outside of WFL's
 visibility but can still affect the result.</p>
 <p>WFL supplies its own derived options usually on a per-module basis,

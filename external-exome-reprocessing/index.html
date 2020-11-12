@@ -695,6 +695,9 @@ Response:</p>
   <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
+"workflowOptions" via the <code>options</code> map. See the
+<a href="/docs/md/workflow-options.md">reference page</a> for more information.</p>
 <h3 id="start-workload-apiv1start">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start" title="Permanent link">&para;</a></h3>
 <p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.</p>
@@ -714,8 +717,8 @@ particular input cram, WFL will not re-submit that workflow.</p>
    <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
    <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
    <span class="nt">&quot;workflows&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
-     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span>
-     <span class="s2">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
        <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
@@ -797,8 +800,8 @@ particular input cram, WFL will not re-submit that workflow.</p>
    <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
    <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
    <span class="nt">&quot;workflows&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
-     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span>
-     <span class="s2">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
        <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
@@ -868,8 +871,8 @@ particular input cram, WFL will not re-submit that workflow.</p>
    <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
    <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
    <span class="nt">&quot;workflows&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
-     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span>
-     <span class="s2">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
        <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
@@ -933,48 +936,52 @@ failures.</p>
      <span class="nt">&quot;cromwell&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
      <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
      <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-     <span class="nt">&quot;shared_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&quot;common&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="err">//</span> <span class="err">see</span> <span class="err">workflow-options</span>
+       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
          <span class="nt">&quot;unmapped_bam_suffix&quot;</span><span class="p">:</span>    <span class="s2">&quot;string&quot;</span><span class="p">,</span>
          <span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span>       <span class="s2">&quot;string&quot;</span><span class="p">,</span>
          <span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
          <span class="nt">&quot;bait_set_name&quot;</span><span class="p">:</span>        <span class="s2">&quot;string&quot;</span><span class="p">,</span>
          <span class="nt">&quot;bait_interval_list&quot;</span><span class="p">:</span>   <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
-         <span class="s2">&quot;references&quot;</span><span class="p">:</span> <span class="p">{</span>
-             <span class="nt">&quot;calling_interval_list&quot;</span><span class="p">:</span>      <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;contamination_sites_bed&quot;</span><span class="p">:</span>    <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;contamination_sites_mu&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;contamination_sites_ud&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span>                  <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span>            <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;evaluation_interval_list&quot;</span><span class="p">:</span>   <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;haplotype_database_file&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;known_indels_sites_vcfs&quot;</span><span class="p">:</span>    <span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span>
-             <span class="nt">&quot;known_indels_sites_indices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span>
-             <span class="nt">&quot;reference_fasta&quot;</span><span class="p">:</span> <span class="p">{</span>
-                 <span class="nt">&quot;ref_pac&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_bwt&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_dict&quot;</span><span class="p">:</span>        <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_ann&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_alt&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_fasta&quot;</span><span class="p">:</span>       <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_sa&quot;</span><span class="p">:</span>          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                 <span class="nt">&quot;ref_amb&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span>
-             <span class="p">}</span>
+         <span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+         <span class="nt">&quot;references&quot;</span><span class="p">:</span> <span class="p">{</span>
+           <span class="nt">&quot;calling_interval_list&quot;</span><span class="p">:</span>      <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;contamination_sites_bed&quot;</span><span class="p">:</span>    <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;contamination_sites_mu&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;contamination_sites_ud&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span>                  <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span>            <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;evaluation_interval_list&quot;</span><span class="p">:</span>   <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;haplotype_database_file&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;known_indels_sites_vcfs&quot;</span><span class="p">:</span>    <span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span>
+           <span class="nt">&quot;known_indels_sites_indices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span>
+           <span class="nt">&quot;reference_fasta&quot;</span><span class="p">:</span> <span class="p">{</span>
+             <span class="nt">&quot;ref_pac&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_bwt&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_dict&quot;</span><span class="p">:</span>        <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_ann&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_alt&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_fasta&quot;</span><span class="p">:</span>       <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_sa&quot;</span><span class="p">:</span>          <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;ref_amb&quot;</span><span class="p">:</span>         <span class="s2">&quot;string&quot;</span>
+           <span class="p">}</span>
          <span class="p">},</span>
          <span class="nt">&quot;scatter_settings&quot;</span><span class="p">:</span> <span class="p">{</span>
-             <span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span>     <span class="err">int</span><span class="p">,</span>
-             <span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span> <span class="err">int</span>
+           <span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span>     <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span>
          <span class="p">},</span>
          <span class="nt">&quot;papi_settings&quot;</span><span class="p">:</span> <span class="p">{</span>
-             <span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span> <span class="err">int</span><span class="p">,</span>
-             <span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span>     <span class="err">int</span>
+           <span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+           <span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span>     <span class="s2">&quot;integer&quot;</span>
          <span class="p">},</span>
          <span class="nt">&quot;fingerprint_genotypes_file&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;fingerprint_genotypes_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+         <span class="nt">&quot;fingerprint_genotypes_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+       <span class="p">}</span>
      <span class="p">},</span>
      <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[{</span>
+         <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="err">//</span> <span class="err">see</span> <span class="err">workflow-options</span>
          <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
              <span class="err">//</span> <span class="err">required</span> <span class="err">-</span> <span class="err">specify</span> <span class="err">either</span> <span class="nt">&quot;input_bam&quot;</span> <span class="err">or</span> <span class="s2">&quot;input_cram&quot;</span>
              <span class="s2">&quot;input_bam&quot;</span><span class="p">:</span>  <span class="s2">&quot;string&quot;</span><span class="p">,</span>
@@ -988,8 +995,8 @@ failures.</p>
              <span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
              <span class="nt">&quot;bait_set_name&quot;</span><span class="p">:</span>        <span class="s2">&quot;string&quot;</span><span class="p">,</span>
              <span class="nt">&quot;bait_interval_list&quot;</span><span class="p">:</span>   <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-             <span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
-             <span class="s2">&quot;references&quot;</span><span class="p">:</span> <span class="p">{</span>
+             <span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+             <span class="nt">&quot;references&quot;</span><span class="p">:</span> <span class="p">{</span>
                  <span class="nt">&quot;calling_interval_list&quot;</span><span class="p">:</span>      <span class="s2">&quot;string&quot;</span><span class="p">,</span>
                  <span class="nt">&quot;contamination_sites_bed&quot;</span><span class="p">:</span>    <span class="s2">&quot;string&quot;</span><span class="p">,</span>
                  <span class="nt">&quot;contamination_sites_mu&quot;</span><span class="p">:</span>     <span class="s2">&quot;string&quot;</span><span class="p">,</span>
@@ -1013,12 +1020,12 @@ failures.</p>
                  <span class="p">}</span>
              <span class="p">},</span>
              <span class="nt">&quot;scatter_settings&quot;</span><span class="p">:</span> <span class="p">{</span>
-                 <span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span>     <span class="err">int</span><span class="p">,</span>
-                 <span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span> <span class="err">int</span>
+                 <span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span>     <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+                 <span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span>
              <span class="p">},</span>
              <span class="nt">&quot;papi_settings&quot;</span><span class="p">:</span> <span class="p">{</span>
-                 <span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span> <span class="err">int</span><span class="p">,</span>
-                 <span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span>     <span class="err">int</span>
+                 <span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+                 <span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span>     <span class="s2">&quot;integer&quot;</span>
              <span class="p">},</span>
              <span class="nt">&quot;fingerprint_genotypes_file&quot;</span><span class="p">:</span>  <span class="s2">&quot;string&quot;</span><span class="p">,</span>
              <span class="nt">&quot;fingerprint_genotypes_index&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>

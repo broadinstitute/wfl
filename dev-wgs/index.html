@@ -594,7 +594,7 @@
 specifies the following inputs
 for each workflow:</p>
 <ul>
-<li>input_cram (required)</li>
+<li>input_cram or input_bam (required)</li>
 <li>sample_name (required)</li>
 <li>base_file_name</li>
 <li>final_gvcf_base_name</li>
@@ -639,6 +639,8 @@ unless it is specified.</p>
 <p>The <code>reference_fasta_prefix</code> can be used to override
 the <a href="https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7">default value</a> used by this module:
 "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"</p>
+<p>Note that this pipeline supports specifying arbitrary WDL inputs, either
+at the workload level through <code>common</code> or individually via <code>items</code>.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="create-workload-apiv1create">Create Workload: <code>/api/v1/create</code><a class="headerlink" href="#create-workload-apiv1create" title="Permanent link">&para;</a></h3>
 <p>Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have
@@ -681,6 +683,9 @@ at least read access to the input files.</p>
   <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.3.2&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<p>Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
+cromwell "workflowOptions" via the <code>options</code> map. See the
+<a href="/docs/md/workflow-options.md">reference page</a> for more information.</p>
 <h3 id="start-workload-apiv1start">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start" title="Permanent link">&para;</a></h3>
 <p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.</p>
