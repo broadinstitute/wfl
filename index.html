@@ -8,8 +8,9 @@
       
       
       
+      
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.2">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.4">
     
     
       
@@ -17,10 +18,10 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.19190aaf.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.358818c7.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.24b84193.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.f0267088.min.css">
         
           
           
@@ -785,22 +786,27 @@ Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
 of tests to save time and filter out noise. You can do this by directly
 invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
-<div class="highlight"><pre><span></span><code>$ clojure -A:test integration --focus wfl.integration.v1-endpoint-test
+<div class="highlight"><pre><span></span><code>$ clojure -A:test integration --focus wfl.integration.modules.copyfile-test
 </code></pre></div>
 <p>In general, we implement Clojure tests under the <code>test/</code> root directory and use the
 <a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
 runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
 line arguments to <code>kaocha</code>, such as the above <code>--focus</code> flag.
 You can see the full list of options with the following:</p>
-<div class="highlight"><pre><span></span><code>clojure -A:integration --help
+<div class="highlight"><pre><span></span><code>clojure -A:test --help
 </code></pre></div>
-<p>At present, <code>wfl</code> api has two kinds of test, <code>unit</code> and <code>integration</code>. These can be run
-via the <code>deps.edn</code>, optionally specifying the kind:</p>
-<div class="highlight"><pre><span></span><code>clojure -A:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="o">]</span>
+<p>At present, <code>wfl</code> api has three kinds of test, <code>unit</code>, <code>integration</code>, and <code>system</code>.
+These can be run via the <code>deps.edn</code>, optionally specifying the kind:</p>
+<div class="highlight"><pre><span></span><code>clojure -A:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="p">|</span>system<span class="o">]</span>
 </code></pre></div>
 <p>Note that the integration tests currently require a little more configuration
 before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
 <div class="highlight"><pre><span></span><code>./ops/server.sh
+</code></pre></div>
+<p>Additionally, there is a custom parallel test runner that can be invoked
+to help speed up the <code>system</code> tests. Rather than <code>clojure -A:test system</code> you'd
+just specify the namespace(s) to try to parallelize.</p>
+<div class="highlight"><pre><span></span><code>clojure -A:parallel-test wfl.system.v1-endpoint-test
 </code></pre></div>
 <h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
 <p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
@@ -1016,7 +1022,7 @@ the services WFL talks to, and are named accordingly.</p>
     </div>
     
       <script src="assets/javascripts/vendor.7e0ee788.min.js"></script>
-      <script src="assets/javascripts/bundle.c1ccee15.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="assets/javascripts/bundle.b3a72adc.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
