@@ -127,9 +127,14 @@
 
 ;; Common workload operations
 (defn saved-before?
-  "Test if the `_workload` was saved before the `reference` version string."
+  "Test if the `_workload` was saved before the `reference` version string.
+   Version strings must be in the form \"major.minor.patch\"."
   [reference {:keys [version] :as _workload}]
   (letfn [(decode [v] (map util/parse-int (str/split v #"\.")))
+          (validate [v] (when (not= 3 (count v))
+                          (throw (ex-info "malformed version string"
+                                   {:version (str/join "." v)})))
+            v)
           (lt? [[x & xs] [y & ys]]
             (or (< x y) (and (== x y) (every? some? [xs ys]) (lt? xs ys))))]
-    (lt? (decode version) (decode reference))))
+    (util/on lt? (comp validate decode) version reference)))
