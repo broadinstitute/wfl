@@ -124,7 +124,7 @@ of tests to save time and filter out noise. You can do this by directly
 invoke `clojure` cli from within the `api` directory, for example, `cd api` and:
 
 ```bash
-$ clojure -A:test integration --focus wfl.integration.v1-endpoint-test
+$ clojure -A:test integration --focus wfl.integration.modules.copyfile-test
 ```
 
 In general, we implement Clojure tests under the `test/` root directory and use the
@@ -134,14 +134,14 @@ line arguments to `kaocha`, such as the above `--focus` flag.
 You can see the full list of options with the following:
 
 ```shell
-clojure -A:integration --help
+clojure -A:test --help
 ```
 
-At present, `wfl` api has two kinds of test, `unit` and `integration`. These can be run
-via the `deps.edn`, optionally specifying the kind:
+At present, `wfl` api has three kinds of test, `unit`, `integration`, and `system`.
+These can be run via the `deps.edn`, optionally specifying the kind:
 
 ```shell
-clojure -A:test [unit|integration]
+clojure -A:test [unit|integration|system]
 ```
 
 Note that the integration tests currently require a little more configuration
@@ -149,6 +149,14 @@ before they can be run, namely, they require a `wfl` server running locally:
 
 ```shell
 ./ops/server.sh
+```
+
+Additionally, there is a custom parallel test runner that can be invoked
+to help speed up the `system` tests. Rather than `clojure -A:test system` you'd
+just specify the namespace(s) to try to parallelize.
+
+```shell
+clojure -A:parallel-test wfl.system.v1-endpoint-test
 ```
 
 ### Deploy

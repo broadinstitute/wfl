@@ -80,5 +80,11 @@
    :extra-paths ["test"]
    :main-opts   ["-m" "kaocha.runner"]}
 
+  :parallel-test
+  {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.0.0"
+                                                :exclusions [ch.qos.logback/logback-classic]}}
+   :extra-paths ["test"]
+   :main-opts   ["-m" "wfl.tools.parallel-runner"]}
+
   :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "0.1.4"}}
             :main-opts  ["-m" "uberdeps.uberjar" "--multi-release"]}}}

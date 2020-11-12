@@ -5,7 +5,6 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :refer [with-temporary-gcs-folder temporary-postgresql-database]]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util]
             [wfl.service.cromwell :as cromwell])
   (:import (java.util UUID)
            (clojure.lang ExceptionInfo)))
@@ -18,9 +17,6 @@
 (def create-xx-workload (make-create-workload workloads/xx-workload-request))
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
-
-(defn- get-existing-workload-uuids []
-  (->> (endpoints/get-workloads) (map :uuid) set))
 
 (defn- verify-succeeded-workflow [workflow]
   (is (map? (:inputs workflow)) "Every workflow should have nested inputs")
@@ -38,75 +34,84 @@
       (is (some #(= % :oauth2-client-id) response))
       (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
 
-(deftest test-create-workload
-  (letfn [(go! [uuids {:keys [pipeline] :as request}]
-            (testing (format "calling api/v1/create with %s workload request" pipeline)
-              (let [{:keys [uuid] :as workload} (endpoints/create-workload request)]
-                (is uuid "workloads should be been assigned a uuid")
-                (is (util/absent? uuids uuid))
-                (is (:created workload) "should have a created timestamp")
-                (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-                (is (not (:started workload)) "hasn't been started in cromwell")
-                (let [include [:pipeline :cromwell :project]]
-                  (is (= (select-keys request include) (select-keys workload include))))
-                (conj uuids uuid))))]
-    (reduce go!
-      (get-existing-workload-uuids)
-      [(workloads/wgs-workload-request (UUID/randomUUID))
-       (workloads/aou-workload-request (UUID/randomUUID))
-       (workloads/xx-workload-request (UUID/randomUUID))
-       (workloads/copyfile-workload-request
-         "gs://fake-inputs/lolcats.txt"
-         "gs://fake-outputs/copied.txt")])))
 
-(deftest test-start-workload
-  (letfn [(go! [{:keys [uuid pipeline] :as workload}]
-            (testing (format "calling api/v1/start with %s workload" pipeline)
-              (let [workload (endpoints/start-workload workload)]
-                (is (= uuid (:uuid workload)))
-                (is (:started workload))
-                (let [{:keys [workflows]} workload]
-                  (is (every? :updated workflows))
-                  (is (every? :uuid workflows)))
-                (workloads/when-done verify-succeeded-workload workload))))]
-    (with-temporary-gcs-folder uri
-      (let [src (str uri "input.txt")]
-        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
+(defn ^:private test-create-workload
+  [{:keys [pipeline] :as request}]
+  (testing (format "calling api/v1/create with %s workload request" pipeline)
+    (let [{:keys [uuid] :as workload} (endpoints/create-workload request)]
+      (is uuid "workloads should be been assigned a uuid")
+      (is (:created workload) "should have a created timestamp")
+      (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
+      (is (not (:started workload)) "hasn't been started in cromwell")
+      (let [include [:pipeline :cromwell :project]]
+        (is (= (select-keys request include) (select-keys workload include)))))))
+
+(deftest test-create-wgs-workload
+  (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+(deftest test-create-aou-workload
+  (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
+(deftest test-create-xx-workload
+  (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
+(deftest test-create-copyfile-workload
+  (test-create-workload (workloads/copyfile-workload-request
+                          "gs://fake-inputs/lolcats.txt"
+                          "gs://fake-outputs/copied.txt")))
+
+(defn ^:private test-start-workload
+  [{:keys [uuid pipeline] :as workload}]
+  (testing (format "calling api/v1/start with %s workload" pipeline)
+    (let [workload (endpoints/start-workload workload)]
+      (is (= uuid (:uuid workload)))
+      (is (:started workload))
+      (let [{:keys [workflows]} workload]
+        (is (every? :updated workflows))
+        (is (every? :uuid workflows)))
+      (workloads/when-done verify-succeeded-workload workload))))
+
+(deftest test-start-wgs-workload
+  (test-start-workload (create-wgs-workload)))
+(deftest ^:parallel test-start-aou-workload
+  (test-start-workload (create-aou-workload)))
+(deftest ^:parallel test-start-xx-workload
+  (test-start-workload (create-xx-workload)))
+(deftest ^:parallel test-start-copyfile-workload
+  (with-temporary-gcs-folder uri
+    (let [src (str uri "input.txt")
+          dst (str uri "output.txt")]
+      (-> (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
-        (run! go!
-          [(create-wgs-workload)
-           (create-aou-workload)
-           (create-xx-workload)
-           (create-copyfile-workload src (str uri "output.txt"))])))))
+      (test-start-workload (create-copyfile-workload src dst)))))
 
-(deftest test-exec-workload
-  (letfn [(go! [uuids {:keys [pipeline] :as request}]
-            (testing (format "calling api/v1/exec with %s workload request" pipeline)
-              (let [{:keys [uuid] :as workload} (endpoints/exec-workload request)]
-                (is uuid "workloads should be been assigned a uuid")
-                (is (util/absent? uuids uuid) "must have a new unique id")
-                (is (:created workload) "should have a created timestamp")
-                (is (:started workload) "should have a started timestamp")
-                (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-                (let [include [:pipeline :cromwell :project]]
-                  (is (= (select-keys request include) (select-keys workload include))))
-                (let [{:keys [workflows]} workload]
-                  (is (every? :updated workflows))
-                  (is (every? :uuid workflows)))
-                (workloads/when-done verify-succeeded-workload workload)
-                (conj uuids uuid))))]
-    (with-temporary-gcs-folder uri
-      (let [src (str uri "input.txt")]
-        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
+(defn ^:private test-exec-workload
+  [{:keys [pipeline] :as request}]
+  (testing (format "calling api/v1/exec with %s workload request" pipeline)
+    (let [{:keys [uuid] :as workload} (endpoints/exec-workload request)]
+      (is uuid "workloads should be been assigned a uuid")
+      (is (:created workload) "should have a created timestamp")
+      (is (:started workload) "should have a started timestamp")
+      (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
+      (let [include [:pipeline :cromwell :project]]
+        (is (= (select-keys request include) (select-keys workload include))))
+      (let [{:keys [workflows]} workload]
+        (is (every? :updated workflows))
+        (is (every? :uuid workflows)))
+      (workloads/when-done verify-succeeded-workload workload))))
+
+(deftest test-exec-wgs-workload
+  (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-aou-workload
+  (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-xx-workload
+  (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-copyfile-workload
+  (with-temporary-gcs-folder uri
+    (let [src (str uri "input.txt")
+          dst (str uri "output.txt")]
+      (-> (str/join "/" ["test" "resources" "copy-me.txt"])
           (gcs/upload-file src))
-        (reduce go!
-          (get-existing-workload-uuids)
-          [(workloads/wgs-workload-request (UUID/randomUUID))
-           (workloads/aou-workload-request (UUID/randomUUID))
-           (workloads/xx-workload-request (UUID/randomUUID))
-           (workloads/copyfile-workload-request src (str uri "output.txt"))])))))
+      (test-exec-workload (workloads/copyfile-workload-request src dst)))))
 
-(deftest test-append-to-aou-workload
+(deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
         workload (endpoints/exec-workload
                    (workloads/aou-workload-request (UUID/randomUUID)))]
