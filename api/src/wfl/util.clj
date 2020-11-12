@@ -317,9 +317,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
         (maybe :monitoring_script cromwell)
         (maybe :noAddress noAddress)))))
 
-(comment
-  (make-options :gotc-dev))
-
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
   [int-string]
