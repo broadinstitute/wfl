@@ -100,6 +100,10 @@ Response:
 }
 ```
 
+Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
+"workflowOptions" via the `options` map. See the
+[reference page](/docs/md/workflow-options.md) for more information.
+
 ### Start Workload: `/api/v1/start`
 
 Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
@@ -126,7 +130,7 @@ Response:
    "started" : "YYYY-MM-DDTHH:MM:SSZ",
    "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
    "workflows" : [ {
-     "status" : "Submitted"
+     "status" : "Submitted",
      "updated" : "YYYY-MM-DDTHH:MM:SSZ",
      "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
      "inputs" : {
@@ -217,7 +221,7 @@ Response:
    "started" : "YYYY-MM-DDTHH:MM:SSZ",
    "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
    "workflows" : [ {
-     "status" : "Submitted"
+     "status" : "Submitted",
      "updated" : "YYYY-MM-DDTHH:MM:SSZ",
      "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
      "inputs" : {
@@ -296,7 +300,7 @@ Response:
    "started" : "YYYY-MM-DDTHH:MM:SSZ",
    "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
    "workflows" : [ {
-     "status" : "Submitted"
+     "status" : "Submitted",
      "updated" : "YYYY-MM-DDTHH:MM:SSZ",
      "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
      "inputs" : {
@@ -364,48 +368,52 @@ failures.
      "cromwell": "string",
      "output": "string",
      "project": "string",
-     "shared_inputs": {
+     "common": {
+       "options": {}, // see workflow-options
+       "inputs": {
          "unmapped_bam_suffix":    "string",
          "cram_ref_fasta":       "string",
          "cram_ref_fasta_index": "string",
          "bait_set_name":        "string",
          "bait_interval_list":   "string",
-         "target_interval_list": "string"
+         "target_interval_list": "string",
          "references": {
-             "calling_interval_list":      "string",
-             "contamination_sites_bed":    "string",
-             "contamination_sites_mu":     "string",
-             "contamination_sites_ud":     "string",
-             "dbsnp_vcf":                  "string",
-             "dbsnp_vcf_index":            "string",
-             "evaluation_interval_list":   "string",
-             "haplotype_database_file":     "string",
-             "known_indels_sites_vcfs":    ["string"],
-             "known_indels_sites_indices": ["string"],
-             "reference_fasta": {
-                 "ref_pac":         "string",
-                 "ref_bwt":         "string",
-                 "ref_dict":        "string",
-                 "ref_ann":         "string",
-                 "ref_fasta_index": "string",
-                 "ref_alt":         "string",
-                 "ref_fasta":       "string",
-                 "ref_sa":          "string",
-                 "ref_amb":         "string"
-             }
+           "calling_interval_list":      "string",
+           "contamination_sites_bed":    "string",
+           "contamination_sites_mu":     "string",
+           "contamination_sites_ud":     "string",
+           "dbsnp_vcf":                  "string",
+           "dbsnp_vcf_index":            "string",
+           "evaluation_interval_list":   "string",
+           "haplotype_database_file":     "string",
+           "known_indels_sites_vcfs":    ["string"],
+           "known_indels_sites_indices": ["string"],
+           "reference_fasta": {
+             "ref_pac":         "string",
+             "ref_bwt":         "string",
+             "ref_dict":        "string",
+             "ref_ann":         "string",
+             "ref_fasta_index": "string",
+             "ref_alt":         "string",
+             "ref_fasta":       "string",
+             "ref_sa":          "string",
+             "ref_amb":         "string"
+           }
          },
          "scatter_settings": {
-             "haplotype_scatter_count":     int,
-             "break_bands_at_multiples_of": int
+           "haplotype_scatter_count":     "integer",
+           "break_bands_at_multiples_of": "integer"
          },
          "papi_settings": {
-             "agg_preemptible_tries": int,
-             "preemptible_tries":     int
+           "agg_preemptible_tries": "integer",
+           "preemptible_tries":     "integer"
          },
          "fingerprint_genotypes_file": "string",
-         "fingerprint_genotypes_index": "string",
+         "fingerprint_genotypes_index": "string"
+       }
      },
      "items": [{
+         "options": {}, // see workflow-options
          "inputs": {
              // required - specify either "input_bam" or "input_cram"
              "input_bam":  "string",
@@ -419,7 +427,7 @@ failures.
              "cram_ref_fasta_index": "string",
              "bait_set_name":        "string",
              "bait_interval_list":   "string",
-             "target_interval_list": "string"
+             "target_interval_list": "string",
              "references": {
                  "calling_interval_list":      "string",
                  "contamination_sites_bed":    "string",
@@ -444,12 +452,12 @@ failures.
                  }
              },
              "scatter_settings": {
-                 "haplotype_scatter_count":     int,
-                 "break_bands_at_multiples_of": int
+                 "haplotype_scatter_count":     "integer",
+                 "break_bands_at_multiples_of": "integer"
              },
              "papi_settings": {
-                 "agg_preemptible_tries": int,
-                 "preemptible_tries":     int
+                 "agg_preemptible_tries": "integer",
+                 "preemptible_tries":     "integer"
              },
              "fingerprint_genotypes_file":  "string",
              "fingerprint_genotypes_index": "string",
