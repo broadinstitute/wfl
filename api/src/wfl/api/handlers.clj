@@ -109,7 +109,3 @@
         (assoc workload-request :creator)
         (workloads/execute-workload! tx)
         succeed))))
-
-(comment
-
-  )
