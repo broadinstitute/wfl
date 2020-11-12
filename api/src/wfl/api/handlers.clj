@@ -78,7 +78,9 @@
         (mapv (partial go! tx)
           (if-let [uuid (-> request :parameters :query :uuid)]
             [(workloads/load-workload-for-uuid tx uuid)]
-            (workloads/load-workloads tx)))))))
+            (if-let [project (-> request :parameters :query :project)]
+              [(workloads/load-workload-for-project tx project)]
+              (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
@@ -107,3 +109,7 @@
         (assoc workload-request :creator)
         (workloads/execute-workload! tx)
         succeed))))
+
+(comment
+
+  )
