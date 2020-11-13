@@ -31,9 +31,9 @@
 (defn ^:private verify-missing-internals [workload]
   (letfn [(go! [key]
             (is (util/absent? workload key)
-              (format "workload should not contain %" key))
+              (format "workload should not contain %s" key))
             (is (every? #(util/absent? % key) (:workflows workload))
-              (format "workflows should not contain %" key)))]
+              (format "workflows should not contain %s" key)))]
     (run! go! [:id])))
 
 (deftest test-oauth2-endpoint

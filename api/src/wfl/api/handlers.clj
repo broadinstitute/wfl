@@ -81,11 +81,10 @@
                 (workloads/update-workload! tx workload))))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
-        (strip-internals
-          (mapv (partial go! tx)
-            (if-let [uuid (-> request :parameters :query :uuid)]
-              [(workloads/load-workload-for-uuid tx uuid)]
-              (workloads/load-workloads tx))))))))
+        (mapv (comp strip-internals (partial go! tx))
+          (if-let [uuid (-> request :parameters :query :uuid)]
+            [(workloads/load-workload-for-uuid tx uuid)]
+            (workloads/load-workloads tx)))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
