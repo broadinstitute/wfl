@@ -34,7 +34,7 @@
               (format "workload should not contain %s" key))
             (is (every? #(util/absent? % key) (:workflows workload))
               (format "workflows should not contain %s" key)))]
-    (run! go! [:id])))
+    (run! go! [:id :items])))
 
 (deftest test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"

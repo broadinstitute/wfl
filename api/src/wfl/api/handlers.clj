@@ -43,9 +43,10 @@
           query {:includeSubworkflows false :start start :end end}]
       (succeed {:results (cromwell/query env query)}))))
 
-(defn strip-internals [workload]
+(defn strip-internals
   "Strip internal properties from the `workload` and its `workflows`."
-  (let [prune #(apply dissoc % [:id])]
+  [workload]
+  (let [prune #(apply dissoc % [:id :items])]
     (prune (update workload :workflows (partial mapv prune)))))
 
 (defn append-to-aou-workload
