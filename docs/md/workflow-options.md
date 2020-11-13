@@ -108,7 +108,6 @@ response, which includes all workflow options calculated for each workflow:
   "created": "2020-10-05T15:50:01Z",
   "workflows": [
     {
-      "id": 1,
       "inputs": {
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample1234"
@@ -120,7 +119,6 @@ response, which includes all workflow options calculated for each workflow:
       }
     },
     {
-      "id": 2,
       "inputs": {
         "input_cram": "develop/20k/NA12878_PLUMBING.cram",
         "sample_name": "TestSample5678"
