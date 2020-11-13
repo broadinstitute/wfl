@@ -46,9 +46,7 @@
 (defn strip-internals [workload]
   "Strip internal properties from the `workload` and its `workflows`."
   (let [prune #(apply dissoc % [:id])]
-    (prune
-      (update workload :workflows
-        (partial mapv #(update % :inputs prune))))))
+    (prune (update workload :workflows (partial mapv prune)))))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
