@@ -28,7 +28,7 @@
 (defn- verify-succeeded-workload [workload]
   (run! verify-succeeded-workflow (:workflows workload)))
 
-(defn ^:private verify-missing-internals [workload]
+(defn ^:private verify-internal-properties-removed [workload]
   (letfn [(go! [key]
             (is (util/absent? workload key)
               (format "workload should not contain %s" key))
@@ -53,7 +53,7 @@
       (is (not (:started workload)) "hasn't been started in cromwell")
       (let [include [:pipeline :cromwell :project]]
         (is (= (select-keys request include) (select-keys workload include))))
-      (verify-missing-internals workload))))
+      (verify-internal-properties-removed workload))))
 
 (deftest test-create-wgs-workload
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -75,7 +75,7 @@
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
-      (verify-missing-internals workload)
+      (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
 (deftest test-start-wgs-workload
@@ -105,7 +105,7 @@
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
-      (verify-missing-internals workload)
+      (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
 (deftest test-exec-wgs-workload
