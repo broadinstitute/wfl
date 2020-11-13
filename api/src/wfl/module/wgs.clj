@@ -51,7 +51,7 @@
   "HG38 reference, calling interval, and contamination files."
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
     (merge references/contamination-sites
-      (references/hg38-genome-references nil)
+      references/hg38-genome-references
       {:calling_interval_list
        (str hg38 "wgs_calling_regions.hg38.interval_list")})))
 

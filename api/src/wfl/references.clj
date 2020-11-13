@@ -15,14 +15,12 @@
    :ref_amb         (str prefix ".fasta.64.amb")
    :ref_sa          (str prefix ".fasta.64.sa")})
 
-(defn hg38-genome-references
+(def hg38-genome-references
   "HG38 reference files for genome reprocessing."
-  [prefix]
   (let [hg38    "gs://gcp-public-data--broad-references/hg38/v0/"
         gold    "Mills_and_1000G_gold_standard.indels.hg38"
         hsa     "Homo_sapiens_assembly38"
-        regions "_regions.hg38.interval_list"
-        r_f_p   (fnil reference_fasta (str hg38 hsa))]
+        regions "_regions.hg38.interval_list"]
     {:haplotype_scatter_count     10
      :break_bands_at_multiples_of 100000
      :haplotype_database_file     (str hg38 hsa ".haplotype_database.txt")
@@ -33,7 +31,7 @@
                                   (str hg38 hsa  ".known_indels.vcf.gz.tbi")]
      :known_indels_sites_vcfs    [(str hg38 gold ".vcf.gz")
                                   (str hg38 hsa  ".known_indels.vcf.gz")]
-     :reference_fasta             (r_f_p prefix)}))
+     :reference_fasta             (reference_fasta (str hg38 hsa))}))
 
 (def contamination-sites
   "Default contamination sites."
