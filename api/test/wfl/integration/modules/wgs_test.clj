@@ -1,11 +1,12 @@
 (ns wfl.integration.modules.wgs-test
   (:require [clojure.set :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflow]]
+            [wfl.service.cromwell :refer [wait-for-workflow-complete
+                                          submit-workflow]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs]
+            [wfl.module.wgs :as wgs :refer [skip-workflow?]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.util :as util]
@@ -120,7 +121,8 @@
             (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys inputs)))
             (verify-workflow-inputs (into {} (map strip-prefix inputs)))
             (UUID/randomUUID))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
+    (with-redefs-fn {#'submit-workflow verify-submitted-inputs
+                     #'skip-workflow? (constantly false)}
       (fn []
         (->
           (make-wgs-workload-request)
@@ -142,7 +144,8 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (UUID/randomUUID)))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-options}
+    (with-redefs-fn {#'submit-workflow verify-submitted-options
+                     #'skip-workflow? (constantly false)}
       (fn []
         (->
           (make-wgs-workload-request)
