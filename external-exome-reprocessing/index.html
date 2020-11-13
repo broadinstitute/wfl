@@ -445,6 +445,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: /api/v1/workload?project=&lt;project&gt;
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -569,6 +576,13 @@
           <li class="md-nav__item">
   <a href="#query-workload-apiv1workloaduuiduuid" class="md-nav__link">
     Query Workload: /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: /api/v1/workload?project=&lt;project&gt;
   </a>
   
 </li>
@@ -782,6 +796,50 @@ particular input cram, WFL will not re-submit that workflow.</p>
 includes their status information. It is also possible to use the Job Manager
 to check workflow progress and easily see information about any workflow
 failures.</p>
+<h3 id="query-workload-with-project-apiv1workloadprojectproject">Query Workload with project: <code>/api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-apiv1workloadprojectproject" title="Permanent link">&para;</a></h3>
+<p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
+<p>Request:</p>
+<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234&#39;</span> <span class="se">\</span>
+  -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>Response:</p>
+<div class="highlight"><pre><span></span><code><span class="p">[{</span>
+   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;workflows&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
+     <span class="nt">&quot;status&quot;</span> <span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span>
+     <span class="p">}</span>
+   <span class="p">}</span> <span class="p">],</span>
+   <span class="nt">&quot;commit&quot;</span> <span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;Example Project&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;wdl&quot;</span> <span class="p">:</span> <span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+ <span class="p">}]</span>
+</code></pre></div>
+<p>The "workflows" field lists out each Cromwell workflow that was started, and
+includes their status information. It is also possible to use the Job Manager
+to check workflow progress and easily see information about any workflow
+failures.</p>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint,
+hitting this endpoint without them will return all workloads. However, they cannot be specified
+together.</p>
+</div>
 <h2 id="a1-external-exome-workload-request-json-spec">A1 External Exome Workload-Request JSON Spec<a class="headerlink" href="#a1-external-exome-workload-request-json-spec" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
      <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>

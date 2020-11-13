@@ -595,6 +595,16 @@ analyzed, processed and submitted to Cromwell as long as it has valid informatio
 <div class="highlight"><pre><span></span><code>curl <span class="s2">&quot;http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000&quot;</span> <span class="se">\</span>
      -H <span class="s1">&#39;Accept: application/json&#39;</span>
 </code></pre></div>
+<p><strong>GET /api/v1/workload/{project}</strong></p>
+<div class="highlight"><pre><span></span><code>curl <span class="s2">&quot;http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing&quot;</span> <span class="se">\</span>
+     -H <span class="s1">&#39;Accept: application/json&#39;</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint, 
+hitting this endpoint without them will return all workloads. However, they cannot be specified
+together.</p>
+</div>
 <p><strong>GET /api/v1/workload/create</strong></p>
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/create&quot;</span> <span class="se">\</span>
      -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
