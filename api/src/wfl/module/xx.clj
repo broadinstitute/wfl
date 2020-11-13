@@ -11,7 +11,6 @@
             [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.gcs :as gcs]
-            [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
@@ -69,7 +68,8 @@
 (defn ^:private cromwellify-workflow-inputs [environment {:keys [inputs]}]
   (-> (env/stuff environment)
     (select-keys [:google_account_vault_path :vault_token_path])
-    (merge inputs)
+    (util/deep-merge workflow-defaults)
+    (util/deep-merge inputs)
     (util/prefix-keys (keyword pipeline))))
 
 ;; visible for testing
@@ -129,18 +129,6 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx {:keys [items] :as workload}]
-  (letfn [(unnilify [m] (into {} (filter second m)))
-          (load-inputs [m]
-            (update m :inputs
-              #(util/deep-merge workflow-defaults (util/parse-json %))))
-          (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (postgres/get-table tx items)
-      (mapv (comp unnilify load-inputs load-options))
-      (assoc workload :workflows)
-      unnilify)))
-
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
