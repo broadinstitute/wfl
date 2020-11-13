@@ -15,7 +15,7 @@
 (def profile "390e7a85-d47f-4531-b612-165fc977d3bd")
 
 ;; rr: GH-1048
-(deftest ^:excluded delivery
+(deftest delivery
   (with-temporary-gcs-folder uri
     (testing "delivery succeeds"
       (let [[bucket object] (gcs/parse-gs-url uri)
@@ -39,10 +39,10 @@
           (stage vcf "bogus vcf content")
           (stage (str vcf ".tbi") "bogus index content")
           (stage table (json/write-str
-                        {:id        object
-                         :vcf       (ingest vcf-url vcf)
-                         :vcf_index (ingest vcf-url (str vcf ".tbi"))}
-                        :escape-slash false))
+                         {:id        object
+                          :vcf       (ingest vcf-url vcf)
+                          :vcf_index (ingest vcf-url (str vcf ".tbi"))}
+                         :escape-slash false))
           (let [table-url (gcs/gs-url bucket (str object table))
                 job (datarepo/tabular-ingest :gotc-dev dataset table-url "sample")
                 {:keys [bad_row_count row_count]} (datarepo/poll-job :gotc-dev job)]
