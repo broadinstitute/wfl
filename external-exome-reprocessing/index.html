@@ -626,11 +626,11 @@ accounts have at least read access to the input files.</p>
 <span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
-<span class="s1">        &quot;project&quot;: &quot;PO-1234&quot;,</span>
+<span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
 <span class="s1">        &quot;items&quot;: [{</span>
-<span class="s1">            &quot;inputs&quot;: {</span>
-<span class="s1">                &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;</span>
-<span class="s1">            }</span>
+<span class="s1">          &quot;inputs&quot;: {</span>
+<span class="s1">            &quot;input_cram&quot; : &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span>
+<span class="s1">          }</span>
 <span class="s1">        }]</span>
 <span class="s1">      }&#39;</span>
 </code></pre></div>
@@ -644,52 +644,15 @@ Response:</p>
   <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workflows&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
     <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
-      <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;scatter_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;haplotype_scatter_count&quot;</span> <span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-        <span class="nt">&quot;break_bands_at_multiples_of&quot;</span> <span class="p">:</span> <span class="mi">0</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://path/to/a.cram&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/to&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;bait_set_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;whole_exome_illumina_coding_v1&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;references&quot;</span> <span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;calling_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;contamination_sites_bed&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;dbsnp_vcf_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;haplotype_database_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;known_indels_sites_indices&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi&quot;</span> <span class="p">],</span>
-        <span class="nt">&quot;evaluation_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;contamination_sites_mu&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;dbsnp_vcf&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;known_indels_sites_vcfs&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz&quot;</span> <span class="p">],</span>
-        <span class="nt">&quot;reference_fasta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-          <span class="nt">&quot;ref_pac&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_bwt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_dict&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_ann&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_alt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_sa&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;ref_amb&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb&quot;</span>
-        <span class="p">},</span>
-        <span class="nt">&quot;contamination_sites_ud&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;cram_ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;papi_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;agg_preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-        <span class="nt">&quot;preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;bait_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;target_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;unmapped_bam_suffix&quot;</span> <span class="p">:</span> <span class="s2">&quot;.unmapped.bam&quot;</span>
+      <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span>
     <span class="p">}</span>
   <span class="p">}</span> <span class="p">],</span>
   <span class="nt">&quot;commit&quot;</span> <span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;Example Project&quot;</span><span class="p">,</span>
   <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span>
   <span class="nt">&quot;wdl&quot;</span> <span class="p">:</span> <span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span>
   <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
@@ -721,52 +684,15 @@ particular input cram, WFL will not re-submit that workflow.</p>
      <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
-       <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;scatter_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;haplotype_scatter_count&quot;</span> <span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-         <span class="nt">&quot;break_bands_at_multiples_of&quot;</span> <span class="p">:</span> <span class="mi">0</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://path/to/a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/to&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_set_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;whole_exome_illumina_coding_v1&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;references&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;calling_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_bed&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;haplotype_database_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_indices&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;evaluation_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_mu&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_vcfs&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;reference_fasta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-           <span class="nt">&quot;ref_pac&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_bwt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_dict&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_ann&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_alt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_sa&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_amb&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb&quot;</span>
-         <span class="p">},</span>
-         <span class="nt">&quot;contamination_sites_ud&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD&quot;</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;cram_ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;papi_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;agg_preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-         <span class="nt">&quot;preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;target_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;unmapped_bam_suffix&quot;</span> <span class="p">:</span> <span class="s2">&quot;.unmapped.bam&quot;</span>
+       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span>
      <span class="p">}</span>
    <span class="p">}</span> <span class="p">],</span>
    <span class="nt">&quot;commit&quot;</span> <span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;Example Project&quot;</span><span class="p">,</span>
    <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span>
    <span class="nt">&quot;wdl&quot;</span> <span class="p">:</span> <span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span>
    <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
@@ -782,11 +708,11 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
-<span class="s1">        &quot;project&quot;: &quot;PO-1234&quot;,</span>
+<span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
 <span class="s1">        &quot;items&quot;: [{</span>
-<span class="s1">            &quot;inputs&quot;: {</span>
-<span class="s1">                &quot;input_cram&quot;: &quot;gs://path/to/a.cram&quot;</span>
-<span class="s1">            }</span>
+<span class="s1">          &quot;inputs&quot; : {</span>
+<span class="s1">            &quot;input_cram&quot; : &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
+<span class="s1">          }</span>
 <span class="s1">        }]</span>
 <span class="s1">      }&#39;</span>
 </code></pre></div>
@@ -804,52 +730,15 @@ particular input cram, WFL will not re-submit that workflow.</p>
      <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
-       <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;scatter_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;haplotype_scatter_count&quot;</span> <span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-         <span class="nt">&quot;break_bands_at_multiples_of&quot;</span> <span class="p">:</span> <span class="mi">0</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://path/to/a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/to&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_set_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;whole_exome_illumina_coding_v1&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;references&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;calling_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_bed&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;haplotype_database_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_indices&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;evaluation_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_mu&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_vcfs&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;reference_fasta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-           <span class="nt">&quot;ref_pac&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_bwt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_dict&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_ann&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_alt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_sa&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_amb&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb&quot;</span>
-         <span class="p">},</span>
-         <span class="nt">&quot;contamination_sites_ud&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD&quot;</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;cram_ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;papi_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;agg_preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-         <span class="nt">&quot;preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;target_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;unmapped_bam_suffix&quot;</span> <span class="p">:</span> <span class="s2">&quot;.unmapped.bam&quot;</span>
-     <span class="p">}</span>
+        <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span>
+      <span class="p">}</span>
    <span class="p">}</span> <span class="p">],</span>
    <span class="nt">&quot;commit&quot;</span> <span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;Example Project&quot;</span><span class="p">,</span>
    <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span>
    <span class="nt">&quot;wdl&quot;</span> <span class="p">:</span> <span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span>
    <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
@@ -875,52 +764,15 @@ particular input cram, WFL will not re-submit that workflow.</p>
      <span class="nt">&quot;updated&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
      <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span>
      <span class="nt">&quot;inputs&quot;</span> <span class="p">:</span> <span class="p">{</span>
-       <span class="nt">&quot;cram_ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;scatter_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;haplotype_scatter_count&quot;</span> <span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-         <span class="nt">&quot;break_bands_at_multiples_of&quot;</span> <span class="p">:</span> <span class="mi">0</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://path/to/a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/to&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_set_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;whole_exome_illumina_coding_v1&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;references&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;calling_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_bed&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;haplotype_database_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_indices&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;evaluation_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;contamination_sites_mu&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;dbsnp_vcf&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf&quot;</span><span class="p">,</span>
-         <span class="nt">&quot;known_indels_sites_vcfs&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz&quot;</span> <span class="p">],</span>
-         <span class="nt">&quot;reference_fasta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-           <span class="nt">&quot;ref_pac&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_bwt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_dict&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_ann&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_alt&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_fasta&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_sa&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa&quot;</span><span class="p">,</span>
-           <span class="nt">&quot;ref_amb&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb&quot;</span>
-         <span class="p">},</span>
-         <span class="nt">&quot;contamination_sites_ud&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD&quot;</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;cram_ref_fasta_index&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;papi_settings&quot;</span> <span class="p">:</span> <span class="p">{</span>
-         <span class="nt">&quot;agg_preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-         <span class="nt">&quot;preemptible_tries&quot;</span> <span class="p">:</span> <span class="mi">3</span>
-       <span class="p">},</span>
-       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;bait_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;a.cram&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;target_interval_list&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list&quot;</span><span class="p">,</span>
-       <span class="nt">&quot;unmapped_bam_suffix&quot;</span> <span class="p">:</span> <span class="s2">&quot;.unmapped.bam&quot;</span>
+       <span class="nt">&quot;input_cram&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;destination_cloud_path&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;sample_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;base_file_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;final_gvcf_base_name&quot;</span> <span class="p">:</span> <span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span>
      <span class="p">}</span>
    <span class="p">}</span> <span class="p">],</span>
    <span class="nt">&quot;commit&quot;</span> <span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;project&quot;</span> <span class="p">:</span> <span class="s2">&quot;Example Project&quot;</span><span class="p">,</span>
    <span class="nt">&quot;uuid&quot;</span> <span class="p">:</span> <span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span>
    <span class="nt">&quot;wdl&quot;</span> <span class="p">:</span> <span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span>
    <span class="nt">&quot;version&quot;</span> <span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
