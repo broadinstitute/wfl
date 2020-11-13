@@ -65,7 +65,7 @@
           (assoc body :creator email))))))
 
 (defn get-workload!
-  "List all workloads or the workload with UUID in REQUEST."
+  "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
   (letfn [(go! [tx {:keys [uuid] :as workload}]
             (if (:finished workload)
@@ -77,8 +77,16 @@
       (succeed
         (mapv (partial go! tx)
           (if-let [uuid (-> request :parameters :query :uuid)]
-            [(workloads/load-workload-for-uuid tx uuid)]
-            (workloads/load-workloads tx)))))))
+            (do
+              (logr/infof "getting workload by uuid %s" uuid)
+              [(workloads/load-workload-for-uuid tx uuid)])
+            (if-let [project (-> request :parameters :query :project)]
+              (do
+                (logr/infof "getting workloads by project %s" project)
+                (workloads/load-workloads-with-project tx project))
+              (do
+                (logr/infof "getting all workloads")
+                (workloads/load-workloads tx)))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."

@@ -213,6 +213,58 @@ includes their status information. It is also possible to use the Job Manager
 to check workflow progress and easily see information about any workflow
 failures.
 
+### Query Workload with project: `/api/v1/workload?project=<project>`
+
+Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).
+
+Request:
+
+```bash
+curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)"
+```
+
+Response:
+
+```json
+[{
+   "creator" : "user@domain",
+   "pipeline" : "ExternalExomeReprocessing",
+   "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+   "release" : "ExternalExomeReprocessing_vX.Y.Z",
+   "created" : "YYYY-MM-DDTHH:MM:SSZ",
+   "started" : "YYYY-MM-DDTHH:MM:SSZ",
+   "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+   "workflows" : [ {
+     "status" : "Submitted",
+     "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+     "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+     "inputs" : {
+       "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+       "sample_name" : "NA12878_PLUMBING",
+       "base_file_name" : "NA12878_PLUMBING.cram",
+       "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+     }
+   } ],
+   "commit" : "commit-ish",
+   "project" : "Example Project",
+   "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+   "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+   "version" : "X.Y.Z"
+ }]
+```
+
+The "workflows" field lists out each Cromwell workflow that was started, and
+includes their status information. It is also possible to use the Job Manager
+to check workflow progress and easily see information about any workflow
+failures.
+
+!!! warning "Note"
+    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
+    hitting this endpoint without them will return all workloads. However, they cannot be specified
+    together.
+
 ## A1 External Exome Workload-Request JSON Spec
 ```json
 {

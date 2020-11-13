@@ -267,3 +267,56 @@ Response:
 The "workflows" field lists out each Cromwell workflow that was started, and includes their
 status information. It is also possible to use the Job Manager to check workflow progress and
 easily see information about any workflow failures.
+
+### Query Workload with project: `/api/v1/workload?project=<project>`
+
+Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).
+
+Request:
+
+```bash
+curl --location --request GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=wgs-dev' \
+--header 'Authorization: Bearer '$(gcloud auth print-access-token)
+```
+
+Response:
+
+```json
+[{
+  "creator": "username",
+  "pipeline": "ExternalWholeGenomeReprocessing",
+  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+  "release": "ExternalWholeGenomeReprocessing_v1.0",
+  "created": "2020-08-27T16:26:59Z",
+  "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
+  "workflows": [
+    {
+      "id": 1,
+      "updated": "2020-10-05T16:15:32Z",
+      "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+      "inputs": {
+        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+        "sample_name": "TestSample1234"
+      }
+    }
+  ],
+  "project": "wgs-dev",
+  "id": 6,
+  "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
+  "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+  "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+  "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
+  "items": "ExternalWholeGenomeReprocessing_000000006",
+  "version": "0.1.7"
+}]
+```
+
+The "workflows" field lists out each Cromwell workflow that was started, and
+includes their status information. It is also possible to use the Job Manager
+to check workflow progress and easily see information about any workflow
+failures.
+
+!!! warning "Note"
+    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint, 
+    hitting this endpoint without them will return all workloads. However, they cannot be specified
+    together.

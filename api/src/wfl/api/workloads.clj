@@ -59,6 +59,12 @@
                 :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
+(defn load-workloads-with-project
+  "Use transaction `tx` to load `workload`(s) with `project`."
+  [tx project]
+  (let [do-load   (partial load-workload-impl tx)]
+    (map do-load (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
   [tx]

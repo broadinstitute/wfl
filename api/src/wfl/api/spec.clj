@@ -27,11 +27,12 @@
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
-(s/def ::uuid-query (s/keys :opt-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
 (s/def ::options map?)
 (s/def ::common map?)
+(s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
+                               #(not (and (:uuid %) (:project %)))))
 (s/def ::workload-request (s/keys :opt-un [::common
                                            ::input
                                            ::items]

@@ -18,7 +18,7 @@
   (-> (workloads/copyfile-workload-request src dst)
     (assoc :creator (:email @endpoints/userinfo))))
 
-(defn ^:private old-create-wgs-workload! []
+(defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
       (let [[id table] (all/add-workload-table! tx copyfile/workflow-wdl request)
@@ -28,7 +28,7 @@
         id))))
 
 (deftest test-loading-old-copyfile-workload
-  (let [id       (old-create-wgs-workload!)
+  (let [id       (old-create-copyfile-workload!)
         workload (workloads/load-workload-for-id id)]
     (is (= id (:id workload)))
     (is (= copyfile/pipeline (:pipeline workload)))))

@@ -68,7 +68,7 @@
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get  {:summary    "Get the workloads."
-            :parameters {:query ::spec/uuid-query}
+            :parameters {:query ::spec/workload-query}
             :responses  {200 {:body ::spec/workload-responses}}
             :handler    handlers/get-workload!}}]
    ["/api/v1/create"
