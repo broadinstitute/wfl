@@ -10,22 +10,27 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private make-copyfile-workload-request
-  [src dst]
+(defn ^:private make-copyfile-workload-request-with-project
+  [src dst project]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo) :project project)))
 
-(defn ^:private old-create-copyfile-workload! []
-  (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
-    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-      (let [[id table] (all/add-workload-table! tx copyfile/workflow-wdl request)
-            add-id (fn [m id] (assoc (:inputs m) :id id))]
-        (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
-        (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
-        table))))
-
-(deftest test-loading-old-copyfile-workload-with-project
-  (let [project (:project (old-create-copyfile-workload!))
-        workloads (workloads/load-workloads-with-project project)]
-    (is (every? #(= copyfile/pipeline (:pipeline %)) workloads))
-    (is (every? #(= project (:project %)) workloads))))
+(deftest test-loading-copyfile-workloads-with-project
+  (let [upper-project "TEST-PROJECT"
+        lower-project "test-project"
+        bogus-project "bogus"]
+    (letfn [(create-copyfile-workload! [project]
+              (-> (make-copyfile-workload-request-with-project "gs://fake/input" "gs://fake/output" project)
+                  workloads/create-workload!))
+            (create-a-bunch-copyfile-workloads! []
+              (dotimes [n 2] (create-copyfile-workload! upper-project))
+              (dotimes [n 2] (create-copyfile-workload! lower-project)))
+            (verify-copyfile-workloads-identity [project workloads]
+              (is (every? #(= copyfile/pipeline (:pipeline %)) workloads))
+              (is (every? #(= project (:project %)) workloads)))]
+      (create-a-bunch-copyfile-workloads!)
+      (testing "No matching returns empty list"
+        (is empty? (workloads/load-workloads-with-project bogus-project)))
+      (testing "Query project parameter is case-sensitive"
+        (let [fetched-workloads (workloads/load-workloads-with-project upper-project)]
+          (verify-copyfile-workloads-identity upper-project fetched-workloads))))))
