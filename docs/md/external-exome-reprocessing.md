@@ -240,52 +240,15 @@ Response:
      "updated" : "YYYY-MM-DDTHH:MM:SSZ",
      "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
      "inputs" : {
-       "cram_ref_fasta" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-       "scatter_settings" : {
-         "haplotype_scatter_count" : 50,
-         "break_bands_at_multiples_of" : 0
-       },
-       "input_cram" : "gs://path/to/a.cram",
-       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/to",
-       "sample_name" : "a",
-       "bait_set_name" : "whole_exome_illumina_coding_v1",
-       "references" : {
-         "calling_interval_list" : "gs://gcp-public-data--broad-references/hg38/v0/exome_calling_regions.v1.interval_list",
-         "contamination_sites_bed" : "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.bed",
-         "dbsnp_vcf_index" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf.idx",
-         "haplotype_database_file" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.haplotype_database.txt",
-         "known_indels_sites_indices" : [ "gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi", "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz.tbi" ],
-         "evaluation_interval_list" : "gs://gcp-public-data--broad-references/hg38/v0/exome_evaluation_regions.v1.interval_list",
-         "contamination_sites_mu" : "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.mu",
-         "dbsnp_vcf" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dbsnp138.vcf",
-         "known_indels_sites_vcfs" : [ "gs://gcp-public-data--broad-references/hg38/v0/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz", "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.known_indels.vcf.gz" ],
-         "reference_fasta" : {
-           "ref_pac" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.pac",
-           "ref_bwt" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.bwt",
-           "ref_dict" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.dict",
-           "ref_ann" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.ann",
-           "ref_fasta_index" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-           "ref_alt" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt",
-           "ref_fasta" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-           "ref_sa" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.sa",
-           "ref_amb" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.64.amb"
-         },
-         "contamination_sites_ud" : "gs://gcp-public-data--broad-references/hg38/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat.UD"
-       },
-       "cram_ref_fasta_index" : "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-       "papi_settings" : {
-         "agg_preemptible_tries" : 3,
-         "preemptible_tries" : 3
-       },
-       "base_file_name" : "a.cram",
-       "bait_interval_list" : "gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.baits.interval_list",
-       "final_gvcf_base_name" : "a.cram",
-       "target_interval_list" : "gs://gcp-public-data--broad-references/hg38/v0/HybSelOligos/whole_exome_illumina_coding_v1/whole_exome_illumina_coding_v1.Homo_sapiens_assembly38.targets.interval_list",
-       "unmapped_bam_suffix" : ".unmapped.bam"
+       "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+       "sample_name" : "NA12878_PLUMBING",
+       "base_file_name" : "NA12878_PLUMBING.cram",
+       "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
      }
    } ],
    "commit" : "commit-ish",
-   "project" : "PO-1234",
+   "project" : "Example Project",
    "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
    "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
    "version" : "X.Y.Z"
@@ -298,7 +261,7 @@ to check workflow progress and easily see information about any workflow
 failures.
 
 !!! warning "Note"
-    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint, 
+    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.
 
