@@ -43,6 +43,12 @@
           query {:includeSubworkflows false :start start :end end}]
       (succeed {:results (cromwell/query env query)}))))
 
+(defn strip-internals
+  "Strip internal properties from the `workload` and its `workflows`."
+  [workload]
+  (let [prune #(apply dissoc % [:id :items])]
+    (prune (update workload :workflows (partial mapv prune)))))
+
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
   [request]
@@ -61,8 +67,9 @@
     (logr/infof "post-create endpoint called: body=%s" body)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
-        (workloads/create-workload! tx
-          (assoc body :creator email))))))
+        (strip-internals
+          (workloads/create-workload! tx
+            (assoc body :creator email)))))))
 
 (defn get-workload!
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
@@ -75,7 +82,7 @@
                 (workloads/update-workload! tx workload))))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
-        (mapv (partial go! tx)
+        (mapv (comp strip-internals (partial go! tx))
           (if-let [uuid (-> request :parameters :query :uuid)]
             (do
               (logr/infof "getting workload by uuid %s" uuid)
@@ -101,6 +108,7 @@
             (do
               (logr/infof "starting workload %s" uuid)
               (workloads/start-workload! tx workload)))
+          strip-internals
           succeed)))))
 
 (defn post-exec
@@ -114,4 +122,5 @@
         :email
         (assoc workload-request :creator)
         (workloads/execute-workload! tx)
+        strip-internals
         succeed))))

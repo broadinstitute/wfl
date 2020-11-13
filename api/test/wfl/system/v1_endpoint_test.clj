@@ -5,7 +5,8 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :refer [with-temporary-gcs-folder temporary-postgresql-database]]
             [wfl.tools.workloads :as workloads]
-            [wfl.service.cromwell :as cromwell])
+            [wfl.service.cromwell :as cromwell]
+            [wfl.util :as util])
   (:import (java.util UUID)
            (clojure.lang ExceptionInfo)))
 
@@ -27,13 +28,20 @@
 (defn- verify-succeeded-workload [workload]
   (run! verify-succeeded-workflow (:workflows workload)))
 
+(defn ^:private verify-internal-properties-removed [workload]
+  (letfn [(go! [key]
+            (is (util/absent? workload key)
+              (format "workload should not contain %s" key))
+            (is (every? #(util/absent? % key) (:workflows workload))
+              (format "workflows should not contain %s" key)))]
+    (run! go! [:id :items])))
+
 (deftest test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
     (let [response (endpoints/get-oauth2-id)]
       (is (= (count response) 2))
       (is (some #(= % :oauth2-client-id) response))
       (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
-
 
 (defn ^:private test-create-workload
   [{:keys [pipeline] :as request}]
@@ -44,7 +52,8 @@
       (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
       (is (not (:started workload)) "hasn't been started in cromwell")
       (let [include [:pipeline :cromwell :project]]
-        (is (= (select-keys request include) (select-keys workload include)))))))
+        (is (= (select-keys request include) (select-keys workload include))))
+      (verify-internal-properties-removed workload))))
 
 (deftest test-create-wgs-workload
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -66,6 +75,7 @@
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
+      (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
 (deftest test-start-wgs-workload
@@ -95,6 +105,7 @@
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
+      (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
 (deftest test-exec-wgs-workload
