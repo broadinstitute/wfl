@@ -60,7 +60,7 @@
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest test-create-aou-workload
   (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
-(deftest test-create-aou-workload
+(deftest test-create-arrays-workload
   (test-create-workload (workloads/arrays-workload-request (UUID/randomUUID))))
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
