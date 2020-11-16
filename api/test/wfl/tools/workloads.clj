@@ -88,7 +88,7 @@
 
 (defn arrays-workload-request
   [identifier]
-  {:cromwell (get-in stuff [:aou-dev :cromwell :url])
+  {:cromwell (get-in stuff [:arrays-dev :cromwell :url])
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output"
    :pipeline arrays/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)

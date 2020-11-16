@@ -95,7 +95,7 @@
     (merge optional mandatory)))
 
 (defn make-inputs
-  "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
+  "Return inputs for arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
   [environment per-sample-inputs]
   (-> (merge references/hg19-arrays-references
              fingerprinting
@@ -113,14 +113,14 @@
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
 
 (defn make-labels
-  "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
+  "Return labels for arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
   [per-sample-inputs other-labels]
   (merge cromwell-label-map
          (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
          other-labels))
 
 ;; visible for testing
-(defn submit-aou-workflow
+(defn submit-arrays-workflow
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    WORKFLOW-OPTIONS and OTHER-LABELS."
   [environment per-sample-inputs workflow-options other-labels]
@@ -159,7 +159,7 @@
         id))
 
 (def primary-keys
-  "An AoU workflow can be uniquely identified by its `chip_well_barcode` and
+  "An arrays workflow can be uniquely identified by its `chip_well_barcode` and
   `analysis_version_number`. Consequently, these are the primary keys in the
   database."
   [:chip_well_barcode :analysis_version_number])
@@ -176,7 +176,7 @@
                   workflow-options (util/deep-merge default-options
                                                     {:final_workflow_outputs_dir output-path})]
               [id (or uuid
-                  (submit-aou-workflow environment (:inputs workflow) workflow-options {:workload uuid}))]))
+                  (submit-arrays-workflow environment (:inputs workflow) workflow-options {:workload uuid}))]))
           (update! [tx [id uuid]]
             (when uuid
               (jdbc/update! tx items
