@@ -111,12 +111,10 @@ at least read access to the input files.
       "created": "2020-10-05T15:50:01Z",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "project": "PO-1234",
-      "id": 30,
       "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
       "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
       "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
       "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
-      "items": "ExternalWholeGenomeReprocessing_000000030",
       "version": "0.3.2"
     }
     ```
