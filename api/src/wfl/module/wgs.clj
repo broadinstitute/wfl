@@ -123,10 +123,12 @@
 (defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items output common] :as request}]
-  (letfn [(serialize [workflow id]
+  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
+          (serialize [workflow id]
             (-> (assoc workflow :id id)
               (update :options
-                #(json/write-str (util/deep-merge (:options common) %)))
+                #(json/write-str
+                   (nil-if-empty (util/deep-merge (:options common) %))))
               (update :inputs
                 #(json/write-str
                    (normalize-reference-fasta

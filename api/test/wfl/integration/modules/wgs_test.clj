@@ -157,3 +157,11 @@
           workloads/execute-workload!
           :workflows
           (->> (map (comp verify-workflow-options :options))))))))
+
+(deftest test-empty-workflow-options
+  (letfn [(go! [workflow] (is (util/absent? workflow :options)))]
+    (run! go! (-> (make-wgs-workload-request)
+                (assoc-in [:common :options] {})
+                (update :items (partial map #(assoc % :options {})))
+                workloads/create-workload!
+                :workflows))))
