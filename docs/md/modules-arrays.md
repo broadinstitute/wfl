@@ -21,13 +21,15 @@ caller.
 
 It supports the following API endpoints:
 
-| Verb   | Endpoint                       | Description                                                    |
-|--------|--------------------------------|----------------------------------------------------------------|
-| GET    | `/api/v1/workload`             | List all workloads                                             |
-| GET    | `/api/v1/workload/{uuid}`      | Query for a workload by its UUID                               |
-| POST   | `/api/v1/create`               | Create a new workload                                          |
-| POST   | `/api/v1/start`                | Start a workload                                |
-| POST   | `/api/v1/append_to_aou`        | Append a new or multiple sample(s) to an existing AOU workload |
+| Verb | Endpoint                     | Description                                                    |
+|------|------------------------------|----------------------------------------------------------------|
+| GET  | `/api/v1/workload`           | List all workloads                                             |
+| GET  | `/api/v1/workload/{uuid}`    | Query for a workload by its UUID                               |
+| GET  | `/api/v1/workload/{project}` | Query for a workload by its Project name                       |
+| POST | `/api/v1/create`             | Create a new workload                                          |
+| POST | `/api/v1/start`              | Start a workload                                               |
+| POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
+| POST | `/api/v1/append_to_aou`      | Append a new or multiple sample(s) to an existing AOU workload |
 
 Different from the fixed workload types that caller only needs to create a workload with a series of sample inputs and
 then simply start the workload, `aou-arrays` module requires the caller to manage the life cycle of a workload on their

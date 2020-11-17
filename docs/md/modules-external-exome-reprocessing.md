@@ -14,6 +14,17 @@ below for all options.
 
 ## Usage
 
+External Exome Reprocessing workload supports the following API endpoints:
+
+| Verb | Endpoint                     | Description                                                    |
+|------|------------------------------|----------------------------------------------------------------|
+| GET  | `/api/v1/workload`           | List all workloads                                             |
+| GET  | `/api/v1/workload/{uuid}`    | Query for a workload by its UUID                               |
+| GET  | `/api/v1/workload/{project}` | Query for a workload by its Project name                       |
+| POST | `/api/v1/create`             | Create a new workload                                          |
+| POST | `/api/v1/start`              | Start a workload                                               |
+| POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
+
 ### Create Workload: `/api/v1/create`
 Create a new workload. Ensure that `workflow-launcher` and `cromwell`'s service
 accounts have at least read access to the input files.
