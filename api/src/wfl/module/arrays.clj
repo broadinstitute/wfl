@@ -1,8 +1,8 @@
 (ns wfl.module.arrays
   "Process Arrays for the Broad Genomics Platform."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [wfl.environments :as env]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
@@ -14,8 +14,7 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl]
-            [clojure.data.json :as json])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GPArrays")
@@ -30,15 +29,16 @@
   {(keyword wfl/the-name)
    pipeline})
 
-(def cromwell-label
-  "The WDL label applied to Cromwell metadata."
-  (let [[key value] (first cromwell-label-map)]
-    (str (name key) ":" value)))
+(def primary-keys
+  "An arrays workflow can be uniquely identified by its `chip_well_barcode` and
+  `analysis_version_number`. Consequently, these are the primary keys in the
+  database."
+  [:chip_well_barcode :analysis_version_number])
 
 (def fingerprinting
   "Fingerprinting inputs for arrays."
-  {:haplotype_database_file              "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.haplotype_database.txt"
-   :variant_rsids_file                   "gs://broad-references-private/hg19/v0/Homo_sapiens_assembly19.haplotype_database.snps.list"})
+  {:haplotype_database_file "gs://gcp-public-data--broad-references/hg19/v0/Homo_sapiens_assembly19.haplotype_database.txt"
+   :variant_rsids_file      "gs://broad-references-private/hg19/v0/Homo_sapiens_assembly19.haplotype_database.snps.list"})
 
 (def other-inputs
   "Miscellaneous inputs for arrays."
@@ -47,16 +47,11 @@
    :disk_size                        100
    :preemptible_tries                3})
 
-(defn map-arrays-environment
-  "Map ARRAYS-ENV to environment for inputs preparation."
-  [arrays-env]
-  ({:arrays-dev "dev" :arrays-prod "prod"} arrays-env))
-
 (defn env-inputs
   "Array inputs for ENVIRONMENT that do not depend on the input file."
   [environment]
   {:vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :environment      (map-arrays-environment environment)})
+   :environment      ({:arrays-dev "dev" :arrays-prod "prod"} environment)})
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
@@ -106,17 +101,18 @@
 
 ;; visible for testing
 (def default-options
-  {; TODO: add :default_runtime_attributes {:maxRetries 3} here
+  {
    :use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
-   :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"}})
+   :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
+                                :maxRetries 1}})
 
 (defn make-labels
   "Return labels for arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
   [per-sample-inputs other-labels]
   (merge cromwell-label-map
-         (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
+         (select-keys per-sample-inputs primary-keys)
          other-labels))
 
 ;; visible for testing
@@ -158,21 +154,12 @@
       (jdbc/insert-multi! tx table (map form items (range))))
     id))
 
-(def primary-keys
-  "An arrays workflow can be uniquely identified by its `chip_well_barcode` and
-  `analysis_version_number`. Consequently, these are the primary keys in the
-  database."
-  [:chip_well_barcode :analysis_version_number])
-
-(defn- primary-values [sample]
-  (mapv sample primary-keys))
-
 (defn start-arrays-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [items output uuid] :as workload}]
-  (let [now             (OffsetDateTime/now)]
+  (let [now (OffsetDateTime/now)]
     (letfn [(submit! [environment {:keys [id uuid] :as workflow}]
-              (let [output-path      (str output (str/join "/" (primary-values workflow)))
+              (let [output-path      (str (all/slashify output) (str/join "/" (mapv workflow primary-keys)))
                     workflow-options (util/deep-merge default-options
                                                       {:final_workflow_outputs_dir output-path})]
                 [id (or uuid
@@ -190,8 +177,8 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->>
-   (add-arrays-workload! tx request)
+  (->> request
+   (add-arrays-workload! tx)
    (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
