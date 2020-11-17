@@ -1,16 +1,16 @@
 # Customizing Workflow Options
 
 ???+ tip
-    This page covers customizing workflow _options_, which are different from the 
+    This page covers customizing workflow _options_, which are different from the
     _inputs_ passed to the WDL. Workflow options are interpreted directly by Cromwell,
-    though WDLs can customize them too. For more information see 
+    though WDLs can customize them too. For more information see
     [Cromwell's documentation](https://cromwell.readthedocs.io/en/stable/wf_options/Overview/).
-    
+
     Another important piece of context for this page is the difference between a workflow
     that actually gets run on Cromwell versus a workload (a WFL-managed set of individual
     workflows).
-    
-    
+
+
 ## Usage
 
 !!! info "Summary"
@@ -67,7 +67,7 @@ workflows, for the entire workload, or both:
         "sample_name": "TestSample1234"
       },
       "options": {
-        "my_option": "something for sample 1234"      
+        "my_option": "something for sample 1234"
       }
     },
     {
@@ -116,7 +116,7 @@ response, which includes all workflow options calculated for each workflow:
       "options": {
         "my_option": "something for sample 1234",
         "global_option": "something for all of the samples",
-        "overwritten_option": "overwrite me for sample 5678"  
+        "overwritten_option": "overwrite me for sample 5678"
       }
     },
     {
@@ -156,7 +156,7 @@ visibility but can still affect the result.
 
 WFL supplies its own derived options usually on a per-module basis,
 meaning different pipelines that make use of different modules may
-have different options they derive and supply by default. 
+have different options they derive and supply by default.
 
 Individual module documentation can help provide more info, as will
 simply looking at WFL's response from the `/create` or `/exec` endpoints,

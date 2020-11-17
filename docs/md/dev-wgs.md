@@ -112,7 +112,7 @@ Response:
 
 Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
 cromwell "workflowOptions" via the `options` map. See the
-[reference page](/docs/md/workflow-options.md) for more information.
+[reference page](./workflow-options.md) for more information.
 
 ### Start Workload: `/api/v1/start`
 
@@ -317,6 +317,6 @@ to check workflow progress and easily see information about any workflow
 failures.
 
 !!! warning "Note"
-    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint, 
+    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.

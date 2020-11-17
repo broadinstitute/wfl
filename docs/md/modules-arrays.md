@@ -65,7 +65,7 @@ curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testi
 ```
 
 !!! warning "Note"
-    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint, 
+    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.
 
