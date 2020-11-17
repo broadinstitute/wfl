@@ -51,6 +51,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl "http://localhost:8080/api/v1/workload" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
 
@@ -60,6 +61,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl "http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
 
@@ -69,6 +71,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
 
@@ -83,6 +86,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl -X "POST" "http://localhost:8080/api/v1/create" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json' \
         -H 'Content-Type: application/json' \
         -d '{
@@ -99,6 +103,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl -X "POST" "http://localhost:8080/api/v1/start" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json' \
         -H 'Content-Type: application/json' \
         -d $'{
@@ -112,6 +117,7 @@ To give more information, here are some example inputs to the above endpoints:
 
     ```shell
     curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json' \
         -H 'Content-Type: application/json' \
         -d $'{
