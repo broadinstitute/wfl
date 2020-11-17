@@ -24,28 +24,26 @@ this documentation.
 
 ## Create a workload
 
-Defining a workload type requires these top-level parameters.
+Defining a workload type usually requires these top-level parameters.
 
-| Parameter | Type       |
-|-----------|------------|
-| project   | text       |
-| cromwell  | URL        |
-| pipeline  | pipeline   |
-| input     | URL prefix |
-| output    | URL prefix |
+| Parameter | Type       |              Required              |
+|-----------|------------|:----------------------------------:|
+| cromwell  | URL        | :fontawesome-regular-check-square: |
+| output    | URL prefix  | :fontawesome-regular-check-square: |
+| pipeline  | pipeline   | :fontawesome-regular-check-square: |
+| project   | text       | :fontawesome-regular-check-square: |
+| common    | object     |                                    |
+| input     | URL prefix  |                                    |
+| items     | object     |                                    |
+
 
 The parameters are used this way.
 
-The `project` is just some text
-to identify a researcher,
-billing entity,
-or cost object
-responsible for the workload.
-
-The `cromwell` URL specifies the Cromwell instance
+- The `cromwell` URL specifies the Cromwell instance
 to service the _workload_.
-
-The `pipeline` enumeration implicitly identifies a data
+- The `output` URL prefix specifies the path you'd like WFL
+to dump the results to. It usually is a _gs_ bucket.
+- The `pipeline` enumeration implicitly identifies a data
 schema for the inputs to and outputs from the workload.
 You can think of it as the _kind_ of workflow
 specified for the workload.
@@ -55,4 +53,12 @@ for a Cromwell pipeline defined in WDL.
 You might also think of `pipeline`
 as the external or official name
 of a WFL processing module.
-
+- The `project` is just some text
+to identify a researcher,
+billing entity,
+or cost object
+responsible for the workload.
+- The `common` is something common for all of the samples, such as the workflow options. For more details, check the docs for the specific type of workload you are trying to submit.
+- The `input` URL prefix specifies the path you'd like WFL
+to read (a batch of) sample(s) from. It usually is a _gs_ bucket.
+- The `items` is used to configure individual units of a workload. You can use it to tell WFL to treat arbitrary parts of the workload sepcially. For more details, check the docs for the specific type of workload you are trying to submit.

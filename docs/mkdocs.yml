@@ -59,3 +59,6 @@ markdown_extensions:
       permalink: ⚓︎
   - markdown_include.include:
       base_path: md
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
