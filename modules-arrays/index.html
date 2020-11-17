@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -403,7 +401,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -415,7 +413,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -517,7 +515,7 @@
                   </a>
                 
                 
-                <h1 id="arrays-module">Arrays module<a class="headerlink" href="#arrays-module" title="Permanent link">&para;</a></h1>
+                <h1 id="arrays-module">Arrays module<a class="headerlink" href="#arrays-module" title="Permanent link">⚓︎</a></h1>
 <p>WorkFlow Launcher (WFL) implements <code>aou-arrays</code> module to
 support secure and efficient processing of the AllOfUs Arrays
 samples. This page documents the design principles and assumptions
@@ -528,7 +526,7 @@ means all samples are coming in like a continuous stream, and WFL does not make
 any assumption of how many samples will be in the workload or how to group the
 samples together: it hands off the workload creation and starting process to its
 caller.</p>
-<h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h3>
+<h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">⚓︎</a></h3>
 <p><code>aou-arrays</code> module, like others, implements the following <em>multimethod dispatchers</em>:</p>
 <ul>
 <li>start-workload!</li>
@@ -555,6 +553,11 @@ caller.</p>
 <td>Query for a workload by its UUID</td>
 </tr>
 <tr>
+<td>GET</td>
+<td><code>/api/v1/workload/{project}</code></td>
+<td>Query for a workload by its Project name</td>
+</tr>
+<tr>
 <td>POST</td>
 <td><code>/api/v1/create</code></td>
 <td>Create a new workload</td>
@@ -563,6 +566,11 @@ caller.</p>
 <td>POST</td>
 <td><code>/api/v1/start</code></td>
 <td>Start a workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/exec</code></td>
+<td>Create and start (execute) a workload</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -585,47 +593,69 @@ analyzed, processed and submitted to Cromwell as long as it has valid informatio
 </ol>
 <p>To give more information, here are some example inputs to the above endpoints:</p>
 <p><strong>GET /api/v1/workload</strong></p>
+<div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl <span class="s2">&quot;http://localhost:8080/api/v1/workload&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span>
 </code></pre></div>
+</div>
+</div>
 <p><strong>GET /api/v1/workload/{uuid}</strong></p>
+<div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl <span class="s2">&quot;http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span>
 </code></pre></div>
+</div>
+</div>
 <p><strong>GET /api/v1/workload/{project}</strong></p>
+<div class="tabbed-set" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl <span class="s2">&quot;http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span>
 </code></pre></div>
+</div>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Note</p>
-<p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint, 
+<p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint,
 hitting this endpoint without them will return all workloads. However, they cannot be specified
 together.</p>
 </div>
 <p><strong>GET /api/v1/workload/create</strong></p>
+<div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/create&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">&#39;{</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+    -d <span class="s1">&#39;{</span>
 <span class="s1">            &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
 <span class="s1">            &quot;output&quot;:   &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/&quot;,</span>
 <span class="s1">            &quot;project&quot;:  &quot;Example Project&quot;,</span>
 <span class="s1">            &quot;pipeline&quot;: &quot;AllOfUsArrays&quot;</span>
-<span class="s1">         }&#39;</span>
+<span class="s1">        }&#39;</span>
 </code></pre></div>
+</div>
+</div>
 <p><strong>GET /api/v1/workload/start</strong></p>
+<div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/start&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">$&#39;{</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+    -d <span class="s1">$&#39;{</span>
 <span class="s1">            &quot;uuid&quot;: &quot;00000000-0000-0000-0000-000000000000&quot;</span>
 <span class="s1">          }&#39;</span>
 </code></pre></div>
+</div>
+</div>
 <p><strong>GET /api/v1/workload/append_to_aou</strong></p>
+<div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl -X <span class="s2">&quot;POST&quot;</span> <span class="s2">&quot;http://localhost:8080/api/v1/append_to_aou&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">$&#39;{</span>
+    -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Accept: application/json&#39;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+    -d <span class="s1">$&#39;{</span>
 <span class="s1">  &quot;uuid&quot;: &quot;00000000-0000-0000-0000-000000000000&quot;,</span>
 <span class="s1">  &quot;notifications&quot;: [</span>
 <span class="s1">    {</span>
@@ -661,7 +691,9 @@ together.</p>
 <span class="s1">  ]</span>
 <span class="s1">}&#39;</span>
 </code></pre></div>
-<h3 id="workload-model">Workload Model<a class="headerlink" href="#workload-model" title="Permanent link">&para;</a></h3>
+</div>
+</div>
+<h3 id="workload-model">Workload Model<a class="headerlink" href="#workload-model" title="Permanent link">⚓︎</a></h3>
 <p>WFL designed the following workload model in order to support the above API and workload submission mechanism.</p>
 <p>Initially, it has the following schema:</p>
 <div class="highlight"><pre><span></span><code>                                    List of relations
@@ -737,7 +769,7 @@ with the existing <code>primary-keys</code> will be omitted.</p>
           </a>
         
         
-          <a href="../dev-wgs/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../modules-wgs/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">

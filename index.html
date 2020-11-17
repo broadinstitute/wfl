@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -488,7 +486,7 @@
 
 
   <li class="md-nav__item">
-    <a href="dev-wgs/" class="md-nav__link">
+    <a href="modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -500,7 +498,7 @@
 
 
   <li class="md-nav__item">
-    <a href="external-exome-reprocessing/" class="md-nav__link">
+    <a href="modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -689,12 +687,12 @@
                   </a>
                 
                 
-                <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">&para;</a></h1>
+                <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">⚓︎</a></h1>
 <p><a href="https://internal.broadinstitute.org/~jwarren/green-hornet-status.html"><img alt="Build Board" src="https://img.shields.io/badge/-The%20Build%20Boad%20(VPN)-blue" /></a>
 <img alt="Docsite Build" src="https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master" />
 <img alt="Build on Master" src="https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master" />
 <a href="https://github.com/broadinstitute/wfl/blob/master/CHANGELOG.md"><img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release" /></a></p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">⚓︎</a></h2>
 <p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a>
 is a workload manager.</p>
 <p>For example, a workload could be a set of Whole Genome samples to be reprocessed in a
@@ -708,13 +706,13 @@ on Kubernetes clusters.</p>
 <p>For more on Workflow Launcher's role in the Terra infrastructure
 see <a href="/docs/md/terra.md">Workflow Launcher's role in Terra</a>.</p>
 </div>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">⚓︎</a></h2>
 <details class="tip" open="open"><summary>Tip</summary><p>This is the Quickstart section, which should cover the most frequent
 uses cases that interact with WFL. For more detailed information, please
 check other sections such as the <a href="/docs/md/dev-process.md">development guide</a>
 or <a href="/docs/md/modules-general.md">modules design principles</a>.</p>
 </details>
-<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h3>
+<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">⚓︎</a></h3>
 <p>The easiest way to build WFL is via <code>make</code> (or <code>gmake</code> on macOS), in addition, the
 following prerequisites are needed:</p>
 <ul>
@@ -773,13 +771,13 @@ project root.</p>
 to remove them. This is not always needed but can help completely
 purge the local derived files.</p>
 </div>
-<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h3>
+<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">⚓︎</a></h3>
 <p>If you only want to run tests on specific modules, you could run:</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
 </code></pre></div>
 <p>such as <code>make api TARGET=check</code> or <code>make cloud_function TARGET=check</code>.
 Note this automatically makes all of <code>check</code>'s prerequisites.</p>
-<h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">&para;</a></h4>
+<h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">⚓︎</a></h4>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
 of tests to save time and filter out noise. You can do this by directly
 invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
@@ -805,7 +803,7 @@ to help speed up the <code>system</code> tests. Rather than <code>clojure -A:tes
 just specify the namespace(s) to try to parallelize.</p>
 <div class="highlight"><pre><span></span><code>clojure -A:parallel-test wfl.system.v1-endpoint-test
 </code></pre></div>
-<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
+<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">⚓︎</a></h3>
 <p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
 When it's time to deploy WFL, for most of the time developers need to
 release a new version following the steps in <a href="/docs/md/dev-release.md">Release Guide</a></p>
@@ -825,9 +823,9 @@ function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for ins
 </div>
 <p>Learn more about the deployment details in
 <a href="/docs/md/dev-deployment.md">Deployment of WorkFlow Launcher</a>.</p>
-<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
+<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">⚓︎</a></h2>
 <p>For frontend details, check <a href="/docs/md/dev-frontend.md">Frontend Section</a></p>
-<h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">&para;</a></h3>
+<h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">⚓︎</a></h3>
 <p>After cloning a new WFL repo, the top-level files are:
 <div class="highlight"><pre><span></span><code>.
 ├── api/            - `workflow-launcher` backend
@@ -846,8 +844,8 @@ function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for ins
 </code></pre></div>
 Tip: Run <code>make</code> at least once after cloning the repo to make sure all the
 necessary files are in place.</p>
-<h3 id="api-module"><code>api</code> Module<a class="headerlink" href="#api-module" title="Permanent link">&para;</a></h3>
-<h4 id="source-code">Source code<a class="headerlink" href="#source-code" title="Permanent link">&para;</a></h4>
+<h3 id="api-module"><code>api</code> Module<a class="headerlink" href="#api-module" title="Permanent link">⚓︎</a></h3>
+<h4 id="source-code">Source code<a class="headerlink" href="#source-code" title="Permanent link">⚓︎</a></h4>
 <p>The Clojure source code is in the <code>api/src/</code> directory.</p>
 <p>The entry point for the WFL executable is the <code>-main</code> function
 in <code>main.clj</code>. It takes the command line arguments as strings,
@@ -926,7 +924,7 @@ the services WFL talks to, and are named accordingly.</p>
 </tr>
 </tbody>
 </table>
-<h4 id="exomes-in-the-cloud-resources">Exomes in the Cloud Resources<a class="headerlink" href="#exomes-in-the-cloud-resources" title="Permanent link">&para;</a></h4>
+<h4 id="exomes-in-the-cloud-resources">Exomes in the Cloud Resources<a class="headerlink" href="#exomes-in-the-cloud-resources" title="Permanent link">⚓︎</a></h4>
 <p>From <a href="https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing">Hybrid Selection in the Cloud V1</a></p>
 <ol>
 <li>

@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -403,7 +401,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -415,7 +413,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -517,16 +515,16 @@
                   </a>
                 
                 
-                <h1 id="customizing-workflow-options">Customizing Workflow Options<a class="headerlink" href="#customizing-workflow-options" title="Permanent link">&para;</a></h1>
-<details class="tip" open="open"><summary>Tip</summary><p>This page covers customizing workflow <em>options</em>, which are different from the 
+                <h1 id="customizing-workflow-options">Customizing Workflow Options<a class="headerlink" href="#customizing-workflow-options" title="Permanent link">⚓︎</a></h1>
+<details class="tip" open="open"><summary>Tip</summary><p>This page covers customizing workflow <em>options</em>, which are different from the
 <em>inputs</em> passed to the WDL. Workflow options are interpreted directly by Cromwell,
-though WDLs can customize them too. For more information see 
+though WDLs can customize them too. For more information see
 <a href="https://cromwell.readthedocs.io/en/stable/wf_options/Overview/">Cromwell's documentation</a>.</p>
 <p>Another important piece of context for this page is the difference between a workflow
 that actually gets run on Cromwell versus a workload (a WFL-managed set of individual
 workflows).</p>
 </details>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
 <div class="admonition info">
 <p class="admonition-title">Summary</p>
 <ul>
@@ -579,7 +577,7 @@ workflows, for the entire workload, or both:</p>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">},</span>
       <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span>      
+        <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span>
       <span class="p">}</span>
     <span class="p">},</span>
     <span class="p">{</span>
@@ -622,7 +620,7 @@ response, which includes all workflow options calculated for each workflow:</p>
       <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="nt">&quot;my_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for sample 1234&quot;</span><span class="p">,</span>
         <span class="nt">&quot;global_option&quot;</span><span class="p">:</span> <span class="s2">&quot;something for all of the samples&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;overwrite me for sample 5678&quot;</span>  
+        <span class="nt">&quot;overwritten_option&quot;</span><span class="p">:</span> <span class="s2">&quot;overwrite me for sample 5678&quot;</span>
       <span class="p">}</span>
     <span class="p">},</span>
     <span class="p">{</span>
@@ -644,7 +642,7 @@ response, which includes all workflow options calculated for each workflow:</p>
 workflow options and you'll see those defaults when you look at the
 returned options for a given workflow.
 See below for more information.</p>
-<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">&para;</a></h2>
+<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">⚓︎</a></h2>
 <p>The diagram below lists the different sources of options for a particular
 workflow. Precedence is from the bottom up, so "higher" sources override
 lower ones.</p>
@@ -655,7 +653,7 @@ supply options by default, and the gray "sources" are outside of WFL's
 visibility but can still affect the result.</p>
 <p>WFL supplies its own derived options usually on a per-module basis,
 meaning different pipelines that make use of different modules may
-have different options they derive and supply by default. </p>
+have different options they derive and supply by default.</p>
 <p>Individual module documentation can help provide more info, as will
 simply looking at WFL's response from the <code>/create</code> or <code>/exec</code> endpoints,
 which includes those defaults.</p>

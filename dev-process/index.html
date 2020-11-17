@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -465,7 +463,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -477,7 +475,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -641,17 +639,17 @@
                   </a>
                 
                 
-                <h1 id="development-process">Development Process<a class="headerlink" href="#development-process" title="Permanent link">&para;</a></h1>
+                <h1 id="development-process">Development Process<a class="headerlink" href="#development-process" title="Permanent link">⚓︎</a></h1>
 <p>This is a development process
 we are tying to standardize
 within the team,
 and encourage ourselves
 to follow in most cases.</p>
-<h2 id="the-swagger-page">The Swagger page<a class="headerlink" href="#the-swagger-page" title="Permanent link">&para;</a></h2>
+<h2 id="the-swagger-page">The Swagger page<a class="headerlink" href="#the-swagger-page" title="Permanent link">⚓︎</a></h2>
 <p>WFL ships with a swaggger UI that documents all of the
 available endpoints. It's available at path <code>/swagger</code>, e.g.
 https://dev-wfl.gotc-dev.broadinstitute.org/swagger</p>
-<h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">&para;</a></h2>
+<h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">⚓︎</a></h2>
 <p>Clojure development feels very different from Scala and Java
 development. It even differs markedly from development in other
 <em>dynamic languages</em> such as Python or Ruby.</p>
@@ -691,7 +689,7 @@ support <code>lein</code>, Cursive, and Calva users.</p>
 <p>Running <code>boot build</code> will not only build a fat jar (<em>uberjar</em>)
 for the WFL project, but will add an executable symbolic link
 <code>wfl</code> to conveniently execute the Clojure code as a script.</p>
-<h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">&para;</a></h2>
+<h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">⚓︎</a></h2>
 <p>We always make feature branches from <code>master</code>,
 make pull requests,
 ask for reviews
@@ -782,13 +780,13 @@ gcloud auth login
 <p><strong>Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!</strong></p>
 </li>
 </ol>
-<h2 id="development-tips">Development Tips<a class="headerlink" href="#development-tips" title="Permanent link">&para;</a></h2>
+<h2 id="development-tips">Development Tips<a class="headerlink" href="#development-tips" title="Permanent link">⚓︎</a></h2>
 <p>Here are some tips for WFL development.</p>
 <p>Some of this advice might help
 when testing Liquibase migration
 or other changes
 that affect WFL's Postgres database.</p>
-<h3 id="migrating-a-database">migrating a database<a class="headerlink" href="#migrating-a-database" title="Permanent link">&para;</a></h3>
+<h3 id="migrating-a-database">migrating a database<a class="headerlink" href="#migrating-a-database" title="Permanent link">⚓︎</a></h3>
 <p>To change WFL's Postgres database schema,
 add a changeset XML file
 in the <code>database/changesets</code> directory.
@@ -802,21 +800,21 @@ Then add the changeset file
 to the <code>database/changlog.xml</code> file.</p>
 <p>Test the changes against a local <em>scratch database</em>.
 See the next section for suggestions.</p>
-<h3 id="debugging-jdbc-sql">debugging JDBC SQL<a class="headerlink" href="#debugging-jdbc-sql" title="Permanent link">&para;</a></h3>
+<h3 id="debugging-jdbc-sql">debugging JDBC SQL<a class="headerlink" href="#debugging-jdbc-sql" title="Permanent link">⚓︎</a></h3>
 <p>Something seems to swallow SQL exceptions
 raised by Postgres and the JDBC library.
 Wrap suspect <code>clojure.java.jdbc</code> calls
 in <code>wfl.util/do-or-nil</code> to ensure
 that any exceptions show up
 in the server logs.</p>
-<h3 id="debugging-api-specs">debugging API specs<a class="headerlink" href="#debugging-api-specs" title="Permanent link">&para;</a></h3>
+<h3 id="debugging-api-specs">debugging API specs<a class="headerlink" href="#debugging-api-specs" title="Permanent link">⚓︎</a></h3>
 <p>If an API references an undefined spec,
 HTTP requests and responses might silently fail
 or the Swagger page will fail to render.
 Check the <code>clojure.spec.alpha/def</code>s
 in <code>wfl.api.routes</code> for typos
 before tearing your hair out.</p>
-<h3 id="hacking-a-scratch-database">hacking a scratch database<a class="headerlink" href="#hacking-a-scratch-database" title="Permanent link">&para;</a></h3>
+<h3 id="hacking-a-scratch-database">hacking a scratch database<a class="headerlink" href="#hacking-a-scratch-database" title="Permanent link">⚓︎</a></h3>
 <p>You can test against a local Postgres
 before running Liquibase or SQL
 against a shared database
@@ -841,7 +839,7 @@ That includes running Liquibase,
 so don't forget to reset <code>:debug</code> to <code>env</code>
 before deploying your changes
 after merging a PR.</p>
-<h3 id="useful-hacks-for-debugging-postgresliquibase-locally">Useful hacks for debugging Postgres/Liquibase locally<a class="headerlink" href="#useful-hacks-for-debugging-postgresliquibase-locally" title="Permanent link">&para;</a></h3>
+<h3 id="useful-hacks-for-debugging-postgresliquibase-locally">Useful hacks for debugging Postgres/Liquibase locally<a class="headerlink" href="#useful-hacks-for-debugging-postgresliquibase-locally" title="Permanent link">⚓︎</a></h3>
 <p>Starting <code>postgres</code>:
 <div class="highlight"><pre><span></span><code>pg_ctl -D /usr/local/var/postgresql@11 start
 </code></pre></div></p>
@@ -873,7 +871,7 @@ if you are working aginst a local database. If you are working with a CloudSQL
 database, the liquibase migration is a encoded step of the <code>cli.py</code>'s <code>deploy</code>
 command.</p>
 </div>
-<h3 id="diagnosis">Diagnosis<a class="headerlink" href="#diagnosis" title="Permanent link">&para;</a></h3>
+<h3 id="diagnosis">Diagnosis<a class="headerlink" href="#diagnosis" title="Permanent link">⚓︎</a></h3>
 <p>Workflow Launcher has a diagnostic command, <code>dx</code>,
 for debugging problems.</p>
 <p>Run <code>wfl dx</code> to get a list of the diagnostics available.</p>

@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -492,7 +490,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -504,7 +502,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -695,12 +693,12 @@
                   </a>
                 
                 
-                <h1 id="workflow-launcher-ui">Workflow Launcher UI<a class="headerlink" href="#workflow-launcher-ui" title="Permanent link">&para;</a></h1>
+                <h1 id="workflow-launcher-ui">Workflow Launcher UI<a class="headerlink" href="#workflow-launcher-ui" title="Permanent link">⚓︎</a></h1>
 <p>This is the front-end interface of the Workflow Launcher. It is a VueJS based
 SPA (Single-Page Application) that works as an ordinary client of the
 Workflow Launcher Server. You could find its position in the following Diagram:</p>
 <p><img alt="Workflow Launcher Tech Arch" src="https://www.lucidchart.com/publicSegments/view/07076782-0aea-4c3b-b999-6bc413f4250a/image.png" /></p>
-<h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
+<h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">⚓︎</a></h2>
 <div class="highlight"><pre><span></span><code>ui
 ├── README.md
 ├── babel.config.js
@@ -734,8 +732,8 @@ Workflow Launcher Server. You could find its position in the following Diagram:<
 </li>
 <li><code>vue.config.js</code> contains settings for the Vue applicationm, such as the proxy table for local development.</li>
 </ul>
-<h2 id="project-setup">Project setup<a class="headerlink" href="#project-setup" title="Permanent link">&para;</a></h2>
-<h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
+<h2 id="project-setup">Project setup<a class="headerlink" href="#project-setup" title="Permanent link">⚓︎</a></h2>
+<h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">⚓︎</a></h3>
 <p>Run the following command from the <code>workflow-launcher</code> root directory:
 <div class="highlight"><pre><span></span><code>$ make ui
 </code></pre></div>
@@ -749,25 +747,25 @@ the root directory of the WFL repo instead of running from within <code>wfl/ui</
 please be sure to append <code>--prefix=ui</code>to the npm command you run.
 2. When using the environment as configured by <code>make</code>, append
 <code>--prefix=derived/ui</code> to your <code>npm</code> commands.</p>
-<h3 id="install-dependencies">Install dependencies<a class="headerlink" href="#install-dependencies" title="Permanent link">&para;</a></h3>
+<h3 id="install-dependencies">Install dependencies<a class="headerlink" href="#install-dependencies" title="Permanent link">⚓︎</a></h3>
 <p>After cloning <code>workflow-launcher</code>, run the following command to install the
 necessary dependencies:
 <div class="highlight"><pre><span></span><code>$ npm install
 </code></pre></div></p>
-<h3 id="compiles-and-hot-reloads-for-development">Compiles and hot-reloads for development<a class="headerlink" href="#compiles-and-hot-reloads-for-development" title="Permanent link">&para;</a></h3>
+<h3 id="compiles-and-hot-reloads-for-development">Compiles and hot-reloads for development<a class="headerlink" href="#compiles-and-hot-reloads-for-development" title="Permanent link">⚓︎</a></h3>
 <div class="highlight"><pre><span></span><code>$ npm run serve
 </code></pre></div>
-<h3 id="compiles-and-minifies-for-production">Compiles and minifies for production<a class="headerlink" href="#compiles-and-minifies-for-production" title="Permanent link">&para;</a></h3>
+<h3 id="compiles-and-minifies-for-production">Compiles and minifies for production<a class="headerlink" href="#compiles-and-minifies-for-production" title="Permanent link">⚓︎</a></h3>
 <div class="highlight"><pre><span></span><code>$ npm run build
 </code></pre></div>
-<h3 id="lints-and-fixes-files">Lints and fixes files<a class="headerlink" href="#lints-and-fixes-files" title="Permanent link">&para;</a></h3>
+<h3 id="lints-and-fixes-files">Lints and fixes files<a class="headerlink" href="#lints-and-fixes-files" title="Permanent link">⚓︎</a></h3>
 <div class="highlight"><pre><span></span><code>$ npm run lint
 </code></pre></div>
-<h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
+<h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">⚓︎</a></h2>
 <p><em>It makes your life easier if you start the local server while developing on the ui, since you could preview the live changes in your browser.</em></p>
-<h3 id="styles">Styles<a class="headerlink" href="#styles" title="Permanent link">&para;</a></h3>
+<h3 id="styles">Styles<a class="headerlink" href="#styles" title="Permanent link">⚓︎</a></h3>
 <p>This project follows and uses Material Design, especilly the Vue implementation of Material Design framework: Vuetify. Please check <a href="https://vuetifyjs.com/en/">their docs</a> before adding anything to the front-end.</p>
-<h3 id="add-new-components-or-views">Add new components or views<a class="headerlink" href="#add-new-components-or-views" title="Permanent link">&para;</a></h3>
+<h3 id="add-new-components-or-views">Add new components or views<a class="headerlink" href="#add-new-components-or-views" title="Permanent link">⚓︎</a></h3>
 <p>The development process is pretty straightforward as the above structure diagram shows. Usually you just need to create a new re-usable component under <code>ui/src/components</code>, which follows the Vue file format:</p>
 <div class="highlight"><pre><span></span><code>&lt;template&gt;
 &lt;!-- your HTML and template code --&gt;
@@ -783,11 +781,11 @@ necessary dependencies:
 &lt;/style&gt;
 </code></pre></div>
 <p>You could either put the component you created in the <code>App.vue</code> directly, or use it in the views under <code>views/</code>. Note the views files are also components, except they are designed to be specific not reusable.</p>
-<h3 id="ui-states">UI states<a class="headerlink" href="#ui-states" title="Permanent link">&para;</a></h3>
+<h3 id="ui-states">UI states<a class="headerlink" href="#ui-states" title="Permanent link">⚓︎</a></h3>
 <p>Sometimes it's inevitable to store some states for components of UI to better control their behaviors, the state files should be added to <code>store/modules/</code> and get registered in <code>store/index.js</code>.</p>
-<h3 id="single-page-routing">Single Page Routing<a class="headerlink" href="#single-page-routing" title="Permanent link">&para;</a></h3>
+<h3 id="single-page-routing">Single Page Routing<a class="headerlink" href="#single-page-routing" title="Permanent link">⚓︎</a></h3>
 <p>The SPA application is achieved by an internal routing in UI. This is controlled by the routing tables in <code>router/</code>.</p>
-<h2 id="more-refernces">More refernces<a class="headerlink" href="#more-refernces" title="Permanent link">&para;</a></h2>
+<h2 id="more-refernces">More refernces<a class="headerlink" href="#more-refernces" title="Permanent link">⚓︎</a></h2>
 <ul>
 <li>VueJS: https://vuejs.org/v2/guide/</li>
 <li>Vuetify: https://vuetifyjs.com/en/</li>

@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -424,7 +422,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -436,7 +434,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -559,8 +557,8 @@
                   </a>
                 
                 
-                <h1 id="wfl-sandboxes">WFL Sandboxes<a class="headerlink" href="#wfl-sandboxes" title="Permanent link">&para;</a></h1>
-<h3 id="_1"><img alt=":deploy_parrot:" src="https://emojis.slackmojis.com/emojis/images/1554740062/5584/deployparrot.gif" title=":deploy_parrot:" /><a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+                <h1 id="wfl-sandboxes">WFL Sandboxes<a class="headerlink" href="#wfl-sandboxes" title="Permanent link">⚓︎</a></h1>
+<h3 id="_1"><img alt=":deploy_parrot:" src="https://emojis.slackmojis.com/emojis/images/1554740062/5584/deployparrot.gif" title=":deploy_parrot:" /><a class="headerlink" href="#_1" title="Permanent link">⚓︎</a></h3>
 <p>We have the ability to deploy isolated instances of WFL infrastructure so that
 developers can work in parallel. Summary of the steps:
 1. Copy another dev's sandbox in <code>gotc-deploy/deploy/</code> and change every instance of
@@ -571,7 +569,7 @@ their username to yours, PR in the changes, <code>apply</code> them
 4. Deploy WFL via <code>./ops/cli.py gotc-dev &lt;username&gt;</code></p>
 <p>Because this process might well be a new team member's first introduction to WFL,
 Terraform, and/or GCP, I've added more in-depth instructions below.</p>
-<h2 id="1-make-your-sandbox">1. Make your sandbox<a class="headerlink" href="#1-make-your-sandbox" title="Permanent link">&para;</a></h2>
+<h2 id="1-make-your-sandbox">1. Make your sandbox<a class="headerlink" href="#1-make-your-sandbox" title="Permanent link">⚓︎</a></h2>
 <p>Within our <a href="https://github.com/broadinstitute/gotc-deploy">deployment config repo</a>
 we keep our sandboxes in the <code>deploy</code> folder in folders like <code>{username}-sandbox</code>.
 They should look pretty similar from person to person but ask if you're not sure
@@ -605,23 +603,23 @@ username within your files you may break their sandbox.</p>
 <div class="highlight"><pre><span></span><code>../../../scripts/terraform.sh apply plan.out
 rm plan.out
 </code></pre></div></p>
-<h2 id="2-change-the-sql-password">2. Change the SQL password<a class="headerlink" href="#2-change-the-sql-password" title="Permanent link">&para;</a></h2>
+<h2 id="2-change-the-sql-password">2. Change the SQL password<a class="headerlink" href="#2-change-the-sql-password" title="Permanent link">⚓︎</a></h2>
 <p>Terraform makes a random password for the <code>wfl</code> account in your new Cloud SQL instance but for simplicity the WFL installations tied to <code>gotc-dev</code> all use the same one (you'll end up deploying using <code>gotc-dev</code>'s <a href="https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl">WFL values file</a> which will supply a certain password).</p>
 <p>The password is defined in Vault at <code>secret/dsde/gotc/dev/zero</code>. You'll want to copy it to your clipboard ideally without having it end up in your console history:
 - If you use Vault's UI, go to <a href="https://clotho.broadinstitute.org:8200/ui/vault/secrets/secret/show/dsde/gotc/dev/zero">https://clotho.broadinstitute.org:8200/ui/vault/secrets/secret/show/dsde/gotc/dev/zero</a> and click the little copy button next to the <code>password</code> field
 - If you use a Mac, you can run <code>vault read -field=password secret/dsde/gotc/dev/zero | pbcopy</code></p>
 <p>Next, find your Cloud SQL instance. It is named starting with <code>{username}-wfl</code> in the <code>broad-gotc-dev</code> GCP project. Go to <a href="https://console.cloud.google.com/sql/instances?folder=&amp;organizationId=&amp;project=broad-gotc-dev">the list of SQL instances</a>, click on yours, go to "Users", change the <code>wfl</code> user's password, and paste the value you copied earlier.</p>
-<h2 id="3-add-url-to-oauth-credentials">3. Add URL to OAuth credentials<a class="headerlink" href="#3-add-url-to-oauth-credentials" title="Permanent link">&para;</a></h2>
-<p>WFL makes use of OAuth and the new URL of your deployment will need to be added to what the OAuth client will accept. The credentials to edit correspond to the <code>oauth2_client_id</code> field at <code>secret/dsde/gotc/dev/zero</code> (match to the "Client ID" column <a href="https://console.cloud.google.com/apis/credentials?project=broad-gotc-dev">here</a>). If you'd rather copy-paste, go to <code>https://console.cloud.google.com/apis/credentials/oauthclient/{oauth2_client_id}</code>. </p>
+<h2 id="3-add-url-to-oauth-credentials">3. Add URL to OAuth credentials<a class="headerlink" href="#3-add-url-to-oauth-credentials" title="Permanent link">⚓︎</a></h2>
+<p>WFL makes use of OAuth and the new URL of your deployment will need to be added to what the OAuth client will accept. The credentials to edit correspond to the <code>oauth2_client_id</code> field at <code>secret/dsde/gotc/dev/zero</code> (match to the "Client ID" column <a href="https://console.cloud.google.com/apis/credentials?project=broad-gotc-dev">here</a>). If you'd rather copy-paste, go to <code>https://console.cloud.google.com/apis/credentials/oauthclient/{oauth2_client_id}</code>.</p>
 <p>You'll need to the following URI to the "Authorized JavaScript origins":
 <div class="highlight"><pre><span></span><code>https://{username}-wfl.gotc-dev.broadinstitute.org
 </code></pre></div>
-You'll also need to add the following URIs to the "Authorized redirect URIs": 
+You'll also need to add the following URIs to the "Authorized redirect URIs":
 <div class="highlight"><pre><span></span><code>https://{username}-wfl.gotc-dev.broadinstitute.org
 https://{username}-wfl.gotc-dev.broadinstitute.org/oauth2-redirect.html
 </code></pre></div>
 That latter one is used for authenticating the Swagger UI.</p>
-<h2 id="4-deploy-wfl">4. Deploy WFL<a class="headerlink" href="#4-deploy-wfl" title="Permanent link">&para;</a></h2>
+<h2 id="4-deploy-wfl">4. Deploy WFL<a class="headerlink" href="#4-deploy-wfl" title="Permanent link">⚓︎</a></h2>
 <p>See the <a href="/docs/md/README.md">Quickstart section</a> for more info on building WFL and pushing images. Assuming you've done that, run <code>./ops/cli.py deploy gotc-dev {username}</code> to deploy the version in <code>./version</code> to your sandbox. The help text on <code>./ops/cli.py</code> has more options for customizing the deployment.</p>
                 
               

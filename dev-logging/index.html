@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -424,7 +422,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -436,7 +434,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -559,14 +557,14 @@
                   </a>
                 
                 
-                <h1 id="wfl-logging">WFL Logging<a class="headerlink" href="#wfl-logging" title="Permanent link">&para;</a></h1>
-<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h2>
+                <h1 id="wfl-logging">WFL Logging<a class="headerlink" href="#wfl-logging" title="Permanent link">⚓︎</a></h1>
+<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">⚓︎</a></h2>
 <blockquote>
 <p>Import <code>clojure.tools.logging :as log</code> and use <code>log/error</code> / <code>log/info</code> etc.</p>
 <p><code>clojure.tools.logging</code> uses SLF4J under the hood which in turn uses Log4j2 as its implementation.</p>
 <p>Below is more detailed information for those interested.</p>
 </blockquote>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
 <p>We use <code>clojure.tools.logging</code> aliased to <code>log</code>.</p>
 <p>Require it like any other dependency:
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">ns </span><span class="s">&quot;...&quot;</span>
@@ -578,17 +576,17 @@
 <span class="p">(</span><span class="nf">log/info</span> <span class="s">&quot;Hello!&quot;</span><span class="p">)</span>
 </code></pre></div></p>
 <p>Full documentation is available <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging">here</a>.</p>
-<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">&para;</a></h2>
+<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">⚓︎</a></h2>
 <p>Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.</p>
 <p>Thus, to have WFL log everything to a file you'd want to use something like
 <div class="highlight"><pre><span></span><code>my-command &gt;output.log <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
 </code></pre></div>
 That'll capture both STDOUT and STDERR to the same file.
 Note that this specific syntax is more universal than just <code>&amp;&gt;output.log</code>.</p>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">⚓︎</a></h2>
 <p>clojure.tools.logging provides a <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging.test">test namespace</a>.</p>
 <p>An example of usage is in <code>test/wfl/unit/logging_test.clj</code>, which exists to test that the service loaders are correctly resolving our dependencies.</p>
-<h2 id="under-the-hood">Under the Hood<a class="headerlink" href="#under-the-hood" title="Permanent link">&para;</a></h2>
+<h2 id="under-the-hood">Under the Hood<a class="headerlink" href="#under-the-hood" title="Permanent link">⚓︎</a></h2>
 <blockquote>
 <p>This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup
 doesn't change all that much.</p>

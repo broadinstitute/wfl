@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -356,7 +354,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -368,7 +366,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -559,8 +557,8 @@
                   </a>
                 
                 
-                <h1 id="workflow-launchers-role-in-terra">WorkFlow Launcher's Role in Terra<a class="headerlink" href="#workflow-launchers-role-in-terra" title="Permanent link">&para;</a></h1>
-<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+                <h1 id="workflow-launchers-role-in-terra">WorkFlow Launcher's Role in Terra<a class="headerlink" href="#workflow-launchers-role-in-terra" title="Permanent link">⚓︎</a></h1>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">⚓︎</a></h2>
 <p>The Data Sciences Platform (DSP) is building a new system (around
 <a href="https://terra.bio/">Terra</a>) for storing and processing biological
 data. The system design includes a Data Repository where data is
@@ -579,7 +577,7 @@ Zamboni can run workflows on both a local Sun Grid Engine (SGE), and
 on Cromwell on premises and in the cloud.</p>
 <p>We think that WFL can fill the role of Zamboni in the new data
 storage and processing system that DSP is developing now.</p>
-<h2 id="history">History<a class="headerlink" href="#history" title="Permanent link">&para;</a></h2>
+<h2 id="history">History<a class="headerlink" href="#history" title="Permanent link">⚓︎</a></h2>
 <p>WFL began as a project to replace a Zamboni <em>starter</em>, with the old
 name "Zero". A <em>starter</em> is a Zamboni component that brokers messages
 among the queues that Zamboni watches. It interprets messages
@@ -601,7 +599,7 @@ needed until an output exists for every input.</p>
 <p>Zero has recently been adapted again to deploy as a web service
 under Google App Engine (GAE) though most of the value of Zero is
 still not available to the server. And now it has the new name WFL.</p>
-<h2 id="the-role-of-wfl-in-terra">The role of WFL in Terra<a class="headerlink" href="#the-role-of-wfl-in-terra" title="Permanent link">&para;</a></h2>
+<h2 id="the-role-of-wfl-in-terra">The role of WFL in Terra<a class="headerlink" href="#the-role-of-wfl-in-terra" title="Permanent link">⚓︎</a></h2>
 <p>Diagrams of the new DSP processing system show a WFL service
 subscribed to event streams from the Data Repository (DR), with
 interfaces to both the Data and the Method Repositories.</p>
@@ -612,7 +610,7 @@ on other services as necessary to process the data and writes the
 results back to the DR. There is also, presumably, a web UI to track
 and debug the workflows managed by WFL.</p>
 <p>Many details are yet to be worked out.</p>
-<h2 id="wfl-concepts">WFL Concepts<a class="headerlink" href="#wfl-concepts" title="Permanent link">&para;</a></h2>
+<h2 id="wfl-concepts">WFL Concepts<a class="headerlink" href="#wfl-concepts" title="Permanent link">⚓︎</a></h2>
 <p>WFL is designed around several novel concepts.</p>
 <ol>
 <li>
@@ -722,7 +720,7 @@ includes monitoring and diagnostic modules for tracking workload
 progress and debugging failures.</p>
 </li>
 </ol>
-<h2 id="wfl-server">WFL server<a class="headerlink" href="#wfl-server" title="Permanent link">&para;</a></h2>
+<h2 id="wfl-server">WFL server<a class="headerlink" href="#wfl-server" title="Permanent link">⚓︎</a></h2>
 <p>The WFL client is a command-line batch program that a person runs
 intermittently on a laptop or virtual machine (VM).</p>
 <p>We are working to port the client functions of WFL to a ubiquitous
@@ -836,7 +834,7 @@ redeployment.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../external-exome-reprocessing/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../modules-external-exome-reprocessing/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>

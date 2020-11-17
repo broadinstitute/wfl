@@ -23,10 +23,6 @@
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
         
-          
-          
-          <meta name="theme-color" content="#4cae4f">
-        
       
     
     
@@ -49,10 +45,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="teal">
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
       
   
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -451,7 +449,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../dev-wgs/" class="md-nav__link">
+    <a href="../modules-wgs/" class="md-nav__link">
       Whole Genome
     </a>
   </li>
@@ -463,7 +461,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external-exome-reprocessing/" class="md-nav__link">
+    <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
     </a>
   </li>
@@ -613,13 +611,13 @@
                   </a>
                 
                 
-                <h1 id="deployment-of-workflow-launcher">Deployment of WorkFlow Launcher<a class="headerlink" href="#deployment-of-workflow-launcher" title="Permanent link">&para;</a></h1>
-<h2 id="make-a-deployment">Make a deployment<a class="headerlink" href="#make-a-deployment" title="Permanent link">&para;</a></h2>
+                <h1 id="deployment-of-workflow-launcher">Deployment of WorkFlow Launcher<a class="headerlink" href="#deployment-of-workflow-launcher" title="Permanent link">⚓︎</a></h1>
+<h2 id="make-a-deployment">Make a deployment<a class="headerlink" href="#make-a-deployment" title="Permanent link">⚓︎</a></h2>
 <p>The WorkFlow Launcher is currently running on a Kubernetes cluster,
 and the deployment is managed by <a href="https://helm.sh/docs/intro/install/">Helm</a>.
 In order to make a deployment or upgrade the current deployment manually without
 using the automations, you have to make the following preparations:</p>
-<h3 id="setup-kubernetes">Setup Kubernetes<a class="headerlink" href="#setup-kubernetes" title="Permanent link">&para;</a></h3>
+<h3 id="setup-kubernetes">Setup Kubernetes<a class="headerlink" href="#setup-kubernetes" title="Permanent link">⚓︎</a></h3>
 <ul>
 <li>Make sure you have the <code>kubectl</code> command available,
   while in the Broad network or using the VPN,
@@ -640,7 +638,7 @@ using the automations, you have to make the following preparations:</p>
   to switch (back) to other contexts.</p>
 </li>
 </ul>
-<h3 id="setup-helm">Setup Helm<a class="headerlink" href="#setup-helm" title="Permanent link">&para;</a></h3>
+<h3 id="setup-helm">Setup Helm<a class="headerlink" href="#setup-helm" title="Permanent link">⚓︎</a></h3>
 <ul>
 <li>
 <p>Install Helm,
@@ -674,7 +672,7 @@ using the automations, you have to make the following preparations:</p>
 <p><div class="highlight"><pre><span></span><code>helm list
 </code></pre></div>
   to check the current deployments that are managed by Helm.</p>
-<h3 id="build-and-dockerize">Build and Dockerize<a class="headerlink" href="#build-and-dockerize" title="Permanent link">&para;</a></h3>
+<h3 id="build-and-dockerize">Build and Dockerize<a class="headerlink" href="#build-and-dockerize" title="Permanent link">⚓︎</a></h3>
 <p>Build the WFL with <code>make</code> as it's described in <a href="/docs/md/README.md">Quickstart</a>:</p>
 <div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
 </code></pre></div>
@@ -692,11 +690,11 @@ docker push broadinstitute/workflow-launcher-ui:<span class="nv">$IMAGE</span>
 </div>
 <p>You should see it listed here:</p>
 <p>https://hub.docker.com/repository/docker/broadinstitute/workflow-launcher-api</p>
-<h3 id="clone-the-gotc-deploy-repository">Clone the gotc-deploy repository.<a class="headerlink" href="#clone-the-gotc-deploy-repository" title="Permanent link">&para;</a></h3>
+<h3 id="clone-the-gotc-deploy-repository">Clone the gotc-deploy repository.<a class="headerlink" href="#clone-the-gotc-deploy-repository" title="Permanent link">⚓︎</a></h3>
 <div class="highlight"><pre><span></span><code>git clone --branch &lt;the branch you want&gt; <span class="se">\</span>
   https://github.com/broadinstitute/gotc-deploy.git
 </code></pre></div>
-<h3 id="render-the-chart">Render the chart<a class="headerlink" href="#render-the-chart" title="Permanent link">&para;</a></h3>
+<h3 id="render-the-chart">Render the chart<a class="headerlink" href="#render-the-chart" title="Permanent link">⚓︎</a></h3>
 <p>Render the <code>wfl-values.yaml</code> file.</p>
 <div class="highlight"><pre><span></span><code>docker run -i --rm -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/working <span class="se">\</span>
   -v <span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">&quot;</span>/.vault-token:/root/.vault-token <span class="se">\</span>
@@ -716,7 +714,7 @@ contain credentials or sensitive information,
 so <strong>DO NOT</strong> check them in
 to your version control system
 or make them public!!!</p>
-<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h3>
+<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">⚓︎</a></h3>
 <p>Run this to upgrade a deployment release.</p>
 <div class="highlight"><pre><span></span><code>helm upgrade wfl-k8s gotc-charts/wfl --install <span class="se">\</span>
   -f ./gotc-deploy/deploy/gotc-dev/helm/wfl-values.yaml
@@ -736,7 +734,7 @@ wfl-k8s-6948f6566d-2bdcp                          <span class="m">2</span>/2   R
 to view the logs for the WFL-API server.</p>
 <p>Run <code>kubectl logs wfl-k8s-6948f6566d-2bdcp workflow-launcher-ui</code>
 to view the logs for the WFL-UI front end.</p>
-<h2 id="testing-the-deployment-locally">Testing the deployment locally<a class="headerlink" href="#testing-the-deployment-locally" title="Permanent link">&para;</a></h2>
+<h2 id="testing-the-deployment-locally">Testing the deployment locally<a class="headerlink" href="#testing-the-deployment-locally" title="Permanent link">⚓︎</a></h2>
 <p>Similar to the above process,
 but in addition to the above preparations,
 you also have to:</p>
