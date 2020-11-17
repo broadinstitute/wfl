@@ -1,4 +1,5 @@
 # Release 0.4.0
+- create release candidate for v0.4.0 ([#231](https://github.com/broadinstitute/wfl/pull/231))
 - graphic updates ([#230](https://github.com/broadinstitute/wfl/pull/230))
 - Update docs and make improvements during feature bashing ([#227](https://github.com/broadinstitute/wfl/pull/227))
 - dont serialise empty workflow options if an empty map is specified ([#228](https://github.com/broadinstitute/wfl/pull/228))
