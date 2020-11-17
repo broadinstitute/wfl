@@ -150,7 +150,6 @@ particular input cram, WFL will not re-submit that workflow.
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "workflows": [
         {
-          "id": 1,
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
@@ -160,12 +159,10 @@ particular input cram, WFL will not re-submit that workflow.
         }
       ],
       "project": "PO-1234",
-      "id": 30,
       "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
       "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
       "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
       "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
-      "items": "ExternalWholeGenomeReprocessing_000000030",
       "version": "0.3.2"
     }
     ```
@@ -210,7 +207,6 @@ Creates and then starts a Cromwell workflow for each item in the workload.
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "workflows": [
         {
-          "id": 1,
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
@@ -220,12 +216,10 @@ Creates and then starts a Cromwell workflow for each item in the workload.
         }
       ],
       "project": "PO-1234",
-      "id": 31,
       "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
       "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
       "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
       "uuid": "3a13f732-9743-47a9-ab83-c467b3bf0ca4",
-      "items": "ExternalWholeGenomeReprocessing_000000031",
       "version": "0.3.2"
     }
     ```
@@ -253,7 +247,6 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
       "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
       "workflows": [
         {
-          "id": 1,
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
@@ -263,12 +256,10 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
         }
       ],
       "project": "wgs-dev",
-      "id": 6,
       "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
       "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
       "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
       "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
-      "items": "ExternalWholeGenomeReprocessing_000000006",
       "version": "0.1.7"
     }]
     ```
@@ -300,7 +291,6 @@ Queries the WFL database for workloads. Specify the project name to query for a 
       "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
       "workflows": [
         {
-          "id": 1,
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
@@ -310,12 +300,10 @@ Queries the WFL database for workloads. Specify the project name to query for a 
         }
       ],
       "project": "wgs-dev",
-      "id": 6,
       "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
       "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
       "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
       "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
-      "items": "ExternalWholeGenomeReprocessing_000000006",
       "version": "0.1.7"
     }]
     ```
