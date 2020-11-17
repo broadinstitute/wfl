@@ -126,12 +126,12 @@
   [environment per-sample-inputs workflow-options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
-      environment
-      (io/file (:dir path) (path ".wdl"))
-      (io/file (:dir path) (path ".zip"))
-      (make-inputs environment per-sample-inputs)
-      workflow-options
-      (make-labels per-sample-inputs other-labels))))
+     environment
+     (io/file (:dir path) (path ".wdl"))
+     (io/file (:dir path) (path ".zip"))
+     (make-inputs environment per-sample-inputs)
+     workflow-options
+     (make-labels per-sample-inputs other-labels))))
 
 (defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:arrays-dev :arrays-prod} cromwell)]
@@ -152,11 +152,11 @@
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
   (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
-        (letfn [(form [m id] (-> m
-                                 (update :inputs json/write-str)
-                                 (assoc :id id)))]
-          (jdbc/insert-multi! tx table (map form items (range))))
-        id))
+    (letfn [(form [m id] (-> m
+                             (update :inputs json/write-str)
+                             (assoc :id id)))]
+      (jdbc/insert-multi! tx table (map form items (range))))
+    id))
 
 (def primary-keys
   "An arrays workflow can be uniquely identified by its `chip_well_barcode` and
@@ -171,28 +171,28 @@
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [items output uuid] :as workload}]
   (let [now             (OffsetDateTime/now)]
-     (letfn [(submit! [environment {:keys [id uuid] :as workflow}]
-            (let [output-path      (str output (str/join "/" (primary-values workflow)))
-                  workflow-options (util/deep-merge default-options
-                                                    {:final_workflow_outputs_dir output-path})]
-              [id (or uuid
-                  (submit-arrays-workflow environment (:inputs workflow) workflow-options {:workload uuid}))]))
-          (update! [tx [id uuid]]
-            (when uuid
-              (jdbc/update! tx items
-                {:updated now :uuid uuid :status "Submitted"}
-                ["id = ?" id])))]
-    (let [environment       (get-cromwell-environment! workload)
-          ids-uuids (map (partial submit! environment) (:workflows workload))]
-      (run! (partial update! tx) ids-uuids)
-      (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
+    (letfn [(submit! [environment {:keys [id uuid] :as workflow}]
+              (let [output-path      (str output (str/join "/" (primary-values workflow)))
+                    workflow-options (util/deep-merge default-options
+                                                      {:final_workflow_outputs_dir output-path})]
+                [id (or uuid
+                        (submit-arrays-workflow environment (:inputs workflow) workflow-options {:workload uuid}))]))
+            (update! [tx [id uuid]]
+              (when uuid
+                (jdbc/update! tx items
+                              {:updated now :uuid uuid :status "Submitted"}
+                              ["id = ?" id])))]
+      (let [environment       (get-cromwell-environment! workload)
+            ids-uuids (map (partial submit! environment) (:workflows workload))]
+        (run! (partial update! tx) ids-uuids)
+        (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
 
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
   (->>
-    (add-arrays-workload! tx request)
-    (workloads/load-workload-for-id tx)))
+   (add-arrays-workload! tx request)
+   (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
@@ -200,18 +200,6 @@
   (do
     (start-arrays-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
-
-;; The arrays module is always "open" for appending workflows - once started,
-;; it cannot be stopped!
-;(defmethod workloads/update-workload!
-;  pipeline
-;  [tx workload]
-;  (try
-;    (postgres/update-workflow-statuses! tx workload)
-;    (workloads/load-workload-for-id tx (:id workload))
-;    (catch Throwable cause
-;      (throw (ex-info "Error updating arrays workload"
-;                      {:workload workload} cause)))))
 
 (defmethod workloads/load-workload-impl
   pipeline
