@@ -6,7 +6,7 @@ specifies the following inputs
 for each workflow:
 
 - input_cram or input_bam (required)
-- sample_name (required)
+- sample_name
 - base_file_name
 - final_gvcf_base_name
 - unmapped_bam_suffix
