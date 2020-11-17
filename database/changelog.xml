@@ -21,4 +21,5 @@
     <include file="changesets/20200827_ExternalWholeGenomeReprocessingTable.xml" relativeToChangelogFile="true"/>
     <include file="changesets/20201029_CromwellWorkflow.xml"                     relativeToChangelogFile="true"/>
     <include file="changesets/20201030_ExternalExomeReprocessing.xml"            relativeToChangelogFile="true"/>
+    <include file="changesets/20201105_GPArraysEnum.xml"                         relativeToChangelogFile="true"/>
 </databaseChangeLog>

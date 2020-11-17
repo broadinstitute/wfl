@@ -62,6 +62,7 @@
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
                                  :opt-un [::options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
+                      :arrays   ::aou-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs))

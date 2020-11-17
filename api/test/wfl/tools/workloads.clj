@@ -4,6 +4,7 @@
             [wfl.environments :refer [stuff]]
             [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
+            [wfl.module.arrays :as arrays]
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
@@ -65,6 +66,33 @@
    :green_idat_cloud_path       "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/idats/7991775143_R01C01/7991775143_R01C01_Grn.idat",
    :params_file                 "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/HumanExome-12v1-1_A/inputs/7991775143_R01C01/params.txt",
    :gender_cluster_file         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"})
+
+(def arrays-sample
+  {
+   :sample_alias                    "03C 17319",
+   :sample_lsid                     "broadinstitute.org:bsp.dev.sample:NOTREAL.03C17319",
+   :analysis_version_number         1,
+   :call_rate_threshold             0.98,
+   :genotype_concordance_threshold  0.98,
+   :reported_gender                 "Male",
+   :chip_well_barcode               "200598830050_R07C01",
+   :green_idat_cloud_path           "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/idats/200598830050_R07C01/200598830050_R07C01_Grn.idat",
+   :red_idat_cloud_path             "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/idats/200598830050_R07C01/200598830050_R07C01_Red.idat",
+   :params_file                     "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/inputs/200598830050_R07C01/params.txt",
+   :fingerprint_genotypes_vcf_file  "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/inputs/200598830050_R07C01/200598830050_R07C01.03C_17319.reference.fingerprint.vcf.gz",
+   :fingerprint_genotypes_vcf_index_file "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/inputs/200598830050_R07C01/200598830050_R07C01.03C_17319.reference.fingerprint.vcf.gz.tbi",
+   :bead_pool_manifest_file         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/PsychChip_v1-1_15073391_A1.bpm",
+   :extended_chip_manifest_file     "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/PsychChip_v1-1_15073391_A1.1.3.extended.csv",
+   :cluster_file                    "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
+   :zcall_thresholds_file           "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/thresholds.7.txt"})
+
+(defn arrays-workload-request
+  [identifier]
+  {:cromwell (get-in stuff [:arrays-dev :cromwell :url])
+   :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output"
+   :pipeline arrays/pipeline
+   :project  (format "(Test) %s %s" @git-branch identifier)
+   :items   [{:inputs arrays-sample}]})
 
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
