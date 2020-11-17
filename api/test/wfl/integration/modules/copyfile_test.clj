@@ -80,3 +80,11 @@
               #(update % :inputs
                  (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
           workloads/execute-workload!)))))
+
+(deftest test-empty-workflow-options
+  (letfn [(go! [workflow] (is (util/absent? workflow :options)))]
+    (run! go! (-> (make-copyfile-workload-request "in" "out")
+                (assoc-in [:common :options] {})
+                (update :items (partial map #(assoc % :options {})))
+                workloads/create-workload!
+                :workflows))))
