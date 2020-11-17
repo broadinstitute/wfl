@@ -77,7 +77,7 @@ accounts have at least read access to the input files.
 
 Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
 "workflowOptions" via the `options` map. See the
-[reference page](/docs/md/workflow-options.md) for more information.
+[reference page](./workflow-options.md) for more information.
 
 ### Start Workload: `/api/v1/start`
 
