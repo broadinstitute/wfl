@@ -5,8 +5,18 @@ repo_url: https://github.com/broadinstitute/wfl
 theme:
   name: material
   palette:
-   primary: green
-   accent: teal
+    - scheme: default
+      primary: green
+      accent: teal
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
   feature:
     tabs: true
 
@@ -31,17 +41,24 @@ nav:
     - General: modules-general.md
     - Workflow Options: workflow-options.md
     - Arrays: modules-arrays.md
-    - Whole Genome: dev-wgs.md
-    - External Exome: external-exome-reprocessing.md
+    - Whole Genome: modules-wgs.md
+    - External Exome: modules-external-exome-reprocessing.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md
 
 markdown_extensions:
   - codehilite
   - admonition
+  - pymdownx.tabbed
   - pymdownx.superfences
   - pymdownx.details
+  - attr_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - toc:
-      permalink: True
+      permalink: ⚓︎
   - markdown_include.include:
       base_path: md
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
