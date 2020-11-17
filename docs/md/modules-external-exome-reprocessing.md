@@ -18,50 +18,51 @@ below for all options.
 Create a new workload. Ensure that `workflow-launcher` and `cromwell`'s service
 accounts have at least read access to the input files.
 
-Request:
+=== "Request"
 
-```bash
-curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-        "pipeline": "ExternalExomeReprocessing",
-        "project": "Example Project",
-        "items": [{
-          "inputs": {
-            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram"
-          }
-        }]
-      }'
-```
-Response:
+    ```bash
+    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
+      -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+      -H 'Content-Type: application/json' \
+      -d '{
+            "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+            "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+            "pipeline": "ExternalExomeReprocessing",
+            "project": "Example Project",
+            "items": [{
+              "inputs": {
+                "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram"
+              }
+            }]
+          }'
+    ```
 
-```json
-{
-  "creator" : "user@domain",
-  "pipeline" : "ExternalExomeReprocessing",
-  "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-  "release" : "ExternalExomeReprocessing_vX.Y.Z",
-  "created" : "YYYY-MM-DDTHH:MM:SSZ",
-  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-  "workflows" : [ {
-    "inputs" : {
-      "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-      "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-      "sample_name" : "NA12878_PLUMBING",
-      "base_file_name" : "NA12878_PLUMBING.cram",
-      "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+=== "Response"
+
+    ```json
+    {
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "workflows" : [ {
+        "inputs" : {
+          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+          "sample_name" : "NA12878_PLUMBING",
+          "base_file_name" : "NA12878_PLUMBING.cram",
+          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+        }
+      } ],
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
     }
-  } ],
-  "commit" : "commit-ish",
-  "project" : "Example Project",
-  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
-  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
-  "version" : "X.Y.Z"
-}
-```
+    ```
 
 Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
 "workflowOptions" via the `options` map. See the
@@ -72,141 +73,141 @@ Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
 Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.
 
-Request:
+=== "Request"
 
-```bash
-curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
- -H "Authorization: Bearer $(gcloud auth print-access-token)" \
- -H 'Content-Type: application/json' \
- -d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'
-```
+    ```bash
+    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H 'Content-Type: application/json' \
+    -d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'
+    ```
 
-Response:
+=== "Response"
 
-```json
-{
-   "creator" : "user@domain",
-   "pipeline" : "ExternalExomeReprocessing",
-   "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   "release" : "ExternalExomeReprocessing_vX.Y.Z",
-   "created" : "YYYY-MM-DDTHH:MM:SSZ",
-   "started" : "YYYY-MM-DDTHH:MM:SSZ",
-   "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-   "workflows" : [ {
-     "status" : "Submitted",
-     "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-     "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-     "inputs" : {
-       "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-       "sample_name" : "NA12878_PLUMBING",
-       "base_file_name" : "NA12878_PLUMBING.cram",
-       "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-     }
-   } ],
-   "commit" : "commit-ish",
-   "project" : "Example Project",
-   "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
-   "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
-   "version" : "X.Y.Z"
- }
-```
+    ```json
+    {
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "started" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "workflows" : [ {
+        "status" : "Submitted",
+        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+        "inputs" : {
+          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+          "sample_name" : "NA12878_PLUMBING",
+          "base_file_name" : "NA12878_PLUMBING.cram",
+          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+        }
+      } ],
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
+    }
+    ```
 
 ### Exec Workload: `/api/v1/exec`
 
 Creates and then starts a Cromwell workflow for each item in the workload.
 
-Request:
+=== "Request"
 
-```bash
-curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-        "pipeline": "ExternalExomeReprocessing",
-        "project": "Example Project",
-        "items": [{
-          "inputs" : {
+    ```bash
+    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+      -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+      -H 'Content-Type: application/json' \
+      -d '{
+            "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+            "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+            "pipeline": "ExternalExomeReprocessing",
+            "project": "Example Project",
+            "items": [{
+              "inputs" : {
+                "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+              }
+            }]
+          }'
+    ```
+
+=== "Response"
+
+    ```json
+    {
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "started" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "workflows" : [ {
+        "status" : "Submitted",
+        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+        "inputs" : {
             "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+            "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+            "sample_name" : "NA12878_PLUMBING",
+            "base_file_name" : "NA12878_PLUMBING.cram",
+            "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
           }
-        }]
-      }'
-```
-
-Response:
-
-```json
-{
-   "creator" : "user@domain",
-   "pipeline" : "ExternalExomeReprocessing",
-   "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   "release" : "ExternalExomeReprocessing_vX.Y.Z",
-   "created" : "YYYY-MM-DDTHH:MM:SSZ",
-   "started" : "YYYY-MM-DDTHH:MM:SSZ",
-   "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-   "workflows" : [ {
-     "status" : "Submitted",
-     "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-     "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-     "inputs" : {
-        "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-        "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-        "sample_name" : "NA12878_PLUMBING",
-        "base_file_name" : "NA12878_PLUMBING.cram",
-        "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-      }
-   } ],
-   "commit" : "commit-ish",
-   "project" : "Example Project",
-   "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
-   "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
-   "version" : "X.Y.Z"
- }
-```
+      } ],
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
+    }
+    ```
 
 ### Query Workload: `/api/v1/workload?uuid=<uuid>`
 
 Queries the WFL database for workloads. Specify the uuid to query for a specific workload.
 
-Request:
+=== "Request"
 
-```bash
-curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)"
-```
+    ```bash
+    curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
+      -H "Authorization: Bearer $(gcloud auth print-access-token)"
+    ```
 
-Response:
+=== "Response"
 
-```json
-[{
-   "creator" : "user@domain",
-   "pipeline" : "ExternalExomeReprocessing",
-   "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   "release" : "ExternalExomeReprocessing_vX.Y.Z",
-   "created" : "YYYY-MM-DDTHH:MM:SSZ",
-   "started" : "YYYY-MM-DDTHH:MM:SSZ",
-   "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-   "workflows" : [ {
-     "status" : "Submitted",
-     "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-     "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-     "inputs" : {
-       "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-       "sample_name" : "NA12878_PLUMBING",
-       "base_file_name" : "NA12878_PLUMBING.cram",
-       "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-     }
-   } ],
-   "commit" : "commit-ish",
-   "project" : "Example Project",
-   "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
-   "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
-   "version" : "X.Y.Z"
- }]
-```
+    ```json
+    [{
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "started" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "workflows" : [ {
+        "status" : "Submitted",
+        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+        "inputs" : {
+          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+          "sample_name" : "NA12878_PLUMBING",
+          "base_file_name" : "NA12878_PLUMBING.cram",
+          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+        }
+      } ],
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
+    }]
+    ```
 
 The "workflows" field lists out each Cromwell workflow that was started, and
 includes their status information. It is also possible to use the Job Manager
@@ -217,43 +218,43 @@ failures.
 
 Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).
 
-Request:
+=== "Request"
 
-```bash
-curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234' \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)"
-```
+    ```bash
+    curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234' \
+      -H "Authorization: Bearer $(gcloud auth print-access-token)"
+    ```
 
-Response:
+=== "Response"
 
-```json
-[{
-   "creator" : "user@domain",
-   "pipeline" : "ExternalExomeReprocessing",
-   "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   "release" : "ExternalExomeReprocessing_vX.Y.Z",
-   "created" : "YYYY-MM-DDTHH:MM:SSZ",
-   "started" : "YYYY-MM-DDTHH:MM:SSZ",
-   "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-   "workflows" : [ {
-     "status" : "Submitted",
-     "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-     "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-     "inputs" : {
-       "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-       "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-       "sample_name" : "NA12878_PLUMBING",
-       "base_file_name" : "NA12878_PLUMBING.cram",
-       "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-     }
-   } ],
-   "commit" : "commit-ish",
-   "project" : "Example Project",
-   "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
-   "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
-   "version" : "X.Y.Z"
- }]
-```
+    ```json
+    [{
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "started" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "workflows" : [ {
+        "status" : "Submitted",
+        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+        "inputs" : {
+          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+          "sample_name" : "NA12878_PLUMBING",
+          "base_file_name" : "NA12878_PLUMBING.cram",
+          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+        }
+      } ],
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
+    }]
+    ```
 
 The "workflows" field lists out each Cromwell workflow that was started, and
 includes their status information. It is also possible to use the Job Manager

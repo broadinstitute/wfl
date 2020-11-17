@@ -45,24 +45,30 @@ To give more information, here are some example inputs to the above endpoints:
 
 **GET /api/v1/workload**
 
-```shell
-curl "http://localhost:8080/api/v1/workload" \
-     -H 'Accept: application/json'
-```
+=== "Request"
+
+    ```shell
+    curl "http://localhost:8080/api/v1/workload" \
+        -H 'Accept: application/json'
+    ```
 
 **GET /api/v1/workload/{uuid}**
 
-```shell
-curl "http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000" \
-     -H 'Accept: application/json'
-```
+=== "Request"
+
+    ```shell
+    curl "http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000" \
+        -H 'Accept: application/json'
+    ```
 
 **GET /api/v1/workload/{project}**
 
-```shell
-curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing" \
-     -H 'Accept: application/json'
-```
+=== "Request"
+
+    ```shell
+    curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing" \
+        -H 'Accept: application/json'
+    ```
 
 !!! warning "Note"
     `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
@@ -71,71 +77,77 @@ curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testi
 
 **GET /api/v1/workload/create**
 
-```shell
-curl -X "POST" "http://localhost:8080/api/v1/create" \
-     -H 'Accept: application/json' \
-     -H 'Content-Type: application/json' \
-     -d '{
-            "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-            "output":   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/",
-            "project":  "Example Project",
-            "pipeline": "AllOfUsArrays"
-         }'
-```
+=== "Request"
+
+    ```shell
+    curl -X "POST" "http://localhost:8080/api/v1/create" \
+        -H 'Accept: application/json' \
+        -H 'Content-Type: application/json' \
+        -d '{
+                "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+                "output":   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/",
+                "project":  "Example Project",
+                "pipeline": "AllOfUsArrays"
+            }'
+    ```
 
 **GET /api/v1/workload/start**
 
-```shell
-curl -X "POST" "http://localhost:8080/api/v1/start" \
-     -H 'Accept: application/json' \
-     -H 'Content-Type: application/json' \
-     -d $'{
-            "uuid": "00000000-0000-0000-0000-000000000000"
-          }'
-```
+=== "Request"
+
+    ```shell
+    curl -X "POST" "http://localhost:8080/api/v1/start" \
+        -H 'Accept: application/json' \
+        -H 'Content-Type: application/json' \
+        -d $'{
+                "uuid": "00000000-0000-0000-0000-000000000000"
+              }'
+    ```
 
 **GET /api/v1/workload/append_to_aou**
 
-```shell
-curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
-     -H 'Accept: application/json' \
-     -H 'Content-Type: application/json' \
-     -d $'{
-  "uuid": "00000000-0000-0000-0000-000000000000",
-  "notifications": [
-    {
-      "zcall_thresholds_file": "foo",
-      "sample_lsid": "foo",
-      "bead_pool_manifest_file": "foo",
-      "chip_well_barcode": "foo",
-      "sample_alias": "foo",
-      "green_idat_cloud_path": "foo",
-      "red_idat_cloud_path": "foo",
-      "cluster_file": "foo",
-      "reported_gender": "foo",
-      "gender_cluster_file": "foo",
-      "params_file": "foo",
-      "extended_chip_manifest_file": "foo",
-      "analysis_version_number": 1
-    },
-    {
-      "zcall_thresholds_file": "foo",
-      "sample_lsid": "foo",
-      "bead_pool_manifest_file": "foo",
-      "chip_well_barcode": "foo",
-      "sample_alias": "foo",
-      "green_idat_cloud_path": "foo",
-      "red_idat_cloud_path": "foo",
-      "cluster_file": "foo",
-      "reported_gender": "foo",
-      "gender_cluster_file": "foo",
-      "params_file": "foo",
-      "extended_chip_manifest_file": "foo",
-      "analysis_version_number": 5
-    }
-  ]
-}'
-```
+=== "Request"
+
+    ```shell
+    curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
+        -H 'Accept: application/json' \
+        -H 'Content-Type: application/json' \
+        -d $'{
+      "uuid": "00000000-0000-0000-0000-000000000000",
+      "notifications": [
+        {
+          "zcall_thresholds_file": "foo",
+          "sample_lsid": "foo",
+          "bead_pool_manifest_file": "foo",
+          "chip_well_barcode": "foo",
+          "sample_alias": "foo",
+          "green_idat_cloud_path": "foo",
+          "red_idat_cloud_path": "foo",
+          "cluster_file": "foo",
+          "reported_gender": "foo",
+          "gender_cluster_file": "foo",
+          "params_file": "foo",
+          "extended_chip_manifest_file": "foo",
+          "analysis_version_number": 1
+        },
+        {
+          "zcall_thresholds_file": "foo",
+          "sample_lsid": "foo",
+          "bead_pool_manifest_file": "foo",
+          "chip_well_barcode": "foo",
+          "sample_alias": "foo",
+          "green_idat_cloud_path": "foo",
+          "red_idat_cloud_path": "foo",
+          "cluster_file": "foo",
+          "reported_gender": "foo",
+          "gender_cluster_file": "foo",
+          "params_file": "foo",
+          "extended_chip_manifest_file": "foo",
+          "analysis_version_number": 5
+        }
+      ]
+    }'
+    ```
 
 ### Workload Model
 
