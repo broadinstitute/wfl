@@ -193,7 +193,8 @@
   "Use transaction TX to start the WORKLOAD. This is simply updating the
    workload table to mark a workload as 'started' so it becomes append-able."
   [tx {:keys [id] :as workload}]
-  (when-not (:started workload)
+  (if (:started workload)
+    workload
     (let [now {:started (Timestamp/from (.toInstant (OffsetDateTime/now)))}]
       (jdbc/update! tx :workload now ["id = ?" id])
       (merge workload now))))

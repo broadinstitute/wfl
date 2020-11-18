@@ -46,7 +46,7 @@
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
   {:cromwell (get-in stuff [:aou-dev :cromwell :url])
-   :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output"
+   :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
 
