@@ -155,10 +155,11 @@
   [tx {:keys [creator cromwell pipeline project output] :as request}]
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
-  (let [{:keys [release top]} workflow-wdl
+  (let [slashified-output (all/slashify output)
+        {:keys [release top]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
-                                  project pipeline release output])]
+                                  project pipeline release slashified-output])]
     (when (< 1 (count workloads))
       (log/warn "Found more than 1 workloads!")
       (log/error workloads))
@@ -167,7 +168,7 @@
       (let [id            (->> {:commit   commit
                                 :creator  creator
                                 :cromwell cromwell
-                                :output   (all/slashify output)
+                                :output   slashified-output
                                 :project  project
                                 :release  release
                                 :uuid     (UUID/randomUUID)
