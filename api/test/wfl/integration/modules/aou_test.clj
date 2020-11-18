@@ -2,6 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
+            [wfl.module.all :as all]
             [wfl.module.aou :as aou]
             [wfl.service.cromwell :refer [submit-workflow]]
             [wfl.service.postgres :as postgres]
@@ -71,4 +72,13 @@
   "executing a workload-request twice should not create a new workload"
   (let [request (make-aou-workload-request)]
     (is (= (workloads/execute-workload! request)
-          (workloads/execute-workload! request)))))
+           (workloads/execute-workload! request)))))
+
+(deftest test-exec-on-similar-workload-request
+  "output bucket slashes should be standardized to not create new workloads unnecessarily"
+  (let [request (make-aou-workload-request)
+        slashified (update request :output all/slashify)
+        deslashified (update request :output all/de-slashify)]
+    (is (not (= slashified deslashified)))
+    (is (= (workloads/execute-workload! slashified)
+           (workloads/execute-workload! deslashified)))))
