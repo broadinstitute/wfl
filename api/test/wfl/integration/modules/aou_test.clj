@@ -65,3 +65,10 @@
          (let [workload (workloads/update-workload! workload)]
            (is (every? (comp #{"Succeeded"} :status) (:workflows workload)))
            (is (not (:finished workload))))))))
+
+;; rr: GH-1071
+(deftest test-exec-on-same-workload-request
+  "executing a workload-request twice should not create a new workload"
+  (let [request (make-aou-workload-request)]
+    (is (= (workloads/execute-workload! request)
+          (workloads/execute-workload! request)))))
