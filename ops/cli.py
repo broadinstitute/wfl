@@ -283,11 +283,13 @@ def check_git_tag(config: WflInstanceConfig) -> None:
 
 def _markdownify_commit_msg(commit: str) -> str:
     "Turn a single commit message to markdown style."
-    regex = re.compile("\#[0-9][0-9][0-9]")
-    num_pr = regex.search(commit)[0]
-    marked_commit = regex.sub(f"[\g<0>](https://github.com/broadinstitute/wfl/pull/{num_pr[1:]})", commit)
-    marked_commit = f'- {marked_commit}'
-    return marked_commit
+    try:
+        regex = re.compile("\#[0-9][0-9][0-9]")
+        num_pr = regex.search(commit)[0]
+        marked_commit = regex.sub(f"[\g<0>](https://github.com/broadinstitute/wfl/pull/{num_pr[1:]})", commit)
+        return f'- {marked_commit}'
+    except:
+        return f'- {commit}'
 
 
 def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
