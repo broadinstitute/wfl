@@ -13,12 +13,16 @@
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
 
+(def second-party "../derived/2p")
+(defn derived
+  ([] "../derived/api")
+  ([part] (str (derived) "/" part)))
+
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
-(defn make-the-version
-  "Make a map of version information."
-  []
+(def the-version
+  "A map of version information."
   (let [built     (-> (OffsetDateTime/now)
                       (.truncatedTo ChronoUnit/SECONDS)
                       .toInstant .toString)
