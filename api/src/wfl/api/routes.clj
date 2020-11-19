@@ -1,6 +1,8 @@
 (ns wfl.api.routes
   "Define routes for API endpoints"
   (:require [clojure.string                     :as str]
+            [clojure.tools.logging              :as log]
+            [clojure.tools.logging.readable     :as logr]
             [reitit.ring.middleware.dev         :as dev]
             [reitit.dev.pretty                  :as pretty]
             [muuntaja.core                      :as muuntaja-core]
@@ -140,10 +142,8 @@
        ::exception/default                   (partial ex-handler 500 "Internal Server Error")
        ;; print stack-traces for all exceptions in logs
        ::exception/wrap                      (fn [handler e request]
-                                               (println "ERROR" (pr-str
-                                                                  ;; uncomment to log the full request body
-                                                                  ; request
-                                                                  (:uri request)))
+                                               (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
+                                               (logr/error request)
                                                (handler e request))})))
 
 (def routes
