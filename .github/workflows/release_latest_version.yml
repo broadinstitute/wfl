@@ -6,7 +6,7 @@ on:
       ref:
         description: branch, tag or SHA to checkout.
         required: false
-        default: 'master'
+        default: 'main'
 
 jobs:
   build:
