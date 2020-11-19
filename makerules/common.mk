@@ -6,7 +6,6 @@ SHELL       := bash -o pipefail -c
 
 # Common shell programs
 AWK     := awk
-BOOT    := boot
 CAT     := cat
 CD      := cd
 CLOJURE := clojure
