@@ -1,3 +1,10 @@
+# Release 0.4.1
+- [GH-1072] Standardize AoU output bucket in DB ([#236](https://github.com/broadinstitute/wfl/pull/236))
+- [GH-1071] Fix `exec`-ing an AoU workload twice fails to return the `exec`-ed workload ([#234](https://github.com/broadinstitute/wfl/pull/234))
+- Transition the build board to rex. ([#233](https://github.com/broadinstitute/wfl/pull/233))
+- [GH-1020] Add non-AOU Arrays module ([#217](https://github.com/broadinstitute/wfl/pull/217))
+- Update version ([#229](https://github.com/broadinstitute/wfl/pull/229))
+
 # Release 0.4.0
 - create release candidate for v0.4.0 ([#231](https://github.com/broadinstitute/wfl/pull/231))
 - graphic updates ([#230](https://github.com/broadinstitute/wfl/pull/230))
@@ -36,4 +43,3 @@
 - [GH-1034] Fix reference_fasta function ([#194](https://github.com/broadinstitute/wfl/pull/194))
 - [GH-771] WGS updates ([#191](https://github.com/broadinstitute/wfl/pull/191))
 - [GH-819] External Exome Reprocessing ([#139](https://github.com/broadinstitute/wfl/pull/139))
-
