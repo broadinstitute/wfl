@@ -1,23 +1,25 @@
 (ns wfl.api.routes
   "Define routes for API endpoints"
-  (:require [clojure.string                     :as str]
-            [reitit.ring.middleware.dev         :as dev]
-            [reitit.dev.pretty                  :as pretty]
-            [muuntaja.core                      :as muuntaja-core]
+  (:require [clojure.string :as str]
+            [reitit.ring.middleware.dev :as dev]
+            [reitit.dev.pretty :as pretty]
+            [muuntaja.core :as muuntaja-core]
             [reitit.coercion.spec]
-            [reitit.ring                        :as ring]
-            [reitit.ring.coercion               :as coercion]
-            [reitit.ring.middleware.exception   :as exception]
-            [reitit.ring.middleware.multipart   :as multipart]
-            [reitit.ring.middleware.muuntaja    :as muuntaja]
-            [reitit.ring.middleware.parameters  :as parameters]
-            [reitit.swagger                     :as swagger]
-            [wfl.api.handlers                   :as handlers]
-            [wfl.api.workloads                  :as workloads]
-            [wfl.environments                   :as env]
-            [wfl.api.spec                       :as spec]
-            [wfl.wfl                            :as wfl]
-            [wfl.once                           :as once])
+            [reitit.ring :as ring]
+            [reitit.ring.coercion :as coercion]
+            [reitit.ring.middleware.exception :as exception]
+            [reitit.ring.middleware.multipart :as multipart]
+            [reitit.ring.middleware.muuntaja :as muuntaja]
+            [reitit.ring.middleware.parameters :as parameters]
+            [reitit.swagger :as swagger]
+            [wfl.api.handlers :as handlers]
+            [wfl.api.workloads :as workloads]
+            [wfl.environments :as env]
+            [wfl.api.spec :as spec]
+            [wfl.wfl :as wfl]
+            [wfl.once :as once]
+            [clojure.tools.logging :as log]
+            [clojure.tools.logging.readable :as logr])
   (:import (java.sql SQLException)))
 
 (def endpoints
@@ -140,10 +142,8 @@
        ::exception/default                   (partial ex-handler 500 "Internal Server Error")
        ;; print stack-traces for all exceptions in logs
        ::exception/wrap                      (fn [handler e request]
-                                               (println "ERROR" (pr-str
-                                                                  ;; uncomment to log the full request body
-                                                                  ; request
-                                                                  (:uri request)))
+                                               (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
+                                               (logr/error request)
                                                (handler e request))})))
 
 (def routes
