@@ -292,7 +292,7 @@ def _markdownify_commit_msg(commit: str) -> str:
 
 def get_git_commits_since_last_tag(config: WflInstanceConfig) -> None:
     "Read commit messages since last tag, store to config and print."
-    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 origin/master^)..origin/master'
+    command = 'git log --pretty=format:"%s" $(git describe --tags --abbrev=0 HEAD^)..HEAD'
     info("=>  Reading commit messages from git log")
     lines = shell(command).split("\n")
     info("=>  Markdown-ify log messages")
