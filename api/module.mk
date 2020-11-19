@@ -26,13 +26,10 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
-$(PREBUILD): $(MODULE_DIR)/wfl
+$(PREBUILD):
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	$(BOOT) prebuild
+	clojure -X wfl.boot/prebuild
 	@$(TOUCH) $@
-
-$(MODULE_DIR)/wfl: $(BOOT_PROJECT)
-	$(LN) $(BOOT_PROJECT) $@
 
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_TARGET_DIR)

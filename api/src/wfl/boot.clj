@@ -14,9 +14,7 @@
            [java.time.temporal ChronoUnit]))
 
 (def second-party "../derived/2p")
-(defn derived
-  ([] "../derived/api")
-  ([part] (str (derived) "/" part)))
+(def derived      "../derived/api")
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
@@ -66,10 +64,9 @@
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
-
-   Specifically omits [[wfl/the-name]]'s repo since it isn't needed
+   Omit [[wfl/the-name]]'s repo since it isn't needed
    for the version."
-  [second-party]
+  []
   (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
     (into {}
           (for [repo (keys the-github-repos-no-wfl)]
@@ -104,24 +101,17 @@
                       "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
       (stage sources environments))))
 
-;; Hack: (delete-tree directory) is a hack.
-;;
-(defn manage-version-and-resources
+(defn prebuild
   "Use VERSION to stage any needed RESOURCES on the class path."
-  [version second-party derived]
+  [_opts]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
-          clones    (find-repos second-party)
+          clones    (find-repos)
           sources   (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
-          edn (merge version clones (into {} (map frob wdls)))]
+          edn       (merge the-version clones (into {} (map frob wdls)))]
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
       (write-the-version-file resources edn))))
-
-(defn main
-  "Run this with ARGS."
-  [& args]
-  (apply main/-main args))
