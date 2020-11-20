@@ -116,7 +116,7 @@
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
-(defn ex-handler
+(defn on-error
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
@@ -126,25 +126,34 @@
           :data (ex-data exception)
           :uri (:uri request)}})
 
+(defn on-unexpected-error
+  [status message exception request]
+  (log/errorf exception "ERROR IN (%s)" (:uri request))
+  (logr/error request)
+  (on-error status message exception request))
+
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."
   (exception/create-exception-middleware
     (merge
       exception/default-handlers
       {;; ex-data with :type :wfl/exception
-       ::workloads/invalid-pipeline          (partial ex-handler 400 "")
-       ::workloads/workload-not-found        (partial ex-handler 404 "")
+       ::workloads/invalid-pipeline
+       (partial on-error 400 "")
+       ::workloads/workload-not-found
+       (partial on-error 404 "")
+
        ;; SQLException and all it's child classes
-       SQLException                          (partial ex-handler 500 "SQL Error")
+       SQLException
+       (partial on-unexpected-error 500 "SQL Error")
+
        ;; handle clj-http Slingshot stone exceptions
-       :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
+       :clj-http.client/unexceptional-status
+       (partial on-unexpected-error 400 "HTTP Error on request")
+
        ;; override the default handler
-       ::exception/default                   (partial ex-handler 500 "Internal Server Error")
-       ;; print stack-traces for all exceptions in logs
-       ::exception/wrap                      (fn [handler e request]
-                                               (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
-                                               (logr/error request)
-                                               (handler e request))})))
+       ::exception/default
+       (partial on-unexpected-error 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
