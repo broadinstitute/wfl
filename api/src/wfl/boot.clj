@@ -97,7 +97,7 @@
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent environments)
-        "checkout" "1e0dd4bca844fb164784c57c01bf86249d4e105b")
+        "checkout" "17bfc6cbf9aa6bfd4ecf34a3cda98a05f2655fa6")
       (stage sources environments))))
 
 ;; Hack: (delete-tree directory) is a hack.
