@@ -102,7 +102,7 @@
       (stage sources environments))))
 
 (defn prebuild
-  "Use VERSION to stage any needed RESOURCES on the class path."
+  "Stage any needed resources on the class path."
   [_opts]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
