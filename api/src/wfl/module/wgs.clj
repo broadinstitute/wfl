@@ -150,7 +150,7 @@
                               seq))
           (processing? [in-gs]
             (->> {:label cromwell-label :status cromwell/active-statuses}
-              (cromwell/query :gotc-dev)
+              (cromwell/query env)
               (filter #(= pipeline (:name %)))
               (map #(->> % :id (cromwell/metadata env) :inputs))
               (map #(some % [:input_bam :input_cram]))
