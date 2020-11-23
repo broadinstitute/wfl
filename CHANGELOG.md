@@ -1,3 +1,11 @@
+# Release 0.4.2
+- [GH-1080] [Double-submit] Use updated environments.clj with gotc-prod being wgs-prod ([#251](https://github.com/broadinstitute/wfl/pull/251))
+- [GH-1082] fix wrong cromwell queried in `wgs/skip-workflow?` ([#252](https://github.com/broadinstitute/wfl/pull/252))
+- make error logging less noisy ([#249](https://github.com/broadinstitute/wfl/pull/249))
+- [GH-1078] use updated environments from pipeline_config ([#248](https://github.com/broadinstitute/wfl/pull/248))
+- open 0.4.2 for fixes
+- Log middleware exceptions better (double submit) ([#247](https://github.com/broadinstitute/wfl/pull/247))
+
 # Release 0.4.1
 - disable failing test for v0.4.1 ([#242](https://github.com/broadinstitute/wfl/pull/242))
 - [GH-1074] Changelog from branches ([#241](https://github.com/broadinstitute/wfl/pull/241)) ([#243](https://github.com/broadinstitute/wfl/pull/241))
