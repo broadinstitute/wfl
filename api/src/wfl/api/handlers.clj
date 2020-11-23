@@ -5,6 +5,7 @@
             [ring.util.http-response :as response]
             [wfl.api.workloads :as workloads]
             [wfl.module.aou :as aou]
+            [wfl.module.arrays]
             [wfl.module.copyfile]
             [wfl.module.wgs]
             [wfl.module.xx]
