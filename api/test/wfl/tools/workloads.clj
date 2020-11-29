@@ -10,6 +10,7 @@
             [wfl.module.xx :as xx]
             [wfl.service.postgres :as postgres]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.terra :as terra]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]])
@@ -85,13 +86,17 @@
    :cluster_file                    "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
    :zcall_thresholds_file           "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/PsychChip_v1-1_15073391_A1/thresholds.7.txt"})
 
+(def arrays-sample-terra
+  {:entity-name "200598830050_R07C01-1"
+   :entity-type "sample"})
+
 (defn arrays-workload-request
   [identifier]
-  {:cromwell (get-in stuff [:arrays-dev :cromwell :url])
-   :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output"
+  {:cromwell "https://firecloud-orchestration.dsde-dev.broadinstitute.org"
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
    :pipeline arrays/pipeline
-   :project  (format "(Test) %s %s" @git-branch identifier)
-   :items   [{:inputs arrays-sample}]})
+   :project  "general-dev-billing-account/arrays"
+   :items   [{:inputs arrays-sample-terra}]})
 
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
@@ -122,7 +127,7 @@
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
-  [done! {:keys [cromwell] :as workload}]
+  [done! {:keys [cromwell project] :as workload}]
   (letfn [(await-workflow [{:keys [uuid] :as workflow}]
             (let [interval  10
                   timeout   3600                            ; 1 hour
@@ -133,7 +138,9 @@
                   (throw (TimeoutException.
                           (format "Timed out waiting for workflow %s" uuid))))
                 (when-not (skipped? workflow)
-                  (let [status (postgres/cromwell-status cromwell uuid)]
+                  (let [status (if (= "GPArrays" (:pipeline workload))
+                                 (terra/get-workflow-status-by-entity cromwell project workflow)
+                                 (postgres/cromwell-status cromwell uuid))]
                     (when-not (finished? status)
                       (log/infof "%s: Sleeping on status: %s" uuid status)
                       (util/sleep-seconds interval)

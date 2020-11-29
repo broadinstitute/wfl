@@ -74,16 +74,15 @@
 
 (defn update-terra-workflow-statuses!
   "Use `tx` to update `status` of `workflows` in `_workload`."
-  [tx {:keys [items workflows project] :as _workload}]
-  (let [terra-url "https://firecloud-orchestration.dsde-dev.broadinstitute.org"]
-    (letfn [(update! [{:keys [id uuid]} status]
+  [tx {:keys [cromwell items workflows project] :as _workload}]
+  (letfn [(update! [{:keys [id uuid]} status]
               (jdbc/update! tx items
                             {:updated (OffsetDateTime/now) :uuid uuid :status status}
                             ["id = ?" id]))]
       (->> workflows
            (remove (comp nil? :uuid))
            (remove (comp finished? :status))
-           (run! #(update! % (terra/get-workflow-status-by-entity terra-url project %)))))))
+           (run! #(update! % (terra/get-workflow-status-by-entity cromwell project %))))))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
