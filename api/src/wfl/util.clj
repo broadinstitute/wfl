@@ -395,12 +395,3 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))
-
-(defn timeout
-  "Timeout FUNCTION after MILLISECONDS."
-  [milliseconds function]
-  (let [f      (future (function))
-        return (deref f milliseconds ::timed-out)]
-    (when (= return ::timed-out)
-      (future-cancel f))
-    return))

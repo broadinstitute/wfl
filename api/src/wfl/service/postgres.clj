@@ -5,6 +5,7 @@
             [wfl.jdbc :as jdbc]
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.terra :as terra]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
@@ -70,6 +71,19 @@
          (remove (comp nil? :uuid))
          (remove (comp finished? :status))
          (run! #(update! % (maybe-cromwell-status %))))))
+
+(defn update-terra-workflow-statuses!
+  "Use `tx` to update `status` of `workflows` in `_workload`."
+  [tx {:keys [items workflows project] :as _workload}]
+  (let [terra-url "https://firecloud-orchestration.dsde-dev.broadinstitute.org"]
+    (letfn [(update! [{:keys [id uuid]} status]
+              (jdbc/update! tx items
+                            {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                            ["id = ?" id]))]
+      (->> workflows
+           (remove (comp nil? :uuid))
+           (remove (comp finished? :status))
+           (run! #(update! % (terra/get-workflow-status-by-entity terra-url project %)))))))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
