@@ -139,22 +139,25 @@ jobs:
           echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
 
       - name: Pre-Build
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=prebuild
+        run: USER='Automated Release Action' make ${MODULES} TARGET=prebuild
+
+      - name: Lint
+        run: USER='Automated Release Action' make ${MODULES} TARGET=lint
 
       - name: Build
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=build
+        run: USER='Automated Release Action' make ${MODULES} TARGET=build
 
       - name: Unit Test
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=unit
+        run: USER='Automated Release Action' make ${MODULES} TARGET=unit
 
       - name: Integration Test
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=integration
+        run: USER='Automated Release Action' make ${MODULES} TARGET=integration
 
       - name: Images
-        run: USER='Automated Release Action' make MODULES="${MODULES}" TARGET=images
+        run: USER='Automated Release Action' make ${MODULES} TARGET=images
 
       - name: tag-and-push-images
         run: ./ops/cli.py tag-and-push-images
