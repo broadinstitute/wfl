@@ -78,13 +78,13 @@ jobs:
           EOF
 
       - name: Pre-Build
-        run: make "${MODULES}" TARGET=prebuild
+        run: make ${MODULES} TARGET=prebuild
 
       - name: Lint
-        run: make "${MODULES}" TARGET=lint
+        run: make ${MODULES} TARGET=lint
 
       - name: Build
-        run: make "${MODULES}" TARGET=build
+        run: make ${MODULES} TARGET=build
 
         # Get secret from vault
       - name: Authenticate to GCloud
@@ -132,11 +132,11 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
 
       - name: Unit Test
-        run: make "${MODULES}" TARGET=unit
+        run: make ${MODULES} TARGET=unit
 
       - name: Integration Test
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
-        run: make "${MODULES}" TARGET=integration
+        run: make ${MODULES} TARGET=integration
 
