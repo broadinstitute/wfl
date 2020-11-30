@@ -114,4 +114,5 @@
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
+      (make-the-pom the-version)
       (write-the-version-file resources edn))))

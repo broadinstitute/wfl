@@ -20,7 +20,6 @@ GIT     := git
 GREP    := grep
 JAVA    := java
 JQ      := jq
-LEIN    := lein
 LN      := ln -s
 MKDIR   := mkdir -p
 MV      := mv -f

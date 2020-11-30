@@ -87,4 +87,4 @@
    :main-opts   ["-m" "wfl.tools.parallel-runner"]}
 
   :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.2"}}
-            :main-opts  ["-m" "uberdeps.uberjar" "--multi-release"]}}}
+            :main-opts  ["-m" "uberdeps.uberjar"]}}}

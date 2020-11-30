@@ -34,7 +34,9 @@ $(PREBUILD):
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	clojure -e "(compile 'wfl.main)"
+	clojure -Spom
 	clojure -A:uberjar --main-class wfl.main
+	echo $(LN) $(JAR) $(JAR_LINK)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 

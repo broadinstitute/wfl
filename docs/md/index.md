@@ -39,17 +39,15 @@ following prerequisites are needed:
 
 - [The Docker daemon](https://www.docker.com/products/docker-desktop)
 - Clojure (`brew install clojure` on macOS)
-- [Boot](https://github.com/boot-clj/boot) (`brew install boot-clj` on macOS)
 - Python3 (`brew install python@3.8` on macOS)
 - NodeJS (`brew install node` on macOS)
 
 !!! tip "Arch Linux tips"
-    - Install [clojure](https://www.archlinux.org/packages/?name=clojure) and
-    [leiningen](https://www.archlinux.org/packages/?name=leiningen)
-    from the official repositories.
-    - Install [boot](https://aur.archlinux.org/packages/boot/) and
-    [google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
-    from the AUR.
+    - Install [clojure](https://www.archlinux.org/packages/?name=clojure)
+      from the official repository.
+    - Install
+      [google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
+      from the AUR.
 
     You could then invoke `make` at the project level to test and build all
     `workflow-launcher` modules:
