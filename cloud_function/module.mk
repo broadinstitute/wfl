@@ -21,7 +21,7 @@ $(UNIT): $(SCM_SRC) $(TEST_SCM_SRC)
 	@$(TOUCH) $@
 
 $(LINT): $(SCM_SRC)
-	$(call using-python-environment, $(PYTHON) -m flake8 $^)
+	$(call using-python-environment, $(PYTHON) -m flake8 $(SCM_SRC))
 	@$(TOUCH) $@
 
 # Remove any python caches
