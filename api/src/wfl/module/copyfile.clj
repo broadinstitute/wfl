@@ -19,20 +19,20 @@
   (let [envs (all/cromwell-environments #{:gotc-dev :gotc-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-               {:cromwell     cromwell
-                :environments envs})))
+                      {:cromwell     cromwell
+                       :environments envs})))
     (first envs)))
 
 (defn ^:private submit-workflow
   "Submit WORKFLOW to Cromwell in ENVIRONMENT with OPTIONS and LABELS."
   [environment inputs options labels]
   (cromwell/submit-workflow
-    environment
-    (util/extract-resource (:top workflow-wdl))
-    nil
-    (-> inputs (util/prefix-keys pipeline))
-    options
-    labels))
+   environment
+   (util/extract-resource (:top workflow-wdl))
+   nil
+   (-> inputs (util/prefix-keys pipeline))
+   options
+   labels))
 
 (defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
@@ -42,9 +42,9 @@
             (json/write-str (nil-if-empty (util/deep-merge shared specific))))
           (serialize [workflow id]
             (-> workflow
-              (assoc :id id)
-              (update :inputs #(merge-to-json (:inputs common) %))
-              (update :options #(merge-to-json (:options common) %))))]
+                (assoc :id id)
+                (update :inputs #(merge-to-json (:inputs common) %))
+                (update :options #(merge-to-json (:options common) %))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
@@ -56,15 +56,15 @@
         default-options (util/make-options env)]
     (letfn [(submit! [{:keys [id inputs options]}]
               [id (submit-workflow env inputs
-                    (util/deep-merge default-options options)
-                    {:workload uuid})])
+                                   (util/deep-merge default-options options)
+                                   {:workload uuid})])
             (update! [tx [id uuid]]
               (jdbc/update! tx items
-                {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
-                ["id = ?" id]))]
+                            {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
+                            ["id = ?" id]))]
       (run! (comp (partial update! tx) submit!) (:workflows workload))
       (jdbc/update! tx :workload
-        {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
+                    {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
 (defoverload workloads/create-workload! pipeline create-copyfile-workload!)
 

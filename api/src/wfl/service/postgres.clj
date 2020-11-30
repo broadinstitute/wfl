@@ -21,17 +21,17 @@
             ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
             :isolation-level :serializable
             :subprotocol     "postgresql"}
-      :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
-      :password (or WFL_POSTGRES_PASSWORD "password")
-      :user (or WFL_POSTGRES_USERNAME USER "postgres"))))
+           :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
+           :password (or WFL_POSTGRES_PASSWORD "password")
+           :user (or WFL_POSTGRES_USERNAME USER "postgres"))))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."
   [tx table]
   (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
-    (jdbc/query tx)
-    (count)
-    (not= 0)))
+       (jdbc/query tx)
+       (count)
+       (not= 0)))
 
 (defn get-table
   "Return TABLE using transaction TX."
@@ -46,10 +46,10 @@
   "`status` of the workflow with UUID on CROMWELL."
   [cromwell uuid]
   (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-    (http/get {:headers (once/get-auth-header)})
-    :body
-    util/parse-json
-    :status))
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :status))
 
 (def ^:private finished?
   "Test if a workflow `:status` is in a terminal state."
@@ -64,21 +64,21 @@
               (cromwell-status cromwell uuid)))
           (update! [{:keys [id uuid]} status]
             (jdbc/update! tx items
-              {:updated (OffsetDateTime/now) :uuid uuid :status status}
-              ["id = ?" id]))]
+                          {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                          ["id = ?" id]))]
     (->> workflows
-      (remove (comp nil? :uuid))
-      (remove (comp finished? :status))
-      (run! #(update! % (maybe-cromwell-status %))))))
+         (remove (comp nil? :uuid))
+         (remove (comp finished? :status))
+         (run! #(update! % (maybe-cromwell-status %))))))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id items] :as _workload}]
   (let [query (format "SELECT id FROM %%s WHERE status NOT IN %s"
-                (util/to-quoted-comma-separated-list finished?))]
+                      (util/to-quoted-comma-separated-list finished?))]
     (when (empty? (jdbc/query tx (format query items)))
       (jdbc/update! tx :workload
-        {:finished (OffsetDateTime/now)} ["id = ?" id]))))
+                    {:finished (OffsetDateTime/now)} ["id = ?" id]))))
 
 (defn update-workload!
   "Use transaction TX to update WORKLOAD statuses."

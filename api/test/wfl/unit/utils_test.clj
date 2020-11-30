@@ -47,7 +47,7 @@
 
 (deftest test-deep-merge
   (letfn [(go [[first second expected]]
-            (is (= expected (util/deep-merge first second))))]
+              (is (= expected (util/deep-merge first second))))]
     (let [parameters [[nil nil nil]
                       [nil {} {}]
                       [{} nil {}]

@@ -34,12 +34,12 @@
   ([db table set-map where-clause]
    `(do
       (log/info "JDBC SQL update! (without opts):"
-        (format-db ~db) ~table ~set-map ~where-clause)
+                (format-db ~db) ~table ~set-map ~where-clause)
       (jdbc/update! ~db ~table ~set-map ~where-clause)))
   ([db table set-map where-clause opts]
    `(do
       (log/info "JDBC SQL update!:"
-        (format-db ~db) ~table ~set-map ~where-clause ~opts)
+                (format-db ~db) ~table ~set-map ~where-clause ~opts)
       (jdbc/update! ~db ~table ~set-map ~where-clause ~opts))))
 
 (defmacro insert-multi!
@@ -47,20 +47,20 @@
   ([db table rows]
    `(do
       (log/info "JDBC SQL insert-rows! (without opts):"
-        (format-db ~db) ~table ~rows)
+                (format-db ~db) ~table ~rows)
       (jdbc/insert-multi! ~db ~table ~rows)))
   ([db table cols-or-rows values-or-opts]
    `(do
       (if (map? values-or-opts)
         (log/info "JDBC SQL insert-rows!:"
-          (format-db ~db) ~table ~cols-or-rows ~values-or-opts)
+                  (format-db ~db) ~table ~cols-or-rows ~values-or-opts)
         (log/info "JDBC SQL insert-cols! (without opts):"
-          (format-db ~db) ~table ~cols-or-rows ~values-or-opts))
+                  (format-db ~db) ~table ~cols-or-rows ~values-or-opts))
       (jdbc/insert-multi! ~db ~table ~cols-or-rows ~values-or-opts)))
   ([db table cols values opts]
    `(do
       (log/info "JDBC SQL insert-cols!:"
-        (format-db ~db) ~table ~cols ~values ~opts)
+                (format-db ~db) ~table ~cols ~values ~opts)
       (jdbc/insert-multi! ~db ~table ~cols ~values ~opts))))
 
 (defmacro execute!
@@ -83,7 +83,7 @@
   ([db transaction? sql-commands]
    `(do
       (log/info "JDBC SQL db-do-commands:"
-        (format-db ~db) ~transaction? ~sql-commands)
+                (format-db ~db) ~transaction? ~sql-commands)
       (jdbc/db-do-commands ~db ~transaction? ~sql-commands))))
 
 (defmacro insert!
@@ -91,20 +91,20 @@
   ([db table row]
    `(do
       (log/info "JDBC SQL insert-rows! (without opts):"
-        (format-db ~db) ~table [~row])
+                (format-db ~db) ~table [~row])
       (jdbc/insert! ~db ~table ~row)))
   ([db table cols-or-row values-or-opts]
    `(do
       (if (map? values-or-opts)
         (log/info "JDBC SQL insert-rows!:"
-          (format-db ~db) ~table [~cols-or-row] ~values-or-opts)
+                  (format-db ~db) ~table [~cols-or-row] ~values-or-opts)
         (log/info "JDBC SQL insert-cols! (without opts):"
-          (format-db ~db) ~table ~cols-or-row [~values-or-opts]))
+                  (format-db ~db) ~table ~cols-or-row [~values-or-opts]))
       (jdbc/insert! ~db ~table ~cols-or-row ~values-or-opts)))
   ([db table cols values opts]
    `(do
       (log/info "JDBC SQL insert-cols!:"
-        (format-db ~db) ~table ~cols [~values] ~opts)
+                (format-db ~db) ~table ~cols [~values] ~opts)
       (jdbc/insert! ~db ~table ~cols ~values ~opts))))
 
 (defmacro with-db-transaction
@@ -112,7 +112,7 @@
   [binding & body]
   `(let [id# (rand-int 10000)]
      (log/info "JDBC SQL transaction" id# "started to"
-       (format-db ~(second binding)))
+               (format-db ~(second binding)))
      (let [exe# (jdbc/with-db-transaction ~binding ~@body)]
        (log/info "JDBC SQL transaction" id# "ended")
        exe#)))

@@ -247,10 +247,10 @@
   (if-let [auth-token (or (get-in request [:headers "Authorization"])
                           (get-in request [:headers "authorization"]))]
     (let [response (http/get (str api-url "oauth2/v3/userinfo")
-                     {:headers {"Authorization" auth-token}})]
+                             {:headers {"Authorization" auth-token}})]
       (json/read-str (:body response) :key-fn keyword))
     (do
       (logr/error "No auth header in request")
       (throw
-        (ex-info "No auth header in request"
-          {:type :clj-http.client/unexceptional-status})))))
+       (ex-info "No auth header in request"
+                {:type :clj-http.client/unexceptional-status})))))

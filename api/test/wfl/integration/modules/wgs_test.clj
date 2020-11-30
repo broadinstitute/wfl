@@ -21,8 +21,8 @@
 
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
-    workloads/wgs-workload-request
-    (assoc :creator (:email @endpoints/userinfo))))
+      workloads/wgs-workload-request
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (deftest test-create-with-common-reference-fasta-prefix
   (let [prefix "gs://fake-input-bucket/ref-fasta"]
@@ -30,14 +30,14 @@
               (is (= reference-fasta (references/reference_fasta prefix))))
             (go! [inputs]
               (verify-reference-fasta
-                (get-in inputs [:references :reference_fasta]))
+               (get-in inputs [:references :reference_fasta]))
               (is (empty? (-> inputs :references (dissoc :reference_fasta))))
               (is (util/absent? inputs :reference_fasta_prefix)))]
       (run! (comp go! :inputs)
-        (-> (make-wgs-workload-request)
-          (assoc-in [:common :inputs] {:reference_fasta_prefix prefix})
-          workloads/create-workload!
-          :workflows)))))
+            (-> (make-wgs-workload-request)
+                (assoc-in [:common :inputs] {:reference_fasta_prefix prefix})
+                workloads/create-workload!
+                :workflows)))))
 
 (deftest test-create-with-reference-fasta-prefix-override
   (let [prefix "gs://fake-input-bucket/ref-fasta"]
@@ -45,26 +45,26 @@
               (is (= reference-fasta (references/reference_fasta prefix))))
             (go! [inputs]
               (verify-reference-fasta
-                (get-in inputs [:references :reference_fasta]))
+               (get-in inputs [:references :reference_fasta]))
               (is (empty? (-> inputs :references (dissoc :reference_fasta))))
               (is (util/absent? inputs :reference_fasta_prefix)))]
       (run! (comp go! :inputs)
-        (-> (make-wgs-workload-request)
-          (assoc-in [:common :inputs] {:reference_fasta_prefix "gs://ignore/this/ref-fasta"})
-          (update :items (partial map #(update % :inputs (fn [xs] (assoc xs :reference_fasta_prefix prefix)))))
-          workloads/create-workload!
-          :workflows)))))
+            (-> (make-wgs-workload-request)
+                (assoc-in [:common :inputs] {:reference_fasta_prefix "gs://ignore/this/ref-fasta"})
+                (update :items (partial map #(update % :inputs (fn [xs] (assoc xs :reference_fasta_prefix prefix)))))
+                workloads/create-workload!
+                :workflows)))))
 
 (deftest test-start-wgs-workload!
   (with-redefs-fn {#'wgs/really-submit-one-workflow mock-really-submit-one-workflow}
     #(let [workload (-> (make-wgs-workload-request)
-                      workloads/create-workload!
-                      workloads/start-workload!)]
+                        workloads/create-workload!
+                        workloads/start-workload!)]
        (letfn [(check-nesting [workflow]
                  (is (:inputs workflow) "Inputs are under :inputs")
                  (is
-                   (not-any? (partial contains? workflow) (keys workloads/wgs-inputs))
-                   "Inputs are not at the top-level"))]
+                  (not-any? (partial contains? workflow) (keys workloads/wgs-inputs))
+                  "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
 
 (defn ^:private old-create-wgs-workload! []
@@ -89,9 +89,9 @@
             (is (:updated workflow)))
           (use-input_bam [item]
             (update item :inputs
-              #(-> %
-                 (dissoc :input_cram)
-                 (assoc :input_bam "gs://inputs/fake.bam"))))
+                    #(-> %
+                         (dissoc :input_cram)
+                         (assoc :input_bam "gs://inputs/fake.bam"))))
           (verify-use_input_bam! [env inputs options labels]
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
@@ -101,11 +101,11 @@
       {#'wgs/really-submit-one-workflow
        (comp mock-really-submit-one-workflow verify-use_input_bam!)}
       #(-> (make-wgs-workload-request)
-         (update :items (comp vector use-input_bam first))
-         (workloads/execute-workload!)
-         (as-> workload
-           (is (:started workload))
-           (run! go! (:workflows workload)))))))
+           (update :items (comp vector use-input_bam first))
+           (workloads/execute-workload!)
+           (as-> workload
+                 (is (:started workload))
+             (run! go! (:workflows workload)))))))
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
@@ -125,14 +125,14 @@
                      #'skip-workflow? (constantly false)}
       (fn []
         (->
-          (make-wgs-workload-request)
-          (assoc-in [:common :inputs]
-            {:supports_common_inputs true :overwritten false})
-          (update :items
-            (partial map
-              #(update % :inputs
-                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
-          workloads/execute-workload!)))))
+         (make-wgs-workload-request)
+         (assoc-in [:common :inputs]
+                   {:supports_common_inputs true :overwritten false})
+         (update :items
+                 (partial map
+                          #(update % :inputs
+                                   (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+         workloads/execute-workload!)))))
 
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
@@ -148,20 +148,20 @@
                      #'skip-workflow? (constantly false)}
       (fn []
         (->
-          (make-wgs-workload-request)
-          (assoc-in [:common :options]
-            {:supports_common_options true :overwritten false})
-          (update :items
-            (partial map
-              #(assoc % :options {:supports_options true :overwritten true})))
-          workloads/execute-workload!
-          :workflows
-          (->> (map (comp verify-workflow-options :options))))))))
+         (make-wgs-workload-request)
+         (assoc-in [:common :options]
+                   {:supports_common_options true :overwritten false})
+         (update :items
+                 (partial map
+                          #(assoc % :options {:supports_options true :overwritten true})))
+         workloads/execute-workload!
+         :workflows
+         (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (util/absent? workflow :options)))]
     (run! go! (-> (make-wgs-workload-request)
-                (assoc-in [:common :options] {})
-                (update :items (partial map #(assoc % :options {})))
-                workloads/create-workload!
-                :workflows))))
+                  (assoc-in [:common :options] {})
+                  (update :items (partial map #(assoc % :options {})))
+                  workloads/create-workload!
+                  :workflows))))

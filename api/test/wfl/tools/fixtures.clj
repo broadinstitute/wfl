@@ -34,22 +34,22 @@
      (try ~@body
           (finally
             (->>
-              (gcs/list-objects gcs-test-bucket name#)
-              (run! (comp delete-test-object :name)))))))
+             (gcs/list-objects gcs-test-bucket name#)
+             (run! (comp delete-test-object :name)))))))
 
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)
-    (dissoc :instance-name)
-    (merge {:connection-uri "jdbc:postgresql:postgres"
-            :db-name        "postgres"})))
+      (dissoc :instance-name)
+      (merge {:connection-uri "jdbc:postgresql:postgres"
+              :db-name        "postgres"})))
 
 (def testing-db-config
   (let [name (str "wfltest" (str/replace (UUID/randomUUID) "-" ""))]
     (-> (postgres/wfl-db-config)
-      (dissoc :instance-name)
-      (merge {:connection-uri (str "jdbc:postgresql:" name)
-              :db-name        name})
-      constantly)))
+        (dissoc :instance-name)
+        (merge {:connection-uri (str "jdbc:postgresql:" name)
+                :db-name        name})
+        constantly)))
 
 (defn ^:private create-local-database
   "Create a local PostgreSQL database with DBNAME."

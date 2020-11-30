@@ -36,10 +36,10 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs wgs-inputs}]
    :common   {:inputs (-> {:disable_sanity_check true}
-                        (util/prefix-keys :CheckContamination)
-                        (util/prefix-keys :UnmappedBamToAlignedBam)
-                        (util/prefix-keys :WholeGenomeGermlineSingleSample)
-                        (util/prefix-keys :WholeGenomeReprocessing))}})
+                          (util/prefix-keys :CheckContamination)
+                          (util/prefix-keys :UnmappedBamToAlignedBam)
+                          (util/prefix-keys :WholeGenomeGermlineSingleSample)
+                          (util/prefix-keys :WholeGenomeReprocessing))}})
 
 (defn aou-workload-request
   "An allofus arrays workload used for testing.
@@ -68,8 +68,7 @@
    :gender_cluster_file         "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/metadata/HumanExome-12v1-1_A/HumanExomev1_1_gender.egt"})
 
 (def arrays-sample
-  {
-   :sample_alias                    "03C 17319",
+  {:sample_alias                    "03C 17319",
    :sample_lsid                     "broadinstitute.org:bsp.dev.sample:NOTREAL.03C17319",
    :analysis_version_number         1,
    :call_rate_threshold             0.98,
@@ -116,10 +115,10 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs xx-inputs}]
    :common {:inputs (-> {:disable_sanity_check true}
-                      (util/prefix-keys :CheckContamination)
-                      (util/prefix-keys :UnmappedBamToAlignedBam)
-                      (util/prefix-keys :ExomeGermlineSingleSample)
-                      (util/prefix-keys :ExomeReprocessing))}})
+                        (util/prefix-keys :CheckContamination)
+                        (util/prefix-keys :UnmappedBamToAlignedBam)
+                        (util/prefix-keys :ExomeGermlineSingleSample)
+                        (util/prefix-keys :ExomeReprocessing))}})
 
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
@@ -132,7 +131,7 @@
               (loop [seconds 0]
                 (when (> seconds timeout)
                   (throw (TimeoutException.
-                           (format "Timed out waiting for workflow %s" uuid))))
+                          (format "Timed out waiting for workflow %s" uuid))))
                 (when-not (skipped? workflow)
                   (let [status (postgres/cromwell-status cromwell uuid)]
                     (when-not (finished? status)
@@ -173,7 +172,7 @@
 (defn load-workloads-with-project [project]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (doall
-      (wfl.api.workloads/load-workloads-with-project tx project))))
+     (wfl.api.workloads/load-workloads-with-project tx project))))
 
 (defn append-to-workload! [samples workload]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]

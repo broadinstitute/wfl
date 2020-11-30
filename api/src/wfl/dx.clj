@@ -78,8 +78,8 @@
                   failures (truncate message 777)
                   code     (papi-error message)
                   wfl     (maybe {:failures-message failures
-                                   :duration-seconds duration}
-                                  :papi-error-code code)]
+                                  :duration-seconds duration}
+                                 :papi-error-code code)]
               (-> thing (dissoc :failures) (assoc :wfl wfl))))]
     (->> workflow-metadata flatten-workflow
          (filter (comp #{"Failed"} :executionStatus))
@@ -413,10 +413,10 @@
 (defn run
   "Run diagnostic program specified by ARGS."
   [& args]
-    (if-let [diagnostic (commands (first args))]
-      (apply diagnostic (rest args))
-      (let [error (if-let [verb (first args)]
-                    (format "Error: %s is not a dx <tool>." verb)
-                    "Error: Must specify a dx <tool> to run.")
-            usage (describe commands)]
-        (throw (IllegalArgumentException. (str error "\n" usage))))))
+  (if-let [diagnostic (commands (first args))]
+    (apply diagnostic (rest args))
+    (let [error (if-let [verb (first args)]
+                  (format "Error: %s is not a dx <tool>." verb)
+                  "Error: Must specify a dx <tool> to run.")
+          usage (describe commands)]
+      (throw (IllegalArgumentException. (str error "\n" usage))))))

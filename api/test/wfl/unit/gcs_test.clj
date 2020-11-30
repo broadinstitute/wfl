@@ -71,7 +71,7 @@
           (testing "download"
             (gcs/download-file local-file-name bucket (str dest-folder "test"))
             (is (= (slurp properties) (slurp local-file-name)))))))
-  (finally (cleanup-object-test))))
+    (finally (cleanup-object-test))))
 
 (deftest userinfo-test
   (testing "no \"Authorization\" header in request should throw"

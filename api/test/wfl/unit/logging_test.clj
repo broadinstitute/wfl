@@ -1,9 +1,9 @@
 (ns wfl.unit.logging-test
   "Test that logging is functional (since there's several layers of delegation)"
   (:require
-    [clojure.tools.logging :as log]
-    [clojure.tools.logging.test :refer [logged? with-log]]
-    [clojure.test :refer [is deftest testing]]))
+   [clojure.tools.logging :as log]
+   [clojure.tools.logging.test :refer [logged? with-log]]
+   [clojure.test :refer [is deftest testing]]))
 
 ;; Useful information on this file is in docs/logging.md#Testing
 
