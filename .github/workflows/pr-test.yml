@@ -7,6 +7,31 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
+        with:
+          tools-deps: '1.10.1.469'
+          boot: 2.8.3
+
+      - name: Setup Python3
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Lint
+        run: make TARGET=lint
+
   build:
     runs-on: ubuntu-latest
     services:
