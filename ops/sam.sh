@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # https://github.com/DataBiosphere/jade-data-repo/blob/develop/docs/register-sa-with-sam.md#registering
 
