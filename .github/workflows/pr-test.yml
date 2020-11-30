@@ -8,31 +8,6 @@ on:
   pull_request:
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Java
-        uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-
-      - name: Setup Clojure
-        uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
-        with:
-          tools-deps: '1.10.1.469'
-          boot: 2.8.3
-
-      - name: Setup Python3
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      - name: Lint
-        run: make TARGET=lint
-
   build:
     runs-on: ubuntu-latest
     services:
@@ -50,6 +25,8 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+    env:
+      MODULES: api cloud_function
 
     steps:
       - name: Checkout
@@ -101,10 +78,13 @@ jobs:
           EOF
 
       - name: Pre-Build
-        run: make api TARGET=prebuild
+        run: make "${MODULES}" TARGET=prebuild
+
+      - name: Lint
+        run: make "${MODULES}" TARGET=lint
 
       - name: Build
-        run: make api TARGET=build
+        run: make "${MODULES}" TARGET=build
 
         # Get secret from vault
       - name: Authenticate to GCloud
@@ -152,13 +132,11 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
 
       - name: Unit Test
-        run: make api TARGET=unit
+        run: make "${MODULES}" TARGET=unit
 
       - name: Integration Test
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
-        run: make api TARGET=integration
+        run: make "${MODULES}" TARGET=integration
 
-      - name: Cloud Function Unit Test
-        run: make cloud_function TARGET=check
