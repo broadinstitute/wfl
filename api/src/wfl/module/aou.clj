@@ -256,8 +256,9 @@
     (let [environment       (get-cromwell-environment! workload)
           submitted-samples (map (partial submit! environment)
                                  (remove-existing-samples notifications
-                                                          (get-existing-samples tx items notifications)))]
-      (jdbc/insert-multi! tx items submitted-samples))))
+                                   (get-existing-samples tx items notifications)))]
+      (jdbc/insert-multi! tx items submitted-samples)
+      submitted-samples)))
 
 (defmethod workloads/create-workload!
   pipeline
