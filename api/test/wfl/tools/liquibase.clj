@@ -6,17 +6,17 @@
   "Migrate the database schema using Liquibase."
   ([url changelog username password]
    (let [status (Main/run
-                  (into-array
-                    String
-                    [(str "--url=" url)
-                     (str "--changeLogFile=" changelog)
-                     (str "--username=" username)
-                     (str "--password=" password)
-                     "update"]))]
+                 (into-array
+                  String
+                  [(str "--url=" url)
+                   (str "--changeLogFile=" changelog)
+                   (str "--username=" username)
+                   (str "--password=" password)
+                   "update"]))]
      (when-not (zero? status)
        (throw
-         (Exception.
-           (format "Liquibase failed with: %s" status))))))
+        (Exception.
+         (format "Liquibase failed with: %s" status))))))
   ([url changelog username]
    (run-liquibase url changelog username nil)))
 

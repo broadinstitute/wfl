@@ -20,14 +20,14 @@
   "Make a map of version information."
   []
   (let [built     (-> (OffsetDateTime/now)
-                    (.truncatedTo ChronoUnit/SECONDS)
-                    .toInstant .toString)
+                      (.truncatedTo ChronoUnit/SECONDS)
+                      .toInstant .toString)
         commit    (util/shell! "git" "rev-parse" "HEAD")
         committed (->> commit
-                    (util/shell! "git" "show" "-s" "--format=%cI")
-                    OffsetDateTime/parse .toInstant .toString)
+                       (util/shell! "git" "show" "-s" "--format=%cI")
+                       OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
-                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                   (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
     {:version   (or (System/getenv "WFL_VERSION") "devel")
      :commit    commit
      :committed committed
@@ -56,9 +56,9 @@
   [the-pom]
   (let [keywords [:description :url :version]]
     (assoc (zipmap (map (comp str/capitalize name) keywords)
-             ((apply juxt keywords) the-pom))
-      "Application-Name" (str/capitalize wfl/the-name)
-      "Multi-Release" "true")))
+                   ((apply juxt keywords) the-pom))
+           "Application-Name" (str/capitalize wfl/the-name)
+           "Multi-Release" "true")))
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
@@ -68,9 +68,9 @@
   [second-party]
   (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
     (into {}
-      (for [repo (keys the-github-repos-no-wfl)]
-        (let [dir (str/join "/" [second-party repo])]
-          [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
+          (for [repo (keys the-github-repos-no-wfl)]
+            (let [dir (str/join "/" [second-party repo])]
+              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from warp in CLONES to RESOURCES."
@@ -97,7 +97,7 @@
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent environments)
-        "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
+                      "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
       (stage sources environments))))
 
 ;; Hack: (delete-tree directory) is a hack.

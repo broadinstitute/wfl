@@ -36,8 +36,8 @@
   (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-               {:cromwell     cromwell
-                :environments envs})))
+                      {:cromwell     cromwell
+                       :environments envs})))
     (first envs)))
 
 (def cram-ref
@@ -51,9 +51,9 @@
   "HG38 reference, calling interval, and contamination files."
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"]
     (merge references/contamination-sites
-      references/hg38-genome-references
-      {:calling_interval_list
-       (str hg38 "wgs_calling_regions.hg38.interval_list")})))
+           references/hg38-genome-references
+           {:calling_interval_list
+            (str hg38 "wgs_calling_regions.hg38.interval_list")})))
 
 (def hack-task-level-values
   "Hack to overload task-level values for wgs pipeline."
@@ -76,8 +76,8 @@
 (defn ^:private normalize-reference-fasta [inputs]
   (if-let [prefix (:reference_fasta_prefix inputs)]
     (-> (update-in inputs [:references :reference_fasta]
-          #(util/deep-merge (references/reference_fasta prefix) %))
-      (dissoc :reference_fasta_prefix))
+                   #(util/deep-merge (references/reference_fasta prefix) %))
+        (dissoc :reference_fasta_prefix))
     inputs))
 
 (defn ^:private make-inputs-to-save
@@ -88,20 +88,20 @@
         leaf   (util/basename base)
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))]
     (-> inputs
-      (util/assoc-when util/absent? :base_file_name leaf)
-      (util/assoc-when util/absent? :sample_name leaf)
-      (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
-      (util/assoc-when util/absent? :final_gvcf_base_name leaf)
-      (assoc :destination_cloud_path (str out-gs out-dir)))))
+        (util/assoc-when util/absent? :base_file_name leaf)
+        (util/assoc-when util/absent? :sample_name leaf)
+        (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
+        (util/assoc-when util/absent? :final_gvcf_base_name leaf)
+        (assoc :destination_cloud_path (str out-gs out-dir)))))
 
 (defn ^:private make-cromwell-inputs
   "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
   [environment workflow-inputs]
   (-> (util/deep-merge cram-ref hack-task-level-values)
-    (util/deep-merge {:references default-references})
-    (util/deep-merge (env-inputs environment))
-    (util/deep-merge workflow-inputs)
-    (util/prefix-keys (keyword pipeline))))
+      (util/deep-merge {:references default-references})
+      (util/deep-merge (env-inputs environment))
+      (util/deep-merge workflow-inputs)
+      (util/prefix-keys (keyword pipeline))))
 
 (defn make-labels
   "Return labels for wgs pipeline from OTHER-LABELS."
@@ -113,12 +113,12 @@
   [environment inputs options other-labels]
   (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
     (cromwell/submit-workflow
-      environment
-      (io/file (:dir path) (path ".wdl"))
-      (io/file (:dir path) (path ".zip"))
-      (make-cromwell-inputs environment inputs)
-      options
-      (make-labels other-labels))))
+     environment
+     (io/file (:dir path) (path ".wdl"))
+     (io/file (:dir path) (path ".zip"))
+     (make-cromwell-inputs environment inputs)
+     options
+     (make-labels other-labels))))
 
 (defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
@@ -126,15 +126,15 @@
   (letfn [(nil-if-empty [x] (if (empty? x) nil x))
           (serialize [workflow id]
             (-> (assoc workflow :id id)
-              (update :options
-                #(json/write-str
-                   (nil-if-empty (util/deep-merge (:options common) %))))
-              (update :inputs
-                #(json/write-str
-                   (normalize-reference-fasta
-                     (util/deep-merge
-                       (:inputs common)
-                       (make-inputs-to-save output %)))))))]
+                (update :options
+                        #(json/write-str
+                          (nil-if-empty (util/deep-merge (:options common) %))))
+                (update :inputs
+                        #(json/write-str
+                          (normalize-reference-fasta
+                           (util/deep-merge
+                            (:inputs common)
+                            (make-inputs-to-save output %)))))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
@@ -145,17 +145,17 @@
    {:keys [output] :as _workload}
    {:keys [inputs] :as _workflow}]
   (letfn [(exists? [out-gs] (->> (gcs/parse-gs-url out-gs)
-                              (apply gcs/list-objects)
-                              util/do-or-nil
-                              seq))
+                                 (apply gcs/list-objects)
+                                 util/do-or-nil
+                                 seq))
           (processing? [in-gs]
             (->> {:label cromwell-label :status cromwell/active-statuses}
-              (cromwell/query env)
-              (filter #(= pipeline (:name %)))
-              (map #(->> % :id (cromwell/metadata env) :inputs))
-              (map #(some % [:input_bam :input_cram]))
-              (filter #{in-gs})
-              seq))]
+                 (cromwell/query env)
+                 (filter #(= pipeline (:name %)))
+                 (map #(->> % :id (cromwell/metadata env) :inputs))
+                 (map #(some % [:input_bam :input_cram]))
+                 (filter #{in-gs})
+                 seq))]
     (let [in-gs  (some inputs [:input_bam :input_cram])
           [_ object] (gcs/parse-gs-url in-gs)
           out-gs (str (all/slashify output) object)]
@@ -172,14 +172,14 @@
                 [id "skipped" util/uuid-nil]
                 [id "Submitted"
                  (really-submit-one-workflow
-                   env
-                   inputs
-                   (util/deep-merge default-options options)
-                   workload->label)]))
+                  env
+                  inputs
+                  (util/deep-merge default-options options)
+                  workload->label)]))
             (update! [tx [id status uuid]]
               (jdbc/update! tx items
-                {:status status :updated (OffsetDateTime/now) :uuid uuid}
-                ["id = ?" id]))]
+                            {:status status :updated (OffsetDateTime/now) :uuid uuid}
+                            ["id = ?" id]))]
       (let [now (OffsetDateTime/now)]
         (run! (comp (partial update! tx) submit!) (:workflows workload))
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))

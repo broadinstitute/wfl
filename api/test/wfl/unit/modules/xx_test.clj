@@ -25,19 +25,19 @@
 (deftest test-specifying-destination_cloud_path
   (let [destination "gs://some-bucket/in-the-middle/of-nowhere.out"
         inputs      (xx/make-inputs-to-save output-url
-                      {:input_bam              "gs://fake-input-bucket/sample.bam"
-                       :destination_cloud_path destination})]
+                                            {:input_bam              "gs://fake-input-bucket/sample.bam"
+                                             :destination_cloud_path destination})]
     (is (= destination (:destination_cloud_path inputs)))))
 
 (deftest test-specifying-sample_name
   (let [name   "geoff"
         inputs (xx/make-inputs-to-save output-url
-                 {:input_bam   "gs://fake-input-bucket/sample.bam"
-                  :sample_name name})]
+                                       {:input_bam   "gs://fake-input-bucket/sample.bam"
+                                        :sample_name name})]
     (is (= name (:sample_name inputs)))))
 
 (deftest test-specifying-arbitrary-workflow-inputs
   (is (:arbitrary
-        (xx/make-inputs-to-save output-url
-          {:input_bam "gs://fake-input-bucket/sample.bam"
-           :arbitrary "hai"}))))
+       (xx/make-inputs-to-save output-url
+                               {:input_bam "gs://fake-input-bucket/sample.bam"
+                                :arbitrary "hai"}))))

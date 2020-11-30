@@ -37,7 +37,7 @@
     (load-workload-impl tx workload)
     (catch Throwable cause
       (throw (ex-info "Error loading workload"
-               {:workload workload} cause)))))
+                      {:workload workload} cause)))))
 
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
@@ -45,8 +45,8 @@
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid"
-               {:cause {:uuid uuid}
-                :type  ::workload-not-found})))
+                      {:cause {:uuid uuid}
+                       :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workload-for-id
@@ -55,8 +55,8 @@
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching id"
-               {:cause {:id id}
-                :type  ::workload-not-found})))
+                      {:cause {:id id}
+                       :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
 (defn load-workloads-with-project
@@ -82,17 +82,17 @@
   :default
   [_ body]
   (throw
-    (ex-info "Failed to create workload - no such pipeline"
-      {:cause body
-       :type  ::invalid-pipeline})))
+   (ex-info "Failed to create workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default
   [_ body]
   (throw
-    (ex-info "Failed to start workload - no such pipeline"
-      {:cause body
-       :type  ::invalid-pipeline})))
+   (ex-info "Failed to start workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
@@ -101,7 +101,7 @@
     (start-workload! tx (create-workload! tx workload-request))
     (catch Throwable cause
       (throw (ex-info "Error executing workload request"
-               {:workload-request workload-request} cause)))))
+                      {:workload-request workload-request} cause)))))
 
 (defmethod update-workload!
   :default
@@ -111,7 +111,7 @@
     (load-workload-for-id tx (:id workload))
     (catch Throwable cause
       (throw (ex-info "Error updating workload"
-               {:workload workload} cause)))))
+                      {:workload workload} cause)))))
 
 (defn default-load-workload-impl
   [tx workload]
@@ -122,12 +122,12 @@
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (try
       (->> (postgres/get-table tx (:items workload))
-        (mapv (comp unnilify split-inputs load-options))
-        (assoc workload :workflows)
-        unnilify)
+           (mapv (comp unnilify split-inputs load-options))
+           (assoc workload :workflows)
+           unnilify)
       (catch Throwable cause
         (throw (ex-info "Error loading workload"
-                 {:workload workload} cause))))))
+                        {:workload workload} cause))))))
 
 (defoverload load-workload-impl :default default-load-workload-impl)
 
@@ -139,7 +139,7 @@
   (letfn [(decode [v] (map util/parse-int (str/split v #"\.")))
           (validate [v] (when (not= 3 (count v))
                           (throw (ex-info "malformed version string"
-                                   {:version (str/join "." v)})))
+                                          {:version (str/join "." v)})))
             v)
           (lt? [[x & xs] [y & ys]]
             (or (< x y) (and (== x y) (every? some? [xs ys]) (lt? xs ys))))]

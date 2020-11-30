@@ -17,18 +17,18 @@
   "Throw or return credentials for the WFL service account."
   []
   (some->
-    (if-let [file (util/getenv "GOOGLE_APPLICATION_CREDENTIALS")]
-      (-> file io/file)
-      (-> "WFL_DEPLOY_ENVIRONMENT"
-        (util/getenv "debug")
-        wfl/error-or-environment-keyword
-        env/stuff :server :service-account util/vault-secrets
-        (json/write-str :escape-slash false)
-        .getBytes))
-    io/input-stream GoogleCredentials/fromStream
-    (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
-                    "https://www.googleapis.com/auth/userinfo.email"
-                    "https://www.googleapis.com/auth/userinfo.profile"])))
+   (if-let [file (util/getenv "GOOGLE_APPLICATION_CREDENTIALS")]
+     (-> file io/file)
+     (-> "WFL_DEPLOY_ENVIRONMENT"
+         (util/getenv "debug")
+         wfl/error-or-environment-keyword
+         env/stuff :server :service-account util/vault-secrets
+         (json/write-str :escape-slash false)
+         .getBytes))
+   io/input-stream GoogleCredentials/fromStream
+   (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
+                   "https://www.googleapis.com/auth/userinfo.email"
+                   "https://www.googleapis.com/auth/userinfo.profile"])))
 
 (defn service-account-email
   "The client_email for the WFL service account."
@@ -49,9 +49,9 @@
   "An Authorization header with a Bearer token."
   []
   (authorization-header-with-bearer-token
-    (if (util/getenv "WFL_DEPLOY_ENVIRONMENT")
-      (service-account-token)
-      (util/shell! "gcloud" "auth" "print-access-token"))))
+   (if (util/getenv "WFL_DEPLOY_ENVIRONMENT")
+     (service-account-token)
+     (util/shell! "gcloud" "auth" "print-access-token"))))
 
 (def oauth-client-id
   "The client ID based on, in order, the environment, vault, or the gotc-dev one"
@@ -60,11 +60,11 @@
            id-from-env
            (if-let [id-from-vault
                     (util/do-or-nil-silently
-                      (-> "WFL_DEPLOY_ENVIRONMENT"
-                          (util/getenv "debug")
-                          wfl/error-or-environment-keyword
-                          env/stuff :server :vault
-                          util/vault-secrets :oauth2_client_id))]
+                     (-> "WFL_DEPLOY_ENVIRONMENT"
+                         (util/getenv "debug")
+                         wfl/error-or-environment-keyword
+                         env/stuff :server :vault
+                         util/vault-secrets :oauth2_client_id))]
              id-from-vault
              ;; Client ID for gotc-dev, the old hardcoded value for backwards-compatibility
              "450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com"))))

@@ -16,7 +16,7 @@
 (defn ^:private make-copyfile-workload-request
   [src dst]
   (-> (workloads/copyfile-workload-request src dst)
-    (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
@@ -46,15 +46,15 @@
     (with-redefs-fn {#'submit-workflow verify-submitted-options}
       (fn []
         (->
-          (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
-          (assoc-in [:common :options]
-            {:supports_common_options true :overwritten false})
-          (update :items
-            (partial map
-              #(assoc % :options {:supports_options true :overwritten true})))
-          workloads/execute-workload!
-          :workflows
-          (->> (map (comp verify-workflow-options :options))))))))
+         (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
+         (assoc-in [:common :options]
+                   {:supports_common_options true :overwritten false})
+         (update :items
+                 (partial map
+                          #(assoc % :options {:supports_options true :overwritten true})))
+         workloads/execute-workload!
+         :workflows
+         (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
@@ -72,19 +72,19 @@
     (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
       (fn []
         (->
-          (make-copyfile-workload-request "gs://fake/foo" "gs://fake/bar")
-          (assoc-in [:common :inputs]
-            {:supports_common_inputs true :overwritten false})
-          (update :items
-            (partial map
-              #(update % :inputs
-                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
-          workloads/execute-workload!)))))
+         (make-copyfile-workload-request "gs://fake/foo" "gs://fake/bar")
+         (assoc-in [:common :inputs]
+                   {:supports_common_inputs true :overwritten false})
+         (update :items
+                 (partial map
+                          #(update % :inputs
+                                   (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+         workloads/execute-workload!)))))
 
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (util/absent? workflow :options)))]
     (run! go! (-> (make-copyfile-workload-request "in" "out")
-                (assoc-in [:common :options] {})
-                (update :items (partial map #(assoc % :options {})))
-                workloads/create-workload!
-                :workflows))))
+                  (assoc-in [:common :options] {})
+                  (update :items (partial map #(assoc % :options {})))
+                  workloads/create-workload!
+                  :workflows))))

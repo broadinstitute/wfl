@@ -25,15 +25,15 @@
   [uuid]
   (let [auth-header (once/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
-                      {:headers      auth-header
-                       :query-params {:uuid uuid}})]
+                                {:headers      auth-header
+                                 :query-params {:uuid uuid}})]
     (first (util/parse-json (:body response)))))
 
 (defn get-workloads
   "Query v1 api for all workloads"
   []
   (let [response (client/get (str server "/api/v1/workload")
-                   {:headers (once/get-auth-header)})]
+                             {:headers (once/get-auth-header)})]
     (util/parse-json (:body response))))
 
 (defn create-workload
@@ -41,35 +41,35 @@
   [workload]
   (let [payload  (json/write-str workload :escape-slash false)
         response (client/post (str server "/api/v1/create")
-                   {:headers      (once/get-auth-header)
-                    :content-type :json
-                    :accept       :json
-                    :body         payload})]
+                              {:headers      (once/get-auth-header)
+                               :content-type :json
+                               :accept       :json
+                               :body         payload})]
     (util/parse-json (:body response))))
 
 (defn start-workload
   "Start processing WORKLOAD. WORKLOAD must be known to the server."
   [workload]
   (let [payload  (-> (select-keys workload [:uuid])
-                   (json/write-str :escape-slash false))
+                     (json/write-str :escape-slash false))
         response (client/post (str server "/api/v1/start")
-                   {:headers      (once/get-auth-header)
-                    :content-type :json
-                    :accept       :json
-                    :body         payload})]
+                              {:headers      (once/get-auth-header)
+                               :content-type :json
+                               :accept       :json
+                               :body         payload})]
     (util/parse-json (:body response))))
 
 (defn append-to-aou-workload
   "Append SAMPLES to the aou WORKLOAD"
   [samples workload]
   (let [payload  (-> (select-keys workload [:uuid])
-                   (assoc :notifications samples)
-                   (json/write-str :escape-slash false))
+                     (assoc :notifications samples)
+                     (json/write-str :escape-slash false))
         response (client/post (str server "/api/v1/append_to_aou")
-                   {:headers      (once/get-auth-header)
-                    :content-type :json
-                    :accept       :json
-                    :body         payload})]
+                              {:headers      (once/get-auth-header)
+                               :content-type :json
+                               :accept       :json
+                               :body         payload})]
     (util/parse-json (:body response))))
 
 (defn exec-workload
@@ -77,9 +77,9 @@
   [workload-request]
   (let [payload  (json/write-str workload-request :escape-slash false)
         response (client/post (str server "/api/v1/exec")
-                   {:headers      (once/get-auth-header)
-                    :content-type :json
-                    :accept       :json
-                    :body         payload})]
+                              {:headers      (once/get-auth-header)
+                               :content-type :json
+                               :accept       :json
+                               :body         payload})]
     (util/parse-json (:body response))))
 

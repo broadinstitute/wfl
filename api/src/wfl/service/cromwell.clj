@@ -308,7 +308,7 @@
           now (status environment id)]
       (if (#{"Submitted" "Running"} now)
         (do (log/infof "%s: Sleeping %s seconds on status: %s"
-                     id seconds now)
+                       id seconds now)
             (util/sleep-seconds seconds)
             (recur environment id))
         (status environment id)))))

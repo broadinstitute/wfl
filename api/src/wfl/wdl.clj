@@ -46,7 +46,7 @@
     (when (.exists result)
       (throw (IllegalArgumentException.
               (format "%s: Two WDL files have the same leaf name: %s"
-                wfl/the-name result))))
+                      wfl/the-name result))))
     (io/make-parents result)
     (with-open [out (io/writer result)
                 in  (io/reader (io/file wdl))]

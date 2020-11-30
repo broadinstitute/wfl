@@ -101,8 +101,7 @@
 
 ;; visible for testing
 (def default-options
-  {
-   :use_relative_output_paths  true
+  {:use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
    :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -178,8 +177,8 @@
   pipeline
   [tx request]
   (->> request
-   (add-arrays-workload! tx)
-   (workloads/load-workload-for-id tx)))
+       (add-arrays-workload! tx)
+       (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline

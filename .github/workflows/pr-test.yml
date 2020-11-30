@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - release/**
   pull_request:
 
 jobs:
@@ -24,6 +25,8 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+    env:
+      MODULES: api cloud_function
 
     steps:
       - name: Checkout
@@ -75,10 +78,13 @@ jobs:
           EOF
 
       - name: Pre-Build
-        run: make api TARGET=prebuild
+        run: make ${MODULES} TARGET=prebuild
+
+      - name: Lint
+        run: make ${MODULES} TARGET=lint
 
       - name: Build
-        run: make api TARGET=build
+        run: make ${MODULES} TARGET=build
 
         # Get secret from vault
       - name: Authenticate to GCloud
@@ -126,13 +132,11 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
 
       - name: Unit Test
-        run: make api TARGET=unit
+        run: make ${MODULES} TARGET=unit
 
       - name: Integration Test
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
-        run: make api TARGET=integration
+        run: make ${MODULES} TARGET=integration
 
-      - name: Cloud Function Unit Test
-        run: make cloud_function TARGET=check

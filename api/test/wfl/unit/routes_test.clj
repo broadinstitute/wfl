@@ -36,12 +36,12 @@
     (let [processed-sample-endpoints (routes/endpoint-swagger-auth-processor sample-endpoints)]
       (testing "no extra insertions"
         (is (not (contains?
-                   (:get (second (config-for-endpoint "/some/unauth/endpoint" processed-sample-endpoints)))
-                   :swagger))))
+                  (:get (second (config-for-endpoint "/some/unauth/endpoint" processed-sample-endpoints)))
+                  :swagger))))
       (testing "proper insertion"
         (is (contains?
-              (:get (second (config-for-endpoint "/api/some/auth/endpoint" processed-sample-endpoints)))
-              :swagger))
+             (:get (second (config-for-endpoint "/api/some/auth/endpoint" processed-sample-endpoints)))
+             :swagger))
         (is (every? #(contains? (first (vals %)) :swagger)
                     (rest (config-for-endpoint "/api/some/other/auth/endpoint" processed-sample-endpoints)))))
       (testing "proper contents"
@@ -73,11 +73,11 @@
         (is (every? identity
                     (map (fn [sample processed]
                            (and
-                             (= (first sample) (first processed))
-                             (every? identity
+                            (= (first sample) (first processed))
+                            (every? identity
                                      ;; does processed not change when we
                                      ;; override it with the original?
                                      ;; (is processed a superset of original)
-                                     (map #(= %2 (recursive-merge %2 %1))
-                                          (rest sample) (rest processed)))))
+                                    (map #(= %2 (recursive-merge %2 %1))
+                                         (rest sample) (rest processed)))))
                          sample-endpoints processed-sample-endpoints)))))))
