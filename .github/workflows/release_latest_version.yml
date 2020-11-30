@@ -27,7 +27,7 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     env:
-      MODULES: api ui
+      MODULES: api ui cloud_function
 
     steps:
       - name: prepare sources
