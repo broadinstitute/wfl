@@ -127,4 +127,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ github.base_ref }}-lastest-pass.tar.gz
-          path: ${{ github.base_ref }}-lastest-pass.tar.gz
+          path: derived/${{ github.base_ref }}-lastest-pass.tar.gz
