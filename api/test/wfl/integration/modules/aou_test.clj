@@ -34,7 +34,7 @@
            (is (s/valid? :wfl.api.spec/append-to-aou-response response))
            (is (count=1? response))))
        (testing "appending the same sample to the workload does nothing"
-         (is (empty? (append-to-workload! [workloads/aou-sample]))))
+         (is (= () (append-to-workload! [workloads/aou-sample]))))
        (testing "incrementing analysis_version_number starts a new workload"
          (is (count=1? (append-to-workload! [(inc-version workloads/aou-sample)]))))
        (testing "only one workflow is started when there are multiple duplicates"
