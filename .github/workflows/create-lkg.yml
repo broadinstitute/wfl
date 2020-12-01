@@ -1,6 +1,11 @@
-name: Incremental Build and Test (PR)
+# This workflow triggers build and test on merge into main
+# Creates a new LKG (Last-Known-Good) for incremental builds on PRs
+name: Sterile Build and Test
 on:
-  pull_request:
+  push:
+    branches:
+      - main
+      - release/**
 
 jobs:
   build:
@@ -24,6 +29,9 @@ jobs:
       MODULES: api cloud_function docs ui
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Setup Java
         uses: actions/setup-java@v1
         with:
@@ -69,27 +77,14 @@ jobs:
             IdentityFile ~/.ssh/wfl_deploy_key
           EOF
 
-      - name: Fetch LKG
-        continue-on-error: true
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.base_ref }}-lastest-pass
-          path: .
-
       - name: Fetch Dependency Cache
         uses: actions/cache@v2
         with:
           key: ${{ runner.os }}-build-deps
           path: ~/.m2
 
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Pre-Build
         run: make ${MODULES} TARGET=prebuild
-
-      - name: Lint
-        run: make ${MODULES} TARGET=lint
 
       - name: Build
         run: make ${MODULES} TARGET=build
@@ -111,3 +106,9 @@ jobs:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
         run: make ${MODULES} TARGET=integration
+
+      - name: Upload LKG
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.ref }}-lastest-pass
+          path: .
