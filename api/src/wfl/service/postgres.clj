@@ -56,33 +56,28 @@
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
 
-(defn update-workflow-statuses!
+(defn ^:private make-update-workflows [get-status!]
   "Use `tx` to update `status` of `workflows` in `_workload`."
-  [tx {:keys [cromwell items workflows] :as _workload}]
-  (letfn [(maybe-cromwell-status [{:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status cromwell uuid)))
-          (update! [{:keys [id uuid]} status]
+  (fn [tx {:keys [items workflows] :as workload}]
+    (letfn [(update! [{:keys [id uuid]} status]
             (jdbc/update! tx items
                           {:updated (OffsetDateTime/now) :uuid uuid :status status}
                           ["id = ?" id]))]
     (->> workflows
          (remove (comp nil? :uuid))
          (remove (comp finished? :status))
-         (run! #(update! % (maybe-cromwell-status %))))))
+         (run! #(update! % (get-status! workload %)))))))
 
-(defn update-terra-workflow-statuses!
-  "Use `tx` to update `status` of `workflows` in `_workload`."
-  [tx {:keys [cromwell items workflows project] :as _workload}]
-  (letfn [(update! [{:keys [id uuid]} status]
-              (jdbc/update! tx items
-                            {:updated (OffsetDateTime/now) :uuid uuid :status status}
-                            ["id = ?" id]))]
-      (->> workflows
-           (remove (comp nil? :uuid))
-           (remove (comp finished? :status))
-           (run! #(update! % (terra/get-workflow-status-by-entity cromwell project %))))))
+(def update-workflow-statuses!
+  (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
+            (if (util/uuid-nil? uuid)
+              "skipped"
+              (get-cromwell-status cromwell uuid)))]))
+
+(def update-terra-workflow-statuses!
+  (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
+            (terra/get-workflow-status-by-entity cromwell project workflow))]
+      (make-update-workflows get-terra-status)))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
