@@ -7,10 +7,10 @@
   "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
 
 (def workspace
-  "general-dev-billing-account/wfl-integration")
+  "general-dev-billing-account/arrays")
 
 (def method-configuration-name
-  "ExternalWholeGenomeReprocessing")
+  "Arrays")
 
 (def method-configuration-namespace
   "general-dev-billing-account")
@@ -19,7 +19,7 @@
   "sample")
 
 (def entity-name
-  "NA12878_PLUMBING")
+  "200598830050_R07C01-1")
 
 (deftest test-terra-submission
   (testing "A workflow is created for the entity"
