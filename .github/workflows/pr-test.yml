@@ -1,10 +1,5 @@
-# This workflow triggers tests on PRs that targets main branch
-name: Tests on Pull Requests and Main
+name: Incremental Build and Test on Pull Requests
 on:
-  push:
-    branches:
-      - main
-      - release/**
   pull_request:
 
 jobs:
@@ -26,7 +21,7 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     env:
-      MODULES: api cloud_function
+      MODULES: api cloud_function docs ui
 
     steps:
       - name: Checkout
@@ -77,12 +72,15 @@ jobs:
             IdentityFile ~/.ssh/wfl_deploy_key
           EOF
 
-      - name: Fetch LKG
-        uses: actions/download-artifact@v2
+      - name: Fetch Dependency Cache
+        uses: actions/cache@v2
         with:
-          name: lkg
-          path: derived/
-        continue-on-error: true
+          key: ${{ runner.os }}-build-deps
+          path: |
+            ~/.m2
+            derived/**/node_modules
+            derived/**/.venv
+            !derived/**/*.timestamp
 
       - name: Pre-Build
         run: make ${MODULES} TARGET=prebuild
@@ -100,43 +98,7 @@ jobs:
           ROLE_ID: ${{ secrets.ROLE_ID }}
           SECRET_ID: ${{ secrets.SECRET_ID }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-        run: |
-          # get vault token using role-id and secret-id
-          VAULT_TOKEN=$(curl \
-              --request POST \
-              --data "{\"role_id\":\"${ROLE_ID}\",\"secret_id\":\"${SECRET_ID}\"}" \
-              ${VAULT_ADDR}/v1/auth/approle/login | jq -r .auth.client_token)
-          if [ -z "${VAULT_TOKEN}" ] ; then
-            echo "Vault authentication failed!"
-            exit 1
-          fi
-          echo ::add-mask::${VAULT_TOKEN}
-          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $GITHUB_ENV
-          echo ${VAULT_TOKEN} > ~/.vault-token
-          # use vault token to read secret - service account json
-          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
-              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
-              | jq .data > sa.json
-          if [ ! -s sa.json ] ; then
-            echo "Retrieval of Gcloud SA credentials failed"
-            exit 1
-          fi
-          # auth as service account
-          gcloud auth activate-service-account --key-file=sa.json
-          if [ $? -ne 0 ] ; then
-            echo "Gcloud auth failed!"
-            exit 1
-          fi
-          # get bearer token and set it to a specific env var that
-          #   subsequent steps expect.  bearer token good for 1 hour
-          GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
-          if [ -z "${GOOGLE_OAUTH_ACCESS_TOKEN}" ] ; then
-            echo "Generating Gcloud access token failed"
-            exit 1
-          fi
-          echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
-          echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
+        run: ./.github/scripts/gcloud-authenticate.sh
 
       - name: Unit Test
         run: make ${MODULES} TARGET=unit
@@ -146,10 +108,3 @@ jobs:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
         run: make ${MODULES} TARGET=integration
-
-      - name: Upload LKG
-        if: github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@v2
-        with:
-          name: lkg
-          path: derived/
