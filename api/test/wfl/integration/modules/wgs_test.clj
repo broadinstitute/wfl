@@ -24,6 +24,10 @@
       workloads/wgs-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
+(defn ^:private strip-prefix
+  [[k v]]
+  [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])
+
 (deftest test-create-with-common-reference-fasta-prefix
   (let [prefix "gs://fake-input-bucket/ref-fasta"]
     (letfn [(verify-reference-fasta [reference-fasta]
@@ -109,9 +113,6 @@
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
-          (strip-prefix [[k v]]
-            [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing."))
-             v])
           (verify-workflow-inputs [inputs]
             (is (:supports_common_inputs inputs))
             (is (:supports_inputs inputs))
@@ -133,6 +134,27 @@
                           #(update % :inputs
                                    (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
          workloads/execute-workload!)))))
+
+(deftest test-only-bam-or-cram
+  (letfn [(verify-workflow-inputs [inputs]
+            (is (some inputs [:input_bam :input_cram]))
+            (run! #(is (% inputs)) [:base_file_name
+                                    :sample_name
+                                    :unmapped_bam_suffix
+                                    :final_gvcf_base_name
+                                    :destination_cloud_path]))
+          (verify-submitted-inputs [_ _ _ inputs _ _]
+            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
+            (UUID/randomUUID))
+          (test-with-input [key value]
+            (let [request (-> (make-wgs-workload-request)
+                              (assoc :items [{:inputs {key value}}]))]
+              (testing (str "default inputs when given only " key)
+                (with-redefs-fn {#'submit-workflow verify-submitted-inputs
+                                 #'skip-workflow? (constantly false)}
+                  #(workloads/execute-workload! request)))))]
+    (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
+    (test-with-input :input_cram (:input_cram workloads/wgs-inputs))))
 
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
