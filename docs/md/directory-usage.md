@@ -66,6 +66,11 @@ gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram' \
         }'
 ```
 
+!!! info 
+    If you're copying and pasting this, make sure you change the target
+    Cromwell! You'll probably want the production Cromwell auth proxy,
+    `https://cromwell-gotc-auth.gotc-prod.broadinstitute.org`
+
 ## Step 3: Send Request
 
 We can pipe what we've got to `curl` to send it off:
