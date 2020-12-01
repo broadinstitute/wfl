@@ -28,18 +28,21 @@ JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD):
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	clojure -X wfl.boot/prebuild
+	$(CLOJURE) -X wfl.boot/prebuild
 	@$(TOUCH) $@
 
-$(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
+pom.xml: $(PREBUILD) $(SCM_SRC) $(SCM_RESOURCES)
+	$(CLOJURE) -Spom
+	$(CLOJURE) -X wfl.boot/update-the-pom
+	@$(TOUCH) $@
+
+$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) pom.xml
 	$(MKDIR) $(DERIVED_TARGET_DIR)
-	clojure -e "(compile 'wfl.main)"
-	clojure -Spom
-	clojure -X wfl.boot/update-the-pom
-	clojure -A:uberjar \
+	$(CLOJURE) -e "(compile 'wfl.main)"
+	$(CLOJURE) -A:uberjar \
+		--level error \
 		--main-class wfl.main \
 		--target $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
-	echo $(LN) $(JAR) $(JAR_LINK)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
