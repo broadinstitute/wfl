@@ -80,7 +80,7 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.base_ref }}-lastest-pass
+          name: ${{ github.base_ref }}-lastest-pass.tar.gz
           path: .
 
       - name: Extract LKG
@@ -119,12 +119,12 @@ jobs:
 
       - name: Package Files
         run: |
-          tar -czf ${{ github.base_ref }}-lastest-pass.tar.gz \
-            -X ${{ github.base_ref }}-lastest-pass.tar.gz \
+          tar -czf derived/${{ github.base_ref }}-lastest-pass.tar.gz \
+            --exclude=derived/${{ github.base_ref }}-lastest-pass.tar.gz \
             -v .
 
       - name: Upload LKG
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ github.base_ref }}-lastest-pass
+          name: ${{ github.base_ref }}-lastest-pass.tar.gz
           path: ${{ github.base_ref }}-lastest-pass.tar.gz
