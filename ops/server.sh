@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/usr/bin/env bash
+
+set -ex
 
 declare -r WFL=${0%/*}
 
