@@ -1,6 +1,7 @@
 (ns wfl.boot
   "Stuff moved out of build.boot."
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.data.xml :as xml]
+            [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [wfl.main :as main]
@@ -45,13 +46,30 @@
       (binding [*out* out]
         (pprint version)))))
 
-(defn make-the-pom
-  "Make the Project Object Model for this program from THE-VERSION."
-  [the-version]
-  {:description "WFL manages workflows."
-   :project     wfl/artifactId
-   :url         (:primary (wfl/the-github-repos wfl/the-name))
-   :version     (:version the-version)})
+(xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
+
+(def the-pom
+  "The POM elements that override the uberdeps/uberjar defaults."
+  #::pom{:artifactId  (name wfl/artifactId)
+         :description "WFL manages workflows."
+         :groupId     (namespace wfl/artifactId)
+         :name        "WorkFlow Launcher"
+         :url         (:primary (wfl/the-github-repos wfl/the-name))
+         :version     (:version the-version)})
+
+(defn update-the-pom
+  "Update the Project Object Model (pom.xml) file for this program."
+  [_opts]
+  (let [pom-file  "./pom.xml"
+        override? (set (keys the-pom))]
+    (letfn [(override [{:keys [tag] :as element}]
+              (if (override? tag)
+                (assoc element :content (vector (the-pom tag)))
+                element))]
+      (-> pom-file io/file io/reader xml/parse
+          (update :content (partial map override))
+          xml/emit-str
+          (->> (spit pom-file))))))
 
 (defn make-the-manifest
   "Make the manifest map for the jar file derived from THE-POM."
@@ -114,5 +132,4 @@
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
-      (make-the-pom the-version)
       (write-the-version-file resources edn))))
