@@ -16,9 +16,9 @@
   (let [[bucket object] (gcs/parse-gs-url gs-output-url)]
     (when (first (gcs/list-objects bucket object))
       (throw
-        (IllegalArgumentException.
-          (format "%s: output already exists: %s"
-                  wfl/the-name gs-output-url))))))
+       (IllegalArgumentException.
+        (format "%s: output already exists: %s"
+                wfl/the-name gs-output-url))))))
 
 (defn bam-or-cram?
   "Nil or a vector with root of PATH and the matching suffix."
@@ -39,7 +39,7 @@
               (util/do-or-nil (gcs/list-objects bucket prefix)))]
       (when-not (ok? result prefix)
         (throw (IllegalArgumentException.
-                 (format "%s must be readable" gs-url)))))
+                (format "%s must be readable" gs-url)))))
     result))
 
 (defn processed-crams

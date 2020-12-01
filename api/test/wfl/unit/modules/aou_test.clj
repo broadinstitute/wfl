@@ -27,7 +27,7 @@
         expected        (merge {:wfl "AllOfUsArrays"
                                 :analysis_version_number 1
                                 :chip_well_barcode "chip"}
-                          workload->label)]
+                               workload->label)]
     (testing "make-labels can return correct workflow labels"
       (is (= (aou/make-labels sample workload->label) expected) "label map is not made as expected"))))
 
@@ -80,10 +80,10 @@
                                              :Arrays.call_rate_threshold
                                              :Arrays.haplotype_database_file}
         all-expected-keys                   (set/union all-expected-keys-no-control
-                                              #{:Arrays.control_sample_vcf_index_file
-                                                :Arrays.control_sample_intervals_file
-                                                :Arrays.control_sample_vcf_file
-                                                :Arrays.control_sample_name})]
+                                                       #{:Arrays.control_sample_vcf_index_file
+                                                         :Arrays.control_sample_intervals_file
+                                                         :Arrays.control_sample_vcf_file
+                                                         :Arrays.control_sample_name})]
     (testing "aou filters out non-necessary keys for per-sample-inputs"
       (is (= expected-per-sample-inputs (aou/get-per-sample-inputs redundant-per-sample-inputs-inputs))))
     (testing "aou throws for missing keys for per-sample-inputs"
@@ -92,7 +92,7 @@
       (is (= all-expected-keys-no-control (set (keys (aou/make-inputs :aou-dev expected-per-sample-inputs))))))
     (testing "aou prepares all necessary keys plus optional keys"
       (is (= all-expected-keys (set (keys (aou/make-inputs :aou-dev (merge expected-per-sample-inputs
-                                                                      {:control_sample_vcf_index_file "foo"
-                                                                       :control_sample_intervals_file "foo"
-                                                                       :control_sample_vcf_file       "foo"
-                                                                       :control_sample_name           "foo"})))))))))
+                                                                           {:control_sample_vcf_index_file "foo"
+                                                                            :control_sample_intervals_file "foo"
+                                                                            :control_sample_vcf_file       "foo"
+                                                                            :control_sample_name           "foo"})))))))))

@@ -18,7 +18,7 @@
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
-    (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn ^:private inc-version [sample]
   (update sample :analysis_version_number inc))
@@ -39,8 +39,8 @@
          (is (count=1? (append-to-workload! [(inc-version workloads/aou-sample)]))))
        (testing "only one workflow is started when there are multiple duplicates"
          (is (count=1?
-               (append-to-workload!
-                 (repeat 5 (inc-version (inc-version workloads/aou-sample)))))))
+              (append-to-workload!
+               (repeat 5 (inc-version (inc-version workloads/aou-sample)))))))
        (testing "appending empty workload"
          (let [response (append-to-workload! [])]
            (is (s/valid? :wfl.api.spec/append-to-aou-response response))
@@ -49,16 +49,16 @@
 (deftest test-append-to-aou-not-started
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
     #(is
-       (thrown? Exception
-         (workloads/append-to-workload! [workloads/aou-sample]
-           (workloads/create-workload! (make-aou-workload-request)))))))
+      (thrown? Exception
+               (workloads/append-to-workload! [workloads/aou-sample]
+                                              (workloads/create-workload! (make-aou-workload-request)))))))
 
 (deftest test-aou-cannot-be-stopped!
   (with-redefs-fn {#'aou/submit-aou-workflow  mock-submit-workload
                    #'postgres/cromwell-status mock-cromwell-status}
     #(let [workload (-> (make-aou-workload-request)
-                      (workloads/execute-workload!)
-                      (workloads/update-workload!))]
+                        (workloads/execute-workload!)
+                        (workloads/update-workload!))]
        (is (not (:finished workload)))
        (workloads/append-to-workload! [workloads/aou-sample] workload)
        (let [workload (workloads/load-workload-for-uuid (:uuid workload))]

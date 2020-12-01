@@ -1,6 +1,8 @@
 (ns wfl.api.routes
   "Define routes for API endpoints"
   (:require [clojure.string                     :as str]
+            [clojure.tools.logging              :as log]
+            [clojure.tools.logging.readable     :as logr]
             [reitit.ring.middleware.dev         :as dev]
             [reitit.dev.pretty                  :as pretty]
             [muuntaja.core                      :as muuntaja-core]
@@ -127,49 +129,47 @@
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."
   (exception/create-exception-middleware
-    (merge
-      exception/default-handlers
-      {;; ex-data with :type :wfl/exception
-       ::workloads/invalid-pipeline          (partial ex-handler 400 "")
-       ::workloads/workload-not-found        (partial ex-handler 404 "")
+   (merge
+    exception/default-handlers
+    {;; ex-data with :type :wfl/exception
+     ::workloads/invalid-pipeline          (partial ex-handler 400 "")
+     ::workloads/workload-not-found        (partial ex-handler 404 "")
        ;; SQLException and all it's child classes
-       SQLException                          (partial ex-handler 500 "SQL Error")
+     SQLException                          (partial ex-handler 500 "SQL Error")
        ;; handle clj-http Slingshot stone exceptions
-       :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
+     :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
        ;; override the default handler
-       ::exception/default                   (partial ex-handler 500 "Internal Server Error")
+     ::exception/default                   (partial ex-handler 500 "Internal Server Error")
        ;; print stack-traces for all exceptions in logs
-       ::exception/wrap                      (fn [handler e request]
-                                               (println "ERROR" (pr-str
-                                                                  ;; uncomment to log the full request body
-                                                                  ; request
-                                                                  (:uri request)))
-                                               (handler e request))})))
+     ::exception/wrap                      (fn [handler e request]
+                                             (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
+                                             (logr/error request)
+                                             (handler e request))})))
 
 (def routes
   (ring/ring-handler
-    (ring/router
-      (endpoint-swagger-auth-processor endpoints)
-      {;; uncomment for easier debugging with coercion and middleware transformations
+   (ring/router
+    (endpoint-swagger-auth-processor endpoints)
+    {;; uncomment for easier debugging with coercion and middleware transformations
        ;; :reitit.middleware/transform dev/print-request-diffs
        ;; :exception pretty/exception
-       :data {:coercion   reitit.coercion.spec/coercion
-              :muuntaja   muuntaja-core/instance
-              :middleware [;; query-params & form-params
-                           parameters/parameters-middleware
+     :data {:coercion   reitit.coercion.spec/coercion
+            :muuntaja   muuntaja-core/instance
+            :middleware [;; query-params & form-params
+                         parameters/parameters-middleware
                            ;; content-negotiation
-                           muuntaja/format-negotiate-middleware
+                         muuntaja/format-negotiate-middleware
                            ;; encoding response body
-                           muuntaja/format-response-middleware
-                           exception-middleware
+                         muuntaja/format-response-middleware
+                         exception-middleware
                            ;; decoding request body
-                           muuntaja/format-request-middleware
+                         muuntaja/format-request-middleware
                            ;; coercing response bodys
-                           coercion/coerce-response-middleware
+                         coercion/coerce-response-middleware
                            ;; coercing request parameters
-                           coercion/coerce-request-middleware
-                           multipart/multipart-middleware]}})
+                         coercion/coerce-request-middleware
+                         multipart/multipart-middleware]}})
     ;; get more correct http error responses on routes
-    (ring/create-default-handler
-      {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
-       :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))
+   (ring/create-default-handler
+    {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))

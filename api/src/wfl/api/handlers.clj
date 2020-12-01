@@ -1,10 +1,11 @@
 (ns wfl.api.handlers
-  "Define handlers for API endpoints"
+  "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
   (:require [clojure.tools.logging :as log]
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response :as response]
             [wfl.api.workloads :as workloads]
             [wfl.module.aou :as aou]
+            [wfl.module.arrays]
             [wfl.module.copyfile]
             [wfl.module.wgs]
             [wfl.module.xx]
@@ -56,8 +57,8 @@
     (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
-        (aou/append-to-workload! tx notifications)
-        succeed))))
+           (aou/append-to-workload! tx notifications)
+           succeed))))
 
 (defn post-create
   "Create the workload described in BODY of REQUEST."
@@ -67,9 +68,9 @@
     (logr/infof "post-create endpoint called: body=%s" body)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
-        (strip-internals
-          (workloads/create-workload! tx
-            (assoc body :creator email)))))))
+       (strip-internals
+        (workloads/create-workload! tx
+                                    (assoc body :creator email)))))))
 
 (defn get-workload!
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
@@ -82,18 +83,18 @@
                 (workloads/update-workload! tx workload))))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
-        (mapv (comp strip-internals (partial go! tx))
-          (if-let [uuid (-> request :parameters :query :uuid)]
-            (do
-              (logr/infof "getting workload by uuid %s" uuid)
-              [(workloads/load-workload-for-uuid tx uuid)])
-            (if-let [project (-> request :parameters :query :project)]
-              (do
-                (logr/infof "getting workloads by project %s" project)
-                (workloads/load-workloads-with-project tx project))
-              (do
-                (logr/infof "getting all workloads")
-                (workloads/load-workloads tx)))))))))
+       (mapv (comp strip-internals (partial go! tx))
+             (if-let [uuid (-> request :parameters :query :uuid)]
+               (do
+                 (logr/infof "getting workload by uuid %s" uuid)
+                 [(workloads/load-workload-for-uuid tx uuid)])
+               (if-let [project (-> request :parameters :query :project)]
+                 (do
+                   (logr/infof "getting workloads by project %s" project)
+                   (workloads/load-workloads-with-project tx project))
+                 (do
+                   (logr/infof "getting all workloads")
+                   (workloads/load-workloads tx)))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
@@ -103,13 +104,13 @@
       (logr/infof "post-start endpoint called: uuid=%s" uuid)
       (let [workload (workloads/load-workload-for-uuid tx uuid)]
         (->>
-          (if (:started workload)
-            workload
-            (do
-              (logr/infof "starting workload %s" uuid)
-              (workloads/start-workload! tx workload)))
-          strip-internals
-          succeed)))))
+         (if (:started workload)
+           workload
+           (do
+             (logr/infof "starting workload %s" uuid)
+             (workloads/start-workload! tx workload)))
+         strip-internals
+         succeed)))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
@@ -118,9 +119,9 @@
     (let [workload-request (:body-params request)]
       (logr/info "executing workload-request: " workload-request)
       (->>
-        (gcs/userinfo request)
-        :email
-        (assoc workload-request :creator)
-        (workloads/execute-workload! tx)
-        strip-internals
-        succeed))))
+       (gcs/userinfo request)
+       :email
+       (assoc workload-request :creator)
+       (workloads/execute-workload! tx)
+       strip-internals
+       succeed))))

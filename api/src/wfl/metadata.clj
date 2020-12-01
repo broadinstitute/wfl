@@ -48,8 +48,8 @@
   metadata should be saved next to."
   [env wf-name output-key]
   (log/info (->> (successes env wf-name)
-              (map (partial get-metadata env))
-              (map (partial record-metadata (keyword output-key))))))
+                 (map (partial get-metadata env))
+                 (map (partial record-metadata (keyword output-key))))))
 
 (def description
   "Describe this command."

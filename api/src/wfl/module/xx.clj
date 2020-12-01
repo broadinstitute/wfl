@@ -27,15 +27,15 @@
   "The top-level WDL file and its version."
   {:release "ExternalExomeReprocessing_v2.1.1"
    :top     (str "pipelines/broad/reprocessing/external/exome/"
-              "ExternalExomeReprocessing.wdl")})
+                 "ExternalExomeReprocessing.wdl")})
 
 (def ^:private references-defaults
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
         hsa  "Homo_sapiens_assembly38"]
     (merge references/hg38-exome-references
-      references/contamination-sites
-      {:calling_interval_list   (str hg38 "exome_calling_regions.v1.interval_list")
-       :haplotype_database_file (str hg38 hsa ".haplotype_database.txt")})))
+           references/contamination-sites
+           {:calling_interval_list   (str hg38 "exome_calling_regions.v1.interval_list")
+            :haplotype_database_file (str hg38 hsa ".haplotype_database.txt")})))
 
 (def ^:private workflow-defaults
   (let [hg38          "gs://gcp-public-data--broad-references/hg38/v0/"
@@ -61,16 +61,16 @@
         envs     (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-               {:cromwell     cromwell
-                :environments envs})))
+                      {:cromwell     cromwell
+                       :environments envs})))
     (first envs)))
 
 (defn ^:private cromwellify-workflow-inputs [environment {:keys [inputs]}]
   (-> (env/stuff environment)
-    (select-keys [:google_account_vault_path :vault_token_path])
-    (util/deep-merge workflow-defaults)
-    (util/deep-merge inputs)
-    (util/prefix-keys (keyword pipeline))))
+      (select-keys [:google_account_vault_path :vault_token_path])
+      (util/deep-merge workflow-defaults)
+      (util/deep-merge inputs)
+      (util/prefix-keys (keyword pipeline))))
 
 ;; visible for testing
 (defn make-inputs-to-save [output-url inputs]
@@ -78,11 +78,11 @@
         [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
         basename    (or (:base_file_name inputs) (util/basename path))]
     (-> inputs
-      (assoc :base_file_name basename)
-      (util/assoc-when util/absent? :sample_name (sample-name basename))
-      (util/assoc-when util/absent? :final_gvcf_base_name basename)
-      (util/assoc-when util/absent? :destination_cloud_path
-        (str (all/slashify output-url) (util/dirname path))))))
+        (assoc :base_file_name basename)
+        (util/assoc-when util/absent? :sample_name (sample-name basename))
+        (util/assoc-when util/absent? :final_gvcf_base_name basename)
+        (util/assoc-when util/absent? :destination_cloud_path
+                         (str (all/slashify output-url) (util/dirname path))))))
 
 ;; visible for testing
 (defn submit-workload! [{:keys [uuid workflows] :as workload}]
@@ -91,18 +91,18 @@
         default-options (util/make-options environment)]
     (letfn [(update-workflow [workflow cromwell-uuid]
               (assoc workflow :uuid cromwell-uuid
-                              :status "Submitted"
-                              :updated (OffsetDateTime/now)))
+                     :status "Submitted"
+                     :updated (OffsetDateTime/now)))
             (submit-batch! [[options workflows]]
               (map update-workflow
-                workflows
-                (cromwell/submit-workflows
-                  environment
-                  (io/file (:dir path) (path ".wdl"))
-                  (io/file (:dir path) (path ".zip"))
-                  (map (partial cromwellify-workflow-inputs environment) workflows)
-                  (util/deep-merge default-options options)
-                  (merge cromwell-labels {:workload uuid}))))]
+                   workflows
+                   (cromwell/submit-workflows
+                    environment
+                    (io/file (:dir path) (path ".wdl"))
+                    (io/file (:dir path) (path ".zip"))
+                    (map (partial cromwellify-workflow-inputs environment) workflows)
+                    (util/deep-merge default-options options)
+                    (merge cromwell-labels {:workload uuid}))))]
       ;; Group by discrete options to batch submit
       (mapcat submit-batch! (group-by :options workflows)))))
 
@@ -113,10 +113,10 @@
             (json/write-str (nil-if-empty (util/deep-merge shared specific))))
           (serialize [item id]
             (-> item
-              (assoc :id id)
-              (update :options #(merge-to-json (:options common) %))
-              (update :inputs #(merge-to-json (:inputs common)
-                                 (make-inputs-to-save output %)))))]
+                (assoc :id id)
+                (update :options #(merge-to-json (:options common) %))
+                (update :inputs #(merge-to-json (:inputs common)
+                                                (make-inputs-to-save output %)))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))

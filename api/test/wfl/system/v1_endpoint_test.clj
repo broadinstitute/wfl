@@ -32,9 +32,9 @@
 (defn ^:private verify-internal-properties-removed [workload]
   (letfn [(go! [key]
             (is (util/absent? workload key)
-              (format "workload should not contain %s" key))
+                (format "workload should not contain %s" key))
             (is (every? #(util/absent? % key) (:workflows workload))
-              (format "workflows should not contain %s" key)))]
+                (format "workflows should not contain %s" key)))]
     (run! go! [:id :items])))
 
 (deftest test-oauth2-endpoint
@@ -66,8 +66,8 @@
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest test-create-copyfile-workload
   (test-create-workload (workloads/copyfile-workload-request
-                          "gs://fake-inputs/lolcats.txt"
-                          "gs://fake-outputs/copied.txt")))
+                         "gs://fake-inputs/lolcats.txt"
+                         "gs://fake-outputs/copied.txt")))
 
 (defn ^:private test-start-workload
   [{:keys [uuid pipeline] :as workload}]
@@ -132,18 +132,18 @@
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
         workload (endpoints/exec-workload
-                   (workloads/aou-workload-request (UUID/randomUUID)))]
+                  (workloads/aou-workload-request (UUID/randomUUID)))]
     (testing "appending sample successfully launches an aou workflow"
       (is
-        (every? #{"Succeeded"}
-          (map (comp await :uuid)
-            (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
+       (every? #{"Succeeded"}
+               (map (comp await :uuid)
+                    (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
       (->> (endpoints/get-workload-status (:uuid workload))
-        (workloads/when-done verify-succeeded-workload)))))
+           (workloads/when-done verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
   (let [request (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
-                  (assoc :pipeline "geoff"))]
+                    (assoc :pipeline "geoff"))]
     (testing "create-workload! fails with bad request"
       (is (thrown? ExceptionInfo (endpoints/create-workload request))))
     (testing "create-workload! fails with bad request"

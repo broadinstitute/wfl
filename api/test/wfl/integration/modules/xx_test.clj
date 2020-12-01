@@ -15,14 +15,14 @@
 
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
-    workloads/xx-workload-request
-    (assoc :creator (:email @endpoints/userinfo))))
+      workloads/xx-workload-request
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn mock-submit-workload [{:keys [workflows]}]
   (let [now       (OffsetDateTime/now)
         do-submit #(assoc % :uuid (UUID/randomUUID)
-                            :status "Submitted"
-                            :updated now)]
+                          :status "Submitted"
+                          :updated now)]
     (map do-submit workflows)))
 
 (deftest test-create-workload!
@@ -47,9 +47,9 @@
                 (is (value-equal? :bait_set_name))
                 (is (value-equal? :bait_interval_list))))]
       (run! (comp go! :inputs) (-> (make-xx-workload-request)
-                                 (assoc-in [:common :inputs] common-inputs)
-                                 workloads/create-workload!
-                                 :workflows)))))
+                                   (assoc-in [:common :inputs] common-inputs)
+                                   workloads/create-workload!
+                                   :workflows)))))
 
 (deftest test-start-workload!
   (letfn [(go! [workflow]
@@ -58,11 +58,11 @@
             (is (:updated workflow)))]
     (with-redefs-fn {#'xx/submit-workload! mock-submit-workload}
       #(-> (make-xx-workload-request)
-         workloads/create-workload!
-         workloads/start-workload!
-         (as-> workload
-           (is (:started workload))
-           (run! go! (:workflows workload)))))))
+           workloads/create-workload!
+           workloads/start-workload!
+           (as-> workload
+                 (is (:started workload))
+             (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -70,9 +70,9 @@
               (is (absent? inputs :vault_token_path))
               (is (absent? inputs :google_account_vault_path)))]
       (->> (make-xx-workload-request)
-        workloads/create-workload!
-        :workflows
-        (run! (comp go! :inputs))))))
+           workloads/create-workload!
+           :workflows
+           (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
   (let [workload (->> {:cromwell (get-in env/stuff [:xx-dev :cromwell :url])
@@ -80,8 +80,8 @@
                        :pipeline xx/pipeline
                        :project  (format "(Test) %s" @workloads/git-branch)
                        :creator  (:email @endpoints/userinfo)}
-                   workloads/execute-workload!
-                   workloads/update-workload!)]
+                      workloads/execute-workload!
+                      workloads/update-workload!)]
     (is (:finished workload))))
 
 (deftest test-submitted-workflow-inputs
@@ -95,22 +95,22 @@
             (is (:overwritten inputs)))
           (verify-submitted-inputs [_ _ _ inputs _ _]
             (map
-              (fn [in]
-                (is (every? #(prefixed? :ExternalExomeReprocessing %) (keys in)))
-                (verify-workflow-inputs (into {} (map strip-prefix in)))
-                (UUID/randomUUID))
-              inputs))]
+             (fn [in]
+               (is (every? #(prefixed? :ExternalExomeReprocessing %) (keys in)))
+               (verify-workflow-inputs (into {} (map strip-prefix in)))
+               (UUID/randomUUID))
+             inputs))]
     (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
       (fn []
         (->
-          (make-xx-workload-request)
-          (assoc-in [:common :inputs]
-            {:supports_common_inputs true :overwritten false})
-          (update :items
-            (partial map
-              #(update % :inputs
-                 (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
-          workloads/execute-workload!)))))
+         (make-xx-workload-request)
+         (assoc-in [:common :inputs]
+                   {:supports_common_inputs true :overwritten false})
+         (update :items
+                 (partial map
+                          #(update % :inputs
+                                   (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
+         workloads/execute-workload!)))))
 
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
@@ -125,20 +125,20 @@
     (with-redefs-fn {#'submit-workflows verify-submitted-options}
       (fn []
         (->
-          (make-xx-workload-request)
-          (assoc-in [:common :options]
-            {:supports_common_options true :overwritten false})
-          (update :items
-            (partial map
-              #(assoc % :options {:supports_options true :overwritten true})))
-          workloads/execute-workload!
-          :workflows
-          (->> (map (comp verify-workflow-options :options))))))))
+         (make-xx-workload-request)
+         (assoc-in [:common :options]
+                   {:supports_common_options true :overwritten false})
+         (update :items
+                 (partial map
+                          #(assoc % :options {:supports_options true :overwritten true})))
+         workloads/execute-workload!
+         :workflows
+         (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (absent? workflow :options)))]
     (run! go! (-> (make-xx-workload-request)
-                (assoc-in [:common :options] {})
-                (update :items (partial map #(assoc % :options {})))
-                workloads/create-workload!
-                :workflows))))
+                  (assoc-in [:common :options] {})
+                  (update :items (partial map #(assoc % :options {})))
+                  workloads/create-workload!
+                  :workflows))))
