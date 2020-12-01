@@ -69,6 +69,13 @@ jobs:
             IdentityFile ~/.ssh/wfl_deploy_key
           EOF
 
+      - name: Fetch Dependencies Cache
+        continue-on-error: true
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-build-deps
+
       - name: Fetch LKG
         continue-on-error: true
         uses: actions/download-artifact@v2
@@ -76,11 +83,9 @@ jobs:
           name: ${{ github.base_ref }}-lastest-pass
           path: .
 
-      - name: Fetch Dependency Cache
-        uses: actions/cache@v2
-        with:
-          key: ${{ runner.os }}-build-deps
-          path: ~/.m2
+      - name: Extract LKG
+        continue-on-error: true
+        run: tar -xvf ${{ github.base_ref }}-lastest-pass.tar.gz .
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -111,3 +116,15 @@ jobs:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
         run: make ${MODULES} TARGET=integration
+
+      - name: Package Files
+        run: |
+          tar -czf ${{ github.base_ref }}-lastest-pass.tar.gz \
+            -X ${{ github.base_ref }}-lastest-pass.tar.gz \
+            -v .
+
+      - name: Upload LKG
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.base_ref }}-lastest-pass
+          path: ${{ github.base_ref }}-lastest-pass.tar.gz
