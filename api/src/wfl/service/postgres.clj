@@ -60,13 +60,13 @@
   "Use `tx` to update `status` of `workflows` in `_workload`."
   (fn [tx {:keys [items workflows] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
-            (jdbc/update! tx items
-                          {:updated (OffsetDateTime/now) :uuid uuid :status status}
-                          ["id = ?" id]))]
-    (->> workflows
-         (remove (comp nil? :uuid))
-         (remove (comp finished? :status))
-         (run! #(update! % (get-status! workload %)))))))
+              (jdbc/update! tx items
+                            {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                            ["id = ?" id]))]
+      (->> workflows
+           (remove (comp nil? :uuid))
+           (remove (comp finished? :status))
+           (run! #(update! % (get-status! workload %)))))))
 
 (def update-workflow-statuses!
   (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
@@ -77,7 +77,7 @@
 (def update-terra-workflow-statuses!
   (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
             (terra/get-workflow-status-by-entity cromwell project workflow))]
-      (make-update-workflows get-terra-status)))
+    (make-update-workflows get-terra-status)))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."

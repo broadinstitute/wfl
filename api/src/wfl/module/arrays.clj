@@ -116,7 +116,7 @@
                     entity-type      (:entity-type inputs)
                     entity-name      (:entity-name inputs)]
                 [id (terra/create-submission cromwell project method-configuration-name
-                                                      method-configuration-namespace entity-type entity-name)]))
+                                             method-configuration-namespace entity-type entity-name)]))
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
