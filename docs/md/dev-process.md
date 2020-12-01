@@ -63,22 +63,22 @@ for the WFL project, but will add an executable symbolic link
 
 ## Process
 
-We always make feature branches from `master`,
+We always make feature branches from `main`,
 make pull requests,
 ask for reviews
-and merge back to `master` on Github.
+and merge back to `main` on Github.
 
-For the release process, please refer to the [release guide](/docs/md/dev-release.md)
+For the release process, please refer to the [release guide](../dev-release/)
 
 1. Clone the repo
     ```
     git@github.com:broadinstitute/wfl.git
     ```
 
-2. Start from the latest copy of the remote master
+2. Start from the latest copy of the remote main
     ```
-    git checkout master
-    git pull origin master
+    git checkout main
+    git pull origin main
     ```
 
 3. Create a feature branch
@@ -96,19 +96,19 @@ For the release process, please refer to the [release guide](/docs/md/dev-releas
     git commit -m "Update the readme file."
     ```
 
-5. [Optional] Rebase onto lastet master: only if you want to get updates from the master
+5. [Optional] Rebase onto lastest main: only if you want to get updates from the main
     ```
-    git checkout master
-    git pull origin master
+    git checkout main
+    git pull origin main
     git checkout tbl/GH-666-feature-branch-something
-    git rebase master
+    git rebase main
     ```
 
     alternatively, you could use the following commands without switching branches:
     ```
     git checkout tbl/GH-666-feature-branch-something
-    git fetch origin master
-    git merge master
+    git fetch origin main
+    git merge main
     ```
 
 6. Push branch to Github in the early stage of your development (recommended):
@@ -128,27 +128,12 @@ For the release process, please refer to the [release guide](/docs/md/dev-releas
 
 10. Receive approval from reviewers.
 
-11. Make sure build the backend code at least once with:
-    ```
-    make api
-    ```
+11. Merge the PR.
 
-12. Merge the PR. The feature branch will be automatically cleaned up.
+Deployment can be done to [sandboxes](../dev-sandbox/) if you build images locally and use `./ops/cli.py deploy`, but
+for deploying to a shared environment you'll generally want to follow the [release process](../dev-release/).
 
-13. [Temporary] Fetch the lastest master branch again and deploy it to dev server.
-    ```
-    git checkout master
-    git pull origin master
-    boot deploy
-    ```
 
-    you might need to login to vault and google by the following commands before you want to deploy:
-    ```
-    vault auth -method=github token=$(cat ~/.github-token)
-    gcloud auth login
-    ```
-
-    **Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!**
 
 ## Development Tips
 

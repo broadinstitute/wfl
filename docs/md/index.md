@@ -1,9 +1,9 @@
 # Welcome to WorkFlow Launcher
 
 [![Build Board](https://img.shields.io/badge/-The%20Build%20Boad%20(VPN)-blue)](https://internal.broadinstitute.org/~chengche/green-hornet-status.html)
-![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=master)
-![Build on Master](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Master/badge.svg?branch=master)
-[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release)](https://github.com/broadinstitute/wfl/blob/master/CHANGELOG.md)
+![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=main)
+![Build on Main](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Main/badge.svg?branch=main)
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release)](https://github.com/broadinstitute/wfl/blob/main/CHANGELOG.md)
 
 ## Overview
 

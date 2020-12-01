@@ -1,11 +1,11 @@
-# This workflow triggers helm linting on PRs and master branch pushes
+# This workflow triggers helm linting on PRs and main branch pushes
 # that affect helm files
-name: Helm Chart Linting on Pull Requests and Master
+name: Helm Chart Linting on Pull Requests and Main
 
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - helm/wfl/**
   pull_request:

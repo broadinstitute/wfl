@@ -57,7 +57,7 @@ rm plan.out
 ```
 
 ## 2. Change the SQL password
-Terraform makes a random password for the `wfl` account in your new Cloud SQL instance but for simplicity the WFL installations tied to `gotc-dev` all use the same one (you'll end up deploying using `gotc-dev`'s [WFL values file](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl) which will supply a certain password).
+Terraform makes a random password for the `wfl` account in your new Cloud SQL instance but for simplicity the WFL installations tied to `gotc-dev` all use the same one (you'll end up deploying using `gotc-dev`'s [WFL values file](https://github.com/broadinstitute/gotc-deploy/blob/main/deploy/gotc-dev/helm/wfl-values.yaml.ctmpl) which will supply a certain password).
 
 The password is defined in Vault at `secret/dsde/gotc/dev/zero`. You'll want to copy it to your clipboard ideally without having it end up in your console history:
 - If you use Vault's UI, go to [https://clotho.broadinstitute.org:8200/ui/vault/secrets/secret/show/dsde/gotc/dev/zero](https://clotho.broadinstitute.org:8200/ui/vault/secrets/secret/show/dsde/gotc/dev/zero) and click the little copy button next to the `password` field

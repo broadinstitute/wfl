@@ -1,9 +1,9 @@
-# This workflow triggers tests on PRs that targets master branch
-name: Tests on Pull Requests and Master
+# This workflow triggers tests on PRs that targets main branch
+name: Tests on Pull Requests and Main
 on:
   push:
     branches:
-      - master
+      - main
       - release/**
   pull_request:
 

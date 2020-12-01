@@ -54,7 +54,7 @@ so that is its default value
 unless it is specified.
 
 The `reference_fasta_prefix` can be used to override
-the [default value](https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7) used by this module:
+the [default value](https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L7) used by this module:
 "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
 
 Note that this pipeline supports specifying arbitrary WDL inputs, either
