@@ -88,7 +88,8 @@
   "Cromwellify the WDL from warp in CLONES to RESOURCES."
   [clones resources {:keys [release top] :as _wdl}]
   (let [dp (str/join "/" [clones "warp"])]
-    (util/shell-io! "git" "-C" dp "checkout" release)
+    (util/shell-io!
+      "git" "-c" "advice.detachedHead=false" "-C" dp "checkout" release)
     (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
       (when directory
         (try (let [out-wdl (.getPath (io/file resources (.getName in-wdl)))
@@ -108,7 +109,8 @@
               (io/copy file out)))]
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
-      (util/shell-io! "git" "-C" (.getParent environments)
+      (util/shell-io!
+        "git" "-c" "advice.detachedHead=false" "-C" (.getParent environments)
         "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
       (stage sources environments))))
 
