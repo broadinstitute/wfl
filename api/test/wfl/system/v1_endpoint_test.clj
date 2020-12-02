@@ -144,7 +144,7 @@
 (deftest test-bad-pipeline
   (let [request (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
                     (assoc :pipeline "geoff"))]
-    (testing "create-workload! fails with bad request"
-      (is (thrown? ExceptionInfo (endpoints/create-workload request))))
-    (testing "create-workload! fails with bad request"
-      (is (thrown? ExceptionInfo (endpoints/exec-workload request))))))
+    (testing "create-workload! fails (400) with bad request"
+      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400" (endpoints/create-workload request))))
+    (testing "exec-workload! fails (400) with bad request"
+      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400" (endpoints/exec-workload request))))))
