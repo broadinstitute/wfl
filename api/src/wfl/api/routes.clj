@@ -161,13 +161,13 @@
        ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muuntaja-core/instance
-            :middleware [;; query-params & form-params
+            :middleware [exception-middleware
+                         ;; query-params & form-params
                          parameters/parameters-middleware
                            ;; content-negotiation
                          muuntaja/format-negotiate-middleware
                            ;; encoding response body
                          muuntaja/format-response-middleware
-                         exception-middleware
                            ;; decoding request body
                          muuntaja/format-request-middleware
                            ;; coercing response bodys
