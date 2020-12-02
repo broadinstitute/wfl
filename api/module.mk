@@ -29,12 +29,12 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
-$(PREBUILD):
+$(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
 	$(CLOJURE) -X wfl.boot/prebuild
 	@$(TOUCH) $@
 
-$(POM_IN): $(PREBUILD) $(SCM_SRC) $(SCM_RESOURCES)
+$(POM_IN): $(PREBUILD) $(CLOJURE_PROJECT)
 	$(CLOJURE) -Spom
 
 $(POM_OUT): $(POM_IN)
