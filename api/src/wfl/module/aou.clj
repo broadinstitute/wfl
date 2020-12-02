@@ -86,7 +86,9 @@
                         ;; cloud path of the Illumina gender cluster file
                         :gender_cluster_file
                         ;; arbitrary path to be used by BAFRegress
-                        :minor_allele_frequency_file]
+                        :minor_allele_frequency_file
+                        ;; some message-specified environment to override WFL's
+                        :environment]
         mandatory      (select-keys inputs mandatory-keys)
         optional       (select-keys inputs optional-keys)
         missing        (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
