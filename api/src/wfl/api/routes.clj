@@ -125,11 +125,7 @@
                          :exception (str (.getClass exception))
                          :data (ex-data exception)
                          :uri (:uri request)}}]
-    (if (< (:status response) 500)
-      (log/warnf "Client %s error - %s occurred at %s"
-                 (:status response)
-                 (:message (:body response))
-                 (:uri (:body response)))
+    (if (>= (:status response) 500)
       (do
         (log/errorf "Server %s error at occurred at %s :"
                     (:status response)
