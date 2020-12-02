@@ -13,8 +13,11 @@ DERIVED_SRC_DIR		  := $(DERIVED_MODULE_DIR)/src
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 CLOJURE_PROJECT       := $(MODULE_DIR)/deps.edn
 
-CLEAN_DIRS  += $(CPCACHE_DIR)
-CLEAN_FILES += $(LEIN_PROJECT) $(MODULE_DIR)/wfl
+POM_IN       := $(MODULE_DIR)/pom.xml
+POM_OUT      := $(SRC_DIR)/META-INF/maven/org.broadinstitute/wfl/pom.xml
+
+CLEAN_DIRS  += $(CPCACHE_DIR) $(SRC_DIR)/META-INF
+CLEAN_FILES += $(POM_IN) $(POM_OUT)
 
 SCM_RESOURCES      = $(shell $(FIND) $(RESOURCES_DIR) -type f)
 SCM_SRC            = $(shell $(FIND) $(SRC_DIR) -type f -name "*.$(CLJ)")
@@ -23,8 +26,6 @@ DERIVED_SRC        = $(shell $(FIND) $(DERIVED_SRC_DIR) -type f -name "*.$(CLJ)"
 TEST_SCM_RESOURCES = $(shell $(FIND) $(TEST_RESOURCES_DIR) -type f)
 TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 
-POM_IN       := $(MODULE_DIR)/pom.xml
-POM_OUT      := $(SRC_DIR)/META-INF/maven/org.broadinstitute/wfl/pom.xml
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
@@ -37,16 +38,13 @@ $(POM_IN): $(PREBUILD) $(SCM_SRC) $(SCM_RESOURCES)
 	$(CLOJURE) -Spom
 
 $(POM_OUT): $(POM_IN)
-	$(CLOJURE) -X wfl.boot/update-the-pom
+	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$<"' :out '"$@"'
 
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
 	$(MKDIR) $(DERIVED_TARGET_DIR)
-	$(CLOJURE) -e "(compile 'wfl.main)"
-	$(CLOJURE) -A:uberjar \
-		--level error \
-		--multi-release \
-		--main-class wfl.main \
-		--target $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
+	$(CLOJURE) -M -e "(compile 'wfl.main)"
+	$(CLOJURE) -M:uberjar --level error --multi-release \
+		--main-class wfl.main --target $(JAR)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 

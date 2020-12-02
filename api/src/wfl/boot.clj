@@ -59,19 +59,17 @@
 
 (defn update-the-pom
   "Update the Project Object Model (pom.xml) file for this program."
-  [_opts]
-  (let [input "pom.xml"
-        output (str/join "/" ["src" "META-INF" "maven" wfl/artifactId input])
-        override? (set (keys the-pom))]
-    (io/make-parents output)
+  [{:keys [in out]}]
+  (let [override? (set (keys the-pom))]
+    (io/make-parents out)
     (letfn [(override [{:keys [tag] :as element}]
               (if (override? tag)
                 (assoc element :content (vector (the-pom tag)))
                 element))]
-      (-> input io/file io/reader xml/parse
+      (-> in io/file io/reader xml/parse
           (update :content (partial map override))
           xml/emit-str
-          (->> (spit output))))))
+          (->> (spit out))))))
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
