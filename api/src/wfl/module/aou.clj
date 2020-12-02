@@ -56,7 +56,8 @@
   ({:aou-dev "dev" :aou-prod "prod"} aou-env))
 
 (defn env-inputs
-  "Array inputs for ENVIRONMENT that do not depend on the input file."
+  "Array inputs for ENVIRONMENT that do not depend on the input file.
+  Environment here is just a default, input file may specify override."
   [environment]
   {:vault_token_path (get-in env/stuff [environment :vault_token_path])
    :environment      (map-aou-environment environment)})
