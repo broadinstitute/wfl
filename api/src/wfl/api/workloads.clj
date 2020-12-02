@@ -36,8 +36,9 @@
   (try
     (load-workload-impl tx workload)
     (catch Throwable cause
-      (throw (ex-info "Error loading workload"
-                      {:workload workload} cause)))))
+      (throw (ex-info (str "Error loading workload - " (.getMessage cause))
+                      (util/deep-merge {:workload workload} (ex-data cause))
+                      cause)))))
 
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
@@ -100,8 +101,8 @@
   (try
     (start-workload! tx (create-workload! tx workload-request))
     (catch Throwable cause
-      (throw (ex-info "Error executing workload request"
-                      {:workload-request workload-request} cause)))))
+      (throw (ex-info (str "Error executing workload request - " (.getMessage cause))
+                      (ex-data cause) cause)))))
 
 (defmethod update-workload!
   :default
@@ -110,8 +111,9 @@
     (postgres/update-workload! tx workload)
     (load-workload-for-id tx (:id workload))
     (catch Throwable cause
-      (throw (ex-info "Error updating workload"
-                      {:workload workload} cause)))))
+      (throw (ex-info (str "Error updating workload - " (.getMessage cause))
+                      (util/deep-merge {:workload workload} (ex-data cause))
+                      cause)))))
 
 (defn default-load-workload-impl
   [tx workload]
@@ -126,8 +128,9 @@
            (assoc workload :workflows)
            unnilify)
       (catch Throwable cause
-        (throw (ex-info "Error loading workload"
-                        {:workload workload} cause))))))
+        (throw (ex-info (str "Error loading workload - " (.getMessage cause))
+                        (util/deep-merge {:workload workload} (ex-data cause))
+                        cause))))))
 
 (defoverload load-workload-impl :default default-load-workload-impl)
 
