@@ -73,16 +73,6 @@
           xml/emit-str
           (->> (spit output))))))
 
-(defn make-the-manifest
-  "Make the manifest map for the jar file derived from THE-POM."
-  [_opts]
-  (let [keywords [::pom/description ::pom/url ::pom/version]]
-    (assoc (zipmap (map (comp str/capitalize name) keywords)
-             ((apply juxt keywords) the-pom))
-      "Application-Name" (str/capitalize wfl/the-name)
-      "Main-Class"       "wfl.main"
-      "Multi-Release"    "true")))
-
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
    Omit [[wfl/the-name]]'s repo since it isn't needed
