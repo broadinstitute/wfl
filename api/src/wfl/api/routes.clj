@@ -120,11 +120,22 @@
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
-  {:status (or (:status (ex-data exception)) status)
-   :body {:message (or (.getMessage exception) message)
-          :exception (.getClass exception)
-          :data (ex-data exception)
-          :uri (:uri request)}})
+  (let [response {:status (or (:status (ex-data exception)) status)
+                  :body {:message (or (.getMessage exception) message)
+                         :exception (str (.getClass exception))
+                         :data (ex-data exception)
+                         :uri (:uri request)}}]
+    (if (< (:status response) 500)
+      (log/warnf "Client %s error - %s occurred at %s"
+                 (:status response)
+                 (:message (:body response))
+                 (:uri (:body response)))
+      (do
+        (log/errorf "Server %s error at occurred at %s :"
+                    (:status response)
+                    (:uri (:body response)))
+        (logr/error exception (:body response))))
+    response))
 
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."
