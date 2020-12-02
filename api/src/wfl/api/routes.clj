@@ -139,12 +139,7 @@
        ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
        ;; override the default handler
-     ::exception/default                   (partial ex-handler 500 "Internal Server Error")
-       ;; print stack-traces for all exceptions in logs
-     ::exception/wrap                      (fn [handler e request]
-                                             (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
-                                             (logr/error request)
-                                             (handler e request))})))
+     ::exception/default                   (partial ex-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
