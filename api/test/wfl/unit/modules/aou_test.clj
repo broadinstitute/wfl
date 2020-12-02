@@ -46,7 +46,8 @@
                                             :reported_gender             "foo"
                                             :sample_alias                "foo"
                                             :sample_lsid                 "foo"
-                                            :zcall_thresholds_file       "foo"}
+                                            :zcall_thresholds_file       "foo"
+                                            :environment                 "foo"}
         redundant-per-sample-inputs-inputs (merge expected-per-sample-inputs {:extra "bar"})
         missing-per-sample-inputs-inputs   (dissoc expected-per-sample-inputs :analysis_version_number)
         all-expected-keys-no-control       #{:Arrays.preemptible_tries
@@ -90,6 +91,11 @@
       (is (thrown? Exception (aou/get-per-sample-inputs missing-per-sample-inputs-inputs))))
     (testing "aou prepares all necessary keys"
       (is (= all-expected-keys-no-control (set (keys (aou/make-inputs :aou-dev expected-per-sample-inputs))))))
+    (testing "aou supplies merges environment from inputs with default"
+      (is (= "dev" (:Arrays.environment (aou/make-inputs :aou-dev (dissoc expected-per-sample-inputs :environment)))))
+      (is (= "foo" (:Arrays.environment (aou/make-inputs :aou-dev expected-per-sample-inputs))))
+      (is (= all-expected-keys-no-control
+             (set (keys (aou/make-inputs :aou-dev (dissoc expected-per-sample-inputs :environment)))))))
     (testing "aou prepares all necessary keys plus optional keys"
       (is (= all-expected-keys (set (keys (aou/make-inputs :aou-dev (merge expected-per-sample-inputs
                                                                            {:control_sample_vcf_index_file "foo"
