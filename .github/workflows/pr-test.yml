@@ -77,6 +77,12 @@ jobs:
             IdentityFile ~/.ssh/wfl_deploy_key
           EOF
 
+      - name: Fetch Dependency Cache
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-depedency-cache
+          path: ~/.m2
+
       - name: Pre-Build
         run: make ${MODULES} TARGET=prebuild
 
