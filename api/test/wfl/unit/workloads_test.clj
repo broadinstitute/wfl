@@ -47,5 +47,5 @@
         (is (= workload (workloads/execute-workload! nil workload)))))
     (testing "illegal pipeline"
       (let [workload {:pipeline "geoff"}]
-        (is (thrown-with-msg? Exception #"Error executing workload request"
+        (is (thrown-with-msg? Exception #"Failed to create workload - no such pipeline"
                               (workloads/execute-workload! nil workload)))))))
