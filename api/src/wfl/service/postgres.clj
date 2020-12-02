@@ -57,7 +57,6 @@
   (set (conj cromwell/final-statuses "skipped")))
 
 (defn ^:private make-update-workflows [get-status!]
-  "Use `tx` to update `status` of `workflows` in `_workload`."
   (fn [tx {:keys [items workflows] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
               (jdbc/update! tx items
@@ -69,6 +68,7 @@
            (run! #(update! % (get-status! workload %)))))))
 
 (def update-workflow-statuses!
+  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
   (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
             (if (util/uuid-nil? uuid)
               "skipped"
@@ -76,6 +76,7 @@
     (make-update-workflows get-cromwell-status)))
 
 (def update-terra-workflow-statuses!
+  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
   (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
             (terra/get-workflow-status-by-entity cromwell project workflow))]
     (make-update-workflows get-terra-status)))
