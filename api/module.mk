@@ -23,6 +23,8 @@ DERIVED_SRC        = $(shell $(FIND) $(DERIVED_SRC_DIR) -type f -name "*.$(CLJ)"
 TEST_SCM_RESOURCES = $(shell $(FIND) $(TEST_RESOURCES_DIR) -type f)
 TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 
+POM_IN       := ./pom.xml
+POM_OUT      := src/META-INF/maven/org.broadinstitute/wfl/pom.xml
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
@@ -31,16 +33,20 @@ $(PREBUILD):
 	$(CLOJURE) -X wfl.boot/prebuild
 	@$(TOUCH) $@
 
-pom.xml: $(PREBUILD) $(SCM_SRC) $(SCM_RESOURCES)
+$(POM_IN): $(PREBUILD) $(SCM_SRC) $(SCM_RESOURCES)
 	$(CLOJURE) -Spom
+	@$(TOUCH) $@
+
+$(POM_OUT): $(POM_IN)
 	$(CLOJURE) -X wfl.boot/update-the-pom
 	@$(TOUCH) $@
 
-$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) pom.xml
+$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
 	$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -e "(compile 'wfl.main)"
 	$(CLOJURE) -A:uberjar \
 		--level error \
+		--multi-release \
 		--main-class wfl.main \
 		--target $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 	$(LN) $(JAR) $(JAR_LINK)

@@ -23,14 +23,14 @@
 (def the-version
   "A map of version information."
   (let [built     (-> (OffsetDateTime/now)
-                      (.truncatedTo ChronoUnit/SECONDS)
-                      .toInstant .toString)
+                    (.truncatedTo ChronoUnit/SECONDS)
+                    .toInstant .toString)
         commit    (util/shell! "git" "rev-parse" "HEAD")
         committed (->> commit
-                       (util/shell! "git" "show" "-s" "--format=%cI")
-                       OffsetDateTime/parse .toInstant .toString)
+                    (util/shell! "git" "show" "-s" "--format=%cI")
+                    OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
-                   (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
     {:version   (or (System/getenv "WFL_VERSION") "devel")
      :commit    commit
      :committed committed
@@ -54,31 +54,34 @@
          :description "WFL manages workflows."
          :groupId     (namespace wfl/artifactId)
          :name        "WorkFlow Launcher"
-         :url         (:primary (wfl/the-github-repos wfl/the-name))
+         :url         "https://github.com/broadinstitute/wfl.git"
          :version     (:version the-version)})
 
 (defn update-the-pom
   "Update the Project Object Model (pom.xml) file for this program."
   [_opts]
-  (let [pom-file  "./pom.xml"
+  (let [input "pom.xml"
+        output (str/join "/" ["src" "META-INF" "maven" wfl/artifactId input])
         override? (set (keys the-pom))]
+    (io/make-parents output)
     (letfn [(override [{:keys [tag] :as element}]
               (if (override? tag)
                 (assoc element :content (vector (the-pom tag)))
                 element))]
-      (-> pom-file io/file io/reader xml/parse
+      (-> input io/file io/reader xml/parse
           (update :content (partial map override))
           xml/emit-str
-          (->> (spit pom-file))))))
+          (->> (spit output))))))
 
 (defn make-the-manifest
   "Make the manifest map for the jar file derived from THE-POM."
-  [the-pom]
-  (let [keywords [:description :url :version]]
+  [_opts]
+  (let [keywords [::pom/description ::pom/url ::pom/version]]
     (assoc (zipmap (map (comp str/capitalize name) keywords)
-                   ((apply juxt keywords) the-pom))
-           "Application-Name" (str/capitalize wfl/the-name)
-           "Multi-Release" "true")))
+             ((apply juxt keywords) the-pom))
+      "Application-Name" (str/capitalize wfl/the-name)
+      "Main-Class"       "wfl.main"
+      "Multi-Release"    "true")))
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
@@ -87,9 +90,9 @@
   []
   (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
     (into {}
-          (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [second-party repo])]
-              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
+      (for [repo (keys the-github-repos-no-wfl)]
+        (let [dir (str/join "/" [second-party repo])]
+          [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
 (defn cromwellify-wdl
   "Cromwellify the WDL from warp in CLONES to RESOURCES."
@@ -116,7 +119,7 @@
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io! "git" "-C" (.getParent environments)
-                      "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
+        "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
       (stage sources environments))))
 
 (defn prebuild
