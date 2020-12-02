@@ -1,10 +1,12 @@
 (ns wfl.service.terra
   "Analyze data in Terra using the Firecloud/Terra API."
   (:require [clojure.data.json :as json]
+            [clojure.tools.logging :as log]
             [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.once :as once]
-            [wfl.util :as util]))
+            [wfl.util :as util])
+  (:import [java.util.concurrent TimeUnit]))
 
 (defn workspace-api-url
   [terra-url workspace]
@@ -39,3 +41,11 @@
         response (http/get submission-url {:headers (once/get-auth-header)})]
     (util/parse-json (:body response))))
 
+(defn get-workflow-status-by-entity
+  "Get workflow status given a Terra submission-id and entity-name."
+  [terra-url workspace {:keys [uuid inputs] :as _item}]
+  (->> (get-submission terra-url workspace uuid)
+       :workflows
+       (filter #(= (:entity-name inputs) (get-in % [:workflowEntity :entityName])))
+       (first)
+       (:status)))

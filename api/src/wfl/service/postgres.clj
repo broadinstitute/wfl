@@ -5,6 +5,7 @@
             [wfl.jdbc :as jdbc]
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.terra :as terra]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
@@ -55,21 +56,30 @@
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
 
-(defn update-workflow-statuses!
-  "Use `tx` to update `status` of `workflows` in `_workload`."
-  [tx {:keys [cromwell items workflows] :as _workload}]
-  (letfn [(maybe-cromwell-status [{:keys [uuid]}]
+(defn ^:private make-update-workflows [get-status!]
+  (fn [tx {:keys [items workflows] :as workload}]
+    (letfn [(update! [{:keys [id uuid]} status]
+              (jdbc/update! tx items
+                            {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                            ["id = ?" id]))]
+      (->> workflows
+           (remove (comp nil? :uuid))
+           (remove (comp finished? :status))
+           (run! #(update! % (get-status! workload %)))))))
+
+(def update-workflow-statuses!
+  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
+  (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
             (if (util/uuid-nil? uuid)
               "skipped"
-              (cromwell-status cromwell uuid)))
-          (update! [{:keys [id uuid]} status]
-            (jdbc/update! tx items
-                          {:updated (OffsetDateTime/now) :uuid uuid :status status}
-                          ["id = ?" id]))]
-    (->> workflows
-         (remove (comp nil? :uuid))
-         (remove (comp finished? :status))
-         (run! #(update! % (maybe-cromwell-status %))))))
+              (cromwell-status cromwell uuid)))]
+    (make-update-workflows get-cromwell-status)))
+
+(def update-terra-workflow-statuses!
+  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
+  (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
+            (terra/get-workflow-status-by-entity cromwell project workflow))]
+    (make-update-workflows get-terra-status)))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
