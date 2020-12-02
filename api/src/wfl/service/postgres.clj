@@ -72,7 +72,8 @@
   (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
             (if (util/uuid-nil? uuid)
               "skipped"
-              (get-cromwell-status cromwell uuid)))]))
+              (cromwell-status cromwell uuid)))]
+    (make-update-workflows get-cromwell-status)))
 
 (def update-terra-workflow-statuses!
   (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
