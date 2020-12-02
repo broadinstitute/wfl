@@ -1,5 +1,5 @@
 (ns wfl.boot
-  "Stuff moved out of build.boot."
+  "Build support originating in build.boot."
   (:require [clojure.data.xml :as xml]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
