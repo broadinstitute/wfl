@@ -3,20 +3,22 @@
 REQUIRED_2P_REPOSITORIES := pipeline-config warp
 include $(MAKE_INCLUDE_DIR)/modules.mk
 
+CLASSES_DIR           := $(MODULE_DIR)/classes
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
 RESOURCES_DIR         := $(MODULE_DIR)/resources
 SRC_DIR               := $(MODULE_DIR)/src
 TEST_DIR              := $(MODULE_DIR)/test
 TEST_RESOURCES_DIR    := $(TEST_DIR)/resources
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
-DERIVED_SRC_DIR		  := $(DERIVED_MODULE_DIR)/src
+DERIVED_SRC_DIR       := $(DERIVED_MODULE_DIR)/src
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
 CLOJURE_PROJECT       := $(MODULE_DIR)/deps.edn
 
+API_DIR      := $(CLASSES_DIR)/wfl/api
 POM_IN       := $(MODULE_DIR)/pom.xml
 POM_OUT      := $(SRC_DIR)/META-INF/maven/org.broadinstitute/wfl/pom.xml
 
-CLEAN_DIRS  += $(CPCACHE_DIR) $(SRC_DIR)/META-INF
+CLEAN_DIRS  += $(CLASSES_DIR) $(CPCACHE_DIR) $(SRC_DIR)/META-INF
 CLEAN_FILES += $(POM_IN) $(POM_OUT)
 
 SCM_RESOURCES      = $(shell $(FIND) $(RESOURCES_DIR) -type f)
@@ -40,9 +42,12 @@ $(POM_IN): $(PREBUILD) $(CLOJURE_PROJECT)
 $(POM_OUT): $(POM_IN) $(SCM_SRC)
 	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$<"' :out '"$@"'
 
-$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
-	@$(MKDIR) $(DERIVED_TARGET_DIR)
+$(API_DIR): $(SCM_SRC)
+	$(MKDIR) $(CLASSES_DIR)
 	$(CLOJURE) -M -e "(compile 'wfl.main)"
+
+$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT) $(API_DIR)
+	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M:uberjar -m uberdeps.uberjar \
 		--level error --multi-release --main-class wfl.main \
 		--target $(JAR)
