@@ -5,57 +5,44 @@ An `ExternalWholeGenomeReprocessing` workload
 specifies the following inputs
 for each workflow:
 
-- input_cram or input_bam (required)
-- sample_name
-- base_file_name
-- final_gvcf_base_name
-- unmapped_bam_suffix
-- reference_fasta_prefix
+- `input_cram` or `input_bam` (required)
+- `base_file_name`
+- `sample_name`
+- `final_gvcf_base_name`
+- `unmapped_bam_suffix`
+- `reference_fasta_prefix`
 
-The `input_cram` is the path to a file
-relative to the `input` URL prefix
-in the `workload` definition above.
+#### `input_cram` or `input_bam` (required)
 
-The `input_cram` contains the `sample_name`
-but we break it out into a separate input here
-to avoid parsing every (often large) CRAM file.
+- Absolute GCS file path (like `gs://...`)
 
-The `base_file_name` is used to name result files.
-The workflow uses the `base_file_name`
-together with one or more filetype suffixes
-to name intermediate and output files.
-It is usually just the leaf name of `input_cram`
-with the `.cram` extension removed.
+#### `base_file_name`
 
-The `final_gvcf_base_name` is the root
-of the leaf name
-of the pathname of the final VCF.
-The final VCF will have some variant
-of a `.vcf` suffix
-added by the workflow WDL.
+- Used for naming intermediate/output files
+- Defaults to the filename of the `input_cram` or `input_bam`
+without the `.cram` or `.bam` extension
 
-It is common for `base_file_name`
-and `final_gvcf_base_name`
-to be identical to `sample_name`.
-If no `base_file_name` is specified
-for any workflow in a workload,
-`base_file_name` defaults to `sample_name`.
-Likewise,
-if no `final_gvcf_base_name` is specified
-for any workflow in a workload,
-then `final_gvcf_base_name`
-also defaults to `sample_name`.
+#### `sample_name`
 
-It is used to recover the filename resulting
-from re-aligning a reverted CRAM file.
-The `unmapped_bam_suffix`
-is almost always `.unmapped.bam`,
-so that is its default value
-unless it is specified.
+- Defaults to the filename of the `input_cram` or `input_bam`
+without the `.cram` or `.bam` extension
 
-The `reference_fasta_prefix` can be used to override
-the [default value](https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L7) used by this module:
-"gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"
+#### `final_gvcf_base_name`
+
+- Path to the final VCF (`.vcf` will be added by the WDL)
+- Defaults to the filename of the `input_cram` or `input_bam`
+without the `.cram` or `.bam` extension
+
+#### `unmapped_bam_suffix`
+
+- Defaults to `.unmapped.bam`
+
+#### `reference_fasta_prefix`
+
+- [Defaults to](https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L34) `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38`
+
+
+
 
 Note that this pipeline supports specifying arbitrary WDL inputs, either
 at the workload level through `common` or individually via `items`.
@@ -85,14 +72,13 @@ at least read access to the input files.
     --header 'Content-Type: application/json' \
     --data-raw '{
       "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-      "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "pipeline": "ExternalWholeGenomeReprocessing",
       "project": "PO-1234",
       "items": [
         {
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
@@ -153,7 +139,7 @@ particular input cram, WFL will not re-submit that workflow.
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
@@ -179,14 +165,13 @@ Creates and then starts a Cromwell workflow for each item in the workload.
     --header 'Content-Type: application/json' \
     --data-raw '{
       "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-      "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "pipeline": "ExternalWholeGenomeReprocessing",
       "project": "PO-1234",
       "items": [
         {
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
@@ -210,7 +195,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
@@ -250,7 +235,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
@@ -294,7 +279,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
           "updated": "2020-10-05T16:15:32Z",
           "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
           "inputs": {
-            "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
             "sample_name": "TestSample1234"
           }
         }
