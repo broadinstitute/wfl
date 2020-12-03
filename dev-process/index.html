@@ -10,7 +10,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.5">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.6">
     
     
       
@@ -18,7 +18,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.21aed14c.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6910b76c.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
@@ -481,6 +481,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../directory-usage/" class="md-nav__link">
+      Usage Across a Directory
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -690,11 +702,11 @@ support <code>lein</code>, Cursive, and Calva users.</p>
 for the WFL project, but will add an executable symbolic link
 <code>wfl</code> to conveniently execute the Clojure code as a script.</p>
 <h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">⚓︎</a></h2>
-<p>We always make feature branches from <code>master</code>,
+<p>We always make feature branches from <code>main</code>,
 make pull requests,
 ask for reviews
-and merge back to <code>master</code> on Github.</p>
-<p>For the release process, please refer to the <a href="/docs/md/dev-release.md">release guide</a></p>
+and merge back to <code>main</code> on Github.</p>
+<p>For the release process, please refer to the <a href="../dev-release/">release guide</a></p>
 <ol>
 <li>
 <p>Clone the repo
@@ -702,9 +714,9 @@ and merge back to <code>master</code> on Github.</p>
 </code></pre></div></p>
 </li>
 <li>
-<p>Start from the latest copy of the remote master
-    <div class="highlight"><pre><span></span><code>git checkout master
-git pull origin master
+<p>Start from the latest copy of the remote main
+    <div class="highlight"><pre><span></span><code>git checkout main
+git pull origin main
 </code></pre></div></p>
 </li>
 <li>
@@ -722,16 +734,16 @@ git commit -m &quot;Update the readme file.&quot;
 </code></pre></div></p>
 </li>
 <li>
-<p>[Optional] Rebase onto lastet master: only if you want to get updates from the master
-    <div class="highlight"><pre><span></span><code>git checkout master
-git pull origin master
+<p>[Optional] Rebase onto lastest main: only if you want to get updates from the main
+    <div class="highlight"><pre><span></span><code>git checkout main
+git pull origin main
 git checkout tbl/GH-666-feature-branch-something
-git rebase master
+git rebase main
 </code></pre></div></p>
 <p>alternatively, you could use the following commands without switching branches:
 <div class="highlight"><pre><span></span><code>git checkout tbl/GH-666-feature-branch-something
-git fetch origin master
-git merge master
+git fetch origin main
+git merge main
 </code></pre></div></p>
 </li>
 <li>
@@ -760,26 +772,11 @@ git merge master
 <p>Receive approval from reviewers.</p>
 </li>
 <li>
-<p>Make sure build the backend code at least once with:
-    <div class="highlight"><pre><span></span><code>make api
-</code></pre></div></p>
-</li>
-<li>
-<p>Merge the PR. The feature branch will be automatically cleaned up.</p>
-</li>
-<li>
-<p>[Temporary] Fetch the lastest master branch again and deploy it to dev server.
-    <div class="highlight"><pre><span></span><code>git checkout master
-git pull origin master
-boot deploy
-</code></pre></div></p>
-<p>you might need to login to vault and google by the following commands before you want to deploy:
-<div class="highlight"><pre><span></span><code>vault auth -method=github token=$(cat ~/.github-token)
-gcloud auth login
-</code></pre></div></p>
-<p><strong>Note: this action might interfere other people's work that is under QA, please always coordinate before you do this!</strong></p>
+<p>Merge the PR.</p>
 </li>
 </ol>
+<p>Deployment can be done to <a href="../dev-sandbox/">sandboxes</a> if you build images locally and use <code>./ops/cli.py deploy</code>, but
+for deploying to a shared environment you'll generally want to follow the <a href="../dev-release/">release process</a>.</p>
 <h2 id="development-tips">Development Tips<a class="headerlink" href="#development-tips" title="Permanent link">⚓︎</a></h2>
 <p>Here are some tips for WFL development.</p>
 <p>Some of this advice might help
@@ -972,8 +969,8 @@ wm28d-f87:wfl yanc$
       
     </div>
     
-      <script src="../assets/javascripts/vendor.7e0ee788.min.js"></script>
-      <script src="../assets/javascripts/bundle.b3a72adc.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.fd16492e.min.js"></script>
+      <script src="../assets/javascripts/bundle.7836ba4d.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({

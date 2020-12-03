@@ -10,7 +10,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.5">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.6">
     
     
       
@@ -18,7 +18,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.21aed14c.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6910b76c.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.196e0c26.min.css">
@@ -391,6 +391,54 @@
     Inputs
   </a>
   
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input_cram-or-input_bam-required" class="md-nav__link">
+    input_cram or input_bam (required)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base_file_name" class="md-nav__link">
+    base_file_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample_name" class="md-nav__link">
+    sample_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final_gvcf_base_name" class="md-nav__link">
+    final_gvcf_base_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unmapped_bam_suffix" class="md-nav__link">
+    unmapped_bam_suffix
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference_fasta_prefix" class="md-nav__link">
+    reference_fasta_prefix
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -456,6 +504,18 @@
   <li class="md-nav__item">
     <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
       External Exome
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../directory-usage/" class="md-nav__link">
+      Usage Across a Directory
     </a>
   </li>
 
@@ -530,6 +590,54 @@
     Inputs
   </a>
   
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input_cram-or-input_bam-required" class="md-nav__link">
+    input_cram or input_bam (required)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base_file_name" class="md-nav__link">
+    base_file_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample_name" class="md-nav__link">
+    sample_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final_gvcf_base_name" class="md-nav__link">
+    final_gvcf_base_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unmapped_bam_suffix" class="md-nav__link">
+    unmapped_bam_suffix
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference_fasta_prefix" class="md-nav__link">
+    reference_fasta_prefix
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -603,51 +711,42 @@
 specifies the following inputs
 for each workflow:</p>
 <ul>
-<li>input_cram or input_bam (required)</li>
-<li>sample_name</li>
-<li>base_file_name</li>
-<li>final_gvcf_base_name</li>
-<li>unmapped_bam_suffix</li>
-<li>reference_fasta_prefix</li>
+<li><code>input_cram</code> or <code>input_bam</code> (required)</li>
+<li><code>base_file_name</code></li>
+<li><code>sample_name</code></li>
+<li><code>final_gvcf_base_name</code></li>
+<li><code>unmapped_bam_suffix</code></li>
+<li><code>reference_fasta_prefix</code></li>
 </ul>
-<p>The <code>input_cram</code> is the path to a file
-relative to the <code>input</code> URL prefix
-in the <code>workload</code> definition above.</p>
-<p>The <code>input_cram</code> contains the <code>sample_name</code>
-but we break it out into a separate input here
-to avoid parsing every (often large) CRAM file.</p>
-<p>The <code>base_file_name</code> is used to name result files.
-The workflow uses the <code>base_file_name</code>
-together with one or more filetype suffixes
-to name intermediate and output files.
-It is usually just the leaf name of <code>input_cram</code>
-with the <code>.cram</code> extension removed.</p>
-<p>The <code>final_gvcf_base_name</code> is the root
-of the leaf name
-of the pathname of the final VCF.
-The final VCF will have some variant
-of a <code>.vcf</code> suffix
-added by the workflow WDL.</p>
-<p>It is common for <code>base_file_name</code>
-and <code>final_gvcf_base_name</code>
-to be identical to <code>sample_name</code>.
-If no <code>base_file_name</code> is specified
-for any workflow in a workload,
-<code>base_file_name</code> defaults to <code>sample_name</code>.
-Likewise,
-if no <code>final_gvcf_base_name</code> is specified
-for any workflow in a workload,
-then <code>final_gvcf_base_name</code>
-also defaults to <code>sample_name</code>.</p>
-<p>It is used to recover the filename resulting
-from re-aligning a reverted CRAM file.
-The <code>unmapped_bam_suffix</code>
-is almost always <code>.unmapped.bam</code>,
-so that is its default value
-unless it is specified.</p>
-<p>The <code>reference_fasta_prefix</code> can be used to override
-the <a href="https://github.com/broadinstitute/wfl/blob/master/api/src/wfl/references.clj#L7">default value</a> used by this module:
-"gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38"</p>
+<h4 id="input_cram-or-input_bam-required"><code>input_cram</code> or <code>input_bam</code> (required)<a class="headerlink" href="#input_cram-or-input_bam-required" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>Absolute GCS file path (like <code>gs://...</code>)</li>
+</ul>
+<h4 id="base_file_name"><code>base_file_name</code><a class="headerlink" href="#base_file_name" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>Used for naming intermediate/output files</li>
+<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
+without the <code>.cram</code> or <code>.bam</code> extension</li>
+</ul>
+<h4 id="sample_name"><code>sample_name</code><a class="headerlink" href="#sample_name" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
+without the <code>.cram</code> or <code>.bam</code> extension</li>
+</ul>
+<h4 id="final_gvcf_base_name"><code>final_gvcf_base_name</code><a class="headerlink" href="#final_gvcf_base_name" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>Path to the final VCF (<code>.vcf</code> will be added by the WDL)</li>
+<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
+without the <code>.cram</code> or <code>.bam</code> extension</li>
+</ul>
+<h4 id="unmapped_bam_suffix"><code>unmapped_bam_suffix</code><a class="headerlink" href="#unmapped_bam_suffix" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>Defaults to <code>.unmapped.bam</code></li>
+</ul>
+<h4 id="reference_fasta_prefix"><code>reference_fasta_prefix</code><a class="headerlink" href="#reference_fasta_prefix" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li><a href="https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L34">Defaults to</a> <code>gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38</code></li>
+</ul>
 <p>Note that this pipeline supports specifying arbitrary WDL inputs, either
 at the workload level through <code>common</code> or individually via <code>items</code>.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
@@ -702,14 +801,13 @@ at least read access to the input files.</p>
 --header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
 --data-raw <span class="s1">&#39;{</span>
 <span class="s1">  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,</span>
 <span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
 <span class="s1">  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
 <span class="s1">  &quot;project&quot;: &quot;PO-1234&quot;,</span>
 <span class="s1">  &quot;items&quot;: [</span>
 <span class="s1">    {</span>
 <span class="s1">      &quot;inputs&quot;: {</span>
-<span class="s1">        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,</span>
+<span class="s1">        &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
 <span class="s1">        &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
 <span class="s1">      }</span>
 <span class="s1">    }</span>
@@ -762,7 +860,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
       <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
@@ -785,14 +883,13 @@ particular input cram, WFL will not re-submit that workflow.</p>
 --header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
 --data-raw <span class="s1">&#39;{</span>
 <span class="s1">  &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">  &quot;input&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;,</span>
 <span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
 <span class="s1">  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
 <span class="s1">  &quot;project&quot;: &quot;PO-1234&quot;,</span>
 <span class="s1">  &quot;items&quot;: [</span>
 <span class="s1">    {</span>
 <span class="s1">      &quot;inputs&quot;: {</span>
-<span class="s1">        &quot;input_cram&quot;: &quot;develop/20k/NA12878_PLUMBING.cram&quot;,</span>
+<span class="s1">        &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
 <span class="s1">        &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
 <span class="s1">      }</span>
 <span class="s1">    }</span>
@@ -814,7 +911,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
       <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
@@ -849,7 +946,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
       <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
@@ -887,7 +984,7 @@ easily see information about any workflow failures.</p>
       <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
         <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
@@ -991,8 +1088,8 @@ together.</p>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.7e0ee788.min.js"></script>
-      <script src="../assets/javascripts/bundle.b3a72adc.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../assets/javascripts/vendor.fd16492e.min.js"></script>
+      <script src="../assets/javascripts/bundle.7836ba4d.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
