@@ -189,9 +189,8 @@
 
 (defn make-workflow-labels
   "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS."
-  [environment wdl inputs]
-  (letfn [(unprefix [[k v]] [(keyword (last (str/split (name k) #"\."))) v])
-          (key-for [suffix] (keyword (str wfl/the-name "-" (name suffix))))]
+  [wdl]
+  (letfn [(key-for [suffix] (keyword (str wfl/the-name "-" (name suffix))))]
     (let [the-version   (wfl/get-the-version)
           wdl-value     (last (str/split wdl #"/"))
           version-value (-> the-version
@@ -200,20 +199,18 @@
       (merge
        {(key-for :version)     version-value
         (key-for :wdl)         wdl-value
-        (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}
-       (select-keys (into {} (map unprefix inputs))
-                    (get-in env/stuff [environment :cromwell :labels]))))))
+        (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}))))
 
 (defn post-workflow
   "Assemble PARTS into a multipart HTML body and post it to the Cromwell
   server in ENVIRONMENT, and return the workflow ID."
-  [environment parts]
+  [url parts]
   (letfn [(multipartify [[k v]] {:name (name k) :content v})]
     (-> {:method    :post               ; :debug true :debug-body true
-         :url       (api environment)
+         :url       url
          :headers   (once/get-auth-header)
          :multipart (map multipartify parts)}
-        request-json #_debug/dump :body :id)))
+        request-json #_debug/dump :body)))
 
 (defn stringify-vals
   "Stringify all of the values of a Map."
@@ -223,10 +220,10 @@
 (defn partify-workflow
   "Return a map describing a workflow named WF to run in ENVIRONMENT
    with DEPENDENCIES, INPUTS, OPTIONS, and LABELS."
-  [environment wf dependencies inputs options labels]
+  [wf dependencies inputs options labels]
   (letfn [(jsonify [edn] (when edn (json/write-str edn :escape-slash false)))
           (maybe [m k v] (if v (assoc m k v) m))]
-    (let [wf-labels (make-workflow-labels environment (.getName wf) inputs)
+    (let [wf-labels (make-workflow-labels (.getName wf))
           all-labels (stringify-vals (merge labels wf-labels))]
       (-> {:workflowSource wf
            :workflowType   "WDL"
@@ -243,14 +240,13 @@
   zip archive of WDL's dependencies.  INPUTS and OPTIONS are the
   standard JSON files for Cromwell.  LABELS is a {:key value} map."
   [environment wdl imports-zip inputs options labels]
-  (post-workflow environment
-                 (assoc (partify-workflow environment
-                                          wdl
+  (:id (post-workflow (api environment)
+                 (assoc (partify-workflow wdl
                                           imports-zip
                                           inputs
                                           options
                                           labels)
-                        :workflowOnHold "true")))
+                        :workflowOnHold "true"))))
 
 (defn submit-workflow
   "Submit a workflow to run WDL with IMPORTS-ZIP, INPUTS,
@@ -260,13 +256,13 @@
   zip archive of WDL's dependencies.  INPUTS and OPTIONS are the
   standard JSON files for Cromwell.  LABELS is a {:key value} map."
   [environment wdl imports-zip inputs options labels]
-  (post-workflow environment
-                 (partify-workflow environment
-                                   wdl
-                                   imports-zip
-                                   inputs
-                                   options
-                                   labels)))
+  (->> (partify-workflow wdl
+                         imports-zip
+                         inputs
+                         options
+                         labels)
+       (post-workflow (api environment))
+       :id))
 
 (defn submit-workflows
   "Submit one or more workflows to cromwell.
@@ -281,8 +277,13 @@
   Return:
    List of UUIDS for each workflow as reported by cromwell."
   [environment wdl imports-zip inputs options labels]
-  ; todo: call the batch endpoint
-  (mapv #(submit-workflow environment wdl imports-zip % options labels) inputs))
+  (->> (partify-workflow wdl
+                         imports-zip
+                         inputs
+                         options
+                         labels)
+       (post-workflow (str (api environment) "/batch"))
+       (mapv #(:id %))))
 
 (defn work-around-cromwell-fail-bug
   "Wait 2 seconds and ignore up to N times a bogus failure response from
