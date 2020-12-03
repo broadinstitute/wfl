@@ -96,7 +96,7 @@ to **only build** the WFL and its docker images without running tests.
 
 !!! info
     Note if you updated the second party repositories such as
-    `dsde-pipelines` or `gotc-deploy`, you might have to run:
+    `warp` or `gotc-deploy`, you might have to run:
     ```bash
     $ make distclean
     ```
@@ -169,7 +169,7 @@ to deploy applicable versions of WFL to various available cloud projects.
 
 !!! warning
     In addition to its own version, Workflow Launcher also needs to manage
-    the verions of `dsde-pipelines.git` which contribute the WDL files.
+    the version of `warp.git` which contribute the WDL files.
     Currently, that version is controlled by the commit hash string in
     function `stage-some-files` in `api/src/boot.clj`, for instance:
 

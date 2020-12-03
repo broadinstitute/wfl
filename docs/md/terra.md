@@ -178,7 +178,7 @@ WFL is designed around several novel concepts.
     to manage dependencies.
     Of course, it also pulls in numerous Clojure and Java
     libraries at build time, and sources WDL files from the
-    `dsde-pipelines` repository.
+    `warp` repository.
     A programmer need only install Clojure,
     clone the `wfl` Git repository,
     and run `make`
