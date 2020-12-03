@@ -120,17 +120,20 @@
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
-  (let [response {:status (or (:status (ex-data exception)) status)
-                  :body {:message (or (.getMessage exception) message)
-                         :exception (str (.getClass exception))
-                         :data (ex-data exception)
-                         :uri (:uri request)}}]
-    (if (>= (:status response) 500)
-      (do
-        (log/errorf "Server %s error at occurred at %s :"
-                    (:status response)
-                    (:uri (:body response)))
-        (logr/error exception (:body response))))
+  {:status (or (:status (ex-data exception)) status)
+   :body {:message (or (.getMessage exception) message)
+          :exception (str (.getClass exception))
+          :data (ex-data exception)
+          :uri (:uri request)}})
+
+(defn unexpected-ex-handler
+  "Like [[ex-handler]] but also logs information about the exception."
+  [status message exception request]
+  (let [response (ex-handler status message exception request)]
+    (log/errorf "Server %s error at occurred at %s :"
+                (:status response)
+                (:uri (:body response)))
+    (logr/error exception (:body response))
     response))
 
 (def exception-middleware
@@ -141,12 +144,12 @@
     {;; ex-data with :type :wfl/exception
      ::workloads/invalid-pipeline          (partial ex-handler 400 "")
      ::workloads/workload-not-found        (partial ex-handler 404 "")
-       ;; SQLException and all it's child classes
-     SQLException                          (partial ex-handler 500 "SQL Error")
+       ;; SQLException and all its child classes
+     SQLException                          (partial unexpected-ex-handler 500 "SQL Error")
        ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
        ;; override the default handler
-     ::exception/default                   (partial ex-handler 500 "Internal Server Error")})))
+     ::exception/default                   (partial unexpected-ex-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
