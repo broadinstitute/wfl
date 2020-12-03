@@ -43,8 +43,7 @@ $(POM_OUT): $(POM_IN)
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
 	$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M -e "(compile 'wfl.main)"
-	$(CLOJURE) -M:uberjar --level error --multi-release \
-		--main-class wfl.main --target $(JAR)
+	$(CLOJURE) -M:uberjar --target $(JAR)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
