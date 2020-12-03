@@ -24,9 +24,8 @@ will handle this for us.
 ## Step 1: List Files
 
 We need a list of all the files you intend to process. This'll depend on the
-location of the files, so here we'll use an example of
-`gs://broad-gotc-dev-wfl-ptc-test-inputs/`. We can use 
-[wildcards](https://cloud.google.com/storage/docs/gsutil/addlhelp/WildcardNames)
+file location, `gs://broad-gotc-dev-wfl-ptc-test-inputs/` for example. We can
+use [wildcards](https://cloud.google.com/storage/docs/gsutil/addlhelp/WildcardNames)
 to list out the individual files we'd like. Make some scratch file like
 `script.sh` and store the list of CRAMs in a variable:
 
@@ -39,7 +38,7 @@ CRAMS=$(gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram')
 ## Step 2: Format Items
 
 First, we need to turn that string output into an actual list of file paths.
-We can use `jq` to `split` intolines and `select` ones that are paths:
+We can use `jq` to `split` into lines and `select` ones that are paths:
 
 ```bash
 FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))' <<< "$CRAMS")
@@ -53,7 +52,7 @@ options.
 ITEMS=$(jq 'map({ inputs: { input_cram: .} })' <<< "$FILES")
 ```
 
-!!! info 
+!!! info
     If you want to process BAMs, you'll need to use `input_bam` instead of
     `input_cram` above.
 
