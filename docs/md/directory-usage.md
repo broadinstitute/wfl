@@ -42,8 +42,6 @@ First, we need to turn that string output into an actual list of file paths.
 We can use `jq` to `split` intolines and `select` ones that are paths:
 
 ```bash
-CRAMS=$(gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram')
-
 FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))' <<< "$CRAMS")
 ```
 
@@ -52,10 +50,6 @@ accept a list of files because we allow configuration of many other inputs and
 options.
 
 ```bash
-CRAMS=$(gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram')
-
-FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))' <<< "$CRAMS")
-
 ITEMS=$(jq 'map({ inputs: { input_cram: .} })' <<< "$FILES")
 ```
 
@@ -69,12 +63,6 @@ Now, we can simply insert those items into a normal ExternalExomeReprocessing
 workload request:
 
 ```bash
-CRAMS=$(gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram')
-
-FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))' <<< "$CRAMS")
-
-ITEMS=$(jq 'map({ inputs: { input_cram: .} })' <<< "$FILES")
-
 REQUEST=$(jq '{
     cromwell: "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
     output: "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output",
@@ -96,6 +84,15 @@ REQUEST=$(jq '{
     more info.
 
 Last, we can use `curl` to send off the request to WFL:
+
+```bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H 'Content-Type: application/json' \
+    -d "$REQUEST"
+```
+
+With this, the final result is something like the following:
 
 ```bash
 CRAMS=$(gsutil ls 'gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram')
@@ -126,35 +123,23 @@ Have a lot of workflows to submit? You can use array slicing to help split
 things up:
 
 ```bash
-# ...
-
 FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))[0:50]' <<< "$CRAMS")
-
-# ...
 ```
 
 Need to select files matching some other query too? You can chain the
 `map`-`select` commands and use other string filters on the file names:
 
 ```bash
-# ...
-
 FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://"))) |
     map(select(contains("foobar")))' <<< "$CRAMS")
-
-# ...
 ```
 
 If `contains`/`startswith`/`endswith` aren't enough, you can use `test`
 with PCRE regex:
 
 ```bash
-# ...
-
 FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://"))) |
     map(select(test("fo+bar")))' <<< "$CRAMS")
-
-# ...
 ```
 
 See [this page for more `jq` info](https://stedolan.github.io/jq/manual/).
