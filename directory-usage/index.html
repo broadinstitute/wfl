@@ -578,9 +578,8 @@ and you may need to run <code>gcloud auth login</code></p>
 </blockquote>
 <h2 id="step-1-list-files">Step 1: List Files<a class="headerlink" href="#step-1-list-files" title="Permanent link">⚓︎</a></h2>
 <p>We need a list of all the files you intend to process. This'll depend on the
-location of the files, so here we'll use an example of
-<code>gs://broad-gotc-dev-wfl-ptc-test-inputs/</code>. We can use 
-<a href="https://cloud.google.com/storage/docs/gsutil/addlhelp/WildcardNames">wildcards</a>
+file location, <code>gs://broad-gotc-dev-wfl-ptc-test-inputs/</code> for example. We can
+use <a href="https://cloud.google.com/storage/docs/gsutil/addlhelp/WildcardNames">wildcards</a>
 to list out the individual files we'd like. Make some scratch file like
 <code>script.sh</code> and store the list of CRAMs in a variable:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># In script.sh</span>
@@ -589,7 +588,7 @@ to list out the individual files we'd like. Make some scratch file like
 </code></pre></div>
 <h2 id="step-2-format-items">Step 2: Format Items<a class="headerlink" href="#step-2-format-items" title="Permanent link">⚓︎</a></h2>
 <p>First, we need to turn that string output into an actual list of file paths.
-We can use <code>jq</code> to <code>split</code> intolines and <code>select</code> ones that are paths:</p>
+We can use <code>jq</code> to <code>split</code> into lines and <code>select</code> ones that are paths:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">FILES</span><span class="o">=</span><span class="k">$(</span>jq -sR <span class="s1">&#39;split(&quot;\n&quot;) | map(select(startswith(&quot;gs://&quot;)))&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$CRAMS</span><span class="s2">&quot;</span><span class="k">)</span>
 </code></pre></div>
 <p>Next, we need to format each of those file paths into inputs. WFL doesn't just
