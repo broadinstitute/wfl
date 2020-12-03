@@ -37,7 +37,7 @@ $(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 $(POM_IN): $(PREBUILD) $(CLOJURE_PROJECT)
 	$(CLOJURE) -Spom
 
-$(POM_OUT): $(POM_IN)
+$(POM_OUT): $(POM_IN) $(SCM_SRC)
 	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$<"' :out '"$@"'
 
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
