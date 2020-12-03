@@ -41,7 +41,7 @@ $(POM_OUT): $(POM_IN) $(SCM_SRC)
 	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$<"' :out '"$@"'
 
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
-	$(MKDIR) $(DERIVED_TARGET_DIR)
+	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M -e "(compile 'wfl.main)"
 	$(CLOJURE) -M:uberjar --target $(JAR)
 	$(LN) $(JAR) $(JAR_LINK)

@@ -1,8 +1,8 @@
 (ns wfl.boot
   "Build support originating in build.boot."
   (:require [clojure.data.xml :as xml]
-            [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [wfl.main :as main]
             [wfl.module.aou :as aou]
