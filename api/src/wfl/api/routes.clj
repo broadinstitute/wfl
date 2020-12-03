@@ -130,9 +130,7 @@
   "Like [[ex-handler]] but also logs information about the exception."
   [status message exception request]
   (let [response (ex-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :"
-                (:status response)
-                (:uri (:body response)))
+    (log/errorf "Server %s error at occurred at %s :" (:status response) (:uri request))
     (logr/error exception (:body response))
     response))
 
