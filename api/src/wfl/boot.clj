@@ -1,7 +1,8 @@
 (ns wfl.boot
-  "Stuff moved out of build.boot."
-  (:require [clojure.pprint :refer [pprint]]
+  "Build support originating in build.boot."
+  (:require [clojure.data.xml :as xml]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [wfl.main :as main]
             [wfl.module.aou :as aou]
@@ -13,12 +14,14 @@
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
 
+(def second-party "../derived/2p")
+(def derived      "../derived/api")
+
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
-(defn make-the-version
-  "Make a map of version information."
-  []
+(def the-version
+  "A map of version information."
   (let [built     (-> (OffsetDateTime/now)
                       (.truncatedTo ChronoUnit/SECONDS)
                       .toInstant .toString)
@@ -43,29 +46,36 @@
       (binding [*out* out]
         (pprint version)))))
 
-(defn make-the-pom
-  "Make the Project Object Model for this program from THE-VERSION."
-  [the-version]
-  {:description "WFL manages workflows."
-   :project     wfl/artifactId
-   :url         (:primary (wfl/the-github-repos wfl/the-name))
-   :version     (:version the-version)})
+(xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
 
-(defn make-the-manifest
-  "Make the manifest map for the jar file derived from THE-POM."
-  [the-pom]
-  (let [keywords [:description :url :version]]
-    (assoc (zipmap (map (comp str/capitalize name) keywords)
-                   ((apply juxt keywords) the-pom))
-           "Application-Name" (str/capitalize wfl/the-name)
-           "Multi-Release" "true")))
+(def the-pom
+  "The POM elements that override the uberdeps/uberjar defaults."
+  #::pom{:artifactId  (name wfl/artifactId)
+         :description "WFL manages workflows."
+         :groupId     (namespace wfl/artifactId)
+         :name        "WorkFlow Launcher"
+         :url         "https://github.com/broadinstitute/wfl.git"
+         :version     (:version the-version)})
+
+(defn update-the-pom
+  "Update the Project Object Model (pom.xml) file for this program."
+  [{:keys [in out]}]
+  (let [override? (set (keys the-pom))]
+    (io/make-parents out)
+    (letfn [(override [{:keys [tag] :as element}]
+              (if (override? tag)
+                (assoc element :content (vector (the-pom tag)))
+                element))]
+      (-> in io/file io/reader xml/parse
+          (update :content (partial map override))
+          xml/emit-str
+          (->> (spit out))))))
 
 (defn find-repos
   "Return a map of wfl/the-github-repos clones.
-
-   Specifically omits [[wfl/the-name]]'s repo since it isn't needed
+   Omit [[wfl/the-name]]'s repo since it isn't needed
    for the version."
-  [second-party]
+  []
   (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
     (into {}
           (for [repo (keys the-github-repos-no-wfl)]
@@ -76,7 +86,8 @@
   "Cromwellify the WDL from warp in CLONES to RESOURCES."
   [clones resources {:keys [release top] :as _wdl}]
   (let [dp (str/join "/" [clones "warp"])]
-    (util/shell-io! "git" "-C" dp "checkout" release)
+    (util/shell-io!
+     "git" "-c" "advice.detachedHead=false" "-C" dp "checkout" release)
     (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
       (when directory
         (try (let [out-wdl (.getPath (io/file resources (.getName in-wdl)))
@@ -96,28 +107,22 @@
               (io/copy file out)))]
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
       (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
-      (util/shell-io! "git" "-C" (.getParent environments)
-                      "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
+      (util/shell-io!
+       "git" "-c" "advice.detachedHead=false" "-C" (.getParent environments)
+       "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
       (stage sources environments))))
 
-;; Hack: (delete-tree directory) is a hack.
-;;
-(defn manage-version-and-resources
-  "Use VERSION to stage any needed RESOURCES on the class path."
-  [version second-party derived]
+(defn prebuild
+  "Stage any needed resources on the class path."
+  [_opts]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
     (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
-          clones    (find-repos second-party)
+          clones    (find-repos)
           sources   (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
-          edn (merge version clones (into {} (map frob wdls)))]
+          edn       (merge the-version clones (into {} (map frob wdls)))]
       (pprint edn)
       (stage-some-files second-party sources resources)
       (run! (partial cromwellify-wdl second-party resources) wdls)
       (write-the-version-file resources edn))))
-
-(defn main
-  "Run this with ARGS."
-  [& args]
-  (apply main/-main args))

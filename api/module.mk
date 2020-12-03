@@ -3,20 +3,23 @@
 REQUIRED_2P_REPOSITORIES := pipeline-config warp
 include $(MAKE_INCLUDE_DIR)/modules.mk
 
+CLASSES_DIR           := $(MODULE_DIR)/classes
 CPCACHE_DIR           := $(MODULE_DIR)/.cpcache
 RESOURCES_DIR         := $(MODULE_DIR)/resources
 SRC_DIR               := $(MODULE_DIR)/src
 TEST_DIR              := $(MODULE_DIR)/test
 TEST_RESOURCES_DIR    := $(TEST_DIR)/resources
 DERIVED_RESOURCES_DIR := $(DERIVED_MODULE_DIR)/resources
-DERIVED_SRC_DIR		  := $(DERIVED_MODULE_DIR)/src
+DERIVED_SRC_DIR       := $(DERIVED_MODULE_DIR)/src
 DERIVED_TARGET_DIR    := $(DERIVED_MODULE_DIR)/target
-BOOT_PROJECT          := $(MODULE_DIR)/build.boot
 CLOJURE_PROJECT       := $(MODULE_DIR)/deps.edn
-LEIN_PROJECT          := $(MODULE_DIR)/project.clj
 
-CLEAN_DIRS  += $(CPCACHE_DIR)
-CLEAN_FILES += $(LEIN_PROJECT) $(MODULE_DIR)/wfl
+API_DIR      := $(CLASSES_DIR)/wfl/api
+POM_IN       := $(MODULE_DIR)/pom.xml
+POM_OUT      := $(SRC_DIR)/META-INF/maven/org.broadinstitute/wfl/pom.xml
+
+CLEAN_DIRS  += $(CLASSES_DIR) $(CPCACHE_DIR) $(SRC_DIR)/META-INF
+CLEAN_FILES += $(POM_IN) $(POM_OUT)
 
 SCM_RESOURCES      = $(shell $(FIND) $(RESOURCES_DIR) -type f)
 SCM_SRC            = $(shell $(FIND) $(SRC_DIR) -type f -name "*.$(CLJ)")
@@ -28,22 +31,31 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
-$(PREBUILD): $(MODULE_DIR)/wfl
+$(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	$(BOOT) prebuild
+	$(CLOJURE) -X wfl.boot/prebuild
 	@$(TOUCH) $@
 
-$(MODULE_DIR)/wfl: $(BOOT_PROJECT)
-	$(LN) $(BOOT_PROJECT) $@
+$(POM_IN): $(CLOJURE_PROJECT)
+	$(CLOJURE) -Spom
 
-$(BUILD): $(SCM_SRC) $(SCM_RESOURCES)
+$(POM_OUT): $(POM_IN) $(PREBUILD) $(SCM_SRC)
+	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$(POM_IN)"' :out '"$@"'
+
+$(API_DIR): $(SCM_SRC)
+	$(MKDIR) $(CLASSES_DIR)
+	$(CLOJURE) -M -e "(compile 'wfl.main)"
+
+$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT) $(API_DIR)
 	@$(MKDIR) $(DERIVED_TARGET_DIR)
-	$(BOOT) build
+	$(CLOJURE) -M:uberjar -m uberdeps.uberjar \
+		--level error --multi-release --main-class wfl.main \
+		--target $(JAR)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	@$(CLOJURE) -A:lint
+	$(CLOJURE) -M:lint -m cljfmt.main check
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)

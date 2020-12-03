@@ -44,13 +44,13 @@
 
  ;; derived/api/src must come first so environments.clj is found before
  ;; placeholder in src/.
- :paths ["../derived/api/src" "src"
+ :paths ["../derived/api/src" "src" "classes"
          "../derived/api/resources" "resources"]
 
  :aliases
+ 
  {:lint
-  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
-   :main-opts  ["-m" "cljfmt.main" "check"]}
+  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}}
 
   :format
   {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
@@ -86,5 +86,4 @@
    :extra-paths ["test"]
    :main-opts   ["-m" "wfl.tools.parallel-runner"]}
 
-  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "0.1.4"}}
-            :main-opts  ["-m" "uberdeps.uberjar" "--multi-release"]}}}
+  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.3"}}}}}

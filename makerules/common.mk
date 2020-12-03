@@ -6,7 +6,6 @@ SHELL       := bash -o pipefail -c
 
 # Common shell programs
 AWK     := awk
-BOOT    := boot
 CAT     := cat
 CD      := cd
 CLOJURE := clojure
@@ -21,8 +20,7 @@ GIT     := git
 GREP    := grep
 JAVA    := java
 JQ      := jq
-LEIN    := lein
-LN      := ln -s
+LN      := ln -f -s
 MKDIR   := mkdir -p
 MV      := mv -f
 NPM     := npm

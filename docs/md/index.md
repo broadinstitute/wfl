@@ -39,17 +39,15 @@ following prerequisites are needed:
 
 - [The Docker daemon](https://www.docker.com/products/docker-desktop)
 - Clojure (`brew install clojure` on macOS)
-- [Boot](https://github.com/boot-clj/boot) (`brew install boot-clj` on macOS)
 - Python3 (`brew install python@3.8` on macOS)
 - NodeJS (`brew install node` on macOS)
 
 !!! tip "Arch Linux tips"
-    - Install [clojure](https://www.archlinux.org/packages/?name=clojure) and
-    [leiningen](https://www.archlinux.org/packages/?name=leiningen)
-    from the official repositories.
-    - Install [boot](https://aur.archlinux.org/packages/boot/) and
-    [google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
-    from the AUR.
+    - Install [clojure](https://www.archlinux.org/packages/?name=clojure)
+      from the official repository.
+    - Install
+      [google-cloud-sdk](https://aur.archlinux.org/packages/google-cloud-sdk)
+      from the AUR.
 
     You could then invoke `make` at the project level to test and build all
     `workflow-launcher` modules:
@@ -98,7 +96,7 @@ to **only build** the WFL and its docker images without running tests.
 
 !!! info
     Note if you updated the second party repositories such as
-    `dsde-pipelines` or `gotc-deploy`, you might have to run:
+    `warp` or `gotc-deploy`, you might have to run:
     ```bash
     $ make distclean
     ```
@@ -171,7 +169,7 @@ to deploy applicable versions of WFL to various available cloud projects.
 
 !!! warning
     In addition to its own version, Workflow Launcher also needs to manage
-    the verions of `dsde-pipelines.git` which contribute the WDL files.
+    the version of `warp.git` which contribute the WDL files.
     Currently, that version is controlled by the commit hash string in
     function `stage-some-files` in `api/src/boot.clj`, for instance:
 
@@ -226,8 +224,7 @@ server.
 
 Some hacks specific to WFL are in `wfl.clj`.
 
-The `boot.clj` offloads code from the `build.boot` file for
-easier development and debugging.
+The `boot.clj` file includes build and deployment code.
 
 The `debug.clj` file defines some macros useful when debugging
 or logging.
@@ -238,9 +235,6 @@ WFL that are not specific to its function.
 The `environments.clj` file defines configuration parameters for
 different execution contexts. It's a placeholder in this repo
 but will be loaded in build/deploy time from a private repo.
-
-The `module/ukb.clj` file implements a command-line starter for the
-**White Album**, **Pharma5**, or **UK Biobank** project.
 
 The `module/xx.clj` file implements a command-line starter for
 reprocessing *eXternal eXomes*.
