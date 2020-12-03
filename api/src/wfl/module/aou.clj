@@ -56,7 +56,8 @@
   ({:aou-dev "dev" :aou-prod "prod"} aou-env))
 
 (defn env-inputs
-  "Array inputs for ENVIRONMENT that do not depend on the input file."
+  "Array inputs for ENVIRONMENT that do not depend on the input file.
+  Environment here is just a default, input file may specify override."
   [environment]
   {:vault_token_path (get-in env/stuff [environment :vault_token_path])
    :environment      (map-aou-environment environment)})
@@ -86,7 +87,9 @@
                         ;; cloud path of the Illumina gender cluster file
                         :gender_cluster_file
                         ;; arbitrary path to be used by BAFRegress
-                        :minor_allele_frequency_file]
+                        :minor_allele_frequency_file
+                        ;; some message-specified environment to override WFL's
+                        :environment]
         mandatory      (select-keys inputs mandatory-keys)
         optional       (select-keys inputs optional-keys)
         missing        (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
@@ -257,7 +260,8 @@
           submitted-samples (map (partial submit! environment)
                                  (remove-existing-samples notifications
                                                           (get-existing-samples tx items notifications)))]
-      (jdbc/insert-multi! tx items submitted-samples))))
+      (jdbc/insert-multi! tx items submitted-samples)
+      submitted-samples)))
 
 (defmethod workloads/create-workload!
   pipeline
