@@ -48,9 +48,9 @@
          "../derived/api/resources" "resources"]
 
  :aliases
+ 
  {:lint
-  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
-   :main-opts  ["-m" "cljfmt.main" "check"]}
+  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}}
 
   :format
   {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
@@ -86,6 +86,4 @@
    :extra-paths ["test"]
    :main-opts   ["-m" "wfl.tools.parallel-runner"]}
 
-  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.3"}}
-            :main-opts  ["-m" "uberdeps.uberjar" "--level" "error"
-                         "--multi-release" "--main-class" "wfl.main"]}}}
+  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.3"}}}}}

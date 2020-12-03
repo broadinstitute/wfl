@@ -43,12 +43,14 @@ $(POM_OUT): $(POM_IN) $(SCM_SRC)
 $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
 	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M -e "(compile 'wfl.main)"
-	$(CLOJURE) -M:uberjar --target $(JAR)
+	$(CLOJURE) -M:uberjar -m uberdeps.uberjar \
+		--level error --multi-release --main-class wfl.main \
+		--target $(JAR)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	@$(CLOJURE) -A:lint
+	$(CLOJURE) -M:lint -m cljfmt.main check
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
