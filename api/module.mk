@@ -36,11 +36,11 @@ $(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	$(CLOJURE) -X wfl.boot/prebuild
 	@$(TOUCH) $@
 
-$(POM_IN): $(PREBUILD) $(CLOJURE_PROJECT)
+$(POM_IN): $(CLOJURE_PROJECT)
 	$(CLOJURE) -Spom
 
-$(POM_OUT): $(POM_IN) $(SCM_SRC)
-	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$<"' :out '"$@"'
+$(POM_OUT): $(POM_IN) $(PREBUILD) $(SCM_SRC)
+	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$(POM_IN)"' :out '"$@"'
 
 $(API_DIR): $(SCM_SRC)
 	$(MKDIR) $(CLASSES_DIR)
