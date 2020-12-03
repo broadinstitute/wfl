@@ -730,19 +730,17 @@ following prerequisites are needed:</p>
 <ul>
 <li><a href="https://www.docker.com/products/docker-desktop">The Docker daemon</a></li>
 <li>Clojure (<code>brew install clojure</code> on macOS)</li>
-<li><a href="https://github.com/boot-clj/boot">Boot</a> (<code>brew install boot-clj</code> on macOS)</li>
 <li>Python3 (<code>brew install python@3.8</code> on macOS)</li>
 <li>NodeJS (<code>brew install node</code> on macOS)</li>
 </ul>
 <div class="admonition tip">
 <p class="admonition-title">Arch Linux tips</p>
 <ul>
-<li>Install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a> and
-<a href="https://www.archlinux.org/packages/?name=leiningen">leiningen</a>
-from the official repositories.</li>
-<li>Install <a href="https://aur.archlinux.org/packages/boot/">boot</a> and
-<a href="https://aur.archlinux.org/packages/google-cloud-sdk">google-cloud-sdk</a>
-from the AUR.</li>
+<li>Install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a>
+  from the official repository.</li>
+<li>Install
+  <a href="https://aur.archlinux.org/packages/google-cloud-sdk">google-cloud-sdk</a>
+  from the AUR.</li>
 </ul>
 <p>You could then invoke <code>make</code> at the project level to test and build all
 <code>workflow-launcher</code> modules:</p>
@@ -777,7 +775,7 @@ project root.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>Note if you updated the second party repositories such as
-<code>dsde-pipelines</code> or <code>gotc-deploy</code>, you might have to run:
+<code>warp</code> or <code>gotc-deploy</code>, you might have to run:
 <div class="highlight"><pre><span></span><code>$ make distclean
 </code></pre></div>
 to remove them. This is not always needed but can help completely
@@ -825,7 +823,7 @@ to deploy applicable versions of WFL to various available cloud projects.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>In addition to its own version, Workflow Launcher also needs to manage
-the verions of <code>dsde-pipelines.git</code> which contribute the WDL files.
+the version of <code>warp.git</code> which contribute the WDL files.
 Currently, that version is controlled by the commit hash string in
 function <code>stage-some-files</code> in <code>api/src/boot.clj</code>, for instance:</p>
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nf">util/shell-io!</span> <span class="s">&quot;git&quot;</span> <span class="s">&quot;-C&quot;</span> <span class="p">(</span><span class="nf">.getParent</span> <span class="nv">environments</span><span class="p">)</span>
@@ -866,8 +864,7 @@ validates the arguments, then launches the appropriate process.</p>
 <code>server_debug.clj</code> file adds some tools to aid in debugging the
 server.</p>
 <p>Some hacks specific to WFL are in <code>wfl.clj</code>.</p>
-<p>The <code>boot.clj</code> offloads code from the <code>build.boot</code> file for
-easier development and debugging.</p>
+<p>The <code>boot.clj</code> file includes build and deployment code.</p>
 <p>The <code>debug.clj</code> file defines some macros useful when debugging
 or logging.</p>
 <p>The <code>util.clj</code> file contains a few functions and macros used in
@@ -875,8 +872,6 @@ WFL that are not specific to its function.</p>
 <p>The <code>environments.clj</code> file defines configuration parameters for
 different execution contexts. It's a placeholder in this repo
 but will be loaded in build/deploy time from a private repo.</p>
-<p>The <code>module/ukb.clj</code> file implements a command-line starter for the
-<strong>White Album</strong>, <strong>Pharma5</strong>, or <strong>UK Biobank</strong> project.</p>
 <p>The <code>module/xx.clj</code> file implements a command-line starter for
 reprocessing <em>eXternal eXomes</em>.</p>
 <p>The <code>module/wgs.clj</code> file helps implements a command-line starter for

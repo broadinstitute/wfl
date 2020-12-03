@@ -681,11 +681,8 @@ as it sets up all libraries and derived resources and sources:
 </code></pre></div></p>
 </details>
 <ol>
-<li><em>Outside of IntelliJ</em>, <code>clone</code> the repo and run <code>boot</code> at the top-level to
-generate the <code>project.clj</code> (see below)</li>
-<li><em>Now inside of IntelliJ</em>, import the project by specifically targeting the
-<code>project.clj</code> file (it should offer to import the entire project, and targeting
-the <code>project.clj</code> will make use of Leiningen to work with Cursive)</li>
+<li><em>Outside of IntelliJ</em>, <code>clone</code> the repo.</li>
+<li><em>Now inside of IntelliJ</em>, import the project.</li>
 <li>Use the Project Structure window (Help -&gt; Find Action -&gt; Project Structure) to set a JDK as the Project SDK</li>
 </ol>
 <p>There is also a
@@ -696,11 +693,6 @@ plugin for <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
 <a href="https://github.com/clojure/tools.nrepl">nREPL</a>. CIDER is not
 trivial to set up, but not <em>especially</em> difficult if you are
 used to Emacs. (I can help if CIDER gives you trouble.)</p>
-<p>Every time <code>boot</code> runs, it generates a <code>project.clj</code> file to
-support <code>lein</code>, Cursive, and Calva users.</p>
-<p>Running <code>boot build</code> will not only build a fat jar (<em>uberjar</em>)
-for the WFL project, but will add an executable symbolic link
-<code>wfl</code> to conveniently execute the Clojure code as a script.</p>
 <h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">⚓︎</a></h2>
 <p>We always make feature branches from <code>main</code>,
 make pull requests,

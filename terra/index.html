@@ -717,19 +717,17 @@ a JSON Web Token (JWT) to authorize other services as needed.</p>
 </li>
 <li>
 <p>Limit dependencies.</p>
-<p>WFL depends on a Java runtime, <code>boot-clj</code> to manage
-dependencies, Google Cloud SDK to deploy to Google App Engine
-(GAE). Of course, it also pulls in numerous Clojure and Java
+<p>WFL depends on a Java runtime,
+and Gnu make
+and the Clojure CLI
+to manage dependencies.
+Of course, it also pulls in numerous Clojure and Java
 libraries at build time, and sources WDL files from the
-<code>dsde-pipelines</code> repository. A programmer needs only clone the
-<code>wfl</code> Git repositories, and run <code>boot-clj</code>
-to bootstrap WFL from source. And <code>boot-clj</code> is a single file:
-its own installer.</p>
-<p>Similarly, <code>boot build</code> builds WFL, and <code>boot deploy</code> deploys
-it to GAE.</p>
-<p>WFL attempts to be self-describing and self-documenting. It
-includes monitoring and diagnostic modules for tracking workload
-progress and debugging failures.</p>
+<code>warp</code> repository.
+A programmer need only install Clojure,
+clone the <code>wfl</code> Git repository,
+and run <code>make</code>
+to bootstrap WFL from source.</p>
 </li>
 </ol>
 <h2 id="wfl-server">WFL server<a class="headerlink" href="#wfl-server" title="Permanent link">⚓︎</a></h2>
