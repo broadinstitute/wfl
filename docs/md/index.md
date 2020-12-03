@@ -171,7 +171,7 @@ to deploy applicable versions of WFL to various available cloud projects.
     In addition to its own version, Workflow Launcher also needs to manage
     the version of `warp.git` which contribute the WDL files.
     Currently, that version is controlled by the commit hash string in
-    function `stage-some-files` in `api/src/boot.clj`, for instance:
+    function `stage-some-files` in `api/src/build.clj`, for instance:
 
     ```clojure
     (util/shell-io! "git" "-C" (.getParent environments)
@@ -224,7 +224,7 @@ server.
 
 Some hacks specific to WFL are in `wfl.clj`.
 
-The `boot.clj` file includes build and deployment code.
+The `build.clj` file includes build and deployment code.
 
 The `debug.clj` file defines some macros useful when debugging
 or logging.
