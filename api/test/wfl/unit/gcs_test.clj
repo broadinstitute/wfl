@@ -56,10 +56,11 @@
       (testing "Objects"
         (let [[bucket src-folder] (gcs/parse-gs-url uri)
               dest-folder (str src-folder "destination/")
-              object {:name (str src-folder "test") :contentType "text/x-java-properties"}
-              properties "boot.properties"]
+              object {:name (str src-folder "test")
+                      :contentType "text/plain"}
+              dockerfile "Dockerfile"]
           (testing "upload"
-            (let [result (gcs/upload-file properties bucket (:name object))]
+            (let [result (gcs/upload-file dockerfile bucket (:name object))]
               (is (= object (select-keys result (keys object))))
               (is (= bucket (:bucket result)))))
           (testing "list"
@@ -70,7 +71,7 @@
             (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
           (testing "download"
             (gcs/download-file local-file-name bucket (str dest-folder "test"))
-            (is (= (slurp properties) (slurp local-file-name)))))))
+            (is (= (slurp dockerfile) (slurp local-file-name)))))))
     (finally (cleanup-object-test))))
 
 (deftest userinfo-test

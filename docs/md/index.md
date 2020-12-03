@@ -224,8 +224,7 @@ server.
 
 Some hacks specific to WFL are in `wfl.clj`.
 
-The `boot.clj` offloads code from the `build.boot` file for
-easier development and debugging.
+The `boot.clj` file includes build and deployment code.
 
 The `debug.clj` file defines some macros useful when debugging
 or logging.
@@ -236,9 +235,6 @@ WFL that are not specific to its function.
 The `environments.clj` file defines configuration parameters for
 different execution contexts. It's a placeholder in this repo
 but will be loaded in build/deploy time from a private repo.
-
-The `module/ukb.clj` file implements a command-line starter for the
-**White Album**, **Pharma5**, or **UK Biobank** project.
 
 The `module/xx.clj` file implements a command-line starter for
 reprocessing *eXternal eXomes*.

@@ -37,11 +37,8 @@ differ from Cursive's docs:
     make TARGET=prebuild - jN
     ```
 
-1. *Outside of IntelliJ*, `clone` the repo and run `boot` at the top-level to
-generate the `project.clj` (see below)
-2. *Now inside of IntelliJ*, import the project by specifically targeting the
-`project.clj` file (it should offer to import the entire project, and targeting
-the `project.clj` will make use of Leiningen to work with Cursive)
+1. *Outside of IntelliJ*, `clone` the repo.
+2. *Now inside of IntelliJ*, import the project.
 3. Use the Project Structure window (Help -> Find Action -> Project Structure) to set a JDK as the Project SDK
 
 There is also a
@@ -53,13 +50,6 @@ I hack Clojure in Emacs using
 [nREPL](https://github.com/clojure/tools.nrepl). CIDER is not
 trivial to set up, but not *especially* difficult if you are
 used to Emacs. (I can help if CIDER gives you trouble.)
-
-Every time `boot` runs, it generates a `project.clj` file to
-support `lein`, Cursive, and Calva users.
-
-Running `boot build` will not only build a fat jar (*uberjar*)
-for the WFL project, but will add an executable symbolic link
-`wfl` to conveniently execute the Clojure code as a script.
 
 ## Process
 

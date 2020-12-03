@@ -172,21 +172,17 @@ WFL is designed around several novel concepts.
 
 6.  Limit dependencies.
 
-    WFL depends on a Java runtime, `boot-clj` to manage
-    dependencies, Google Cloud SDK to deploy to Google App Engine
-    (GAE). Of course, it also pulls in numerous Clojure and Java
+    WFL depends on a Java runtime,
+    and Gnu make
+    and the Clojure CLI
+    to manage dependencies.
+    Of course, it also pulls in numerous Clojure and Java
     libraries at build time, and sources WDL files from the
-    `dsde-pipelines` repository. A programmer needs only clone the
-    `wfl` Git repositories, and run `boot-clj`
-    to bootstrap WFL from source. And `boot-clj` is a single file:
-    its own installer.
-
-    Similarly, `boot build` builds WFL, and `boot deploy` deploys
-    it to GAE.
-
-    WFL attempts to be self-describing and self-documenting. It
-    includes monitoring and diagnostic modules for tracking workload
-    progress and debugging failures.
+    `dsde-pipelines` repository.
+    A programmer need only install Clojure,
+    clone the `wfl` Git repository,
+    and run `make`
+    to bootstrap WFL from source.
 
 ## WFL server
 
