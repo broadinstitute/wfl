@@ -37,7 +37,7 @@
     (load-workload-impl tx workload)
     (catch Throwable cause
       (throw (ex-info (str "Error loading workload - " (.getMessage cause))
-                      (util/deep-merge {:workload workload} (ex-data cause))
+                      (assoc (ex-data cause) :workload workload)
                       cause)))))
 
 (defn load-workload-for-uuid
