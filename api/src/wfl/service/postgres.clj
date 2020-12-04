@@ -60,7 +60,6 @@
 (defn update-workflow-statuses!
   "Use `tx` to update `status` of unfinished Cromwell `workflows` in a `workload`."
   [tx {:keys [cromwell workflows] :as workload}]
-  (println "MARK")
   (let [ws-to-update (->> workflows
                           (remove (comp nil? :uuid))
                           (remove (comp finished? :status)))
