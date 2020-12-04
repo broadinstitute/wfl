@@ -241,12 +241,12 @@
   standard JSON files for Cromwell.  LABELS is a {:key value} map."
   [environment wdl imports-zip inputs options labels]
   (:id (post-workflow (api environment)
-                 (assoc (partify-workflow wdl
-                                          imports-zip
-                                          inputs
-                                          options
-                                          labels)
-                        :workflowOnHold "true"))))
+                      (assoc (partify-workflow wdl
+                                               imports-zip
+                                               inputs
+                                               options
+                                               labels)
+                             :workflowOnHold "true"))))
 
 (defn submit-workflow
   "Submit a workflow to run WDL with IMPORTS-ZIP, INPUTS,
