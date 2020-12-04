@@ -149,23 +149,14 @@
     (mapcat expand form-params)))
 
 (defn query
-  "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
+  "Results of querying Cromwell in ENVIRONMENT with a list of PARAMS."
   [environment params]
-  (let [form-params (merge {:pagesize 999} params)
-        request     {:method       :post                   ;; :debug true :debug-body true
-                     :url          (str (api environment) "/query")
-                     :form-params  (cromwellify-json-form form-params)
-                     :content-type :application/json}]
-    (letfn [(each [page sofar]
-              (let [response (-> request
-                                 (update :form-params conj {:page (str page)})
-                                 (assoc :headers (once/get-auth-header))
-                                 request-json :body)
-                    {:keys [results totalResultsCount]} response
-                    total    (+ sofar (count results))]
-                (lazy-cat results (when (< total totalResultsCount)
-                                    (each (inc page) total)))))]
-      (util/lazy-unchunk (each 1 0)))))
+    (-> {:method       :post
+         :url          (str (api environment) "/query")
+         :form-params  params
+         :content-type :application/json
+         :headers      (once/get-auth-header)}
+        request-json :body :results))
 
 ;; HACK: (into (array-map) ...) is egregious.
 ;;
