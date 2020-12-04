@@ -64,7 +64,7 @@
                           (remove (comp nil? :uuid))
                           (remove (comp finished? :status)))
         uuid->status (if (empty? ws-to-update)
-                       (fn [_] nil)
+                       (constantly nil)
                        (->> ws-to-update
                             (map (fn [{:keys [uuid]}] {:id uuid}))
                             (#(conj % {:includeSubworkflows "false"}))
