@@ -5,16 +5,19 @@
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
             [wfl.service.cromwell :refer [submit-workflow]]
-            [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.tools.endpoints :as endpoints])
+            [wfl.tools.endpoints :as endpoints]
+            [wfl.service.cromwell :as cromwell])
   (:import (java.util UUID)))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn mock-submit-workload [& _] (UUID/randomUUID))
-(def mock-cromwell-status (constantly "Succeeded"))
+(defn mock-cromwell-query-id [_ params]
+  (->> params
+       (filter #(contains? % :id))
+       (map #(assoc % :status "Succeeded"))))
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
@@ -54,8 +57,8 @@
                                               (workloads/create-workload! (make-aou-workload-request)))))))
 
 (deftest test-aou-cannot-be-stopped!
-  (with-redefs-fn {#'aou/submit-aou-workflow  mock-submit-workload
-                   #'postgres/cromwell-status mock-cromwell-status}
+  (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload
+                   #'cromwell/query          mock-cromwell-query-id}
     #(let [workload (-> (make-aou-workload-request)
                         (workloads/execute-workload!)
                         (workloads/update-workload!))]

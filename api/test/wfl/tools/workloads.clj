@@ -13,7 +13,9 @@
             [wfl.service.terra :as terra]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
-            [wfl.util :as util :refer [shell!]])
+            [wfl.util :as util :refer [shell!]]
+            [clj-http.client :as http]
+            [wfl.once :as once])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -125,6 +127,16 @@
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
+;; HACK: We don't have the workload environment here
+(defn cromwell-status
+  "`status` of the workflow with UUID on CROMWELL."
+  [cromwell uuid]
+  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :status))
+
 (defn when-done
   "Call `done!` when cromwell has finished executing `workload`'s workflows."
   [done! {:keys [cromwell project] :as workload}]
@@ -140,7 +152,7 @@
                 (when-not (skipped? workflow)
                   (let [status (if (= "GPArrays" (:pipeline workload))
                                  (terra/get-workflow-status-by-entity cromwell project workflow)
-                                 (postgres/cromwell-status cromwell uuid))]
+                                 (cromwell-status cromwell uuid))]
                     (when-not (finished? status)
                       (log/infof "%s: Sleeping on status: %s" uuid status)
                       (util/sleep-seconds interval)
