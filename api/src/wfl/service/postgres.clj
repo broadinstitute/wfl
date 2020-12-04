@@ -60,14 +60,18 @@
 (defn update-workflow-statuses!
   "Use `tx` to update `status` of unfinished Cromwell `workflows` in a `workload`."
   [tx {:keys [cromwell workflows] :as workload}]
-  (let [uuid->status (->> (-> workflows
-                              (remove (comp nil? :uuid))
-                              (remove (comp finished? :status)))
-                          (map (fn [{:keys [uuid]}] {:id uuid}))
-                          #(conj % {:includeSubworkflows "false"})
-                          (cromwell/query (first (all/cromwell-environments cromwell)))
-                          (map (fn [{:keys [id status]}] [id status]))
-                          (into {}))
+  (println "MARK")
+  (let [ws-to-update (->> workflows
+                          (remove (comp nil? :uuid))
+                          (remove (comp finished? :status)))
+        uuid->status (if (empty? ws-to-update)
+                       (fn [_] nil)
+                       (->> ws-to-update
+                            (map (fn [{:keys [uuid]}] {:id uuid}))
+                            (#(conj % {:includeSubworkflows "false"}))
+                            (cromwell/query (first (all/cromwell-environments cromwell)))
+                            (map (fn [{:keys [id status]}] [id status]))
+                            (into {})))
         get-status   (fn [_ {:keys [uuid]}] (or (uuid->status uuid) "skipped"))]
     ((make-update-workflows get-status) tx workload)))
 

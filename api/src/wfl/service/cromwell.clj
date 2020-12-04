@@ -149,12 +149,14 @@
     (mapcat expand form-params)))
 
 (defn query
-  "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
+  "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS.
+  If the params are a map they'll be passed to [[cromwellify-json-form]]."
   [environment params]
-  (let [form-params (merge {:pagesize 999} params)
+  (let [form-params (conj (if (map? params) (cromwellify-json-form params) params)
+                          {:pagesize "999"})
         request     {:method       :post                   ;; :debug true :debug-body true
                      :url          (str (api environment) "/query")
-                     :form-params  (cromwellify-json-form form-params)
+                     :form-params  form-params
                      :content-type :application/json}]
     (letfn [(each [page sofar]
               (let [response (-> request
