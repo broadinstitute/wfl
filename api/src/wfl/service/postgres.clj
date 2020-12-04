@@ -6,7 +6,8 @@
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.terra :as terra]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.module.all :as all])
   (:import [java.time OffsetDateTime]))
 
 (defn wfl-db-config
@@ -67,13 +68,19 @@
            (remove (comp finished? :status))
            (run! #(update! % (get-status! workload %)))))))
 
-(def update-workflow-statuses!
-  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status cromwell uuid)))]
-    (make-update-workflows get-cromwell-status)))
+(defn update-workflow-statuses!
+  "Use `tx` to update `status` of unfinished Cromwell `workflows` in a `workload`."
+  [tx {:keys [cromwell workflows] :as workload}]
+  (let [uuid->status (->> (-> workflows
+                              (remove (comp nil? :uuid))
+                              (remove (comp finished? :status)))
+                          (map (fn [{:keys [uuid]}] {:id uuid}))
+                          #(conj % {:includeSubworkflows "false"})
+                          (cromwell/query (first (all/cromwell-environments cromwell)))
+                          (map (fn [{:keys [id status]}] [id status]))
+                          (into {}))
+        get-status   (fn [_ {:keys [uuid]}] (or (uuid->status uuid) "skipped"))]
+    ((make-update-workflows get-status) tx workload)))
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
