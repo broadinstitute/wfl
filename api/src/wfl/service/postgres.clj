@@ -42,17 +42,6 @@
     (jdbc/query tx (format "SELECT * FROM %s" table))
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
-;; HACK: We don't have the workload environment here.
-;; visible for testing
-(defn cromwell-status
-  "`status` of the workflow with UUID on CROMWELL."
-  [cromwell uuid]
-  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (once/get-auth-header)})
-      :body
-      util/parse-json
-      :status))
-
 (def ^:private finished?
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
