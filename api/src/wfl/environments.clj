@@ -64,6 +64,6 @@
 
 ;; Ignore all of that above and instead load from the classpath.
 ;;
-;; See wfl.boot/stage-some-files for more.
+;; See wfl.build/stage-some-files for more.
 ;;
 (load "environments")
