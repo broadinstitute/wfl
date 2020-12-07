@@ -11,9 +11,9 @@ test "$1" && export WFL_DEPLOY_ENVIRONMENT="$1"
 npm run serve --prefix=derived/ui -- --port 8080 &
 
 pushd api
-clojure -A:liquibase
+clojure -M:liquibase
 export _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-"./wfl" server 3000 &
+clojure -M:wfl server 3000 &
 popd
 
 wait
