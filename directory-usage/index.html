@@ -646,7 +646,7 @@ more info.</p>
 <span class="s1">    items: .</span>
 <span class="s1">}&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$ITEMS</span><span class="s2">&quot;</span><span class="k">)</span>
 
-curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
+curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
     -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
     -d <span class="s2">&quot;</span><span class="nv">$REQUEST</span><span class="s2">&quot;</span>

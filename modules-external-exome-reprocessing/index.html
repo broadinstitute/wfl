@@ -682,11 +682,11 @@ below for all options.</p>
 <p>Create a new workload. Ensure that <code>workflow-launcher</code> and <code>cromwell</code>'s service
 accounts have at least read access to the input files.</p>
 <div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
   -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
   -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
+<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
 <span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
@@ -702,7 +702,7 @@ accounts have at least read access to the input files.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
@@ -731,7 +731,7 @@ accounts have at least read access to the input files.</p>
 <p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.</p>
 <div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
 -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
 -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
 -d <span class="s1">&#39;{&quot;uuid&quot;: &quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;}&#39;</span>
@@ -741,7 +741,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -774,7 +774,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
   -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
   -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
+<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
 <span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
@@ -790,7 +790,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -819,7 +819,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <h3 id="query-workload-apiv1workloaduuiduuid">Query Workload: <code>/api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
 <div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c&#39;</span> <span class="se">\</span>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
 </code></pre></div>
 </div>
@@ -827,7 +827,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -860,7 +860,7 @@ failures.</p>
 <h3 id="query-workload-with-project-apiv1workloadprojectproject">Query Workload with project: <code>/api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
 <div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-1234&#39;</span> <span class="se">\</span>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
 </code></pre></div>
 </div>
@@ -868,7 +868,7 @@ failures.</p>
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
