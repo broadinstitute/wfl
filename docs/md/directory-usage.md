@@ -108,7 +108,7 @@ REQUEST=$(jq '{
     items: .
 }' <<< "$ITEMS")
 
-curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec' \
     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
     -H 'Content-Type: application/json' \
     -d "$REQUEST"

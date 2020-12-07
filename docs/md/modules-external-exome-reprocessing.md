@@ -32,11 +32,11 @@ accounts have at least read access to the input files.
 === "Request"
 
     ```bash
-    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
+    curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create' \
       -H "Authorization: Bearer $(gcloud auth print-access-token)" \
       -H 'Content-Type: application/json' \
       -d '{
-            "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+            "cromwell": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
             "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
             "pipeline": "ExternalExomeReprocessing",
             "project": "Example Project",
@@ -54,7 +54,7 @@ accounts have at least read access to the input files.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
@@ -87,7 +87,7 @@ particular input cram, WFL will not re-submit that workflow.
 === "Request"
 
     ```bash
-    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
+    curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start' \
     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
     -H 'Content-Type: application/json' \
     -d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'
@@ -99,7 +99,7 @@ particular input cram, WFL will not re-submit that workflow.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -135,7 +135,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
       -H "Authorization: Bearer $(gcloud auth print-access-token)" \
       -H 'Content-Type: application/json' \
       -d '{
-            "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+            "cromwell": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
             "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
             "pipeline": "ExternalExomeReprocessing",
             "project": "Example Project",
@@ -153,7 +153,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -185,7 +185,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
 === "Request"
 
     ```bash
-    curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
+    curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
       -H "Authorization: Bearer $(gcloud auth print-access-token)"
     ```
 
@@ -195,7 +195,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
     [{
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -232,7 +232,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
 === "Request"
 
     ```bash
-    curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=PO-1234' \
+    curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-1234' \
       -H "Authorization: Bearer $(gcloud auth print-access-token)"
     ```
 
@@ -242,7 +242,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
     [{
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
