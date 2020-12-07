@@ -33,14 +33,14 @@ JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	$(CLOJURE) -X wfl.boot/prebuild
+	$(CLOJURE) -X wfl.build/prebuild
 	@$(TOUCH) $@
 
 $(POM_IN): $(CLOJURE_PROJECT)
 	$(CLOJURE) -Spom
 
 $(POM_OUT): $(POM_IN) $(PREBUILD) $(SCM_SRC)
-	$(CLOJURE) -X wfl.boot/update-the-pom :in '"$(POM_IN)"' :out '"$@"'
+	$(CLOJURE) -X wfl.build/update-the-pom :in '"$(POM_IN)"' :out '"$@"'
 
 $(API_DIR): $(SCM_SRC)
 	$(MKDIR) $(CLASSES_DIR)

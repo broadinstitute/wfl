@@ -1,4 +1,4 @@
-(ns wfl.boot
+(ns wfl.build
   "Build support originating in build.boot."
   (:require [clojure.data.xml :as xml]
             [clojure.java.io :as io]
