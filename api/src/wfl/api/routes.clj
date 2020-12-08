@@ -116,15 +116,23 @@
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
-(defn ex-handler
+(defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
   {:status (or (:status (ex-data exception)) status)
    :body {:message (or (.getMessage exception) message)
-          :exception (.getClass exception)
+          :exception (str (.getClass exception))
           :data (ex-data exception)
           :uri (:uri request)}})
+
+(defn logging-exception-handler
+  "Like [[exception-handler]] but also log information about the exception."
+  [status message exception request]
+  (let [response (exception-handler status message exception request)]
+    (log/errorf "Server %s error at occurred at %s :" (:status response) (:uri request))
+    (logr/error exception (:body response))
+    response))
 
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."
@@ -132,19 +140,14 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     ::workloads/invalid-pipeline          (partial ex-handler 400 "")
-     ::workloads/workload-not-found        (partial ex-handler 404 "")
-       ;; SQLException and all it's child classes
-     SQLException                          (partial ex-handler 500 "SQL Error")
+     ::workloads/invalid-pipeline          (partial exception-handler 400 "")
+     ::workloads/workload-not-found        (partial exception-handler 404 "")
+       ;; SQLException and all its child classes
+     SQLException                          (partial logging-exception-handler 500 "SQL Exception")
        ;; handle clj-http Slingshot stone exceptions
-     :clj-http.client/unexceptional-status (partial ex-handler 400 "HTTP Error on request")
+     :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
        ;; override the default handler
-     ::exception/default                   (partial ex-handler 500 "Internal Server Error")
-       ;; print stack-traces for all exceptions in logs
-     ::exception/wrap                      (fn [handler e request]
-                                             (log/errorf e "EXCEPTION ROSE TO MIDDLEWARE (%s)" (:uri request))
-                                             (logr/error request)
-                                             (handler e request))})))
+     ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
@@ -155,13 +158,13 @@
        ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muuntaja-core/instance
-            :middleware [;; query-params & form-params
+            :middleware [exception-middleware
+                         ;; query-params & form-params
                          parameters/parameters-middleware
                            ;; content-negotiation
                          muuntaja/format-negotiate-middleware
                            ;; encoding response body
                          muuntaja/format-response-middleware
-                         exception-middleware
                            ;; decoding request body
                          muuntaja/format-request-middleware
                            ;; coercing response bodys

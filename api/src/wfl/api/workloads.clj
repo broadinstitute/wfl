@@ -36,8 +36,9 @@
   (try
     (load-workload-impl tx workload)
     (catch Throwable cause
-      (throw (ex-info "Error loading workload"
-                      {:workload workload} cause)))))
+      (throw (ex-info (str "Error loading workload - " (.getMessage cause))
+                      (assoc (ex-data cause) :workload workload)
+                      cause)))))
 
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
@@ -97,21 +98,13 @@
 (defmethod execute-workload!
   :default
   [tx workload-request]
-  (try
-    (start-workload! tx (create-workload! tx workload-request))
-    (catch Throwable cause
-      (throw (ex-info "Error executing workload request"
-                      {:workload-request workload-request} cause)))))
+  (start-workload! tx (create-workload! tx workload-request)))
 
 (defmethod update-workload!
   :default
   [tx workload]
-  (try
-    (postgres/update-workload! tx workload)
-    (load-workload-for-id tx (:id workload))
-    (catch Throwable cause
-      (throw (ex-info "Error updating workload"
-                      {:workload workload} cause)))))
+  (postgres/update-workload! tx workload)
+  (load-workload-for-id tx (:id workload)))
 
 (defn default-load-workload-impl
   [tx workload]
@@ -120,14 +113,10 @@
             (let [keep [:id :finished :status :updated :uuid :options]]
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (try
-      (->> (postgres/get-table tx (:items workload))
-           (mapv (comp unnilify split-inputs load-options))
-           (assoc workload :workflows)
-           unnilify)
-      (catch Throwable cause
-        (throw (ex-info "Error loading workload"
-                        {:workload workload} cause))))))
+    (->> (postgres/get-table tx (:items workload))
+         (mapv (comp unnilify split-inputs load-options))
+         (assoc workload :workflows)
+         unnilify)))
 
 (defoverload load-workload-impl :default default-load-workload-impl)
 
