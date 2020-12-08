@@ -6,7 +6,8 @@
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.terra :as terra]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.module.all :as all])
   (:import [java.time OffsetDateTime]))
 
 (defn wfl-db-config
@@ -41,17 +42,6 @@
     (jdbc/query tx (format "SELECT * FROM %s" table))
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
-;; HACK: We don't have the workload environment here.
-;; visible for testing
-(defn cromwell-status
-  "`status` of the workflow with UUID on CROMWELL."
-  [cromwell uuid]
-  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (once/get-auth-header)})
-      :body
-      util/parse-json
-      :status))
-
 (def ^:private finished?
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
@@ -67,13 +57,17 @@
            (remove (comp finished? :status))
            (run! #(update! % (get-status! workload %)))))))
 
-(def update-workflow-statuses!
-  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status cromwell uuid)))]
-    (make-update-workflows get-cromwell-status)))
+(defn update-workflow-statuses!
+  "Use `tx` to update `status` the workflows in a `workload`."
+  [tx {:keys [cromwell uuid items]}]
+  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+                          (cromwell/query (first (all/cromwell-environments cromwell)))
+                          (map (juxt :id :status)))]
+    (letfn [(update! [[uuid status]]
+              (jdbc/update! tx items
+                            {:updated (OffsetDateTime/now) :status status}
+                            ["uuid = ?" uuid]))]
+      (run! update! uuid->status))))
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
