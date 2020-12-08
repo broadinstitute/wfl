@@ -85,6 +85,8 @@
                                      ::chip_well_barcode]))
 
 ;; arrays
+(s/def ::entity-name string?)
+(s/def ::entity-type string?)
 (s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
                                                  ::entity-type]))
 
