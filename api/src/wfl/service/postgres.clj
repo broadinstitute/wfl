@@ -69,7 +69,7 @@
                             (map (fn [{:keys [uuid]}] {:id uuid}))
                             (#(conj % {:includeSubworkflows "false"}))
                             (cromwell/query (first (all/cromwell-environments cromwell)))
-                            (map (fn [{:keys [id status]}] [id status]))
+                            (map (juxt :id :status))
                             (into {})))
         get-status   (fn [_ {:keys [uuid]}] (or (uuid->status uuid) "skipped"))]
     ((make-update-workflows get-status) tx workload)))
