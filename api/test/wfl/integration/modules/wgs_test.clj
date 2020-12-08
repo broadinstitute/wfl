@@ -92,12 +92,12 @@
             (is (:updated workflow)))
           (use-input_bam [items]
             (mapv
-              (fn [item]
-                (update item :inputs
-                        #(-> %
-                             (dissoc :input_cram)
-                             (assoc :input_bam "gs://inputs/fake.bam"))))
-              items))
+             (fn [item]
+               (update item :inputs
+                       #(-> %
+                            (dissoc :input_cram)
+                            (assoc :input_bam "gs://inputs/fake.bam"))))
+             items))
           (verify-use_input_bam! [inputs labels]
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
