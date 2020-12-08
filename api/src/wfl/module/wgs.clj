@@ -23,14 +23,12 @@
   {:release "ExternalWholeGenomeReprocessing_v1.1.1"
    :top     "pipelines/broad/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
 
-(def ^:private cromwell-labels
-  "The WDL label applied to Cromwell metadata."
+(def ^:private cromwell-label
   {(keyword wfl/the-name) pipeline})
 
-(defn ^:private stringify-cromwell-label [label]
+(def ^:private stringified-cromwell-label
   "The WDL label applied to Cromwell metadata."
-  (let [[key value] label]
-    (str (name key) ":" value)))
+  (mapv (fn [[k v]] (str (name k) ":" v)) cromwell-label))
 
 (defn ^:private get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
@@ -95,12 +93,12 @@
         (assoc :destination_cloud_path (str out-gs out-dir)))))
 
 (defn ^:private make-cromwell-inputs
-  "Return inputs for reprocessing IN-GS into OUT-GS in ENVIRONMENT."
   [environment {:keys [inputs]}]
-  (-> (util/deep-merge cram-ref hack-task-level-values)
-      (util/deep-merge {:references default-references})
-      (util/deep-merge (env-inputs environment))
-      (util/deep-merge inputs)
+  (-> (util/deep-merge cram-ref
+                       hack-task-level-values
+                       {:references default-references}
+                       (env-inputs environment)
+                       inputs)
       (util/prefix-keys (keyword pipeline))))
 
 (defn create-wgs-workload!
@@ -132,7 +130,7 @@
                                  util/do-or-nil
                                  seq))
           (processing? [in-gs]
-            (->> {:label (stringify-cromwell-label (first cromwell-labels)) :status cromwell/active-statuses}
+            (->> {:label (first stringified-cromwell-label) :status cromwell/active-statuses}
                  (cromwell/query env)
                  (filter #(= pipeline (:name %)))
                  (map #(->> % :id (cromwell/metadata env) :inputs))
@@ -142,7 +140,7 @@
     (let [in-gs  (some inputs [:input_bam :input_cram])
           [_ object] (gcs/parse-gs-url in-gs)
           out-gs (str (all/slashify output) object)]
-      (or (exists? out-gs) (processing? in-gs)))))
+      (or (exists? out-gs) (processing? in-gs) false))))
 
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
@@ -163,15 +161,14 @@
                     (io/file (:dir path) (path ".zip"))
                     (map (partial make-cromwell-inputs env) workflows)
                     (util/deep-merge default-options options)
-                    (merge cromwell-labels {:workload uuid}))))]
-      (let [workflows (group-by #(skip-workflow? env workload %) (:workflows workload))
-            skipped-workflows (get workflows true)]
+                    (merge cromwell-label {:workload uuid}))))]
+      (let [{skipped? true workflows false} (group-by #(skip-workflow? env workload %) (:workflows workload))]
         (concat (map
                  #(assoc % :uuid util/uuid-nil
                          :status "skipped"
                          :updated (OffsetDateTime/now))
-                 skipped-workflows)
-                (mapcat submit-batch! (group-by :options  (get workflows nil))))))))
+                 skipped?)
+                (mapcat submit-batch! (group-by :options workflows)))))))
 
 (defoverload workloads/create-workload! pipeline create-wgs-workload!)
 

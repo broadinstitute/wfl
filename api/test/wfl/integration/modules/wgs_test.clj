@@ -132,7 +132,7 @@
                (UUID/randomUUID))
              inputs))]
     (with-redefs-fn {#'submit-workflows verify-submitted-inputs
-                     #'skip-workflow? (constantly nil)}
+                     #'skip-workflow? (constantly false)}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -176,7 +176,7 @@
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
     (with-redefs-fn {#'submit-workflows verify-submitted-options
-                     #'skip-workflow? (constantly nil)}
+                     #'skip-workflow? (constantly false)}
       (fn []
         (->
          (make-wgs-workload-request)

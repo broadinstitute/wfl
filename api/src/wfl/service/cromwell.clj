@@ -188,7 +188,7 @@
       (into counts [[:total total]]))))
 
 (defn make-workflow-labels
-  "Return the workflow labels from ENVIRONMENT, WDL, and INPUTS."
+  "Return workflow labels for WDL."
   [wdl]
   (letfn [(key-for [suffix] (keyword (str wfl/the-name "-" (name suffix))))]
     (let [the-version   (wfl/get-the-version)
@@ -218,7 +218,7 @@
   (into {} (map (fn [[k v]] [k (str v)]) m)))
 
 (defn partify-workflow
-  "Return a map describing a workflow named WF to run in ENVIRONMENT
+  "Return a map describing a workflow named WF to run
    with DEPENDENCIES, INPUTS, OPTIONS, and LABELS."
   [wf dependencies inputs options labels]
   (letfn [(jsonify [edn] (when edn (json/write-str edn :escape-slash false)))
@@ -283,7 +283,7 @@
                          options
                          labels)
        (post-workflow (str (api environment) "/batch"))
-       (mapv #(:id %))))
+       (mapv :id)))
 
 (defn work-around-cromwell-fail-bug
   "Wait 2 seconds and ignore up to N times a bogus failure response from
