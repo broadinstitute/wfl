@@ -16,16 +16,15 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private mock-submit-workflows [& _]
-  [(UUID/randomUUID)])
+(defn ^:private mock-submit-workflows [_ _ _ inputs _ _]
+  (map (fn [_] (UUID/randomUUID)) inputs))
 
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
       workloads/wgs-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn ^:private strip-prefix
-  [[k v]]
+(defn ^:private strip-prefix [[k v]]
   [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])
 
 (deftest test-create-with-common-reference-fasta-prefix
@@ -91,26 +90,28 @@
             (is (:uuid workflow))
             (is (:status workflow))
             (is (:updated workflow)))
-          (use-input_bam [item]
-            (update item :inputs
-                    #(-> %
-                         (dissoc :input_cram)
-                         (assoc :input_bam "gs://inputs/fake.bam"))))
+          (use-input_bam [items]
+            (mapv
+              (fn [item]
+                (update item :inputs
+                        #(-> %
+                             (dissoc :input_cram)
+                             (assoc :input_bam "gs://inputs/fake.bam"))))
+              items))
           (verify-use_input_bam! [inputs labels]
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
             (is (contains? labels :workload)))
-          (verify-inputs [env _ _ inputs options labels]
+          (verify-inputs [_ _ _ inputs _ labels]
             (map
-             (fn [inputs]
-               (verify-use_input_bam! (into {} inputs) labels)
-               [env _ _ inputs options labels])
+             (fn [in]
+               (verify-use_input_bam! (into {} (map strip-prefix in)) labels)
+               (UUID/randomUUID))
              inputs))]
     (with-redefs-fn
-      {#'submit-workflows
-       (comp mock-submit-workflows verify-inputs)}
+      {#'submit-workflows verify-inputs}
       #(-> (make-wgs-workload-request)
-           (update :items (comp vector use-input_bam first))
+           (update :items use-input_bam)
            (workloads/execute-workload!)
            (as-> workload
                  (is (:started workload))
