@@ -167,11 +167,11 @@
       (let [workflows (group-by #(skip-workflow? env workload %) (:workflows workload))
             skipped-workflows (get workflows true)]
         (concat (map
-               #(assoc % :uuid util/uuid-nil
-                       :status "skipped"
-                       :updated (OffsetDateTime/now))
-               skipped-workflows)
-              (mapcat submit-batch! (group-by :options  (get workflows nil))))))))
+                 #(assoc % :uuid util/uuid-nil
+                         :status "skipped"
+                         :updated (OffsetDateTime/now))
+                 skipped-workflows)
+                (mapcat submit-batch! (group-by :options  (get workflows nil))))))))
 
 (defoverload workloads/create-workload! pipeline create-wgs-workload!)
 

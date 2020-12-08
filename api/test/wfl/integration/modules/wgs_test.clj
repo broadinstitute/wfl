@@ -102,10 +102,10 @@
             (is (contains? labels :workload)))
           (verify-inputs [env _ _ inputs options labels]
             (map
-              (fn [inputs]
-                (verify-use_input_bam! (into {} inputs) labels)
-                [env _ _ inputs options labels])
-              inputs))]
+             (fn [inputs]
+               (verify-use_input_bam! (into {} inputs) labels)
+               [env _ _ inputs options labels])
+             inputs))]
     (with-redefs-fn
       {#'submit-workflows
        (comp mock-submit-workflows verify-inputs)}
@@ -125,11 +125,11 @@
             (is (not-empty (-> inputs :references (dissoc :reference_fasta)))))
           (verify-submitted-inputs [_ _ _ inputs _ _]
             (map
-              (fn [in]
-                (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys in)))
-                (verify-workflow-inputs (into {} (map strip-prefix in)))
-                (UUID/randomUUID))
-              inputs))]
+             (fn [in]
+               (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys in)))
+               (verify-workflow-inputs (into {} (map strip-prefix in)))
+               (UUID/randomUUID))
+             inputs))]
     (with-redefs-fn {#'submit-workflows verify-submitted-inputs
                      #'skip-workflow? (constantly nil)}
       (fn []
