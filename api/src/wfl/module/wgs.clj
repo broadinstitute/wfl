@@ -1,16 +1,13 @@
 (ns wfl.module.wgs
   "Reprocess (External) Whole Genomes."
-  (:require [clojure.java.io :as io]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.environments :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
-            [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
             [wfl.module.batch :as batch])
   (:import [java.time OffsetDateTime]))
@@ -115,28 +112,6 @@
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
 
-(defn submit-workload!
-  "Use transaction TX to start the WORKLOAD."
-  [{:keys [uuid] :as workload}]
-  (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-        env             (get-cromwell-environment workload)
-        default-options (util/make-options env)]
-    (letfn [(update-workflow [workflow cromwell-uuid]
-              (assoc workflow :uuid cromwell-uuid
-                     :status "Submitted"
-                     :updated (OffsetDateTime/now)))
-            (submit-batch! [[options workflows]]
-              (map update-workflow
-                   workflows
-                   (cromwell/submit-workflows
-                    env
-                    (io/file (:dir path) (path ".wdl"))
-                    (io/file (:dir path) (path ".zip"))
-                    (map (partial make-cromwell-inputs env) workflows)
-                    (util/deep-merge default-options options)
-                    (merge cromwell-label {:workload uuid}))))]
-      (mapcat submit-batch! (group-by :options (:workflows workload))))))
-
 (defoverload workloads/create-workload! pipeline create-wgs-workload!)
 
 (defmethod workloads/start-workload!
@@ -145,8 +120,9 @@
   (letfn [(update-record! [{:keys [id] :as workflow}]
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
-    (let [now (OffsetDateTime/now)]
-      (run! update-record! (submit-workload! workload))
+    (let [now (OffsetDateTime/now)
+          env (get-cromwell-environment workload)]
+      (run! update-record! (batch/submit-workload! workload env workflow-wdl make-cromwell-inputs cromwell-label))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
