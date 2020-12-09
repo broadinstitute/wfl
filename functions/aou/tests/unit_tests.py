@@ -1,6 +1,6 @@
 import mock
 from google.cloud import storage, exceptions
-from cloud_function import main
+from aou import main
 
 
 bucket_name = "test_bucket"
@@ -14,10 +14,10 @@ def test_get_manifest_path_from_uploaded_file():
     result = main.get_manifest_path(uploaded_file)
     assert result == manifest_file
 
-@mock.patch("cloud_function.main.update_workload", return_value=["workflow_uuid"])
-@mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
+@mock.patch("aou.main.update_workload", return_value=["workflow_uuid"])
+@mock.patch("aou.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Blob, 'download_as_string')
-@mock.patch("cloud_function.main.get_auth_headers")
+@mock.patch("aou.main.get_auth_headers")
 def test_manifest_file_not_uploaded(mock_headers, mock_download, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
     mock_download.side_effect = exceptions.NotFound('Error')
@@ -25,11 +25,11 @@ def test_manifest_file_not_uploaded(mock_headers, mock_download, mock_get_worklo
     assert not mock_get_workload.called
     assert not mock_update_workload.called
 
-@mock.patch("cloud_function.main.update_workload", return_value=["workflow_uuid"])
-@mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
+@mock.patch("aou.main.update_workload", return_value=["workflow_uuid"])
+@mock.patch("aou.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Bucket, 'get_blob')
 @mock.patch.object(storage.Blob, 'download_as_string')
-@mock.patch("cloud_function.main.get_auth_headers")
+@mock.patch("aou.main.get_auth_headers")
 def test_input_file_not_uploaded(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
     mock_download.return_value = '{"notifications": [{"file": "gs://test_bucket/file.txt"}]}'
@@ -38,11 +38,11 @@ def test_input_file_not_uploaded(mock_headers, mock_download, mock_get_blob, moc
     assert not mock_get_workload.called
     assert not mock_update_workload.called
 
-@mock.patch("cloud_function.main.update_workload", return_value=["workflow_uuid"])
-@mock.patch("cloud_function.main.get_or_create_workload", return_value="workload_uuid")
+@mock.patch("aou.main.update_workload", return_value=["workflow_uuid"])
+@mock.patch("aou.main.get_or_create_workload", return_value="workload_uuid")
 @mock.patch.object(storage.Bucket, 'get_blob')
 @mock.patch.object(storage.Blob, 'download_as_string')
-@mock.patch("cloud_function.main.get_auth_headers")
+@mock.patch("aou.main.get_auth_headers")
 def test_wfl_called_when_sample_upload_completes(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
     mock_download.return_value = '{"cromwell": "http://cromwell.broadinstitute.org", ' \

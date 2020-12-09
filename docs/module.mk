@@ -1,4 +1,4 @@
-# Makefile for the cloud_function module
+# Makefile for the docs module
 
 REQUIRED_PYTHON_ENVIRONMENT := requirements.txt
 include $(MAKE_INCLUDE_DIR)/modules.mk

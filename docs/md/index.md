@@ -76,7 +76,7 @@ You can also invoke `make` on a module from the top level directory by
 $ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
 
-where currently available `MODULE`s are {api cloud_function docs helm ui}
+where currently available `MODULE`s are {api functions/aou docs helm ui}
 
 For most of the time, you would want to run something like:
 
@@ -112,7 +112,7 @@ If you only want to run tests on specific modules, you could run:
 $ make [MODULE] TARGET=check
 ```
 
-such as `make api TARGET=check` or `make cloud_function TARGET=check`.
+such as `make api TARGET=check` or `make functions/aou TARGET=check`.
 Note this automatically makes all of `check`'s prerequisites.
 
 #### Clojure Test
@@ -193,7 +193,7 @@ After cloning a new WFL repo, the top-level files are:
 ```
 .
 ├── api/            - `workflow-launcher` backend
-├── cloud_function/ - functions deployed separately
+├── functions/      - cloud functions deployed separately
 ├── database/       - database scheme migration changelog and changeset
 ├── derived/        - generated artifacts
 ├── docs/           - ancillary documentation
