@@ -6,7 +6,7 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs :refer [skip-workflow?]]
+            [wfl.module.wgs :as wgs]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.util :as util]
@@ -131,8 +131,7 @@
                (verify-workflow-inputs (into {} (map strip-prefix in)))
                (UUID/randomUUID))
              inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs
-                     #'skip-workflow? (constantly false)}
+    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -162,8 +161,7 @@
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
               (testing (str "default inputs when given only " key)
-                (with-redefs-fn {#'submit-workflows verify-submitted-inputs
-                                 #'skip-workflow? (constantly false)}
+                (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
                   #(workloads/execute-workload! request)))))]
     (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
     (test-with-input :input_cram (:input_cram workloads/wgs-inputs))))
@@ -178,8 +176,7 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options
-                     #'skip-workflow? (constantly false)}
+    (with-redefs-fn {#'submit-workflows verify-submitted-options}
       (fn []
         (->
          (make-wgs-workload-request)

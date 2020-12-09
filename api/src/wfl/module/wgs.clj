@@ -12,8 +12,7 @@
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl]
-            [wfl.module.batch :as batch]
-            [wfl.service.postgres :as postgres])
+            [wfl.module.batch :as batch])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -25,10 +24,6 @@
 
 (def ^:private cromwell-label
   {(keyword wfl/the-name) pipeline})
-
-(def ^:private stringified-cromwell-label
-  "The WDL label applied to Cromwell metadata."
-  (mapv (fn [[k v]] (str (name k) ":" v)) cromwell-label))
 
 (defn ^:private get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
@@ -120,28 +115,6 @@
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
 
-(defn skip-workflow?
-  "True when _WORKFLOW in _WORKLOAD in ENV is done or active."
-  [env
-   {:keys [output] :as _workload}
-   {:keys [inputs] :as _workflow}]
-  (letfn [(exists? [out-gs] (->> (gcs/parse-gs-url out-gs)
-                                 (apply gcs/list-objects)
-                                 util/do-or-nil
-                                 seq))
-          (processing? [in-gs]
-            (->> {:label (first stringified-cromwell-label) :status cromwell/active-statuses}
-                 (cromwell/query env)
-                 (filter #(= pipeline (:name %)))
-                 (map #(->> % :id (cromwell/metadata env) :inputs))
-                 (map #(some % [:input_bam :input_cram]))
-                 (filter #{in-gs})
-                 seq))]
-    (let [in-gs  (some inputs [:input_bam :input_cram])
-          [_ object] (gcs/parse-gs-url in-gs)
-          out-gs (str (all/slashify output) object)]
-      (or (exists? out-gs) (processing? in-gs) false))))
-
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
   [{:keys [uuid] :as workload}]
@@ -162,13 +135,7 @@
                     (map (partial make-cromwell-inputs env) workflows)
                     (util/deep-merge default-options options)
                     (merge cromwell-label {:workload uuid}))))]
-      (let [{skipped? true workflows false} (group-by #(skip-workflow? env workload %) (:workflows workload))]
-        (concat (map
-                 #(assoc % :uuid util/uuid-nil
-                         :status "skipped"
-                         :updated (OffsetDateTime/now))
-                 skipped?)
-                (mapcat submit-batch! (group-by :options workflows)))))))
+      (mapcat submit-batch! (group-by :options (:workflows workload))))))
 
 (defoverload workloads/create-workload! pipeline create-wgs-workload!)
 
