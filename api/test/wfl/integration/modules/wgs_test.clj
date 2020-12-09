@@ -159,7 +159,7 @@
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
               (testing (str "default inputs when given only " key)
-                (with-redefs-fn {#'submit-workflow verify-submitted-inputs
+                (with-redefs-fn {#'submit-workflows verify-submitted-inputs
                                  #'skip-workflow? (constantly false)}
                   #(workloads/execute-workload! request)))))]
     (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
