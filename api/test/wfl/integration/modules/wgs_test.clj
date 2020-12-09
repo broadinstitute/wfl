@@ -153,8 +153,11 @@
                                     :final_gvcf_base_name
                                     :destination_cloud_path]))
           (verify-submitted-inputs [_ _ _ inputs _ _]
-            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
-            (UUID/randomUUID))
+            (map
+             (fn [in]
+               (verify-workflow-inputs (into {} (map strip-prefix in)))
+               (UUID/randomUUID))
+             inputs))
           (test-with-input [key value]
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
