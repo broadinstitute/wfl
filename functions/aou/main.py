@@ -117,7 +117,7 @@ def submit_aou_workload(event, context):
     chip_well_barcode = notification.get('chip_well_barcode')
     analysis_version = notification.get('analysis_version_number')
     print(f'Upload complete for {chip_well_barcode}-{analysis_version}')
-    environment = notification.get('environment')
+    environment = notification.get('environment').lower()
     workload_uuid = get_or_create_workload(headers, environment)
     print(f'Updating workload: {workload_uuid}')
     workflow_ids = update_workload(headers, workload_uuid, input_data)
