@@ -33,6 +33,7 @@ jobs:
           remote: origin
           chart-dirs:
             - helm
+          target-branch: main
           namespace: default
           release-label: default
           EOF
