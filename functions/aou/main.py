@@ -37,7 +37,7 @@ def get_auth_headers():
 
 
 def get_manifest_path(object_name):
-    segments = object_name.strip('/').split('/', maxsplit=3)[:3]
+    segments = object_name.strip('/').split('/', maxsplit=4)[:4]
     segments.append('ptc.json')
     return '/'.join(segments)
 
