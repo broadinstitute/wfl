@@ -27,15 +27,15 @@ jobs:
         run: git fetch --prune --unshallow
 
         # generate the required `ct.yaml` file for chart-testing
-      - name: Generate ct.yaml
-        run: |
-          cat << EOF > ct.yaml
-          remote: origin
-          chart-dirs:
-            - helm
-          namespace: default
-          release-label: default
-          EOF
+      # - name: Generate ct.yaml
+      #   run: |
+      #     cat << EOF > ct.yaml
+      #     remote: origin
+      #     chart-dirs:
+      #       - helm
+      #     namespace: default
+      #     release-label: default
+      #     EOF
 
         # We keep this around because it does version bump and
         # maintenance checks outside of what `helm lint` does.
@@ -43,7 +43,7 @@ jobs:
         # the repo, and it is cleaner to use the
         # working-directory directive below.
       - name: Chart Test Basic Lint
-        run: ct lint --config ct.yaml
+        run: ct lint --config ct.yaml --chart-dirs ["helm"]
 
         # These are each actually run by `ct lint`, but we want
         # to see their output and set arguments ourselves
