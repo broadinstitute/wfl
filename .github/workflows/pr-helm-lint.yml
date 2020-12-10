@@ -26,6 +26,17 @@ jobs:
       - name: Fetch History
         run: git fetch --prune --unshallow
 
+        # generate the required `ct.yaml` file for chart-testing
+      - name: Generate ct.yaml
+        run: |
+          cat << EOF > ct.yaml
+          remote: origin
+          chart-dirs:
+            - helm
+          namespace: default
+          release-label: default
+          EOF
+
         # We keep this around because it does version bump and
         # maintenance checks outside of what `helm lint` does.
         # It is separate because this needs to be at the top of
