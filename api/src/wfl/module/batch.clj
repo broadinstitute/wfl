@@ -1,12 +1,16 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
+            [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
+            [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [java.time OffsetDateTime]))
 
 (defn add-workload-table!
   "Create row in workload table for `workload-request` using transaction `tx`.
@@ -41,3 +45,24 @@
          (assoc workload :workflows)
          load-options
          unnilify)))
+
+(defn submit-workload!
+  "Use transaction TX to start the WORKLOAD."
+  [{:keys [uuid workflows]} env workflow-wdl make-cromwell-inputs! cromwell-label]
+  (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))
+        default-options (util/make-options env)]
+    (letfn [(update-workflow [workflow cromwell-uuid]
+              (assoc workflow :uuid cromwell-uuid
+                     :status "Submitted"
+                     :updated (OffsetDateTime/now)))
+            (submit-batch! [[options workflows]]
+              (map update-workflow
+                   workflows
+                   (cromwell/submit-workflows
+                    env
+                    (io/file (:dir path) (path ".wdl"))
+                    (io/file (:dir path) (path ".zip"))
+                    (map (partial make-cromwell-inputs! env) workflows)
+                    (util/deep-merge default-options options)
+                    (merge cromwell-label {:workload uuid}))))]
+      (mapcat submit-batch! (group-by :options workflows)))))
