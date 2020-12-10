@@ -84,4 +84,3 @@ spec:
             items:
               - key: service-account
                 path: service-account.json
-
