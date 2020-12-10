@@ -763,7 +763,7 @@ project root.</p>
 <p>You can also invoke <code>make</code> on a module from the top level directory by</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">={</span>prebuild<span class="p">|</span>build<span class="p">|</span>check<span class="p">|</span>images<span class="p">|</span>clean<span class="p">|</span>distclean<span class="o">}</span>
 </code></pre></div>
-<p>where currently available <code>MODULE</code>s are {api cloud_function docs helm ui}</p>
+<p>where currently available <code>MODULE</code>s are {api functions/aou docs helm ui}</p>
 <p>For most of the time, you would want to run something like:</p>
 <div class="highlight"><pre><span></span><code>$ make clean
 </code></pre></div>
@@ -785,7 +785,7 @@ purge the local derived files.</p>
 <p>If you only want to run tests on specific modules, you could run:</p>
 <div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
 </code></pre></div>
-<p>such as <code>make api TARGET=check</code> or <code>make cloud_function TARGET=check</code>.
+<p>such as <code>make api TARGET=check</code> or <code>make functions/aou TARGET=check</code>.
 Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">⚓︎</a></h4>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
@@ -839,7 +839,7 @@ function <code>stage-some-files</code> in <code>api/src/build.clj</code>, for in
 <p>After cloning a new WFL repo, the top-level files are:
 <div class="highlight"><pre><span></span><code>.
 ├── api/            - `workflow-launcher` backend
-├── cloud_function/ - functions deployed separately
+├── functions/      - cloud functions deployed separately
 ├── database/       - database scheme migration changelog and changeset
 ├── derived/        - generated artifacts
 ├── docs/           - ancillary documentation
