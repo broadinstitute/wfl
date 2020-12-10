@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main
-      - rex/GH-1114-fix-helm-releaser
     paths:
       - helm/**
-  pull_request:
 
 jobs:
   release:
