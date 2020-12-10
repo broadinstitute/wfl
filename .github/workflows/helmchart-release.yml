@@ -56,4 +56,8 @@ jobs:
       uses: broadinstitute/chart-releaser-action@v1.0.0-rc.4
       with:
         charts_dir: "helm"
-        charts_repo: "gotc-helm-repo"
+        charts_repo_url: https://broadinstitute.github.io/gotc-helm-repo
+      env:
+        # this is to tell chart-releaser-action
+        # our charts repo is not wfl but a different repo
+        INPUT_CHARTS_REPO: gotc-helm-repo
