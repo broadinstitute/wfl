@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - rex/GH-1114-fix-helm-releaser
     paths:
       - helm/**
 
@@ -56,4 +57,4 @@ jobs:
       uses: broadinstitute/chart-releaser-action@v1.0.0-rc.4
       with:
         charts_dir: "helm"
-        charts_repo: "gotc-helm-repo"
+        charts_repo_url: https://broadinstitute.github.io/gotc-helm-repo
