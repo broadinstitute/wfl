@@ -74,7 +74,6 @@ data:
         </Directory>
 
         # === API ===
-
         # For those endpoints that does NOT require AUTH
         # reverse proxy for /status, /version, and /oauth2id
         ProxyPassMatch          ^/(status|version|oauth2id) ${PROXY_URL}/$1
