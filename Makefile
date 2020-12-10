@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Project-Level Makefile for WFL
+# Top-level Makefile for workflow-launcher
 
 export PROJECT_DIR      := $(CURDIR)
 export DERIVED_DIR      := $(PROJECT_DIR)/derived
@@ -12,7 +12,7 @@ include $(MAKE_INCLUDE_DIR)/common.mk
 # $ make WFL_VERSION=1.2.3
 export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
-MODULES := api cloud_function docs helm ui
+MODULES := api docs functions/aou functions/sg helm ui
 
 .PHONY: all $(MODULES)
 all: $(MODULES)
