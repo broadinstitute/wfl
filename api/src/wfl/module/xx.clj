@@ -19,7 +19,7 @@
 
 (def pipeline "ExternalExomeReprocessing")
 
-(def ^:private cromwell-labels
+(def ^:private cromwell-label
   "The WDL label applied to Cromwell metadata."
   {(keyword wfl/the-name) pipeline})
 
@@ -84,28 +84,6 @@
         (util/assoc-when util/absent? :destination_cloud_path
                          (str (all/slashify output-url) (util/dirname path))))))
 
-;; visible for testing
-(defn submit-workload! [{:keys [uuid workflows] :as workload}]
-  (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-        environment     (get-cromwell-environment workload)
-        default-options (util/make-options environment)]
-    (letfn [(update-workflow [workflow cromwell-uuid]
-              (assoc workflow :uuid cromwell-uuid
-                     :status "Submitted"
-                     :updated (OffsetDateTime/now)))
-            (submit-batch! [[options workflows]]
-              (map update-workflow
-                   workflows
-                   (cromwell/submit-workflows
-                    environment
-                    (io/file (:dir path) (path ".wdl"))
-                    (io/file (:dir path) (path ".zip"))
-                    (map (partial cromwellify-workflow-inputs environment) workflows)
-                    (util/deep-merge default-options options)
-                    (merge cromwell-labels {:workload uuid}))))]
-      ;; Group by discrete options to batch submit
-      (mapcat submit-batch! (group-by :options workflows)))))
-
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]
   (letfn [(nil-if-empty [x] (if (empty? x) nil x))
@@ -125,8 +103,9 @@
   (letfn [(update-record! [{:keys [id] :as workflow}]
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
-    (let [now (OffsetDateTime/now)]
-      (run! update-record! (submit-workload! workload))
+    (let [now (OffsetDateTime/now)
+          env (get-cromwell-environment workload)]
+      (run! update-record! (batch/submit-workload! workload env workflow-wdl cromwellify-workflow-inputs cromwell-label))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 

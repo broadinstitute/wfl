@@ -2,11 +2,11 @@
   (:require [clojure.set :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
             [wfl.service.cromwell :refer [wait-for-workflow-complete
-                                          submit-workflow]]
+                                          submit-workflows]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs :refer [skip-workflow?]]
+            [wfl.module.wgs :as wgs]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.util :as util]
@@ -16,16 +16,15 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private mock-really-submit-one-workflow [& _]
-  (UUID/randomUUID))
+(defn ^:private mock-submit-workflows [_ _ _ inputs _ _]
+  (map (fn [_] (UUID/randomUUID)) inputs))
 
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
       workloads/wgs-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn ^:private strip-prefix
-  [[k v]]
+(defn ^:private strip-prefix [[k v]]
   [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])
 
 (deftest test-create-with-common-reference-fasta-prefix
@@ -60,7 +59,7 @@
                 :workflows)))))
 
 (deftest test-start-wgs-workload!
-  (with-redefs-fn {#'wgs/really-submit-one-workflow mock-really-submit-one-workflow}
+  (with-redefs-fn {#'submit-workflows mock-submit-workflows}
     #(let [workload (-> (make-wgs-workload-request)
                         workloads/create-workload!
                         workloads/start-workload!)]
@@ -91,21 +90,28 @@
             (is (:uuid workflow))
             (is (:status workflow))
             (is (:updated workflow)))
-          (use-input_bam [item]
-            (update item :inputs
-                    #(-> %
-                         (dissoc :input_cram)
-                         (assoc :input_bam "gs://inputs/fake.bam"))))
-          (verify-use_input_bam! [env inputs options labels]
+          (use-input_bam [items]
+            (mapv
+             (fn [item]
+               (update item :inputs
+                       #(-> %
+                            (dissoc :input_cram)
+                            (assoc :input_bam "gs://inputs/fake.bam"))))
+             items))
+          (verify-use_input_bam! [inputs labels]
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
-            (is (contains? labels :workload))
-            [env inputs options labels])]
+            (is (contains? labels :workload)))
+          (verify-inputs [_ _ _ inputs _ labels]
+            (map
+             (fn [in]
+               (verify-use_input_bam! (into {} (map strip-prefix in)) labels)
+               (UUID/randomUUID))
+             inputs))]
     (with-redefs-fn
-      {#'wgs/really-submit-one-workflow
-       (comp mock-really-submit-one-workflow verify-use_input_bam!)}
+      {#'submit-workflows verify-inputs}
       #(-> (make-wgs-workload-request)
-           (update :items (comp vector use-input_bam first))
+           (update :items use-input_bam)
            (workloads/execute-workload!)
            (as-> workload
                  (is (:started workload))
@@ -119,11 +125,13 @@
             (is (:overwritten inputs))
             (is (not-empty (-> inputs :references (dissoc :reference_fasta)))))
           (verify-submitted-inputs [_ _ _ inputs _ _]
-            (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys inputs)))
-            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
-            (UUID/randomUUID))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-inputs
-                     #'skip-workflow? (constantly false)}
+            (map
+             (fn [in]
+               (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys in)))
+               (verify-workflow-inputs (into {} (map strip-prefix in)))
+               (UUID/randomUUID))
+             inputs))]
+    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -144,14 +152,16 @@
                                     :final_gvcf_base_name
                                     :destination_cloud_path]))
           (verify-submitted-inputs [_ _ _ inputs _ _]
-            (verify-workflow-inputs (into {} (map strip-prefix inputs)))
-            (UUID/randomUUID))
+            (map
+             (fn [in]
+               (verify-workflow-inputs (into {} (map strip-prefix in)))
+               (UUID/randomUUID))
+             inputs))
           (test-with-input [key value]
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
               (testing (str "default inputs when given only " key)
-                (with-redefs-fn {#'submit-workflow verify-submitted-inputs
-                                 #'skip-workflow? (constantly false)}
+                (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
                   #(workloads/execute-workload! request)))))]
     (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
     (test-with-input :input_cram (:input_cram workloads/wgs-inputs))))
@@ -161,13 +171,12 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ _ _ options _]
+          (verify-submitted-options [env _ _ inputs options _]
             (let [defaults (util/make-options env)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
-              (UUID/randomUUID)))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-options
-                     #'skip-workflow? (constantly false)}
+              (map (fn [_] (UUID/randomUUID)) inputs)))]
+    (with-redefs-fn {#'submit-workflows verify-submitted-options}
       (fn []
         (->
          (make-wgs-workload-request)

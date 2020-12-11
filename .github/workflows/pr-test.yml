@@ -26,7 +26,7 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     env:
-      MODULES: api cloud_function
+      MODULES: api functions/aou
 
     steps:
       - name: Checkout

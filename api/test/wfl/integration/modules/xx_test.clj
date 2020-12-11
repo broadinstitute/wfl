@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [wfl.environments :as env]
             [wfl.module.xx :as xx]
+            [wfl.module.batch :as batch]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
@@ -18,7 +19,7 @@
       workloads/xx-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn mock-submit-workload [{:keys [workflows]}]
+(defn mock-submit-workload [{:keys [workflows]} _ _ _ _]
   (let [now       (OffsetDateTime/now)
         do-submit #(assoc % :uuid (UUID/randomUUID)
                           :status "Submitted"
@@ -56,7 +57,7 @@
             (is (:uuid workflow))
             (is (:status workflow))
             (is (:updated workflow)))]
-    (with-redefs-fn {#'xx/submit-workload! mock-submit-workload}
+    (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
       #(-> (make-xx-workload-request)
            workloads/create-workload!
            workloads/start-workload!
