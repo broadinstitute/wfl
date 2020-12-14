@@ -17,8 +17,8 @@
   (fn [[input expected]]
     (is (= expected (transform input)))))
 
-(deftest test-basename
-  (let [go         (testing-equality-on util/basename)
+(deftest test-leafname
+  (let [go         (testing-equality-on util/leafname)
         parameters [["" ""]
                     ["/" "/"]
                     ["foo" "foo"]

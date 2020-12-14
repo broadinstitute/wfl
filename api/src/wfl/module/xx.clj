@@ -74,15 +74,16 @@
 
 ;; visible for testing
 (defn make-inputs-to-save [output-url inputs]
-  (let [sample-name (fn [basename] (first (str/split basename #"\.")))
-        [_ path] (gcs/parse-gs-url (some inputs [:input_bam :input_cram]))
-        basename    (or (:base_file_name inputs) (util/basename path))]
+  (let [sample (some inputs [:input_bam :input_cram])
+        [_ base _] (all/bam-or-cram? sample)
+        leaf   (util/leafname base)
+        [_ out-dir] (gcs/parse-gs-url base)]
     (-> inputs
-        (assoc :base_file_name basename)
-        (util/assoc-when util/absent? :sample_name (sample-name basename))
-        (util/assoc-when util/absent? :final_gvcf_base_name basename)
+        (util/assoc-when util/absent? :base_file_name leaf)
+        (util/assoc-when util/absent? :sample_name leaf)
+        (util/assoc-when util/absent? :final_gvcf_base_name leaf)
         (util/assoc-when util/absent? :destination_cloud_path
-                         (str (all/slashify output-url) (util/dirname path))))))
+                         (str (all/slashify output-url) (util/dirname out-dir))))))
 
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]

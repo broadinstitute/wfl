@@ -9,8 +9,8 @@
         inputs (xx/make-inputs-to-save output-url {:input_cram sample})]
     (is (= sample (:input_cram inputs)))
     (is (= "sample" (:sample_name inputs)))
-    (is (= "sample.cram" (:base_file_name inputs)))
-    (is (= "sample.cram" (:final_gvcf_base_name inputs)))
+    (is (= "sample" (:base_file_name inputs)))
+    (is (= "sample" (:final_gvcf_base_name inputs)))
     (is (= (str output-url "folder") (:destination_cloud_path inputs)))))
 
 (deftest test-make-inputs-from-bam
@@ -18,8 +18,8 @@
         inputs (xx/make-inputs-to-save output-url {:input_bam sample})]
     (is (= sample (:input_bam inputs)))
     (is (= "sample" (:sample_name inputs)))
-    (is (= "sample.bam" (:base_file_name inputs)))
-    (is (= "sample.bam" (:final_gvcf_base_name inputs)))
+    (is (= "sample" (:base_file_name inputs)))
+    (is (= "sample" (:final_gvcf_base_name inputs)))
     (is (= (str output-url "folder") (:destination_cloud_path inputs)))))
 
 (deftest test-specifying-destination_cloud_path
