@@ -48,9 +48,11 @@ def get_manifest_path(object_name):
 
 
 def get_or_create_workload(headers, environment):
+    output = f'{OUTPUT_BUCKET}/{environment.lower()}' \
+        if environment else OUTPUT_BUCKET
     payload = {
         'cromwell': CROMWELL_URL,
-        'output': f'{OUTPUT_BUCKET}/{environment.lower()}' if environment else OUTPUT_BUCKET,
+        'output': output,
         'pipeline': 'AllOfUsArrays',
         'project': WFL_ENVIRONMENT
     }
