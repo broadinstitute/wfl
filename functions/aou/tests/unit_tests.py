@@ -4,13 +4,13 @@ from aou import main
 
 
 bucket_name = "test_bucket"
-file_name = "chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
+file_name = "dev/chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
 event_data = {'bucket': bucket_name, 'name': file_name}
 
 
 def test_get_manifest_path_from_uploaded_file():
-    uploaded_file = "chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
-    manifest_file = "chip_name/chipwell_barcode/analysis_version/ptc.json"
+    uploaded_file = "dev/chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
+    manifest_file = "dev/chip_name/chipwell_barcode/analysis_version/ptc.json"
     result = main.get_manifest_path(uploaded_file)
     assert result == manifest_file
 
@@ -32,7 +32,7 @@ def test_manifest_file_not_uploaded(mock_headers, mock_download, mock_get_worklo
 @mock.patch("aou.main.get_auth_headers")
 def test_input_file_not_uploaded(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
-    mock_download.return_value = '{"notifications": [{"file": "gs://test_bucket/file.txt"}]}'
+    mock_download.return_value = '{"notifications": [{"file": "gs://test_bucket/file.txt", "environment": "dev"}]}'
     mock_get_blob.return_value = None
     main.submit_aou_workload(event_data, None)
     assert not mock_get_workload.called
@@ -47,7 +47,7 @@ def test_wfl_called_when_sample_upload_completes(mock_headers, mock_download, mo
     client = mock.create_autospec(storage.Client())
     mock_download.return_value = '{"cromwell": "http://cromwell.broadinstitute.org", ' \
                                  '"sample_alias": "test_sample", ' \
-                                 '"notifications": [{"file": "gs://test_bucket/file.txt"}]}'
+                                 '"notifications": [{"file": "gs://test_bucket/file.txt", "environment": "dev"}]}'
     mock_get_blob.return_value = "blob"
     main.submit_aou_workload(event_data, None)
     assert mock_get_workload.called

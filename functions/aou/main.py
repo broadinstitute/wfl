@@ -37,15 +37,15 @@ def get_auth_headers():
 
 
 def get_manifest_path(object_name):
-    segments = object_name.strip('/').split('/', maxsplit=3)[:3]
+    segments = object_name.strip('/').split('/', maxsplit=4)[:4]
     segments.append('ptc.json')
     return '/'.join(segments)
 
 
-def get_or_create_workload(headers):
+def get_or_create_workload(headers, environment):
     payload = {
         'cromwell': CROMWELL_URL,
-        'output': OUTPUT_BUCKET,
+        'output': f'{OUTPUT_BUCKET}/{environment}',
         'pipeline': 'AllOfUsArrays',
         'project': WFL_ENVIRONMENT
     }
@@ -117,7 +117,8 @@ def submit_aou_workload(event, context):
     chip_well_barcode = notification.get('chip_well_barcode')
     analysis_version = notification.get('analysis_version_number')
     print(f'Upload complete for {chip_well_barcode}-{analysis_version}')
-    workload_uuid = get_or_create_workload(headers)
+    environment = notification.get('environment').lower()
+    workload_uuid = get_or_create_workload(headers, environment)
     print(f'Updating workload: {workload_uuid}')
     workflow_ids = update_workload(headers, workload_uuid, input_data)
     print(
