@@ -75,7 +75,7 @@ def get_files_to_keep(env):
         files = json.load(f)
     return files.get(env, [])
 
-def main(env, service_account_key_path, prefix=None, apply=False):
+def main(env, service_account_key_path, apply=False):
     if env == "prod":
         cromwell_url = "https://cromwell-aou.gotc-prod.broadinstitute.org"
         google_project = "broad-aou-storage"
@@ -89,11 +89,13 @@ def main(env, service_account_key_path, prefix=None, apply=False):
 
     credentials = get_credentials(service_account_key_path, scopes=STORAGE_SCOPES)
     client = storage.Client(project=google_project, credentials=credentials)
-    file_blobs = client.list_blobs(bucket_name, prefix=prefix)
+    # Only get files in one "environment" sub-directory because
+    # dev and staging can include the same samples
+    file_blobs = client.list_blobs(bucket_name, prefix=env)
     file_names = []
     files = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for blob in file_blobs:
-        chip_name, chip_well_barcode, analysis_version_number, file_name = blob.name.split("/", maxsplit=3)
+        mercury_env, chip_name, chip_well_barcode, analysis_version_number, file_name = blob.name.split("/", maxsplit=4)
         files[chip_name][chip_well_barcode][analysis_version_number].append(blob.name)
         file_names.append(blob.name)
 
@@ -119,14 +121,13 @@ if __name__ == "__main__":
                                      usage="%(prog)s [-h] [ENV SERVICE_ACCOUNT_KEY_PATH] [...]")
     parser.add_argument("env",
                         metavar="env",
-                        choices=["dev", "prod"],
-                        help="Which environment's input bucket to clean up. Options: [%(choices)s]")
+                        choices=["dev", "staging", "prod"],
+                        help="Which environment's input files to clean up. Options: [%(choices)s]")
     parser.add_argument("service_account_key_path",
-                        help="A service account with access to the buckets and to Cromwell")
-    parser.add_argument("--prefix",
-                        help="An file object prefix to narrow down which files to clean-up within a bucket, e.g. HumanExome-12v1-1_A")
+                        help="A service account with access to the buckets and to Cromwell. The staging 'env' shares"
+                             "the same input bucket as dev and uses the dev service account.")
     parser.add_argument("--apply",
                         action="store_true",
                         help="Apply the changes.")
     args = parser.parse_args()
-    main(args.env, args.service_account_key_path, args.prefix, args.apply)
+    main(args.env, args.service_account_key_path, args.apply)
