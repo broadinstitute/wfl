@@ -8,9 +8,15 @@ file_name = "dev/chip_name/chipwell_barcode/analysis_version/arrays/metadata/fil
 event_data = {'bucket': bucket_name, 'name': file_name}
 
 
-def test_get_manifest_path_from_uploaded_file():
+def test_get_manifest_path_from_uploaded_file_with_environment_prefix():
     uploaded_file = "dev/chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
     manifest_file = "dev/chip_name/chipwell_barcode/analysis_version/ptc.json"
+    result = main.get_manifest_path(uploaded_file)
+    assert result == manifest_file
+
+def test_get_manifest_path_from_uploaded_file():
+    uploaded_file = "chip_name/chipwell_barcode/analysis_version/arrays/metadata/file.txt"
+    manifest_file = "chip_name/chipwell_barcode/analysis_version/ptc.json"
     result = main.get_manifest_path(uploaded_file)
     assert result == manifest_file
 

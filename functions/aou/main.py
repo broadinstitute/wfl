@@ -37,15 +37,20 @@ def get_auth_headers():
 
 
 def get_manifest_path(object_name):
-    segments = object_name.strip('/').split('/', maxsplit=4)[:4]
-    segments.append('ptc.json')
-    return '/'.join(segments)
+    mercury_environments = ["dev", "staging", "prod"]
+    segments = object_name.strip('/').split('/')
+    if segments[0] in mercury_environments:
+        manifest_segments = segments[:4]
+    else:
+        manifest_segments = segments[:3]
+    manifest_segments.append('ptc.json')
+    return '/'.join(manifest_segments)
 
 
 def get_or_create_workload(headers, environment):
     payload = {
         'cromwell': CROMWELL_URL,
-        'output': f'{OUTPUT_BUCKET}/{environment}',
+        'output': f'{OUTPUT_BUCKET}/{environment.lower()}' if environment else OUTPUT_BUCKET,
         'pipeline': 'AllOfUsArrays',
         'project': WFL_ENVIRONMENT
     }
@@ -117,7 +122,7 @@ def submit_aou_workload(event, context):
     chip_well_barcode = notification.get('chip_well_barcode')
     analysis_version = notification.get('analysis_version_number')
     print(f'Upload complete for {chip_well_barcode}-{analysis_version}')
-    environment = notification.get('environment').lower()
+    environment = notification.get('environment')
     workload_uuid = get_or_create_workload(headers, environment)
     print(f'Updating workload: {workload_uuid}')
     workflow_ids = update_workload(headers, workload_uuid, input_data)
