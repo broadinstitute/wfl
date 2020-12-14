@@ -58,13 +58,67 @@ jobs:
         with:
           cli: '1.10.1.739'
 
-      - name: Configure SSH Keys
+        # Get secret from vault
+      - name: Authenticate to GCloud
+        id: gcloud
+        env:
+          ROLE_ID: ${{ secrets.ROLE_ID }}
+          SECRET_ID: ${{ secrets.SECRET_ID }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
         run: |
+          # get vault token using role-id and secret-id
+          VAULT_TOKEN=$(curl \
+              --request POST \
+              --data "{\"role_id\":\"${ROLE_ID}\",\"secret_id\":\"${SECRET_ID}\"}" \
+              ${VAULT_ADDR}/v1/auth/approle/login | jq -r .auth.client_token)
+          if [ -z "${VAULT_TOKEN}" ] ; then
+            echo "Vault authentication failed!"
+            exit 1
+          fi
+          echo ::add-mask::${VAULT_TOKEN}
+          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $GITHUB_ENV
+          echo ${VAULT_TOKEN} > ~/.vault-token
+
+          # use vault token to read secret - service account json
+          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
+              | jq .data > sa.json
+          if [ ! -s sa.json ] ; then
+            echo "Retrieval of Gcloud SA credentials failed"
+            exit 1
+          fi
+          # auth as service account
+          gcloud auth activate-service-account --key-file=sa.json
+          if [ $? -ne 0 ] ; then
+            echo "Gcloud auth failed!"
+            exit 1
+          fi
+
+          # get bearer token and set it to a specific env var that
+          #   subsequent steps expect.  bearer token good for 1 hour
+          GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
+          if [ -z "${GOOGLE_OAUTH_ACCESS_TOKEN}" ] ; then
+            echo "Generating Gcloud access token failed"
+            exit 1
+          fi
+          echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
+          echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
+
+          # use vault token to get SSH private keys
           mkdir -p ~/.ssh
 
-          echo "${{ secrets.pipeline_config_deploy_key }}" > ~/.ssh/pipeline_config_deploy_key
-          echo "${{ secrets.warp_deploy_key }}" > ~/.ssh/warp_deploy_key
-          echo "${{ secrets.wfl_deploy_key }}" > ~/.ssh/wfl_deploy_key
+          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
+              | jq -r '.data."pipeline-config-deployment_private_key"' > ~/.ssh/pipeline_config_deploy_key
+
+          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
+              | jq -r '.data."warp-deployment_private_key"' > ~/.ssh/warp_deploy_key
+
+          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
+              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
+              | jq -r '.data."wfl-deployment_private_key"' > ~/.ssh/wfl_deploy_key
 
           chmod 600 ~/.ssh/pipeline_config_deploy_key
           chmod 600 ~/.ssh/warp_deploy_key
@@ -92,50 +146,6 @@ jobs:
           docker login \
             --username "${{ secrets.dockerhub_username }}" \
             --password "${{ secrets.dockerhub_password }}"
-
-        # Get secret from vault
-      - name: Authenticate to GCloud
-        id: gcloud
-        env:
-          ROLE_ID: ${{ secrets.ROLE_ID }}
-          SECRET_ID: ${{ secrets.SECRET_ID }}
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-        run: |
-          # get vault token using role-id and secret-id
-          VAULT_TOKEN=$(curl \
-              --request POST \
-              --data "{\"role_id\":\"${ROLE_ID}\",\"secret_id\":\"${SECRET_ID}\"}" \
-              ${VAULT_ADDR}/v1/auth/approle/login | jq -r .auth.client_token)
-          if [ -z "${VAULT_TOKEN}" ] ; then
-            echo "Vault authentication failed!"
-            exit 1
-          fi
-          echo ::add-mask::${VAULT_TOKEN}
-          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> $GITHUB_ENV
-          echo ${VAULT_TOKEN} > ~/.vault-token
-          # use vault token to read secret - service account json
-          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
-              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json \
-              | jq .data > sa.json
-          if [ ! -s sa.json ] ; then
-            echo "Retrieval of Gcloud SA credentials failed"
-            exit 1
-          fi
-          # auth as service account
-          gcloud auth activate-service-account --key-file=sa.json
-          if [ $? -ne 0 ] ; then
-            echo "Gcloud auth failed!"
-            exit 1
-          fi
-          # get bearer token and set it to a specific env var that
-          #   subsequent steps expect.  bearer token good for 1 hour
-          GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
-          if [ -z "${GOOGLE_OAUTH_ACCESS_TOKEN}" ] ; then
-            echo "Generating Gcloud access token failed"
-            exit 1
-          fi
-          echo ::add-mask::${GOOGLE_OAUTH_ACCESS_TOKEN}
-          echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
 
       - name: Pre-Build
         run: USER='Automated Release Action' make ${MODULES} TARGET=prebuild
