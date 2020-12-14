@@ -85,7 +85,7 @@
   [out-gs inputs]
   (let [sample (some inputs [:input_bam :input_cram])
         [_ base _] (all/bam-or-cram? sample)
-        leaf   (util/basename base)
+        leaf   (util/leafname base)
         [_ out-dir] (gcs/parse-gs-url (util/unsuffix base leaf))]
     (-> inputs
         (util/assoc-when util/absent? :base_file_name leaf)
