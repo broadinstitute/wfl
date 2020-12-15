@@ -1,6 +1,5 @@
 import os
 import requests
-from google.cloud import storage
 
 
 WFL_URL = os.environ.get('WFL_URL')
@@ -47,12 +46,14 @@ def submit_wgs_workload(event, context):
     headers = get_auth_headers()
 
     input_file = f"gs://{event['bucket']}/{event['name']}"
-    if input_file.endswith('.cram'):
-        inputs = {'input_cram': input_file}
-    elif input_file.endswith('.bam'):
-        inputs = {'input_bam': input_file}
+    if input_file.endswith('.bam'):
+        inputs = {'ubam': input_file}
+    elif input_file.endswith('.cram'):
+        print(f'Saw CRAM {input_file} get uploaded but SG only accepts BAMs! Erroring out to alert to misuse...')
+        exit(1)
+        return
     else:
-        print(f'Ignoring non CRAM/BAM file: {input_file}')
+        print(f'Ignoring non-input file: {input_file}')
         return
 
     payload = {
