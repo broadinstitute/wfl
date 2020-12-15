@@ -60,13 +60,13 @@ $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
 
 $(UNIT): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);     \
-	$(CLOJURE) $(CLJFLAGS) -A:test unit | \
+	$(CLOJURE) $(CLJFLAGS) -M:test unit | \
 	$(TEE) $(DERIVED_MODULE_DIR)/unit.log
 	@$(TOUCH) $@
 
 $(INTEGRATION): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);            \
-	$(CLOJURE) $(CLJFLAGS) -A:test integration | \
+	$(CLOJURE) $(CLJFLAGS) -M:test integration | \
 	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
