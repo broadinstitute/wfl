@@ -25,8 +25,8 @@
   "Load Cromwell url from the env var CROMWELL."
   []
   (some-> "CROMWELL"
-      util/getenv
-      all/de-slashify))
+          util/getenv
+          all/de-slashify))
 
 (def wgs-inputs
   (let [input-folder
