@@ -122,7 +122,7 @@ of tests to save time and filter out noise. You can do this by directly
 invoke `clojure` cli from within the `api` directory, for example, `cd api` and:
 
 ```bash
-$ clojure -A:test integration --focus wfl.integration.modules.copyfile-test
+$ clojure -M:test integration --focus wfl.integration.modules.copyfile-test
 ```
 
 In general, we implement Clojure tests under the `test/` root directory and use the
@@ -132,14 +132,14 @@ line arguments to `kaocha`, such as the above `--focus` flag.
 You can see the full list of options with the following:
 
 ```shell
-clojure -A:test --help
+clojure -M:test --help
 ```
 
 At present, `wfl` api has three kinds of test, `unit`, `integration`, and `system`.
 These can be run via the `deps.edn`, optionally specifying the kind:
 
 ```shell
-clojure -A:test [unit|integration|system]
+clojure -M:test [unit|integration|system]
 ```
 
 Note that the integration tests currently require a little more configuration
@@ -150,12 +150,27 @@ before they can be run, namely, they require a `wfl` server running locally:
 ```
 
 Additionally, there is a custom parallel test runner that can be invoked
-to help speed up the `system` tests. Rather than `clojure -A:test system` you'd
+to help speed up the `system` tests. Rather than `clojure -M:test system` you'd
 just specify the namespace(s) to try to parallelize.
 
 ```shell
-clojure -A:parallel-test wfl.system.v1-endpoint-test
+clojure -M:parallel-test wfl.system.v1-endpoint-test
 ```
+
+!!! info
+    Note for `system` tests, no matter it's kicked off through `clojure -M:test system` or
+    `clojure -M:parallel-test wfl.system.v1-endpoint-test`, you can use an environment
+    variable `CROMWELL` to override the default Cromwell instance that's used in the test. For
+    example:
+    
+    ```bash
+    CROMWELL=https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test
+    ```
+    
+    will tell the test to submit workflows to the "gotc-prod" Cromwell instance no matter what the
+    default instance was defined in the test. However, you need to make sure the validity of the Cromwell
+    URL you passed in; certain IAM permissions will also be required in order for Cromwell to execute the
+    testing workflows smoothly.
 
 ### Deploy
 
