@@ -15,18 +15,18 @@
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
             [clj-http.client :as http]
-            [wfl.once :as once])
+            [wfl.once :as once]
+            [wfl.module.all :as all])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
-(defn ^:private load-cromwell-from-env-var!
-  "Load Cromwell url from the env var ENVIRONMENT or throw."
+(defn ^:private load-cromwell-url-from-env-var!
+  "Load Cromwell url from the env var CROMWELL."
   []
-  (-> "ENVIRONMENT"
+  (some-> "CROMWELL"
       util/getenv
-      wfl/throw-or-environment-keyword!
-      stuff :cromwell :url))
+      all/de-slashify))
 
 (def wgs-inputs
   (let [input-folder
@@ -41,7 +41,7 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:cromwell (or (load-cromwell-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
+  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -56,7 +56,7 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:cromwell (or (load-cromwell-from-env-var!) (get-in stuff [:aou-dev :cromwell :url]))
+  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:aou-dev :cromwell :url]))
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -102,7 +102,7 @@
 
 (defn arrays-workload-request
   [identifier]
-  {:cromwell (or (load-cromwell-from-env-var!) "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+  {:cromwell (or (load-cromwell-url-from-env-var!) "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"
@@ -111,7 +111,7 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:cromwell (or (load-cromwell-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
+  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -124,7 +124,7 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:cromwell (or (load-cromwell-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
+  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
    :pipeline xx/pipeline
    :project  (format "(Test) %s" @git-branch)
