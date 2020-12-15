@@ -854,7 +854,7 @@ You can use <code>--password=$ENV_SOMETHING</code> to supply it.</p>
 <p class="admonition-title">Tip</p>
 <p>It is more convenient to use the following alias to migrate the database schema
 from within the <code>api</code> directory:
-<div class="highlight"><pre><span></span><code>clojure -A:liquibase
+<div class="highlight"><pre><span></span><code>clojure -M:liquibase
 </code></pre></div>
 if you are working aginst a local database. If you are working with a CloudSQL
 database, the liquibase migration is a encoded step of the <code>cli.py</code>'s <code>deploy</code>

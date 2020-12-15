@@ -791,28 +791,41 @@ Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
 of tests to save time and filter out noise. You can do this by directly
 invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
-<div class="highlight"><pre><span></span><code>$ clojure -A:test integration --focus wfl.integration.modules.copyfile-test
+<div class="highlight"><pre><span></span><code>$ clojure -M:test integration --focus wfl.integration.modules.copyfile-test
 </code></pre></div>
 <p>In general, we implement Clojure tests under the <code>test/</code> root directory and use the
 <a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
 runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
 line arguments to <code>kaocha</code>, such as the above <code>--focus</code> flag.
 You can see the full list of options with the following:</p>
-<div class="highlight"><pre><span></span><code>clojure -A:test --help
+<div class="highlight"><pre><span></span><code>clojure -M:test --help
 </code></pre></div>
 <p>At present, <code>wfl</code> api has three kinds of test, <code>unit</code>, <code>integration</code>, and <code>system</code>.
 These can be run via the <code>deps.edn</code>, optionally specifying the kind:</p>
-<div class="highlight"><pre><span></span><code>clojure -A:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="p">|</span>system<span class="o">]</span>
+<div class="highlight"><pre><span></span><code>clojure -M:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="p">|</span>system<span class="o">]</span>
 </code></pre></div>
 <p>Note that the integration tests currently require a little more configuration
 before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
 <div class="highlight"><pre><span></span><code>./ops/server.sh
 </code></pre></div>
 <p>Additionally, there is a custom parallel test runner that can be invoked
-to help speed up the <code>system</code> tests. Rather than <code>clojure -A:test system</code> you'd
+to help speed up the <code>system</code> tests. Rather than <code>clojure -M:test system</code> you'd
 just specify the namespace(s) to try to parallelize.</p>
-<div class="highlight"><pre><span></span><code>clojure -A:parallel-test wfl.system.v1-endpoint-test
+<div class="highlight"><pre><span></span><code>clojure -M:parallel-test wfl.system.v1-endpoint-test
 </code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Note for <code>system</code> tests, no matter it's kicked off through <code>clojure -M:test system</code> or
+<code>clojure -M:parallel-test wfl.system.v1-endpoint-test</code>, you can use an environment
+variable <code>CROMWELL</code> to override the default Cromwell instance that's used in the test. For
+example:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">CROMWELL</span><span class="o">=</span>https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test
+</code></pre></div>
+<p>will tell the test to submit workflows to the "gotc-prod" Cromwell instance no matter what the
+default instance was defined in the test. However, you need to make sure the validity of the Cromwell
+URL you passed in; certain IAM permissions will also be required in order for Cromwell to execute the
+testing workflows smoothly.</p>
+</div>
 <h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">⚓︎</a></h3>
 <p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
 When it's time to deploy WFL, for most of the time developers need to
