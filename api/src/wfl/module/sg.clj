@@ -52,7 +52,7 @@
     (first envs)))
 
 (defn ^:private cromwellify-workflow-inputs [_ {:keys [inputs]}]
-  (-> default-inputs
+  (-> references/gdc-sg-references
       (util/deep-merge inputs)
       (util/prefix-keys pipeline)))
 
