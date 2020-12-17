@@ -41,13 +41,6 @@
                    :ref_pac   ".fa.pac"
                    :ref_sa    ".fa.sa"}))))
 
-(def default-options
-  {:read_from_cache true
-   :write_to_cache true
-   :google_legacy_machine_selection true
-   :default_runtime_attributes
-   {:zones "us-central1-a us-central1-b us-east1-d us-central1-c us-central1-f us-east1-c"}})
-
 ;; visible for testing
 (defn get-cromwell-environment [{:keys [cromwell]}]
   (let [cromwell (all/de-slashify cromwell)
@@ -83,8 +76,7 @@
               (jdbc/update! tx items values ["id = ?" id])))]
     (let [now (OffsetDateTime/now)
           env (get-cromwell-environment workload)]
-      (run! update-record! (batch/submit-workload! workload env workflow-wdl cromwellify-workflow-inputs cromwell-label
-                                                   default-options))
+      (run! update-record! (batch/submit-workload! workload env workflow-wdl cromwellify-workflow-inputs cromwell-label))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
