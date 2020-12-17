@@ -86,4 +86,4 @@
                     :ref_fai   ".fa.fai"
                     :ref_fasta ".fa"
                     :ref_pac   ".fa.pac"
-                    :ref_sa    ".fa.sa"})))))
+                    :ref_sa    ".fa.sa"}))))
