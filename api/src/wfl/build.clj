@@ -94,7 +94,7 @@
                    out-zip (str (util/unsuffix out-wdl ".wdl") ".zip")]
                (io/make-parents out-zip)
                (.renameTo in-wdl (io/file out-wdl))
-               (.renameTo in-zip (io/file out-zip)))
+               (if in-zip (.renameTo in-zip (io/file out-zip))))
              (finally (util/delete-tree directory)))))))
 
 (defn stage-some-files

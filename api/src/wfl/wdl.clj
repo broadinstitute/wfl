@@ -96,8 +96,10 @@
         path     (zipmap suffixes (map make suffixes))
         dir      (.toFile (Files/createTempDirectory "wfl" (into-array FileAttribute nil)))]
     (doseq [resource (vals path)]
-      (let [destination (io/file dir resource)]
-        (io/make-parents destination)
-        (with-open [in (io/input-stream (or (io/resource resource) resource))]
-          (io/copy in destination))))
+      (try
+        (let [destination (io/file dir resource)]
+          (io/make-parents destination)
+          (with-open [in (io/input-stream (or (io/resource resource) resource))]
+            (io/copy in destination)))
+        (catch Exception _)))
     (assoc path :dir dir)))
