@@ -75,7 +75,8 @@
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
     (let [now (OffsetDateTime/now)
-          env (get-cromwell-environment workload)]
+          ;; SG is derivative of WGS and should use precisely the same environments
+          env (wgs/get-cromwell-environment workload)]
       (run! update-record! (batch/submit-workload! workload env workflow-wdl cromwellify-workflow-inputs cromwell-label))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
