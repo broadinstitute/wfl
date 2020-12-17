@@ -59,7 +59,7 @@ def submit_wgs_workload(event, context):
     payload = {
         'cromwell': CROMWELL_URL,
         'output': OUTPUT_BUCKET,
-        'pipeline': 'ExternalWholeGenomeReprocessing',
+        'pipeline': 'GDCWholeGenomeSomaticSingleSample',
         'project': WFL_ENVIRONMENT,
         'items': [
             {
