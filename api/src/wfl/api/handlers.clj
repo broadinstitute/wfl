@@ -9,6 +9,7 @@
             [wfl.module.copyfile]
             [wfl.module.wgs]
             [wfl.module.xx]
+            [wfl.module.sg]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]

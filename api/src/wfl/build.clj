@@ -8,6 +8,7 @@
             [wfl.module.aou :as aou]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
+            [wfl.module.sg :as sg]
             [wfl.util :as util]
             [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
@@ -117,7 +118,7 @@
   [_opts]
   (letfn [(frob [{:keys [release top] :as _wdl}]
             [(last (str/split top #"/")) release])]
-    (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl]
+    (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl sg/workflow-wdl]
           clones    (find-repos)
           sources   (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
