@@ -61,7 +61,8 @@
                    (cromwell/submit-workflows
                     env
                     (io/file (:dir path) (path ".wdl"))
-                    (io/file (:dir path) (path ".zip"))
+                    (let [dependencies (io/file (:dir path) (path ".zip"))]
+                      (if (.exists dependencies) dependencies nil))
                     (map (partial make-cromwell-inputs! env) workflows)
                     (util/deep-merge default-options options)
                     (merge cromwell-label {:workload uuid}))))]
