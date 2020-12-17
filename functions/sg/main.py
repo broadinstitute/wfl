@@ -33,7 +33,7 @@ def get_auth_headers():
     return headers
 
 
-def submit_wgs_workload(event, context):
+def submit_sg_workload(event, context):
     """Background Cloud Function to be triggered by Cloud Storage.
     Args:
          event (dict):  The dictionary with data specific to this type of
