@@ -73,17 +73,17 @@
         vcf "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf"
         vd1 "gs://broad-gotc-dev-storage/temp_references/gdc/GRCh38.d1.vd1"]
     (merge
-      (util/prefix-keys
-        (prefix-vals vcf
-                     {:dbsnp_vcf       ".gz"
-                      :dbsnp_vcf_index ".gz.tbi"})
-        "gatk_baserecalibrator")
-      (prefix-vals vd1
-                   {:ref_amb   ".fa.amb"
-                    :ref_ann   ".fa.ann"
-                    :ref_bwt   ".fa.bwt"
-                    :ref_dict  ".dict"
-                    :ref_fai   ".fa.fai"
-                    :ref_fasta ".fa"
-                    :ref_pac   ".fa.pac"
-                    :ref_sa    ".fa.sa"}))))
+     (util/prefix-keys
+      (prefix-vals vcf
+                   {:dbsnp_vcf       ".gz"
+                    :dbsnp_vcf_index ".gz.tbi"})
+      "gatk_baserecalibrator")
+     (prefix-vals vd1
+                  {:ref_amb   ".fa.amb"
+                   :ref_ann   ".fa.ann"
+                   :ref_bwt   ".fa.bwt"
+                   :ref_dict  ".dict"
+                   :ref_fai   ".fa.fai"
+                   :ref_fasta ".fa"
+                   :ref_pac   ".fa.pac"
+                   :ref_sa    ".fa.sa"}))))
