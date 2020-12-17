@@ -4,10 +4,11 @@
             [wfl.api.workloads :refer [defoverload]]
             [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
             [wfl.module.batch :as batch]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.references :as references]
+            [wfl.module.wgs :as wgs])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
@@ -20,36 +21,6 @@
   "The top-level WDL file and its version."
   {:release "develop"
    :top     "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
-
-(def default-inputs
-  (let [prefix-vals (fn [s m] (reduce (fn [acc [k v]] (assoc acc k (str s v))) {} m))
-        vcf "gs://pgdac-gdc/dbsnp_144.hg38.vcf"
-        vd1 "gs://getzlab-workflows-reference_files-oa/hg38/gdc/GRCh38.d1.vd1"]
-    (merge
-     (util/prefix-keys
-      (prefix-vals vcf
-                   {:dbsnp_vcf       ".gz"
-                    :dbsnp_vcf_index ".gz.tbi"})
-      "gatk_baserecalibrator")
-     (prefix-vals vd1
-                  {:ref_amb   ".fa.amb"
-                   :ref_ann   ".fa.ann"
-                   :ref_bwt   ".fa.bwt"
-                   :ref_dict  ".dict"
-                   :ref_fai   ".fa.fai"
-                   :ref_fasta ".fa"
-                   :ref_pac   ".fa.pac"
-                   :ref_sa    ".fa.sa"}))))
-
-;; visible for testing
-(defn get-cromwell-environment [{:keys [cromwell]}]
-  (let [cromwell (all/de-slashify cromwell)
-        envs     (all/cromwell-environments #{:gotc-dev :gotc-prod} cromwell)]
-    (when (not= 1 (count envs))
-      (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
-                       :environments envs})))
-    (first envs)))
 
 (defn ^:private cromwellify-workflow-inputs [_ {:keys [inputs]}]
   (-> references/gdc-sg-references
