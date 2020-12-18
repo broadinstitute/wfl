@@ -32,11 +32,11 @@ gcloud functions deploy submit_sg_workload \
     --trigger-resource ${TRIGGER_BUCKET_NAME} \
     --trigger-event ${TRIGGER_EVENT} \
     --service-account ${SA_EMAIL} \
-    --set-env-vars WFL_URL=${_WFL_URL},CROMWELL_URL=${_CROMWELL_URL},WORKLOAD_PROJECT=${_WORKLOAD_PROJECT},OUTPUT_BUCKET=${_OUTPUT_BUCKET}
+    --set-env-vars WFL_URL=${_WFL_URL},CROMWELL_URL=${_CROMWELL_URL},WORKLOAD_PROJECT=${_WORKLOAD_PROJECT},OUTPUT_BUCKET=${_OUTPUT_BUCKET} \
     --runtime python37 \
     --memory 128MB \
     --retry
 
-if [-z "${_PATH_PATTERN}"]; then
+if [ -n "${_PATH_PATTERN}" ]; then
     gcloud functions deploy submit_sg_workload --update-env-vars PATH_PATTERN=${_PATH_PATTERN}
 fi
