@@ -28,7 +28,7 @@
       (util/prefix-keys pipeline)))
 
 (defn ^:private per-workflow-default-options [{:keys [output]}]
-  "Options to cause workflow outputs to be at `{output}/{pipeline}/{workflow uuid}/{pipeline task}/execution/`."
+  "Cause workflow outputs to be at `{output}/{pipeline}/{workflow uuid}/{pipeline task}/execution/`."
   {:final_workflow_outputs_dir output})
 
 (defn create-sg-workload!
