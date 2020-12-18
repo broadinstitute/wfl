@@ -17,6 +17,7 @@
 (def create-aou-workload (make-create-workload workloads/aou-workload-request))
 (def create-xx-workload (make-create-workload workloads/xx-workload-request))
 (def create-arrays-workload (make-create-workload workloads/arrays-workload-request))
+(def create-sg-workload (make-create-workload workloads/sg-workload-request))
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
@@ -64,6 +65,8 @@
   (test-create-workload (workloads/arrays-workload-request (UUID/randomUUID))))
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
+(deftest test-create-sg-workload
+  (test-create-workload (workloads/sg-workload-request (UUID/randomUUID))))
 (deftest test-create-copyfile-workload
   (test-create-workload (workloads/copyfile-workload-request
                          "gs://fake-inputs/lolcats.txt"
@@ -89,6 +92,8 @@
   (test-start-workload (create-arrays-workload)))
 (deftest ^:parallel test-start-xx-workload
   (test-start-workload (create-xx-workload)))
+(deftest ^:parallel test-start-sg-workload
+  (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
   (with-temporary-gcs-folder uri
     (let [src (str uri "input.txt")
@@ -121,6 +126,8 @@
   (test-exec-workload (workloads/arrays-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-sg-workload
+  (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-copyfile-workload
   (with-temporary-gcs-folder uri
     (let [src (str uri "input.txt")
