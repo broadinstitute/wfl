@@ -35,9 +35,6 @@ def get_auth_headers():
 def make_inputs(input_file):
     if input_file.endswith('.bam'):
         return {'ubam': input_file}
-    elif input_file.endswith('.cram'):
-        raise Exception(f'Saw CRAM {input_file} get uploaded but SG only '
-                        f'accepts BAMs! Erroring out to alert to misuse')
     else:
         print(f'Ignoring non-input file: {input_file}')
         return None

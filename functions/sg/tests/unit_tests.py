@@ -7,11 +7,6 @@ def test_make_inputs():
     input_bam = "foo.bam"
     assert main.make_inputs(input_bam) == {'ubam': input_bam}
 
-    input_cram = "foo.cram"
-    with pytest.raises(Exception) as excinfo:
-        main.make_inputs(input_cram)
-    assert f'Saw CRAM {input_cram}' in str(excinfo.value)
-
     input_txt = "foo.txt"
     assert main.make_inputs(input_txt) is None
 
