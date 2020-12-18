@@ -2,6 +2,7 @@ import pytest
 import os
 from sg import main
 
+
 def test_make_inputs():
     input_bam = "foo.bam"
     assert main.make_inputs(input_bam) == {'ubam': input_bam}
@@ -13,6 +14,7 @@ def test_make_inputs():
 
     input_txt = "foo.txt"
     assert main.make_inputs(input_txt) is None
+
 
 def test_make_payload():
     inputs = {'foo': 'bar'}
@@ -27,6 +29,7 @@ def test_make_payload():
             }
         ]
     }
+
 
 def test_describe_workload():
     workload_one = {
@@ -45,4 +48,3 @@ def test_describe_workload():
         ]
     }
     assert main.describe_workload(workload_one) == ['bar', 'baz']
-
