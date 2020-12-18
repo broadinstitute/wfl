@@ -4,13 +4,13 @@ import requests
 
 WFL_URL = os.environ.get('WFL_URL')
 CROMWELL_URL = os.environ.get('CROMWELL_URL')
-WFL_ENVIRONMENT = os.environ.get('WFL_ENVIRONMENT')
+WORKLOAD_PROJECT = os.environ.get('WORKLOAD_PROJECT')
 OUTPUT_BUCKET = os.environ.get('OUTPUT_BUCKET')
 PATH_PATTERN = os.environ.get('PATH_PATTERN')
 
 assert WFL_URL is not None, 'WFL_URL is not set'
 assert CROMWELL_URL is not None, 'CROMWELL_URL is not set'
-assert WFL_ENVIRONMENT is not None, 'WFL_ENVIRONMENT is not set'
+assert WORKLOAD_PROJECT is not None, 'WORKLOAD_PROJECT is not set'
 assert OUTPUT_BUCKET is not None, 'OUTPUT_BUCKET is not set'
 
 
@@ -54,7 +54,7 @@ def make_payload(inputs):
         'cromwell': CROMWELL_URL,
         'output': OUTPUT_BUCKET,
         'pipeline': 'GDCWholeGenomeSomaticSingleSample',
-        'project': WFL_ENVIRONMENT,
+        'project': WORKLOAD_PROJECT,
         'items': [
             {
                 'inputs': inputs
