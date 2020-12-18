@@ -1,14 +1,14 @@
 (ns wfl.module.sg
   "Handle Somatic Genomes."
   (:require [clojure.data.json :as json]
-            [wfl.api.workloads :refer [defoverload]]
             [wfl.api.workloads :as workloads]
+            [wfl.api.workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl]
+            [wfl.module.wgs :as wgs]
             [wfl.references :as references]
-            [wfl.module.wgs :as wgs])
+            [wfl.util :as util]
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
