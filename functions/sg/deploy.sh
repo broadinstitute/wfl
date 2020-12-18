@@ -6,6 +6,7 @@ TRIGGER_BUCKET_NAME=${1}
 TRIGGER_EVENT=${2:-"google.storage.object.finalize"}
 REGION=${3:-"us-central1"}
 
+# gotc-prod
 if [ "${TRIGGER_BUCKET_NAME}" == "broad-gotc-prod-storage" ]; then
     GCLOUD_PROJECT="broad-gotc-prod-storage"
     SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-prod-storage.iam.gserviceaccount.com"
@@ -14,6 +15,15 @@ if [ "${TRIGGER_BUCKET_NAME}" == "broad-gotc-prod-storage" ]; then
     _CROMWELL_URL="https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/"
     _WORKLOAD_PROJECT="sg-prod"
     _OUTPUT_BUCKET="gs://???"
+# gotc-dev
+elif [ "${TRIGGER_BUCKET_NAME}" == "???" ]; then
+    GCLOUD_PROJECT="broad-gotc-dev-storage"
+    SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-dev-storage.iam.gserviceaccount.com"
+    _WFL_URL="https://dev-wfl.gotc-dev.broadinstitute.org"
+    _CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
+    _WORKLOAD_PROJECT="sg-dev"
+    _OUTPUT_BUCKET="gs://???"
+# gotc-dev -- Jack's sandbox
 elif [ "${TRIGGER_BUCKET_NAME}" == "jwarren-wfl-inputs" ]; then
     GCLOUD_PROJECT="broad-gotc-dev-storage"
     SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-dev-storage.iam.gserviceaccount.com"
