@@ -1,10 +1,12 @@
 import os
+import re
 import requests
 
 WFL_URL = os.environ.get('WFL_URL')
 CROMWELL_URL = os.environ.get('CROMWELL_URL')
 WFL_ENVIRONMENT = os.environ.get('WFL_ENVIRONMENT')
 OUTPUT_BUCKET = os.environ.get('OUTPUT_BUCKET')
+PATH_PATTERN = os.environ.get('PATH_PATTERN')
 
 assert WFL_URL is not None, 'WFL_URL is not set'
 assert CROMWELL_URL is not None, 'CROMWELL_URL is not set'
@@ -32,11 +34,18 @@ def get_auth_headers():
     return headers
 
 
+def filter_for_input_paths(pattern, event_file):
+    if pattern is None or re.search(pattern, event_file) is not None:
+        return event_file
+    else:
+        return None
+
+
 def make_inputs(input_file):
     if input_file.endswith('.bam'):
         return {'ubam': input_file}
     else:
-        print(f'Ignoring non-input file: {input_file}')
+        print(f'Ignoring non-input file within input path: {input_file}')
         return None
 
 
@@ -89,11 +98,14 @@ def submit_sg_workload(event, _):
     """
     headers = get_auth_headers()
 
-    input_file = f"gs://{event['bucket']}/{event['name']}"
-    inputs = make_inputs(input_file)
+    event_file = f"gs://{event['bucket']}/{event['name']}"
+    input_file = filter_for_input_paths(PATH_PATTERN, event_file)
+    if input_file is None:
+        return
 
+    inputs = make_inputs(input_file)
     if inputs is None:
         return
-    else:
-        print(f'Submitting {input_file}')
-        return post_payload(headers, make_payload(inputs))
+
+    print(f'Submitting {input_file}')
+    return post_payload(headers, make_payload(inputs))
