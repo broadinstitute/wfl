@@ -27,7 +27,7 @@ elif [ "${TRIGGER_BUCKET_NAME}" == "???" ]; then
 elif [ "${TRIGGER_BUCKET_NAME}" == "jwarren-wfl-inputs" ]; then
     GCLOUD_PROJECT="broad-gotc-dev-storage"
     SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-dev-storage.iam.gserviceaccount.com"
-    _WFL_URL="https://dev-wfl.gotc-dev.broadinstitute.org"
+    _WFL_URL="https://jwarren-wfl.gotc-dev.broadinstitute.org"
     _CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
     _WORKLOAD_PROJECT="sg-dev"
     _OUTPUT_BUCKET="gs://jwarren-wfl-outputs"
