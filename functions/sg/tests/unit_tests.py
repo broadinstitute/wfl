@@ -35,7 +35,7 @@ def test_make_payload():
         'cromwell': os.environ.get('CROMWELL_URL'),
         'output': os.environ.get('OUTPUT_BUCKET'),
         'pipeline': 'GDCWholeGenomeSomaticSingleSample',
-        'project': os.environ.get('WFL_ENVIRONMENT'),
+        'project': os.environ.get('WORKLOAD_PROJECT'),
         'items': [
             {
                 'inputs': inputs
