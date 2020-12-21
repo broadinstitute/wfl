@@ -81,8 +81,11 @@ def post_payload(headers, payload):
         return describe_workload(workload)
     except Exception as e:
         print(f'The failed payload: {payload}')
-        print(f'The failed request: {response.request}')
-        print(f'The failed response: {response.text}')
+        try:
+            # noinspection PyUnboundLocalVariable
+            print(f'The failed response: {response.text}')
+        except UnboundLocalError:
+            print('No response text available')
         raise e
 
 
