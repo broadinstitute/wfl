@@ -101,7 +101,10 @@ def submit_sg_workload(event, _):
     """
     headers = get_auth_headers()
 
-    input_file = filter_for_input_paths(PATH_PATTERN, f"gs://{event['bucket']}/{event['name']}")
+    input_file = filter_for_input_paths(
+        PATH_PATTERN,
+        f"gs://{event['bucket']}/{event['name']}"
+    )
     if input_file is None:
         return
 
