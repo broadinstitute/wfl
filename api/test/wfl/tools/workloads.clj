@@ -16,7 +16,8 @@
             [wfl.util :as util :refer [shell!]]
             [clj-http.client :as http]
             [wfl.once :as once]
-            [wfl.module.all :as all])
+            [wfl.module.all :as all]
+            [wfl.module.sg :as sg])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -134,6 +135,18 @@
                         (util/prefix-keys :UnmappedBamToAlignedBam)
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
+
+(def sg-inputs
+  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
+    {:ubam (str storage "NA12878_PLUMBING.unmapped.bam")}))
+
+(defn sg-workload-request
+  [identifier]
+  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/" identifier)
+   :pipeline sg/pipeline
+   :project  (format "(Test) %s" @git-branch)
+   :items    [{:inputs sg-inputs}]})
 
 ;; HACK: We don't have the workload environment here
 (defn cromwell-status

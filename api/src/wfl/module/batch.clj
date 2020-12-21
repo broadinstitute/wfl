@@ -48,21 +48,23 @@
 
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
-  [{:keys [uuid workflows]} env workflow-wdl make-cromwell-inputs! cromwell-label]
-  (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))
-        default-options (util/make-options env)]
-    (letfn [(update-workflow [workflow cromwell-uuid]
-              (assoc workflow :uuid cromwell-uuid
-                     :status "Submitted"
-                     :updated (OffsetDateTime/now)))
-            (submit-batch! [[options workflows]]
-              (map update-workflow
-                   workflows
-                   (cromwell/submit-workflows
-                    env
-                    (io/file (:dir path) (path ".wdl"))
-                    (io/file (:dir path) (path ".zip"))
-                    (map (partial make-cromwell-inputs! env) workflows)
-                    (util/deep-merge default-options options)
-                    (merge cromwell-label {:workload uuid}))))]
-      (mapcat submit-batch! (group-by :options workflows)))))
+  ([workflow env workflow-wdl make-cromwell-inputs! cromwell-label]
+   (submit-workload! workflow env workflow-wdl make-cromwell-inputs! cromwell-label (util/make-options env)))
+  ([{:keys [uuid workflows]} env workflow-wdl make-cromwell-inputs! cromwell-label default-options]
+   (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
+     (letfn [(update-workflow [workflow cromwell-uuid]
+               (assoc workflow :uuid cromwell-uuid
+                      :status "Submitted"
+                      :updated (OffsetDateTime/now)))
+             (submit-batch! [[options workflows]]
+               (map update-workflow
+                    workflows
+                    (cromwell/submit-workflows
+                     env
+                     (io/file (:dir path) (path ".wdl"))
+                     (let [dependencies (io/file (:dir path) (path ".zip"))]
+                       (if (.exists dependencies) dependencies nil))
+                     (map (partial make-cromwell-inputs! env) workflows)
+                     (util/deep-merge default-options options)
+                     (merge cromwell-label {:workload uuid}))))]
+       (mapcat submit-batch! (group-by :options workflows))))))
