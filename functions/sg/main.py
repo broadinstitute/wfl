@@ -77,7 +77,7 @@ def post_payload(headers, payload):
             json=payload
         )
         response.raise_for_status()
-        workload = response.json
+        workload = response.json()
         return describe_workload(workload)
     except Exception as e:
         print(f'The failed payload: {payload}')
