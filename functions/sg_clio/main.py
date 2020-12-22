@@ -33,7 +33,9 @@ def get_auth_headers():
 
 def make_output_json_blob(event: dict, bucket: storage.Bucket):
     # Returns a blob of `gs://{PIPELINE}/{WORKFLOW UUID}/output.json`
-    return bucket.blob('/'.join([*(event['name'].split('/', 2)[:2]), 'output.json']))
+    return bucket.blob(
+        '/'.join([*(event['name'].split('/', 2)[:2]), 'output.json'])
+    )
 
 
 def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
@@ -56,10 +58,10 @@ def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
             # loss and permits automatic retries of connection failures
             return aggregation_blob.upload_from_string(
                 json.dumps(aggregation_json),
-                if_generation_match=
-                (aggregation_blob.generation if exists else 0),
-                if_metageneration_match=
-                (aggregation_blob.metageneration if exists else None),
+                if_generation_match=(aggregation_blob.generation
+                                     if exists else 0),
+                if_metageneration_match=(aggregation_blob.metageneration
+                                         if exists else None),
             )
         except FailedPrecondition:
             aggregation_blob.reload()
