@@ -12,7 +12,7 @@ include $(MAKE_INCLUDE_DIR)/common.mk
 # $ make WFL_VERSION=1.2.3
 export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
-MODULES := api docs functions/aou functions/sg helm ui
+MODULES := api docs functions/aou functions/sg functions/sg_clio helm ui
 
 .PHONY: all $(MODULES)
 all: $(MODULES)
