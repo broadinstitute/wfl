@@ -91,13 +91,13 @@ def post_payload(headers, payload):
 
 def submit_sg_workload(event, _):
     """Background Cloud Function to be triggered by Cloud Storage.
+
     Args:
-         event (dict):  The dictionary with data specific to this type of
-         event. The `data` field contains the PubsubMessage message. The
-         `attributes` field will contain custom attributes if there are any.
-         _ (google.cloud.functions.Context): The Cloud Functions event
-         metadata. The `event_id` field contains the Pub/Sub message ID. The
-         `timestamp` field contains the publish time.
+        event (dict):  The dictionary with data specific to this type of event.
+                       The `data` field contains a description of the event in
+                       the Cloud Storage `object` format described here:
+                       https://cloud.google.com/storage/docs/json_api/v1/objects#resource
+        _ (google.cloud.functions.Context): Metadata of triggering event.
     """
     headers = get_auth_headers()
 
