@@ -30,7 +30,7 @@ else
 fi
 
 gcloud config set project ${GCLOUD_PROJECT}
-gcloud functions deploy submit_sg_workload \
+gcloud functions deploy sg_clio \
     --region ${REGION} \
     --trigger-resource ${TRIGGER_BUCKET_NAME} \
     --trigger-event ${TRIGGER_EVENT} \
