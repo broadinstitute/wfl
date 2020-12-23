@@ -60,8 +60,9 @@ def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
         aggregation_json[extension] = output_path
         try:
             # Matching to our stored generation/metageneration avoids data
-            # loss and permits automatic retries of connection failures
-            return aggregation_blob.upload_from_string(
+            # loss and permits automatic retries of connection failures.
+            # Use fresh blob to allow uploads.
+            return make_output_json_blob(event, bucket).upload_from_string(
                 json.dumps(aggregation_json),
                 if_generation_match=(aggregation_blob.generation
                                      if exists else 0),
@@ -128,11 +129,16 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
         return
 
     try:
-        key = 'Clio-update-handled-by'
-        if key in aggregation_blob.metadata:
-            raise FailedPrecondition('Already handled, force exit')
-        aggregation_blob.metadata[key] = sg_update_clio.__name__
-        aggregation_blob.patch(
+        handled_flag = 'Clio-update-handled-by'
+        if (aggregation_blob.metadata is not None and
+                handled_flag in aggregation_blob.metadata):
+            raise PreconditionFailed('Already handled, force exit')
+        upload_blob = make_output_json_blob(event, bucket)
+        upload_blob.metadata = {
+            **(aggregation_blob.metadata or {}),
+            handled_flag: sg_update_clio.__name__
+        }
+        upload_blob.patch(
             if_generation_match=event['generation'],
             if_metageneration_match=event['metageneration']
         )
