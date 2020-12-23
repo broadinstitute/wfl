@@ -123,9 +123,11 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
         print('Message out of date, exiting')
         return
 
-    if aggregation_json.keys() != OUTPUT_EXTENSIONS:
-        print(f'{aggregation_blob.path} still missing '
-              f'{aggregation_json.keys() - OUTPUT_EXTENSIONS}, exiting')
+    # KeysView is similar to a Set but not for set subtraction
+    keys = set(aggregation_json.keys())
+    if keys != OUTPUT_EXTENSIONS:
+        print(f'{aggregation_blob.name} still missing '
+              f'{", ".join(OUTPUT_EXTENSIONS - keys)}, exiting')
         return
 
     try:
