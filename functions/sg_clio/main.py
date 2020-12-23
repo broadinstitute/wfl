@@ -4,7 +4,7 @@ import re
 from time import sleep
 
 import requests
-from google.api_core.exceptions import FailedPrecondition
+from google.api_core.exceptions import PreconditionFailed
 from google.cloud import storage
 
 PIPELINE = 'GDCWholeGenomeSomaticSingleSample'
@@ -68,7 +68,7 @@ def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
                 if_metageneration_match=(aggregation_blob.metageneration
                                          if exists else None),
             )
-        except FailedPrecondition:
+        except PreconditionFailed:
             aggregation_blob.reload()
             retries -= 1
 
@@ -118,7 +118,7 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
                 if_metageneration_match=event['metageneration'],
             )
         )
-    except FailedPrecondition:
+    except PreconditionFailed:
         print('Message out of date, exiting')
         return
 
@@ -136,7 +136,7 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
             if_generation_match=event['generation'],
             if_metageneration_match=event['metageneration']
         )
-    except FailedPrecondition:
+    except PreconditionFailed:
         print(f'Multiple invocations detected for {event["name"]}, exiting')
         return
 
