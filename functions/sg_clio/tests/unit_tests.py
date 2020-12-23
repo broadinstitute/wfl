@@ -143,9 +143,9 @@ def test_add_output_to_aggregate():
     }
 
 
-@mock.patch('sg_clio.main.update_clio')
-def test_check_aggregate(mock_update_clio):
-    mock_update_clio.return_value = None
+@mock.patch('sg_clio.main.post_outputs_to_clio')
+def test_check_aggregate(mock_post_outputs_to_clio):
+    mock_post_outputs_to_clio.return_value = None
 
     # Simulate an out-of-date message
     main.check_aggregate(
@@ -155,7 +155,7 @@ def test_check_aggregate(mock_update_clio):
         FakeBucket(),
         disable_sleep=True
     )
-    assert mock_update_clio.call_count == 0
+    assert mock_post_outputs_to_clio.call_count == 0
 
     # Simulate a message with an incomplete aggregate
     fake_bucket = FakeBucket(blob_contents='{}')
@@ -166,7 +166,7 @@ def test_check_aggregate(mock_update_clio):
         fake_bucket,
         disable_sleep=True
     )
-    assert mock_update_clio.call_count == 0
+    assert mock_post_outputs_to_clio.call_count == 0
 
     # Simulate a complete aggregate
     generation = fake_bucket.blob_generation
@@ -181,7 +181,7 @@ def test_check_aggregate(mock_update_clio):
         fake_bucket,
         disable_sleep=True
     )
-    assert mock_update_clio.call_count == 1
+    assert mock_post_outputs_to_clio.call_count == 1
 
     # Simulate a plain but complete duplicate
     main.check_aggregate(
@@ -191,7 +191,7 @@ def test_check_aggregate(mock_update_clio):
         fake_bucket,
         disable_sleep=True
     )
-    assert mock_update_clio.call_count == 1
+    assert mock_post_outputs_to_clio.call_count == 1
 
     # Simulate a fully valid message after we've sent to Clio,
     # metadata check avoids duplicate update
@@ -202,6 +202,6 @@ def test_check_aggregate(mock_update_clio):
         fake_bucket,
         disable_sleep=True
     )
-    assert mock_update_clio.call_count == 1
+    assert mock_post_outputs_to_clio.call_count == 1
 
 

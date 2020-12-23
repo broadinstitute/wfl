@@ -76,7 +76,7 @@ def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
                     f'{aggregation_blob.path} with {event["name"]}')
 
 
-def update_clio(outputs: dict):
+def post_outputs_to_clio(outputs: dict):
     """
     Actually does the talking to Clio.
 
@@ -131,7 +131,7 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
         key = 'Clio-update-handled-by'
         if key in aggregation_blob.metadata:
             raise FailedPrecondition('Already handled, force exit')
-        aggregation_blob.metadata[key] = sg_clio.__name__
+        aggregation_blob.metadata[key] = sg_update_clio.__name__
         aggregation_blob.patch(
             if_generation_match=event['generation'],
             if_metageneration_match=event['metageneration']
@@ -140,7 +140,7 @@ def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
         print(f'Multiple invocations detected for {event["name"]}, exiting')
         return
 
-    return update_clio(aggregation_json)
+    return post_outputs_to_clio(aggregation_json)
 
 
 # An association of str (to be used as a pattern) to some
@@ -152,7 +152,7 @@ FILE_HANDLERS = {
 }
 
 
-def sg_clio(event, _):
+def sg_update_clio(event, _):
     """Background Cloud Function to be triggered by Cloud Storage.
     Updates Clio with outputs of the Somatic Genomes workflow.
 
