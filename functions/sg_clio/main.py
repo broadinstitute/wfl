@@ -46,14 +46,14 @@ def make_output_json_blob(event: dict, bucket: storage.Bucket):
 def add_output_to_aggregate(event: dict, bucket: storage.Bucket):
     aggregation_blob = make_output_json_blob(event, bucket)
     output_path = f'gs://{bucket.name}/{event["name"]}'
-    extension = event['name'].split(".")[-1]
+    extension = f'.{event["name"].split(".")[-1]}'
 
     retries = len(OUTPUT_EXTENSIONS)
     while retries > 0:
         exists = aggregation_blob.exists()
         aggregation_json: dict = \
             json.loads(aggregation_blob.download_as_text()) if exists else {}
-        if aggregation_json[extension] == output_path:
+        if aggregation_json.get(extension) == output_path:
             print(f'Multiple messages were sent for {output_path}, exiting')
             return
 
@@ -103,11 +103,13 @@ def update_clio(outputs: dict):
     return
 
 
-def check_aggregate(event: dict, bucket: storage.Bucket):
+def check_aggregate(event: dict, bucket: storage.Bucket, disable_sleep=False):
     # Many messages notifying of updates to outputs.json will occur in quick
     # succession, so we wait 5 seconds to reasonably check if our message
     # has been superseded.
-    sleep(5)
+    if not disable_sleep:
+        sleep(5)
+
     aggregation_blob = bucket.blob(event['name'])
     try:
         aggregation_json: dict = json.loads(
@@ -123,6 +125,19 @@ def check_aggregate(event: dict, bucket: storage.Bucket):
     if aggregation_json.keys() != OUTPUT_EXTENSIONS:
         print(f'{aggregation_blob.path} still missing '
               f'{aggregation_json.keys() - OUTPUT_EXTENSIONS}, exiting')
+        return
+
+    try:
+        key = 'Clio-update-handled-by'
+        if key in aggregation_blob.metadata:
+            raise FailedPrecondition('Already handled, force exit')
+        aggregation_blob.metadata[key] = sg_clio.__name__
+        aggregation_blob.patch(
+            if_generation_match=event['generation'],
+            if_metageneration_match=event['metageneration']
+        )
+    except FailedPrecondition:
+        print(f'Multiple invocations detected for {event["name"]}, exiting')
         return
 
     return update_clio(aggregation_json)
