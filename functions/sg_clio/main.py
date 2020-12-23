@@ -9,7 +9,7 @@ from google.cloud import storage
 
 PIPELINE = 'GDCWholeGenomeSomaticSingleSample'
 
-OUTPUT_EXTENSIONS = {'.bai', '.bam', '.md_metrics'}
+OUTPUT_EXTENSIONS = {'.bai', '.bam', '.metrics'}
 
 CLIO_URL = os.environ.get('CLIO_URL')
 
