@@ -2,7 +2,7 @@ import mock
 import json
 from random import randrange
 
-from google.api_core.exceptions import FailedPrecondition
+from google.api_core.exceptions import PreconditionFailed
 from sg_clio import main
 
 
@@ -14,7 +14,7 @@ class FakeBucket:
             blob_contents='',
             blob_generation=randrange(100),
             blob_metageneration=randrange(100),
-            blob_metadata={}
+            blob_metadata=None
     ):
         self.name = name
         self.blobs_exist = blobs_exist
@@ -24,20 +24,27 @@ class FakeBucket:
         self.blob_metadata = blob_metadata
 
     def blob(self, path: str):
-        return FakeBlob(self, path, self.blob_metadata)
+        return FakeBlob(self, path)
 
 
 class FakeBlob:
-    def __init__(self, bucket: FakeBucket, path: str, metadata: dict):
+    def __init__(self, bucket: FakeBucket, name: str):
         self.bucket = bucket
-        self.path = path
-        self.metadata = metadata
+        self.name = name
         self.generation = self.bucket.blob_generation if self.bucket.blobs_exist else 0
         self.metageneration = self.bucket.blob_metageneration if self.bucket.blobs_exist else None
         self.reload()
 
     def exists(self):
         return self.bucket.blobs_exist
+
+    @property
+    def metadata(self):
+        return self.bucket.blob_metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        self.bucket.blob_metadata = value
 
     def reload(self):
         self.generation = self.bucket.blob_generation if self.bucket.blobs_exist else 0
@@ -48,7 +55,7 @@ class FakeBlob:
              if_generation_match != self.generation) or
                 (if_metageneration_match is not None and
                  if_metageneration_match != self.metageneration)):
-            raise FailedPrecondition('Failed match')
+            raise PreconditionFailed('Failed match')
 
     def download_as_text(
             self,
@@ -84,7 +91,7 @@ def test_make_output_json_blob():
         {'name': f'{main.PIPELINE}/uuid/task/out.bam'},
         FakeBucket()
     )
-    assert fake_blob.path == f'{main.PIPELINE}/uuid/output.json'
+    assert fake_blob.name == f'{main.PIPELINE}/uuid/output.json'
 
 
 def test_add_output_to_aggregate():
