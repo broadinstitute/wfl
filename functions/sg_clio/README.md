@@ -58,9 +58,8 @@ This accomplishes points two and three discussed above, where Clio is contacted
 with all outputs only once they are in place.
 
 However, finalize events may be sent more than once. We have seen this happen
-with AoU (see [GH-1084](https://broadinstitute.atlassian.net/browse/GH-1084) and
-[GH-1071](https://broadinstitute.atlassian.net/browse/GH-1071) for bugs found
-due to this behavior).
+with AoU (see [GH-1084](https://broadinstitute.atlassian.net/browse/GH-1084)
+for a bug in WFL potentially found due to this behavior).
 
 We'd like to avoid finding numerous bugs in Clio, so we use the bucket's state
 to eliminate duplicate cloud function invocations.
