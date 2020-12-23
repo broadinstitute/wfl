@@ -1,14 +1,19 @@
-import re
-import requests
 import json
+import os
+import re
 from time import sleep
 
+import requests
 from google.api_core.exceptions import FailedPrecondition
 from google.cloud import storage
 
 PIPELINE = 'GDCWholeGenomeSomaticSingleSample'
 
 OUTPUT_EXTENSIONS = {'.bai', '.bam', '.md_metrics'}
+
+CLIO_URL = os.environ.get('CLIO_URL')
+
+assert CLIO_URL is not None, 'CLIO_URL not set'
 
 
 def get_auth_headers():
@@ -93,7 +98,9 @@ def update_clio(outputs: dict):
 
     # If we need to actually read the files for some reason, very easy
     # to pass the bucket into this function
-    raise Exception('TODO')
+
+    print(f'TODO: POST {outputs} to {CLIO_URL}')
+    return
 
 
 def check_aggregate(event: dict, bucket: storage.Bucket):
