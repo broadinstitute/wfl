@@ -1,4 +1,4 @@
-# Deploy the submit_sg_workload cloud function
+# Deploy the sg_update_clio cloud function
 # usage: bash deploy.sh TRIGGER_BUCKET_NAME
 # ex: bash deploy.sh broad-gotc-prod-storage
 
