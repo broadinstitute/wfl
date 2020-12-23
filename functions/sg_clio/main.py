@@ -176,7 +176,7 @@ def sg_update_clio(event, _):
         print(f'{event["name"]} not prefixed with {PIPELINE}, ignoring')
         return
 
-    for pattern, handler in FILE_HANDLERS:
+    for pattern, handler in FILE_HANDLERS.items():
         if re.search(pattern, event['name']) is not None:
             print(f'Handling {event["name"]} with {handler.__name__}')
             return handler(event, storage.Client().bucket(event['bucket']))
