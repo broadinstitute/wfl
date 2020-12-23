@@ -6,9 +6,9 @@ from time import sleep
 from google.api_core.exceptions import FailedPrecondition
 from google.cloud import storage
 
-PIPELINE = "GDCWholeGenomeSomaticSingleSample"
+PIPELINE = 'GDCWholeGenomeSomaticSingleSample'
 
-OUTPUT_EXTENSIONS = {".bai"}
+OUTPUT_EXTENSIONS = {'.bai', '.bam', '.md_metrics'}
 
 
 def get_auth_headers():
@@ -32,7 +32,7 @@ def get_auth_headers():
 
 
 def make_output_json_blob(event: dict, bucket: storage.Bucket):
-    # Returns a blob of `gs://{PIPELINE}/{WORKFLOW UUID}/output.json`
+    # Returns a blob of `gs://{BUCKET}/{PIPELINE}/{WORKFLOW UUID}/output.json`
     return bucket.blob(
         '/'.join([*(event['name'].split('/', 2)[:2]), 'output.json'])
     )
@@ -103,11 +103,12 @@ def check_aggregate(event: dict, bucket: storage.Bucket):
     sleep(5)
     aggregation_blob = bucket.blob(event['name'])
     try:
-        aggregation_json: dict \
-            = json.loads(aggregation_blob.download_as_text(
+        aggregation_json: dict = json.loads(
+            aggregation_blob.download_as_text(
                 if_generation_match=event['generation'],
                 if_metageneration_match=event['metageneration'],
-            ))
+            )
+        )
     except FailedPrecondition:
         print('Message out of date, exiting')
         return
@@ -122,9 +123,9 @@ def check_aggregate(event: dict, bucket: storage.Bucket):
 
 # An association of str (to be used as a pattern) to some
 # function(event: dict, bucket: storage.Bucket) to be called in case of a
-# match. Searched in order; only the first match's function is called.
+# match. Only the first match's function is called.
 FILE_HANDLERS = {
-    r'\.bai$': add_output_to_aggregate,
+    **{f'\\{ext}$': add_output_to_aggregate for ext in OUTPUT_EXTENSIONS},
     r'output\.json$': check_aggregate,
 }
 
@@ -142,8 +143,13 @@ def sg_clio(event, _):
     """
 
     if not event['name'].startswith(PIPELINE):
+        print(f'{event["name"]} not prefixed with {PIPELINE}, ignoring')
         return
 
     for pattern, handler in FILE_HANDLERS:
         if re.search(pattern, event['name']) is not None:
+            print(f'Handling {event["name"]} with {handler.__name__}')
             return handler(event, storage.Client().bucket(event['bucket']))
+
+    print(f'{event["name"]} matched no handlers, ignoring')
+    return
