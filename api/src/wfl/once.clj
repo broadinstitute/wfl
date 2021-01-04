@@ -55,16 +55,12 @@
 
 (def oauth-client-id
   "The client ID based on, in order, the environment, vault, or the gotc-dev one"
-  (delay (if-let [id-from-env
-                  (not-empty (util/getenv "WFL_OAUTH2_CLIENT_ID"))]
-           id-from-env
-           (if-let [id-from-vault
-                    (util/do-or-nil-silently
-                     (-> "WFL_DEPLOY_ENVIRONMENT"
-                         (util/getenv "debug")
-                         wfl/error-or-environment-keyword
-                         env/stuff :server :vault
-                         util/vault-secrets :oauth2_client_id))]
-             id-from-vault
+  (delay (or (not-empty (util/getenv "WFL_OAUTH2_CLIENT_ID"))
+             (util/do-or-nil-silently
+               (-> "WFL_DEPLOY_ENVIRONMENT"
+                   (util/getenv "debug")
+                   wfl/error-or-environment-keyword
+                   env/stuff :server :vault
+                   util/vault-secrets :oauth2_client_id))
              ;; Client ID for gotc-dev, the old hardcoded value for backwards-compatibility
-             "450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com"))))
+             "450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com")))
