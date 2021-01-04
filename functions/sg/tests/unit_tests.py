@@ -5,24 +5,6 @@ import pytest
 from sg import main
 
 
-def test_filter_for_input_paths():
-    # How files look in production: https://broadinstitute.slack.com/archives/C01G46T8HPC/p1608226117024900
-    input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.bam'
-    # Filtering need not handle extensions, make_inputs handles that
-    garbage_input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.bam.metrics.something'
-    # Files not for us may be uploaded to production bucket
-    other_file = 'gs://broad-gotc-prod-storage/blah.txt'
-
-    assert main.filter_for_input_paths(None, input_file) == input_file
-    assert main.filter_for_input_paths(None, garbage_input_file) == garbage_input_file
-    assert main.filter_for_input_paths(None, other_file) == other_file
-
-    pattern = '^gs://broad-gotc-prod-storage/pipeline/[^/]+/[^/]+/unmapped/'
-    assert main.filter_for_input_paths(pattern, input_file) == input_file
-    assert main.filter_for_input_paths(pattern, garbage_input_file) == garbage_input_file
-    assert main.filter_for_input_paths(pattern, other_file) is None
-
-
 def test_make_payload():
     inputs = {'foo': 'bar'}
     assert main.make_payload(inputs) == {

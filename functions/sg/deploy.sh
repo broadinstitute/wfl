@@ -7,10 +7,9 @@ TRIGGER_EVENT=${2:-"google.storage.object.finalize"}
 REGION=${3:-"us-central1"}
 
 # gotc-prod
-if [ "${TRIGGER_BUCKET_NAME}" == "broad-gotc-prod-storage" ]; then
+if [ "${TRIGGER_BUCKET_NAME}" == "???" ]; then
     GCLOUD_PROJECT="broad-gotc-prod-storage"
     SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-prod-storage.iam.gserviceaccount.com"
-    _PATH_PATTERN="^gs://broad-gotc-prod-storage/pipeline/[^/]+/[^/]+/unmapped/"
     _WFL_URL="https://gotc-prod-wfl.gotc-prod.broadinstitute.org"
     _CROMWELL_URL="https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/"
     _WORKLOAD_PROJECT="sg-prod"
@@ -23,14 +22,6 @@ elif [ "${TRIGGER_BUCKET_NAME}" == "???" ]; then
     _CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
     _WORKLOAD_PROJECT="sg-dev"
     _OUTPUT_BUCKET="gs://???"
-# gotc-dev -- Jack's sandbox
-elif [ "${TRIGGER_BUCKET_NAME}" == "jwarren-wfl-inputs" ]; then
-    GCLOUD_PROJECT="broad-gotc-dev-storage"
-    SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-dev-storage.iam.gserviceaccount.com"
-    _WFL_URL="https://jwarren-wfl.gotc-dev.broadinstitute.org"
-    _CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/"
-    _WORKLOAD_PROJECT="sg-dev"
-    _OUTPUT_BUCKET="gs://jwarren-wfl-outputs"
 else
     printf "Unrecognized google project\n"
     exit 1
@@ -46,7 +37,3 @@ gcloud functions deploy submit_sg_workload \
     --runtime python37 \
     --memory 128MB \
     --retry
-
-if [ -n "${_PATH_PATTERN}" ]; then
-    gcloud functions deploy submit_sg_workload --update-env-vars PATH_PATTERN=${_PATH_PATTERN}
-fi
