@@ -41,14 +41,6 @@ def filter_for_input_paths(pattern, event_file):
         return None
 
 
-def make_inputs(input_file):
-    if input_file.endswith('.bam'):
-        return {'ubam': input_file}
-    else:
-        print(f'Ignoring non-input file within input path: {input_file}')
-        return None
-
-
 def make_payload(inputs):
     return {
         'cromwell': CROMWELL_URL,
@@ -105,12 +97,11 @@ def submit_sg_workload(event, _):
         PATH_PATTERN,
         f"gs://{event['bucket']}/{event['name']}"
     )
-    if input_file is None:
-        return
 
-    inputs = make_inputs(input_file)
-    if inputs is None:
+    if input_file is not None and input_file.endswith('.bam'):
+        print(f'Submitting {input_file}')
+        inputs = {'ubam': input_file}
+        return post_payload(headers, make_payload(inputs))
+    else:
+        print(f'Ignoring {input_file}')
         return
-
-    print(f'Submitting {input_file}')
-    return post_payload(headers, make_payload(inputs))
