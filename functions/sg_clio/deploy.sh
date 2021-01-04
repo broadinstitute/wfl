@@ -37,5 +37,4 @@ gcloud functions deploy sg_update_clio \
     --service-account ${SA_EMAIL} \
     --set-env-vars CLIO_URL=${_CLIO_URL} \
     --runtime python37 \
-    --memory 128MB \
-    --retry
+    --memory 128MB
