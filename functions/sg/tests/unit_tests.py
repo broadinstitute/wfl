@@ -23,14 +23,6 @@ def test_filter_for_input_paths():
     assert main.filter_for_input_paths(pattern, other_file) is None
 
 
-def test_make_inputs():
-    input_bam = "foo.bam"
-    assert main.make_inputs(input_bam) == {'ubam': input_bam}
-
-    input_txt = "foo.txt"
-    assert main.make_inputs(input_txt) is None
-
-
 def test_make_payload():
     inputs = {'foo': 'bar'}
     assert main.make_payload(inputs) == {
