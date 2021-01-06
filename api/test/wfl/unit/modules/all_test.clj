@@ -23,6 +23,6 @@
   (let [edn          (wfl/get-the-version)
         has-version? #(= (:release %) (-> % :path leafname edn))]
     (is (every? has-version? [aou/workflow-wdl
+                              sg/workflow-wdl
                               wgs/workflow-wdl
-                              xx/workflow-wdl
-                              sg/workflow-wdl]))))
+                              xx/workflow-wdl]))))
