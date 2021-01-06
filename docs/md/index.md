@@ -96,7 +96,7 @@ to **only build** the WFL and its docker images without running tests.
 
 !!! info
     Note if you updated the second party repositories such as
-    `warp` or `gotc-deploy`, you might have to run:
+    `pipeline-config` or `gotc-deploy`, you might have to run:
     ```bash
     $ make distclean
     ```
@@ -181,19 +181,6 @@ release a new version following the steps in [Release Guide](/docs/md/dev-releas
 After which, the developers who have broad VPN connected can go to the
 [Jenkins Page](https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec)
 to deploy applicable versions of WFL to various available cloud projects.
-
-!!! warning
-    In addition to its own version, Workflow Launcher also needs to manage
-    the version of `warp.git` which contribute the WDL files.
-    Currently, that version is controlled by the commit hash string in
-    function `stage-some-files` in `api/src/build.clj`, for instance:
-
-    ```clojure
-    (util/shell-io! "git" "-C" (.getParent environments)
-                      "checkout" "ad2a1b6b0f16d0e732dd08abcb79eccf4913c8d8")
-    ```
-
-    In the long term, this is likely to change.
 
 Learn more about the deployment details in
 [Deployment of WorkFlow Launcher](/docs/md/dev-deployment.md).
@@ -286,7 +273,6 @@ the services WFL talks to, and are named accordingly.
 | jms.clj      | Java Message Service queues               |
 | postgres.clj | Cloud SQL postgres databases              |
 | server.clj   | the WFL server itself                     |
-| wdl.clj      | parse WDL and manage dependencies         |
 
 ####  Exomes in the Cloud Resources
 
