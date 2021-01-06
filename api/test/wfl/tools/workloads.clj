@@ -101,9 +101,13 @@
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
 
+;; (load-cromwell-url-from-env-var!) is turned off as arrays workload
+;; expects a Terra than Cromwell URL which is not consistent with other modules
+;;
 (defn arrays-workload-request
   [identifier]
-  {:cromwell (or (load-cromwell-url-from-env-var!) "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+  {:cromwell (or #_(load-cromwell-url-from-env-var!)
+                 "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"

@@ -11,6 +11,14 @@ across the WFL code base, this page keeps track of them.
 Set by user, required by WFL deployment, the value is store in Vault. It's used to create a cookie store engine
 by WFL's default middleware.
 
+### `CROMWELL`
+
+Can be set by user, a string of Cromwell URL such as `https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/`.
+If defined, WFL system tests will use this Cromwell URL to override the default ones from the code.
+
+**Note:** this is currently turned off for system tests for `Arrays` module as its `cromwell` field
+actually expects a Terra url which is inconsistent with other module tests.
+
 ### `GOOGLE_APPLICATION_CREDENTIALS`
 
 Path to a Service Account file, can be set by user. If provided, will dominate other variables and WFL
