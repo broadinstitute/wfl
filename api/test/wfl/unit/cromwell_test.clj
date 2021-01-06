@@ -5,7 +5,7 @@
 (def a-wdl {:release "foo"
             :path   "bar/baz.wdl"})
 
-(def b-wdl {:user     "user"
+(def b-wdl {:user    "user"
             :repo    "repo"
             :release "release"
             :path    "path"})
