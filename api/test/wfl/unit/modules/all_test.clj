@@ -3,11 +3,11 @@
             [wfl.environments :as env]
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
+            [wfl.module.sg :as sg]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
-            [wfl.wfl :as wfl]
             [wfl.util :refer [leafname]]
-            [wfl.module.sg :as sg]))
+            [wfl.wfl :as wfl]))
 
 (deftest test-cromwell-environments
   (let [url (get-in env/gotc-dev [:cromwell :url])]
