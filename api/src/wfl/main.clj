@@ -43,7 +43,6 @@
           (namify [ns] (last (str/split (name ns) #"\.")))]
     (let [namespaces '[wfl.dx
                        wfl.metadata
-                       wfl.module.wgs
                        wfl.server]]
       (assoc (zipmap (map namify namespaces) (map varify namespaces))
              "help"         #'help

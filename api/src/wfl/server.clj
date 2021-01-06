@@ -14,7 +14,8 @@
             [wfl.api.routes :as routes]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import [org.eclipse.jetty.util.log Log Logger]))
+  (:import [org.eclipse.jetty.util.log Log Logger]
+           (java.util.concurrent TimeUnit)))
 
 (def description
   "The purpose of this command."
@@ -85,11 +86,31 @@
      (setDebugEnabled [enabled])
      (warn ([thrown]) ([msg & args])))))
 
+(defn ^:private start-workload-manager []
+  (letfn [(update-workloads! [])] ;; todo
+    (pprint "starting workload update loop")
+    (update-workloads!)
+    (future
+      (loop []
+        (update-workloads!)
+        (.sleep TimeUnit/SECONDS 20)
+        (recur)))))
+
+(defn ^:private start-server [args]
+  (let [port {:port (util/is-non-negative! (first args))}]
+    (pprint [wfl/the-name port])
+    (stfu-jetty)
+    (future (jetty/run-jetty app port))))
+
+(defn ^:private await-some [& futures]
+  (loop []
+    (when-not (some future-done? futures)
+      (.sleep TimeUnit/SECONDS 1)
+      (recur))))
+
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
   (pprint (into ["Run:" wfl/the-name "server"] args))
-  (let [port {:port (util/is-non-negative! (first args))}]
-    (pprint [wfl/the-name port])
-    (stfu-jetty)
-    (jetty/run-jetty app port)))
+  (let [manager (start-workload-manager)]
+    (await-some manager (start-server args))))
