@@ -15,8 +15,8 @@
 
 !!! info "Summary"
     - Workflow options are an arbitrary JSON object stored in a key of `options`
-    - Can be provided either per-workflow or for an entire workload (or both)
-    - Optional when you make requests but will always be included in WFL's responses
+    - Can be provided per-workflow, for an entire workload, or both
+    - Optional -- you only need to specify options if you'd like to override something
 
 Suppose the following valid workload request that you might `POST` to `/create` or `/exec`:
 
@@ -56,8 +56,8 @@ workflows, for the entire workload, or both:
   "project": "PO-1234",
   "common": {
     "options": {
-        "global_option": "something for all of the samples",
-        "overwritten_option": "overwrite me for sample 5678"
+        "write_to_cache": false,
+        "google_project": "broad-google-project"
     }
   },
   "items": [
@@ -67,7 +67,7 @@ workflows, for the entire workload, or both:
         "sample_name": "TestSample1234"
       },
       "options": {
-        "my_option": "something for sample 1234"
+        "jes_gcs_root": "gs://broad-gotc-something-execution"
       }
     },
     {
@@ -76,9 +76,9 @@ workflows, for the entire workload, or both:
         "sample_name": "TestSample5678"
       },
       "options": {
-        "my_option": "something different for sample 5678",
-        "another_option": {"foo": "bar"},
-        "overwritten_option": "use this value instead"
+        "jes_gcs_root": "gs://broad-gotc-different-execution",
+        "default_runtime_attributes": {"maxRetries": 3},
+        "google_project": "broad-google-project-2"
       }
     }
   ]
@@ -90,17 +90,16 @@ workflows, for the entire workload, or both:
 
 To recap, in the above example the following workflow options will be set:
 
-- "my_option" will have different strings for the different samples
-- "another_option" will be an object just set for the latter sample
-- "global_option" will be the same string for all samples
-- "overwritten_option" is different for the latter sample
+- "jes_gcs_root" will have different values for the different samples
+- "default_runtime_attributes" will override the "maxRetries" value to be 3
+- "write_to_cache" will be false for all samples
+- "google_project" is broad-google-project for the entire workload but is
+overridden in the second sample to be broad-google-project-2 (providing an
+option with more granularity gives it higher precedence)
 
 In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
 response, which includes all workflow options calculated for each workflow:
-
-???+ info
-    Some fields omitted for brevity
 
 ```json
 {
@@ -113,9 +112,9 @@ response, which includes all workflow options calculated for each workflow:
         "sample_name": "TestSample1234"
       },
       "options": {
-        "my_option": "something for sample 1234",
-        "global_option": "something for all of the samples",
-        "overwritten_option": "overwrite me for sample 5678"
+        "jes_gcs_root": "gs://broad-gotc-something-execution",
+        "write_to_cache": false,
+        "google_project": "broad-google-project"
       }
     },
     {
@@ -124,10 +123,10 @@ response, which includes all workflow options calculated for each workflow:
         "sample_name": "TestSample5678"
       },
       "options": {
-        "my_option": "something different for sample 5678",
-        "another_option": {"foo": "bar"},
-        "global_option": "something for all of the samples",
-        "overwritten_option": "use this value instead"
+        "jes_gcs_root": "gs://broad-gotc-different-execution",
+        "default_runtime_attributes": {"maxRetries": 3},
+        "write_to_cache": false,
+        "google_project": "broad-google-project-2",
       }
     }
   ]
