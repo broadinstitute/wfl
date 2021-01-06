@@ -126,7 +126,7 @@ response, which includes all workflow options calculated for each workflow:
         "jes_gcs_root": "gs://broad-gotc-different-execution",
         "default_runtime_attributes": {"maxRetries": 3},
         "write_to_cache": false,
-        "google_project": "broad-google-project-2",
+        "google_project": "broad-google-project-2"
       }
     }
   ]
