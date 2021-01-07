@@ -136,17 +136,14 @@
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
-(def sg-inputs
-  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:ubam (str storage "NA12878_PLUMBING.unmapped.bam")}))
-
 (defn sg-workload-request
+  "The WDL runs on arbitrary `input_crams` like XX so we can use its inputs."
   [identifier]
   {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/" identifier)
    :pipeline sg/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs sg-inputs}]})
+   :items    [{:inputs xx-inputs}]})
 
 ;; HACK: We don't have the workload environment here
 (defn cromwell-status

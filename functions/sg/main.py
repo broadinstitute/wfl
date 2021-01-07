@@ -98,9 +98,9 @@ def submit_sg_workload(event, _):
         f"gs://{event['bucket']}/{event['name']}"
     )
 
-    if input_file is not None and input_file.endswith('.bam'):
+    if input_file is not None and input_file.endswith('.cram'):
         print(f'Submitting {input_file}')
-        inputs = {'ubam': input_file}
+        inputs = {'input_cram': input_file}
         return post_payload(headers, make_payload(inputs))
     else:
         print(f'Ignoring {input_file}')

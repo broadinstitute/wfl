@@ -7,9 +7,9 @@ from sg import main
 
 def test_filter_for_input_paths():
     # How files look in production: https://broadinstitute.slack.com/archives/C01G46T8HPC/p1608226117024900
-    input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.bam'
+    input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.cram'
     # Filtering need not handle extensions, make_inputs handles that
-    garbage_input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.bam.metrics.something'
+    garbage_input_file = 'gs://broad-gotc-prod-storage/pipeline/foo/bar/unmapped/baz.cram.metrics.something'
     # Files not for us may be uploaded to production bucket
     other_file = 'gs://broad-gotc-prod-storage/blah.txt'
 
@@ -84,14 +84,14 @@ def mocked_requests_post(*args, **kwargs):
 def test_main(mock_post, mock_get_auth_headers):
     mock_get_auth_headers.return_value = {'Authorization': 'Bearer abcd'}
     assert main.submit_sg_workload(
-        {'bucket': 'fake-bucket', 'name': 'something.bam'},
+        {'bucket': 'fake-bucket', 'name': 'something.cram'},
         None
     ) == ['uuid1']
 
     mock_get_auth_headers.return_value = {}
     with pytest.raises(Exception) as excinfo:
         main.submit_sg_workload(
-            {'bucket': 'fake-bucket', 'name': 'something.bam'},
+            {'bucket': 'fake-bucket', 'name': 'something.cram'},
             None
         )
     assert '401' in str(excinfo.value)

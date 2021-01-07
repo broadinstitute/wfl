@@ -103,8 +103,7 @@
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
 ;; sg (Whole Genome Somatic single Sample)
-(s/def ::ubam #(str/ends-with? % ".bam"))
-(s/def ::sg-workflow-inputs (s/keys :req-un [::ubam]))
+(s/def ::sg-workflow-inputs (s/keys :req-un [::input_cram]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)
