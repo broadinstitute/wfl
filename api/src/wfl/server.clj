@@ -14,7 +14,7 @@
             [wfl.api.routes :as routes]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent TimeUnit Future)))
+  (:import (java.util.concurrent Future TimeUnit)))
 
 (def description
   "The purpose of this command."
@@ -92,9 +92,9 @@
   (log/infof "starting jetty webserver on port %s" port)
   (let [server    (jetty/run-jetty app {:port port :join? false})]
     (reify Future
-      (cancel [_ _] (.stop server))
+      (cancel [_ _] (throw (UnsupportedOperationException.)))
       (get [_] (.join server))
-      (get [_ _ _] (.join server))
+      (get [_ _ _] (throw (UnsupportedOperationException.)))
       (isCancelled [_] false)
       (isDone [_] (.isStopped server)))))
 
