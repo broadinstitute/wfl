@@ -7,19 +7,14 @@ for the specific pipeline for more information).
 If you have a set of files uploaded to a GCS bucket and you'd like to start
 a workflow for each one, you can do that via shell scripting.
 
-!!! warning "Note"
-    You will likely run into performance issues with WFL if you try to start
-    hundreds or thousands of workflows in a single request to WFL. You'll need
-    to split up the workflows into multiple workloads, tips for that are
-    [here](#other-notes).
-
 Suppose we have a set of CRAMs in a folder in some bucket, and we'd like to
-submit them all to WFL for ExternalExomeReprocessing (perhaps associated with
+submit them all to WFL for `ExternalExomeReprocessing` (perhaps associated with
 some project or ticket, maybe PO-1234). We'll write a short bash script that
 will handle this for us.
 
-> Make sure you're able to list the files yourself! You'll need permissions
-> and you may need to run `gcloud auth login`
+!!! tip
+    Make sure you're able to list the files yourself! You'll need permissions
+    and you may need to run `gcloud auth login`
 
 ## Step 1: List Files
 
@@ -71,12 +66,12 @@ REQUEST=$(jq '{
 }' <<< "$ITEMS")
 ```
 
-!!! info 
+!!! info
     Remember to change the `output` bucket! And the `project` isn't used by WFL
     but we keep track of it to help you organize workloads based on tickets
     or anything else.
 
-!!! info 
+!!! info
     You can make other customizations here too, like specifying some input or
     option across all the workflows by adding a `common` block. See the docs
     for your pipeline or the [workflow options page](../workflow-options/) for
@@ -90,6 +85,22 @@ curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
     -H 'Content-Type: application/json' \
     -d "$REQUEST"
 ```
+
+!!! warning
+    Curl will complain if the `$REQUEST` here contains more than thousand
+    lines of data. Remember to dump the payload to a file such as
+    `payload.json` and let Curl read from that file instead in that case.
+    For example, the last step can be replaced by:
+
+    ```bash
+
+    echo "$REQUEST" >> "payload.json"
+
+    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+        -H 'Content-Type: application/json' \
+        -d "@payload.json"
+    ```
 
 With this, the final result is something like the following:
 
@@ -118,11 +129,12 @@ Save that as `script.sh` and run with `bash myscript.sh` and you should be good
 to go!
 
 ## Other Notes
+
 Have a lot of workflows to submit? You can use array slicing to help split
 things up:
 
 ```bash
-FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))[0:50]' <<< "$CRAMS")
+FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))[0:5000]' <<< "$CRAMS")
 ```
 
 Need to select files matching some other query too? You can chain the
