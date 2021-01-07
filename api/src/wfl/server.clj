@@ -80,7 +80,7 @@
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
-      (while [true]
+      (while true
         (update-workloads!)
         (.sleep TimeUnit/SECONDS 20)))))
 
