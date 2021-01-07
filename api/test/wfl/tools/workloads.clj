@@ -107,7 +107,7 @@
 (defn arrays-workload-request
   [identifier]
   {:cromwell (or #_(load-cromwell-url-from-env-var!)
-                 "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+              "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"
