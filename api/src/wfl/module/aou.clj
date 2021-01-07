@@ -89,7 +89,9 @@
                         ;; arbitrary path to be used by BAFRegress
                         :minor_allele_frequency_file
                         ;; some message-specified environment to override WFL's
-                        :environment]
+                        :environment
+                        ;; some message-specified vault token path to override WFL's
+                        :vault_token_path]
         mandatory      (select-keys inputs mandatory-keys)
         optional       (select-keys inputs optional-keys)
         missing        (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
@@ -105,6 +107,7 @@
              other-inputs
              (env-inputs environment)
              (get-per-sample-inputs per-sample-inputs))
+      (update :environment str/lower-case)
       (util/prefix-keys :Arrays)))
 
 ;; visible for testing
