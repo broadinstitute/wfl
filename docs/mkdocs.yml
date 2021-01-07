@@ -43,7 +43,7 @@ nav:
     - Arrays: modules-arrays.md
     - Whole Genome: modules-wgs.md
     - External Exome: modules-external-exome-reprocessing.md
-    - Usage Across a Directory: directory-usage.md
+    - Usage Across a Directory: modules-directory-usage.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md
 
