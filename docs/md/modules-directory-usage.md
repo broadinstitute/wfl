@@ -7,11 +7,6 @@ for the specific pipeline for more information).
 If you have a set of files uploaded to a GCS bucket and you'd like to start
 a workflow for each one, you can do that via shell scripting.
 
-??? question "Wondering about performance?"
-    WFL has been updated to use Cromwell's `/api/workflows/{version}/batch`
-    endpoint to submit your samples in a batch, so you don't have to worry
-    about submitting too many samples in a single workload will break WFL.
-
 Suppose we have a set of CRAMs in a folder in some bucket, and we'd like to
 submit them all to WFL for `ExternalExomeReprocessing` (perhaps associated with
 some project or ticket, maybe PO-1234). We'll write a short bash script that
