@@ -104,9 +104,12 @@
 
 (defn ^:private await-some [& futures]
   (loop []
-    (when-not (some future-done? futures)
-      (.sleep TimeUnit/SECONDS 1)
-      (recur))))
+    (let [fs (filter future-done? futures)]
+      (if (not-empty fs)
+        @(first fs)
+        (do
+          (.sleep TimeUnit/SECONDS 1)
+          (recur))))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."
