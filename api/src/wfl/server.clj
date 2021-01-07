@@ -14,7 +14,7 @@
             [wfl.api.routes :as routes]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent TimeUnit)))
+  (:import (java.util.concurrent TimeUnit ExecutionException)))
 
 (def description
   "The purpose of this command."
@@ -72,32 +72,40 @@
       (wrap-json-response {:pretty true})))
 
 (defn ^:private start-workload-manager []
-  (letfn [(update-workloads! [])] ;; todo
+  "Update the workload database then start a background task to periodically
+  manage the state of workflows indefinitely. Returns a
+  java.util.concurrent.Future that, when de-referenced, waits for the background
+  task to finish (i.e. until an error occurs)."
+  (letfn [(update-workloads! [])]                           ;; todo
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
-      (loop []
+      (while [true]
         (update-workloads!)
-        (.sleep TimeUnit/SECONDS 20)
-        (recur)))))
+        (.sleep TimeUnit/SECONDS 20)))))
 
-(defn ^:private start-server [args]
-  (let [port {:port (util/is-non-negative! (first args))}]
-    (log/info wfl/the-name port)
-    (future (jetty/run-jetty app port))))
+(defn ^:private start-webserver
+  "Start the jetty webserver asynchronously to serve http requests on the
+  specified port. Returns a java.util.concurrent.Future that, when de-
+  referenced, blocks until the server ends."
+  [port]
+  (log/infof "starting jetty webserver on port %s" port)
+  (future (jetty/run-jetty app {:port port})))
 
 (defn ^:private await-some [& futures]
+  "Poll the sequence of futures until at least one is done then dereference
+  that future. Any exceptions thrown by that future are propagated untouched."
   (loop []
-    (let [fs (filter future-done? futures)]
-      (if (not-empty fs)
-        @(first fs)
-        (do
-          (.sleep TimeUnit/SECONDS 1)
-          (recur))))))
+    (if-let [f (first (filter future-done? futures))]
+      (do @f nil)
+      (do
+        (.sleep TimeUnit/SECONDS 1)
+        (recur)))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
   (log/info "Run:" wfl/the-name "server" args)
-  (let [manager (start-workload-manager)]
-    (await-some manager (start-server args))))
+  (let [port    {:port (util/is-non-negative! (first args))}
+        manager (start-workload-manager)]
+    (await-some manager (start-webserver port))))
