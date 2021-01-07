@@ -809,7 +809,7 @@ project root.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>Note if you updated the second party repositories such as
-<code>warp</code> or <code>gotc-deploy</code>, you might have to run:
+<code>pipeline-config</code> or <code>gotc-deploy</code>, you might have to run:
 <div class="highlight"><pre><span></span><code>$ make distclean
 </code></pre></div>
 to remove them. This is not always needed but can help completely
@@ -867,17 +867,6 @@ release a new version following the steps in <a href="/docs/md/dev-release.md">R
 <p>After which, the developers who have broad VPN connected can go to the
 <a href="https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec">Jenkins Page</a>
 to deploy applicable versions of WFL to various available cloud projects.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>In addition to its own version, Workflow Launcher also needs to manage
-the version of <code>warp.git</code> which contribute the WDL files.
-Currently, that version is controlled by the commit hash string in
-function <code>stage-some-files</code> in <code>api/src/build.clj</code>, for instance:</p>
-<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nf">util/shell-io!</span> <span class="s">&quot;git&quot;</span> <span class="s">&quot;-C&quot;</span> <span class="p">(</span><span class="nf">.getParent</span> <span class="nv">environments</span><span class="p">)</span>
-                  <span class="s">&quot;checkout&quot;</span> <span class="s">&quot;ad2a1b6b0f16d0e732dd08abcb79eccf4913c8d8&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>In the long term, this is likely to change.</p>
-</div>
 <p>Learn more about the deployment details in
 <a href="/docs/md/dev-deployment.md">Deployment of WorkFlow Launcher</a>.</p>
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">⚓︎</a></h2>
@@ -971,10 +960,6 @@ the services WFL talks to, and are named accordingly.</p>
 <tr>
 <td>server.clj</td>
 <td>the WFL server itself</td>
-</tr>
-<tr>
-<td>wdl.clj</td>
-<td>parse WDL and manage dependencies</td>
 </tr>
 </tbody>
 </table>
