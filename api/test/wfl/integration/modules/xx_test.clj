@@ -85,6 +85,13 @@
                       workloads/update-workload!)]
     (is (:finished workload))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-xx-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
           (strip-prefix [[k v]]

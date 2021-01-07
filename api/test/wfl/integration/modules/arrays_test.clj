@@ -39,6 +39,13 @@
                      workloads/create-workload!)]
     (run! check-inputs (:workflows workload))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-arrays-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-start-arrays-workload!
   (with-redefs-fn {#'terra/create-submission mock-terra-create-submission}
     #(let [workload (-> (make-arrays-workload-request)

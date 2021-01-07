@@ -27,6 +27,13 @@
         (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
         id))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-loading-old-copyfile-workload
   (let [id       (old-create-copyfile-workload!)
         workload (workloads/load-workload-for-id id)]
