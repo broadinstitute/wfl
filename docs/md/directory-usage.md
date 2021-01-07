@@ -91,6 +91,22 @@ curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
     -d "$REQUEST"
 ```
 
+!!! warning
+    Curl will complain if the `$REQUEST` here contains more than thousand
+    lines of data. Remember to dump the payload to a file such as
+    `payload.json` and let Curl read from that file instead in that case.
+    For example, the last step can be replaced by:
+
+    ```bash
+
+    echo "$REQUEST" >> "payload.json"
+
+    curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+        -H 'Content-Type: application/json' \
+        -d "@payload.json"
+    ```
+
 With this, the final result is something like the following:
 
 ```bash
@@ -118,11 +134,12 @@ Save that as `script.sh` and run with `bash myscript.sh` and you should be good
 to go!
 
 ## Other Notes
+
 Have a lot of workflows to submit? You can use array slicing to help split
 things up:
 
 ```bash
-FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))[0:50]' <<< "$CRAMS")
+FILES=$(jq -sR 'split("\n") | map(select(startswith("gs://")))[0:5000]' <<< "$CRAMS")
 ```
 
 Need to select files matching some other query too? You can chain the
