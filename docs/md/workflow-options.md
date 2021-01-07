@@ -22,7 +22,7 @@ Suppose the following valid workload request that you might `POST` to `/create` 
 
 ```json
 {
-  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
   "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
@@ -49,7 +49,7 @@ workflows, for the entire workload, or both:
 
 ```json
 {
-  "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+  "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
   "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
   "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
   "pipeline": "ExternalWholeGenomeReprocessing",
