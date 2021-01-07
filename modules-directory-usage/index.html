@@ -584,7 +584,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/directory-usage.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-directory-usage.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -595,21 +595,15 @@ pipeline you specify, other inputs will be extrapolated (see WFL's docs
 for the specific pipeline for more information).</p>
 <p>If you have a set of files uploaded to a GCS bucket and you'd like to start
 a workflow for each one, you can do that via shell scripting.</p>
-<div class="admonition warning">
-<p class="admonition-title">Note</p>
-<p>You will likely run into performance issues with WFL if you try to start
-hundreds or thousands of workflows in a single request to WFL. You'll need
-to split up the workflows into multiple workloads, tips for that are
-<a href="#other-notes">here</a>.</p>
-</div>
 <p>Suppose we have a set of CRAMs in a folder in some bucket, and we'd like to
-submit them all to WFL for ExternalExomeReprocessing (perhaps associated with
+submit them all to WFL for <code>ExternalExomeReprocessing</code> (perhaps associated with
 some project or ticket, maybe PO-1234). We'll write a short bash script that
 will handle this for us.</p>
-<blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
 <p>Make sure you're able to list the files yourself! You'll need permissions
 and you may need to run <code>gcloud auth login</code></p>
-</blockquote>
+</div>
 <h2 id="step-1-list-files">Step 1: List Files<a class="headerlink" href="#step-1-list-files" title="Permanent link">⚓︎</a></h2>
 <p>We need a list of all the files you intend to process. This'll depend on the
 file location, <code>gs://broad-gotc-dev-wfl-ptc-test-inputs/</code> for example. We can
@@ -665,6 +659,20 @@ more info.</p>
     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
     -d <span class="s2">&quot;</span><span class="nv">$REQUEST</span><span class="s2">&quot;</span>
 </code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Curl will complain if the <code>$REQUEST</code> here contains more than thousand
+lines of data. Remember to dump the payload to a file such as
+<code>payload.json</code> and let Curl read from that file instead in that case.
+For example, the last step can be replaced by:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$REQUEST</span><span class="s2">&quot;</span> &gt;&gt; <span class="s2">&quot;payload.json&quot;</span>
+
+curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
+    -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+    -d <span class="s2">&quot;@payload.json&quot;</span>
+</code></pre></div>
+</div>
 <p>With this, the final result is something like the following:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">CRAMS</span><span class="o">=</span><span class="k">$(</span>gsutil ls <span class="s1">&#39;gs://broad-gotc-dev-wfl-ptc-test-inputs/**.cram&#39;</span><span class="k">)</span>
 
@@ -690,7 +698,7 @@ to go!</p>
 <h2 id="other-notes">Other Notes<a class="headerlink" href="#other-notes" title="Permanent link">⚓︎</a></h2>
 <p>Have a lot of workflows to submit? You can use array slicing to help split
 things up:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">FILES</span><span class="o">=</span><span class="k">$(</span>jq -sR <span class="s1">&#39;split(&quot;\n&quot;) | map(select(startswith(&quot;gs://&quot;)))[0:50]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$CRAMS</span><span class="s2">&quot;</span><span class="k">)</span>
+<div class="highlight"><pre><span></span><code><span class="nv">FILES</span><span class="o">=</span><span class="k">$(</span>jq -sR <span class="s1">&#39;split(&quot;\n&quot;) | map(select(startswith(&quot;gs://&quot;)))[0:5000]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$CRAMS</span><span class="s2">&quot;</span><span class="k">)</span>
 </code></pre></div>
 <p>Need to select files matching some other query too? You can chain the
 <code>map</code>-<code>select</code> commands and use other string filters on the file names:</p>
