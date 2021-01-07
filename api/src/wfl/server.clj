@@ -14,7 +14,7 @@
             [wfl.api.routes :as routes]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent TimeUnit ExecutionException)))
+  (:import (java.util.concurrent TimeUnit Future)))
 
 (def description
   "The purpose of this command."
@@ -90,7 +90,13 @@
   referenced, blocks until the server ends."
   [port]
   (log/infof "starting jetty webserver on port %s" port)
-  (future (jetty/run-jetty app {:port port})))
+  (let [server    (jetty/run-jetty app {:port port :join? false})]
+    (reify Future
+      (cancel [_ _] (.stop server))
+      (get [_] (.join server))
+      (get [_ _ _] (.join server))
+      (isCancelled [_] false)
+      (isDone [_] (.isStopped server)))))
 
 (defn ^:private await-some [& futures]
   "Poll the sequence of futures until at least one is done then dereference
@@ -106,6 +112,6 @@
   "Run child server in ENVIRONMENT on PORT."
   [& args]
   (log/info "Run:" wfl/the-name "server" args)
-  (let [port    {:port (util/is-non-negative! (first args))}
+  (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)]
     (await-some manager (start-webserver port))))
