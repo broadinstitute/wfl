@@ -51,7 +51,7 @@ def get_or_create_workload(headers, environment):
     output = f'{OUTPUT_BUCKET}/{environment.lower()}' \
         if environment else OUTPUT_BUCKET
     payload = {
-        'cromwell': CROMWELL_URL,
+        'executor': CROMWELL_URL,
         'output': output,
         'pipeline': 'AllOfUsArrays',
         'project': WFL_ENVIRONMENT
