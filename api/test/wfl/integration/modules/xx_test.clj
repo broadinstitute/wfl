@@ -76,7 +76,7 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:cromwell (get-in env/stuff [:xx-dev :cromwell :url])
+  (let [workload (->> {:executor (get-in env/stuff [:xx-dev :cromwell :url])
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  (format "(Test) %s" @workloads/git-branch)

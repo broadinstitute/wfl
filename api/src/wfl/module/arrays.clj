@@ -108,14 +108,14 @@
 
 (defn start-arrays-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [cromwell items project uuid] :as workload}]
+  [tx {:keys [executor items project uuid] :as workload}]
   (let [now (OffsetDateTime/now)
         method-configuration-namespace (first (str/split project #"/"))]
     (letfn [(submit! [{:keys [id] :as workflow}]
               (let [inputs           (:inputs workflow)
                     entity-type      (:entity-type inputs)
                     entity-name      (:entity-name inputs)]
-                [id (terra/create-submission cromwell project method-configuration-name
+                [id (terra/create-submission executor project method-configuration-name
                                              method-configuration-namespace entity-type entity-name)]))
             (update! [tx [id uuid]]
               (when uuid

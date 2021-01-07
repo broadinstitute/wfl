@@ -59,9 +59,9 @@
 
 (defn update-workflow-statuses!
   "Use `tx` to update `status` the workflows in a `workload`."
-  [tx {:keys [cromwell uuid items]}]
+  [tx {:keys [executor uuid items]}]
   (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
-                          (cromwell/query (first (all/cromwell-environments cromwell)))
+                          (cromwell/query (first (all/cromwell-environments executor)))
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
               (jdbc/update! tx items
@@ -71,8 +71,8 @@
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
-            (terra/get-workflow-status-by-entity cromwell project workflow))]
+  (letfn [(get-terra-status [{:keys [executor project]} workflow]
+            (terra/get-workflow-status-by-entity executor project workflow))]
     (make-update-workflows get-terra-status)))
 
 (defn update-workload-status!
