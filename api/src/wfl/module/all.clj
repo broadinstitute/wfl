@@ -84,7 +84,7 @@
 
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
-  [tx {:keys [release top] :as _workflow-wdl} body]
+  [tx {:keys [release path] :as _workflow-wdl} body]
   (let [{:keys [creator cromwell input output pipeline project]} body
         {:keys [commit version]} (wfl/get-the-version)
         [{:keys [id]}]
@@ -97,7 +97,7 @@
                                     :release  release
                                     :uuid     (UUID/randomUUID)
                                     :version  version
-                                    :wdl      top})
+                                    :wdl      path})
         table (format "%s_%09d" pipeline id)
         work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
                      table pipeline)]

@@ -4,7 +4,6 @@
             [wfl.api.spec]
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
-            [wfl.service.cromwell :refer [submit-workflow]]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.tools.endpoints :as endpoints]

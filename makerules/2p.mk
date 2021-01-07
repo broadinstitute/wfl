@@ -1,6 +1,6 @@
 # Makerules for 2p (Broad Institute) Libraries on GitHub
 # Conditionally included by defining the list REQUIRED_2P_REPOSITORIES
-# 2p repositories are cloned into derived/2p and are cleaed on `distclean`
+# 2p repositories are cloned into derived/2p and are cleaned on `distclean`
 # Example:
 # REQUIRED_2P_REPOSITORIES := wfl
 # include $(MAKE_INCLUDE_DIR)/modules.mk

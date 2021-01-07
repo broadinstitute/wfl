@@ -4,13 +4,11 @@
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [wfl.main :as main]
             [wfl.module.aou :as aou]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.module.sg :as sg]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
@@ -83,31 +81,15 @@
             (let [dir (str/join "/" [second-party repo])]
               [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
 
-(defn cromwellify-wdl
-  "Cromwellify the WDL from warp in CLONES to RESOURCES."
-  [clones resources {:keys [release top] :as _wdl}]
-  (let [dp (str/join "/" [clones "warp"])]
-    (util/shell-io!
-     "git" "-c" "advice.detachedHead=false" "-C" dp "checkout" release)
-    (let [[directory in-wdl in-zip] (wdl/cromwellify (io/file dp top))]
-      (when directory
-        (try (let [out-wdl (.getPath (io/file resources (.getName in-wdl)))
-                   out-zip (str (util/unsuffix out-wdl ".wdl") ".zip")]
-               (io/make-parents out-zip)
-               (.renameTo in-wdl (io/file out-wdl))
-               (if in-zip (.renameTo in-zip (io/file out-zip))))
-             (finally (util/delete-tree directory)))))))
-
 (defn stage-some-files
-  "Stage some files from CLONES to generated SOURCES and RESOURCES."
-  [clones sources resources]
+  "Stage some files from CLONES to generated SOURCES."
+  [clones sources]
   (letfn [(clone [repo file] (io/file (str/join "/" [clones repo]) file))
           (stage [dir file]
             (let [out (io/file dir (.getName file))]
               (io/make-parents out)
               (io/copy file out)))]
     (let [environments (clone "pipeline-config" "wfl/environments.clj")]
-      (stage resources (clone "warp" "tasks/broad/CopyFilesFromCloudToCloud.wdl"))
       (util/shell-io!
        "git" "-c" "advice.detachedHead=false" "-C" (.getParent environments)
        "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
@@ -116,14 +98,13 @@
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (letfn [(frob [{:keys [release top] :as _wdl}]
-            [(last (str/split top #"/")) release])]
+  (letfn [(frob [{:keys [release path]}]
+            [(last (str/split path #"/")) release])]
     (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl sg/workflow-wdl]
           clones    (find-repos)
           sources   (io/file derived "src" "wfl")
           resources (io/file derived "resources" "wfl")
           edn       (merge the-version clones (into {} (map frob wdls)))]
       (pprint edn)
-      (stage-some-files second-party sources resources)
-      (run! (partial cromwellify-wdl second-party resources) wdls)
+      (stage-some-files second-party sources)
       (write-the-version-file resources edn))))

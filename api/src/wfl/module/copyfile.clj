@@ -12,8 +12,9 @@
 (def pipeline "copyfile")
 
 (def workflow-wdl
-  {:release "copyfile-v1.0"
-   :top     "wdl/copyfile.wdl"})
+  {:repo    "wfl"
+   :release "v0.4.2"
+   :path    "api/resources/wdl/copyfile.wdl"})
 
 (defn ^:private get-cromwell-environment [{:keys [cromwell]}]
   (let [envs (all/cromwell-environments #{:gotc-dev :gotc-prod} cromwell)]
@@ -28,8 +29,7 @@
   [environment inputs options labels]
   (cromwell/submit-workflow
    environment
-   (util/extract-resource (:top workflow-wdl))
-   nil
+   workflow-wdl
    (-> inputs (util/prefix-keys pipeline))
    options
    labels))
