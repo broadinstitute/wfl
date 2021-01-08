@@ -6,7 +6,8 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.api.workloads :as workloads])
   (:import [java.util UUID]
            [java.time OffsetDateTime]))
 
@@ -66,7 +67,8 @@
 
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
-  [tx workload]
+  [tx {:keys [id] :as workload}]
   (do
     (postgres/batch-update-workflow-statuses! tx workload)
-    (postgres/update-workload-status! tx workload)))
+    (postgres/update-workload-status! tx workload)
+    (workloads/load-workload-for-id tx id)))
