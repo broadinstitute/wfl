@@ -1,4 +1,4 @@
-(ns wfl.build
+(ns build
   "Build support originating in build.boot."
   (:require [clojure.data.xml :as xml]
             [clojure.java.io :as io]
@@ -8,13 +8,9 @@
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.module.sg :as sg]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util :as util])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
-
-(def second-party "../derived/2p")
-(def derived      "../derived/api")
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
@@ -30,11 +26,12 @@
                        OffsetDateTime/parse .toInstant .toString)
         clean?    (util/do-or-nil-silently
                    (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
-    {:version   (or (System/getenv "WFL_VERSION") "devel")
-     :commit    commit
-     :committed committed
-     :built     built
-     :user      (or (System/getenv "USER") wfl/the-name)}))
+    {:version          (or (System/getenv "WFL_VERSION") "devel")
+     :commit           commit
+     :committed        committed
+     :built            built
+     :user             (or (System/getenv "USER") "wfl")
+     "pipeline-config" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae"}))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
@@ -49,12 +46,13 @@
 
 (def the-pom
   "The POM elements that override the uberdeps/uberjar defaults."
-  #::pom{:artifactId  (name wfl/artifactId)
-         :description "WFL manages workflows."
-         :groupId     (namespace wfl/artifactId)
-         :name        "WorkFlow Launcher"
-         :url         "https://github.com/broadinstitute/wfl.git"
-         :version     (:version the-version)})
+  (let [artifactId 'org.broadinstitute/wfl]
+    #::pom{:artifactId  (name artifactId)
+           :description "WFL manages workflows."
+           :groupId     (namespace artifactId)
+           :name        "WorkFlow Launcher"
+           :url         "https://github.com/broadinstitute/wfl.git"
+           :version     (:version the-version)}))
 
 (defn update-the-pom
   "Update the Project Object Model (pom.xml) file for this program."
@@ -70,41 +68,26 @@
           xml/emit-str
           (->> (spit out))))))
 
-(defn find-repos
-  "Return a map of wfl/the-github-repos clones.
-   Omit [[wfl/the-name]]'s repo since it isn't needed
-   for the version."
-  []
-  (let [the-github-repos-no-wfl (dissoc wfl/the-github-repos wfl/the-name)]
-    (into {}
-          (for [repo (keys the-github-repos-no-wfl)]
-            (let [dir (str/join "/" [second-party repo])]
-              [repo (util/shell! "git" "-C" dir "rev-parse" "HEAD")])))))
-
-(defn stage-some-files
-  "Stage some files from CLONES to generated SOURCES."
-  [clones sources]
-  (letfn [(clone [repo file] (io/file (str/join "/" [clones repo]) file))
-          (stage [dir file]
-            (let [out (io/file dir (.getName file))]
-              (io/make-parents out)
-              (io/copy file out)))]
-    (let [environments (clone "pipeline-config" "wfl/environments.clj")]
-      (util/shell-io!
-       "git" "-c" "advice.detachedHead=false" "-C" (.getParent environments)
-       "checkout" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae")
-      (stage sources environments))))
+(defn stage-environment-dot-clj
+  "Stage the wfl/environments.clj file to generated SOURCES."
+  [sources]
+  (let [clj  "../../derived/2p/pipeline-config/wfl/environments.clj"
+        file (io/file clj)]
+    (util/shell-io!
+     "git" "-c" "advice.detachedHead=false" "-C" (.getParent file)
+     "checkout" (the-version "pipeline-config"))
+    (let [out (io/file sources (.getName file))]
+      (io/make-parents out)
+      (io/copy file out))))
 
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (letfn [(frob [{:keys [release path]}]
-            [(last (str/split path #"/")) release])]
-    (let [wdls      [aou/workflow-wdl wgs/workflow-wdl xx/workflow-wdl sg/workflow-wdl]
-          clones    (find-repos)
-          sources   (io/file derived "src" "wfl")
-          resources (io/file derived "resources" "wfl")
-          edn       (merge the-version clones (into {} (map frob wdls)))]
-      (pprint edn)
-      (stage-some-files second-party sources)
-      (write-the-version-file resources edn))))
+  (let [api   "../../derived/api"]
+    (pprint the-version)
+    (stage-environment-dot-clj (io/file api "src" "wfl"))
+    (write-the-version-file (io/file api "resources" "wfl") the-version)))
+
+(comment
+  (prebuild {})
+  )

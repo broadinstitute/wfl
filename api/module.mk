@@ -33,7 +33,8 @@ JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	$(CLOJURE) -X wfl.build/prebuild
+	$(CD) build
+	$(CLOJURE) -X build/prebuild
 	@$(TOUCH) $@
 
 $(POM_IN): $(CLOJURE_PROJECT)

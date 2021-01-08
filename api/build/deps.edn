@@ -1,0 +1,13 @@
+{:mvn/repos
+ {"broad"
+  {:url "https://broadinstitute.jfrog.io/broadinstitute/ext-release-local"}
+  "central" {:url "https://repo1.maven.org/maven2/"}
+  "clojars" {:url "https://clojars.org/repo"}}
+
+ :deps
+ {org.clojure/clojure       {:mvn/version "1.10.1"}
+  org.broadinstitute/wfl    {:local/root  ".."}}
+
+ ;; derived/api/src must come first so environments.clj is found before
+ ;; placeholder in src/.
+ :paths ["." "../src"]}
