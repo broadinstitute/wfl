@@ -17,8 +17,8 @@
   [tx {:keys [release path] :as _workflow-wdl} {:keys [pipeline] :as workload-request}]
   (let [[{:keys [id]}]
         (-> workload-request
-            (select-keys [:creator :cromwell :input :output :project])
-            (update :cromwell all/de-slashify)
+            (select-keys [:creator :executor :input :output :project])
+            (update :executor all/de-slashify)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))

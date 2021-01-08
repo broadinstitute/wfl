@@ -1,5 +1,6 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.string :as str]
+  (:require [clojure.set :refer [rename-keys]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest testing is]]
             [wfl.service.gcs :as gcs]
             [wfl.tools.endpoints :as endpoints]
@@ -46,16 +47,22 @@
       (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
 
 (defn ^:private test-create-workload
-  [{:keys [pipeline] :as request}]
-  (testing (format "calling api/v1/create with %s workload request" pipeline)
-    (let [{:keys [uuid] :as workload} (endpoints/create-workload request)]
-      (is uuid "workloads should be been assigned a uuid")
-      (is (:created workload) "should have a created timestamp")
-      (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-      (is (not (:started workload)) "hasn't been started in cromwell")
-      (let [include [:pipeline :cromwell :project]]
-        (is (= (select-keys request include) (select-keys workload include))))
-      (verify-internal-properties-removed workload))))
+  [request]
+  (letfn [(test! [{:keys [pipeline] :as request}]
+            (testing (format "calling api/v1/create with %s workload request" pipeline)
+              (let [{:keys [uuid] :as workload} (endpoints/create-workload request)]
+                (is uuid "workloads should be been assigned a uuid")
+                (is (:created workload) "should have a created timestamp")
+                (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
+                (is (not (:started workload)) "hasn't been started in cromwell")
+                (let [include [:pipeline :project]]
+                  (is (= (select-keys request include) (select-keys workload include))))
+                (is (= (:executor workload) (or (:executor request) (:cromwell request)))
+                    "lost track of executor/cromwell")
+                (verify-internal-properties-removed workload))))]
+    (test! request)
+    (testing "passed :cromwell rather than :executor"
+      (test! (rename-keys request {:executor :cromwell})))))
 
 (deftest test-create-wgs-workload
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -110,7 +117,7 @@
       (is (:created workload) "should have a created timestamp")
       (is (:started workload) "should have a started timestamp")
       (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-      (let [include [:pipeline :cromwell :project]]
+      (let [include [:pipeline :executor :project]]
         (is (= (select-keys request include) (select-keys workload include))))
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))

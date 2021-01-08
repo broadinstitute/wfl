@@ -40,7 +40,7 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -55,7 +55,7 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:aou-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:aou-dev :cromwell :url]))
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -101,7 +101,7 @@
 
 (defn arrays-workload-request
   [identifier]
-  {:cromwell (or (load-cromwell-url-from-env-var!) "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+  {:executor (or (load-cromwell-url-from-env-var!) "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"
@@ -110,7 +110,7 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -123,7 +123,7 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
    :pipeline xx/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -140,7 +140,7 @@
 
 (defn sg-workload-request
   [identifier]
-  {:cromwell (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/" identifier)
    :pipeline sg/pipeline
    :project  (format "(Test) %s" @git-branch)

@@ -82,9 +82,9 @@
 
 (defn batch-update-workflow-statuses!
   "Use `tx` to update `status` the workflows in a `workload`."
-  [tx {:keys [cromwell uuid items]}]
+  [tx {:keys [executor uuid items]}]
   (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
-                          (cromwell/query (first (all/cromwell-environments cromwell)))
+                          (cromwell/query (first (all/cromwell-environments executor)))
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
               (jdbc/update! tx items

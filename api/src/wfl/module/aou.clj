@@ -131,12 +131,12 @@
    workflow-options
    (make-labels per-sample-inputs other-labels)))
 
-(defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
-  (let [cromwell (all/de-slashify cromwell)
-        envs     (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
+(defn ^:private get-cromwell-environment! [{:keys [executor]}]
+  (let [executor (all/de-slashify executor)
+        envs     (all/cromwell-environments #{:aou-dev :aou-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
@@ -150,7 +150,7 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator cromwell pipeline project output] :as request}]
+  [tx {:keys [creator executor pipeline project output] :as request}]
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
   (let [slashified-output (all/slashify output)
@@ -165,7 +165,7 @@
       (:id workload)
       (let [id            (->> {:commit   commit
                                 :creator  creator
-                                :cromwell cromwell
+                                :executor executor
                                 :output   slashified-output
                                 :project  project
                                 :release  release

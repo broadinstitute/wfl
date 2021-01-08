@@ -51,7 +51,7 @@ def test_input_file_not_uploaded(mock_headers, mock_download, mock_get_blob, moc
 @mock.patch("aou.main.get_auth_headers")
 def test_wfl_called_when_sample_upload_completes(mock_headers, mock_download, mock_get_blob, mock_get_workload, mock_update_workload):
     client = mock.create_autospec(storage.Client())
-    mock_download.return_value = '{"cromwell": "http://cromwell.broadinstitute.org", ' \
+    mock_download.return_value = '{"executor": "http://cromwell.broadinstitute.org", ' \
                                  '"sample_alias": "test_sample", ' \
                                  '"notifications": [{"file": "gs://test_bucket/file.txt", "environment": "dev"}]}'
     mock_get_blob.return_value = "blob"

@@ -23,4 +23,5 @@
     <include file="changesets/20201030_ExternalExomeReprocessing.xml"            relativeToChangelogFile="true"/>
     <include file="changesets/20201105_GPArraysEnum.xml"                         relativeToChangelogFile="true"/>
     <include file="changesets/20201216_GDCWholeGenomeSomaticSingleSample.xml"    relativeToChangelogFile="true"/>
+    <include file="changesets/20210107_CromwellToExecutor.xml"                   relativeToChangelogFile="true"/>
 </databaseChangeLog>

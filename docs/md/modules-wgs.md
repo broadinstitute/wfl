@@ -71,7 +71,7 @@ at least read access to the input files.
     --header 'Authorization: Bearer '$(gcloud auth print-access-token) \
     --header 'Content-Type: application/json' \
     --data-raw '{
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "pipeline": "ExternalWholeGenomeReprocessing",
       "project": "PO-1234",
@@ -92,7 +92,7 @@ at least read access to the input files.
     {
       "creator": "sehsan@broadinstitute.org",
       "pipeline": "ExternalWholeGenomeReprocessing",
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
       "release": "ExternalWholeGenomeReprocessing_v1.0",
       "created": "2020-10-05T15:50:01Z",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
@@ -130,7 +130,7 @@ particular input cram, WFL will not re-submit that workflow.
       "started": "2020-10-05T15:50:51Z",
       "creator": "username@broadinstitute.org",
       "pipeline": "ExternalWholeGenomeReprocessing",
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
       "release": "ExternalWholeGenomeReprocessing_v1.0",
       "created": "2020-10-05T15:50:01Z",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
@@ -164,7 +164,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
     --header 'Authorization: Bearer '$(gcloud auth print-access-token) \
     --header 'Content-Type: application/json' \
     --data-raw '{
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
       "pipeline": "ExternalWholeGenomeReprocessing",
       "project": "PO-1234",
@@ -186,7 +186,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
       "started": "2020-10-05T16:15:32Z",
       "creator": "username@broadinstitute.org",
       "pipeline": "ExternalWholeGenomeReprocessing",
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
       "release": "ExternalWholeGenomeReprocessing_v1.0",
       "created": "2020-10-05T16:15:32Z",
       "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
@@ -226,7 +226,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
     [{
       "creator": "username",
       "pipeline": "ExternalWholeGenomeReprocessing",
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
       "release": "ExternalWholeGenomeReprocessing_v1.0",
       "created": "2020-08-27T16:26:59Z",
       "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
@@ -270,7 +270,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
     [{
       "creator": "username",
       "pipeline": "ExternalWholeGenomeReprocessing",
-      "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
       "release": "ExternalWholeGenomeReprocessing_v1.0",
       "created": "2020-08-27T16:26:59Z",
       "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",

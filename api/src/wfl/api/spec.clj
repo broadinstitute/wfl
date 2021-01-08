@@ -14,6 +14,7 @@
 (s/def ::creator string?)
 (s/def ::cromwell string?)
 (s/def ::environment string?)
+(s/def ::executor string?)
 (s/def ::finished inst?)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
@@ -36,7 +37,7 @@
 (s/def ::workload-request (s/keys :opt-un [::common
                                            ::input
                                            ::items]
-                                  :req-un [::cromwell
+                                  :req-un [(or ::executor ::cromwell)
                                            ::output
                                            ::pipeline
                                            ::project]))
@@ -48,7 +49,7 @@
                                    :req-un [::commit
                                             ::created
                                             ::creator
-                                            ::cromwell
+                                            ::executor
                                             ::output
                                             ::pipeline
                                             ::project

@@ -36,7 +36,7 @@ accounts have at least read access to the input files.
       -H "Authorization: Bearer $(gcloud auth print-access-token)" \
       -H 'Content-Type: application/json' \
       -d '{
-            "cromwell": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+            "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
             "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
             "pipeline": "ExternalExomeReprocessing",
             "project": "Example Project",
@@ -54,7 +54,7 @@ accounts have at least read access to the input files.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
@@ -99,7 +99,7 @@ particular input cram, WFL will not re-submit that workflow.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -135,7 +135,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
       -H "Authorization: Bearer $(gcloud auth print-access-token)" \
       -H 'Content-Type: application/json' \
       -d '{
-            "cromwell": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+            "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
             "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
             "pipeline": "ExternalExomeReprocessing",
             "project": "Example Project",
@@ -153,7 +153,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
     {
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -195,7 +195,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
     [{
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -242,7 +242,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
     [{
       "creator" : "user@domain",
       "pipeline" : "ExternalExomeReprocessing",
-      "cromwell" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
@@ -281,7 +281,7 @@ failures.
 ```json
 {
      "pipeline": "string",
-     "cromwell": "string",
+     "executor": "string",
      "output": "string",
      "project": "string",
      "common": {

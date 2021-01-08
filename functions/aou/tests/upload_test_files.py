@@ -25,7 +25,7 @@ def get_destination_paths(bucket, prefix):
 
 def get_ptc_json(bucket, prefix, chip_well_barcode, analysis_version, prod):
     return {
-        "cromwell":
+        "executor":
             "https://cromwell-aou.gotc-prod.broadinstitute.org" if prod
             else "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
         "environment": "aou-prod" if prod else "aou-dev",

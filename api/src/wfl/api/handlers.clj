@@ -1,6 +1,6 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.set :refer [rename-keys]]
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response :as response]
             [wfl.api.workloads :as workloads]
@@ -70,8 +70,9 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (succeed
        (strip-internals
-        (workloads/create-workload! tx
-                                    (assoc body :creator email)))))))
+        (workloads/create-workload! tx (-> body
+                                           (assoc :creator email)
+                                           (rename-keys {:cromwell :executor}))))))))
 
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
