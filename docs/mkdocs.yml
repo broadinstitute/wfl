@@ -44,6 +44,7 @@ nav:
     - Whole Genome: modules-wgs.md
     - External Exome: modules-external-exome-reprocessing.md
     - Usage Across a Directory: modules-directory-usage.md
+    - Retrying Failures: modules-retry-usage.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md
 
