@@ -9,7 +9,7 @@ REGION=${3:-"us-central1"}
 # gotc-prod
 if [ "${TRIGGER_BUCKET_NAME}" == "???" ]; then
     GCLOUD_PROJECT="broad-gotc-prod-storage"
-    SA_EMAIL="sg-submission-fn-non-prod@broad-gotc-prod-storage.iam.gserviceaccount.com"
+    SA_EMAIL="sg-submission-fn-prod@broad-gotc-prod-storage.iam.gserviceaccount.com"
     _WFL_URL="https://gotc-prod-wfl.gotc-prod.broadinstitute.org"
     _CROMWELL_URL="https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/"
     _WORKLOAD_PROJECT="sg-prod"

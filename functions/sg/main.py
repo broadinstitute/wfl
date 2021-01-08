@@ -1,12 +1,10 @@
 import os
-import re
 import requests
 
 WFL_URL = os.environ.get('WFL_URL')
 CROMWELL_URL = os.environ.get('CROMWELL_URL')
 WORKLOAD_PROJECT = os.environ.get('WORKLOAD_PROJECT')
 OUTPUT_BUCKET = os.environ.get('OUTPUT_BUCKET')
-PATH_PATTERN = os.environ.get('PATH_PATTERN')
 
 assert WFL_URL is not None, 'WFL_URL is not set'
 assert CROMWELL_URL is not None, 'CROMWELL_URL is not set'
@@ -32,13 +30,6 @@ def get_auth_headers():
         'Authorization': 'Bearer {}'.format(access_token)
     }
     return headers
-
-
-def filter_for_input_paths(pattern, event_file):
-    if pattern is None or re.search(pattern, event_file) is not None:
-        return event_file
-    else:
-        return None
 
 
 def make_payload(inputs):
@@ -93,15 +84,9 @@ def submit_sg_workload(event, _):
     """
     headers = get_auth_headers()
 
-    input_file = filter_for_input_paths(
-        PATH_PATTERN,
-        f"gs://{event['bucket']}/{event['name']}"
-    )
+    input_file = f"gs://{event['bucket']}/{event['name']}"
 
-    if input_file is not None and input_file.endswith('.cram'):
+    if input_file.endswith('.cram'):
         print(f'Submitting {input_file}')
         inputs = {'input_cram': input_file}
         return post_payload(headers, make_payload(inputs))
-    else:
-        print(f'Ignoring {input_file}')
-        return
