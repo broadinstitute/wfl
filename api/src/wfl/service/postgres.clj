@@ -78,15 +78,16 @@
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id items] :as _workload}]
-  (let [query (format "SELECT id FROM %%s WHERE status NOT IN %s"
+  (let [query (format "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
                       (util/to-quoted-comma-separated-list finished?))]
     (when (empty? (jdbc/query tx (format query items)))
       (jdbc/update! tx :workload
                     {:finished (OffsetDateTime/now)} ["id = ?" id]))))
 
 (defn update-workload!
-  "Use transaction TX to update WORKLOAD statuses."
+  "Use transaction TX to update WORKLOAD statuses if it has been started."
   [tx workload]
-  (do
-    (update-workflow-statuses! tx workload)
-    (update-workload-status! tx workload)))
+  (if (and (:started workload) (not (:finished workload)))
+    (do
+      (update-workflow-statuses! tx workload)
+      (update-workload-status! tx workload))))

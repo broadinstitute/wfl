@@ -47,6 +47,13 @@
            (is (s/valid? :wfl.api.spec/append-to-aou-response response))
            (is (empty? response)))))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-aou-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-append-to-aou-not-started
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
     #(is

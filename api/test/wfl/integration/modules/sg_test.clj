@@ -40,6 +40,13 @@
     (testing "single-sample workload-request"
       (go! (make-sg-workload-request)))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-sg-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-create-workload-with-common-inputs
   (let [common-inputs {:biobambam_bamtofastq.max_retries 2
                        :ref_pac "gs://fake-location/temp_references/gdc/GRCh38.d1.vd1.fa.pac"}]
