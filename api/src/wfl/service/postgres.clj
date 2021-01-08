@@ -68,16 +68,16 @@
 
 (def update-workflow-statuses!
   "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [cromwell]} {:keys [uuid]}]
+  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
             (if (util/uuid-nil? uuid)
               "skipped"
-              (cromwell-status cromwell uuid)))]
+              (cromwell-status executor uuid)))]
     (make-update-workflows get-cromwell-status)))
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [cromwell project]} workflow]
-            (terra/get-workflow-status-by-entity cromwell project workflow))]
+  (letfn [(get-terra-status [{:keys [executor project]} workflow]
+            (terra/get-workflow-status-by-entity executor project workflow))]
     (make-update-workflows get-terra-status)))
 
 (defn batch-update-workflow-statuses!
