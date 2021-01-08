@@ -92,7 +92,9 @@
             (log/info "updating workloads")
             (run! do-update!
                   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (jdbc/query tx ["SELECT id,uuid FROM workload WHERE finished IS NULL"]))))]
+                    (jdbc/query tx [(str/join " " ["SELECT id,uuid FROM workload"
+                                                   "WHERE started IS NOT NULL"
+                                                   "AND finished IS NULL"])]))))]
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
