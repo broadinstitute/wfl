@@ -70,6 +70,13 @@
                   "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-wgs-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]

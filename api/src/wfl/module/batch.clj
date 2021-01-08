@@ -68,7 +68,9 @@
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [tx {:keys [id] :as workload}]
-  (do
-    (postgres/batch-update-workflow-statuses! tx workload)
-    (postgres/update-workload-status! tx workload)
-    (workloads/load-workload-for-id tx id)))
+  (if (or (:finished workload) (not (:started workload)))
+    workload
+    (do
+      (postgres/batch-update-workflow-statuses! tx workload)
+      (postgres/update-workload-status! tx workload)
+      (workloads/load-workload-for-id tx id))))
