@@ -109,4 +109,5 @@
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)

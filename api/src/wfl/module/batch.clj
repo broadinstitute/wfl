@@ -63,3 +63,10 @@
                    (util/deep-merge default-options options)
                    (merge cromwell-label {:workload uuid}))))]
      (mapcat submit-batch! (group-by :options workflows)))))
+
+(defn update-workload!
+  "Use transaction TX to batch-update WORKLOAD statuses."
+  [tx workload]
+  (do
+    (postgres/batch-update-workflow-statuses! tx workload)
+    (postgres/update-workload-status! tx workload)))

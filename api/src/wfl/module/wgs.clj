@@ -126,6 +126,8 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
+
 (defmethod workloads/load-workload-impl
   pipeline
   [tx workload]
