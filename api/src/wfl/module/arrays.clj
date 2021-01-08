@@ -19,7 +19,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "Arrays_v2.3.0"
-   :top     "pipelines/broad/arrays/single_sample/Arrays.wdl"})
+   :path    "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def primary-keys
   "An arrays workflow can be uniquely identified by its `chip_well_barcode` and

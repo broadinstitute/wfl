@@ -191,15 +191,11 @@
   "Return workflow labels for WDL."
   [wdl]
   (letfn [(key-for [suffix] (keyword (str wfl/the-name "-" (name suffix))))]
-    (let [the-version   (wfl/get-the-version)
-          wdl-value     (last (str/split wdl #"/"))
-          version-value (-> the-version
-                            (select-keys [:commit :version])
-                            (json/write-str :escape-slash false))]
-      (merge
-       {(key-for :version)     version-value
-        (key-for :wdl)         wdl-value
-        (key-for :wdl-version) (or (the-version wdl-value) "Unknown")}))))
+    {(key-for :version)     (-> (wfl/get-the-version)
+                                (select-keys [:commit :version])
+                                (json/write-str :escape-slash false))
+     (key-for :wdl)         (last (str/split (:path wdl) #"/"))
+     (key-for :wdl-version) (:release wdl)}))
 
 (defn post-workflow
   "Assemble PARTS into a multipart HTML body and post it to the Cromwell
@@ -217,47 +213,53 @@
   [m]
   (into {} (map (fn [[k v]] [k (str v)]) m)))
 
+(defn wdl-map->url
+  "Create a http url for WDL where any imports are relative.
+  Uses jsDelivr CDN to avoid GitHub rate-limiting."
+  [wdl]
+  (str/join "/" ["https://cdn.jsdelivr.net/gh"
+                 (or (:user wdl) "broadinstitute")
+                 (str (or (:repo wdl) "warp") (str "@" (:release wdl)))
+                 (:path wdl)]))
+
 (defn partify-workflow
-  "Return a map describing a workflow named WF to run
+  "Return a map describing a workflow of running WDL
    with DEPENDENCIES, INPUTS, OPTIONS, and LABELS."
-  [wf dependencies inputs options labels]
+  [wdl inputs options labels]
   (letfn [(jsonify [edn] (when edn (json/write-str edn :escape-slash false)))
           (maybe [m k v] (if v (assoc m k v) m))]
-    (let [wf-labels (make-workflow-labels (.getName wf))
+    (let [wf-labels  (make-workflow-labels wdl)
           all-labels (stringify-vals (merge labels wf-labels))]
-      (-> {:workflowSource wf
+      (-> {:workflowUrl    (wdl-map->url wdl)
            :workflowType   "WDL"
            :labels         (jsonify all-labels)}
-          (maybe :workflowDependencies dependencies)
           (maybe :workflowInputs       (jsonify inputs))
           (maybe :workflowOptions      (jsonify options))))))
 
 (defn hold-workflow
-  "Submit a workflow 'On Hold' to run WDL with IMPORTS-ZIP, INPUTS,
-  OPTIONS, and LABELS on the Cromwell in ENVIRONMENT and return its
-  ID.  IMPORTS-ZIP, INPUTS, OPTIONS, and LABELS can be nil.  WDL is
-  the top-level wf.wdl file specifying the workflow.  IMPORTS-ZIP is a
-  zip archive of WDL's dependencies.  INPUTS and OPTIONS are the
-  standard JSON files for Cromwell.  LABELS is a {:key value} map."
-  [environment wdl imports-zip inputs options labels]
+  "Submit a workflow 'On Hold' to run WDL with INPUTS, OPTIONS,
+  and LABELS on the Cromwell in ENVIRONMENT and return its ID.
+  INPUTS, OPTIONS, and LABELS can be nil.  WDL is a map
+  referencing the workflow file on GitHub, see [[wdl-map->url]].
+  INPUTS and OPTIONS are the standard JSON files for Cromwell.
+  LABELS is a {:key value} map."
+  [environment wdl inputs options labels]
   (:id (post-workflow (api environment)
                       (assoc (partify-workflow wdl
-                                               imports-zip
                                                inputs
                                                options
                                                labels)
                              :workflowOnHold "true"))))
 
 (defn submit-workflow
-  "Submit a workflow to run WDL with IMPORTS-ZIP, INPUTS,
-  OPTIONS, and LABELS on the Cromwell in ENVIRONMENT and return its
-  ID.  IMPORTS-ZIP, INPUTS, OPTIONS, and LABELS can be nil.  WDL is
-  the top-level wf.wdl file specifying the workflow.  IMPORTS-ZIP is a
-  zip archive of WDL's dependencies.  INPUTS and OPTIONS are the
-  standard JSON files for Cromwell.  LABELS is a {:key value} map."
-  [environment wdl imports-zip inputs options labels]
+  "Submit a workflow to run WDL with INPUTS, OPTIONS, and LABELS
+  on the Cromwell in ENVIRONMENT and return its ID.  INPUTS,
+  OPTIONS, and LABELS can be nil.  WDL is a map referencing the
+  workflow file on GitHub, see [[wdl-map->url]].  INPUTS and
+  OPTIONS are the standard JSON files for Cromwell.  LABELS is a
+  {:key value} map."
+  [environment wdl inputs options labels]
   (->> (partify-workflow wdl
-                         imports-zip
                          inputs
                          options
                          labels)
@@ -268,17 +270,15 @@
   "Submit one or more workflows to cromwell.
   Parameters:
    ENVIRONMENT - Cromwell Deployment Environment
-   WDL         - Workflow WDL to be executed
-   IMPORTS-ZIP - Zip archive of WDL dependencies
+   WDL         - Workflow WDL to be executed, see [[wdl-map->url]]
    INPUTS      - Sequence of workflow inputs
    OPTIONS     - Workflow options for entire batch
    LABELS      - Labels to apply to each workflow
 
   Return:
    List of UUIDS for each workflow as reported by cromwell."
-  [environment wdl imports-zip inputs options labels]
+  [environment wdl inputs options labels]
   (->> (partify-workflow wdl
-                         imports-zip
                          inputs
                          options
                          labels)

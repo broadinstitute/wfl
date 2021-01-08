@@ -14,7 +14,7 @@
             [wfl.api.routes :as routes]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import [org.eclipse.jetty.util.log Log Logger]))
+  (:import (java.util.concurrent Future TimeUnit)))
 
 (def description
   "The purpose of this command."
@@ -71,25 +71,47 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn stfu-jetty
-  "Set up a stub logger to shut Jetty up."
-  []
-  (Log/setLog
-   (proxy [Logger] []
-     (debug ([thrown]) ([msg & args]))
-     (getLogger [name] this)
-     (getName [] "JettyStfu")
-     (ignore [ignored])
-     (info ([thrown]) ([msg & args]))
-     (isDebugEnabled [] false)
-     (setDebugEnabled [enabled])
-     (warn ([thrown]) ([msg & args])))))
+(defn ^:private start-workload-manager []
+  "Update the workload database then start a background task to periodically
+  manage the state of workflows indefinitely. Returns a
+  java.util.concurrent.Future that, when de-referenced, waits for the background
+  task to finish (i.e. until an error occurs)."
+  (letfn [(update-workloads! [])]                           ;; todo
+    (log/info "starting workload update loop")
+    (update-workloads!)
+    (future
+      (while true
+        (update-workloads!)
+        (.sleep TimeUnit/SECONDS 20)))))
+
+(defn ^:private start-webserver
+  "Start the jetty webserver asynchronously to serve http requests on the
+  specified port. Returns a java.util.concurrent.Future that, when de-
+  referenced, blocks until the server ends."
+  [port]
+  (log/infof "starting jetty webserver on port %s" port)
+  (let [server    (jetty/run-jetty app {:port port :join? false})]
+    (reify Future
+      (cancel [_ _] (throw (UnsupportedOperationException.)))
+      (get [_] (.join server))
+      (get [_ _ _] (throw (UnsupportedOperationException.)))
+      (isCancelled [_] false)
+      (isDone [_] (.isStopped server)))))
+
+(defn ^:private await-some [& futures]
+  "Poll the sequence of futures until at least one is done then dereference
+  that future. Any exceptions thrown by that future are propagated untouched."
+  (loop []
+    (if-let [f (first (filter future-done? futures))]
+      (do @f nil)
+      (do
+        (.sleep TimeUnit/SECONDS 1)
+        (recur)))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
-  (pprint (into ["Run:" wfl/the-name "server"] args))
-  (let [port {:port (util/is-non-negative! (first args))}]
-    (pprint [wfl/the-name port])
-    (stfu-jetty)
-    (jetty/run-jetty app port)))
+  (log/info "Run:" wfl/the-name "server" args)
+  (let [port    (util/is-non-negative! (first args))
+        manager (start-workload-manager)]
+    (await-some manager (start-webserver port))))

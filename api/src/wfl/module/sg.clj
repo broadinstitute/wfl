@@ -19,8 +19,8 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "develop"
-   :top     "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
+  {:release "b0e3cfef18fc3c4126b7b835ab2b253599a18904"
+   :path    "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
 
 (defn ^:private cromwellify-workflow-inputs [_ {:keys [inputs]}]
   (-> references/gdc-sg-references

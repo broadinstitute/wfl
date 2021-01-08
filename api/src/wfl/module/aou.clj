@@ -1,7 +1,6 @@
 (ns wfl.module.aou
   "Process Arrays for the All Of Us project."
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.environments :as env]
             [wfl.api.workloads :as workloads :refer [defoverload]]
@@ -12,9 +11,7 @@
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl]
-            [clojure.data.json :as json])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            (java.sql Timestamp)))
@@ -24,7 +21,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "Arrays_v2.3.0"
-   :top     "pipelines/broad/arrays/single_sample/Arrays.wdl"})
+   :path    "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
@@ -127,14 +124,12 @@
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    WORKFLOW-OPTIONS and OTHER-LABELS."
   [environment per-sample-inputs workflow-options other-labels]
-  (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
-    (cromwell/submit-workflow
-     environment
-     (io/file (:dir path) (path ".wdl"))
-     (io/file (:dir path) (path ".zip"))
-     (make-inputs environment per-sample-inputs)
-     workflow-options
-     (make-labels per-sample-inputs other-labels))))
+  (cromwell/submit-workflow
+   environment
+   workflow-wdl
+   (make-inputs environment per-sample-inputs)
+   workflow-options
+   (make-labels per-sample-inputs other-labels)))
 
 (defn ^:private get-cromwell-environment! [{:keys [executor]}]
   (let [executor (all/de-slashify executor)
@@ -159,7 +154,7 @@
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
   (let [slashified-output (all/slashify output)
-        {:keys [release top]} workflow-wdl
+        {:keys [release path]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release slashified-output])]
@@ -176,7 +171,7 @@
                                 :release  release
                                 :uuid     (UUID/randomUUID)
                                 :version  version
-                                :wdl      top}
+                                :wdl      path}
                                (jdbc/insert! tx :workload)
                                first
                                :id)
