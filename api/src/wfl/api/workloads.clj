@@ -104,9 +104,9 @@
   :default
   [_ body]
   (throw
-    (ex-info "Failed to update workload - no such pipeline"
-      {:cause body
-       :type  ::invalid-pipeline})))
+   (ex-info "Failed to update workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 (defn default-load-workload-impl
   [tx workload]
