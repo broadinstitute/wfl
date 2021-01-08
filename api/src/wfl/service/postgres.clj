@@ -85,8 +85,9 @@
                     {:finished (OffsetDateTime/now)} ["id = ?" id]))))
 
 (defn update-workload!
-  "Use transaction TX to update WORKLOAD statuses."
+  "Use transaction TX to update WORKLOAD statuses if it has been started."
   [tx workload]
-  (do
-    (update-workflow-statuses! tx workload)
-    (update-workload-status! tx workload)))
+  (if (and (:started workload) (not (:finished workload)))
+    (do
+      (update-workflow-statuses! tx workload)
+      (update-workload-status! tx workload))))
