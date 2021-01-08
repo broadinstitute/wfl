@@ -720,7 +720,7 @@ accounts have at least read access to the input files.</p>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
   -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
   -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
+<span class="s1">        &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
 <span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
@@ -736,7 +736,7 @@ accounts have at least read access to the input files.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;output&quot;</span> <span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span>
@@ -775,7 +775,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -808,7 +808,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
   -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
   -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
   -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;cromwell&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
+<span class="s1">        &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
 <span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
 <span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
 <span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
@@ -824,7 +824,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -861,7 +861,7 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -902,7 +902,7 @@ failures.</p>
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
   <span class="nt">&quot;creator&quot;</span> <span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
   <span class="nt">&quot;pipeline&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;cromwell&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span> <span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
   <span class="nt">&quot;release&quot;</span> <span class="p">:</span> <span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span>
   <span class="nt">&quot;created&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
   <span class="nt">&quot;started&quot;</span> <span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
@@ -941,7 +941,7 @@ together.</p>
 <h2 id="a1-external-exome-workload-request-json-spec">A1 External Exome Workload-Request JSON Spec<a class="headerlink" href="#a1-external-exome-workload-request-json-spec" title="Permanent link">⚓︎</a></h2>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
      <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-     <span class="nt">&quot;cromwell&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+     <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
      <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
      <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
      <span class="nt">&quot;common&quot;</span><span class="p">:</span> <span class="p">{</span>
