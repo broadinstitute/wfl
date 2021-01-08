@@ -9,8 +9,6 @@
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.terra :as terra]
-            [wfl.wfl :as wfl]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
@@ -148,7 +146,6 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs sg-inputs}]})
 
-;; HACK: We don't have the workload environment here
 (defn cromwell-status
   "`status` of the workflow with UUID on CROMWELL."
   [cromwell uuid]
@@ -159,28 +156,24 @@
       :status))
 
 (defn when-done
-  "Call `done!` when cromwell has finished executing `workload`'s workflows."
-  [done! {:keys [cromwell project] :as workload}]
-  (letfn [(await-workflow [{:keys [uuid] :as workflow}]
-            (let [interval  10
-                  timeout   3600                            ; 1 hour
-                  finished? (set cromwell/final-statuses)
-                  skipped?  #(-> % :uuid util/uuid-nil?)]   ; see wgs. i die.
-              (loop [seconds 0]
-                (when (> seconds timeout)
-                  (throw (TimeoutException.
-                          (format "Timed out waiting for workflow %s" uuid))))
-                (when-not (skipped? workflow)
-                  (let [status (if (= "GPArrays" (:pipeline workload))
-                                 (terra/get-workflow-status-by-entity cromwell project workflow)
-                                 (cromwell-status cromwell uuid))]
-                    (when-not (finished? status)
-                      (log/infof "%s: Sleeping on status: %s" uuid status)
-                      (util/sleep-seconds interval)
-                      (recur (+ seconds interval))))))))]
-    (run! await-workflow (:workflows workload))
-    (done! (endpoints/get-workload-status (:uuid workload)))
-    nil))
+  "Call `done!` when all workflows in the `workload` have finished processing."
+  [done! {:keys [uuid] :as workload}]
+  (letfn [(finished? [{:keys [status] :as workflow}]
+            (let [skipped? #(-> % :uuid util/uuid-nil?)]
+              (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
+    (let [interval 10
+          timeout  3600]                                    ; 1 hour
+      (loop [elapsed 0 wl workload]
+        (when (> elapsed timeout)
+          (throw (TimeoutException.
+                  (format "Timed out waiting for workload %s" uuid))))
+        (if (every? finished? (:workflows wl))
+          (done! wl)
+          (do
+            (log/infof "Waiting for workload %s to complete" uuid)
+            (util/sleep-seconds interval)
+            (recur (+ elapsed interval)
+                   (endpoints/get-workload-status uuid))))))))
 
 (defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
@@ -206,13 +199,9 @@
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/load-workload-for-id tx id)))
 
-;; `doall` is required here for testing otherwise the moment test uses
-;; the result and tries to force realizing, the db tx is already closed
-;;
 (defn load-workloads-with-project [project]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-    (doall
-     (wfl.api.workloads/load-workloads-with-project tx project))))
+    (wfl.api.workloads/load-workloads-with-project tx project)))
 
 (defn append-to-workload! [samples workload]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
