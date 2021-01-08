@@ -90,7 +90,7 @@ To give more information, here are some example inputs to the above endpoints:
         -H 'Accept: application/json' \
         -H 'Content-Type: application/json' \
         -d '{
-                "cromwell": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+                "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
                 "output":   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/",
                 "project":  "Example Project",
                 "pipeline": "AllOfUsArrays"

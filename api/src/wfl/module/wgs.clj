@@ -22,11 +22,11 @@
 (def ^:private cromwell-label
   {(keyword wfl/the-name) pipeline})
 
-(defn get-cromwell-environment [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
+(defn get-cromwell-environment [{:keys [executor]}]
+  (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 

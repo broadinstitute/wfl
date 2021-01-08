@@ -85,12 +85,12 @@
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
   [tx {:keys [release path] :as _workflow-wdl} body]
-  (let [{:keys [creator cromwell input output pipeline project]} body
+  (let [{:keys [creator executor input output pipeline project]} body
         {:keys [commit version]} (wfl/get-the-version)
         [{:keys [id]}]
         (jdbc/insert! tx :workload {:commit   commit
                                     :creator  creator
-                                    :cromwell cromwell
+                                    :executor executor
                                     :input    input
                                     :output   output
                                     :project  project

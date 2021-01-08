@@ -53,12 +53,12 @@
                             :preemptible_tries     3}}))
 
 ;; visible for testing
-(defn get-cromwell-environment [{:keys [cromwell]}]
-  (let [cromwell (all/de-slashify cromwell)
-        envs     (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
+(defn get-cromwell-environment [{:keys [executor]}]
+  (let [executor (all/de-slashify executor)
+        envs     (all/cromwell-environments #{:xx-dev :xx-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
