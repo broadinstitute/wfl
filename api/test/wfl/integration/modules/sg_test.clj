@@ -40,6 +40,13 @@
     (testing "single-sample workload-request"
       (go! (make-sg-workload-request)))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-sg-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (deftest test-create-workload-with-common-inputs
   (let [common-inputs {:biobambam_bamtofastq.max_retries 2
                        :ref_pac "gs://fake-location/temp_references/gdc/GRCh38.d1.vd1.fa.pac"}]
@@ -76,7 +83,7 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:cromwell (get-in env/stuff [:wgs-dev :cromwell :url])
+  (let [workload (->> {:executor (get-in env/stuff [:wgs-dev :cromwell :url])
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  (format "(Test) %s" @workloads/git-branch)
@@ -94,7 +101,7 @@
             (is (:supports_common_inputs inputs))
             (is (:supports_inputs inputs))
             (is (:overwritten inputs)))
-          (verify-submitted-inputs [_ _ _ inputs _ _]
+          (verify-submitted-inputs [_ _ inputs _ _]
             (map
              (fn [in]
                (is (every? #(prefixed? (keyword sg/pipeline) %) (keys in)))
@@ -118,7 +125,7 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ _ inputs options _]
+          (verify-submitted-options [env _ inputs options _]
             (let [defaults (util/make-options env)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))

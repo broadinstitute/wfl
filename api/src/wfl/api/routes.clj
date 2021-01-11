@@ -69,10 +69,10 @@
             :responses  {200 {:body ::spec/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
-    {:get  {:summary    "Get the workloads."
-            :parameters {:query ::spec/workload-query}
-            :responses  {200 {:body ::spec/workload-responses}}
-            :handler    handlers/get-workload!}}]
+    {:get {:summary    "Get the workloads."
+           :parameters {:query ::spec/workload-query}
+           :responses  {200 {:body ::spec/workload-responses}}
+           :handler    handlers/get-workload}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::spec/workload-request}

@@ -16,7 +16,7 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private mock-submit-workflows [_ _ _ inputs _ _]
+(defn ^:private mock-submit-workflows [_ _ inputs _ _]
   (map (fn [_] (UUID/randomUUID)) inputs))
 
 (defn ^:private make-wgs-workload-request []
@@ -70,6 +70,13 @@
                   "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
 
+(deftest test-update-unstarted
+  (let [workload (->> (make-wgs-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
+
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
     (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
@@ -102,7 +109,7 @@
             (is (contains? inputs :input_bam))
             (is (util/absent? inputs :input_cram))
             (is (contains? labels :workload)))
-          (verify-inputs [_ _ _ inputs _ labels]
+          (verify-inputs [_ _ inputs _ labels]
             (map
              (fn [in]
                (verify-use_input_bam! (into {} (map strip-prefix in)) labels)
@@ -124,7 +131,7 @@
             (is (:supports_inputs inputs))
             (is (:overwritten inputs))
             (is (not-empty (-> inputs :references (dissoc :reference_fasta)))))
-          (verify-submitted-inputs [_ _ _ inputs _ _]
+          (verify-submitted-inputs [_ _ inputs _ _]
             (map
              (fn [in]
                (is (every? #(prefixed? :ExternalWholeGenomeReprocessing %) (keys in)))
@@ -151,7 +158,7 @@
                                     :unmapped_bam_suffix
                                     :final_gvcf_base_name
                                     :destination_cloud_path]))
-          (verify-submitted-inputs [_ _ _ inputs _ _]
+          (verify-submitted-inputs [_ _ inputs _ _]
             (map
              (fn [in]
                (verify-workflow-inputs (into {} (map strip-prefix in)))
@@ -171,7 +178,7 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ _ inputs options _]
+          (verify-submitted-options [env _ inputs options _]
             (let [defaults (util/make-options env)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))

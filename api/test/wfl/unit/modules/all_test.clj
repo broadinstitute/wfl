@@ -3,10 +3,11 @@
             [wfl.environments :as env]
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
+            [wfl.module.sg :as sg]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
-            [wfl.wfl :as wfl]
-            [wfl.util :refer [leafname]]))
+            [wfl.util :refer [leafname]]
+            [wfl.wfl :as wfl]))
 
 (deftest test-cromwell-environments
   (let [url (get-in env/gotc-dev [:cromwell :url])]
@@ -20,7 +21,8 @@
 
 (deftest test-version-edn-contains-wdl-version
   (let [edn          (wfl/get-the-version)
-        has-version? #(= (:release %) (-> % :top leafname edn))]
+        has-version? #(= (:release %) (-> % :path leafname edn))]
     (is (every? has-version? [aou/workflow-wdl
+                              sg/workflow-wdl
                               wgs/workflow-wdl
                               xx/workflow-wdl]))))

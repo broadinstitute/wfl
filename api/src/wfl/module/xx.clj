@@ -1,7 +1,6 @@
 (ns wfl.module.xx
   "Reprocess External Exomes, whatever they are."
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
             [clojure.string :as str]
             [wfl.api.workloads :refer [defoverload]]
             [wfl.api.workloads :as workloads]
@@ -11,9 +10,7 @@
             [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.gcs :as gcs]
-            [wfl.service.cromwell :as cromwell]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
             [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]))
 
@@ -26,8 +23,8 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "ExternalExomeReprocessing_v2.1.1"
-   :top     (str "pipelines/broad/reprocessing/external/exome/"
-                 "ExternalExomeReprocessing.wdl")})
+   :path     (str "pipelines/broad/reprocessing/external/exome/"
+                  "ExternalExomeReprocessing.wdl")})
 
 (def ^:private references-defaults
   (let [hg38 "gs://gcp-public-data--broad-references/hg38/v0/"
@@ -56,12 +53,12 @@
                             :preemptible_tries     3}}))
 
 ;; visible for testing
-(defn get-cromwell-environment [{:keys [cromwell]}]
-  (let [cromwell (all/de-slashify cromwell)
-        envs     (all/cromwell-environments #{:xx-dev :xx-prod} cromwell)]
+(defn get-cromwell-environment [{:keys [executor]}]
+  (let [executor (all/de-slashify executor)
+        envs     (all/cromwell-environments #{:xx-dev :xx-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
@@ -112,4 +109,5 @@
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)

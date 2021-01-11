@@ -1,14 +1,13 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]
+  (:require [clojure.pprint :refer [pprint]]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.api.workloads :as workloads])
   (:import [java.util UUID]
            [java.time OffsetDateTime]))
 
@@ -16,13 +15,13 @@
   "Create row in workload table for `workload-request` using transaction `tx`.
   Instantiate a CromwellWorkflow table for the workload.
   Returns: [id table-name]"
-  [tx {:keys [release top] :as _workflow-wdl} {:keys [pipeline] :as workload-request}]
+  [tx {:keys [release path] :as _workflow-wdl} {:keys [pipeline] :as workload-request}]
   (let [[{:keys [id]}]
         (-> workload-request
-            (select-keys [:creator :cromwell :input :output :project])
-            (update :cromwell all/de-slashify)
+            (select-keys [:creator :executor :input :output :project])
+            (update :executor all/de-slashify)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
-            (assoc :release release :wdl top :uuid (UUID/randomUUID))
+            (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))
         table (format "%s_%09d" pipeline id)]
     (jdbc/execute! tx
@@ -51,20 +50,27 @@
   ([workflow env workflow-wdl make-cromwell-inputs! cromwell-label]
    (submit-workload! workflow env workflow-wdl make-cromwell-inputs! cromwell-label (util/make-options env)))
   ([{:keys [uuid workflows]} env workflow-wdl make-cromwell-inputs! cromwell-label default-options]
-   (let [path            (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
-     (letfn [(update-workflow [workflow cromwell-uuid]
-               (assoc workflow :uuid cromwell-uuid
-                      :status "Submitted"
-                      :updated (OffsetDateTime/now)))
-             (submit-batch! [[options workflows]]
-               (map update-workflow
-                    workflows
-                    (cromwell/submit-workflows
-                     env
-                     (io/file (:dir path) (path ".wdl"))
-                     (let [dependencies (io/file (:dir path) (path ".zip"))]
-                       (if (.exists dependencies) dependencies nil))
-                     (map (partial make-cromwell-inputs! env) workflows)
-                     (util/deep-merge default-options options)
-                     (merge cromwell-label {:workload uuid}))))]
-       (mapcat submit-batch! (group-by :options workflows))))))
+   (letfn [(update-workflow [workflow cromwell-uuid]
+             (assoc workflow :uuid cromwell-uuid
+                    :status "Submitted"
+                    :updated (OffsetDateTime/now)))
+           (submit-batch! [[options workflows]]
+             (map update-workflow
+                  workflows
+                  (cromwell/submit-workflows
+                   env
+                   workflow-wdl
+                   (map (partial make-cromwell-inputs! env) workflows)
+                   (util/deep-merge default-options options)
+                   (merge cromwell-label {:workload uuid}))))]
+     (mapcat submit-batch! (group-by :options workflows)))))
+
+(defn update-workload!
+  "Use transaction TX to batch-update WORKLOAD statuses."
+  [tx {:keys [id] :as workload}]
+  (if (or (:finished workload) (not (:started workload)))
+    workload
+    (do
+      (postgres/batch-update-workflow-statuses! tx workload)
+      (postgres/update-workload-status! tx workload)
+      (workloads/load-workload-for-id tx id))))

@@ -1,6 +1,6 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.set :refer [rename-keys]]
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response :as response]
             [wfl.api.workloads :as workloads]
@@ -62,40 +62,35 @@
            succeed))))
 
 (defn post-create
-  "Create the workload described in BODY of REQUEST."
-  [{:keys [parameters] :as request}]
-  (let [{:keys [body]} parameters
-        {:keys [email]} (gcs/userinfo request)]
-    (logr/infof "post-create endpoint called: body=%s" body)
+  "Create the workload described in REQUEST."
+  [request]
+  (let [workload-request (-> (:body-params request)
+                             (rename-keys {:cromwell :executor}))
+        {:keys [email]}  (gcs/userinfo request)]
+    (logr/info "post-create endpoint called: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-       (strip-internals
-        (workloads/create-workload! tx
-                                    (assoc body :creator email)))))))
+      (->> (assoc workload-request :creator email)
+           (workloads/create-workload! tx)
+           strip-internals
+           succeed))))
 
-(defn get-workload!
+(defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (letfn [(go! [tx {:keys [uuid] :as workload}]
-            (if (:finished workload)
-              workload
+  (succeed
+   (map strip-internals
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (if-let [uuid (-> request :parameters :query :uuid)]
+            (do
+              (logr/infof "getting workload by uuid %s" uuid)
+              [(workloads/load-workload-for-uuid tx uuid)])
+            (if-let [project (-> request :parameters :query :project)]
               (do
-                (logr/infof "updating workload %s" uuid)
-                (workloads/update-workload! tx workload))))]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-       (mapv (comp strip-internals (partial go! tx))
-             (if-let [uuid (-> request :parameters :query :uuid)]
-               (do
-                 (logr/infof "getting workload by uuid %s" uuid)
-                 [(workloads/load-workload-for-uuid tx uuid)])
-               (if-let [project (-> request :parameters :query :project)]
-                 (do
-                   (logr/infof "getting workloads by project %s" project)
-                   (workloads/load-workloads-with-project tx project))
-                 (do
-                   (logr/infof "getting all workloads")
-                   (workloads/load-workloads tx)))))))))
+                (logr/infof "getting workloads by project %s" project)
+                (workloads/load-workloads-with-project tx project))
+              (do
+                (logr/infof "getting all workloads")
+                (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
@@ -116,9 +111,10 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [workload-request (:body-params request)]
-      (logr/info "executing workload-request: " workload-request)
+  (let [workload-request (-> (:body-params request)
+                             (rename-keys {:cromwell :executor}))]
+    (logr/info "post-exec endpoint called: " workload-request)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->>
        (gcs/userinfo request)
        :email

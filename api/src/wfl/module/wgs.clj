@@ -17,16 +17,16 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "ExternalWholeGenomeReprocessing_v1.1.1"
-   :top     "pipelines/broad/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
+   :path    "pipelines/broad/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl"})
 
 (def ^:private cromwell-label
   {(keyword wfl/the-name) pipeline})
 
-(defn get-cromwell-environment [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} cromwell)]
+(defn get-cromwell-environment [{:keys [executor]}]
+  (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
@@ -125,6 +125,8 @@
       (run! update-record! (batch/submit-workload! workload env workflow-wdl make-cromwell-inputs cromwell-label))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
+
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
 
 (defmethod workloads/load-workload-impl
   pipeline

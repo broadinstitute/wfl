@@ -1,6 +1,6 @@
 # Makefile for the wfl/api module
 
-REQUIRED_2P_REPOSITORIES := pipeline-config warp
+REQUIRED_2P_REPOSITORIES := pipeline-config
 include $(MAKE_INCLUDE_DIR)/modules.mk
 
 CLASSES_DIR           := $(MODULE_DIR)/classes
@@ -31,16 +31,16 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
-$(PREBUILD): $(SCM_SRC) $(SCM_RESOURCES)
+$(PREBUILD): $(SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
-	$(CLOJURE) -X wfl.build/prebuild
+	$(CLOJURE) -X:prebuild
 	@$(TOUCH) $@
 
 $(POM_IN): $(CLOJURE_PROJECT)
 	$(CLOJURE) -Spom
 
-$(POM_OUT): $(POM_IN) $(PREBUILD) $(SCM_SRC)
-	$(CLOJURE) -X wfl.build/update-the-pom :in '"$(POM_IN)"' :out '"$@"'
+$(POM_OUT): $(POM_IN) $(PREBUILD)
+	$(CLOJURE) -X:update-the-pom :in '"$(POM_IN)"' :out '"$@"'
 
 $(API_DIR): $(SCM_SRC)
 	$(MKDIR) $(CLASSES_DIR)

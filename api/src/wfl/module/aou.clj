@@ -1,7 +1,6 @@
 (ns wfl.module.aou
   "Process Arrays for the All Of Us project."
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.environments :as env]
             [wfl.api.workloads :as workloads :refer [defoverload]]
@@ -12,9 +11,7 @@
             [wfl.service.gcs :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wdl :as wdl]
-            [wfl.wfl :as wfl]
-            [clojure.data.json :as json])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            (java.sql Timestamp)))
@@ -24,7 +21,7 @@
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "Arrays_v2.3.0"
-   :top     "pipelines/broad/arrays/single_sample/Arrays.wdl"})
+   :path    "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map
   "The WDL label applied to Cromwell metadata."
@@ -89,7 +86,9 @@
                         ;; arbitrary path to be used by BAFRegress
                         :minor_allele_frequency_file
                         ;; some message-specified environment to override WFL's
-                        :environment]
+                        :environment
+                        ;; some message-specified vault token path to override WFL's
+                        :vault_token_path]
         mandatory      (select-keys inputs mandatory-keys)
         optional       (select-keys inputs optional-keys)
         missing        (vec (keep (fn [k] (when (nil? (k mandatory)) k)) mandatory-keys))]
@@ -105,6 +104,7 @@
              other-inputs
              (env-inputs environment)
              (get-per-sample-inputs per-sample-inputs))
+      (update :environment str/lower-case)
       (util/prefix-keys :Arrays)))
 
 ;; visible for testing
@@ -127,21 +127,19 @@
   "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
    WORKFLOW-OPTIONS and OTHER-LABELS."
   [environment per-sample-inputs workflow-options other-labels]
-  (let [path (wdl/hack-unpack-resources-hack (:top workflow-wdl))]
-    (cromwell/submit-workflow
-     environment
-     (io/file (:dir path) (path ".wdl"))
-     (io/file (:dir path) (path ".zip"))
-     (make-inputs environment per-sample-inputs)
-     workflow-options
-     (make-labels per-sample-inputs other-labels))))
+  (cromwell/submit-workflow
+   environment
+   workflow-wdl
+   (make-inputs environment per-sample-inputs)
+   workflow-options
+   (make-labels per-sample-inputs other-labels)))
 
-(defn ^:private get-cromwell-environment! [{:keys [cromwell]}]
-  (let [cromwell (all/de-slashify cromwell)
-        envs     (all/cromwell-environments #{:aou-dev :aou-prod} cromwell)]
+(defn ^:private get-cromwell-environment! [{:keys [executor]}]
+  (let [executor (all/de-slashify executor)
+        envs     (all/cromwell-environments #{:aou-dev :aou-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
@@ -155,11 +153,11 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator cromwell pipeline project output] :as request}]
+  [tx {:keys [creator executor pipeline project output] :as request}]
   (gcs/parse-gs-url output)
   (get-cromwell-environment! request)
   (let [slashified-output (all/slashify output)
-        {:keys [release top]} workflow-wdl
+        {:keys [release path]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release slashified-output])]
@@ -170,13 +168,13 @@
       (:id workload)
       (let [id            (->> {:commit   commit
                                 :creator  creator
-                                :cromwell cromwell
+                                :executor executor
                                 :output   slashified-output
                                 :project  project
                                 :release  release
                                 :uuid     (UUID/randomUUID)
                                 :version  version
-                                :wdl      top}
+                                :wdl      path}
                                (jdbc/insert! tx :workload)
                                first
                                :id)
@@ -277,9 +275,11 @@
 (defmethod workloads/update-workload!
   pipeline
   [tx workload]
-  (try
-    (postgres/update-workflow-statuses! tx workload)
-    (workloads/load-workload-for-id tx (:id workload))
-    (catch Throwable cause
-      (throw (ex-info "Error updating aou workload"
-                      {:workload workload} cause)))))
+  (if-not (:started workload)
+    workload
+    (try
+      (postgres/update-workflow-statuses! tx workload)
+      (workloads/load-workload-for-id tx (:id workload))
+      (catch Throwable cause
+        (throw (ex-info "Error updating aou workload"
+                        {:workload workload} cause))))))

@@ -4,7 +4,6 @@
             [wfl.api.spec]
             [wfl.module.all :as all]
             [wfl.module.aou :as aou]
-            [wfl.service.cromwell :refer [submit-workflow]]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.tools.endpoints :as endpoints]
@@ -47,6 +46,13 @@
          (let [response (append-to-workload! [])]
            (is (s/valid? :wfl.api.spec/append-to-aou-response response))
            (is (empty? response)))))))
+
+(deftest test-update-unstarted
+  (let [workload (->> (make-aou-workload-request)
+                      workloads/create-workload!
+                      workloads/update-workload!)]
+    (is (nil? (:finished workload)))
+    (is (nil? (:submitted workload)))))
 
 (deftest test-append-to-aou-not-started
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}

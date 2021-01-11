@@ -12,14 +12,15 @@
 (def pipeline "copyfile")
 
 (def workflow-wdl
-  {:release "copyfile-v1.0"
-   :top     "wdl/copyfile.wdl"})
+  {:repo    "wfl"
+   :release "v0.4.2"
+   :path    "api/resources/wdl/copyfile.wdl"})
 
-(defn ^:private get-cromwell-environment [{:keys [cromwell]}]
-  (let [envs (all/cromwell-environments #{:gotc-dev :gotc-prod} cromwell)]
+(defn ^:private get-cromwell-environment [{:keys [executor]}]
+  (let [envs (all/cromwell-environments #{:gotc-dev :gotc-prod} executor)]
     (when (not= 1 (count envs))
       (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     cromwell
+                      {:cromwell     executor
                        :environments envs})))
     (first envs)))
 
@@ -28,8 +29,7 @@
   [environment inputs options labels]
   (cromwell/submit-workflow
    environment
-   (util/extract-resource (:top workflow-wdl))
-   nil
+   workflow-wdl
    (-> inputs (util/prefix-keys pipeline))
    options
    labels))
@@ -74,6 +74,8 @@
   (do
     (start-copyfile-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
+
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
 
 (defmethod workloads/load-workload-impl
   pipeline
