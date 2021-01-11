@@ -90,10 +90,6 @@
 
   :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.3"}}}
 
-  :prebuild {:extra-paths ["./build"]
-             :exec-fn build/prebuild
-             :exec-args {}}
+  :prebuild {:extra-paths ["./build"] :exec-fn build/prebuild}
 
-  :update-the-pom {:extra-paths ["./build"]
-                   :exec-fn build/update-the-pom
-                   :exec-args {}}}}
+  :update-the-pom {:extra-paths ["./build"] :exec-fn build/update-the-pom}}}
