@@ -14,7 +14,7 @@
     
     
       
-        <title>Workflow Options - Workflow Launcher</title>
+        <title>Retrying Failures - Workflow Launcher</title>
       
     
     
@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#customizing-workflow-options" class="md-skip">
+        <a href="#retrying-failures-via-wfl" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Workflow Options
+              Retrying Failures
             
           </span>
         </div>
@@ -354,56 +354,11 @@
           
 
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Workflow Options
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../workflow-options/" class="md-nav__link">
       Workflow Options
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    Usage
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behavior" class="md-nav__link">
-    Behavior
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -464,11 +419,69 @@
           
 
 
+  
 
-  <li class="md-nav__item">
-    <a href="../modules-retry-usage/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Retrying Failures
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Retrying Failures
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    Tips
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#customizing-inputsoptions" class="md-nav__link">
+    Customizing Inputs/Options
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simpler-retries" class="md-nav__link">
+    "Simpler" Retries
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -544,16 +557,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    Usage
+  <a href="#tips" class="md-nav__link">
+    Tips
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#customizing-inputsoptions" class="md-nav__link">
+    Customizing Inputs/Options
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#behavior" class="md-nav__link">
-    Behavior
+        
+          <li class="md-nav__item">
+  <a href="#simpler-retries" class="md-nav__link">
+    "Simpler" Retries
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -569,153 +595,90 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/workflow-options.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-retry-usage.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="customizing-workflow-options">Customizing Workflow Options<a class="headerlink" href="#customizing-workflow-options" title="Permanent link">⚓︎</a></h1>
-<details class="tip" open="open"><summary>Tip</summary><p>This page covers customizing workflow <em>options</em>, which are different from the
-<em>inputs</em> passed to the WDL. Workflow options are interpreted directly by Cromwell,
-though WDLs can customize them too. For more information see
-<a href="https://cromwell.readthedocs.io/en/stable/wf_options/Overview/">Cromwell's documentation</a>.</p>
-<p>Another important piece of context for this page is the difference between a workflow
-that actually gets run on Cromwell versus a workload (a WFL-managed set of individual
-workflows).</p>
-</details>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
-<div class="admonition info">
-<p class="admonition-title">Summary</p>
+                <h1 id="retrying-failures-via-wfl">Retrying Failures via WFL<a class="headerlink" href="#retrying-failures-via-wfl" title="Permanent link">⚓︎</a></h1>
+<p>WFL remembers enough about submissions to let you quickly resubmit failed
+workflows with the same inputs/options as they were originally submitted.</p>
+<p>All you need is a query string like you'd pass to the <code>/workflows</code> endpoint,
+either:</p>
 <ul>
-<li>Workflow options are an arbitrary JSON object stored in a key of <code>options</code></li>
-<li>Can be provided per-workflow, for an entire workload, or both</li>
-<li>Optional -- you only need to specify options if you'd like to override something</li>
+<li><code>uuid=&lt;UUID&gt;</code> where <code>&lt;UUID&gt;</code> is the identifier of the specific workload you'd
+like to retry failures from<ul>
+<li>Ex: <code>uuid=95d536c7-ce3e-4ffc-8c9c-2b9c710d625a</code></li>
 </ul>
-</div>
-<p>Suppose the following valid workload request that you might <code>POST</code> to <code>/create</code> or <code>/exec</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+</li>
+<li><code>project=&lt;PROJECT&gt;</code> where <code>&lt;PROJECT&gt;</code> is the value of the project field of the
+workloads you'd like to retry<ul>
+<li>Ex: <code>project=PO-29619</code></li>
+</ul>
+</li>
+</ul>
+<p>With the below script, WFL will find matching workloads and resubmit any unique
+failures of individual workflows in a new workload (with the same parameters as
+the originals).</p>
+<p>Usage: <code>bash retry.sh QUERY</code></p>
+<p>Ex: <code>bash retry.sh project=PO-29619</code></p>
+<div class="highlight"><pre><span></span><code><span class="nv">WORKLOAD</span><span class="o">=</span><span class="k">$(</span>curl -X GET <span class="s2">&quot;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="se">\</span>
+    -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="p">|</span> jq<span class="k">)</span>
+
+jq <span class="s1">&#39;{</span>
+<span class="s1">    executor: .[0].executor,</span>
+<span class="s1">    output: .[0].output,</span>
+<span class="s1">    input: .[0].input,</span>
+<span class="s1">    pipeline: .[0].pipeline,</span>
+<span class="s1">    project: .[0].project,</span>
+<span class="s1">    items: .[].workflows</span>
+<span class="s1">        | group_by({inputs: .inputs, options: .options}) </span>
+<span class="s1">        | map(select(all(.status==&quot;Failed&quot;)) | .[0]</span>
+<span class="s1">            | {inputs: .inputs, options: .options})</span>
+<span class="s1">        | del(.[][] | nulls)</span>
+<span class="s1">} | del(.[] | nulls)&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$WORKLOAD</span><span class="s2">&quot;</span> &gt; retry.json
+
+curl -X POST <span class="s2">&quot;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec&quot;</span> <span class="se">\</span>
+    -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+    -d <span class="s2">&quot;@retry.json&quot;</span>
 </code></pre></div>
-<p>You may optionally add arbitrary JSON objects as <code>options</code> either for individual
-workflows, for the entire workload, or both:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;common&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project&quot;</span>
-    <span class="p">}</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span>
-      <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project-2&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">⚓︎</a></h2>
+<h3 id="customizing-inputsoptions">Customizing Inputs/Options<a class="headerlink" href="#customizing-inputsoptions" title="Permanent link">⚓︎</a></h3>
+<p>If you want to inject a new input or option into all of the retried workflows,
+you can do that with a <code>common</code> block. For example, replace this:</p>
+<div class="highlight"><pre><span></span><code>jq &#39;{
+    executor: .[0].executor,
 </code></pre></div>
-<details class="info" open="open"><summary>Info</summary><p>This behavior isn't supported for All-of-Us-related processing.</p>
-</details>
-<p>To recap, in the above example the following workflow options will be set:</p>
+<p>with this:</p>
+<div class="highlight"><pre><span></span><code>jq &#39;{
+    common: { inputs: { &quot;WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.BamToCram.ValidateCram.memory_multiplier&quot;: 2 } },
+    executor: .[0].executor,
+</code></pre></div>
+<p>That example uses WFL's arbitrary input feature to bump up the memory multiplier
+for a particular WGS task.</p>
 <ul>
-<li>"jes_gcs_root" will have different values for the different samples</li>
-<li>"default_runtime_attributes" will override the "maxRetries" value to be 3</li>
-<li>"write_to_cache" will be false for all samples</li>
-<li>"google_project" is broad-google-project for the entire workload but is
-overridden in the second sample to be broad-google-project-2 (providing an
-option with more granularity gives it higher precedence)</li>
+<li>Nested inputs will have periods in them, you'll need to use quotes around it</li>
+<li>You can't override inputs or options that the workflows originally had (the
+<code>common</code> block has lower precedence)</li>
 </ul>
-<p>In other words, WFL will recursively merge the options objects together to
-resolve the options for individual workflows. You can see this in WFL's
-response, which includes all workflow options calculated for each workflow:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T15:50:01Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project&quot;</span>
-      <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-        <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project-2&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+<h3 id="simpler-retries">"Simpler" Retries<a class="headerlink" href="#simpler-retries" title="Permanent link">⚓︎</a></h3>
+<p>The script tries to be a bit intelligent about not making multiple resubmissions
+for the same sets of inputs/options. If you don't want that logic for whatever
+reason, replace this:</p>
+<div class="highlight"><pre><span></span><code>    items: .[].workflows
+        | group_by({inputs: .inputs, options: .options}) 
+        | map(select(all(.status==&quot;Failed&quot;)) | .[0]
+            | {inputs: .inputs, options: .options})
+        | del(.[][] | nulls)
 </code></pre></div>
-<p>One note is that WFL already has some default values it passes for
-workflow options and you'll see those defaults when you look at the
-returned options for a given workflow.
-See below for more information.</p>
-<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">⚓︎</a></h2>
-<p>The diagram below lists the different sources of options for a particular
-workflow. Precedence is from the bottom up, so "higher" sources override
-lower ones.</p>
-<p><img alt="" src="../assets/option-precedence.svg" /></p>
-<p>The green "sources" are where you may optionally provide configuration
-via <code>options</code>, the white "sources" are where WFL may create and
-supply options by default, and the gray "sources" are outside of WFL's
-visibility but can still affect the result.</p>
-<p>WFL supplies its own derived options usually on a per-module basis,
-meaning different pipelines that make use of different modules may
-have different options they derive and supply by default.</p>
-<p>Individual module documentation can help provide more info, as will
-simply looking at WFL's response from the <code>/create</code> or <code>/exec</code> endpoints,
-which includes those defaults.</p>
+<p>with this:</p>
+<div class="highlight"><pre><span></span><code>    items: .[].workflows
+        | map(select(.status==&quot;Failed&quot;)
+            | {inputs: .inputs, options: .options})
+        | del(.[][] | nulls)
+</code></pre></div>
                 
               
               
@@ -734,7 +697,7 @@ which includes those defaults.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../modules-general/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../modules-directory-usage/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -743,19 +706,19 @@ which includes those defaults.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                General
+                Usage Across a Directory
               </div>
             </div>
           </a>
         
         
-          <a href="../modules-arrays/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../terra/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Arrays
+                WorkFlow Launcher's Role in Terra
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
