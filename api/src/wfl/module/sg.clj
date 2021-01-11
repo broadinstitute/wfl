@@ -60,4 +60,5 @@
 
 (defoverload workloads/create-workload! pipeline create-sg-workload!)
 (defoverload workloads/start-workload! pipeline start-sg-workload!)
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)

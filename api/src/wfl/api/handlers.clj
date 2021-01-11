@@ -74,29 +74,23 @@
            strip-internals
            succeed))))
 
-(defn get-workload!
+(defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (letfn [(go! [tx {:keys [uuid] :as workload}]
-            (if (:finished workload)
-              workload
+  (succeed
+   (map strip-internals
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (if-let [uuid (-> request :parameters :query :uuid)]
+            (do
+              (logr/infof "getting workload by uuid %s" uuid)
+              [(workloads/load-workload-for-uuid tx uuid)])
+            (if-let [project (-> request :parameters :query :project)]
               (do
-                (logr/infof "updating workload %s" uuid)
-                (workloads/update-workload! tx workload))))]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-       (mapv (comp strip-internals (partial go! tx))
-             (if-let [uuid (-> request :parameters :query :uuid)]
-               (do
-                 (logr/infof "getting workload by uuid %s" uuid)
-                 [(workloads/load-workload-for-uuid tx uuid)])
-               (if-let [project (-> request :parameters :query :project)]
-                 (do
-                   (logr/infof "getting workloads by project %s" project)
-                   (workloads/load-workloads-with-project tx project))
-                 (do
-                   (logr/infof "getting all workloads")
-                   (workloads/load-workloads tx)))))))))
+                (logr/infof "getting workloads by project %s" project)
+                (workloads/load-workloads-with-project tx project))
+              (do
+                (logr/infof "getting all workloads")
+                (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."

@@ -12,9 +12,13 @@
             [ring.middleware.reload :as reload]
             [ring.middleware.session.cookie :as cookie]
             [wfl.api.routes :as routes]
+            [wfl.api.workloads :as workloads]
+            [wfl.jdbc :as jdbc]
+            [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent Future TimeUnit)))
+  (:import (java.util.concurrent Future TimeUnit)
+           (org.postgresql.util PSQLException)))
 
 (def description
   "The purpose of this command."
@@ -71,12 +75,27 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn ^:private start-workload-manager []
+(defn ^:private start-workload-manager
   "Update the workload database then start a background task to periodically
   manage the state of workflows indefinitely. Returns a
   java.util.concurrent.Future that, when de-referenced, waits for the background
   task to finish (i.e. until an error occurs)."
-  (letfn [(update-workloads! [])]                           ;; todo
+  []
+  (letfn [(do-update! [{:keys [id uuid]}]
+            (try
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (->> (workloads/load-workload-for-id tx id)
+                     (workloads/update-workload! tx)))
+              (catch PSQLException ex
+                (log/warnf "Failed to update workload %s" uuid)
+                (log/warn ex))))
+          (update-workloads! []
+            (log/info "updating workloads")
+            (run! do-update!
+                  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                    (jdbc/query tx [(str/join " " ["SELECT id,uuid FROM workload"
+                                                   "WHERE started IS NOT NULL"
+                                                   "AND finished IS NULL"])]))))]
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
@@ -98,9 +117,10 @@
       (isCancelled [_] false)
       (isDone [_] (.isStopped server)))))
 
-(defn ^:private await-some [& futures]
+(defn ^:private await-some
   "Poll the sequence of futures until at least one is done then dereference
   that future. Any exceptions thrown by that future are propagated untouched."
+  [& futures]
   (loop []
     (if-let [f (first (filter future-done? futures))]
       (do @f nil)

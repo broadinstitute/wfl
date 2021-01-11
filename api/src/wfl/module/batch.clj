@@ -6,7 +6,8 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.api.workloads :as workloads])
   (:import [java.util UUID]
            [java.time OffsetDateTime]))
 
@@ -63,3 +64,13 @@
                    (util/deep-merge default-options options)
                    (merge cromwell-label {:workload uuid}))))]
      (mapcat submit-batch! (group-by :options workflows)))))
+
+(defn update-workload!
+  "Use transaction TX to batch-update WORKLOAD statuses."
+  [tx {:keys [id] :as workload}]
+  (if (or (:finished workload) (not (:started workload)))
+    workload
+    (do
+      (postgres/batch-update-workflow-statuses! tx workload)
+      (postgres/update-workload-status! tx workload)
+      (workloads/load-workload-for-id tx id))))

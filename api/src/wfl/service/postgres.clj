@@ -42,6 +42,15 @@
     (jdbc/query tx (format "SELECT * FROM %s" table))
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
+(defn ^:private cromwell-status
+  "`status` of the workflow with `uuid` in `cromwell`."
+  [cromwell uuid]
+  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :status))
+
 (def ^:private finished?
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
@@ -57,7 +66,21 @@
            (remove (comp finished? :status))
            (run! #(update! % (get-status! workload %)))))))
 
-(defn update-workflow-statuses!
+(def update-workflow-statuses!
+  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
+  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
+            (if (util/uuid-nil? uuid)
+              "skipped"
+              (cromwell-status executor uuid)))]
+    (make-update-workflows get-cromwell-status)))
+
+(def update-terra-workflow-statuses!
+  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
+  (letfn [(get-terra-status [{:keys [executor project]} workflow]
+            (terra/get-workflow-status-by-entity executor project workflow))]
+    (make-update-workflows get-terra-status)))
+
+(defn batch-update-workflow-statuses!
   "Use `tx` to update `status` the workflows in a `workload`."
   [tx {:keys [executor uuid items]}]
   (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
@@ -69,12 +92,6 @@
                             ["uuid = ?" uuid]))]
       (run! update! uuid->status))))
 
-(def update-terra-workflow-statuses!
-  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [executor project]} workflow]
-            (terra/get-workflow-status-by-entity executor project workflow))]
-    (make-update-workflows get-terra-status)))
-
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id items] :as _workload}]
@@ -83,11 +100,3 @@
     (when (empty? (jdbc/query tx (format query items)))
       (jdbc/update! tx :workload
                     {:finished (OffsetDateTime/now)} ["id = ?" id]))))
-
-(defn update-workload!
-  "Use transaction TX to update WORKLOAD statuses if it has been started."
-  [tx workload]
-  (if (and (:started workload) (not (:finished workload)))
-    (do
-      (update-workflow-statuses! tx workload)
-      (update-workload-status! tx workload))))
