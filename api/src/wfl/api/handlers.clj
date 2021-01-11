@@ -62,17 +62,17 @@
            succeed))))
 
 (defn post-create
-  "Create the workload described in BODY of REQUEST."
-  [{:keys [parameters] :as request}]
-  (let [{:keys [body]} parameters
-        {:keys [email]} (gcs/userinfo request)]
-    (logr/infof "post-create endpoint called: body=%s" body)
+  "Create the workload described in REQUEST."
+  [request]
+  (let [workload-request (-> (:body-params request)
+                             (rename-keys {:cromwell :executor}))
+        {:keys [email]}  (gcs/userinfo request)]
+    (logr/info "post-create endpoint called: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (succeed
-       (strip-internals
-        (workloads/create-workload! tx (-> body
-                                           (assoc :creator email)
-                                           (rename-keys {:cromwell :executor}))))))))
+      (->> (assoc workload-request :creator email)
+           (workloads/create-workload! tx)
+           strip-internals
+           succeed))))
 
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
@@ -111,9 +111,10 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [workload-request (:body-params request)]
-      (logr/info "executing workload-request: " workload-request)
+  (let [workload-request (-> (:body-params request)
+                             (rename-keys {:cromwell :executor}))]
+    (logr/info "post-exec endpoint called: " workload-request)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->>
        (gcs/userinfo request)
        :email

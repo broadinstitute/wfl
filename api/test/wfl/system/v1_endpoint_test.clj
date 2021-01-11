@@ -127,6 +127,10 @@
 
 (deftest ^:parallel test-exec-wgs-workload
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-exec-wgs-workload-specifying-cromwell
+  ;; All modules make use of the same code/behavior here, no need to spam Cromwell
+  (test-exec-workload (-> (workloads/wgs-workload-request (UUID/randomUUID))
+                          (rename-keys {:executor :cromwell}))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-arrays-workload
