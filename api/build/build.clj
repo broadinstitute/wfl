@@ -71,7 +71,7 @@
 (defn stage-environment-dot-clj
   "Stage the wfl/environments.clj file to generated SOURCES."
   [sources]
-  (let [clj  "../../derived/2p/pipeline-config/wfl/environments.clj"
+  (let [clj  "../derived/2p/pipeline-config/wfl/environments.clj"
         file (io/file clj)]
     (util/shell-io!
      "git" "-c" "advice.detachedHead=false" "-C" (.getParent file)
@@ -83,7 +83,7 @@
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (let [api   "../../derived/api"]
+  (let [api "../derived/api"]
     (pprint the-version)
     (stage-environment-dot-clj (io/file api "src" "wfl"))
     (write-the-version-file (io/file api "resources" "wfl") the-version)))
