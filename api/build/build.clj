@@ -73,7 +73,8 @@
       (-> in io/file io/reader xml/parse
           (update :content (partial map override))
           xml/emit-str
-          (->> (spit out))))))
+          (->> (spit out)))))
+  (System/exit 0))
 
 (defn stage-environment-dot-clj
   "Stage the wfl/environments.clj file to generated SOURCES."
@@ -93,4 +94,5 @@
   (let [api "../derived/api"]
     (pprint the-version)
     (stage-environment-dot-clj (io/file api "src" "wfl"))
-    (write-the-version-file (io/file api "resources" "wfl") the-version)))
+    (write-the-version-file (io/file api "resources" "wfl") the-version))
+  (System/exit 0))
