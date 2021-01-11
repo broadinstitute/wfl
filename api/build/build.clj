@@ -17,21 +17,28 @@
 ;;
 (def the-version
   "A map of version information."
-  (let [built     (-> (OffsetDateTime/now)
-                      (.truncatedTo ChronoUnit/SECONDS)
-                      .toInstant .toString)
-        commit    (util/shell! "git" "rev-parse" "HEAD")
-        committed (->> commit
-                       (util/shell! "git" "show" "-s" "--format=%cI")
-                       OffsetDateTime/parse .toInstant .toString)
-        clean?    (util/do-or-nil-silently
-                   (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
-    {:version          (or (System/getenv "WFL_VERSION") "devel")
-     :commit           commit
-     :committed        committed
-     :built            built
-     :user             (or (System/getenv "USER") "wfl")
-     "pipeline-config" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae"}))
+  (letfn [(frob [{:keys [release path]}]
+            [(last (str/split path #"/")) release])]
+    (let [built     (-> (OffsetDateTime/now)
+                        (.truncatedTo ChronoUnit/SECONDS)
+                        .toInstant .toString)
+          commit    (util/shell! "git" "rev-parse" "HEAD")
+          committed (->> commit
+                         (util/shell! "git" "show" "-s" "--format=%cI")
+                         OffsetDateTime/parse .toInstant .toString)
+          clean?    (util/do-or-nil-silently
+                     (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+      (into
+       {:version          (or (System/getenv "WFL_VERSION") "devel")
+        :commit           commit
+        :committed        committed
+        :built            built
+        :user             (or (System/getenv "USER") "wfl")
+        "pipeline-config" "3f182c0b06ee5f2dfebf15ed8b12d513027878ae"}
+       (map frob [aou/workflow-wdl
+                  sg/workflow-wdl
+                  wgs/workflow-wdl
+                  xx/workflow-wdl])))))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
