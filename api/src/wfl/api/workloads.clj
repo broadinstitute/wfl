@@ -64,13 +64,13 @@
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
   (let [do-load   (partial load-workload-impl tx)]
-    (map do-load (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+    (mapv do-load (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
 
 (defn load-workloads
   "Use transaction TX to load all known `workloads`"
   [tx]
   (let [do-load (partial load-workload-impl tx)]
-    (map do-load (jdbc/query tx ["SELECT * FROM workload"]))))
+    (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))
 
 ;; helper utility for point-free multi-method implementation registration.
 (defmacro defoverload
@@ -102,9 +102,11 @@
 
 (defmethod update-workload!
   :default
-  [tx workload]
-  (postgres/update-workload! tx workload)
-  (load-workload-for-id tx (:id workload)))
+  [_ body]
+  (throw
+   (ex-info "Failed to update workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 (defn default-load-workload-impl
   [tx workload]

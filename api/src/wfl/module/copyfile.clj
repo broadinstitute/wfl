@@ -75,6 +75,8 @@
     (start-copyfile-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
 
+(defoverload workloads/update-workload! pipeline batch/update-workload!)
+
 (defmethod workloads/load-workload-impl
   pipeline
   [tx workload]

@@ -275,9 +275,11 @@
 (defmethod workloads/update-workload!
   pipeline
   [tx workload]
-  (try
-    (postgres/update-workflow-statuses! tx workload)
-    (workloads/load-workload-for-id tx (:id workload))
-    (catch Throwable cause
-      (throw (ex-info "Error updating aou workload"
-                      {:workload workload} cause)))))
+  (if-not (:started workload)
+    workload
+    (try
+      (postgres/update-workflow-statuses! tx workload)
+      (workloads/load-workload-for-id tx (:id workload))
+      (catch Throwable cause
+        (throw (ex-info "Error updating aou workload"
+                        {:workload workload} cause))))))

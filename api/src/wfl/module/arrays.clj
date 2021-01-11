@@ -143,13 +143,15 @@
 (defmethod workloads/update-workload!
   pipeline
   [tx workload]
-  (try
-    (postgres/update-terra-workflow-statuses! tx workload)
-    (postgres/update-workload-status! tx workload)
-    (workloads/load-workload-for-id tx (:id workload))
-    (catch Throwable cause
-      (throw (ex-info "Error updating arrays workload"
-                      {:workload workload} cause)))))
+  (if (or (:finished workload) (not (:started workload)))
+    workload
+    (try
+      (postgres/update-terra-workflow-statuses! tx workload)
+      (postgres/update-workload-status! tx workload)
+      (workloads/load-workload-for-id tx (:id workload))
+      (catch Throwable cause
+        (throw (ex-info "Error updating arrays workload"
+                        {:workload workload} cause))))))
 
 (defmethod workloads/load-workload-impl
   pipeline
