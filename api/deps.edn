@@ -92,4 +92,8 @@
 
   :prebuild {:extra-paths ["./build"]
              :exec-fn build/prebuild
-             :exec-args {}}}}
+             :exec-args {}}
+
+  :update-the-pom {:extra-paths ["./build"]
+                   :exec-fn build/update-the-pom
+                   :exec-args {}}}}

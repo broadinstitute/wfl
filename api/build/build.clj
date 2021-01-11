@@ -87,7 +87,3 @@
     (pprint the-version)
     (stage-environment-dot-clj (io/file api "src" "wfl"))
     (write-the-version-file (io/file api "resources" "wfl") the-version)))
-
-(comment
-  (prebuild {})
-  )
