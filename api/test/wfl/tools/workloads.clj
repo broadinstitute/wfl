@@ -12,8 +12,6 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
-            [clj-http.client :as http]
-            [wfl.once :as once]
             [wfl.module.all :as all]
             [wfl.module.sg :as sg])
   (:import (java.util.concurrent TimeoutException)))
@@ -145,15 +143,6 @@
    :pipeline sg/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs sg-inputs}]})
-
-(defn cromwell-status
-  "`status` of the workflow with UUID on CROMWELL."
-  [cromwell uuid]
-  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (once/get-auth-header)})
-      :body
-      util/parse-json
-      :status))
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."

@@ -75,11 +75,12 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn ^:private start-workload-manager []
+(defn ^:private start-workload-manager
   "Update the workload database then start a background task to periodically
   manage the state of workflows indefinitely. Returns a
   java.util.concurrent.Future that, when de-referenced, waits for the background
   task to finish (i.e. until an error occurs)."
+  []
   (letfn [(do-update! [{:keys [id uuid]}]
             (try
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
