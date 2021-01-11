@@ -111,10 +111,10 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [workload-request (-> (:body-params request)
-                               (rename-keys {:cromwell :executor}))]
-      (logr/info "post-exec endpoint called: " workload-request)
+  (let [workload-request (-> (:body-params request)
+                             (rename-keys {:cromwell :executor}))]
+    (logr/info "post-exec endpoint called: " workload-request)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->>
        (gcs/userinfo request)
        :email
