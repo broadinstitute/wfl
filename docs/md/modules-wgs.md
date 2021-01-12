@@ -107,7 +107,7 @@ at least read access to the input files.
 
 Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
 cromwell "workflowOptions" via the `options` map. See the
-[reference page](./workflow-options.md) for more information.
+[reference page](./usage-workflow-options) for more information.
 
 ### Start Workload: `/api/v1/start`
 
