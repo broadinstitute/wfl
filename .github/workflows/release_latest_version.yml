@@ -27,7 +27,7 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     env:
-      MODULES: api ui functions/aou functions/sg
+      MODULES: api ui functions/aou functions/sg docs
 
     steps:
       - name: prepare sources
@@ -170,3 +170,29 @@ jobs:
 
       - name: tag-and-push-images
         run: ./ops/cli.py tag-and-push-images
+
+      - name: Read Version Data
+        id: version
+        run: |
+          echo "::set-output name=VERSION::v$(cat version)"
+          echo "::set-output name=CHANGELOG::$(sed -n '1d;/$#/!p;//q' CHANGELOG.md)"
+
+      - name: Deploy Docs
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: derived/docs/site
+          keep_files: true
+          destination_dir: ${{ steps.version.outputs.VERSION }}
+
+      - name: Add Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          body: |
+            Docs available at [broadinstitute.github.io/wfl/${{ steps.version.outputs.VERSION }}](https://broadinstitute.github.io/wfl/${{ steps.version.outputs.VERSION }})
+
+            [Changes](https://github.com/broadinstitute/wfl/blob/${{ steps.version.outputs.VERSION }}/CHANGELOG.md):
+            ${{ steps.version.outputs.CHANGELOG }}
