@@ -305,11 +305,12 @@ vault.client.http/http-client                               ; Keep :clint eastwo
           image "genomes-in-the-cloud:2.4.3-1564508330"
           {:keys [cromwell google]} (env/stuff environment)
           {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend         "PAPIv2"
-           :google_project  (rand-nth projects)
-           :jes_gcs_root    (rand-nth jes_roots)
-           :read_from_cache true
-           :write_to_cache  true
+      (-> {:backend                         "PAPIv2"
+           :google_legacy_machine_selection true
+           :google_project                  (rand-nth projects)
+           :jes_gcs_root                    (rand-nth jes_roots)
+           :read_from_cache                 true
+           :write_to_cache                  true
            :default_runtime_attributes
            {:docker (str/join "/" [gcr repo image])
             :zones  google-cloud-zones
