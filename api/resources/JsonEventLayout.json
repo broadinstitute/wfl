@@ -1,0 +1,49 @@
+{
+  "timestamp": {
+    "$resolver": "timestamp"
+  },
+  "level": {
+    "$resolver": "level",
+    "field": "name"
+  },
+  "location": {
+    "$resolver": "logger",
+    "field": "name"
+  },
+  "message": {
+    "$resolver": "message",
+    "stringified": true
+  },
+  "file": {
+    "$resolver": "source",
+    "field": "fileName"
+  },
+  "class": {
+    "$resolver": "source",
+    "field": "className"
+  },
+  "method": {
+    "$resolver": "source",
+    "field": "methodName"
+  },
+  "line_number": {
+    "$resolver": "source",
+    "field": "lineNumber"
+  },
+  "exception": {
+    "exception_class": {
+      "$resolver": "exception",
+      "field": "className"
+    },
+    "exception_message": {
+      "$resolver": "exception",
+      "field": "message",
+      "stringified": true
+    },
+    "stacktrace": {
+      "$resolver": "exception",
+      "field": "stackTrace",
+      "stringified": true
+    }
+  }
+}
