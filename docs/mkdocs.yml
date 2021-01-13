@@ -37,14 +37,16 @@ nav:
     - Logging: dev-logging.md
     - Deployment: dev-deployment.md
     - Frontend: dev-frontend.md
-  - Modules:
-    - General: modules-general.md
-    - Workflow Options: workflow-options.md
+  - Module-Specific Usage:
+    - Overview: modules-general.md
     - Arrays: modules-arrays.md
     - Whole Genome: modules-wgs.md
     - External Exome: modules-external-exome-reprocessing.md
-    - Usage Across a Directory: modules-directory-usage.md
-    - Retrying Failures: modules-retry-usage.md
+  - General Usage:
+    - Workflow Options: usage-workflow-options.md
+    - Usage Across a Directory: usage-across-directory.md
+    - Retrying Failures: usage-retry.md
+    - Aborting a Workload: usage-abort.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md
 

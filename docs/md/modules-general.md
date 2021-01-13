@@ -28,7 +28,7 @@ Defining a workload type usually requires these top-level parameters.
 
 | Parameter | Type       |              Required              |
 |-----------|------------|:----------------------------------:|
-| cromwell  | URL        | :fontawesome-regular-check-square: |
+| executor  | URL        | :fontawesome-regular-check-square: |
 | output    | URL prefix  | :fontawesome-regular-check-square: |
 | pipeline  | pipeline   | :fontawesome-regular-check-square: |
 | project   | text       | :fontawesome-regular-check-square: |
@@ -39,8 +39,8 @@ Defining a workload type usually requires these top-level parameters.
 
 The parameters are used this way.
 
-- The `cromwell` URL specifies the Cromwell instance
-to service the _workload_.
+- The `executor` URL specifies the Cromwell instance or 
+other execution engine to service the _workload_.
 - The `output` URL prefix specifies the path you'd like WFL
 to dump the results to. It usually is a _gs_ bucket.
 - The `pipeline` enumeration implicitly identifies a data
