@@ -30,11 +30,6 @@
                    "https://www.googleapis.com/auth/userinfo.email"
                    "https://www.googleapis.com/auth/userinfo.profile"])))
 
-(defn service-account-email
-  "The client_email for the WFL service account."
-  []
-  (.getClientEmail (service-account-credentials)))
-
 (defn service-account-token
   "A bearer token for the WFL service account."
   []

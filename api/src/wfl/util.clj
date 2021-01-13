@@ -7,7 +7,7 @@
             [clojure.tools.logging :as log]
             [buddy.sign.jwt :as jwt]
             [clj-yaml.core :as yaml]
-            [vault.client.http]                             ; vault.core needs this
+            [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [wfl.environments :as env]
             [wfl.wfl :as wfl])
@@ -20,7 +20,7 @@
            [java.util.zip ZipOutputStream ZipEntry]
            [org.apache.commons.io FilenameUtils]))
 
-vault.client.http/http-client                               ; Keep :clint eastwood quiet.
+vault.client.http/http-client           ; Keep :clint eastwood quiet.
 
 (defmacro do-or-nil
   "Value of BODY or nil if it throws."
