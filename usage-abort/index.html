@@ -14,7 +14,7 @@
     
     
       
-        <title>Logging - Workflow Launcher</title>
+        <title>Aborting a Workload - Workflow Launcher</title>
       
     
     
@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#wfl-logging" class="md-skip">
+        <a href="#aborting-a-wfl-workload" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Logging
+              Aborting a Workload
             
           </span>
         </div>
@@ -208,14 +208,12 @@
       
 
 
-  
-
 
   
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" >
     
     <label class="md-nav__link" for="nav-2">
       Development Guide
@@ -273,77 +271,11 @@
           
 
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Logging
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../dev-logging/" class="md-nav__link">
       Logging
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#tldr" class="md-nav__link">
-    TL;DR
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    Usage
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behavior" class="md-nav__link">
-    Behavior
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    Testing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#under-the-hood" class="md-nav__link">
-    Under the Hood
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -464,12 +396,14 @@
       
 
 
+  
+
 
   
-  <li class="md-nav__item md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       General Usage
@@ -527,11 +461,20 @@
           
 
 
+  
 
-  <li class="md-nav__item">
-    <a href="../usage-abort/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       Aborting a Workload
     </a>
+    
   </li>
 
         
@@ -600,49 +543,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#tldr" class="md-nav__link">
-    TL;DR
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    Usage
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behavior" class="md-nav__link">
-    Behavior
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    Testing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#under-the-hood" class="md-nav__link">
-    Under the Hood
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -653,66 +553,44 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/dev-logging.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/usage-abort.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="wfl-logging">WFL Logging<a class="headerlink" href="#wfl-logging" title="Permanent link">⚓︎</a></h1>
-<h2 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">⚓︎</a></h2>
-<blockquote>
-<p>Import <code>clojure.tools.logging :as log</code> and use <code>log/error</code> / <code>log/info</code> etc.</p>
-<p><code>clojure.tools.logging</code> uses SLF4J under the hood which in turn uses Log4j2 as its implementation.</p>
-<p>Below is more detailed information for those interested.</p>
-</blockquote>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
-<p>We use <code>clojure.tools.logging</code> aliased to <code>log</code>.</p>
-<p>Require it like any other dependency:
-<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">ns </span><span class="s">&quot;...&quot;</span>
-  <span class="p">(</span><span class="ss">:require</span>
-    <span class="nv">...</span>
-    <span class="p">[</span><span class="nv">clojure.tools.logging</span> <span class="ss">:as</span> <span class="nv">log</span><span class="p">]</span>
-    <span class="nv">...</span><span class="p">))</span>
+                <h1 id="aborting-a-wfl-workload">Aborting a WFL Workload<a class="headerlink" href="#aborting-a-wfl-workload" title="Permanent link">⚓︎</a></h1>
+<p>Aborting a workload is done by aborting individual workflows directly with
+Cromwell. </p>
+<details class="tip" open="open"><summary>Tip</summary><p>This only works with Cromwell! Don't try this script for things running in
+Terra, it won't work.</p>
+</details>
+<p>Here's a script that can help with that:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Usage: bash abort.sh QUERY [WFL_URL] [THREADS]</span>
+<span class="c1">#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`</span>
+<span class="c1">#   WFL_URL is optionally the WFL to abort workflows from</span>
+<span class="c1">#       Default is the gotc-prod WFL</span>
+<span class="c1">#   THREADS is optionally the number of threads to use to talk to Cromwell</span>
+<span class="c1">#       Default is 2</span>
 
-<span class="p">(</span><span class="nf">log/info</span> <span class="s">&quot;Hello!&quot;</span><span class="p">)</span>
-</code></pre></div></p>
-<p>Full documentation is available <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging">here</a>.</p>
-<h2 id="behavior">Behavior<a class="headerlink" href="#behavior" title="Permanent link">⚓︎</a></h2>
-<p>Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.</p>
-<p>Thus, to have WFL log everything to a file you'd want to use something like
-<div class="highlight"><pre><span></span><code>my-command &gt;output.log <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="nv">WORKLOAD</span><span class="o">=</span><span class="k">$(</span>curl -X GET <span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">https</span><span class="p">://gotc-prod-wfl.gotc-prod.broadinstitute.org</span><span class="si">}</span><span class="s2">/api/v1/workload?</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="se">\</span>
+        -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+        -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="p">|</span> jq<span class="k">)</span>
+
+<span class="nv">CROMWELL</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;map(.executor) | .[0]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$WORKLOAD</span><span class="s2">&quot;</span><span class="k">)</span>
+
+jq -r <span class="s1">&#39;map(.workflows)</span>
+<span class="s1">        | flatten</span>
+<span class="s1">        | map(select(.status != &quot;Failed&quot; and .status != &quot;Succeeded&quot;) | .uuid)</span>
+<span class="s1">        | .[]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$WORKLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
+    <span class="p">|</span> xargs -I % -n <span class="m">1</span> -P <span class="si">${</span><span class="nv">3</span><span class="k">:-</span><span class="nv">2</span><span class="si">}</span> curl -w <span class="s2">&quot;\n&quot;</span> -s -X POST <span class="s2">&quot;</span><span class="nv">$CROMWELL</span><span class="s2">/api/workflows/v1/%/abort&quot;</span> <span class="se">\</span>
+        -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+        -H <span class="s2">&quot;Content-Type: application/json&quot;</span>
 </code></pre></div>
-That'll capture both STDOUT and STDERR to the same file.
-Note that this specific syntax is more universal than just <code>&amp;&gt;output.log</code>.</p>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">⚓︎</a></h2>
-<p>clojure.tools.logging provides a <a href="http://clojure.github.io/tools.logging/#clojure.tools.logging.test">test namespace</a>.</p>
-<p>An example of usage is in <code>test/wfl/unit/logging_test.clj</code>, which exists to test that the service loaders are correctly resolving our dependencies.</p>
-<h2 id="under-the-hood">Under the Hood<a class="headerlink" href="#under-the-hood" title="Permanent link">⚓︎</a></h2>
-<blockquote>
-<p>This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup
-doesn't change all that much.</p>
-<p>The key takeaway here is that JVM logging libraries use service loaders
-and other runtime configuration to find each other.</p>
-</blockquote>
-<p>WFL's logging works as follows:</p>
-<ol>
-<li>clojure.tools.logging is imported and used directly</li>
-<li>Why clojure.tools.logging? It is Clojure-native so it has intuitive syntax</li>
-<li>Why not wrap or delegate to it? It already works just as a wrapper to any
-     other logging implementation so wrapping it would duplicate its purpose</li>
-<li>clojure.tools.logging delegates to SLF4J</li>
-<li>Why SLF4J? Jetty already uses it, so configuring it ourselves helps keep
-     it quiet</li>
-<li>SLF4J delegates to Log4j 2</li>
-<li>Why delegate? SLF4J is a facade that still needs an implementation to
-     actually log things</li>
-<li>Why Log4j 2? It is a fair default implementation: highly configurable,
-     well-tested, well-supported</li>
-</ol>
-<p>Even without making our own wrapper around clojure.tools.logging, we have
-a lot of flexibility. Suppose Jetty removes their dependency on SLF4J: we
-could remove our own dependency on SLF4J and clojure.tools.logging would
-immediately begin interacting directly with Log4j 2.</p>
+<p>The 'QUERY' part is like you'd pass to <a href="./usage-retry">retry.sh</a>.</p>
+<p>You don't necessarily need to query WFL for the workload. As of this writing,
+the response from <code>/start</code> or <code>/exec</code> includes the workflow UUIDs, so if you
+stored that response in <code>WORKLOAD</code> then you could abort it without having
+to query WFL (and trigger WFL's potentially lengthy update process).</p>
                 
               
               
@@ -731,7 +609,7 @@ immediately begin interacting directly with Log4j 2.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../dev-sandbox/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../usage-retry/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -740,19 +618,19 @@ immediately begin interacting directly with Log4j 2.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Local Development SandBox
+                Retrying Failures
               </div>
             </div>
           </a>
         
         
-          <a href="../dev-deployment/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../terra/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Deployment
+                WorkFlow Launcher's Role in Terra
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
