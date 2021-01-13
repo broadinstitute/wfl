@@ -26,9 +26,9 @@ def get_snapshot_data(google_project, datarepo_snapshot, service_account_path):
     query_job = client.query(query)
     return query_job.result()
 
-def format_data_as_tsv(tsv_file, snapshot_rows):
+def format_data_as_tsv(tsv_file, snapshot_rows, data_table):
     """ Write BigQuery results into a TSV file for importing to Terra.
-    The first row header must follow the format 'entity:{workspace_data_table}_id'.
+    The first row header must follow the format 'entity:{data_table}_id'.
     For example, 'entity:sample_id' will upload the tsv data into a "sample" table in
     the workspace (or create one if it does not exist). If the table already contains
     a sample with that id, it will get overwritten."""
@@ -39,10 +39,10 @@ def format_data_as_tsv(tsv_file, snapshot_rows):
         for row in snapshot_rows:
             if not headers:
                 keys = list(row.keys())
-                keys[0] = 'entity:datarepo_row_id'
+                keys[0] = f'entity:{data_table}_id'
                 writer.writerow(keys)
             writer.writerow(row.values())
-            entities.append({'entity_name': 'datarepo_row', "entity_id": row[0]})
+            entities.append({'entity_name': data_table, "entity_id": row[0]})
     return entities
 
 def upload_to_terra(terra_url, terra_workspace, tsv_file, service_account_path):
@@ -61,10 +61,10 @@ def upload_to_terra(terra_url, terra_workspace, tsv_file, service_account_path):
                                     'type': 'text/tab-separated-values'})
     return response
 
-def main(datarepo_snapshot, terra_url, terra_workspace, service_account_path):
+def main(datarepo_snapshot, terra_url, terra_workspace, terra_data_table, service_account_path):
     tsv_file = f'{uuid.uuid4()}_samples.tsv'
     snapshot_rows = get_snapshot_data('broad-jade-dev-data', datarepo_snapshot, service_account_path)
-    entities = format_data_as_tsv(tsv_file, snapshot_rows)
+    entities = format_data_as_tsv(tsv_file, snapshot_rows, terra_data_table)
     upload_to_terra(terra_url, terra_workspace, tsv_file, service_account_path)
     print(f'The following samples have been uploaded to {terra_workspace}:')
     for sample in entities:
@@ -83,7 +83,10 @@ if __name__ == '__main__':
     parser.add_argument("--terra_workspace",
                         default="general-dev-billing-account/hornet-test",
                         help="The Terra workspace where the data will be imported. Follows the format {workspaceNamespace}/{workspaceName}")
+    parser.add_argument("--terra_data_table",
+                        default="datarepo_row",
+                        help="The Terra workspace data table that will contain the snapshot data.")
     parser.add_argument("service_account_path",
                         help="A service account with access to both the Data Repo snapshot and the Terra workspace.")
     args = parser.parse_args()
-    main(args.datarepo_snapshot, args.terra_url, args.terra_workspace, args.service_account_path)
+    main(args.datarepo_snapshot, args.terra_url, args.terra_workspace, args.terra_data_table, args.service_account_path)
