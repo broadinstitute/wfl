@@ -1,3 +1,28 @@
+# Release 0.5.0
+- [GH-1120] Document the usage of Env Vars and fixed an issue with GPArrays system test. ([#287](https://github.com/broadinstitute/wfl/pull/287))
+- GH-1104: Factor build code out of WFL. ([#297](https://github.com/broadinstitute/wfl/pull/297))
+- [GH-1129] Avoid NPE in /exec by properly renaming keys ([#300](https://github.com/broadinstitute/wfl/pull/300))
+- [GH-1105] Update workloads in background periodically ([#298](https://github.com/broadinstitute/wfl/pull/298))
+- Add retrying page ([#299](https://github.com/broadinstitute/wfl/pull/299))
+- Get vault_token_path from aou inputs ([#293](https://github.com/broadinstitute/wfl/pull/293))
+- [GH-1125] Don't finish unstarted workloads ([#296](https://github.com/broadinstitute/wfl/pull/296))
+- [GH-1090] Automatic SG submission ([#280](https://github.com/broadinstitute/wfl/pull/280))
+- [GH-1110] Rename `cromwell` to `executor` ([#294](https://github.com/broadinstitute/wfl/pull/294))
+- [GH-1105] Add update loop plumbing ([#290](https://github.com/broadinstitute/wfl/pull/290))
+- [GH-668] Don't clone WARP, don't zip deps, use HTTP WDLs ([#291](https://github.com/broadinstitute/wfl/pull/291))
+- [GH-1115] Update directory docs for wfl batching ([#292](https://github.com/broadinstitute/wfl/pull/292))
+- Update workflow-options.md ([#289](https://github.com/broadinstitute/wfl/pull/289))
+- Bump axios from 0.19.2 to 0.21.1 in /ui ([#288](https://github.com/broadinstitute/wfl/pull/288))
+- [GH-1089] SG module ([#285](https://github.com/broadinstitute/wfl/pull/285))
+- [GH-1086] Make system tests flexible enough to choose Cromwell deployments ([#276](https://github.com/broadinstitute/wfl/pull/276))
+- [GH-1111] Update AOU cloud fn to handle paths with or without env prefix ([#284](https://github.com/broadinstitute/wfl/pull/284))
+- [GH-1106] `final_gvcf_base_name` and `base_file_name` should be the same as the `sample_name` ([#277](https://github.com/broadinstitute/wfl/pull/277))
+- Grab deployment keys from Vault, not secrets ([#283](https://github.com/broadinstitute/wfl/pull/283))
+- Handle environments in file paths ([#282](https://github.com/broadinstitute/wfl/pull/282))
+- [GH-1111] Handle Mercury staging messages for AOU ([#279](https://github.com/broadinstitute/wfl/pull/279))
+- [GH-1114] Fix WFL's Helm chart releaser action ([#281](https://github.com/broadinstitute/wfl/pull/281))
+- GH-1095: Batch submit workflows to Cromwell ([#272](https://github.com/broadinstitute/wfl/pull/272))
+
 # Release 0.4.0
 - create release candidate for v0.4.0 ([#231](https://github.com/broadinstitute/wfl/pull/231))
 - graphic updates ([#230](https://github.com/broadinstitute/wfl/pull/230))
@@ -36,4 +61,3 @@
 - [GH-1034] Fix reference_fasta function ([#194](https://github.com/broadinstitute/wfl/pull/194))
 - [GH-771] WGS updates ([#191](https://github.com/broadinstitute/wfl/pull/191))
 - [GH-819] External Exome Reprocessing ([#139](https://github.com/broadinstitute/wfl/pull/139))
-
