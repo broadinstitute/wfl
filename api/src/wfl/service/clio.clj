@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.environments :as env]
+            [wfl.once :as once]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
   (:import [com.google.auth.oauth2 GoogleCredentials]))
@@ -26,9 +27,7 @@
         (.createScoped ["https://www.googleapis.com/auth/userinfo.email"
                         "https://www.googleapis.com/auth/userinfo.profile"])
         .refreshAccessToken .getTokenValue
-        (->> (conj ["Bearer"])
-             (str/join \space)
-             (hash-map "Authorization")))))
+        once/authorization-header-with-bearer-token)))
 
 (defn post
   "Post THING to Clio server with metadata MD."
