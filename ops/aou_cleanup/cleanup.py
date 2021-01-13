@@ -12,6 +12,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import google.auth.transport.requests
 
+MERCURY_ENVS = ['dev', 'staging', 'prod']
 CROMWELL_SCOPES = ['email', 'openid', 'profile']
 STORAGE_SCOPES = ['https://www.googleapis.com/auth/devstorage.full_control',
                   'https://www.googleapis.com/auth/devstorage.read_only',
@@ -89,15 +90,20 @@ def main(env, service_account_key_path, apply=False):
 
     credentials = get_credentials(service_account_key_path, scopes=STORAGE_SCOPES)
     client = storage.Client(project=google_project, credentials=credentials)
-    # Only get files in one "environment" sub-directory because
-    # dev and staging can include the same samples
-    file_blobs = client.list_blobs(bucket_name, prefix=env)
+    file_blobs = client.list_blobs(bucket_name, prefix=None)
     file_names = []
     files = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    mercury_env = None
     for blob in file_blobs:
-        mercury_env, chip_name, chip_well_barcode, analysis_version_number, file_name = blob.name.split("/", maxsplit=4)
-        files[chip_name][chip_well_barcode][analysis_version_number].append(blob.name)
-        file_names.append(blob.name)
+        if not blob.name.endswith('/'):
+            segments = blob.name.split('/')
+            if segments[0] in MERCURY_ENVS:
+                mercury_env, chip_name, chip_well_barcode, analysis_version_number, file_name = segments[:5]
+            else:
+                chip_name, chip_well_barcode, analysis_version_number, file_name = segments[:4]
+            if not mercury_env or mercury_env == env:
+                files[chip_name][chip_well_barcode][analysis_version_number].append(blob.name)
+                file_names.append(blob.name)
 
     keep_files = get_files_to_keep(env)
     latest_analysis_files = get_latest_analysis_inputs(files)
