@@ -16,6 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # The Dockerfile copies this, so it needs
+      # to exist for the build to succeed
+      # (even though it's not scanned)
+      - run: |
+          mkdir target
+          touch target/wfl-api.jar
+
       - uses: broadinstitute/dsp-appsec-trivy-action@v1
         with:
           context: ${{ matrix.context }}
