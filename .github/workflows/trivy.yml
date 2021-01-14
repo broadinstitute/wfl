@@ -19,7 +19,8 @@ jobs:
       # The Dockerfile copies this, so it needs
       # to exist for the build to succeed
       # (even though it's not scanned)
-      - run: |
+      - working-directory: ${{ matrix.context }}
+        run: |
           mkdir target
           touch target/wfl-api.jar
 
