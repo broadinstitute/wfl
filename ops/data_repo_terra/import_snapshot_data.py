@@ -59,6 +59,7 @@ def upload_to_terra(terra_url, terra_workspace, tsv_file, service_account_path):
                              headers=headers,
                              files={'entities': io.BytesIO(contents),
                                     'type': 'text/tab-separated-values'})
+    response.raise_for_status()
     return response
 
 def main(datarepo_snapshot, terra_url, terra_workspace, terra_data_table, service_account_path):
