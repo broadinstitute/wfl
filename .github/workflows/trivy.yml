@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # The Dockerfile copies this, so it needs
+      # API Dockerfile copies this, so it needs
       # to exist for the build to succeed
       # (even though it's not scanned)
       - working-directory: ${{ matrix.context }}
