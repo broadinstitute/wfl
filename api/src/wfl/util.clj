@@ -297,7 +297,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
          (str/join " "))))
 
 (defn make-options
-  "Make options to run the workflow in ENVIRONMENT."
+  "Make Cromwell options to run a workflow in ENVIRONMENT."
   [environment]
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
     (let [gcr   "us.gcr.io"
