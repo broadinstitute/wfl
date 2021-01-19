@@ -14,7 +14,7 @@
     
     
       
-        <title>Whole Genome - Workflow Launcher</title>
+        <title>GPArrays - Workflow Launcher</title>
       
     
     
@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#externalwholegenomereprocessing-workload" class="md-skip">
+        <a href="#gparrays-workload" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Whole Genome
+              GPArrays
             
           </span>
         </div>
@@ -365,18 +365,6 @@
             
   
   
-  
-    <li class="md-nav__item">
-      <a href="../modules-gp-arrays/" class="md-nav__link">
-        GPArrays
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
     
   
   
@@ -388,12 +376,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Whole Genome
+          GPArrays
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Whole Genome
+        GPArrays
       </a>
       
         
@@ -418,43 +406,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input_cram-or-input_bam-required" class="md-nav__link">
-    input_cram or input_bam (required)
+  <a href="#entity_name-required" class="md-nav__link">
+    entity_name (required)
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#base_file_name" class="md-nav__link">
-    base_file_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sample_name" class="md-nav__link">
-    sample_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#final_gvcf_base_name" class="md-nav__link">
-    final_gvcf_base_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unmapped_bam_suffix" class="md-nav__link">
-    unmapped_bam_suffix
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reference_fasta_prefix" class="md-nav__link">
-    reference_fasta_prefix
+  <a href="#entity_type-required" class="md-nav__link">
+    entity_type (required)
   </a>
   
 </li>
@@ -516,6 +476,18 @@
   
 </nav>
       
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-wgs/" class="md-nav__link">
+        Whole Genome
+      </a>
     </li>
   
 
@@ -695,43 +667,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input_cram-or-input_bam-required" class="md-nav__link">
-    input_cram or input_bam (required)
+  <a href="#entity_name-required" class="md-nav__link">
+    entity_name (required)
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#base_file_name" class="md-nav__link">
-    base_file_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sample_name" class="md-nav__link">
-    sample_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#final_gvcf_base_name" class="md-nav__link">
-    final_gvcf_base_name
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unmapped_bam_suffix" class="md-nav__link">
-    unmapped_bam_suffix
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reference_fasta_prefix" class="md-nav__link">
-    reference_fasta_prefix
+  <a href="#entity_type-required" class="md-nav__link">
+    entity_type (required)
   </a>
   
 </li>
@@ -801,57 +745,35 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-wgs.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-gp-arrays.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="externalwholegenomereprocessing-workload">ExternalWholeGenomeReprocessing workload<a class="headerlink" href="#externalwholegenomereprocessing-workload" title="Permanent link">⚓︎</a></h1>
+                <h1 id="gparrays-workload">GPArrays workload<a class="headerlink" href="#gparrays-workload" title="Permanent link">⚓︎</a></h1>
+<p>The "GPArrays" workload launches workflows in Terra. Because Terra submits workflows to Cromwell
+using the RAWLs API, both the input data and pipeline must be imported into a Terra workspace
+prior to analysis.</p>
+<p>In addition, the workload differs from the other WFL modules in several ways:
+- The <code>executor</code> field is the Terra API URL (instead of the Cromwell URL)
+- The <code>project</code> is the Terra workspace to use for processing, and must follow the format 
+"{workspaceNamespace}/{workspaceName}".</p>
 <h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">⚓︎</a></h2>
-<p>An <code>ExternalWholeGenomeReprocessing</code> workload
-specifies the following inputs
-for each workflow:</p>
+<p>A <code>GPArrays</code> workload specifies the following inputs for each workflow:
+- <code>entity_name</code> 
+- <code>entity_type</code></p>
+<h4 id="entity_name-required"><code>entity_name</code> (required)<a class="headerlink" href="#entity_name-required" title="Permanent link">⚓︎</a></h4>
 <ul>
-<li><code>input_cram</code> or <code>input_bam</code> (required)</li>
-<li><code>base_file_name</code></li>
-<li><code>sample_name</code></li>
-<li><code>final_gvcf_base_name</code></li>
-<li><code>unmapped_bam_suffix</code></li>
-<li><code>reference_fasta_prefix</code></li>
+<li>The unique id of the sample in the Terra data table. The id field follows
+the format "{table_name}_id".</li>
 </ul>
-<h4 id="input_cram-or-input_bam-required"><code>input_cram</code> or <code>input_bam</code> (required)<a class="headerlink" href="#input_cram-or-input_bam-required" title="Permanent link">⚓︎</a></h4>
+<h4 id="entity_type-required"><code>entity_type</code> (required)<a class="headerlink" href="#entity_type-required" title="Permanent link">⚓︎</a></h4>
 <ul>
-<li>Absolute GCS file path (like <code>gs://...</code>)</li>
+<li>The name of the Terra workspace data table containing the sample 
+(e.g the <code>entity_type</code> of a row in the "sample" table is "sample")</li>
 </ul>
-<h4 id="base_file_name"><code>base_file_name</code><a class="headerlink" href="#base_file_name" title="Permanent link">⚓︎</a></h4>
-<ul>
-<li>Used for naming intermediate/output files</li>
-<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
-without the <code>.cram</code> or <code>.bam</code> extension</li>
-</ul>
-<h4 id="sample_name"><code>sample_name</code><a class="headerlink" href="#sample_name" title="Permanent link">⚓︎</a></h4>
-<ul>
-<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
-without the <code>.cram</code> or <code>.bam</code> extension</li>
-</ul>
-<h4 id="final_gvcf_base_name"><code>final_gvcf_base_name</code><a class="headerlink" href="#final_gvcf_base_name" title="Permanent link">⚓︎</a></h4>
-<ul>
-<li>Path to the final VCF (<code>.vcf</code> will be added by the WDL)</li>
-<li>Defaults to the filename of the <code>input_cram</code> or <code>input_bam</code>
-without the <code>.cram</code> or <code>.bam</code> extension</li>
-</ul>
-<h4 id="unmapped_bam_suffix"><code>unmapped_bam_suffix</code><a class="headerlink" href="#unmapped_bam_suffix" title="Permanent link">⚓︎</a></h4>
-<ul>
-<li>Defaults to <code>.unmapped.bam</code></li>
-</ul>
-<h4 id="reference_fasta_prefix"><code>reference_fasta_prefix</code><a class="headerlink" href="#reference_fasta_prefix" title="Permanent link">⚓︎</a></h4>
-<ul>
-<li><a href="https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L34">Defaults to</a> <code>gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38</code></li>
-</ul>
-<p>Note that this pipeline supports specifying arbitrary WDL inputs, either
-at the workload level through <code>common</code> or individually via <code>items</code>.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
-<p>ExternalWholeGenomeReprocessing workload supports the following API endpoints:</p>
+<p>A <code>GPArrays</code> workload supports the following API endpoints:</p>
 <table>
 <thead>
 <tr>
@@ -894,22 +816,23 @@ at the workload level through <code>common</code> or individually via <code>item
 </tbody>
 </table>
 <h3 id="create-workload-apiv1create">Create Workload: <code>/api/v1/create</code><a class="headerlink" href="#create-workload-apiv1create" title="Permanent link">⚓︎</a></h3>
-<p>Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have
-at least read access to the input files.</p>
+<p>Creates a WFL workload. Before processing, confirm that the Terra proxy SA for the
+wfl-non-prod SA has at least read access to the input files, and 
+the vault token path used by the Arrays pipeline.</p>
 <div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
 --header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
 --header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
 --data-raw <span class="s1">&#39;{</span>
-<span class="s1">  &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
-<span class="s1">  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
-<span class="s1">  &quot;project&quot;: &quot;PO-1234&quot;,</span>
+<span class="s1">  &quot;executor&quot;: &quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;,</span>
+<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;,</span>
+<span class="s1">  &quot;pipeline&quot;: &quot;GPArrays&quot;,</span>
+<span class="s1">  &quot;project&quot;: &quot;general-dev-billing-account/arrays&quot;,</span>
 <span class="s1">  &quot;items&quot;: [</span>
 <span class="s1">    {</span>
 <span class="s1">      &quot;inputs&quot;: {</span>
-<span class="s1">        &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
-<span class="s1">        &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
+<span class="s1">        &quot;entity_name&quot;: &quot;200598830050_R07C01-1&quot;,</span>
+<span class="s1">        &quot;entity_type&quot;: &quot;sample&quot;</span>
 <span class="s1">      }</span>
 <span class="s1">    }</span>
 <span class="s1">  ]</span>
@@ -918,28 +841,27 @@ at least read access to the input files.</p>
 </div>
 <input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Response</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;sehsan@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T15:50:01Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
   <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.3.2&quot;</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
-<p>Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
-cromwell "workflowOptions" via the <code>options</code> map. See the
-<a href="./usage-workflow-options">reference page</a> for more information.</p>
+<p>Note that the GPArrays module does NOT support specifying
+Cromwell "workflowOptions" via the <code>options</code> map, since this functionality
+is not exposed via the Terra API.</p>
 <h3 id="start-workload-apiv1start">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start" title="Permanent link">⚓︎</a></h3>
-<p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
-particular input cram, WFL will not re-submit that workflow.</p>
+<p>Creates a new "submission" in Terra, which starts a Cromwell workflow for each item in the workload. 
+Note that the workflow <code>uuid</code> in the response is the Terra submission uuid, not the Cromwell workflow uuid.</p>
 <div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
 --header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
@@ -949,49 +871,48 @@ particular input cram, WFL will not re-submit that workflow.</p>
 </div>
 <input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Response</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T15:50:51Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;username@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T15:50:01Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
-      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">],</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
   <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.3.2&quot;</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 </div>
 </div>
 <h3 id="exec-workload-apiv1exec">Exec Workload: <code>/api/v1/exec</code><a class="headerlink" href="#exec-workload-apiv1exec" title="Permanent link">⚓︎</a></h3>
-<p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
+<p>Creates and then starts a WFL workload.</p>
 <div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
 --header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
 --header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
 --data-raw <span class="s1">&#39;{</span>
-<span class="s1">  &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
-<span class="s1">  &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
-<span class="s1">  &quot;project&quot;: &quot;PO-1234&quot;,</span>
+<span class="s1">  &quot;executor&quot;: &quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;,</span>
+<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;,</span>
+<span class="s1">  &quot;pipeline&quot;: &quot;GPArrays&quot;,</span>
+<span class="s1">  &quot;project&quot;: &quot;general-dev-billing-account/arrays&quot;,</span>
 <span class="s1">  &quot;items&quot;: [</span>
 <span class="s1">    {</span>
 <span class="s1">      &quot;inputs&quot;: {</span>
-<span class="s1">        &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
-<span class="s1">        &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
+<span class="s1">        &quot;entity_name&quot;: &quot;200598830050_R07C01-1&quot;,</span>
+<span class="s1">        &quot;entity_type&quot;: &quot;sample&quot;</span>
 <span class="s1">      }</span>
 <span class="s1">    }</span>
 <span class="s1">  ]</span>
@@ -1000,29 +921,28 @@ particular input cram, WFL will not re-submit that workflow.</p>
 </div>
 <input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Response</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;username@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
-      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">],</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;3a13f732-9743-47a9-ab83-c467b3bf0ca4&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.3.2&quot;</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 </div>
@@ -1030,80 +950,77 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <h3 id="query-workload-apiv1workloaduuiduuid">Query Workload: <code>/api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
 <div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=2c543b29-2db9-4643-b81b-b16a0654c5cc&#39;</span> <span class="se">\</span>
 --header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
 </code></pre></div>
 </div>
 <input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Response</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;username&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-08-27T16:26:59Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
-      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">}</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">],</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;wgs-dev&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-test-storage/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;813e3c38-9c11-4410-9888-435569d91d1d&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.1.7&quot;</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}]</span>
 </code></pre></div>
 </div>
 </div>
-<p>The "workflows" field lists out each Cromwell workflow that was started, and includes their
-status information. It is also possible to use the Job Manager to check workflow progress and
-easily see information about any workflow failures.</p>
+<p>The "workflows" field lists out each Terra submission, and includes the status information
+of the workflow that was started for that sample. It is also possible to use the Terra UI 
+to check workflow progress and easily see information about any workflow failures.</p>
 <h3 id="query-workload-with-project-apiv1workloadprojectproject">Query Workload with project: <code>/api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
 <div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=wgs-dev&#39;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=general-dev-billing-account/arrays&#39;</span> <span class="se">\</span>
 --header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
 </code></pre></div>
 </div>
 <input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><label for="__tabbed_5_2">Response</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="p">[{</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;username&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-08-27T16:26:59Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
-      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
       <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
       <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">}</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">],</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;wgs-dev&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-test-storage/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;813e3c38-9c11-4410-9888-435569d91d1d&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.1.7&quot;</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
 <span class="p">}]</span>
 </code></pre></div>
 </div>
 </div>
-<p>The "workflows" field lists out each Cromwell workflow that was started, and
-includes their status information. It is also possible to use the Job Manager
-to check workflow progress and easily see information about any workflow
-failures.</p>
+<p>The "workflows" field lists out each Terra submission, and includes the status information
+of the workflow that was started for that sample. It is also possible to use the Terra UI 
+to check workflow progress and easily see information about any workflow failures.</p>
 <div class="admonition warning">
 <p class="admonition-title">Note</p>
 <p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint,
@@ -1128,7 +1045,7 @@ together.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../modules-gp-arrays/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../modules-arrays/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1137,19 +1054,19 @@ together.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                GPArrays
+                Arrays
               </div>
             </div>
           </a>
         
         
-          <a href="../modules-external-exome-reprocessing/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../modules-wgs/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                External Exome
+                Whole Genome
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
