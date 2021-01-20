@@ -2,6 +2,7 @@
   "Talk to Google Cloud Storage for some reason..."
   (:require [clojure.data.json              :as json]
             [clojure.java.io                :as io]
+            [clojure.pprint                 :refer [pprint]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
@@ -37,14 +38,14 @@
   [url]
   (let [[gs-colon nada bucket object] (str/split url #"/" 4)]
     (when-not
-     (and (every? seq [gs-colon bucket])
-          (= "gs:" gs-colon)
-          (= "" nada))
+        (and (every? seq [gs-colon bucket])
+             (= "gs:" gs-colon)
+             (= "" nada))
       (throw (IllegalArgumentException. (format "Bad GCS URL: '%s'" url))))
     [bucket (or object "")]))
 
 (defn gs-url
-  "Format BUCKET and OBJECT into a gs://bucket/object URL."
+  "Format BUCKET and OBJECT name into a gs://bucket/object URL."
   [bucket object]
   (when-not (and (string?        bucket)
                  (seq            bucket)
@@ -53,6 +54,15 @@
           msg (format fmt bucket)]
       (throw (IllegalArgumentException. msg))))
   (str "gs://" bucket "/" object))
+
+(defn gs-object-url
+  "Format OBJECT into a gs://bucket/name URL."
+  [{:keys [bucket name] :as object}]
+  (when-not (and (map? object) bucket name)
+    (throw (IllegalArgumentException.
+            (str/join \newline ["Object must have :bucket and :name keys:"
+                                (with-out-str (pprint object))]))))
+  (gs-url bucket name))
 
 (defn iam
   "Return IamPolicy response for URL."

@@ -53,10 +53,11 @@
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
-  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
-    (when (empty? workloads)
-      (throw (ex-info "No workload found matching id"
-                      {:cause {:id id}
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])
+        n (count workloads)]
+    (when (not= 1 n)
+      (throw (ex-info "Expected 1 workload matching id"
+                      {:cause {:id id :count n}
                        :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
@@ -64,10 +65,11 @@
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
   (let [do-load   (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+    (mapv do-load
+          (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
 
 (defn load-workloads
-  "Use transaction TX to load all known `workloads`"
+  "Use transaction `tx` to load all known `workloads`."
   [tx]
   (let [do-load (partial load-workload-impl tx)]
     (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))

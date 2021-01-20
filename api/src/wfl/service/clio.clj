@@ -1,4 +1,4 @@
-(ns wfl.clio
+(ns wfl.service.clio
   "Talk to Clio for some reason ..."
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
@@ -48,29 +48,34 @@
   [md]
   (post (str/join "/" ["bam" "query"]) md))
 
+(defn query-cram
+  "Return CRAM entries with metadata MD."
+  [md]
+  (post (str/join "/" ["cram" "query"]) md))
+
 (defn add-bam
   "Add a BAM entry with metadata MD."
   [md]
   (post (str/join "/" ["bam" "add"]) md))
 
 (comment
+  "gs://broad-gotc-prod-storage/pipeline/{PROJECT}/{SAMPLE_ALIAS}/v{VERSION}"
   (with-open [out (io/writer (io/file "bam.edn"))]
     (binding [*out* out]
       (pprint (query-bam {}))))
   (def sg
     (filter :insert_size_metrics_path (query-bam {})))
-  {:workspace_name
-   "e7d5dbfb93d94563a11e6f563078a56a-TestWorkspace-9d7e4c079a1d456db35db758b9c3c57b",
-   :document_status "Normal",
-   :project "project7ad3f429aebd4e03b00679a70439135e",
-   :data_type "WGS",
+  {:bai_path
+   "gs://broad-gotc-test-clio/bam/project/sample/v3/sample.bai"
+   :bam_md5 "1065398b26d944fc838a39ca78bd96e9"
    :bam_path
-   "gs://broad-gotc-test-clio/bam/project7ad3f429aebd4e03b00679a70439135e/sample364a53a0da354e3d82c7bb3452991c40/v3/sample364a53a0da354e3d82c7bb3452991c40.bam",
-   :bam_md5 "1065398b26d944fc838a39ca78bd96e9",
-   :billing_project "broad-genomics-data",
-   :bai_path
-   "gs://broad-gotc-test-clio/bam/project7ad3f429aebd4e03b00679a70439135e/sample364a53a0da354e3d82c7bb3452991c40/v3/sample364a53a0da354e3d82c7bb3452991c40.bai",
-   :sample_alias "sample364a53a0da354e3d82c7bb3452991c40",
-   :version 3,
-   :location "GCP"}
+   "gs://broad-gotc-test-clio/bam/project/sample/v3/sample.bam"
+   :billing_project "broad-genomics-data"
+   :data_type "WGS"
+   :document_status "Normal"
+   :location "GCP"
+   :project "project"
+   :sample_alias "sample"
+   :version 3
+   :workspace_name "TestWorkspace"}
   )
