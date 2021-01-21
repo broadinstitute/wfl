@@ -97,14 +97,15 @@
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
 
-;; (load-cromwell-url-from-env-var!) is turned off as arrays workload
-;; expects a Terra than Cromwell URL which is not consistent with other modules
+;; (load-cromwell-url-from-env-var!) is turned off here because an
+;; arrays workload expects a Terra (rather than Cromwell) URL.
 ;;
 (defn arrays-workload-request
   [identifier]
   {:executor (or #_(load-cromwell-url-from-env-var!)
-              "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
+                 "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/"
+                  identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"
    :items   [{:inputs arrays-sample-terra}]})
@@ -112,41 +113,46 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:gotc-dev :cromwell :url]))
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs {:src src :dst dst}}]})
 
-(def xx-inputs
-  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:input_cram (str storage "NA12878_PLUMBING.cram")}))
-
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:xx-dev :cromwell :url]))
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
+                  identifier)
    :pipeline xx/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs xx-inputs}]
+   :items    [{:inputs {:input_cram
+                        (str "gs://broad-gotc-dev-wfl-ptc-test-inputs/"
+                             "single_sample/plumbing/truth/develop/20k/"
+                             "NA12878_PLUMBING.cram")}}]
    :common {:inputs (-> {:disable_sanity_check true}
                         (util/prefix-keys :CheckContamination)
                         (util/prefix-keys :UnmappedBamToAlignedBam)
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
-(def sg-inputs
-  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:ubam (str storage "NA12878_PLUMBING.unmapped.bam")}))
 
 (defn sg-workload-request
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/" identifier)
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:wgs-dev :cromwell :url]))
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
+                  identifier)
    :pipeline sg/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs sg-inputs}]})
+   :items    [{:inputs
+               {:ubam
+                (str "gs://broad-gotc-dev-wfl-ptc-test-inputs/"
+                     "single_sample/plumbing/truth/develop/20k/"
+                     "NA12878_PLUMBING.unmapped.bam")}}]})
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."
@@ -155,7 +161,7 @@
             (let [skipped? #(-> % :uuid util/uuid-nil?)]
               (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
     (let [interval 10
-          timeout  3600]                                    ; 1 hour
+          timeout  3600]                ; 1 hour
       (loop [elapsed 0 wl workload]
         (when (> elapsed timeout)
           (throw (TimeoutException.
