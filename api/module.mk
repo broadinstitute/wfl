@@ -1,6 +1,5 @@
 # Makefile for the wfl/api module
 
-REQUIRED_2P_REPOSITORIES := pipeline-config
 include $(MAKE_INCLUDE_DIR)/modules.mk
 
 CLASSES_DIR           := $(MODULE_DIR)/classes
