@@ -6,7 +6,6 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [buddy.sign.jwt :as jwt]
-            [clj-yaml.core :as yaml]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [wfl.environments :as env]
@@ -68,10 +67,10 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn vault-secrets
   "Return the vault-secrets at PATH."
   [path]
-  (let [token-path (str (System/getProperty "user.home") "/.vault-token")]
+  (let [token (str/join "/" [(System/getProperty "user.home") ".vault-token"])]
     (try (vault/read-secret
           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token (slurp token-path)))
+            (vault/authenticate! :token (slurp token)))
           path)
          (catch Throwable e
            (log/warn e "Issue with Vault")
@@ -337,15 +336,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
    (@the-system-environment key))
   ([]
    @the-system-environment))
-
-(defn spit-yaml
-  "Spit CONTENT into FILE as YAML, optionally adding COMMENTS."
-  [file content & comments]
-  (let [header (if (empty? comments) ""
-                   (str "# " (str/join "\n# " comments) "\n\n"))
-        yaml   (yaml/generate-string content
-                                     :dumper-options {:flow-style :block})]
-    (spit file (str header yaml))))
 
 (defn shell!
   "Run ARGS in a shell and return stdout or throw."

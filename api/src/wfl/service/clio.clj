@@ -43,6 +43,16 @@
       http/request :body
       (json/read-str :key-fn keyword)))
 
+(defn add-bam
+  "Add a BAM entry with metadata MD."
+  [md]
+  (post (str/join "/" ["bam" "add"]) md))
+
+(defn add-cram
+  "Add a CRAM entry with metadata MD."
+  [md]
+  (post (str/join "/" ["cram" "upsert"]) md))
+
 (defn query-bam
   "Return BAM entries with metadata MD."
   [md]
@@ -53,13 +63,25 @@
   [md]
   (post (str/join "/" ["cram" "query"]) md))
 
-(defn add-bam
-  "Add a BAM entry with metadata MD."
-  [md]
-  (post (str/join "/" ["bam" "add"]) md))
-
 (comment
   "gs://broad-gotc-prod-storage/pipeline/{PROJECT}/{SAMPLE_ALIAS}/v{VERSION}"
+  (let [NA12878 (str/join "/" ["gs://broad-gotc-prod-storage/pipeline"
+                               "G96830/NA12878/v454/NA12878"])]
+    {:crai_path                  (str NA12878 ".cram.crai")
+     :cram_md5                   "0cfd2e0890f45e5f836b7a82edb3776b"
+     :cram_path                  (str NA12878 ".cram")
+     :cram_size                  19512619343
+     :data_type                  "WGS"
+     :document_status            "Normal"
+     :insert_size_histogram_path (str NA12878 ".insert_size_histogram.pdf")
+     :insert_size_metrics_path   (str NA12878 ".insert_size_metrics")
+     :location                   "GCP"
+     :notes                      "Blame tbl for somatic genomes testing."
+     :project                    "G96830"
+     :regulatory_designation     "RESEARCH_ONLY"
+     :sample_alias               "NA12878"
+     :version                    454})
+
   (with-open [out (io/writer (io/file "bam.edn"))]
     (binding [*out* out]
       (pprint (query-bam {}))))

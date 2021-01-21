@@ -12,9 +12,9 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]
-           (java.sql Timestamp)))
+  (:import [java.sql Timestamp]
+           [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
 

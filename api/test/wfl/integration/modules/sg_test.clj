@@ -1,18 +1,84 @@
 (ns wfl.integration.modules.sg-test
-  (:require [clojure.test :refer [deftest testing is] :as clj-test]
+  (:require [clojure.pprint :refer [pprint]]
+            [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string :as str]
             [wfl.environments :as env]
             [wfl.module.batch :as batch]
+            [wfl.service.clio :as clio]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent? make-options]]
             [wfl.module.sg :as sg])
-  (:import (java.time OffsetDateTime)
-           (java.util UUID)))
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+
+(defn ^:private ensure-clio-cram
+  "Ensure there is a CRAM record in Clio suitable for test."
+  []
+  (let [NA12878 (str/join "/" ["gs://broad-gotc-prod-storage/pipeline"
+                               "G96830/NA12878/v454/NA12878"])
+        path    (partial str NA12878)
+        query   {:billing_project        "hornet-nest"
+                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
+                 :cram_path              (path ".cram")
+                 :cram_size              19512619343
+                 :data_type              "WGS"
+                 :document_status        "Normal"
+                 :location               "GCP"
+                 :notes                  "Blame tbl for SG test."
+                 :pipeline_version       "f1c7883"
+                 :project                "G96830"
+                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
+                 :regulatory_designation "RESEARCH_ONLY"
+                 :sample_alias           "NA12878"
+                 :version                0
+                 :workspace_name         "bike-of-hornets"}]
+    (let [crams (clio/query-cram query)]
+      (when (> (count crams) 1)
+        (throw (ex-info "More than 1 Clio CRAM record"
+                        (with-out-str (pprint crams)))))
+      (if-let [result (first crams)]
+        result
+        (let [now (str (OffsetDateTime/now))
+              add {:crai_path                  (path ".cram.crai")
+                   :cromwell_id                (str (UUID/randomUUID))
+                   :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+                   :insert_size_metrics_path   (path ".insert_size_metrics")
+                   :workflow-end-date          now
+                   :workflow_start_date        now}]
+          [clio/add-cram (merge query add)])))))
+
+(comment
+  "2021-01-21T17:59:20.203558-05:00"
+  "2017-09-19T00:04:30-04:00"
+  (ensure-clio-cram)
+  (clio/add-cram
+   {:billing_project "hornet-nest"
+    :crai_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.cram.crai"
+    :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
+    :cram_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.cram"
+    :cram_size 19512619343
+    :cromwell_id "50726371-6d94-468f-a204-c01512c8737a"
+    :data_type "WGS"
+    :document_status "Normal"
+    :insert_size_histogram_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.insert_size_histogram.pdf"
+    :insert_size_metrics_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.insert_size_metrics"
+    :location "GCP"
+    :notes "Blame tbl for SG test."
+    :pipeline_version "f1c7883"
+    :project "G96830"
+    :readgroup_md5 "a128cbbe435e12a8959199a8bde5541c"
+    :regulatory_designation "RESEARCH_ONLY"
+    :sample_alias "NA12878"
+    :version 0
+    :workflow-end-date "2021-01-21T18:24:45.284423-05:00"
+    :workflow_start_date "2021-01-21T18:24:45.284423-05:00"
+    :workspace_name "bike-of-hornets"})
+  )
 
 (defn ^:private make-sg-workload-request []
   (-> (UUID/randomUUID)
