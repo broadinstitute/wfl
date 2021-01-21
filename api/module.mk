@@ -71,8 +71,7 @@ $(INTEGRATION): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
-	$(CP) $(MODULE_DIR)/.dockerignore $(DERIVED_MODULE_DIR)
-	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(DERIVED_MODULE_DIR)
+	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(PROJECT_DIR)
 	@$(TOUCH) $@
 
 $(CLEAN):
