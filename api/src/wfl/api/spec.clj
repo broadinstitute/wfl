@@ -10,6 +10,8 @@
 
 ;; shared
 (s/def ::commit (s/and string? (comp (partial == 40) count)))
+(s/def ::cram_ref_fasta string?)
+(s/def ::cram_ref_fasta_index string?)
 (s/def ::created inst?)
 (s/def ::creator string?)
 (s/def ::cromwell string?)
@@ -104,8 +106,9 @@
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
 ;; sg (Whole Genome Somatic single Sample)
-(s/def ::ubam #(str/ends-with? % ".bam"))
-(s/def ::sg-workflow-inputs (s/keys :req-un [::ubam]))
+(s/def ::sg-workflow-inputs (s/keys :req-un [::cram_ref_fasta
+                                             ::cram_ref_fasta_index
+                                             ::input_cram]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)

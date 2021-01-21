@@ -139,20 +139,27 @@
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
-
+;; From warp.git ExampleCramToUnmappedBams.plumbing.json
+;;
 (defn sg-workload-request
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!)
-                 (get-in stuff [:wgs-dev :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
-                  identifier)
-   :pipeline sg/pipeline
-   :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs
-               {:ubam
-                (str "gs://broad-gotc-dev-wfl-ptc-test-inputs/"
-                     "single_sample/plumbing/truth/develop/20k/"
-                     "NA12878_PLUMBING.unmapped.bam")}}]})
+  (let [fasta (str "gs://gcp-public-data--broad-references/hg38/v0/"
+                   "Homo_sapiens_assembly38.fasta")]
+    {:executor (or (load-cromwell-url-from-env-var!)
+                   (get-in stuff [:wgs-dev :cromwell :url]))
+     :output   (str/join "/" ["gs://broad-gotc-dev-storage"
+                              sg/pipeline
+                              identifier])
+     :pipeline sg/pipeline
+     :project  (format "(Test) %s" @git-branch)
+     :items    [{:inputs
+                 {:cram_ref_fasta fasta
+                  :cram_ref_fasta_index (str fasta ".fai")
+                  :input_cram (str/join "/" ["gs://broad-gotc-test-storage"
+                                             "germline_single_sample"
+                                             "wgs/plumbing/truth/develop"
+                                             "G96830.NA12878"
+                                             "NA12878_PLUMBING.cram"])}}]}))
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."
