@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
-            [wfl.module.all :as all]
+            [wfl.util :as util]
             [wfl.module.aou :as aou]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -85,8 +85,8 @@
 (deftest test-exec-on-similar-workload-request
   "output bucket slashes should be standardized to not create new workloads unnecessarily"
   (let [request (make-aou-workload-request)
-        slashified (update request :output all/slashify)
-        deslashified (update request :output all/de-slashify)]
+        slashified (update request :output util/slashify)
+        deslashified (update request :output util/de-slashify)]
     (is (not (= slashified deslashified)))
     (is (= (workloads/execute-workload! slashified)
            (workloads/execute-workload! deslashified)))))

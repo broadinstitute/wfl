@@ -23,7 +23,7 @@
   []
   (some-> "CROMWELL"
           util/getenv
-          all/de-slashify))
+          util/de-slashify))
 
 (def wgs-inputs
   (let [input-folder

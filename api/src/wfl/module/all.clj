@@ -106,21 +106,6 @@
     (jdbc/db-do-commands tx [work])
     [id table]))
 
-(defn slashify
-  "Ensure URL ends in a slash /."
-  [url]
-  (if (str/ends-with? url "/")
-    url
-    (str url "/")))
-
-(defn de-slashify
-  [url]
-  (if (str/ends-with? url "/")
-    (->> (seq url)
-         drop-last
-         (str/join ""))
-    url))
-
 (defn cromwell-environments
   "Keywords from the set of ENVIRONMENTS with Cromwell URL."
   ([url]

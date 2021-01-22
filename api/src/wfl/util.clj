@@ -395,3 +395,19 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))
+
+(defn slashify
+  "Ensure URL ends in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    url
+    (str url "/")))
+
+(defn de-slashify
+  "Ensure URL does not end in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    (->> (seq url)
+      drop-last
+      (str/join ""))
+    url))
