@@ -43,15 +43,30 @@
       http/request :body
       (json/read-str :key-fn keyword)))
 
+;; See BamKey.scala and CramKey.scala in Clio.
+;;
+(defn throw-unless-md-has-uri-index-keys!
+  "Return `[uri-suffix payload]` for add-foo `md` or throw."
+  [md]
+  (let [keys [:location :project :data_type :sample_alias :version]
+        need (keep (fn [k] (when-not (k md) k)) keys)]
+    (when-not (empty need)
+      (throw (ex-info "Need these metadata keys:" need)))
+    [((apply juxt keys) md) (apply dissoc md keys)]))
+
 (defn add-bam
   "Add a BAM entry with metadata MD."
   [md]
-  (post (str/join "/" ["bam" "add"]) md))
+  (let [[suffix payload] (throw-unless-md-has-uri-index-keys! md)]
+    (post (str/join "/" (into ["bam"] suffix)) payload)))
 
+;; From CramKey.scala
+;;
 (defn add-cram
   "Add a CRAM entry with metadata MD."
   [md]
-  (post (str/join "/" ["cram" "upsert"]) md))
+  (let [[suffix payload] (throw-unless-md-has-uri-index-keys! md)]
+    (post (str/join "/" (into ["cram"] suffix)) payload)))
 
 (defn query-bam
   "Return BAM entries with metadata MD."

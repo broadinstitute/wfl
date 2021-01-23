@@ -114,7 +114,7 @@
             want (-> bam vals set)
             need (set/difference want have)]
         (when-not (empty? need)
-          (throw (ex-info "Need these output files" need)))
+          (throw (ex-info "Need these output files:" need)))
         (clio/add-bam (merge cram bam))))))
 
 (defn clio-workload!
