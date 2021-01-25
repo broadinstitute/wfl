@@ -14,7 +14,7 @@
     </v-main>
 
     <v-footer color="#74AE43" app :inset="false">
-      <span class="white--text">&copy; Broad Institute, Hornet Team 2020</span>
+      <span class="white--text">&copy; Broad Institute, Hornet Team 2021</span>
     </v-footer>
   </v-app>
 </template>
