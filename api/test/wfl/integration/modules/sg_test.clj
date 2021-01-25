@@ -74,10 +74,13 @@
     :readgroup_md5 "a128cbbe435e12a8959199a8bde5541c"
     :regulatory_designation "RESEARCH_ONLY"
     :sample_alias "NA12878"
-    :version 0
+    :version 1
     :workflow-end-date "2021-01-21T18:24:45.284423-05:00"
     :workflow_start_date "2021-01-21T18:24:45.284423-05:00"
     :workspace_name "bike-of-hornets"})
+  "https://clio.gotc-dev.broadinstitute.org/api/v1/cram/GCP/G96830/WGS/NA12878/1"
+  "Perhaps that should be this?"
+  "https://clio.gotc-dev.broadinstitute.org/api/v1/cram/metadata/GCP/G96830/WGS/NA12878/1"
   )
 
 (defn ^:private make-sg-workload-request []
@@ -135,7 +138,7 @@
            workloads/create-workload!
            workloads/start-workload!
            (as-> workload
-                 (is (:started workload))
+               (is (:started workload))
              (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
