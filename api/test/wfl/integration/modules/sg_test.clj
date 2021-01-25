@@ -149,42 +149,36 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor (get-in env/stuff [:wgs-dev :cromwell :url])
-                       :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
-                       :pipeline sg/pipeline
-                       :project  (format "(Test) %s" @workloads/git-branch)
-                       :creator  (:email @endpoints/userinfo)}
-                      workloads/execute-workload!
-                      workloads/update-workload!)]
-    (is (:finished workload))))
+  (is (->> {:executor (get-in env/stuff [:wgs-dev :cromwell :url])
+            :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
+            :pipeline sg/pipeline
+            :project  (format "(Test) %s" @workloads/git-branch)
+            :creator  (:email @endpoints/userinfo)}
+           workloads/execute-workload!
+           workloads/update-workload!
+           :finished)))
 
 (deftest test-submitted-workflow-inputs
-  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
-          (strip-prefix [[k v]]
-            [(keyword (util/unprefix (str k) (str ":" sg/pipeline ".")))
-             v])
-          (verify-workflow-inputs [inputs]
-            (is (:supports_common_inputs inputs))
-            (is (:supports_inputs inputs))
-            (is (:overwritten inputs)))
-          (verify-submitted-inputs [_ _ inputs _ _]
-            (map
-             (fn [in]
-               (is (every? #(prefixed? (keyword sg/pipeline) %) (keys in)))
-               (verify-workflow-inputs (into {} (map strip-prefix in)))
-               (UUID/randomUUID))
-             inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
-      (fn []
-        (->
-         (make-sg-workload-request)
-         (assoc-in [:common :inputs]
-                   {:supports_common_inputs true :overwritten false})
-         (update :items
-                 (partial map
-                          #(update % :inputs
-                                   (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
-         workloads/execute-workload!)))))
+  (let [prefix (str sg/pipeline ".")]
+    (letfn [(over      [m] (-> m
+                               (assoc-in [:inputs :overwritten]     true)
+                               (assoc-in [:inputs :supports_inputs] true)))
+            (unprefix  [k] (keyword (util/unprefix (name k) prefix)))
+            (prefixed? [k] (str/starts-with? (name k) prefix))
+            (submit [inputs]
+              (is (every? prefixed? (keys inputs)))
+              (let [in (zipmap (map unprefix (keys inputs)) (vals inputs))]
+                (is (:overwritten            in))
+                (is (:supports_common_inputs in))
+                (is (:supports_inputs        in))
+                (UUID/randomUUID)))
+            (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
+      (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+        #(-> (make-sg-workload-request)
+             (assoc-in [:common :inputs] {:overwritten            false
+                                          :supports_common_inputs true})
+             (update :items (partial map over))
+             workloads/execute-workload!)))))
 
 (deftest test-workflow-options
   (letfn [(verify-workflow-options [options]
