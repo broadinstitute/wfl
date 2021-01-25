@@ -1,16 +1,17 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.pprint :refer [pprint]]
-            [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string :as str]
+            [clojure.test :refer [deftest testing is] :as clj-test]
             [wfl.environments :as env]
             [wfl.module.batch :as batch]
+            [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
+            [wfl.service.cromwell :refer [wait-for-workflow-complete
+                                          submit-workflows]]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent? make-options]]
-            [wfl.module.sg :as sg])
+            [wfl.util :as util :refer [absent? make-options]])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -79,7 +80,8 @@
    {:cromwell_id "50726371-6d94-468f-a204-c01512c8737a"})
   )
 
-(defn ^:private make-sg-workload-request []
+(defn ^:private make-sg-workload-request
+  []
   (-> (UUID/randomUUID)
       workloads/sg-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
@@ -106,23 +108,22 @@
       (go! (make-sg-workload-request)))))
 
 (deftest test-update-unstarted
-  (let [workload (->> (make-sg-workload-request)
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
+  (let [request (make-sg-workload-request)
+        workload (-> request
+                     workloads/create-workload!
+                     workloads/update-workload!)]
+    (is (seq  (:workflows request)))
+    (is (nil? (:finished  workload)))
     (is (nil? (:submitted workload)))))
 
 (deftest test-create-workload-with-common-inputs
-  (let [common-inputs {:biobambam_bamtofastq.max_retries 2
-                       :ref_pac "gs://fake-location/temp_references/gdc/GRCh38.d1.vd1.fa.pac"}]
-    (letfn [(go! [inputs]
-              (letfn [(value-equal? [key] (= (key common-inputs) (key inputs)))]
-                (is (value-equal? :biobambam_bamtofastq.max_retries))
-                (is (value-equal? :ref_pac))))]
-      (run! (comp go! :inputs) (-> (make-sg-workload-request)
-                                   (assoc-in [:common :inputs] common-inputs)
-                                   workloads/create-workload!
-                                   :workflows)))))
+  (let [expected {:biobambam_bamtofastq.max_retries 2
+                  :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
+    (is (= expected (-> (make-sg-workload-request)
+                        (assoc-in [:common :inputs] expected)
+                        workloads/create-workload!
+                        :workflows first :inputs
+                        (select-keys (keys expected)))))))
 
 (deftest test-start-workload!
   (letfn [(go! [workflow]
