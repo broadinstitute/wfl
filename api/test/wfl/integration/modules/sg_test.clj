@@ -35,21 +35,20 @@
                  :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
                  :regulatory_designation "RESEARCH_ONLY"
                  :sample_alias           "NA12878"
-                 :version                0
-                 :workspace_name         "bike-of-hornets"}]
-    (let [crams (clio/query-cram query)]
-      (when (> (count crams) 1)
-        (throw (ex-info "More than 1 Clio CRAM record"
-                        (with-out-str (pprint crams)))))
-      (if-let [result (first crams)]
-        result
-        (let [now (str (OffsetDateTime/now))
-              add {:crai_path                  (path ".cram.crai")
-                   :cromwell_id                (str (UUID/randomUUID))
-                   :insert_size_histogram_path (path ".insert_size_histogram.pdf")
-                   :insert_size_metrics_path   (path ".insert_size_metrics")
-                   :workflow_start_date        now}]
-          [clio/add-cram (merge query add)])))))
+                 :version                23
+                 :workspace_name         "bike-of-hornets"}
+        crams   (clio/query-cram query)]
+    (when (> (count crams) 1)
+      (throw (ex-info "More than 1 Clio CRAM record"
+                      (with-out-str (pprint crams)))))
+    (or (first crams)
+        (clio/add-cram
+         (merge query
+                {:crai_path                  (path ".cram.crai")
+                 :cromwell_id                (str (UUID/randomUUID))
+                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+                 :insert_size_metrics_path   (path ".insert_size_metrics")
+                 :workflow_start_date        (str (OffsetDateTime/now))})))))
 
 (comment
   "2021-01-21T17:59:20.203558-05:00"
