@@ -119,11 +119,12 @@
 (deftest test-create-workload-with-common-inputs
   (let [expected {:biobambam_bamtofastq.max_retries 2
                   :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
-    (is (= expected (-> (make-sg-workload-request)
-                        (assoc-in [:common :inputs] expected)
-                        workloads/create-workload!
-                        :workflows first :inputs
-                        (select-keys (keys expected)))))))
+    (letfn [(ok [inputs]
+              (is (= expected (select-keys inputs (keys expected)))))]
+      (run! ok (-> (make-sg-workload-request)
+                   (assoc-in [:common :inputs] expected)
+                   workloads/create-workload! :workflows
+                   (->> (map :inputs)))))))
 
 (deftest test-start-workload!
   (letfn [(go! [workflow]
