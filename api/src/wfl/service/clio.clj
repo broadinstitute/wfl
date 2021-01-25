@@ -46,6 +46,10 @@
 ;; See ApiConstants.scala, ClioWebClientSpec.scala, and BamKey.scala and
 ;; CramKey.scala in Clio.
 ;;
+;; "https://clio.gotc-dev.broadinstitute.org/api/v1/cram/metadata/GCP/G96830/WGS/NA12878/1"
+;;
+;; Return a Firebase Push ID string like this: "-MRu7X3zEzoGeFAVSF-J"
+;;
 (defn add
   [thing md]
   (let [keys [:location :project :data_type :sample_alias :version]
@@ -60,8 +64,6 @@
   [md]
   (add "bam" md))
 
-;; From CramKey.scala
-;;
 (defn add-cram
   "Add a CRAM entry with metadata MD."
   [md]

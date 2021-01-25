@@ -48,7 +48,6 @@
                    :cromwell_id                (str (UUID/randomUUID))
                    :insert_size_histogram_path (path ".insert_size_histogram.pdf")
                    :insert_size_metrics_path   (path ".insert_size_metrics")
-                   :workflow-end-date          now
                    :workflow_start_date        now}]
           [clio/add-cram (merge query add)])))))
 
@@ -75,12 +74,10 @@
     :regulatory_designation "RESEARCH_ONLY"
     :sample_alias "NA12878"
     :version 1
-    :workflow-end-date "2021-01-21T18:24:45.284423-05:00"
     :workflow_start_date "2021-01-21T18:24:45.284423-05:00"
     :workspace_name "bike-of-hornets"})
-  "https://clio.gotc-dev.broadinstitute.org/api/v1/cram/GCP/G96830/WGS/NA12878/1"
-  "Perhaps that should be this?"
-  "https://clio.gotc-dev.broadinstitute.org/api/v1/cram/metadata/GCP/G96830/WGS/NA12878/1"
+  (clio/query-cram
+   {:cromwell_id "50726371-6d94-468f-a204-c01512c8737a"})
   )
 
 (defn ^:private make-sg-workload-request []
