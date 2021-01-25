@@ -160,7 +160,7 @@
 
 (deftest test-submitted-workflow-inputs
   (let [prefix (str sg/pipeline ".")]
-    (letfn [(over      [m] (-> m
+    (letfn [(overmap   [m] (-> m
                                (assoc-in [:inputs :overwritten]     true)
                                (assoc-in [:inputs :supports_inputs] true)))
             (unprefix  [k] (keyword (util/unprefix (name k) prefix)))
@@ -177,36 +177,34 @@
         #(-> (make-sg-workload-request)
              (assoc-in [:common :inputs] {:overwritten            false
                                           :supports_common_inputs true})
-             (update :items (partial map over))
+             (update :items (partial map overmap))
              workloads/execute-workload!)))))
 
 (deftest test-workflow-options
-  (letfn [(verify-workflow-options [options]
+  (letfn [(overmap [m] (-> m
+                           (assoc-in [:options :overwritten]      true)
+                           (assoc-in [:options :supports_options] true)))
+          (verify-workflow-options [options]
+            (is (:overwritten             options))
             (is (:supports_common_options options))
-            (is (:supports_options options))
-            (is (:overwritten options)))
+            (is (:supports_options        options)))
           (verify-submitted-options [env _ inputs options _]
+            (verify-workflow-options options)
             (let [defaults (util/make-options env)]
-              (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
     (with-redefs-fn {#'submit-workflows verify-submitted-options}
-      (fn []
-        (->
-         (make-sg-workload-request)
-         (assoc-in [:common :options]
-                   {:supports_common_options true :overwritten false})
-         (update :items
-                 (partial map
-                          #(assoc % :options {:supports_options true :overwritten true})))
-         workloads/execute-workload!
-         :workflows
-         (->> (map (comp verify-workflow-options :options))))))))
+      #(-> (make-sg-workload-request)
+           (assoc-in [:common :options] {:overwritten             false
+                                         :supports_common_options true})
+           (update :items (partial map overmap))
+           workloads/execute-workload! :workflows
+           (->> (map (comp verify-workflow-options :options)))))))
 
 (deftest test-empty-workflow-options
-  (letfn [(go! [workflow] (is (absent? workflow :options)))]
+  (letfn [(go! [workflow] (is (absent? workflow :options)))
+          (empty-options [m] (assoc m :options {}))]
     (run! go! (-> (make-sg-workload-request)
                   (assoc-in [:common :options] {})
-                  (update :items (partial map #(assoc % :options {})))
-                  workloads/create-workload!
-                  :workflows))))
+                  (update :items (partial map empty-options))
+                  workloads/create-workload! :workflows))))
