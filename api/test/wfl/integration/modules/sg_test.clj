@@ -108,11 +108,10 @@
       (go! (make-sg-workload-request)))))
 
 (deftest test-update-unstarted
-  (let [request (make-sg-workload-request)
-        workload (-> request
+  (let [workload (-> (make-sg-workload-request)
                      workloads/create-workload!
                      workloads/update-workload!)]
-    (is (seq  (:workflows request)))
+    (is (seq  (:workflows workload)))
     (is (nil? (:finished  workload)))
     (is (nil? (:submitted workload)))))
 
