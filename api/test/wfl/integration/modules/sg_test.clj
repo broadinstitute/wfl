@@ -1,13 +1,12 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [clojure.test :refer [deftest testing is] :as clj-test]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [wfl.environments :as env]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete
-                                          submit-workflows]]
+            [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -15,7 +14,7 @@
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-sg-workload-request
   []
@@ -110,7 +109,7 @@
                 (is (:supports_inputs        in))
                 (UUID/randomUUID)))
             (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
-      (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+      (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
         #(-> (make-sg-workload-request)
              (assoc-in [:common :inputs] {:overwritten            false
                                           :supports_common_inputs true})
@@ -130,7 +129,7 @@
             (let [defaults (util/make-options env)]
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
       #(-> (make-sg-workload-request)
            (assoc-in [:common :options] {:overwritten             false
                                          :supports_common_options true})
@@ -202,4 +201,29 @@
   "2017-09-19T00:04:30-04:00"
   (ensure-clio-cram)
   (clio/query-cram {:cromwell_id "4f3d3307-aaad-4373-acb2-1c5a7a068110"})
+  {:started #inst "2021-01-26T19:14:06.746478000-00:00",
+   :creator "tbl@broadinstitute.org",
+   :pipeline "GDCWholeGenomeSomaticSingleSample",
+   :release "b0e3cfef18fc3c4126b7b835ab2b253599a18904",
+   :created #inst "2021-01-26T19:14:06.727552000-00:00",
+   :output
+   "gs://broad-gotc-dev-storage/GDCWholeGenomeSomaticSingleSample/4366635d-9eec-40d7-b02f-c848dcd0e41d",
+   :workflows
+   [{:id 0,
+     :status "Submitted",
+     :updated #inst "2021-01-26T19:14:06.746984000-00:00",
+     :uuid "b5a59e98-0f76-4431-83ac-ecf2102ce790",
+     :inputs
+     {:cram_ref_fasta "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+      :cram_ref_fasta_index "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+      :input_cram "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v23/NA12878.cram",
+      :sample_name "NA12878"}}],
+   :project "(Test) tbl/GH-1091-track-sg",
+   :id 1,
+   :commit "834d2810a0dd8c9c6f6cedec8e0edc18bd2f9ed3",
+   :wdl "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
+   :uuid "f4f38a38-b358-4a38-b134-fd41fd5e4b47",
+   :executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+   :items "GDCWholeGenomeSomaticSingleSample_000000001",
+   :version "0.6.0"}
   )

@@ -1,5 +1,5 @@
 (ns wfl.service.cromwell
-  "Launch a Cromwell workflow and wait for it to complete."
+  "Talk to Cromwell."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
