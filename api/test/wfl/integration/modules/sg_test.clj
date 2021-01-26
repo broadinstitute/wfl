@@ -146,12 +146,12 @@
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
 
-
 (defn ^:private ensure-clio-cram
   "Ensure there is a CRAM record in Clio suitable for test."
   []
-  (let [NA12878 (str/join "/" ["gs://broad-gotc-dev-storage/pipeline"
-                               "G96830/NA12878/v470/NA12878"])
+  (let [version 470
+        NA12878 (str/join "/" ["gs://broad-gotc-dev-storage" "pipeline"
+                               "G96830" "NA12878" (str "v" version) "NA12878"])
         path    (partial str NA12878)
         query   {:billing_project        "hornet-nest"
                  :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -166,25 +166,33 @@
                  :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
                  :regulatory_designation "RESEARCH_ONLY"
                  :sample_alias           "NA12878"
-                 :version                23
+                 :version                version
                  :workspace_name         "bike-of-hornets"}
         crams   (clio/query-cram query)]
     (when (> (count crams) 1)
       (throw (ex-info "More than 1 Clio CRAM record"
                       (with-out-str (pprint crams)))))
     (or (first crams)
-        (clio/add-cram
-         (merge query
-                {:crai_path                  (path ".cram.crai")
-                 :cromwell_id                (str (UUID/randomUUID))
-                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
-                 :insert_size_metrics_path   (path ".insert_size_metrics")
-                 :workflow_start_date        (str (OffsetDateTime/now))})))))
+        (let [md
+              (merge
+               query
+               {:crai_path                  (path ".cram.crai")
+                :cromwell_id                (str (UUID/randomUUID))
+                :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+                :insert_size_metrics_path   (path ".insert_size_metrics")
+                :workflow_start_date        (str (OffsetDateTime/now))})]
+          (clio/add-cram md)
+          (clio/query-cram md)))))
 
 (deftest test-clio-updates
-  (let [cram (ensure-clio-cram)]))
+  (let [{:keys [cram_path sample_alias]} (ensure-clio-cram)
+        input                            {:input_cram  cram_path
+                                          :sample_name sample_alias}]
+    (-> (make-sg-workload-request)
+        (assoc-in [:items 0 :input_cram]))))
 
 (comment
+  (test-clio-updates)
   (make-sg-workload-request)
   "2021-01-21T17:59:20.203558-05:00"
   "2017-09-19T00:04:30-04:00"
