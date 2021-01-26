@@ -4,17 +4,17 @@
 
     <TopBar v-bind:title="'WorkFlow Launcher'" />
 
-    <v-content>
+    <v-main>
       <v-container fluid fill-width>
         <router-view>
           <!-- route outlet -->
           <!-- component matched by the route will render here -->
         </router-view>
       </v-container>
-    </v-content>
+    </v-main>
 
     <v-footer color="#74AE43" app :inset="false">
-      <span class="white--text">&copy; Broad Institute, Hornet Team 2020</span>
+      <span class="white--text">&copy; Broad Institute, Hornet Team 2021</span>
     </v-footer>
   </v-app>
 </template>

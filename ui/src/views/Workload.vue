@@ -1,187 +1,80 @@
 <template>
   <div class="workload">
-    <h1>Current status counts in supported environments</h1>
-    <InfoTable id="data-table" v-bind:headers="status_counts_headers" v-bind:items="status_counts" />
+    <h1>Workloads managed by WFL</h1>
+    <v-row>
+      <v-col v-for="workload in workloads" :key="workload.uuid" fluid fill-width>
+        <v-card class="mx-auto" outlined>
+          <v-card-title>Workload {{ workload.uuid }} </v-card-title>
+          <div v-for='(item, key, index) in workload' v-bind:key="index" class="card-text-wrapper">
+            <v-card-text v-if='key != "workflows"'>
+              <b> {{ key }} </b>: {{ item }}
+              <v-divider></v-divider>
+            </v-card-text>
+          </div>
+          <div class="text-center">
+            <v-progress-circular
+              :size="100"
+              :width="15"
+              :value="calculateWorkflowsProgress(workload.workflows)"
+              color="green">
+              {{ calculateWorkflowsProgress(workload.workflows) }}
+            </v-progress-circular>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
   </div>
 </template>
 
 <script>
-import InfoTable from "../components/InfoTable.vue";
 import axios from "axios";
 
 export default {
   name: "Workload",
-  components: {
-    InfoTable
-  },
   data() {
     return {
-      status_counts_headers: [
-        { text: "Name", sortable: true, value: "name" },
-        { text: "Aborted", sortable: true, value: "Aborted" },
-        { text: "Failed", sortable: true, value: "Failed" },
-        { text: "On Hold", sortable: true, value: "OnHold" },
-        { text: "Running", sortable: true, value: "Running" },
-        {
-          text: "Submitted",
-          sortable: true,
-          value: "Submitted"
-        },
-        {
-          text: "Succeeded",
-          sortable: true,
-          value: "Succeeded"
-        },
-        { text: "total", sortable: true, value: "total" }
-      ],
-      status_counts: []
+      workloads: [],
     };
   },
   methods: {
-    getSomeStatusCounts() {
+    getAndFetchWorkloads() {
       // this is just a hard-coded proof of concept function
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "gotc-dev"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "GOTC-DEV",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
-
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "gotc-prod"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "GOTC-PROD",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
-
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "pharma5"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "PHARMA5",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
-
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "jg-prod"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "JG-PROD",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
-
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "gotc-staging"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "GOTC-STAGING",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
-
-      axios
-        .get("/api/v1/statuscounts", {
-          params: {
-            environment: "xx"
-          }
-        })
-        .then(response => {
-          if (response.status == 200) {
-            this.status_counts.push({
-              name: "EXTERNAL-EXOMES",
-              Aborted: response.data["Aborted"],
-              Aborting: response.data["Aborting"],
-              Failed: response.data["Failed"],
-              OnHold: response.data["On Hold"],
-              Running: response.data["Running"],
-              Submitted: response.data["Submitted"],
-              Succeeded: response.data["Succeeded"],
-              total: response.data["total"]
-            });
-          }
-        });
+      axios.get("/api/v1/workload").then((response) => {
+        if (
+          response.status == 200 &&
+          response.headers["content-type"] === "application/json"
+        ) {
+          this.workloads = response.data;
+        }
+      });
+    },
+    calculateWorkflowsProgress(workflows) {
+      const succeeded = workflows.filter(function(i){
+        if ( i.status === "Succeeded" ) {
+          return true;
+        } else {
+          return false;
+        }
+      })
+      return succeeded.length / workflows.length * 100
     }
   },
-
-  mounted: function() {
-    this.getSomeStatusCounts();
-  }
+  mounted: function () {
+    this.getAndFetchWorkloads();
+  },
 };
 </script>
 
 <style scoped>
 #data-table {
   text-align: center;
+}
+
+.card-text-wrapper .v-card__text {
+  padding-bottom: 1px;
+}
+
+.v-progress-circular {
+  margin: 1rem;
 }
 </style>
