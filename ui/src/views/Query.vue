@@ -71,6 +71,7 @@ export default {
       },
       valid: true,
       rules: {
+        // reference: https://github.com/microsoft/uuid-validate/blob/06554db1b093aa6bb429156fa8964e1cde2b750c/index.js#L2
         workloadUUID: v => {
           const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
           if (v) {
