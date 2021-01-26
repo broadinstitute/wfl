@@ -17,69 +17,6 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private ensure-clio-cram
-  "Ensure there is a CRAM record in Clio suitable for test."
-  []
-  (let [NA12878 (str/join "/" ["gs://broad-gotc-prod-storage/pipeline"
-                               "G96830/NA12878/v454/NA12878"])
-        path    (partial str NA12878)
-        query   {:billing_project        "hornet-nest"
-                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
-                 :cram_path              (path ".cram")
-                 :cram_size              19512619343
-                 :data_type              "WGS"
-                 :document_status        "Normal"
-                 :location               "GCP"
-                 :notes                  "Blame tbl for SG test."
-                 :pipeline_version       "f1c7883"
-                 :project                "G96830"
-                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
-                 :regulatory_designation "RESEARCH_ONLY"
-                 :sample_alias           "NA12878"
-                 :version                23
-                 :workspace_name         "bike-of-hornets"}
-        crams   (clio/query-cram query)]
-    (when (> (count crams) 1)
-      (throw (ex-info "More than 1 Clio CRAM record"
-                      (with-out-str (pprint crams)))))
-    (or (first crams)
-        (clio/add-cram
-         (merge query
-                {:crai_path                  (path ".cram.crai")
-                 :cromwell_id                (str (UUID/randomUUID))
-                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
-                 :insert_size_metrics_path   (path ".insert_size_metrics")
-                 :workflow_start_date        (str (OffsetDateTime/now))})))))
-
-(comment
-  "2021-01-21T17:59:20.203558-05:00"
-  "2017-09-19T00:04:30-04:00"
-  (ensure-clio-cram)
-  (clio/add-cram
-   {:billing_project "hornet-nest"
-    :crai_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.cram.crai"
-    :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
-    :cram_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.cram"
-    :cram_size 19512619343
-    :cromwell_id "50726371-6d94-468f-a204-c01512c8737a"
-    :data_type "WGS"
-    :document_status "Normal"
-    :insert_size_histogram_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.insert_size_histogram.pdf"
-    :insert_size_metrics_path "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v454/NA12878.insert_size_metrics"
-    :location "GCP"
-    :notes "Blame tbl for SG test."
-    :pipeline_version "f1c7883"
-    :project "G96830"
-    :readgroup_md5 "a128cbbe435e12a8959199a8bde5541c"
-    :regulatory_designation "RESEARCH_ONLY"
-    :sample_alias "NA12878"
-    :version 1
-    :workflow_start_date "2021-01-21T18:24:45.284423-05:00"
-    :workspace_name "bike-of-hornets"})
-  (clio/query-cram
-   {:cromwell_id "50726371-6d94-468f-a204-c01512c8737a"})
-  )
-
 (defn ^:private make-sg-workload-request
   []
   (-> (UUID/randomUUID)
@@ -208,3 +145,71 @@
                   (assoc-in [:common :options] {})
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
+
+
+(defn ^:private ensure-clio-cram
+  "Ensure there is a CRAM record in Clio suitable for test."
+  []
+  (let [NA12878 (str/join "/" ["gs://broad-gotc-dev-storage/pipeline"
+                               "G96830/NA12878/v470/NA12878"])
+        path    (partial str NA12878)
+        query   {:billing_project        "hornet-nest"
+                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
+                 :cram_path              (path ".cram")
+                 :cram_size              19512619343
+                 :data_type              "WGS"
+                 :document_status        "Normal"
+                 :location               "GCP"
+                 :notes                  "Blame tbl for SG test."
+                 :pipeline_version       "f1c7883"
+                 :project                "G96830"
+                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
+                 :regulatory_designation "RESEARCH_ONLY"
+                 :sample_alias           "NA12878"
+                 :version                23
+                 :workspace_name         "bike-of-hornets"}
+        crams   (clio/query-cram query)]
+    (when (> (count crams) 1)
+      (throw (ex-info "More than 1 Clio CRAM record"
+                      (with-out-str (pprint crams)))))
+    (or (first crams)
+        (clio/add-cram
+         (merge query
+                {:crai_path                  (path ".cram.crai")
+                 :cromwell_id                (str (UUID/randomUUID))
+                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+                 :insert_size_metrics_path   (path ".insert_size_metrics")
+                 :workflow_start_date        (str (OffsetDateTime/now))})))))
+
+(deftest test-clio-updates
+  (let [cram (ensure-clio-cram)]))
+
+(comment
+  (make-sg-workload-request)
+  "2021-01-21T17:59:20.203558-05:00"
+  "2017-09-19T00:04:30-04:00"
+  (ensure-clio-cram)
+  (clio/add-cram
+   {:billing_project "hornet-nest"
+    :crai_path "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v470/NA12878.cram.crai"
+    :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
+    :cram_path "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v470/NA12878.cram"
+    :cram_size 19512619343
+    :cromwell_id "50726371-6d94-468f-a204-c01512c8737a"
+    :data_type "WGS"
+    :document_status "Normal"
+    :insert_size_histogram_path "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v470/NA12878.insert_size_histogram.pdf"
+    :insert_size_metrics_path "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v470/NA12878.insert_size_metrics"
+    :location "GCP"
+    :notes "Blame tbl for SG test."
+    :pipeline_version "f1c7883"
+    :project "G96830"
+    :readgroup_md5 "a128cbbe435e12a8959199a8bde5541c"
+    :regulatory_designation "RESEARCH_ONLY"
+    :sample_alias "NA12878"
+    :version 1
+    :workflow_start_date "2021-01-21T18:24:45.284423-05:00"
+    :workspace_name "bike-of-hornets"})
+  (clio/query-cram
+   {:cromwell_id "50726371-6d94-468f-a204-c01512c8737a"})
+  )
