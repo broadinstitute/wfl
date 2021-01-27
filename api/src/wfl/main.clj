@@ -41,8 +41,7 @@
   "Map command names to their run functions."
   (letfn [(varify [ns] (require ns) (ns-resolve ns 'run))
           (namify [ns] (last (str/split (name ns) #"\.")))]
-    (let [namespaces '[wfl.dx
-                       wfl.metadata
+    (let [namespaces '[wfl.metadata
                        wfl.server]]
       (assoc (zipmap (map namify namespaces) (map varify namespaces))
              "help"         #'help
