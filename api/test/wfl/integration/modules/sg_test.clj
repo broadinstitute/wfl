@@ -22,12 +22,14 @@
       workloads/sg-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
-  (let [now       (OffsetDateTime/now)
-        do-submit #(assoc % :uuid (UUID/randomUUID)
-                          :status "Submitted"
-                          :updated now)]
-    (map do-submit workflows)))
+(defn mock-submit-workload
+  [{:keys [workflows]} _ _ _ _ _]
+  (let [now (OffsetDateTime/now)]
+    (letfn [(submit [workflow] (assoc workflow
+                                      :status "Submitted"
+                                      :updated now
+                                      :uuid   (UUID/randomUUID)))]
+      (map submit workflows))))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -150,7 +152,7 @@
   []
   (let [version 23
         NA12878 (str/join "/" ["gs://broad-gotc-dev-storage" "pipeline"
-                               "G96830" "NA12878" (str "v" version) "NA12878"])
+                               "G96830" "NA12878" (str \v version) "NA12878"])
         path    (partial str NA12878)
         query   {:billing_project        "hornet-nest"
                  :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -182,16 +184,20 @@
         (clio/query-cram query))))
 
 (deftest test-clio-updates
-  (let [where                            [:items 0 :inputs]
-        {:keys [cram_path sample_alias]} (ensure-clio-cram)]
-    (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(-> (make-sg-workload-request)
-           (update :items (comp vector first))
-           (assoc-in (conj where :input_cram)  cram_path)
-           (assoc-in (conj where :sample_name) sample_alias)
-           workloads/create-workload!
-           workloads/start-workload!
-           workloads/update-workload!))))
+  (testing "Clio updated after workflows finish." 
+    (let [where [:items 0 :inputs]
+          {:keys [cram_path cromwell_id sample_alias]} (ensure-clio-cram)
+          mock-cromwell-query (constantly [[cromwell_id "Succeeded"]])]
+      (with-redefs-fn {#'batch/submit-workload! mock-submit-workload
+                       #'cromwell/query         mock-cromwell-query}
+        #(-> (make-sg-workload-request)
+             (update :items (comp vector first))
+             (assoc-in (conj where :input_cram)  cram_path)
+             (assoc-in (conj where :sample_name) sample_alias)
+             workloads/create-workload!
+             workloads/start-workload!
+             workloads/update-workload!))
+      (is true))))
 
 (comment
   (clojure.test/test-vars [#'test-clio-updates])
@@ -200,30 +206,4 @@
   "2021-01-21T17:59:20.203558-05:00"
   "2017-09-19T00:04:30-04:00"
   (ensure-clio-cram)
-  (clio/query-cram {:cromwell_id "4f3d3307-aaad-4373-acb2-1c5a7a068110"})
-  {:started #inst "2021-01-26T19:14:06.746478000-00:00",
-   :creator "tbl@broadinstitute.org",
-   :pipeline "GDCWholeGenomeSomaticSingleSample",
-   :release "b0e3cfef18fc3c4126b7b835ab2b253599a18904",
-   :created #inst "2021-01-26T19:14:06.727552000-00:00",
-   :output
-   "gs://broad-gotc-dev-storage/GDCWholeGenomeSomaticSingleSample/4366635d-9eec-40d7-b02f-c848dcd0e41d",
-   :workflows
-   [{:id 0,
-     :status "Submitted",
-     :updated #inst "2021-01-26T19:14:06.746984000-00:00",
-     :uuid "b5a59e98-0f76-4431-83ac-ecf2102ce790",
-     :inputs
-     {:cram_ref_fasta "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-      :cram_ref_fasta_index "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-      :input_cram "gs://broad-gotc-dev-storage/pipeline/G96830/NA12878/v23/NA12878.cram",
-      :sample_name "NA12878"}}],
-   :project "(Test) tbl/GH-1091-track-sg",
-   :id 1,
-   :commit "834d2810a0dd8c9c6f6cedec8e0edc18bd2f9ed3",
-   :wdl "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
-   :uuid "f4f38a38-b358-4a38-b134-fd41fd5e4b47",
-   :executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   :items "GDCWholeGenomeSomaticSingleSample_000000001",
-   :version "0.6.0"}
   )
