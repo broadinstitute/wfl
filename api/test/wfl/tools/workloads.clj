@@ -40,7 +40,8 @@
   [identifier]
   "A whole genome sequencing workload used for testing."
   {:executor (load-cromwell-url :wgs-dev)
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
+                  identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs wgs-inputs}]
@@ -157,39 +158,6 @@
                                              "wgs/plumbing/truth/develop"
                                              "G96830.NA12878"
                                              "NA12878_PLUMBING.cram"])}}]}))
-
-(def clio-cram
-  (let [NA12878 (str/join "/" ["gs://broad-gotc-prod-storage/pipeline"
-                               "G96830/NA12878/v454/NA12878"])]
-    {:crai_path                  (str NA12878 ".cram.crai")
-     :cram_md5                   "0cfd2e0890f45e5f836b7a82edb3776b"
-     :cram_path                  (str NA12878 ".cram")
-     :cram_size                  19512619343
-     :data_type                  "WGS"
-     :document_status            "Normal"
-     :insert_size_histogram_path (str NA12878 ".insert_size_histogram.pdf")
-     :insert_size_metrics_path   (str NA12878 ".insert_size_metrics")
-     :location                   "GCP"
-     :notes                      "Blame tbl for somatic genomes testing."
-     :project                    "G96830"
-     :regulatory_designation     "RESEARCH_ONLY"
-     :sample_alias               "NA12878"
-     :version                    454}))
-
-(def request
-  {:executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   :output
-   "gs://broad-gotc-dev-storage/GDCWholeGenomeSomaticSingleSample/X",
-   :pipeline "GDCWholeGenomeSomaticSingleSample",
-   :project "(Test) tbl/GH-1091-track-sg",
-   :items
-   [{:inputs
-     {:cram_ref_fasta
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-      :cram_ref_fasta_index
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-      :input_cram
-      "gs://broad-gotc-test-storage/germline_single_sample/wgs/plumbing/truth/develop/G96830.NA12878/NA12878_PLUMBING.cram"}}]})
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."

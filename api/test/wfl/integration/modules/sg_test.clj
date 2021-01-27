@@ -16,6 +16,8 @@
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
+(def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
+
 (defn ^:private make-sg-workload-request
   []
   (-> (UUID/randomUUID)
@@ -25,11 +27,11 @@
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
   (let [now (OffsetDateTime/now)]
-    (letfn [(submit [workflow] (assoc workflow
-                                      :status "Submitted"
-                                      :updated now
-                                      :uuid   (UUID/randomUUID)))]
-      (map submit workflows))))
+    (letfn [(submit [workflow uuid] (assoc workflow
+                                           :status "Submitted"
+                                           :updated now
+                                           :uuid    uuid))]
+      (map submit workflows the-uuids))))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -183,19 +185,30 @@
                  :workflow_start_date        (str (OffsetDateTime/now))}))
         (clio/query-cram query))))
 
+(defn ^:private mock-cromwell-query
+  "Update `status` of all workflows to `Succeeded`."
+  [_environment _params]
+  (let [{:keys [items]} (make-sg-workload-request)]
+    (map (fn [id] {:id id :status "Succeeded"})
+         (take (count items) the-uuids))))
+
+(defn ^:private mock-cromwell-submit-workflows
+  [_environment _wdl inputs _options _labels]
+  (take (count inputs) the-uuids))
+
 (deftest test-clio-updates
-  (testing "Clio updated after workflows finish." 
+  (testing "Clio updated after workflows finish."
     (let [where [:items 0 :inputs]
-          {:keys [cram_path cromwell_id sample_alias]} (ensure-clio-cram)
-          mock-cromwell-query (constantly [[cromwell_id "Succeeded"]])]
-      (with-redefs-fn {#'batch/submit-workload! mock-submit-workload
-                       #'cromwell/query         mock-cromwell-query}
+          {:keys [cram_path cromwell_id sample_alias]} (ensure-clio-cram)]
+      (with-redefs-fn {#'cromwell/submit-workflows mock-cromwell-submit-workflows
+                       #'cromwell/query            mock-cromwell-query}
         #(-> (make-sg-workload-request)
              (update :items (comp vector first))
              (assoc-in (conj where :input_cram)  cram_path)
              (assoc-in (conj where :sample_name) sample_alias)
              workloads/create-workload!
              workloads/start-workload!
+             workloads/update-workload!
              workloads/update-workload!))
       (is true))))
 

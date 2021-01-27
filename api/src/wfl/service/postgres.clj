@@ -92,7 +92,7 @@
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
               (jdbc/update! tx items
-                            {:updated (OffsetDateTime/now) :status status}
+                            {:status status :updated (OffsetDateTime/now)}
                             ["uuid = ?" uuid]))]
       (run! update! uuid->status))))
 

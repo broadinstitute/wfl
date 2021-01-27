@@ -39,7 +39,7 @@
        :method :post ;; :debug true :debug-body true
        :headers (merge {"Content-Type" "application/json"}
                        (get-authorization-header))
-       :body (json/json-str md)}
+       :body (json/write-str md :escape-slash false)}
       http/request :body
       (json/read-str :key-fn keyword)))
 

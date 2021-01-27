@@ -99,14 +99,18 @@
 
 (defn clio-workflow-item!
   "Ensure Clio knows the `output` files for `item` of `pipeline`."
-  [output pipeline {:keys [base_file_name input_cram uuid] :as item}]
-  (let [parts [output pipeline uuid pipeline "execution" base_file_name]
+  [output pipeline {:keys [inputs uuid] :as item}]
+  (let [{:keys [base_file_name input_cram]} (util/parse-json inputs)
+        base_file_name (or base_file_name
+                           (-> input_cram util/leafname
+                               (util/unsuffix ".cram")))
+        parts [output pipeline uuid pipeline "execution" base_file_name]
         path  (partial str (str/join "/" parts))
         bam   {:bai_path                   (path ".bai")
                :bam_path                   (path ".bam")
                :insert_size_histogram_path (path ".insert_size_histogram.pdf")
                :insert_size_metrics_path   (path ".insert_size_metrics")}]
-    (if-let [bam-record (clio-bam-record bam)]
+    (if-let [bam-record (clio-bam-record (select-keys bam [:bam_path]))]
       bam-record
       (let [cram (clio-cram-record input_cram)
             have (-> "" path gcs/parse-gs-url
@@ -116,7 +120,7 @@
             want (-> bam vals set)
             need (set/difference want have)]
         (when-not (empty? need)
-          (throw (ex-info "Need these output files:" need)))
+          (throw (ex-info "Need these output files:" {:need need})))
         (clio/add-bam (merge cram bam))))))
 
 (defn clio-workload!
@@ -127,7 +131,7 @@
        (run! (partial clio-workflow-item! output pipeline)))
   workload)
 
-(defn update-workload!
+(defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [tx {:keys [finished id started] :as workload}]
   (letfn [(update []
@@ -140,6 +144,6 @@
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
-(defoverload workloads/update-workload!   pipeline update-workload!)
+(defoverload workloads/update-workload!   pipeline update-sg-workload!)
 (defoverload workloads/load-workload-impl pipeline
   batch/load-batch-workload-impl)
