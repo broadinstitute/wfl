@@ -49,28 +49,6 @@
           </v-list-item-content>
         </v-list-item>
       </router-link>
-
-      <router-link to="/settings" v-slot="{ navigate }">
-        <v-list-item @click="navigate">
-          <v-list-item-action>
-            <v-icon>{{ drawer_items.settings.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>{{ drawer_items.settings.text }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </router-link>
-
-      <router-link to="/help" v-slot="{ navigate }">
-        <v-list-item @click="navigate">
-          <v-list-item-action>
-            <v-icon>{{ drawer_items.help.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>{{ drawer_items.help.text }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </router-link>
     </v-list>
   </v-navigation-drawer>
 </template>
@@ -104,8 +82,6 @@ export default {
         //   model: false,
         //   children: this.modules
         // },
-        settings: { icon: "settings", text: "Settings" },
-        help: { icon: "help", text: "Help" }
       };
     }
   }

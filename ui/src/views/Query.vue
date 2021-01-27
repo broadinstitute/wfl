@@ -2,43 +2,25 @@
   <v-container class="query">
     <v-container fluid fill-width>
       <h1>Query workload</h1>
-      <div class="searchbar">
-        <v-toolbar outlined>
-          <v-text-field hide-details prepend-icon="search" single-line disabled placeholder="Currently unavailable"></v-text-field>
-
-          <v-btn icon>
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
-        </v-toolbar>
-      </div>
     </v-container>
 
     <v-container fluid fill-width>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="validateAndPost">
         <v-row>
           <v-col cols="12" sm="6">
-            <v-date-picker v-model="dates" range show-current color="#74AE43"></v-date-picker>
-          </v-col>
-
-          <v-col cols="12" sm="6">
+            <p> Please choose only one query field </p>
             <v-text-field
-              v-model="dateRangeText"
-              label="Date range"
-              prepend-icon="event"
-              required
-              readonly
+              v-model="workloadUUID"
+              :rules="[rules.workloadUUID]"
+              label="Workload UUID"
+              clearable
             ></v-text-field>
 
-            <v-select
-              :items="environment"
-              prepend-icon="extension"
-              menu-props="auto"
-              label="Select"
-              single-line
-              :rules="environmentRules"
-              required
-              v-model="environmentSelected"
-            ></v-select>
+            <v-text-field
+              v-model="projectName"
+              label="Project Name"
+              clearable
+            ></v-text-field>
 
             <v-container>
               <v-btn :disabled="!valid" color="success" class="mr-4" @click="validateAndPost">Query</v-btn>
@@ -53,7 +35,7 @@
     <v-container fluid fill-width>
       <v-card outlined :loading="queryResultsIsLoading">
         <v-card-title>
-          Total Results: {{this.totalResults}}
+          Total Results: {{ this.totalResults }}
         </v-card-title>
 
         <v-card-text>
@@ -82,32 +64,41 @@ export default {
   data() {
     return {
       queryResultsIsLoading: true,
+      workloadUUID: null,
+      projectName: null,
       showResults: {
         results: "You might need to login to query for workload!"
       },
       valid: true,
-      dates: ["2020-01-10", "2020-01-12"],
-      environment: [{ text: "gotc-dev" }],
-      environmentRules: [v => !!v || "Environment is required"],
-      environmentSelected: ""
+      rules: {
+        // reference: https://github.com/microsoft/uuid-validate/blob/06554db1b093aa6bb429156fa8964e1cde2b750c/index.js#L2
+        workloadUUID: v => {
+          const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          if (v) {
+            return pattern.test(v) || 'Invalid workload UUID.'
+          } else {
+            // don't validate if no value is provided
+            return true
+          }
+        }
+      }
     };
   },
   watch: {
     showResults: function () {
-      this.queryResultsIsLoading = !this.queryResultsIsLoading
+      if (this.showResults) {
+        this.queryResultsIsLoading = false
+      }
+
     }
   },
   computed: {
-    dateRangeText() {
-      return this.dates.join("   to   ");
-    },
     totalResults() {
-      if (typeof this.showResults.results !== "string") {
-        return this.showResults.results.length
+      if (this.showResults) {
+        return this.showResults.length
       } else {
         return "N/A"
       }
-      
     }
   },
   methods: {
@@ -119,10 +110,11 @@ export default {
         this.showResults.results = "Fetching querying results..."
 
         axios
-          .post("/api/v1/workflows", {
-            environment: this.environmentSelected,
-            start: new Date(this.dates[0]).toISOString(),
-            end: new Date(this.dates[1]).toISOString()
+          .get("/api/v1/workload", {
+            params: {
+              uuid: this.workloadUUID,
+              project: this.projectName
+            }
           })
           .then(response => {
             if (
