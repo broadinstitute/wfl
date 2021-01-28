@@ -200,7 +200,8 @@
   [_environment _wdl inputs _options _labels]
   (take (count inputs) the-uuids))
 
-(def bam-suffixes
+(def ^:private bam-suffixes
+  "Map Clio BAM record fields to expected file suffixes."
   {:bai_path                 ".bai"
    :bam_path                 ".bam"
    :insert_size_metrics_path ".insert_size_metrics"})
@@ -227,6 +228,8 @@
                                                         :version])]
       (map (partial merge from-cram) (map make workflows)))))
 
+;; The files are all just bogus copies of the README now.
+;;
 (defn ^:private make-bam-outputs
   "Make the BAM outputs expected from a successful `workload`."
   [{:keys [output pipeline workflows] :as workload}]
@@ -251,13 +254,13 @@
              (assoc-in (conj where :sample_name) sample_alias)
              workloads/create-workload!
              workloads/start-workload!
-             workloads/update-workload!
+             workloads/update-workload! ; Make status "Succeeded".
              make-bam-outputs
-             workloads/update-workload!
+             workloads/update-workload! ; Register outputs with Clio.
              expect-clio-bams
-             (as-> bams
-                 (let [query (-> bams first (select-keys [:bam_path]))]
-                   (is (= bams (clio/query-bam query))))))))))
+             (as-> expected
+                 (let [query (-> expected first (select-keys [:bam_path]))]
+                   (is (= expected (clio/query-bam query))))))))))
 
 (comment
   (clojure.test/test-vars [#'test-clio-updates])
