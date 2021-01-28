@@ -5,7 +5,6 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [buddy.sign.jwt :as jwt]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [wfl.environments :as env]
