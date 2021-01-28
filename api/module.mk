@@ -54,6 +54,8 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT) $(API_DIR)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
+# Run `clojure -M:format` in this directory when this fails.
+#
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
 	$(CLOJURE) -M:lint -m cljfmt.main check
 	@$(TOUCH) $@

@@ -17,8 +17,6 @@
       (util/getenv "debug")
       wfl/error-or-environment-keyword env/stuff))
 
-(def deploy-environment (:gotc-dev env/stuff))
-
 (defn get-authorization-header
   "An Authorization header for talking to Clio where deployed."
   []
