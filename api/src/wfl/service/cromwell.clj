@@ -123,14 +123,14 @@
    (some-thing method thing url id {})))
 
 (defn ^:private get-thing
-  "GET the ENVIRONMENT Cromwell THING for the workflow with ID."
+  "GET the THING for the workflow with ID from Cromwell URL."
   ([thing url id query-params]
    (some-thing :get thing url id query-params))
   ([thing url id]
    (get-thing thing url id {})))
 
 (defn ^:private post-thing
-  "POST the ENVIRONMENT Cromwell THING for the workflow with ID."
+  "POST the THING for the workflow with ID from Cromwell URL."
   [thing url id]
   (some-thing :post thing url id))
 
