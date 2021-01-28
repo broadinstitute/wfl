@@ -115,5 +115,4 @@
    :project "project"
    :sample_alias "sample"
    :version 3
-   :workspace_name "TestWorkspace"}
-  )
+   :workspace_name "TestWorkspace"})

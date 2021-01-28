@@ -76,7 +76,7 @@
            workloads/create-workload!
            workloads/start-workload!
            (as-> workload
-               (is (:started workload))
+                 (is (:started workload))
              (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
@@ -259,9 +259,8 @@
              workloads/update-workload! ; Register outputs with Clio.
              expect-clio-bams
              (as-> expected
-                 (let [query (-> expected first (select-keys [:bam_path]))]
-                   (is (= expected (clio/query-bam query))))))))))
+                   (let [query (-> expected first (select-keys [:bam_path]))]
+                     (is (= expected (clio/query-bam query))))))))))
 
 (comment
-  (clojure.test/test-vars [#'test-clio-updates])
-  )
+  (clojure.test/test-vars [#'test-clio-updates]))

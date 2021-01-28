@@ -38,9 +38,9 @@
   [url]
   (let [[gs-colon nada bucket object] (str/split url #"/" 4)]
     (when-not
-        (and (every? seq [gs-colon bucket])
-             (= "gs:" gs-colon)
-             (= "" nada))
+     (and (every? seq [gs-colon bucket])
+          (= "gs:" gs-colon)
+          (= "" nada))
       (throw (IllegalArgumentException. (format "Bad GCS URL: '%s'" url))))
     [bucket (or object "")]))
 
