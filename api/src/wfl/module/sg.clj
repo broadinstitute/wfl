@@ -86,14 +86,15 @@
     (when (not= 1 n)
       (throw (ex-info "Expected 1 Clio record with cram_path"
                       {:cram_path input_cram :count n})))
-    (-> records first (select-keys [:data_type
+    (-> records first (select-keys [:billing_project
+                                    :data_type
                                     :document_status
-                                    :insert_size_histogram_path
+                                    ;; :insert_size_histogram_path
                                     :insert_size_metrics_path
                                     :location
                                     :notes
                                     :project
-                                    :regulatory_designation
+                                    ;; :regulatory_designation
                                     :sample_alias
                                     :version]))))
 
@@ -108,7 +109,7 @@
         path  (partial str (str/join "/" parts))
         bam   {:bai_path                   (path ".bai")
                :bam_path                   (path ".bam")
-               :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+               ;; :insert_size_histogram_path (path ".insert_size_histogram.pdf")
                :insert_size_metrics_path   (path ".insert_size_metrics")}]
     (if-let [bam-record (clio-bam-record (select-keys bam [:bam_path]))]
       bam-record

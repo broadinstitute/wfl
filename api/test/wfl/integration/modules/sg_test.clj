@@ -6,6 +6,7 @@
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
+            [wfl.service.gcs :as gcs]
             [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
@@ -153,8 +154,9 @@
   "Ensure there is a CRAM record in Clio suitable for test."
   []
   (let [version 23
+        project (str "G96830" \- (UUID/randomUUID))
         NA12878 (str/join "/" ["gs://broad-gotc-dev-storage" "pipeline"
-                               "G96830" "NA12878" (str \v version) "NA12878"])
+                               project "NA12878" (str \v version) "NA12878"])
         path    (partial str NA12878)
         query   {:billing_project        "hornet-nest"
                  :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -165,7 +167,7 @@
                  :location               "GCP"
                  :notes                  "Blame tbl for SG test."
                  :pipeline_version       "f1c7883"
-                 :project                "G96830"
+                 :project                project
                  :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
                  :regulatory_designation "RESEARCH_ONLY"
                  :sample_alias           "NA12878"
@@ -182,8 +184,10 @@
                  :cromwell_id                (str (UUID/randomUUID))
                  :insert_size_histogram_path (path ".insert_size_histogram.pdf")
                  :insert_size_metrics_path   (path ".insert_size_metrics")
-                 :workflow_start_date        (str (OffsetDateTime/now))}))
-        (clio/query-cram query))))
+                 :workflow_start_date        (str (OffsetDateTime/now))})))
+    (first (clio/query-cram query))))
+
+(def ^:private the-clio-cram-record (delay (ensure-clio-cram)))
 
 (defn ^:private mock-cromwell-query
   "Update `status` of all workflows to `Succeeded`."
@@ -196,27 +200,65 @@
   [_environment _wdl inputs _options _labels]
   (take (count inputs) the-uuids))
 
+(def bam-suffixes
+  {:bai_path                 ".bai"
+   :bam_path                 ".bam"
+   :insert_size_metrics_path ".insert_size_metrics"})
+
+(defn ^:private expect-clio-bams
+  "Make the Clio BAM records expected from `workload`."
+  [{:keys [output pipeline workflows] :as workload}]
+  (letfn [(make [{:keys [inputs uuid] :as workflow}]
+            (let [{:keys [input_cram sample_name]} inputs
+                  prefix (partial str (str/join "/" [output
+                                                     pipeline
+                                                     uuid
+                                                     pipeline
+                                                     "execution"
+                                                     sample_name]))]
+              (zipmap (keys bam-suffixes) (map prefix (vals bam-suffixes)))))]
+    (let [from-cram (select-keys @the-clio-cram-record [:billing_project
+                                                        :data_type
+                                                        :document_status
+                                                        :location
+                                                        :notes
+                                                        :project
+                                                        :sample_alias
+                                                        :version])]
+      (map (partial merge from-cram) (map make workflows)))))
+
+(defn ^:private make-bam-outputs
+  "Make the BAM outputs expected from a successful `workload`."
+  [{:keys [output pipeline workflows] :as workload}]
+  (let [readme (str/join
+                "/" ["gs://broad-gotc-dev-storage" pipeline "README.txt"])
+        copy!  (partial gcs/copy-object readme)]
+    (->> workload expect-clio-bams
+         (mapcat (apply juxt (keys bam-suffixes)))
+         (run! copy!)))
+  workload)
+
 (deftest test-clio-updates
   (testing "Clio updated after workflows finish."
     (let [where [:items 0 :inputs]
-          {:keys [cram_path cromwell_id sample_alias]} (ensure-clio-cram)]
+          {:keys [cram_path project sample_alias]} @the-clio-cram-record]
       (with-redefs-fn {#'cromwell/submit-workflows mock-cromwell-submit-workflows
                        #'cromwell/query            mock-cromwell-query}
         #(-> (make-sg-workload-request)
              (update :items (comp vector first))
              (assoc-in (conj where :input_cram)  cram_path)
+             (assoc-in (conj where :project)     project)
              (assoc-in (conj where :sample_name) sample_alias)
              workloads/create-workload!
              workloads/start-workload!
              workloads/update-workload!
-             workloads/update-workload!))
-      (is true))))
+             make-bam-outputs
+             workloads/update-workload!
+             expect-clio-bams
+             (as-> bams
+                 (let [query (-> bams first (select-keys [:bam_path]))]
+                   (is (= bams (clio/query-bam query))))))))))
 
 (comment
   (clojure.test/test-vars [#'test-clio-updates])
-  (test-clio-updates)
-  (make-sg-workload-request)
-  "2021-01-21T17:59:20.203558-05:00"
-  "2017-09-19T00:04:30-04:00"
-  (ensure-clio-cram)
   )
