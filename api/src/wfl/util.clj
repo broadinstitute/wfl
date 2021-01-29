@@ -70,7 +70,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
     (try (vault/read-secret
           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
             (vault/authenticate! :token (slurp token)))
-          path)
+          path {})
          (catch Throwable e
            (log/warn e "Issue with Vault")
            (log/debug "Perhaps run 'vault login' and try again")))))
