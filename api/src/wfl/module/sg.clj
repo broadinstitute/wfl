@@ -96,9 +96,9 @@
                                     :sample_alias
                                     :version]))))
 
-(defn clio-workflow-item!
-  "Ensure Clio knows the `output` files for `item` of `pipeline`."
-  [output pipeline {:keys [inputs uuid] :as item}]
+(defn register-workflow-in-clio
+  "Ensure Clio knows the `output` files for `_workflow` of `pipeline`."
+  [output pipeline {:keys [inputs uuid] :as _workflow}]
   (let [{:keys [base_file_name input_cram]} (util/parse-json inputs)
         base_file_name (or base_file_name
                            (-> input_cram util/leafname
@@ -126,7 +126,7 @@
   [tx {:keys [id items output uuid] :as workload}]
   (->> items
        (postgres/get-table tx)
-       (run! (partial clio-workflow-item! output pipeline)))
+       (run! (partial register-workflow-in-clio output pipeline)))
   workload)
 
 (defn update-sg-workload!
