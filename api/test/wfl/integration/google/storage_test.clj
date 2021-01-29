@@ -154,15 +154,16 @@
 (defn with-temporary-subscription [topic f]
   "Create a temporary Google Cloud Storage Pub/Sub subscription"
   (util/bracket
-   #(create-subscription topic
-                         (str "wfl-test-subscription-" (UUID/randomUUID)))
+   #(create-subscription
+     topic
+     (str "wfl-test-subscription-" (UUID/randomUUID)))
    delete-subscription
    f))
 
 ;; the test
 (deftest test-cloud-storage-pubsub
-  (let [project "broad-gotc-dev"
-        bucket  "broad-gotc-dev-zero-test"]
+  (let [project "broad-gotc-dev-storage"
+        bucket  fixtures/gcs-test-bucket]
     (with-temporary-topic project
       (fn [topic]
         (give-project-publish-access-to-topic project topic)
@@ -181,5 +182,5 @@
                        (str/join "/" ["test" "resources" "copy-me.txt"])
                        dest)
                       (let [messages (pull-messages subscription)]
-                        (is (== 1 (count messages)))
+                        (is (< 0 (count messages)))
                         (acknowledge subscription messages)))))))))))))
