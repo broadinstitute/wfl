@@ -53,11 +53,10 @@
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
-  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])
-        n (count workloads)]
-    (when (not= 1 n)
-      (throw (ex-info "Expected 1 workload matching id"
-                      {:cause {:id id :count n}
+  (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
+    (when (empty? workloads)
+      (throw (ex-info "No workload found matching id"
+                      {:cause {:id id}
                        :type  ::workload-not-found})))
     (try-load-workload-impl tx (first workloads))))
 
