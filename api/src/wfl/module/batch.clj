@@ -18,7 +18,7 @@
   (let [{:keys [path release]} workflow-wdl
         {:keys [pipeline]} workload-request
         create "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))"
-        kindit "UPDATE workload SET pipeline = ?::pipeline WHERE id = ?"
+        setter "UPDATE workload SET pipeline = ?::pipeline WHERE id = ?"
         [{:keys [id]}]
         (-> workload-request
             (select-keys [:creator :executor :input :output :project])
@@ -27,7 +27,7 @@
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))
         table (format "%s_%09d" pipeline id)]
-    (jdbc/execute!       tx [kindit pipeline id])
+    (jdbc/execute!       tx [setter pipeline id])
     (jdbc/db-do-commands tx [(format create table)])
     (jdbc/update!        tx :workload {:items table} ["id = ?" id])
     [id table]))
@@ -52,12 +52,10 @@
                      make-cromwell-inputs!
                      cromwell-label
                      (util/make-options env)))
-  ([workload env workflow-wdl make-cromwell-inputs! cromwell-label
-    default-options]
+  ([workload env workflow-wdl make-cromwell-inputs! cromwell-label default-options]
    (let [{:keys [uuid workflows]} workload]
      (letfn [(update-workflow [workflow cromwell-uuid]
                (assoc workflow
-                      ;; :status "Submitted" ; Manage in update. =tbl
                       :updated (OffsetDateTime/now)
                       :uuid   cromwell-uuid))
              (submit-batch! [[options workflows]]

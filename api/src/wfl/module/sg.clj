@@ -121,7 +121,7 @@
           (throw (ex-info "Need these output files:" {:need need})))
         (clio/add-bam (merge cram bam))))))
 
-(defn clio-workload!
+(defn register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
   [tx {:keys [id items output uuid] :as workload}]
   (->> items
@@ -136,7 +136,7 @@
             (postgres/batch-update-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
-    (cond finished (clio-workload! tx workload)
+    (cond finished (register-workload-in-clio tx workload)
           started  (update)
           :else    workload)))
 
