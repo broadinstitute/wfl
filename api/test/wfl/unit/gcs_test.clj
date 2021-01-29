@@ -5,7 +5,8 @@
             [clojure.test :refer [deftest is testing]]
             [wfl.once :as once]
             [wfl.service.gcs :as gcs]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]])
+            [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]
+            [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))
 
 (def project
@@ -52,26 +53,27 @@
 
 (deftest object-test
   (try
-    (with-temporary-gcs-folder uri
-      (testing "Objects"
-        (let [[bucket src-folder] (gcs/parse-gs-url uri)
-              dest-folder (str src-folder "destination/")
-              object {:name (str src-folder "test")
-                      :contentType "text/plain"}
-              dockerfile "Dockerfile"]
-          (testing "upload"
-            (let [result (gcs/upload-file dockerfile bucket (:name object))]
-              (is (= object (select-keys result (keys object))))
-              (is (= bucket (:bucket result)))))
-          (testing "list"
-            (let [result (gcs/list-objects bucket src-folder)]
-              (is (= 1 (count result)))
-              (is (= object (select-keys (first result) (keys object))))))
-          (testing "copy"
-            (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
-          (testing "download"
-            (gcs/download-file local-file-name bucket (str dest-folder "test"))
-            (is (= (slurp dockerfile) (slurp local-file-name)))))))
+    (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+      (fn [url]
+        (testing "Objects"
+          (let [[bucket src-folder] (gcs/parse-gs-url url)
+                dest-folder (str src-folder "destination/")
+                object {:name (str src-folder "test")
+                        :contentType "text/plain"}
+                dockerfile "Dockerfile"]
+            (testing "upload"
+              (let [result (gcs/upload-file dockerfile bucket (:name object))]
+                (is (= object (select-keys result (keys object))))
+                (is (= bucket (:bucket result)))))
+            (testing "list"
+              (let [result (gcs/list-objects bucket src-folder)]
+                (is (= 1 (count result)))
+                (is (= object (select-keys (first result) (keys object))))))
+            (testing "copy"
+              (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
+            (testing "download"
+              (gcs/download-file local-file-name bucket (str dest-folder "test"))
+              (is (= (slurp dockerfile) (slurp local-file-name))))))))
     (finally (cleanup-object-test))))
 
 (deftest userinfo-test

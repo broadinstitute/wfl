@@ -6,7 +6,7 @@
             [wfl.once :as once]
             [wfl.service.gcs :as gcs]
             [wfl.util :as util]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]]
+            [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]
             [wfl.tools.fixtures :as fixtures])
   (:import (java.util UUID)))
 
@@ -138,31 +138,23 @@
                                      (once/service-account-email))]})))
 
 ;; testing helpers
-(defn ^:private bracket [acquire release use]
-  "See https://wiki.haskell.org/Bracket_pattern"
-  (let [resource (acquire)]
-    (try
-      (use resource)
-      (finally
-        (release resource)))))
-
 (defn with-temporary-topic [project f]
   "Create a temporary Google Cloud Storage Pub/Sub topic"
-  (bracket
+  (util/bracket
    #(create-topic project (str "wfl-test-" (UUID/randomUUID)))
    delete-topic
    f))
 
 (defn with-temporary-notification-configuration [bucket topic f]
   "Create a temporary Google Cloud Storage Pub/Sub notification configuration"
-  (bracket
+  (util/bracket
    #(create-notification-configuration bucket topic)
    #(delete-notification-configuration bucket %)
    f))
 
 (defn with-temporary-subscription [topic f]
   "Create a temporary Google Cloud Storage Pub/Sub subscription"
-  (bracket
+  (util/bracket
    #(create-subscription topic
                          (str "wfl-test-subscription-" (UUID/randomUUID)))
    delete-subscription
@@ -183,11 +175,12 @@
               (fn [subscription]
                 (is (== 1 (count (list-subscriptions-for-topic topic))))
                 (is (empty? (pull-messages subscription)))
-                (with-temporary-gcs-folder uri
-                  (let [dest (str uri "input.txt")]
-                    (gcs/upload-file
-                     (str/join "/" ["test" "resources" "copy-me.txt"])
-                     dest)
-                    (let [messages (pull-messages subscription :block)]
-                      (is (== 1 (count messages)))
-                      (acknowledge subscription messages))))))))))))
+                (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+                  (fn [url]
+                    (let [dest (str url "input.txt")]
+                      (gcs/upload-file
+                       (str/join "/" ["test" "resources" "copy-me.txt"])
+                       dest)
+                      (let [messages (pull-messages subscription :block)]
+                        (is (== 1 (count messages)))
+                        (acknowledge subscription messages)))))))))))))

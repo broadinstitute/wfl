@@ -1,7 +1,6 @@
 (ns wfl.integration.terra-test
   (:require [clojure.test       :refer [deftest is testing]]
-            [wfl.service.terra  :as terra]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder]]))
+            [wfl.service.terra  :as terra]))
 
 (def terra-url
   "https://firecloud-orchestration.dsde-dev.broadinstitute.org")

@@ -3,7 +3,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [wfl.util :as util])
   (:import [java.util UUID]))
 
 (defn method-overload-fixture
@@ -17,25 +18,26 @@
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
 
-(defmacro with-temporary-gcs-folder
-  "
-  Create a temporary folder in GCS-TEST-BUCKET for use in BODY.
-  The folder will be deleted after execution transfers from BODY.
+(defn with-temporary-cloud-storage-folder
+  "Create a temporary folder in the Google Cloud storage `bucket` and call
+  `use-folder` with the gs url of the temporary folder. The folder will be
+  deleted after execution transfers from `use-folder`.
+
+  Parameters
+  ----------
+    bucket - name of Google Cloud storage bucket to create temporary folder in
+    use    - function to call with gs url of temporary folder
 
   Example
   -------
-    (with-temporary-gcs-folder uri
-      ;; use temporary folder at `uri`)
-      ;; <- temporary folder deleted
+    (with-temporary-gcs-folder \"broad-gotc-dev\"
+       (fn [url] #_(use temporary folder at url)))
   "
-  [uri & body]
-  `(let [name# (str "wfl-test-" (UUID/randomUUID) "/")
-         ~uri (gcs/gs-url gcs-test-bucket name#)]
-     (try ~@body
-          (finally
-            (->>
-             (gcs/list-objects gcs-test-bucket name#)
-             (run! (comp delete-test-object :name)))))))
+  [bucket use-folder]
+  (util/bracket
+   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
+   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
+   use-folder))
 
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)

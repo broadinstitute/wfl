@@ -108,8 +108,8 @@
                        (json/read-str :key-fn keyword))]
                (lazy-cat items (when nextPageToken (each nextPageToken)))))]
      (each "")))
-  ([bucket]
-   (list-objects bucket "")))
+  ([url]
+   (apply list-objects (parse-gs-url url))))
 
 (def _-? (set "_-"))
 (def digit? (set "0123456789"))

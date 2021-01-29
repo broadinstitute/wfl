@@ -385,3 +385,11 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))
+
+(defn bracket [acquire release use]
+  "`acquire`, `use` and `release` a resource in an exception-safe manner."
+  (let [resource (acquire)]
+    (try
+      (use resource)
+      (finally
+        (release resource)))))
