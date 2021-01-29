@@ -76,8 +76,8 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn vault-secrets
   "Return the secrets at `path` in vault."
   [path]
-  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
-                       (str/join "/") slurp do-or-nil)
+  (let [token (or #_(->> [(System/getProperty "user.home") ".vault-token"]
+                         (str/join "/") slurp do-or-nil)
                   (getenv "VAULT_TOKEN" "VAULT_TOKEN"))]
     (try (vault/read-secret
           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
