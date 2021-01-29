@@ -3,9 +3,7 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
-            [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
-            [wfl.environments :as env]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
   (:import [java.util UUID]))
@@ -69,19 +67,6 @@
           remaining (apply - (map gs-urls [in-gs out-gs]))]
       (into gs-urls [[:remaining remaining]]))))
 
-(defn workflow-status
-  "Get the status of workflows in ENVIRONMENT."
-  [environment label]
-  (prn (format "%s: querying %s Cromwell: %s"
-               wfl/the-name environment (cromwell/url environment)))
-  (cromwell/status-counts environment {:label label}))
-
-(defn report-status
-  "Report workflow statuses in ENVIRONMENT and file counts."
-  [label environment in-gs out-gs]
-  (pprint (workflow-status environment label))
-  (pprint (count-files in-gs out-gs)))
-
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
   [tx {:keys [release path] :as _workflow-wdl} body]
@@ -105,13 +90,3 @@
     (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
     (jdbc/db-do-commands tx [work])
     [id table]))
-
-(defn cromwell-environments
-  "Keywords from the set of ENVIRONMENTS with Cromwell URL."
-  ([url]
-   (->> env/stuff
-        (filter #(-> % second :cromwell :url #{url}))
-        keys))
-  ([environments url]
-   (->> url cromwell-environments
-        (filter environments))))
