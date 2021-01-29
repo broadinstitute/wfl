@@ -129,7 +129,7 @@
       :body
       util/parse-json))
 
-(defn ^:private configure-topic-iam-policy [project topic]
+(defn ^:private give-project-publish-access-to-topic [project topic]
   (let [sa (-> project get-cloud-storage-service-account :email_address)]
     (set-topic-iam-policy
      topic
@@ -174,7 +174,7 @@
         bucket  fixtures/gcs-test-bucket]
     (with-temporary-topic project
       (fn [topic]
-        (configure-topic-iam-policy project topic)
+        (give-project-publish-access-to-topic project topic)
         (with-temporary-notification-configuration bucket topic
           (fn [_]
             (let [configs (list-notification-configurations bucket)]
