@@ -14,20 +14,18 @@
 (defn ^:private wget [url]
   (-> (client/get url {:headers (once/get-auth-header)}) :body util/parse-json))
 
-(def ^:private pubsub-url "https://pubsub.googleapis.com/v1/")
+(def ^:private pubsub-url
+  (partial str "https://pubsub.googleapis.com/v1/"))
 
 ;; pub/sub topics
-(defn ^:private topic-url [topic-name]
-  (str pubsub-url topic-name))
-
 (defn ^:private list-pubsub-topics [project]
-  (-> (str pubsub-url (str/join "/" ["projects" project "topics"]))
+  (-> (pubsub-url (str/join "/" ["projects" project "topics"]))
     wget
     :topics
     (or [])))
 
 (defn ^:private create-pubsub-topic [project topic-id]
-  (-> (topic-url (str/join "/" ["projects" project "topics" topic-id]))
+  (-> (pubsub-url (str/join "/" ["projects" project "topics" topic-id]))
     (client/put {:headers (once/get-auth-header)})
     :body
     util/parse-json
@@ -35,16 +33,16 @@
 
 (defn ^:private delete-pubsub-topic [topic]
   (client/delete
-    (topic-url topic)
+    (pubsub-url topic)
     {:headers (once/get-auth-header)}))
 
 (defn ^:private get-topic-iam-policy [topic]
-  (wget (str (topic-url topic) ":getIamPolicy")))
+  (wget (pubsub-url topic ":getIamPolicy")))
 
 (defn ^:private set-topic-iam-policy [topic role->members]
   (letfn [(make-binding [[role members]] {:role role :members members})]
     (client/post
-      (str (topic-url topic) ":setIamPolicy")
+      (pubsub-url topic ":setIamPolicy")
       {:headers      (once/get-auth-header)
        :content-type :json
        :body         (json/write-str
@@ -54,21 +52,21 @@
 ;; pub/sub subscriptions
 
 (defn ^:private list-subscriptions [project]
-  (-> (str pubsub-url (str/join "/" [project "subscriptions"]))
+  (-> (pubsub-url project "/subscriptions")
     wget
     :subscriptions
     (or [])))
 
 (defn ^:private list-topic-subscriptions [topic]
-  (-> (str pubsub-url (str/join "/" [topic "subscriptions"]))
+  (-> (pubsub-url topic "/subscriptions")
     wget
     :subscriptions
     (or [])))
 
 (defn ^:private create-subscription [topic subscription-id]
-  (let [project           (second (str/split topic #"/"))
-        subscription-name (str/join "/" ["projects" project "subscriptions" subscription-id])]
-    (-> (str pubsub-url subscription-name)
+  (let [project (second (str/split topic #"/"))]
+    (-> (pubsub-url
+          (str/join "/" ["projects" project "subscriptions" subscription-id]))
       (client/put
         {:headers      (once/get-auth-header)
          :content-type :json
@@ -79,11 +77,11 @@
 
 (defn ^:private delete-subscription [subscription]
   (client/delete
-    (str pubsub-url subscription)
+    (pubsub-url subscription)
     {:headers (once/get-auth-header)}))
 
 (defn ^:private pull-messages [subscription & opts]
-  (-> (str pubsub-url subscription ":pull")
+  (-> (pubsub-url subscription ":pull")
     (client/post {:headers (once/get-auth-header)
                   :body    (json/write-str
                              {:returnImmediately (util/absent? (set opts) :block)
@@ -95,14 +93,13 @@
     (or [])))
 
 (defn ^:private acknowledge [subscription message-responses]
-  (-> (str pubsub-url subscription ":acknowledge")
+  (-> (pubsub-url subscription ":acknowledge")
     (client/post {:headers (once/get-auth-header)
                   :body    (json/write-str
                              {:ackIds (map :ackId message-responses)}
                              :escape-slash false)})))
 
 ;; storage notification configuration
-
 (defn ^:private create-pubsub-configuration [bucket topic]
   (let [payload {:payload_format "JSON_API_V1"
                  :event_types    ["OBJECT_FINALIZE"]
