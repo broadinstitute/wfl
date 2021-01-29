@@ -77,7 +77,7 @@
          :url       url
          :headers   (once/get-auth-header)
          :multipart (map multipartify parts)}
-      request-json #_debug/dump :body)))
+        request-json #_debug/dump :body)))
 
 (defn make-workflow-labels
   "Return workflow labels for WDL."
@@ -238,11 +238,11 @@
   {:key value} map."
   [url wdl inputs options labels]
   (->> (partify-workflow wdl
-         inputs
-         options
-         labels)
-    (post-workflow (api url))
-    :id))
+                         inputs
+                         options
+                         labels)
+       (post-workflow (api url))
+       :id))
 
 (defn submit-workflows
   "Batch submit one or more workflows to cromwell.
@@ -257,11 +257,11 @@
    List of UUIDS for each workflow as reported by cromwell."
   [url wdl inputs options labels]
   (->> (partify-workflow wdl
-         inputs
-         options
-         labels)
-    (post-workflow (str (api url) "/batch"))
-    (mapv :id)))
+                         inputs
+                         options
+                         labels)
+       (post-workflow (str (api url) "/batch"))
+       (mapv :id)))
 
 (defn wait-for-workflow-complete
   "Return status of workflow named by ID when it completes, given Cromwell URL."
