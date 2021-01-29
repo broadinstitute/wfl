@@ -79,12 +79,11 @@
    (pubsub-url subscription)
    {:headers (once/get-auth-header)}))
 
-(defn ^:private pull-messages [subscription & opts]
+(defn ^:private pull-messages [subscription]
   (-> (pubsub-url subscription ":pull")
       (client/post {:headers (once/get-auth-header)
                     :body    (json/write-str
-                              {:returnImmediately (util/absent? (set opts) :block)
-                               :maxMessages       100}
+                              {:maxMessages       100}
                               :escape-slash false)})
       :body
       util/parse-json
@@ -162,8 +161,8 @@
 
 ;; the test
 (deftest test-cloud-storage-pubsub
-  (let [project "broad-gotc-dev-storage"
-        bucket  fixtures/gcs-test-bucket]
+  (let [project "broad-gotc-dev"
+        bucket  "broad-gotc-dev-zero-test"]
     (with-temporary-topic project
       (fn [topic]
         (give-project-publish-access-to-topic project topic)
@@ -175,12 +174,12 @@
               (fn [subscription]
                 (is (== 1 (count (list-subscriptions-for-topic topic))))
                 (is (empty? (pull-messages subscription)))
-                (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+                (with-temporary-cloud-storage-folder bucket
                   (fn [url]
                     (let [dest (str url "input.txt")]
                       (gcs/upload-file
                        (str/join "/" ["test" "resources" "copy-me.txt"])
                        dest)
-                      (let [messages (pull-messages subscription :block)]
+                      (let [messages (pull-messages subscription)]
                         (is (== 1 (count messages)))
                         (acknowledge subscription messages)))))))))))))
