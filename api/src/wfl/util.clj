@@ -5,11 +5,9 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [buddy.sign.jwt :as jwt]
             [clj-yaml.core :as yaml]
             [vault.client.http]                             ; vault.core needs this
             [vault.core :as vault]
-            [wfl.environments :as env]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
@@ -238,17 +236,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [g f & xs]
   (apply g (mapv f xs)))
 
-(defn exome-inputs
-  "Exome inputs for ENVIRONMENT that do not depend on the input file."
-  [environment]
-  (let [{:keys [google_account_vault_path vault_token_path]}
-        (env/stuff environment)]
-    {:unmapped_bam_suffix       ".unmapped.bam"
-     :google_account_vault_path google_account_vault_path
-     :vault_token_path          vault_token_path
-     :papi_settings             {:agg_preemptible_tries 3
-                                 :preemptible_tries     3}}))
-
 (def gatk-docker-inputs
   "This is silly."
   (let [gatk {:gatk_docker "us.gcr.io/broad-gatk/gatk:4.0.10.1"}
@@ -295,27 +282,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
          (mapcat spray)
          seeded-shuffle
          (str/join " "))))
-
-(defn make-options
-  "Make options to run the workflow in ENVIRONMENT."
-  [environment]
-  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
-    (let [gcr   "us.gcr.io"
-          repo  "broad-gotc-prod"
-          image "genomes-in-the-cloud:2.4.3-1564508330"
-          {:keys [cromwell google]} (env/stuff environment)
-          {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend         "PAPIv2"
-           :google_project  (rand-nth projects)
-           :jes_gcs_root    (rand-nth jes_roots)
-           :read_from_cache true
-           :write_to_cache  true
-           :default_runtime_attributes
-           {:docker (str/join "/" [gcr repo image])
-            :zones  google-cloud-zones
-            :maxRetries 1}}
-          (maybe :monitoring_script cromwell)
-          (maybe :noAddress noAddress)))))
 
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
@@ -408,6 +374,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [url]
   (if (str/ends-with? url "/")
     (->> (seq url)
-      drop-last
-      (str/join ""))
+         drop-last
+         (str/join ""))
     url))
