@@ -34,7 +34,7 @@
   "Post THING to Clio server with metadata MD."
   [thing md]
   (-> {:url (str/join "/" [(:clio deploy-environment) "api" "v1" thing])
-       :method :post ;; :debug true :debug-body true
+       :method :post                    ; :debug true :debug-body true
        :headers (merge {"Content-Type" "application/json"}
                        (get-authorization-header))
        :body (json/write-str md :escape-slash false)}
