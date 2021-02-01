@@ -1,4 +1,4 @@
-(ns wfl.integration.google.storage-test
+(ns wfl.integration.google.pubsub-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [wfl.once :as once]
