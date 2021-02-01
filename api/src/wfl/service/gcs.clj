@@ -1,15 +1,16 @@
 (ns wfl.service.gcs
   "Talk to Google Cloud Storage for some reason..."
-  (:require [clojure.data.json              :as json]
+  (:require [clj-http.client                :as http]
+            [clj-http.util                  :as http-util]
+            [clojure.data.json              :as json]
             [clojure.java.io                :as io]
             [clojure.pprint                 :refer [pprint]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
-            [clj-http.client                :as http]
-            [clj-http.util                  :as http-util]
-            [wfl.once                       :as once])
+            [wfl.once :as once]
+            [wfl.util :as util])
   (:import [org.apache.tika Tika]))
 
 (def api-url
@@ -267,3 +268,34 @@
       (throw
        (ex-info "No auth header in request"
                 {:type :clj-http.client/unexceptional-status})))))
+
+;; storage pub/sub notification configuration
+(defn create-notification-configuration [bucket topic]
+  (let [payload {:payload_format "JSON_API_V1"
+                 :event_types    ["OBJECT_FINALIZE"]
+                 :topic          topic}]
+    (-> (str bucket-url bucket "/notificationConfigs")
+        (http/post
+         {:headers      (once/get-auth-header)
+          :content-type :json
+          :body         (json/write-str payload :escape-slash false)})
+        :body
+        util/parse-json)))
+
+(defn delete-notification-configuration [bucket {:keys [id]}]
+  (http/delete
+   (str bucket-url bucket "/notificationConfigs/" id)
+   {:headers (once/get-auth-header)}))
+
+(defn list-notification-configurations [bucket]
+  (-> (str bucket-url bucket "/notificationConfigs")
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :items))
+
+(defn get-cloud-storage-service-account [project]
+  (-> (str storage-url (str/join "/" ["projects" project "serviceAccount"]))
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json))

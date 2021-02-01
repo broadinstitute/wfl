@@ -1,9 +1,10 @@
 (ns wfl.tools.fixtures
-  (:require [wfl.service.gcs :as gcs]
+  (:require [clojure.string :as str]
+            [wfl.service.gcs :as storage]
+            [wfl.service.google.pubsub :as pubsub]
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [clojure.string :as str]
             [wfl.util :as util])
   (:import [java.util UUID]))
 
@@ -16,7 +17,7 @@
     (remove-method multifn dispatch-val)))
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
-(def delete-test-object (partial gcs/delete-object gcs-test-bucket))
+(def delete-test-object (partial storage/delete-object gcs-test-bucket))
 
 (defn with-temporary-cloud-storage-folder
   "Create a temporary folder in the Google Cloud storage `bucket` and call
@@ -35,8 +36,8 @@
   "
   [bucket use-folder]
   (util/bracket
-   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
-   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
+   #(storage/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
+   #(run! (comp (partial storage/delete-object bucket) :name) (storage/list-objects %))
    use-folder))
 
 (defn ^:private postgres-db-config []
@@ -107,3 +108,24 @@
   (let [name (:db-name config)]
     (create-local-database name)
     (setup-local-database name)))
+
+(defn with-temporary-topic [project f]
+  "Create a temporary Google Cloud Storage Pub/Sub topic"
+  (util/bracket
+   #(pubsub/create-topic project (str "wfl-test-" (UUID/randomUUID)))
+   pubsub/delete-topic
+   f))
+
+(defn with-temporary-notification-configuration [bucket topic f]
+  "Create a temporary Google Cloud Storage Pub/Sub notification configuration"
+  (util/bracket
+   #(storage/create-notification-configuration bucket topic)
+   #(storage/delete-notification-configuration bucket %)
+   f))
+
+(defn with-temporary-subscription [topic f]
+  "Create a temporary Google Cloud Storage Pub/Sub subscription"
+  (util/bracket
+   #(pubsub/create-subscription topic (str "wfl-test-subscription-" (UUID/randomUUID)))
+   pubsub/delete-subscription
+   f))
