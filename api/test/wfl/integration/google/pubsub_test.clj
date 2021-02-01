@@ -20,6 +20,10 @@
         bucket  fixtures/gcs-test-bucket]
     (fixtures/with-temporary-topic project
       (fn [topic]
+        ;; We need to make sure that the service account of the project that
+        ;; owns the storage bucket has the required permissions to publish
+        ;; messages to the pub/sub topic.
+        ;; See https://cloud.google.com/storage/docs/reporting-changes#prereqs
         (give-project-publish-access-to-topic project topic)
         (fixtures/with-temporary-notification-configuration bucket topic
           (fn [_]
