@@ -1,12 +1,9 @@
 (ns wfl.service.datarepo
   "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
             [clj-http.client :as http]
             [wfl.environments :as env]
-            [wfl.once :as once]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.once :as once])
   (:import [org.apache.http HttpException]))
 
 (defn dr-url

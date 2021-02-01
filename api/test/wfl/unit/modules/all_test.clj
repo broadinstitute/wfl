@@ -1,7 +1,5 @@
 (ns wfl.unit.modules.all-test
   (:require [clojure.test :refer [deftest testing is]]
-            [wfl.environments :as env]
-            [wfl.module.all :as all]
             [wfl.module.aou :as aou]
             [wfl.module.sg :as sg]
             [wfl.module.wgs :as wgs]
