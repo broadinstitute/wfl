@@ -2,10 +2,8 @@
   "Process Arrays for the All Of Us project."
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [wfl.environments :as env]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
@@ -17,6 +15,24 @@
            (java.sql Timestamp)))
 
 (def pipeline "AllOfUsArrays")
+
+(def dev-env
+  {:cromwell {:labels [:data_type :project :regulatory_designation :sample_name :version],
+              :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh",
+              :url "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"},
+   :google {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"], :noAddress false, :projects ["broad-exomes-dev1"]},
+   :server {:project "broad-gotc-dev", :vault "secret/dsde/gotc/dev/zero"},
+   :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"})
+
+(def prod-env
+  {:cromwell {:labels [:data_type :project :regulatory_designation :sample_name :version],
+              :monitoring_script nil,
+              :url "https://cromwell-aou.gotc-prod.broadinstitute.org"},
+   :google {:jes_roots ["gs://broad-aou-exec-storage"],
+            :noAddress false,
+            :projects ["broad-aou-arrays-compute1" "broad-aou-arrays-compute2"]},
+   :server {:project "broad-aou", :vault "secret/dsde/gotc/prod/aou/zero"},
+   :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"})
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -47,17 +63,30 @@
    :disk_size                        100
    :preemptible_tries                3})
 
-(defn map-aou-environment
-  "Map AOU-ENV to environment for inputs preparation."
-  [aou-env]
-  ({:aou-dev "dev" :aou-prod "prod"} aou-env))
+(defn cromwell->inputs+options
+  "Map cromwell URL to workflow inputs and options for submitting arrays pipeline.
+  The returned Environment string here is just a default, input file may specify override."
+  [url]
+  ({"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+    {:environment "dev"
+     :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"}
+    "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+    {:environment "prod"
+     :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"}}
+   (util/de-slashify url)))
 
-(defn env-inputs
-  "Array inputs for ENVIRONMENT that do not depend on the input file.
-  Environment here is just a default, input file may specify override."
-  [environment]
-  {:vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :environment      (map-aou-environment environment)})
+(def ^:private known-cromwells
+  ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+   "https://cromwell-aou.gotc-prod.broadinstitute.org"])
+
+(defn ^:private is-known-cromwell-url?
+  [url]
+  (if-let [known-url (->> url
+                       util/de-slashify
+                       ((set known-cromwells)))]
+    known-url
+    (throw (ex-info "Unknown Cromwell URL provided."
+             {:cromwell url}))))
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
@@ -97,12 +126,12 @@
     (merge optional mandatory)))
 
 (defn make-inputs
-  "Return inputs for AoU Arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
-  [environment per-sample-inputs]
+  "Return inputs for AoU Arrays processing in Cromwell given URL from PER-SAMPLE-INPUTS."
+  [url per-sample-inputs]
   (-> (merge references/hg19-arrays-references
              fingerprinting
              other-inputs
-             (env-inputs environment)
+             (cromwell->inputs+options url)
              (get-per-sample-inputs per-sample-inputs))
       (update :environment str/lower-case)
       (util/prefix-keys :Arrays)))
@@ -124,24 +153,15 @@
 
 ;; visible for testing
 (defn submit-aou-workflow
-  "Submit one workflow to ENVIRONMENT given PER-SAMPLE-INPUTS,
+  "Submit one workflow to Cromwell URL given PER-SAMPLE-INPUTS,
    WORKFLOW-OPTIONS and OTHER-LABELS."
-  [environment per-sample-inputs workflow-options other-labels]
+  [url per-sample-inputs workflow-options other-labels]
   (cromwell/submit-workflow
-   environment
+   url
    workflow-wdl
-   (make-inputs environment per-sample-inputs)
+   (make-inputs url per-sample-inputs)
    workflow-options
    (make-labels per-sample-inputs other-labels)))
-
-(defn ^:private get-cromwell-environment! [{:keys [executor]}]
-  (let [executor (all/de-slashify executor)
-        envs     (all/cromwell-environments #{:aou-dev :aou-prod} executor)]
-    (when (not= 1 (count envs))
-      (throw (ex-info "no unique environment matching Cromwell URL."
-                      {:cromwell     executor
-                       :environments envs})))
-    (first envs)))
 
 ;; The table is named with the id generated by the jdbc/insert!
 ;; so this needs to update the workload table inline after creating the
@@ -155,8 +175,7 @@
    to the existing one."
   [tx {:keys [creator executor pipeline project output] :as request}]
   (gcs/parse-gs-url output)
-  (get-cromwell-environment! request)
-  (let [slashified-output (all/slashify output)
+  (let [slashified-output (util/slashify output)
         {:keys [release path]} workflow-wdl
         {:keys [commit version]} (wfl/get-the-version)
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
@@ -241,21 +260,21 @@
   Note:
   - The `workload` must be `started` in order to be append-able.
   - All samples being appended will be submitted immediately."
-  [tx notifications {:keys [uuid items output] :as workload}]
+  [tx notifications {:keys [uuid items output executor] :as workload}]
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
-  (letfn [(submit! [environment sample]
+  (letfn [(submit! [url sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
                   workflow-options (util/deep-merge default-options
                                                     {:final_workflow_outputs_dir output-path})]
-              (->> (submit-aou-workflow environment sample workflow-options {:workload uuid})
+              (->> (submit-aou-workflow url sample workflow-options {:workload uuid})
                    str ; coerce java.util.UUID -> string
                    (assoc (select-keys sample primary-keys)
                           :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
                           :status "Submitted"
                           :uuid))))]
-    (let [environment       (get-cromwell-environment! workload)
-          submitted-samples (map (partial submit! environment)
+    (let [executor       (is-known-cromwell-url? executor)
+          submitted-samples (map (partial submit! executor)
                                  (remove-existing-samples notifications
                                                           (get-existing-samples tx items notifications)))]
       (jdbc/insert-multi! tx items submitted-samples)
