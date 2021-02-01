@@ -1,6 +1,6 @@
 (ns wfl.service.google.pubsub
   "Wrappers for Google Cloud Pub/Sub REST APIs.
-  See https://cloud.google.com/pubsub/docs/reference/rest"
+   See https://cloud.google.com/pubsub/docs/reference/rest"
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]
             [clojure.string :as str]
@@ -61,7 +61,7 @@
 
 (defn acknowledge [subscription message-responses]
   "Acknowledge messages pulled from server for `subscription`.
-  `message-responses` should not be empty. See also `pull-messages`.
+   `message-responses` should not be empty. See also `pull-messages`.
 
    Parameters
    ----------
@@ -82,8 +82,8 @@
 
    Parameters
    ----------
-   topic - Google Cloud Pub/Sub topic in the form
-           \"/projects/PROJECT/topics/TOPIC-ID\"\"
+   topic           - Google Cloud Pub/Sub topic in the form
+                     \"/projects/PROJECT/topics/TOPIC-ID\"\"
    subscription-id - unique identifier for the subscription
 
    Example
@@ -118,9 +118,8 @@
 
    Parameters
    ----------
-   project - Google Cloud Project, or
-   topic   - Google Cloud Pub/Sub topic in the form
-             \"/projects/PROJECT/topics/TOPIC-ID\""
+   project-or-topic - Google Cloud Project or Pub/Sub topic in the form
+                      \"/projects/PROJECT/topics/TOPIC-ID\""
   (-> (pubsub-url project-or-topic "/subscriptions")
       (http/get {:headers (once/get-auth-header)})
       json-body
