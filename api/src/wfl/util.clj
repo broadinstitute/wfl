@@ -387,7 +387,12 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
     (between "()" (str/join "," (map (partial between "''") xs)))))
 
 (defn bracket [acquire release use]
-  "`acquire`, `use` and `release` a resource in an exception-safe manner."
+  "`acquire`, `use` and `release` a resource in an exception-safe manner.
+  Parameters
+  ----------
+    acquire - thunk returning newly acquired resource
+    release - function to clean up resource, called before this function returns
+    use     - function that uses the resource"
   (let [resource (acquire)]
     (try
       (use resource)
