@@ -109,22 +109,25 @@
     (create-local-database name)
     (setup-local-database name)))
 
-(defn with-temporary-topic [project f]
-  "Create a temporary Google Cloud Storage Pub/Sub topic"
+(defn with-temporary-topic
+  "Create a temporary Google Cloud Storage Pub/Sub topic."
+  [project f]
   (util/bracket
    #(pubsub/create-topic project (str "wfl-test-" (UUID/randomUUID)))
    pubsub/delete-topic
    f))
 
-(defn with-temporary-notification-configuration [bucket topic f]
+(defn with-temporary-notification-configuration
   "Create a temporary Google Cloud Storage Pub/Sub notification configuration"
+  [bucket topic f]
   (util/bracket
    #(gcs/create-notification-configuration bucket topic)
    #(gcs/delete-notification-configuration bucket %)
    f))
 
-(defn with-temporary-subscription [topic f]
+(defn with-temporary-subscription
   "Create a temporary Google Cloud Storage Pub/Sub subscription"
+  [topic f]
   (util/bracket
    #(pubsub/create-subscription topic (str "wfl-test-subscription-" (UUID/randomUUID)))
    pubsub/delete-subscription
