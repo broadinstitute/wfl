@@ -26,14 +26,6 @@
   [body]
   (constantly (succeed body)))
 
-(defn status-counts
-  "Get status counts for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (let [environment (some :environment ((juxt :query :body) parameters))]
-    (logr/infof "status-counts endpoint called: environment=%s" environment)
-    (let [env (wfl/throw-or-environment-keyword! environment)]
-      (succeed (cromwell/status-counts env {:includeSubworkflows false})))))
-
 (defn query-workflows
   "Get workflows for environment in REQUEST."
   [{:keys [parameters] :as _request}]
