@@ -125,4 +125,3 @@ ingress:
   servicePort: wfl-ui
   annotations: {}
   hosts: []
-  tls: []
