@@ -54,12 +54,12 @@
                                 :sample_name
                                 :version]
     :google
-                               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
-                                :noAddress false
-                                :projects  ["broad-exomes-dev1"]}
+    {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
+     :noAddress false
+     :projects  ["broad-exomes-dev1"]}
     :server
-                               {:project "broad-gotc-dev"
-                                :vault   "secret/dsde/gotc/dev/zero"}
+    {:project "broad-gotc-dev"
+     :vault   "secret/dsde/gotc/dev/zero"}
     :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
     :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
    (let [prefix   "broad-realign-"
@@ -74,9 +74,9 @@
                                   :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
                                   :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
       :google
-                                 {:jes_roots (vec roots)
-                                  :noAddress false
-                                  :projects  (vec projects)}
+      {:jes_roots (vec roots)
+       :noAddress false
+       :projects  (vec projects)}
       :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
       :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
 

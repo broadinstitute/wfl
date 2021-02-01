@@ -100,8 +100,8 @@
              (set (keys (aou/make-inputs cromwell-url-for-testing (dissoc expected-per-sample-inputs :environment)))))))
     (testing "aou prepares all necessary keys plus optional keys"
       (is (= all-expected-keys (set (keys (aou/make-inputs cromwell-url-for-testing
-                                            (merge expected-per-sample-inputs
-                                                                           {:control_sample_vcf_index_file "foo"
-                                                                            :control_sample_intervals_file "foo"
-                                                                            :control_sample_vcf_file       "foo"
-                                                                            :control_sample_name           "foo"})))))))))
+                                                           (merge expected-per-sample-inputs
+                                                                  {:control_sample_vcf_index_file "foo"
+                                                                   :control_sample_intervals_file "foo"
+                                                                   :control_sample_vcf_file       "foo"
+                                                                   :control_sample_name           "foo"})))))))))

@@ -83,11 +83,11 @@
 (defn ^:private is-known-cromwell-url?
   [url]
   (if-let [known-url (->> url
-                       util/de-slashify
-                       ((set known-cromwells)))]
+                          util/de-slashify
+                          ((set known-cromwells)))]
     known-url
     (throw (ex-info "Unknown Cromwell URL provided."
-             {:cromwell url}))))
+                    {:cromwell url}))))
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
