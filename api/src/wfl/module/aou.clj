@@ -63,21 +63,22 @@
    :disk_size                        100
    :preemptible_tries                3})
 
-(defn cromwell->inputs+options
-  "Map cromwell URL to workflow inputs and options for submitting arrays pipeline.
-  The returned Environment string here is just a default, input file may specify override."
-  [url]
-  ({"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-    {:environment "dev"
-     :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"}
-    "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-    {:environment "prod"
-     :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"}}
-   (util/de-slashify url)))
-
 (def ^:private known-cromwells
   ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
    "https://cromwell-aou.gotc-prod.broadinstitute.org"])
+
+(def ^:private inputs+options
+  [{:environment "dev"
+    :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"}
+   {:environment "prod"
+    :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"}])
+
+;; visible for testing
+(defn cromwell->inputs+options
+  "Map cromwell URL to workflow inputs and options for submitting an AllOfUs Arrays workflow.
+  The returned environment string here is just a default, input file may specify override."
+  [url]
+  ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
 (defn ^:private is-known-cromwell-url?
   [url]

@@ -43,16 +43,48 @@
     {:wgs_coverage_interval_list
      (str hg38 "wgs_coverage_regions.hg38.interval_list")}))
 
+(def ^:private known-cromwells
+  ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+   "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"])
+
+(def ^:private inputs+options
+  [{:labels                    [:data_type
+                                :project
+                                :regulatory_designation
+                                :sample_name
+                                :version]
+    :google
+                               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
+                                :noAddress false
+                                :projects  ["broad-exomes-dev1"]}
+    :server
+                               {:project "broad-gotc-dev"
+                                :vault   "secret/dsde/gotc/dev/zero"}
+    :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
+    :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
+   (let [prefix   "broad-realign-"
+         projects (map (partial str prefix "execution0") (range 1 6))
+         buckets  (map (partial str prefix "short-execution") (range 1 11))
+         roots    (map (partial format "gs://%s/") buckets)]
+     {:cromwell                  {:labels            [:data_type
+                                                      :project
+                                                      :regulatory_designation
+                                                      :sample_name
+                                                      :version]
+                                  :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
+                                  :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
+      :google
+                                 {:jes_roots (vec roots)
+                                  :noAddress false
+                                  :projects  (vec projects)}
+      :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
+      :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
+
+;; visible for testing
 (defn cromwell->inputs+options
-  "Map cromwell URL to workflow inputs and options for submitting a WGS pipeline."
+  "Map cromwell URL to workflow inputs and options for submitting an Whole Genome workflow."
   [url]
-  ({"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-    {:google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
-     :vault_token_path "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
-    "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-    {:google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
-     :vault_token_path "gs://broad-dsp-gotc-prod-tokens/picardsa.token"}}
-   (util/de-slashify url)))
+  ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
 (defn static-inputs
   "Static inputs for Cromwell URL that do not depend on the inputs."
@@ -96,48 +128,6 @@
                        (static-inputs url)
                        inputs)
       (util/prefix-keys (keyword pipeline))))
-
-(def ^:private known-cromwells
-  ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-   "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"])
-
-(def ^:private inputs+options
-  [{:labels                    [:data_type
-                                :project
-                                :regulatory_designation
-                                :sample_name
-                                :version]
-    :google
-    {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
-     :noAddress false
-     :projects  ["broad-exomes-dev1"]}
-    :server
-    {:project "broad-gotc-dev"
-     :vault   "secret/dsde/gotc/dev/zero"}
-    :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
-    :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
-   (let [prefix   "broad-realign-"
-         projects (map (partial str prefix "execution0") (range 1 6))
-         buckets  (map (partial str prefix "short-execution") (range 1 11))
-         roots    (map (partial format "gs://%s/") buckets)]
-     {:cromwell                  {:labels            [:data_type
-                                                      :project
-                                                      :regulatory_designation
-                                                      :sample_name
-                                                      :version]
-                                  :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-                                  :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
-      :google
-      {:jes_roots (vec roots)
-       :noAddress false
-       :projects  (vec projects)}
-      :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
-      :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
-
-(defn ^:private cromwell->inputs+options
-  "Map cromwell URL to workflow inputs and options for submitting an Whole Genome workflow."
-  [url]
-  ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
 (defn ^:private make-workflow-options
   "Make workflow options to run the workflow in Cromwell URL."

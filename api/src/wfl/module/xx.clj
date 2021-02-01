@@ -87,7 +87,8 @@
       :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
       :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
 
-(defn ^:private cromwell->inputs+options
+;; visible for testing
+(defn cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an Exome workflow."
   [url]
   ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
