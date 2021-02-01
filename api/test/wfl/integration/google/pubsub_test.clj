@@ -8,7 +8,7 @@
 
 (defn ^:private give-project-publish-access-to-topic [project topic]
   (let [sa (-> project gcs/get-cloud-storage-service-account :email_address)]
-    (pubsub/set-topic-iam-policy
+    (pubsub/set-iam-policy
      topic
      {"roles/pubsub.publisher" [(str "serviceAccount:" sa)]
       "roles/pubsub.editor"    [(str "serviceAccount:"
@@ -27,7 +27,7 @@
               (is (< 0 (count configs))))
             (fixtures/with-temporary-subscription topic
               (fn [subscription]
-                (is (== 1 (count (pubsub/list-subscriptions-for-topic topic))))
+                (is (== 1 (count (pubsub/list-subscriptions topic))))
                 (is (empty? (pubsub/pull-subscription subscription)))
                 (fixtures/with-temporary-cloud-storage-folder bucket
                   (fn [url]
