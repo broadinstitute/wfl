@@ -3,10 +3,12 @@
             [clojure.set  :as set]
             [wfl.module.aou :as aou]))
 
-(deftest test-map-aou-environment
-  (testing "maps environments for aou correctly"
-    (is (= (aou/map-aou-environment :aou-dev) "dev"))
-    (is (= (aou/map-aou-environment :aou-prod) "prod"))))
+(def ^:private cromwell-url-for-testing
+  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+
+(deftest test-cromwell->inputs+options
+  (testing "Map cromwell URL to inputs+options correctly"
+    (is (= (:environment (aou/cromwell->inputs+options cromwell-url-for-testing)) "dev"))))
 
 (deftest test-make-cromwell-labels
   (let [sample          {:analysis_version_number     1
@@ -90,14 +92,15 @@
     (testing "aou throws for missing keys for per-sample-inputs"
       (is (thrown? Exception (aou/get-per-sample-inputs missing-per-sample-inputs-inputs))))
     (testing "aou prepares all necessary keys"
-      (is (= all-expected-keys-no-control (set (keys (aou/make-inputs :aou-dev expected-per-sample-inputs))))))
+      (is (= all-expected-keys-no-control (set (keys (aou/make-inputs cromwell-url-for-testing expected-per-sample-inputs))))))
     (testing "aou supplies merges environment from inputs with default"
-      (is (= "dev" (:Arrays.environment (aou/make-inputs :aou-dev (dissoc expected-per-sample-inputs :environment)))))
-      (is (= "foo" (:Arrays.environment (aou/make-inputs :aou-dev expected-per-sample-inputs))))
+      (is (= "dev" (:Arrays.environment (aou/make-inputs cromwell-url-for-testing (dissoc expected-per-sample-inputs :environment)))))
+      (is (= "foo" (:Arrays.environment (aou/make-inputs cromwell-url-for-testing expected-per-sample-inputs))))
       (is (= all-expected-keys-no-control
-             (set (keys (aou/make-inputs :aou-dev (dissoc expected-per-sample-inputs :environment)))))))
+             (set (keys (aou/make-inputs cromwell-url-for-testing (dissoc expected-per-sample-inputs :environment)))))))
     (testing "aou prepares all necessary keys plus optional keys"
-      (is (= all-expected-keys (set (keys (aou/make-inputs :aou-dev (merge expected-per-sample-inputs
+      (is (= all-expected-keys (set (keys (aou/make-inputs cromwell-url-for-testing
+                                            (merge expected-per-sample-inputs
                                                                            {:control_sample_vcf_index_file "foo"
                                                                             :control_sample_intervals_file "foo"
                                                                             :control_sample_vcf_file       "foo"
