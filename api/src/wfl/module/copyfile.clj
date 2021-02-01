@@ -37,12 +37,12 @@
                                 :sample_name
                                 :version]
     :google
-                               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
-                                :noAddress false
-                                :projects  ["broad-exomes-dev1"]}
+    {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
+     :noAddress false
+     :projects  ["broad-exomes-dev1"]}
     :server
-                               {:project "broad-gotc-dev"
-                                :vault   "secret/dsde/gotc/dev/zero"}
+    {:project "broad-gotc-dev"
+     :vault   "secret/dsde/gotc/dev/zero"}
     :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
     :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
    (let [prefix   "broad-realign-"
@@ -57,20 +57,20 @@
                                   :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
                                   :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
       :google
-                                 {:jes_roots (vec roots)
-                                  :noAddress false
-                                  :projects  (vec projects)}
+      {:jes_roots (vec roots)
+       :noAddress false
+       :projects  (vec projects)}
       :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
       :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
 
 (defn ^:private is-known-cromwell-url?
   [url]
   (if-let [known-url (->> url
-                       util/de-slashify
-                       ((set known-cromwells)))]
+                          util/de-slashify
+                          ((set known-cromwells)))]
     known-url
     (throw (ex-info "Unknown Cromwell URL provided."
-             {:cromwell url}))))
+                    {:cromwell url}))))
 
 (defn ^:private cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an Whole Genome workflow."
@@ -93,11 +93,11 @@
            :read_from_cache true
            :write_to_cache  true
            :default_runtime_attributes
-                            {:docker (str/join "/" [gcr repo image])
-                             :zones  util/google-cloud-zones
-                             :maxRetries 1}}
-        (maybe :monitoring_script cromwell)
-        (maybe :noAddress noAddress)))))
+           {:docker (str/join "/" [gcr repo image])
+            :zones  util/google-cloud-zones
+            :maxRetries 1}}
+          (maybe :monitoring_script cromwell)
+          (maybe :noAddress noAddress)))))
 
 (defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
