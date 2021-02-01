@@ -12,6 +12,9 @@
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
+(def ^:private cromwell-url-for-testing
+  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-sg-workload-request []
@@ -83,7 +86,7 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor (get-in env/stuff [:wgs-dev :cromwell :url])
+  (let [workload (->> {:executor cromwell-url-for-testing
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  (format "(Test) %s" @workloads/git-branch)
