@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [wfl.once :as once]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]
             [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))

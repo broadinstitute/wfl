@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.environments :as env]
             [wfl.util :as util]
             [wfl.wfl :as wfl])

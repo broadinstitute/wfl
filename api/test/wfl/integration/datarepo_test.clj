@@ -5,7 +5,7 @@
             [clojure.test :refer [deftest is testing]]
             [wfl.environments :as env]
             [wfl.service.datarepo :as datarepo]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]
             [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))

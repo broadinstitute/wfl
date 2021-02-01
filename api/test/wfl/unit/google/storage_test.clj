@@ -1,6 +1,6 @@
 (ns wfl.unit.google.storage-test
   (:require [clojure.test :refer [deftest is testing]]
-            [wfl.service.gcs :as gcs]))
+            [wfl.service.google.storage :as gcs]))
 
 (deftest gs-url-test
   (testing "URL utilities"

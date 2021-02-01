@@ -6,7 +6,7 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.references :as references]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.util :as util]
             [wfl.wfl :as wfl]
             [wfl.module.batch :as batch])

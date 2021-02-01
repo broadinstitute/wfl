@@ -12,9 +12,9 @@
             [wfl.module.sg]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
-            [wfl.wfl :as wfl]
-            [wfl.service.gcs :as gcs]))
+            [wfl.wfl :as wfl]))
 
 (defn succeed
   "A successful response with BODY."

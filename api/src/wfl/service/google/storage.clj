@@ -1,5 +1,6 @@
-(ns wfl.service.gcs
-  "Talk to Google Cloud Storage for some reason..."
+(ns wfl.service.google.storage
+  "Wrappers for Google Cloud Storage REST APIs.
+  See https://cloud.google.com/storage/docs/json_api/v1"
   (:require [clj-http.client                :as http]
             [clj-http.util                  :as http-util]
             [clojure.data.json              :as json]
@@ -269,7 +270,9 @@
        (ex-info "No auth header in request"
                 {:type :clj-http.client/unexceptional-status})))))
 
-;; storage pub/sub notification configuration
+;; Google Cloud Storage Bucket Notification Configuration
+;; See https://cloud.google.com/storage/docs/json_api/v1/notifications
+
 (defn create-notification-configuration [bucket topic]
   (let [payload {:payload_format "JSON_API_V1"
                  :event_types    ["OBJECT_FINALIZE"]

@@ -8,7 +8,7 @@
             [wfl.module.all :as all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wfl :as wfl])

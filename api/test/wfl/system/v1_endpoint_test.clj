@@ -1,15 +1,15 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest testing is]]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
-            [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder
-                                        temporary-postgresql-database]]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util]
-            [wfl.tools.fixtures :as fixtures])
+  (:require [clojure.set                :as set]
+            [clojure.string             :as str]
+            [clojure.test               :refer [deftest testing is]]
+            [wfl.service.cromwell       :as cromwell]
+            [wfl.service.google.storage :as gcs]
+            [wfl.tools.endpoints        :as endpoints]
+            [wfl.tools.fixtures         :refer [gcs-test-bucket
+                                                temporary-postgresql-database
+                                                with-temporary-cloud-storage-folder]]
+            [wfl.tools.workloads        :as workloads]
+            [wfl.util                   :as util])
   (:import (clojure.lang ExceptionInfo)
            (java.util UUID)))
 
@@ -109,7 +109,7 @@
 (deftest ^:parallel test-start-sg-workload
   (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
-  (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (with-temporary-cloud-storage-folder gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
@@ -153,7 +153,7 @@
   (clojure.test/test-vars [#'test-exec-sg-workload]))
 
 (deftest ^:parallel test-exec-copyfile-workload
-  (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (with-temporary-cloud-storage-folder gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
