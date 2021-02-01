@@ -4,9 +4,8 @@
             [clojure.java.io   :as io]
             [clojure.string    :as str]
             [wfl.environments :as env]
-            [wfl.util         :as util]
-            [wfl.wfl         :as wfl])
-  (:import [com.google.auth.oauth2 GoogleCredentials ServiceAccountCredentials]))
+            [wfl.util         :as util])
+  (:import [com.google.auth.oauth2 GoogleCredentials]))
 
 (defonce the-system-environments
   (reduce #(assoc %1 %2 (System/getenv %2)) {}
@@ -61,15 +60,10 @@
      (service-account-token)
      (util/shell! "gcloud" "auth" "print-access-token"))))
 
-;; FIXME: it seems we have to use dev and prod
 (def oauth-client-id
-  "The client ID based on, in order, the environment, vault, or the gotc-dev one"
+  "The client ID based on, in order, the environment variable, vault, or the gotc-dev one"
   (delay (or (not-empty (the-system-environments "WFL_OAUTH2_CLIENT_ID"))
              (util/do-or-nil-silently
-              (-> "WFL_DEPLOY_ENVIRONMENT"
-                  (util/getenv "debug")
-                  wfl/error-or-environment-keyword
+              (-> :debug
                   env/stuff :server :vault
-                  util/vault-secrets :oauth2_client_id))
-             ;; Client ID for gotc-dev, the old hardcoded value for backwards-compatibility
-             "450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com")))
+                  util/vault-secrets :oauth2_client_id)))))
