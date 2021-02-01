@@ -2,7 +2,6 @@
   "Process Arrays for the Broad Genomics Platform."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
-            [wfl.environments :as env]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -39,11 +38,22 @@
    :disk_size                        100
    :preemptible_tries                3})
 
-(defn env-inputs
-  "Array inputs for ENVIRONMENT that do not depend on the input file."
-  [environment]
-  {:vault_token_path (get-in env/stuff [environment :vault_token_path])
-   :environment      ({:arrays-dev "dev" :arrays-prod "prod"} environment)})
+(def ^:private known-cromwells
+  ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+   "https://cromwell-aou.gotc-prod.broadinstitute.org"])
+
+(def ^:private inputs+options
+  [{:environment "dev"
+    :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"}
+   {:environment "prod"
+    :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"}])
+
+;; visible for testing
+(defn cromwell->inputs+options
+  "Map cromwell URL to workflow inputs and options for submitting a GP Arrays workflow.
+  The returned environment string here is just a default, input file may specify override."
+  [url]
+  ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."
@@ -82,12 +92,12 @@
     (merge optional mandatory)))
 
 (defn make-inputs
-  "Return inputs for arrays processing in ENVIRONMENT from PER-SAMPLE-INPUTS."
-  [environment per-sample-inputs]
+  "Return inputs for arrays processing in Cromwell given URL from PER-SAMPLE-INPUTS."
+  [url per-sample-inputs]
   (-> (merge references/hg19-arrays-references
              fingerprinting
              other-inputs
-             (env-inputs environment)
+             (cromwell->inputs+options url)
              (get-per-sample-inputs per-sample-inputs))
       (util/prefix-keys :Arrays)))
 
