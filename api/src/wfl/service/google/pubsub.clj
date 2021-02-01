@@ -161,8 +161,8 @@
               reference for more information."
   [resource]
   (-> (pubsub-url resource ":getIamPolicy")
-    (http/get {:headers (once/get-auth-header)})
-    json-body))
+      (http/get {:headers (once/get-auth-header)})
+      json-body))
 
 (defn set-iam-policy
   "Set the IAM policy for the given Pub/Sub `resource` with the specified
@@ -178,9 +178,9 @@
   [resource role->members]
   (letfn [(make-binding [[role members]] {:role role :members members})]
     (http/post
-      (pubsub-url resource ":setIamPolicy")
-      {:headers      (once/get-auth-header)
-       :content-type :json
-       :body         (json/write-str
-                       {:policy {:bindings (map make-binding role->members)}}
-                       :escape-slash false)})))
+     (pubsub-url resource ":setIamPolicy")
+     {:headers      (once/get-auth-header)
+      :content-type :json
+      :body         (json/write-str
+                     {:policy {:bindings (map make-binding role->members)}}
+                     :escape-slash false)})))
