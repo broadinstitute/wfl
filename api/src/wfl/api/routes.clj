@@ -51,11 +51,6 @@
             :parameters nil
             :responses {200 {:body map?}}
             :handler (handlers/success env/stuff)}}]
-   ["/api/v1/workflows"
-    {:post {:summary    "Query for workflows"
-            :parameters {:body ::spec/workflow-request}
-            :responses {200 {:body {:results seq?}}}
-            :handler    handlers/query-workflows}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::spec/append-to-aou-request}
