@@ -16,24 +16,6 @@
 
 (def pipeline "AllOfUsArrays")
 
-(def dev-env
-  {:cromwell {:labels [:data_type :project :regulatory_designation :sample_name :version],
-              :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh",
-              :url "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"},
-   :google {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"], :noAddress false, :projects ["broad-exomes-dev1"]},
-   :server {:project "broad-gotc-dev", :vault "secret/dsde/gotc/dev/zero"},
-   :vault_token_path "gs://broad-dsp-gotc-arrays-dev-tokens/arrayswdl.token"})
-
-(def prod-env
-  {:cromwell {:labels [:data_type :project :regulatory_designation :sample_name :version],
-              :monitoring_script nil,
-              :url "https://cromwell-aou.gotc-prod.broadinstitute.org"},
-   :google {:jes_roots ["gs://broad-aou-exec-storage"],
-            :noAddress false,
-            :projects ["broad-aou-arrays-compute1" "broad-aou-arrays-compute2"]},
-   :server {:project "broad-aou", :vault "secret/dsde/gotc/prod/aou/zero"},
-   :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"})
-
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "Arrays_v2.3.0"
