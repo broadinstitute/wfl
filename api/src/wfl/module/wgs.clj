@@ -80,8 +80,7 @@
       :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
       :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
 
-;; visible for testing
-(defn cromwell->inputs+options
+(defn ^:private cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an Whole Genome workflow."
   [url]
   ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
@@ -129,7 +128,8 @@
                        inputs)
       (util/prefix-keys (keyword pipeline))))
 
-(defn ^:private make-workflow-options
+;; visible for testing
+(defn make-workflow-options
   "Make workflow options to run the workflow in Cromwell URL."
   [url]
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]

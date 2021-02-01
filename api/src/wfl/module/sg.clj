@@ -82,7 +82,8 @@
   [url]
   ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
-(defn ^:private make-workflow-options
+;; visible for testing
+(defn make-workflow-options
   "Make workflow options to run the workflow in Cromwell URL."
   [url]
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
