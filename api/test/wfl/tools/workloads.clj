@@ -145,7 +145,7 @@
   (let [fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
                              "Homo_sapiens_assembly38.fasta"])]
     {:executor (load-cromwell-url :wgs-dev)
-     :output   (str/join "/" ["gs://broad-gotc-dev-storage"
+     :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
                               sg/pipeline
                               identifier])
      :pipeline sg/pipeline

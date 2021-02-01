@@ -155,8 +155,11 @@
   []
   (let [version 23
         project (str "G96830" \- (UUID/randomUUID))
-        NA12878 (str/join "/" ["gs://broad-gotc-dev-storage" "pipeline"
-                               project "NA12878" (str \v version) "NA12878"])
+        NA12878 (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
+                               "pipeline"
+                               project
+                               "NA12878"
+                               (str \v version) "NA12878"])
         path    (partial str NA12878)
         query   {:billing_project        "hornet-nest"
                  :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -233,8 +236,9 @@
 (defn ^:private make-bam-outputs
   "Make the BAM outputs expected from a successful `workload`."
   [{:keys [output pipeline workflows] :as workload}]
-  (let [readme (str/join
-                "/" ["gs://broad-gotc-dev-storage" pipeline "README.txt"])
+  (let [readme (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
+                              pipeline
+                              "README.txt"])
         copy!  (partial gcs/copy-object readme)]
     (->> workload expect-clio-bams
          (mapcat (apply juxt (keys bam-suffixes)))
@@ -259,8 +263,8 @@
              workloads/update-workload! ; Register outputs with Clio.
              expect-clio-bams
              (as-> expected
-                   (let [query (-> expected first (select-keys [:bam_path]))]
-                     (is (= expected (clio/query-bam query))))))))))
+                 (let [query (-> expected first (select-keys [:bam_path]))]
+                   (is (= expected (clio/query-bam query))))))))))
 
 (comment
   (clojure.test/test-vars [#'test-clio-updates]))
