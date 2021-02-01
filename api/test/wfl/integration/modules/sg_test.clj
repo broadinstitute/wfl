@@ -7,7 +7,7 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent? make-options]]
+            [wfl.util :as util :refer [absent?]]
             [wfl.module.sg :as sg])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
@@ -128,8 +128,8 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ inputs options _]
-            (let [defaults (util/make-options env)]
+          (verify-submitted-options [url _ inputs options _]
+            (let [defaults (sg/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]

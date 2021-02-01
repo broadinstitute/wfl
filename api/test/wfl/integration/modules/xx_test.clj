@@ -8,7 +8,7 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent? make-options]])
+            [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
@@ -22,7 +22,7 @@
       workloads/xx-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn mock-submit-workload [{:keys [workflows]} _ _ _ _]
+(defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
         do-submit #(assoc % :uuid (UUID/randomUUID)
                           :status "Submitted"
@@ -127,8 +127,8 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ inputs options _]
-            (let [defaults (util/make-options env)]
+          (verify-submitted-options [url _ inputs options _]
+            (let [defaults (xx/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
