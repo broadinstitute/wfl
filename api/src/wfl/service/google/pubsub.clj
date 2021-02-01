@@ -46,10 +46,8 @@
                      {:policy {:bindings (map make-binding role->members)}}
                      :escape-slash false)})))
 
-
 ;; Google Cloud Pub/Sub Subscriptions
 ;; https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions
-
 
 (defn acknowledge [subscription message-responses]
   (http/post
@@ -94,4 +92,3 @@
       json-body
       :receivedMessages
       (or [])))
-
