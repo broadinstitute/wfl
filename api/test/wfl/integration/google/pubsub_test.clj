@@ -6,7 +6,7 @@
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]))
 
-(defn ^:private give-project-publish-access-to-topic [project topic]
+(defn ^:private give-project-sa-publish-access-to-topic [project topic]
   (let [sa (-> project gcs/get-cloud-storage-service-account :email_address)]
     (pubsub/set-iam-policy
      topic
@@ -14,7 +14,6 @@
       "roles/pubsub.editor"    [(str "serviceAccount:"
                                      (once/service-account-email))]})))
 
-;; the test
 (deftest test-cloud-storage-pubsub
   (let [project "broad-gotc-dev-storage"
         bucket  fixtures/gcs-test-bucket]
@@ -24,7 +23,7 @@
         ;; owns the storage bucket has the required permissions to publish
         ;; messages to the pub/sub topic.
         ;; See https://cloud.google.com/storage/docs/reporting-changes#prereqs
-        (give-project-publish-access-to-topic project topic)
+        (give-project-sa-publish-access-to-topic project topic)
         (fixtures/with-temporary-notification-configuration bucket topic
           (fn [_]
             (let [configs (gcs/list-notification-configurations bucket)]
