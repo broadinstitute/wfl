@@ -43,4 +43,4 @@
     (is (thrown? Exception (gcs/userinfo {:headers {}}))))
   (testing "fetching userinfo from request with \"Authorization\" header"
     (let [info (gcs/userinfo {:headers (once/get-auth-header)})]
-      (is (= {:foo "bar"} info)))))
+      (is (:email info)))))
