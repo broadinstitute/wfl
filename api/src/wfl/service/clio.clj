@@ -11,35 +11,26 @@
             [wfl.wfl :as wfl])
   (:import [com.google.auth.oauth2 GoogleCredentials]))
 
-(def deploy-environment
-  "Where is WFL deployed?"
-  (-> "WFL_DEPLOY_ENVIRONMENT"
-      (util/getenv "debug")
-      wfl/error-or-environment-keyword env/stuff))
+(def url
+  "The Clio API URL."
+  "https://clio.gotc-dev.broadinstitute.org/api/v1")
 
 (defn get-authorization-header
   "An Authorization header for talking to Clio where deployed."
   []
-  (with-open [in (-> deploy-environment
-                     :google_account_vault_path util/vault-secrets
-                     (json/write-str :escape-slash false)
-                     .getBytes io/input-stream)]
-    (-> in GoogleCredentials/fromStream
-        (.createScoped ["https://www.googleapis.com/auth/userinfo.email"
-                        "https://www.googleapis.com/auth/userinfo.profile"])
-        .refreshAccessToken .getTokenValue
-        once/authorization-header-with-bearer-token)))
+  (once/authorization-header-with-bearer-token (once/service-account-token)))
 
 (defn post
   "Post THING to Clio server with metadata MD."
   [thing md]
-  (-> {:url (str/join "/" [(:clio deploy-environment) "api" "v1" thing])
-       :method :post                    ; :debug true :debug-body true
-       :headers (merge {"Content-Type" "application/json"}
-                       (get-authorization-header))
-       :body (json/write-str md :escape-slash false)}
-      http/request :body
-      (json/read-str :key-fn keyword)))
+  (let []
+    (-> {:url (str/join "/" [url thing])
+         :method :post                    ; :debug true :debug-body true
+         :headers (merge {"Content-Type" "application/json"}
+                         (get-authorization-header))
+         :body (json/write-str md :escape-slash false)}
+        http/request :body
+        (json/read-str :key-fn keyword))))
 
 ;; See ApiConstants.scala, ClioWebClientSpec.scala, and BamKey.scala and
 ;; CramKey.scala in Clio.
