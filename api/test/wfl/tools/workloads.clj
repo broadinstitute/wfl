@@ -142,17 +142,17 @@
 ;;
 (defn sg-workload-request
   [identifier]
-  (let [vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
-                             "small_exac_common_3.hg38.vcf.gz"])
-        fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
-                             "Homo_sapiens_assembly38.fasta"])
-        dbsnp (str/join "/" ["gs://gcp-public-data--broad-references"
-                             "hg38/v0/gdc/dbsnp_144.hg38.vcf.gz"])
+  (let [dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
+                             "gdc/dbsnp_144.hg38.vcf.gz"])
         cram  (str/join "/" ["gs://broad-gotc-test-storage"
                              "germline_single_sample"
                              "wgs/plumbing/truth/develop"
                              "G96830.NA12878"
-                             "NA12878_PLUMBING.cram"])]
+                             "NA12878_PLUMBING.cram"])
+        fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
+                             "Homo_sapiens_assembly38.fasta"])
+        vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
+                             "small_exac_common_3.hg38.vcf.gz"])]
     {:executor (load-cromwell-url :wgs-dev)
      :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
                               sg/pipeline

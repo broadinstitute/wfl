@@ -119,16 +119,17 @@
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
-    (let [{:keys [uuid] :as workload} (endpoints/exec-workload request)]
-      (is uuid "workloads should be been assigned a uuid")
-      (is (:created workload) "should have a created timestamp")
-      (is (:started workload) "should have a started timestamp")
-      (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-      (let [include [:pipeline :executor :project]]
-        (is (= (select-keys request include) (select-keys workload include))))
-      (let [{:keys [workflows]} workload]
-        (is (every? :updated workflows))
-        (is (every? :uuid workflows)))
+    (let [{:keys [created creator started uuid workflows] :as workload}
+          (endpoints/exec-workload request)]
+      (is uuid    "workloads should have a uuid")
+      (is created "should have a created timestamp")
+      (is started "should have a started timestamp")
+      (is (= (:email @endpoints/userinfo) creator)
+          "creator inferred from auth token")
+      (letfn [(included [m] (select-keys m [:executor :pipeline :project]))]
+        (is (= (included request) (included workload))))
+      (is (every? :updated workflows))
+      (is (every? :uuid workflows))
       (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
@@ -148,8 +149,7 @@
   (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
 
 (comment
-  (clojure.test/test-vars [#'test-exec-sg-workload])
-  )
+  (clojure.test/test-vars [#'test-exec-sg-workload]))
 
 (deftest ^:parallel test-exec-copyfile-workload
   (with-temporary-gcs-folder uri
