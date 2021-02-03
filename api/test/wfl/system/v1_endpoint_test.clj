@@ -120,7 +120,7 @@
       (is (:created workload) "should have a created timestamp")
       (is (:started workload) "should have a started timestamp")
       (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-      (let [include [:pipeline :executor :project]]
+      (let [include [:pipeline :project]]
         (is (= (select-keys request include) (select-keys workload include))))
       (let [{:keys [workflows]} workload]
         (is (every? :updated workflows))
