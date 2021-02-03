@@ -69,7 +69,8 @@
                           ((set known-cromwells)))]
     known-url
     (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url}))))
+                    {:cromwell url
+                     :known-cromwells known-cromwells}))))
 
 (defn get-per-sample-inputs
   "Throw or return per-sample INPUTS."

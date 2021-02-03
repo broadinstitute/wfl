@@ -92,6 +92,16 @@
   [url]
   ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
 
+(defn ^:private is-known-cromwell-url?
+  [url]
+  (if-let [known-url (->> url
+                          util/de-slashify
+                          ((set known-cromwells)))]
+    known-url
+    (throw (ex-info "Unknown Cromwell URL provided."
+                    {:cromwell url
+                     :known-cromwells known-cromwells}))))
+
 ;; visible for testing
 (defn make-workflow-options
   "Make workflow options to run the workflow in Cromwell URL."
@@ -121,15 +131,6 @@
       (util/deep-merge workflow-defaults)
       (util/deep-merge inputs)
       (util/prefix-keys (keyword pipeline))))
-
-(defn ^:private is-known-cromwell-url?
-  [url]
-  (if-let [known-url (->> url
-                          util/de-slashify
-                          ((set known-cromwells)))]
-    known-url
-    (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url}))))
 
 ;; visible for testing
 (defn make-inputs-to-save [output-url inputs]

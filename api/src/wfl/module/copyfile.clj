@@ -70,7 +70,8 @@
                           ((set known-cromwells)))]
     known-url
     (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url}))))
+                    {:cromwell url
+                     :known-cromwells known-cromwells}))))
 
 (defn ^:private cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an Whole Genome workflow."

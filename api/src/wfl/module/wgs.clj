@@ -97,6 +97,16 @@
      :scatter_settings          {:haplotype_scatter_count     10
                                  :break_bands_at_multiples_of 100000}}))
 
+(defn ^:private is-known-cromwell-url?
+  [url]
+  (if-let [known-url (->> url
+                          util/de-slashify
+                          ((set known-cromwells)))]
+    known-url
+    (throw (ex-info "Unknown Cromwell URL provided."
+                    {:cromwell url
+                     :known-cromwells known-cromwells}))))
+
 (defn ^:private normalize-reference-fasta [inputs]
   (if-let [prefix (:reference_fasta_prefix inputs)]
     (-> (update-in inputs [:references :reference_fasta]
@@ -149,15 +159,6 @@
             :maxRetries 1}}
           (maybe :monitoring_script cromwell)
           (maybe :noAddress noAddress)))))
-
-(defn ^:private is-known-cromwell-url?
-  [url]
-  (if-let [known-url (->> url
-                          util/de-slashify
-                          ((set known-cromwells)))]
-    known-url
-    (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url}))))
 
 (defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."

@@ -42,7 +42,8 @@
                           ((set known-cromwells)))]
     known-url
     (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url}))))
+                    {:cromwell url
+                     :known-cromwells known-cromwells}))))
 
 (def ^:private inputs+options
   [{:labels                    [:data_type
