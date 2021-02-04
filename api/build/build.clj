@@ -34,7 +34,7 @@
         :committed        committed
         :built            built
         :user             (or (System/getenv "USER") "wfl")
-        "pipeline-config" "tbl/GH-1091-track-sg"}
+        "pipeline-config" "c8d70e65260239932d2896fbd1a43b3f0bb68475"}
        (map frob [aou/workflow-wdl
                   sg/workflow-wdl
                   wgs/workflow-wdl
