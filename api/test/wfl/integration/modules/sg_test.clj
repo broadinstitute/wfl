@@ -5,7 +5,7 @@
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]

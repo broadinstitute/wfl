@@ -1,14 +1,15 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest testing is]]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
-            [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder
-                                        temporary-postgresql-database]]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util])
+  (:require [clojure.set                :as set]
+            [clojure.string             :as str]
+            [clojure.test               :refer [deftest testing is]]
+            [wfl.service.cromwell       :as cromwell]
+            [wfl.service.google.storage :as gcs]
+            [wfl.tools.endpoints        :as endpoints]
+            [wfl.tools.fixtures         :refer [gcs-test-bucket
+                                                temporary-postgresql-database
+                                                with-temporary-cloud-storage-folder]]
+            [wfl.tools.workloads        :as workloads]
+            [wfl.util                   :as util])
   (:import (clojure.lang ExceptionInfo)
            (java.util UUID)))
 
@@ -111,12 +112,13 @@
 (deftest ^:parallel test-start-sg-workload
   (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
-  (with-temporary-gcs-folder uri
-    (let [src (str uri "input.txt")
-          dst (str uri "output.txt")]
-      (-> (str/join "/" ["test" "resources" "copy-me.txt"])
-          (gcs/upload-file src))
-      (test-start-workload (create-copyfile-workload src dst)))))
+  (with-temporary-cloud-storage-folder gcs-test-bucket
+    (fn [url]
+      (let [src (str url "input.txt")
+            dst (str url "output.txt")]
+        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
+            (gcs/upload-file src))
+        (test-start-workload (create-copyfile-workload src dst))))))
 
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
@@ -154,12 +156,13 @@
   (clojure.test/test-vars [#'test-exec-sg-workload]))
 
 (deftest ^:parallel test-exec-copyfile-workload
-  (with-temporary-gcs-folder uri
-    (let [src (str uri "input.txt")
-          dst (str uri "output.txt")]
-      (-> (str/join "/" ["test" "resources" "copy-me.txt"])
-          (gcs/upload-file src))
-      (test-exec-workload (workloads/copyfile-workload-request src dst)))))
+  (with-temporary-cloud-storage-folder gcs-test-bucket
+    (fn [url]
+      (let [src (str url "input.txt")
+            dst (str url "output.txt")]
+        (-> (str/join "/" ["test" "resources" "copy-me.txt"])
+            (gcs/upload-file src))
+        (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete cromwell-url)

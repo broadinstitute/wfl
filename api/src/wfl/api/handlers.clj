@@ -11,8 +11,8 @@
             [wfl.module.xx]
             [wfl.module.sg]
             [wfl.jdbc :as jdbc]
-            [wfl.service.postgres :as postgres]
-            [wfl.service.gcs :as gcs]))
+            [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres :as postgres]))
 
 (defn succeed
   "A successful response with BODY."
