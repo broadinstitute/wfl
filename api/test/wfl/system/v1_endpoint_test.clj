@@ -128,7 +128,7 @@
       (is started "should have a started timestamp")
       (is (= (:email @endpoints/userinfo) creator)
           "creator inferred from auth token")
-      (letfn [(included [m] (select-keys m [:executor :pipeline :project]))]
+      (letfn [(included [m] (select-keys m [:pipeline :project]))]
         (is (= (included request) (included workload))))
       (is (every? :updated workflows))
       (is (every? :uuid workflows))
