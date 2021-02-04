@@ -15,57 +15,57 @@
         },
         {
           "name": "assembly_length",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "assembly_length_unambiguous",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "reference_genome_length",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "assembly_mean_coverage",
-          "datatype": "float",
+          "datatype": "float64",
           "array_of": false
         },
         {
           "name": "dist_to_ref_snps",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "dist_to_ref_indels",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "replicate_concordant_sites",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "replicate_discordant_snps",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "replicate_discordant_indels",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "num_read_groups",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "num_libraries",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
@@ -80,12 +80,12 @@
         },
         {
           "name": "align_to_ref_per_input_reads_provided",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": true
         },
         {
           "name": "align_to_ref_per_input_reads_aligned",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": true
         },
         {
@@ -110,17 +110,17 @@
         },
         {
           "name": "align_to_ref_merged_reads_aligned",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "align_to_ref_merged_read_pairs_aligned",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "align_to_ref_merged_bases_aligned",
-          "datatype": "float",
+          "datatype": "float64",
           "array_of": false
         },
         {
@@ -140,22 +140,22 @@
         },
         {
           "name": "align_to_self_merged_reads_aligned",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "align_to_self_merged_read_pairs_aligned",
-          "datatype": "integer",
+          "datatype": "int64",
           "array_of": false
         },
         {
           "name": "align_to_self_merged_bases_aligned",
-          "datatype": "float",
+          "datatype": "float64",
           "array_of": false
         },
         {
           "name": "align_to_self_merged_mean_coverage",
-          "datatype": "float",
+          "datatype": "float64",
           "array_of": false
         },
         {
