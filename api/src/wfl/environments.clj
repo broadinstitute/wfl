@@ -49,6 +49,10 @@
    {:url  "https://datarepo-production.example.com"
     :service-account "datarepo-service-account.iam.gserviceaccount.com"}})
 
+(def debug
+  "Put debug hacks here."
+  development)
+
 (def stuff
   "Map ENVIRONMENT and so on to vault paths, URLs and so on."
   (letfn [(make [m e] (let [kw  (keyword e)
@@ -56,7 +60,7 @@
                         (-> (var-get var)
                             (assoc :doc (:doc (meta var)) :keyword kw :name e)
                             (->> (assoc m kw)))))]
-    (reduce make {} ["development" "production"])))
+    (reduce make {} ["debug" "development" "production"])))
 
 (def environments
   "Map valid values for :ENVIRONMENT to their doc strings."

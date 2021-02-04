@@ -5,9 +5,7 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [buddy.sign.jwt :as jwt]
-            [clj-yaml.core :as yaml]
-            [vault.client.http]                             ; vault.core needs this
+            [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [wfl.environments :as env]
             [wfl.wfl :as wfl])
@@ -20,14 +18,21 @@
            [java.util.zip ZipOutputStream ZipEntry]
            [org.apache.commons.io FilenameUtils]))
 
-vault.client.http/http-client                               ; Keep :clint eastwood quiet.
+vault.client.http/http-client           ; Keep :clint eastwood quiet.
 
 (defmacro do-or-nil
-  "Value of BODY or nil if it throws."
+  "Value of `body` or `nil` if it throws."
   [& body]
   `(try (do ~@body)
         (catch Exception x#
           (log/warn x# "Swallowed exception and returned nil in wfl.util/do-or-nil"))))
+
+(defmacro do-or-nil-silently
+  "Value of `body` or `nil` if it throws, without logging exceptions.
+  See also [[do-or-nil]]."
+  [& body]
+  `(try (do ~@body)
+        (catch Exception x#)))
 
 ;; Parsers that will not throw.
 ;;
@@ -38,13 +43,16 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
-;; `x#` used here since `_` will fail in a macro.
-(defmacro do-or-nil-silently
-  "Value of BODY or nil if it throws, without printing any exceptions.
-  See also [[do-or-nil]]."
-  [& body]
-  `(try (do ~@body)
-        (catch Exception x#)))
+(defonce the-system-environment (delay (into {} (System/getenv))))
+
+(defn getenv
+  "`(System/getenv)` as a map, or the value for `key`, or `default`."
+  ([key default]
+   (@the-system-environment key default))
+  ([key]
+   (@the-system-environment key))
+  ([]
+   @the-system-environment))
 
 (defn parse-json
   "Parse the json string STR into a keyword-string map"
@@ -66,13 +74,15 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       (json/pprint content :escape-slash false))))
 
 (defn vault-secrets
-  "Return the vault-secrets at PATH."
+  "Return the secrets at `path` in vault."
   [path]
-  (let [token-path (str (System/getProperty "user.home") "/.vault-token")]
+  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
+                       (str/join "/") slurp do-or-nil)
+                  (getenv "VAULT_TOKEN" "VAULT_TOKEN"))]
     (try (vault/read-secret
           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token (slurp token-path)))
-          path)
+            (vault/authenticate! :token token))
+          path {})
          (catch Throwable e
            (log/warn e "Issue with Vault")
            (log/debug "Perhaps run 'vault login' and try again")))))
@@ -297,7 +307,7 @@ vault.client.http/http-client                               ; Keep :clint eastwo
          (str/join " "))))
 
 (defn make-options
-  "Make options to run the workflow in ENVIRONMENT."
+  "Make Cromwell options to run a workflow in ENVIRONMENT."
   [environment]
   (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
     (let [gcr   "us.gcr.io"
@@ -326,26 +336,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
               (format "%s must be a non-negative integer"
                       (if (nil? result) "" (format " (%s)" result))))))
     result))
-
-(defonce the-system-environment (delay (into {} (System/getenv))))
-
-(defn getenv
-  "(System/getenv) as a map, or the value for KEY, or DEFAULT."
-  ([key default]
-   (@the-system-environment key default))
-  ([key]
-   (@the-system-environment key))
-  ([]
-   @the-system-environment))
-
-(defn spit-yaml
-  "Spit CONTENT into FILE as YAML, optionally adding COMMENTS."
-  [file content & comments]
-  (let [header (if (empty? comments) ""
-                   (str "# " (str/join "\n# " comments) "\n\n"))
-        yaml   (yaml/generate-string content
-                                     :dumper-options {:flow-style :block})]
-    (spit file (str header yaml))))
 
 (defn shell!
   "Run ARGS in a shell and return stdout or throw."

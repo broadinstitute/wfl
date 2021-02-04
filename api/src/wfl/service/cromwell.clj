@@ -1,5 +1,5 @@
 (ns wfl.service.cromwell
-  "Launch a Cromwell workflow and wait for it to complete."
+  "Talk to Cromwell."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -152,7 +152,7 @@
   "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
   [environment params]
   (let [form-params (merge {:pagesize 999} params)
-        request     {:method       :post                   ;; :debug true :debug-body true
+        request     {:method       :post ; :debug true :debug-body true
                      :url          (str (api environment) "/query")
                      :form-params  (cromwellify-json-form form-params)
                      :content-type :application/json}]
@@ -206,7 +206,7 @@
          :url       url
          :headers   (once/get-auth-header)
          :multipart (map multipartify parts)}
-        request-json #_debug/dump :body)))
+        request-json :body)))
 
 (defn stringify-vals
   "Stringify all of the values of a Map."

@@ -76,10 +76,9 @@
       (wrap-json-response {:pretty true})))
 
 (defn ^:private start-workload-manager
-  "Update the workload database then start a background task to periodically
-  manage the state of workflows indefinitely. Returns a
-  java.util.concurrent.Future that, when de-referenced, waits for the background
-  task to finish (i.e. until an error occurs)."
+  "Update the workload database, then start a `future` to manage the
+  state of workflows in the background. Dereference the future to wait
+  for the background task to finish (when an error occurs)."
   []
   (letfn [(do-update! [{:keys [id uuid]}]
             (try

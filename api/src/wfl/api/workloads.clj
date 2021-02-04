@@ -64,10 +64,11 @@
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
   (let [do-load   (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+    (mapv do-load
+          (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
 
 (defn load-workloads
-  "Use transaction TX to load all known `workloads`"
+  "Use transaction `tx` to load all known `workloads`."
   [tx]
   (let [do-load (partial load-workload-impl tx)]
     (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))

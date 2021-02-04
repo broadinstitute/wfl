@@ -25,7 +25,7 @@
 (defn get-cromwell-environment [{:keys [executor]}]
   (let [envs (all/cromwell-environments #{:wgs-dev :wgs-prod} executor)]
     (when (not= 1 (count envs))
-      (throw (ex-info "no unique environment matching Cromwell URL."
+      (throw (ex-info "No unique environment matching Cromwell URL."
                       {:cromwell     executor
                        :environments envs})))
     (first envs)))
