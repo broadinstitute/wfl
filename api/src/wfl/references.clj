@@ -1,6 +1,5 @@
 (ns wfl.references
-  "Define shared static references."
-  (:require [wfl.util :as util]))
+  "Define shared static references.")
 
 (defn reference_fasta
   "Default value for references.reference_fasta with PREFIX."
@@ -69,19 +68,13 @@
 
 (def gdc-sg-references
   "References for the GDC Somatic WGS alignment pipeline."
-  (let [prefix-vals (fn [s m] (reduce (fn [acc [k v]] (assoc acc k (str s v))) {} m))
-        vcf "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf"
-        vd1 "gs://broad-gotc-dev-storage/temp_references/gdc/GRCh38.d1.vd1"]
-    (merge
-     (prefix-vals vcf
-                  {:gatk_baserecalibrator.dbsnp_vcf       ".gz"
-                   :gatk_baserecalibrator.dbsnp_vcf_index ".gz.tbi"})
-     (prefix-vals vd1
-                  {:ref_amb   ".fa.amb"
-                   :ref_ann   ".fa.ann"
-                   :ref_bwt   ".fa.bwt"
-                   :ref_dict  ".dict"
-                   :ref_fai   ".fa.fai"
-                   :ref_fasta ".fa"
-                   :ref_pac   ".fa.pac"
-                   :ref_sa    ".fa.sa"}))))
+  (let [prefix   "gs://broad-gotc-dev-storage/temp_references/gdc/GRCh38.d1.vd1"
+        suffixes {:ref_amb   ".fa.amb"
+                  :ref_ann   ".fa.ann"
+                  :ref_bwt   ".fa.bwt"
+                  :ref_dict  ".dict"
+                  :ref_fai   ".fa.fai"
+                  :ref_fasta ".fa"
+                  :ref_pac   ".fa.pac"
+                  :ref_sa    ".fa.sa"}]
+    (zipmap (keys suffixes) (map (partial str prefix) (vals suffixes)))))

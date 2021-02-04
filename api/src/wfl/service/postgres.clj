@@ -58,7 +58,9 @@
   (fn [tx {:keys [items workflows] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
               (jdbc/update! tx items
-                            {:updated (OffsetDateTime/now) :uuid uuid :status status}
+                            {:status status
+                             :updated (OffsetDateTime/now)
+                             :uuid uuid}
                             ["id = ?" id]))]
       (->> workflows
            (remove (comp nil? :uuid))
@@ -80,22 +82,22 @@
     (make-update-workflows get-terra-status)))
 
 (defn batch-update-workflow-statuses!
-  "Use `tx` to update `status` the workflows in a `workload`."
-  [tx {:keys [executor uuid items]}]
+  "Use `tx` to update the `status` of the workflows in `_workload`."
+  [tx {:keys [executor uuid items] :as _workoad}]
   (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
                           (cromwell/query executor)
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
               (jdbc/update! tx items
-                            {:updated (OffsetDateTime/now) :status status}
+                            {:status status :updated (OffsetDateTime/now)}
                             ["uuid = ?" uuid]))]
       (run! update! uuid->status))))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id items] :as _workload}]
-  (let [query (format "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
-                      (util/to-quoted-comma-separated-list finished?))]
+  (let [select "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
+        query (format select (util/to-quoted-comma-separated-list finished?))]
     (when (empty? (jdbc/query tx (format query items)))
       (jdbc/update! tx :workload
                     {:finished (OffsetDateTime/now)} ["id = ?" id]))))

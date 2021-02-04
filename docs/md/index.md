@@ -162,11 +162,11 @@ clojure -M:parallel-test wfl.system.v1-endpoint-test
     `clojure -M:parallel-test wfl.system.v1-endpoint-test`, you can use an environment
     variable `CROMWELL` to override the default Cromwell instance that's used in the test. For
     example:
-    
+
     ```bash
     CROMWELL=https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test
     ```
-    
+
     will tell the test to submit workflows to the "gotc-prod" Cromwell instance no matter what the
     default instance was defined in the test. However, you need to make sure the validity of the Cromwell
     URL you passed in; certain IAM permissions will also be required in order for Cromwell to execute the

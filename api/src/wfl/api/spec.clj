@@ -10,9 +10,15 @@
 
 ;; shared
 (s/def ::commit (s/and string? (comp (partial == 40) count)))
+(s/def ::contamination_vcf string?)
+(s/def ::contamination_vcf_index string?)
+(s/def ::cram_ref_fasta string?)
+(s/def ::cram_ref_fasta_index string?)
 (s/def ::created inst?)
 (s/def ::creator string?)
 (s/def ::cromwell string?)
+(s/def ::dbsnp_vcf string?)
+(s/def ::dbsnp_vcf_index string?)
 (s/def ::environment string?)
 (s/def ::executor string?)
 (s/def ::finished inst?)
@@ -104,8 +110,13 @@
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
 ;; sg (Whole Genome Somatic single Sample)
-(s/def ::ubam #(str/ends-with? % ".bam"))
-(s/def ::sg-workflow-inputs (s/keys :req-un [::ubam]))
+(s/def ::sg-workflow-inputs (s/keys :req-un [::contamination_vcf
+                                             ::contamination_vcf_index
+                                             ::cram_ref_fasta
+                                             ::cram_ref_fasta_index
+                                             ::dbsnp_vcf
+                                             ::dbsnp_vcf_index
+                                             ::input_cram]))
 
 ;; /api/v1/workflows
 (s/def ::start string?)

@@ -2,6 +2,7 @@
   "Talk to Google Cloud Storage for some reason..."
   (:require [clojure.data.json              :as json]
             [clojure.java.io                :as io]
+            [clojure.pprint                 :refer [pprint]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
@@ -44,7 +45,7 @@
     [bucket (or object "")]))
 
 (defn gs-url
-  "Format BUCKET and OBJECT into a gs://bucket/object URL."
+  "Format BUCKET and OBJECT name into a gs://bucket/object URL."
   [bucket object]
   (when-not (and (string?        bucket)
                  (seq            bucket)
@@ -53,6 +54,15 @@
           msg (format fmt bucket)]
       (throw (IllegalArgumentException. msg))))
   (str "gs://" bucket "/" object))
+
+(defn gs-object-url
+  "Format OBJECT into a gs://bucket/name URL."
+  [{:keys [bucket name] :as object}]
+  (when-not (and (map? object) bucket name)
+    (throw (IllegalArgumentException.
+            (str/join \newline ["Object must have :bucket and :name keys:"
+                                (with-out-str (pprint object))]))))
+  (gs-url bucket name))
 
 (defn iam
   "Return IamPolicy response for URL."
@@ -199,18 +209,21 @@
    (apply patch-object! metadata (parse-gs-url url))))
 
 (defn copy-object
-  "Copy SRC-URL to DEST-URL or SOBJ in SBUCKET to DOBJ in DBUCKET."
-  ([src-url dest-url]
-   (let [destination (str/replace-first dest-url storage-url "")]
-     (-> {:method  :post                ; :debug true :debug-body true
-          :url     (str src-url "/rewriteTo/" destination)
-          :headers (once/get-auth-header)}
-         http/request :body
-         (json/read-str :key-fn keyword))))
+  "Copy SOBJECT in SBUCKET to DOBJECT in DBUCKET."
   ([sbucket sobject dbucket dobject]
-   (let [src-url  (bucket-object-url sbucket sobject)
-         dest-url (bucket-object-url dbucket dobject)]
-     (copy-object src-url dest-url))))
+   (let [surl (bucket-object-url sbucket sobject)
+         durl (bucket-object-url dbucket dobject)
+         destination (str/replace-first durl storage-url "")]
+     (-> {:method  :post                ; :debug true :debug-body true
+          :url     (str surl "/rewriteTo/" destination)
+          :headers (once/get-auth-header)}
+         http/request
+         :body
+         (json/read-str :key-fn keyword))))
+  ([source-url destination-url]
+   (let [[sbucket sobject] (parse-gs-url source-url)
+         [dbucket dobject] (parse-gs-url destination-url)]
+     (copy-object sbucket sobject dbucket dobject))))
 
 (defn add-object-reader
   "Add USER as a reader on OBJECT in BUCKET in gcs"

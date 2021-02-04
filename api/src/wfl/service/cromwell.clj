@@ -184,7 +184,7 @@
   "Lazy results of querying Cromwell given URL with PARAMS map."
   [url params]
   (let [form-params (merge {:pagesize 999} params)
-        request     {:method       :post                   ;; :debug true :debug-body true
+        request     {:method       :post ; :debug true :debug-body true
                      :url          (str (api url) "/query")
                      :form-params  (cromwellify-json-form form-params)
                      :content-type :application/json}]

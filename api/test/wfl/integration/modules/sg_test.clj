@@ -1,9 +1,13 @@
 (ns wfl.integration.modules.sg-test
-  (:require [clojure.test :refer [deftest testing is] :as clj-test]
+  (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [wfl.environments :as env]
             [wfl.module.batch :as batch]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
+            [wfl.module.sg :as sg]
+            [wfl.service.clio :as clio]
+            [wfl.service.gcs :as gcs]
+            [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -17,17 +21,22 @@
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn ^:private make-sg-workload-request []
+(def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
+
+(defn ^:private make-sg-workload-request
+  []
   (-> (UUID/randomUUID)
       workloads/sg-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
-  (let [now       (OffsetDateTime/now)
-        do-submit #(assoc % :uuid (UUID/randomUUID)
-                          :status "Submitted"
-                          :updated now)]
-    (map do-submit workflows)))
+(defn mock-submit-workload
+  [{:keys [workflows]} _ _ _ _ _]
+  (let [now (OffsetDateTime/now)]
+    (letfn [(submit [workflow uuid] (assoc workflow
+                                           :status "Submitted"
+                                           :updated now
+                                           :uuid    uuid))]
+      (map submit workflows the-uuids))))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -44,23 +53,22 @@
       (go! (make-sg-workload-request)))))
 
 (deftest test-update-unstarted
-  (let [workload (->> (make-sg-workload-request)
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
+  (let [workload (-> (make-sg-workload-request)
+                     workloads/create-workload!
+                     workloads/update-workload!)]
+    (is (seq  (:workflows workload)))
+    (is (nil? (:finished  workload)))
     (is (nil? (:submitted workload)))))
 
 (deftest test-create-workload-with-common-inputs
-  (let [common-inputs {:biobambam_bamtofastq.max_retries 2
-                       :ref_pac "gs://fake-location/temp_references/gdc/GRCh38.d1.vd1.fa.pac"}]
-    (letfn [(go! [inputs]
-              (letfn [(value-equal? [key] (= (key common-inputs) (key inputs)))]
-                (is (value-equal? :biobambam_bamtofastq.max_retries))
-                (is (value-equal? :ref_pac))))]
-      (run! (comp go! :inputs) (-> (make-sg-workload-request)
-                                   (assoc-in [:common :inputs] common-inputs)
-                                   workloads/create-workload!
-                                   :workflows)))))
+  (let [expected {:biobambam_bamtofastq.max_retries 2
+                  :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
+    (letfn [(ok [inputs]
+              (is (= expected (select-keys inputs (keys expected)))))]
+      (run! ok (-> (make-sg-workload-request)
+                   (assoc-in [:common :inputs] expected)
+                   workloads/create-workload! :workflows
+                   (->> (map :inputs)))))))
 
 (deftest test-start-workload!
   (letfn [(go! [workflow]
@@ -96,60 +104,171 @@
     (is (:finished workload))))
 
 (deftest test-submitted-workflow-inputs
-  (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
-          (strip-prefix [[k v]]
-            [(keyword (util/unprefix (str k) (str ":" sg/pipeline ".")))
-             v])
-          (verify-workflow-inputs [inputs]
-            (is (:supports_common_inputs inputs))
-            (is (:supports_inputs inputs))
-            (is (:overwritten inputs)))
-          (verify-submitted-inputs [_ _ inputs _ _]
-            (map
-             (fn [in]
-               (is (every? #(prefixed? (keyword sg/pipeline) %) (keys in)))
-               (verify-workflow-inputs (into {} (map strip-prefix in)))
-               (UUID/randomUUID))
-             inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
-      (fn []
-        (->
-         (make-sg-workload-request)
-         (assoc-in [:common :inputs]
-                   {:supports_common_inputs true :overwritten false})
-         (update :items
-                 (partial map
-                          #(update % :inputs
-                                   (fn [xs] (merge xs {:supports_inputs true :overwritten true})))))
-         workloads/execute-workload!)))))
+  (let [prefix (str sg/pipeline ".")]
+    (letfn [(overmap   [m] (-> m
+                               (assoc-in [:inputs :overwritten]     true)
+                               (assoc-in [:inputs :supports_inputs] true)))
+            (unprefix  [k] (keyword (util/unprefix (name k) prefix)))
+            (prefixed? [k] (str/starts-with? (name k) prefix))
+            (submit [inputs]
+              (is (every? prefixed? (keys inputs)))
+              (let [in (zipmap (map unprefix (keys inputs)) (vals inputs))]
+                (is (:overwritten            in))
+                (is (:supports_common_inputs in))
+                (is (:supports_inputs        in))
+                (UUID/randomUUID)))
+            (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
+      (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
+        #(-> (make-sg-workload-request)
+             (assoc-in [:common :inputs] {:overwritten            false
+                                          :supports_common_inputs true})
+             (update :items (partial map overmap))
+             workloads/execute-workload!)))))
 
 (deftest test-workflow-options
-  (letfn [(verify-workflow-options [options]
+  (letfn [(overmap [m] (-> m
+                           (assoc-in [:options :overwritten]      true)
+                           (assoc-in [:options :supports_options] true)))
+          (verify-workflow-options [options]
+            (is (:overwritten             options))
             (is (:supports_common_options options))
             (is (:supports_options options))
-            (is (:overwritten options)))
           (verify-submitted-options [url _ inputs options _]
+            (verify-workflow-options options)
             (let [defaults (sg/make-workflow-options url)]
-              (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options}
-      (fn []
-        (->
-         (make-sg-workload-request)
-         (assoc-in [:common :options]
-                   {:supports_common_options true :overwritten false})
-         (update :items
-                 (partial map
-                          #(assoc % :options {:supports_options true :overwritten true})))
-         workloads/execute-workload!
-         :workflows
-         (->> (map (comp verify-workflow-options :options))))))))
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
+      #(-> (make-sg-workload-request)
+           (assoc-in [:common :options] {:overwritten             false
+                                         :supports_common_options true})
+           (update :items (partial map overmap))
+           workloads/execute-workload! :workflows
+           (->> (map (comp verify-workflow-options :options)))))))
 
 (deftest test-empty-workflow-options
-  (letfn [(go! [workflow] (is (absent? workflow :options)))]
+  (letfn [(go! [workflow] (is (absent? workflow :options)))
+          (empty-options [m] (assoc m :options {}))]
     (run! go! (-> (make-sg-workload-request)
                   (assoc-in [:common :options] {})
-                  (update :items (partial map #(assoc % :options {})))
-                  workloads/create-workload!
-                  :workflows))))
+                  (update :items (partial map empty-options))
+                  workloads/create-workload! :workflows))))
+
+(defn ^:private ensure-clio-cram
+  "Ensure there is a CRAM record in Clio suitable for test."
+  []
+  (let [version 23
+        project (str "G96830" \- (UUID/randomUUID))
+        NA12878 (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
+                               "pipeline"
+                               project
+                               "NA12878"
+                               (str \v version) "NA12878"])
+        path    (partial str NA12878)
+        query   {:billing_project        "hornet-nest"
+                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
+                 :cram_path              (path ".cram")
+                 :cram_size              19512619343
+                 :data_type              "WGS"
+                 :document_status        "Normal"
+                 :location               "GCP"
+                 :notes                  "Blame tbl for SG test."
+                 :pipeline_version       "f1c7883"
+                 :project                project
+                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
+                 :regulatory_designation "RESEARCH_ONLY"
+                 :sample_alias           "NA12878"
+                 :version                version
+                 :workspace_name         "bike-of-hornets"}
+        crams   (clio/query-cram query)]
+    (when (> (count crams) 1)
+      (throw (ex-info "More than 1 Clio CRAM record"
+                      (with-out-str (pprint crams)))))
+    (or (first crams)
+        (clio/add-cram
+         (merge query
+                {:crai_path                  (path ".cram.crai")
+                 :cromwell_id                (str (UUID/randomUUID))
+                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
+                 :insert_size_metrics_path   (path ".insert_size_metrics")
+                 :workflow_start_date        (str (OffsetDateTime/now))})))
+    (first (clio/query-cram query))))
+
+(def ^:private the-clio-cram-record (delay (ensure-clio-cram)))
+
+(defn ^:private mock-cromwell-query
+  "Update `status` of all workflows to `Succeeded`."
+  [_environment _params]
+  (let [{:keys [items]} (make-sg-workload-request)]
+    (map (fn [id] {:id id :status "Succeeded"})
+         (take (count items) the-uuids))))
+
+(defn ^:private mock-cromwell-submit-workflows
+  [_environment _wdl inputs _options _labels]
+  (take (count inputs) the-uuids))
+
+(def ^:private bam-suffixes
+  "Map Clio BAM record fields to expected file suffixes."
+  {:bai_path                 ".bai"
+   :bam_path                 ".bam"
+   :insert_size_metrics_path ".insert_size_metrics"})
+
+(defn ^:private expect-clio-bams
+  "Make the Clio BAM records expected from `workload`."
+  [{:keys [output pipeline workflows] :as workload}]
+  (letfn [(make [{:keys [inputs uuid] :as workflow}]
+            (let [{:keys [input_cram sample_name]} inputs
+                  prefix (partial str (str/join "/" [output
+                                                     pipeline
+                                                     uuid
+                                                     pipeline
+                                                     "execution"
+                                                     sample_name]))]
+              (zipmap (keys bam-suffixes) (map prefix (vals bam-suffixes)))))]
+    (let [from-cram (select-keys @the-clio-cram-record [:billing_project
+                                                        :data_type
+                                                        :document_status
+                                                        :location
+                                                        :notes
+                                                        :project
+                                                        :sample_alias
+                                                        :version])]
+      (map (partial merge from-cram) (map make workflows)))))
+
+;; The files are all just bogus copies of the README now.
+;;
+(defn ^:private make-bam-outputs
+  "Make the BAM outputs expected from a successful `workload`."
+  [{:keys [output pipeline workflows] :as workload}]
+  (let [readme (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
+                              pipeline
+                              "README.txt"])
+        copy!  (partial gcs/copy-object readme)]
+    (->> workload expect-clio-bams
+         (mapcat (apply juxt (keys bam-suffixes)))
+         (run! copy!)))
+  workload)
+
+(deftest test-clio-updates
+  (testing "Clio updated after workflows finish."
+    (let [where [:items 0 :inputs]
+          {:keys [cram_path project sample_alias]} @the-clio-cram-record]
+      (with-redefs-fn {#'cromwell/submit-workflows mock-cromwell-submit-workflows
+                       #'cromwell/query            mock-cromwell-query}
+        #(-> (make-sg-workload-request)
+             (update :items (comp vector first))
+             (assoc-in (conj where :input_cram)  cram_path)
+             (assoc-in (conj where :project)     project)
+             (assoc-in (conj where :sample_name) sample_alias)
+             workloads/create-workload!
+             workloads/start-workload!
+             workloads/update-workload! ; Make status "Succeeded".
+             make-bam-outputs
+             workloads/update-workload! ; Register outputs with Clio.
+             expect-clio-bams
+             (as-> expected
+                   (let [query (-> expected first (select-keys [:bam_path]))]
+                     (is (= expected (clio/query-bam query))))))))))
+
+(comment
+  (clojure.test/test-vars [#'test-clio-updates]))

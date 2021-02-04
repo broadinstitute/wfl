@@ -1,15 +1,17 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set :refer [rename-keys]]
+  (:require [clojure.data.json :as json]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest testing is]]
+            [wfl.service.cromwell :as cromwell]
             [wfl.service.gcs :as gcs]
             [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :refer [with-temporary-gcs-folder temporary-postgresql-database]]
+            [wfl.tools.fixtures :refer [with-temporary-gcs-folder
+                                        temporary-postgresql-database]]
             [wfl.tools.workloads :as workloads]
-            [wfl.service.cromwell :as cromwell]
             [wfl.util :as util])
-  (:import (java.util UUID)
-           (clojure.lang ExceptionInfo)))
+  (:import (clojure.lang ExceptionInfo)
+           (java.util UUID)))
 
 (def ^:private cromwell-url
   "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
@@ -17,21 +19,23 @@
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
-(def create-wgs-workload (make-create-workload workloads/wgs-workload-request))
-(def create-aou-workload (make-create-workload workloads/aou-workload-request))
-(def create-xx-workload (make-create-workload workloads/xx-workload-request))
+(def create-aou-workload    (make-create-workload workloads/aou-workload-request))
 (def create-arrays-workload (make-create-workload workloads/arrays-workload-request))
-(def create-sg-workload (make-create-workload workloads/sg-workload-request))
+(def create-sg-workload     (make-create-workload workloads/sg-workload-request))
+(def create-wgs-workload    (make-create-workload workloads/wgs-workload-request))
+(def create-xx-workload     (make-create-workload workloads/xx-workload-request))
+
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
-(defn- verify-succeeded-workflow [workflow]
-  (is (map? (:inputs workflow)) "Every workflow should have nested inputs")
-  (is (:updated workflow))
-  (is (:uuid workflow))
-  (is (= "Succeeded" (:status workflow))))
+(defn ^:private verify-succeeded-workflow
+  [{:keys [inputs status updated uuid] :as _workflow}]
+  (is (map? inputs) "Every workflow should have nested inputs")
+  (is updated)
+  (is uuid)
+  (is (= "Succeeded" status)))
 
-(defn- verify-succeeded-workload [workload]
+(defn ^:private verify-succeeded-workload [workload]
   (run! verify-succeeded-workflow (:workflows workload)))
 
 (defn ^:private verify-internal-properties-removed [workload]
@@ -52,20 +56,23 @@
 (defn ^:private test-create-workload
   [request]
   (letfn [(test! [{:keys [pipeline] :as request}]
-            (testing (format "calling api/v1/create with %s workload request" pipeline)
-              (let [{:keys [uuid] :as workload} (endpoints/create-workload request)]
+            (testing (format "calling api/v1/create with %s workload request"
+                             pipeline)
+              (let [{:keys [created creator executor started uuid] :as workload}
+                    (endpoints/create-workload request)]
                 (is uuid "workloads should be been assigned a uuid")
-                (is (:created workload) "should have a created timestamp")
-                (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-                (is (not (:started workload)) "hasn't been started in cromwell")
-                (let [include [:pipeline :project]]
-                  (is (= (select-keys request include) (select-keys workload include))))
-                (is (= (:executor workload) (or (:executor request) (:cromwell request)))
+                (is created "should have a created timestamp")
+                (is (= (:email @endpoints/userinfo) creator)
+                    "creator inferred from auth token")
+                (is (not started) "hasn't been started in cromwell")
+                (letfn [(included [m] (select-keys m [:pipeline :project]))]
+                  (is (= (included request) (included workload))))
+                (is (= executor (or (:executor request) (:cromwell request)))
                     "lost track of executor/cromwell")
                 (verify-internal-properties-removed workload))))]
     (test! request)
     (testing "passed :cromwell rather than :executor"
-      (test! (rename-keys request {:executor :cromwell})))))
+      (test! (set/rename-keys request {:executor :cromwell})))))
 
 (deftest test-create-wgs-workload
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -115,16 +122,17 @@
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
-    (let [{:keys [uuid] :as workload} (endpoints/exec-workload request)]
-      (is uuid "workloads should be been assigned a uuid")
-      (is (:created workload) "should have a created timestamp")
-      (is (:started workload) "should have a started timestamp")
-      (is (= (:email @endpoints/userinfo) (:creator workload)) "creator inferred from auth token")
-      (let [include [:pipeline :project]]
-        (is (= (select-keys request include) (select-keys workload include))))
-      (let [{:keys [workflows]} workload]
-        (is (every? :updated workflows))
-        (is (every? :uuid workflows)))
+    (let [{:keys [created creator started uuid workflows] :as workload}
+          (endpoints/exec-workload request)]
+      (is uuid    "workloads should have a uuid")
+      (is created "should have a created timestamp")
+      (is started "should have a started timestamp")
+      (is (= (:email @endpoints/userinfo) creator)
+          "creator inferred from auth token")
+      (letfn [(included [m] (select-keys m [:executor :pipeline :project]))]
+        (is (= (included request) (included workload))))
+      (is (every? :updated workflows))
+      (is (every? :uuid workflows))
       (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
@@ -133,7 +141,7 @@
 (deftest ^:parallel test-exec-wgs-workload-specifying-cromwell
   ;; All modules make use of the same code/behavior here, no need to spam Cromwell
   (test-exec-workload (-> (workloads/wgs-workload-request (UUID/randomUUID))
-                          (rename-keys {:executor :cromwell}))))
+                          (set/rename-keys {:executor :cromwell}))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-arrays-workload
@@ -142,6 +150,10 @@
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
   (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
+
+(comment
+  (clojure.test/test-vars [#'test-exec-sg-workload]))
+
 (deftest ^:parallel test-exec-copyfile-workload
   (with-temporary-gcs-folder uri
     (let [src (str uri "input.txt")
@@ -155,17 +167,20 @@
         workload (endpoints/exec-workload
                   (workloads/aou-workload-request (UUID/randomUUID)))]
     (testing "appending sample successfully launches an aou workflow"
-      (is
-       (every? #{"Succeeded"}
-               (map (comp await :uuid)
-                    (endpoints/append-to-aou-workload [workloads/aou-sample] workload))))
+      (is (->> workload
+               (endpoints/append-to-aou-workload [workloads/aou-sample])
+               (map (comp await :uuid))
+               (every? #{"Succeeded"})))
       (->> (endpoints/get-workload-status (:uuid workload))
            (workloads/when-done verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
-  (let [request (-> (workloads/copyfile-workload-request "gs://fake/in" "gs://fake/out")
+  (let [request (-> (workloads/copyfile-workload-request
+                     "gs://fake/in" "gs://fake/out")
                     (assoc :pipeline "geoff"))]
     (testing "create-workload! fails (400) with bad request"
-      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400" (endpoints/create-workload request))))
+      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
+                            (endpoints/create-workload request))))
     (testing "exec-workload! fails (400) with bad request"
-      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400" (endpoints/exec-workload request))))))
+      (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
+                            (endpoints/exec-workload request))))))
