@@ -1,7 +1,6 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.string :as str]
-            [wfl.api.workloads :as workloads]
+  (:require [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]

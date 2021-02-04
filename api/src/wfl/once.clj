@@ -27,7 +27,7 @@
   (some->
    (if-let [sa-file (the-system-environments "GOOGLE_APPLICATION_CREDENTIALS")]
      (-> sa-file io/file)
-     (-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
+     (-> (get-in env/stuff [:debug :server :service-account])
          util/vault-secrets
          (json/write-str :escape-slash false)
          .getBytes))

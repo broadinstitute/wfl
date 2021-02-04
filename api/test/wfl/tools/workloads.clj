@@ -1,7 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
-            [wfl.environments :as env]
+            [wfl.environments :refer [stuff]]
             [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
             [wfl.module.arrays :as arrays]

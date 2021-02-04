@@ -1,6 +1,5 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.data.json :as json]
-            [clojure.set :as set]
+  (:require [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :refer [deftest testing is]]
             [wfl.service.cromwell :as cromwell]

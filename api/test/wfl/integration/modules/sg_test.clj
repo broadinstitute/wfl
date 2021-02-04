@@ -2,7 +2,6 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [wfl.environments :as env]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
@@ -19,7 +18,7 @@
 (def ^:private cromwell-url-for-testing
   "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
@@ -132,7 +131,7 @@
           (verify-workflow-options [options]
             (is (:overwritten             options))
             (is (:supports_common_options options))
-            (is (:supports_options options))
+            (is (:supports_options options)))
           (verify-submitted-options [url _ inputs options _]
             (verify-workflow-options options)
             (let [defaults (sg/make-workflow-options url)]

@@ -1,6 +1,5 @@
 (ns wfl.environments
-  "Map environment to various values here."
-  (:require [wfl.util :as util]))
+  "Map environment to various values here.")
 
 ;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases
 ;;  since this is baked in code. Can we improve this?

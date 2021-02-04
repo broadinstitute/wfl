@@ -1,15 +1,10 @@
 (ns wfl.service.clio
   "Talk to Clio for some reason ..."
-  (:require [clojure.java.io :as io]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
-            [wfl.environments :as env]
-            [wfl.once :as once]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
-  (:import [com.google.auth.oauth2 GoogleCredentials]))
+            [wfl.once :as once]))
 
 (def url
   "The Clio API URL."
