@@ -10,8 +10,8 @@
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
-            [wfl.once :as once]
-            [wfl.util :as util])
+            [wfl.once                       :as once]
+            [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))
 
 (def api-url
