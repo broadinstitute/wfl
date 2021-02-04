@@ -1,15 +1,17 @@
-(ns wfl.service.gcs
-  "Talk to Google Cloud Storage for some reason..."
-  (:require [clojure.data.json              :as json]
+(ns wfl.service.google.storage
+  "Wrappers for Google Cloud Storage REST APIs.
+  See https://cloud.google.com/storage/docs/json_api/v1"
+  (:require [clj-http.client                :as http]
+            [clj-http.util                  :as http-util]
+            [clojure.data.json              :as json]
             [clojure.java.io                :as io]
             [clojure.pprint                 :refer [pprint]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
-            [clj-http.client                :as http]
-            [clj-http.util                  :as http-util]
-            [wfl.once                       :as once])
+            [wfl.once                       :as once]
+            [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))
 
 (def api-url
@@ -108,8 +110,8 @@
                        (json/read-str :key-fn keyword))]
                (lazy-cat items (when nextPageToken (each nextPageToken)))))]
      (each "")))
-  ([bucket]
-   (list-objects bucket "")))
+  ([url]
+   (apply list-objects (parse-gs-url url))))
 
 (def _-? (set "_-"))
 (def digit? (set "0123456789"))
@@ -267,3 +269,36 @@
       (throw
        (ex-info "No auth header in request"
                 {:type :clj-http.client/unexceptional-status})))))
+
+;; Google Cloud Storage Bucket Notification Configuration
+;; See https://cloud.google.com/storage/docs/json_api/v1/notifications
+
+(defn create-notification-configuration [bucket topic]
+  (let [payload {:payload_format "JSON_API_V1"
+                 :event_types    ["OBJECT_FINALIZE"]
+                 :topic          topic}]
+    (-> (str bucket-url bucket "/notificationConfigs")
+        (http/post
+         {:headers      (once/get-auth-header)
+          :content-type :json
+          :body         (json/write-str payload :escape-slash false)})
+        :body
+        util/parse-json)))
+
+(defn delete-notification-configuration [bucket {:keys [id]}]
+  (http/delete
+   (str bucket-url bucket "/notificationConfigs/" id)
+   {:headers (once/get-auth-header)}))
+
+(defn list-notification-configurations [bucket]
+  (-> (str bucket-url bucket "/notificationConfigs")
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :items))
+
+(defn get-cloud-storage-service-account [project]
+  (-> (str storage-url (str/join "/" ["projects" project "serviceAccount"]))
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json))

@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.wfl :as wfl]))
 
 (defn successes

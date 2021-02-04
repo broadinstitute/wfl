@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.environments :as env]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
@@ -13,12 +13,11 @@
 (defn throw-when-output-exists-already!
   "Throw when GS-OUTPUT-URL output exists already."
   [gs-output-url]
-  (let [[bucket object] (gcs/parse-gs-url gs-output-url)]
-    (when (first (gcs/list-objects bucket object))
-      (throw
-       (IllegalArgumentException.
-        (format "%s: output already exists: %s"
-                wfl/the-name gs-output-url))))))
+  (when (first (gcs/list-objects gs-output-url))
+    (throw
+     (IllegalArgumentException.
+      (format "%s: output already exists: %s"
+              wfl/the-name gs-output-url)))))
 
 (defn bam-or-cram?
   "Nil or a vector with root of PATH and the matching suffix."
@@ -61,8 +60,7 @@
   [in-gs out-gs]
   (letfn [(crams [gs-url]
             (prn (format "%s: reading: %s" wfl/the-name gs-url))
-            [gs-url (->> gs-url gcs/parse-gs-url
-                         (apply gcs/list-objects)
+            [gs-url (->> (gcs/list-objects gs-url)
                          (keep (comp bam-or-cram? :name))
                          count)])]
     (let [gs-urls (into (array-map) (map crams [in-gs out-gs]))
