@@ -1,8 +1,13 @@
 {
   "tables": [
     {
-      "name": "WorkflowOutputs",
+      "name": "assemble_refbased_outputs",
       "columns": [
+        {
+          "name": "id",
+          "datatype": "string",
+          "array_of": false
+        },
         {
           "name": "assembly_fasta",
           "datatype": "fileref",
@@ -173,7 +178,14 @@
           "datatype": "string",
           "array_of": false
         }
-      ]
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "partitionMode": "date",
+      "datePartitionOptions": {
+        "column": "daterepo_ingest_date"
+      }
     }
   ]
 }
