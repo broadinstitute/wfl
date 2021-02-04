@@ -37,7 +37,7 @@
   ring/ring-jetty-adapter                   {:mvn/version "1.8.2"}
   ring/ring-json                            {:mvn/version "0.5.0"}
   ring/ring-servlet                         {:mvn/version "1.7.1"}
-  com.google.auth/google-auth-library-oauth2-http         {:mvn/version "0.15.0"}
+  com.google.auth/google-auth-library-oauth2-http         {:mvn/version "0.23.0"}
   com.google.cloud.sql/mysql-socket-factory-connector-j-8 {:mvn/version "1.0.11"}
   com.google.cloud.sql/postgres-socket-factory {:mvn/version "1.0.15"}
   com.google.cloud.sql/jdbc-socket-factory-core {:mvn/version "1.0.15"}
