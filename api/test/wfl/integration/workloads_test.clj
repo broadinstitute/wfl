@@ -1,8 +1,6 @@
 (ns wfl.integration.workloads-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.test :refer :all]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
             [wfl.module.copyfile :as copyfile]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]

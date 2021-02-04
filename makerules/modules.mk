@@ -79,10 +79,6 @@ help:
 $(DERIVED_DIR) $(DERIVED_MODULE_DIR):
 	@$(MKDIR) $@
 
-ifneq ($(REQUIRED_2P_REPOSITORIES),)
-  include $(MAKE_INCLUDE_DIR)/2p.mk
-endif
-
 ifneq ($(REQUIRED_PYTHON_ENVIRONMENT),)
   include $(MAKE_INCLUDE_DIR)/Python.mk
 endif

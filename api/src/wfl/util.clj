@@ -7,7 +7,6 @@
             [clojure.tools.logging :as log]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
-            [wfl.environments :as env]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
@@ -248,17 +247,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [g f & xs]
   (apply g (mapv f xs)))
 
-(defn exome-inputs
-  "Exome inputs for ENVIRONMENT that do not depend on the input file."
-  [environment]
-  (let [{:keys [google_account_vault_path vault_token_path]}
-        (env/stuff environment)]
-    {:unmapped_bam_suffix       ".unmapped.bam"
-     :google_account_vault_path google_account_vault_path
-     :vault_token_path          vault_token_path
-     :papi_settings             {:agg_preemptible_tries 3
-                                 :preemptible_tries     3}}))
-
 (def gatk-docker-inputs
   "This is silly."
   (let [gatk {:gatk_docker "us.gcr.io/broad-gatk/gatk:4.0.10.1"}
@@ -305,27 +293,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
          (mapcat spray)
          seeded-shuffle
          (str/join " "))))
-
-(defn make-options
-  "Make Cromwell options to run a workflow in ENVIRONMENT."
-  [environment]
-  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
-    (let [gcr   "us.gcr.io"
-          repo  "broad-gotc-prod"
-          image "genomes-in-the-cloud:2.4.3-1564508330"
-          {:keys [cromwell google]} (env/stuff environment)
-          {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend         "PAPIv2"
-           :google_project  (rand-nth projects)
-           :jes_gcs_root    (rand-nth jes_roots)
-           :read_from_cache true
-           :write_to_cache  true
-           :default_runtime_attributes
-           {:docker (str/join "/" [gcr repo image])
-            :zones  google-cloud-zones
-            :maxRetries 1}}
-          (maybe :monitoring_script cromwell)
-          (maybe :noAddress noAddress)))))
 
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
@@ -385,6 +352,22 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))
+
+(defn slashify
+  "Ensure URL ends in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    url
+    (str url "/")))
+
+(defn de-slashify
+  "Ensure URL does not end in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    (->> (seq url)
+         drop-last
+         (str/join ""))
+    url))
 
 (defn bracket
   "`acquire`, `use` and `release` a resource in an exception-safe manner.

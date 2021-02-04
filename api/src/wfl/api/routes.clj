@@ -3,8 +3,6 @@
   (:require [clojure.string                     :as str]
             [clojure.tools.logging              :as log]
             [clojure.tools.logging.readable     :as logr]
-            [reitit.ring.middleware.dev         :as dev]
-            [reitit.dev.pretty                  :as pretty]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -53,16 +51,6 @@
             :parameters nil
             :responses {200 {:body map?}}
             :handler (handlers/success env/stuff)}}]
-   ["/api/v1/workflows"
-    {:post {:summary    "Query for workflows"
-            :parameters {:body ::spec/workflow-request}
-            :responses {200 {:body {:results seq?}}}
-            :handler    handlers/query-workflows}}]
-   ["/api/v1/statuscounts"
-    {:get  {:summary "Get the status counts info for a given environment"
-            :parameters {:query {:environment string?}}
-            :responses {200 {:body {:total pos-int?}}}
-            :handler handlers/status-counts}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::spec/append-to-aou-request}

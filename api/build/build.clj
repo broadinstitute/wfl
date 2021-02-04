@@ -33,8 +33,7 @@
         :commit           commit
         :committed        committed
         :built            built
-        :user             (or (System/getenv "USER") "wfl")
-        "pipeline-config" "c8d70e65260239932d2896fbd1a43b3f0bb68475"}
+        :user             (or (System/getenv "USER") "wfl")}
        (map frob [aou/workflow-wdl
                   sg/workflow-wdl
                   wgs/workflow-wdl
@@ -76,23 +75,10 @@
           (->> (spit out)))))
   (System/exit 0))
 
-(defn stage-environment-dot-clj
-  "Stage the wfl/environments.clj file to generated SOURCES."
-  [sources]
-  (let [clj  "../derived/2p/pipeline-config/wfl/environments.clj"
-        file (io/file clj)]
-    (util/shell-io!
-     "git" "-c" "advice.detachedHead=false" "-C" (.getParent file)
-     "checkout" (the-version "pipeline-config"))
-    (let [out (io/file sources (.getName file))]
-      (io/make-parents out)
-      (io/copy file out))))
-
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
   (let [api "../derived/api"]
     (pprint the-version)
-    (stage-environment-dot-clj (io/file api "src" "wfl"))
     (write-the-version-file (io/file api "resources" "wfl") the-version))
   (System/exit 0))

@@ -1,5 +1,17 @@
-# Ignore everything
-*
-
-# Allow Jar files under target/
-!target/**/*.jar
+api.iml
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/lib/
+/classes/
+/target/
+/checkouts/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
+.nrepl-history
+.cpcache/
+.DS_Store

@@ -1,13 +1,8 @@
 (ns wfl.environments
   "Map environment to various values here.")
 
-;; Note: The LOAD form at the end of this file effectively ignores the
-;; rest of the content in this file in favor of loading a new
-;; wfl.environments namespace out of classpath resources.
-;;
-;; The rest of the file is here just to bootstrap development.
-;;
-;; I hope this works for you.  Let me know when it doesn't.
+;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases
+;;  since this is baked in code. Can we improve this?
 
 (def cromwell-label-keys
   "Use these keys to extract Cromwell labels from workflow inputs."
@@ -17,57 +12,34 @@
    :sample_name
    :version])
 
-(def development
-  "Some development environment."
-  {:cromwell
-   {:url "https://my-development-cromwell.example.com"
-    :labels cromwell-label-keys}
-   :google
-   {:jes_roots ["gs://cromwell-execution-path"]
-    :noAddress false
-    :projects ["a-development-project" "another-development-project"]}
-   :server
-   {:project "development"
-    :vault   "path/to/server/secrets"}
-   :data-repo
-   {:url  "https://datarepo-development.example.com"
-    :service-account "datarepo-service-account.iam.gserviceaccount.com"}})
-
-(def production
-  "Some production environment."
-  {:cromwell
-   {:url    "https://my-production-cromwell.example.com"
-    :labels cromwell-label-keys}
-   :google
-   {:jes_roots   ["gs://cromwell-execution-path"]
-    :noAddress       false
-    :projects ["a-production-project" "another-production-project"]}
-   :server
-   {:project "production"
-    :vault   "path/to/server/secrets"}
-   :data-repo
-   {:url  "https://datarepo-production.example.com"
-    :service-account "datarepo-service-account.iam.gserviceaccount.com"}})
+(def gotc-dev-cromwell
+  {:labels cromwell-label-keys
+   :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
+   :url "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"})
 
 (def debug
-  "Put debug hacks here."
-  development)
+  "A local environment for development and debugging."
+  {:cromwell gotc-dev-cromwell
+   :data-repo
+   {:service-account "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com"
+    :url "https://jade.datarepo-dev.broadinstitute.org"}
+   :google
+   {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
+    :projects ["broad-gotc-dev"]}
+   :server
+   {:project "broad-gotc-dev"
+    :service-account "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
+    :vault "secret/dsde/gotc/dev/zero"}})
 
 (def stuff
-  "Map ENVIRONMENT and so on to vault paths, URLs and so on."
+  "Map ENVIRONMENT and so on to vault paths and JDBC URLs and so on."
   (letfn [(make [m e] (let [kw  (keyword e)
                             var (resolve (symbol e))]
                         (-> (var-get var)
                             (assoc :doc (:doc (meta var)) :keyword kw :name e)
                             (->> (assoc m kw)))))]
-    (reduce make {} ["debug" "development" "production"])))
+    (reduce make {} ["debug"])))
 
 (def environments
   "Map valid values for :ENVIRONMENT to their doc strings."
   (zipmap (keys stuff) (map :doc (vals stuff))))
-
-;; Ignore all of that above and instead load from the classpath.
-;;
-;; See wfl.build/stage-some-files for more.
-;;
-(load "environments")

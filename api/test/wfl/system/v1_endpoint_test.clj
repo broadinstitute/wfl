@@ -13,6 +13,9 @@
   (:import (clojure.lang ExceptionInfo)
            (java.util UUID)))
 
+(def ^:private cromwell-url
+  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
@@ -127,7 +130,7 @@
       (is started "should have a started timestamp")
       (is (= (:email @endpoints/userinfo) creator)
           "creator inferred from auth token")
-      (letfn [(included [m] (select-keys m [:executor :pipeline :project]))]
+      (letfn [(included [m] (select-keys m [:pipeline :project]))]
         (is (= (included request) (included workload))))
       (is (every? :updated workflows))
       (is (every? :uuid workflows))
@@ -162,7 +165,7 @@
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
 (deftest ^:parallel test-append-to-aou-workload
-  (let [await    (partial cromwell/wait-for-workflow-complete :aou-dev)
+  (let [await    (partial cromwell/wait-for-workflow-complete cromwell-url)
         workload (endpoints/exec-workload
                   (workloads/aou-workload-request (UUID/randomUUID)))]
     (testing "appending sample successfully launches an aou workflow"

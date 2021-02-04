@@ -6,8 +6,7 @@
             [wfl.once :as once]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.terra :as terra]
-            [wfl.util :as util]
-            [wfl.module.all :as all])
+            [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
 (defn wfl-db-config
@@ -84,11 +83,9 @@
 
 (defn batch-update-workflow-statuses!
   "Use `tx` to update the `status` of the workflows in `_workload`."
-  [tx {:keys [executor items uuid] :as _workoad}]
-  (let [env (-> executor all/cromwell-environments first)
-        uuid->status (->> {:label               (str "workload:" uuid)
-                           :includeSubworkflows "false"}
-                          (cromwell/query env)
+  [tx {:keys [executor uuid items] :as _workoad}]
+  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+                          (cromwell/query executor)
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
               (jdbc/update! tx items

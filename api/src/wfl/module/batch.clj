@@ -1,9 +1,7 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.string :as str]
-            [wfl.api.workloads :as workloads]
+  (:require [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
@@ -22,7 +20,7 @@
         [{:keys [id]}]
         (-> workload-request
             (select-keys [:creator :executor :input :output :project])
-            (update :executor all/de-slashify)
+            (update :executor util/de-slashify)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))
@@ -47,26 +45,21 @@
 
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
-  ([workload env workflow-wdl make-cromwell-inputs! cromwell-label]
-   (submit-workload! workload env workflow-wdl
-                     make-cromwell-inputs!
-                     cromwell-label
-                     (util/make-options env)))
-  ([workload env workflow-wdl make-cromwell-inputs! cromwell-label default-options]
-   (let [{:keys [uuid workflows]} workload]
-     (letfn [(update-workflow [workflow cromwell-uuid]
-               (assoc workflow
-                      :updated (OffsetDateTime/now)
-                      :uuid   cromwell-uuid))
-             (submit-batch! [[options workflows]]
-               (map update-workflow
-                    workflows
-                    (cromwell/submit-workflows
-                     env workflow-wdl
-                     (map (partial make-cromwell-inputs! env) workflows)
-                     (util/deep-merge default-options options)
-                     (merge cromwell-label {:workload uuid}))))]
-       (mapcat submit-batch! (group-by :options workflows))))))
+  ([{:keys [uuid workflows]} url workflow-wdl make-cromwell-inputs! cromwell-label default-options]
+   (letfn [(update-workflow [workflow cromwell-uuid]
+             (assoc workflow :uuid cromwell-uuid
+                    :status "Submitted"
+                    :updated (OffsetDateTime/now)))
+           (submit-batch! [[options workflows]]
+             (map update-workflow
+                  workflows
+                  (cromwell/submit-workflows
+                   url
+                   workflow-wdl
+                   (map (partial make-cromwell-inputs! url) workflows)
+                   (util/deep-merge default-options options)
+                   (merge cromwell-label {:workload uuid}))))]
+     (mapcat submit-batch! (group-by :options workflows)))))
 
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."

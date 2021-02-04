@@ -8,9 +8,12 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent? make-options]])
+            [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
+
+(def ^:private cromwell-url-for-testing
+  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -19,7 +22,7 @@
       workloads/xx-workload-request
       (assoc :creator (:email @endpoints/userinfo))))
 
-(defn mock-submit-workload [{:keys [workflows]} _ _ _ _]
+(defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
         do-submit #(assoc % :uuid (UUID/randomUUID)
                           :status "Submitted"
@@ -74,9 +77,8 @@
            workloads/create-workload!
            :workflows
            (run! (comp go! :inputs))))))
-
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor (get-in env/stuff [:xx-dev :cromwell :url])
+  (let [workload (->> {:executor cromwell-url-for-testing
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  (format "(Test) %s" @workloads/git-branch)
@@ -125,8 +127,8 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ inputs options _]
-            (let [defaults (util/make-options env)]
+          (verify-submitted-options [url _ inputs options _]
+            (let [defaults (xx/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]

@@ -2,7 +2,6 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [wfl.environments :as env]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
@@ -11,9 +10,13 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent? make-options]])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+            [wfl.util :as util :refer [absent?]]
+            [wfl.module.sg :as sg])
+  (:import (java.time OffsetDateTime)
+           (java.util UUID)))
+
+(def ^:private cromwell-url-for-testing
+  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -90,14 +93,14 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (is (->> {:executor (get-in env/stuff [:wgs-dev :cromwell :url])
-            :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
-            :pipeline sg/pipeline
-            :project  (format "(Test) %s" @workloads/git-branch)
-            :creator  (:email @endpoints/userinfo)}
-           workloads/execute-workload!
-           workloads/update-workload!
-           :finished)))
+  (let [workload (->> {:executor cromwell-url-for-testing
+                       :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
+                       :pipeline sg/pipeline
+                       :project  (format "(Test) %s" @workloads/git-branch)
+                       :creator  (:email @endpoints/userinfo)}
+                      workloads/execute-workload!
+                      workloads/update-workload!)]
+    (is (:finished workload))))
 
 (deftest test-submitted-workflow-inputs
   (let [prefix (str sg/pipeline ".")]
@@ -128,10 +131,10 @@
           (verify-workflow-options [options]
             (is (:overwritten             options))
             (is (:supports_common_options options))
-            (is (:supports_options        options)))
-          (verify-submitted-options [env _ inputs options _]
+            (is (:supports_options options)))
+          (verify-submitted-options [url _ inputs options _]
             (verify-workflow-options options)
-            (let [defaults (util/make-options env)]
+            (let [defaults (sg/make-workflow-options url)]
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
     (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
