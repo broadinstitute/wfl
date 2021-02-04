@@ -1,0 +1,179 @@
+{
+  "tables": [
+    {
+      "name": "WorkflowOutputs",
+      "columns": [
+        {
+          "name": "assembly_fasta",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_variants_vcf_gz",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "assembly_length",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "assembly_length_unambiguous",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "reference_genome_length",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "assembly_mean_coverage",
+          "datatype": "float",
+          "array_of": false
+        },
+        {
+          "name": "dist_to_ref_snps",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "dist_to_ref_indels",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "replicate_concordant_sites",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "replicate_discordant_snps",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "replicate_discordant_indels",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "num_read_groups",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "num_libraries",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "replicate_discordant_vcf",
+          "datatype": "filerep",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_per_input_aligned_flagstat",
+          "datatype": "filerep",
+          "array_of": true
+        },
+        {
+          "name": "align_to_ref_per_input_reads_provided",
+          "datatype": "integer",
+          "array_of": true
+        },
+        {
+          "name": "align_to_ref_per_input_reads_aligned",
+          "datatype": "integer",
+          "array_of": true
+        },
+        {
+          "name": "align_to_ref_per_input_fastqc",
+          "datatype": "filerep",
+          "array_of": true
+        },
+        {
+          "name": "align_to_ref_merged_aligned_trimmed_only_bam",
+          "datatype": "filerep",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_merged_coverage_plot",
+          "datatype": "filerep",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_merged_coverage_tsv",
+          "datatype": "filerep",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_merged_reads_aligned",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_merged_read_pairs_aligned",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_merged_bases_aligned",
+          "datatype": "float",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_aligned_only_bam",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_coverage_plot",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_coverage_tsv",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_reads_aligned",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_read_pairs_aligned",
+          "datatype": "integer",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_bases_aligned",
+          "datatype": "float",
+          "array_of": false
+        },
+        {
+          "name": "align_to_self_merged_mean_coverage",
+          "datatype": "float",
+          "array_of": false
+        },
+        {
+          "name": "align_to_ref_viral_core_version",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "ivar_version",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "viral_assemble_version",
+          "datatype": "string",
+          "array_of": false
+        }
+      ]
+    }
+  ]
+}
