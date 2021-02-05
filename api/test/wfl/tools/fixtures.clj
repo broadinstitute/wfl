@@ -1,12 +1,12 @@
 (ns wfl.tools.fixtures
   (:require [clojure.string :as str]
+            [wfl.service.datarepo :as datarepo]
             [wfl.service.google.pubsub :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util]
-            [wfl.service.datarepo :as datarepo])
+            [wfl.util :as util])
   (:import [java.util UUID]))
 
 (defn method-overload-fixture
