@@ -16,15 +16,44 @@
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
 
-(def ^:private cromwell-label
-  "The WDL label applied to Cromwell metadata."
-  {(keyword wfl/the-name) pipeline})
-
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "948bfc0f4251c349adce4d6a6475b2bb31bbad22"
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
+
+(def ^:private options
+  "Map Cromwell URL to its options."
+  (let [raw {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+             {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"],
+              :projects  ["broad-exomes-dev1"]}
+             "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+             {:jes_roots ["gs://broad-realign-short-execution1/"
+                          "gs://broad-realign-short-execution2/"
+                          "gs://broad-realign-short-execution3/"
+                          "gs://broad-realign-short-execution4/"
+                          "gs://broad-realign-short-execution5/"
+                          "gs://broad-realign-short-execution6/"
+                          "gs://broad-realign-short-execution7/"
+                          "gs://broad-realign-short-execution8/"
+                          "gs://broad-realign-short-execution9/"
+                          "gs://broad-realign-short-execution10/"],
+              :projects ["broad-realign-execution01"
+                         "broad-realign-execution02"
+                         "broad-realign-execution03"
+                         "broad-realign-execution04"
+                         "broad-realign-execution05"]}}]
+    (zipmap (concat (keys raw) (map #(str % "/") (keys raw)))
+            (cycle (vals raw)))))
+
+(def ^:private known-cromwell? (set (keys options)))
+
+(defn ^:private is-known-cromwell-url?
+  [url]
+  (or (known-cromwell? url)
+      (throw (ex-info "Unknown Cromwell URL provided."
+                      {:cromwell url
+                       :known-cromwell? known-cromwell?}))))
 
 (defn ^:private cromwellify-workflow-inputs
   "Ready the `inputs` of `_workflow` for Cromwell."
@@ -33,83 +62,24 @@
       (util/deep-merge inputs)
       (util/prefix-keys pipeline)))
 
-(def ^:private known-cromwells
-  ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-   "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"])
-
-(defn ^:private is-known-cromwell-url?
-  [url]
-  (if-let [known-url (->> url
-                          util/de-slashify
-                          ((set known-cromwells)))]
-    known-url
-    (throw (ex-info "Unknown Cromwell URL provided."
-                    {:cromwell url
-                     :known-cromwells known-cromwells}))))
-
-(def ^:private inputs+options
-  [{:labels                    [:data_type
-                                :project
-                                :regulatory_designation
-                                :sample_name
-                                :version]
-    :google
-    {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
-     :noAddress false
-     :projects  ["broad-exomes-dev1"]}
-    :server
-    {:project "broad-gotc-dev"
-     :vault   "secret/dsde/gotc/dev/zero"}
-    :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
-    :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
-   (let [prefix   "broad-realign-"
-         projects (map (partial str prefix "execution0") (range 1 6))
-         buckets  (map (partial str prefix "short-execution") (range 1 11))
-         roots    (map (partial format "gs://%s/") buckets)]
-     {:cromwell {:labels            [:data_type
-                                     :project
-                                     :regulatory_designation
-                                     :sample_name
-                                     :version]
-                 :monitoring_script
-                 "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-                 :url
-                 "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
-      :google
-      {:jes_roots (vec roots)
-       :noAddress false
-       :projects  (vec projects)}
-      :google_account_vault_path
-      "secret/dsde/gotc/prod/picard/picard-account.pem"
-      :vault_token_path
-      "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
-
-(defn ^:private cromwell->inputs+options
-  "Map cromwell URL to workflow inputs and options for submitting an Whole Genome SG workflow."
-  [url]
-  ((zipmap known-cromwells inputs+options) (util/de-slashify url)))
-
 ;; visible for testing
 (defn make-workflow-options
   "Make workflow options to run the workflow in Cromwell URL."
   [url]
-  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
-    (let [gcr   "us.gcr.io"
-          repo  "broad-gotc-prod"
-          image "genomes-in-the-cloud:2.4.3-1564508330"
-          {:keys [cromwell google]} (cromwell->inputs+options url)
-          {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend         "PAPIv2"
-           :google_project  (rand-nth projects)
-           :jes_gcs_root    (rand-nth jes_roots)
-           :read_from_cache true
-           :write_to_cache  true
-           :default_runtime_attributes
-           {:docker (str/join "/" [gcr repo image])
-            :zones  util/google-cloud-zones
-            :maxRetries 1}}
-          (maybe :monitoring_script cromwell)
-          (maybe :noAddress noAddress)))))
+  (let [gcr   "us.gcr.io"
+        repo  "broad-gotc-prod"
+        image "genomes-in-the-cloud:2.4.3-1564508330"
+        {:keys [projects jes_roots]} (options url)]
+    (-> {:backend         "PAPIv2"
+         :google_project  (rand-nth projects)
+         :jes_gcs_root    (rand-nth jes_roots)
+         :read_from_cache true
+         :write_to_cache  true
+         :default_runtime_attributes
+         {:docker     (str/join "/" [gcr repo image])
+          :maxRetries 1
+          :noAddress  false
+          :zones      util/google-cloud-zones}})))
 
 (defn create-sg-workload!
   [tx {:keys [common items] :as request}]
@@ -135,12 +105,13 @@
                            (make-workflow-options executor)
                            {:final_workflow_outputs_dir output
                             #_#_:use_relative_output_paths  true})]
-      (run! update-record! (batch/submit-workload! workload
-                                                   executor
-                                                   workflow-wdl
-                                                   cromwellify-workflow-inputs
-                                                   cromwell-label
-                                                   default-options))
+      (run! update-record!
+            (batch/submit-workload! workload
+                                    executor
+                                    workflow-wdl
+                                    cromwellify-workflow-inputs
+                                    {(keyword wfl/the-name) pipeline}
+                                    default-options))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
