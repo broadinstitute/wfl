@@ -23,7 +23,7 @@
               vcf (str file-id ".vcf")
               table (str file-id ".tabular.json")
               vcf-url (gcs/gs-url bucket (str object vcf))
-              ingest-file (partial datarepo/file-ingest :debug dataset profile)
+              ingest-file (partial datarepo/ingest-file dataset profile)
               drsa (get-in env/stuff [:debug :data-repo :service-account])]
           (letfn [(stage [file content]
                     (spit file content)
@@ -31,7 +31,7 @@
                     (gcs/add-object-reader drsa bucket (str object file)))
                   (ingest [path vdest]
                     (let [job (ingest-file path vdest)]
-                      (:fileId (datarepo/poll-job :debug job))))
+                      (:fileId (datarepo/poll-job job))))
                   (cleanup []
                     (io/delete-file vcf)
                     (io/delete-file (str vcf ".tbi"))
@@ -44,8 +44,8 @@
                            :vcf_index (ingest vcf-url (str vcf ".tbi"))}
                           :escape-slash false))
             (let [table-url (gcs/gs-url bucket (str object table))
-                  job (datarepo/tabular-ingest :debug dataset table-url "sample")
-                  {:keys [bad_row_count row_count]} (datarepo/poll-job :debug job)]
+                  job (datarepo/ingest-dataset dataset table-url "sample")
+                  {:keys [bad_row_count row_count]} (datarepo/poll-job job)]
               (is (= 1 row_count))
               (is (= 0 bad_row_count)))
             (cleanup)))))))

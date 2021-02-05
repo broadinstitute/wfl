@@ -5,10 +5,7 @@
             [clojure.data.json :as json]
             [clojure.string :as str]
             [wfl.once :as once]
-            [wfl.util :as util]))
-
-(defn ^:private json-body [response]
-  (-> response :body (or "null") util/parse-json))
+            [wfl.util :refer [response-body-json]]))
 
 (def ^:private pubsub-url
   (partial str "https://pubsub.googleapis.com/v1/"))
@@ -32,7 +29,7 @@
   [project topic-id]
   (-> (pubsub-url (str/join "/" ["projects" project "topics" topic-id]))
       (http/put {:headers (once/get-auth-header)})
-      json-body
+      response-body-json
       :name))
 
 (defn delete-topic
@@ -56,7 +53,7 @@
   [project]
   (-> (pubsub-url (str/join "/" ["projects" project "topics"]))
       (http/get {:headers (once/get-auth-header)})
-      json-body
+      response-body-json
       :topics))
 
 ;; Google Cloud Pub/Sub Subscriptions
@@ -104,7 +101,7 @@
          {:headers      (once/get-auth-header)
           :content-type :json
           :body         (json/write-str {:topic topic} :escape-slash false)})
-        json-body
+        response-body-json
         :name)))
 
 (defn delete-subscription
@@ -129,7 +126,7 @@
   [project-or-topic]
   (-> (pubsub-url project-or-topic "/subscriptions")
       (http/get {:headers (once/get-auth-header)})
-      json-body
+      response-body-json
       :subscriptions))
 
 (defn pull-subscription
@@ -147,7 +144,7 @@
                   :body    (json/write-str
                             {:maxMessages 100}
                             :escape-slash false)})
-      json-body
+      response-body-json
       :receivedMessages
       (or [])))
 
@@ -162,7 +159,7 @@
   [resource]
   (-> (pubsub-url resource ":getIamPolicy")
       (http/get {:headers (once/get-auth-header)})
-      json-body))
+      response-body-json))
 
 (defn set-iam-policy
   "Set the IAM policy for the given Pub/Sub `resource` with the specified

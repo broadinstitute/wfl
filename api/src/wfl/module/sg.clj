@@ -170,7 +170,7 @@
   [output pipeline {:keys [inputs uuid] :as _workflow}]
   (let [{:keys [base_file_name input_cram]} (util/parse-json inputs)
         base_file_name (or base_file_name
-                           (-> input_cram util/leafname
+                           (-> input_cram util/basename
                                (util/unsuffix ".cram")))
         parts [output pipeline uuid pipeline "execution" base_file_name]
         path  (partial str (str/join "/" parts))
