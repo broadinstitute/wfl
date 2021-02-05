@@ -368,9 +368,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "Ensure URL does not end in a slash /."
   [url]
   (if (str/ends-with? url "/")
-    (->> (seq url)
-         drop-last
-         (str/join ""))
+    (recur (str/join "" (drop-last url)))
     url))
 
 (defn bracket

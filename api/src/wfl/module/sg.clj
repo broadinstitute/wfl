@@ -22,38 +22,32 @@
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
 
-(def ^:private options
-  "Map Cromwell URL to its options."
-  (let [raw {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-             {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"],
-              :projects  ["broad-exomes-dev1"]}
-             "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-             {:jes_roots ["gs://broad-realign-short-execution1/"
-                          "gs://broad-realign-short-execution2/"
-                          "gs://broad-realign-short-execution3/"
-                          "gs://broad-realign-short-execution4/"
-                          "gs://broad-realign-short-execution5/"
-                          "gs://broad-realign-short-execution6/"
-                          "gs://broad-realign-short-execution7/"
-                          "gs://broad-realign-short-execution8/"
-                          "gs://broad-realign-short-execution9/"
-                          "gs://broad-realign-short-execution10/"],
-              :projects ["broad-realign-execution01"
-                         "broad-realign-execution02"
-                         "broad-realign-execution03"
-                         "broad-realign-execution04"
-                         "broad-realign-execution05"]}}]
-    (zipmap (concat (keys raw) (map #(str % "/") (keys raw)))
-            (cycle (vals raw)))))
-
-(def ^:private known-cromwell? (set (keys options)))
-
-(defn ^:private is-known-cromwell-url?
+(defn ^:private options-for-cromwell
+  "Map Cromwell URL to its options or throw."
   [url]
-  (or (known-cromwell? url)
-      (throw (ex-info "Unknown Cromwell URL provided."
-                      {:cromwell url
-                       :known-cromwell? known-cromwell?}))))
+  (let [known {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"],
+                :projects  ["broad-exomes-dev1"]}
+               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+               {:jes_roots ["gs://broad-realign-short-execution1/"
+                            "gs://broad-realign-short-execution2/"
+                            "gs://broad-realign-short-execution3/"
+                            "gs://broad-realign-short-execution4/"
+                            "gs://broad-realign-short-execution5/"
+                            "gs://broad-realign-short-execution6/"
+                            "gs://broad-realign-short-execution7/"
+                            "gs://broad-realign-short-execution8/"
+                            "gs://broad-realign-short-execution9/"
+                            "gs://broad-realign-short-execution10/"],
+                :projects ["broad-realign-execution01"
+                           "broad-realign-execution02"
+                           "broad-realign-execution03"
+                           "broad-realign-execution04"
+                           "broad-realign-execution05"]}}]
+    (or (-> url util/de-slashify known)
+        (throw (ex-info "Unknown Cromwell URL provided."
+                        {:cromwell        url
+                         :known-cromwells (keys known)})))))
 
 (defn ^:private cromwellify-workflow-inputs
   "Ready the `inputs` of `_workflow` for Cromwell."
@@ -69,7 +63,7 @@
   (let [gcr   "us.gcr.io"
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
-        {:keys [projects jes_roots]} (options url)]
+        {:keys [projects jes_roots]} (options-for-cromwell url)]
     (-> {:backend         "PAPIv2"
          :google_project  (rand-nth projects)
          :jes_gcs_root    (rand-nth jes_roots)
@@ -100,7 +94,6 @@
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
     (let [now (OffsetDateTime/now)
-          executor (is-known-cromwell-url? executor)
           default-options (util/deep-merge
                            (make-workflow-options executor)
                            {:final_workflow_outputs_dir output
