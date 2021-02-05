@@ -54,5 +54,6 @@
 (deftest test-create-dataset
   (-> (slurp "test/resources/datasets/assemble-refbased-outputs.json")
       json/read-str
+      ;; give it a unique name to avoid collisions with other tests
       (update "name" #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
       (fixtures/with-temporary-dataset #(is %))))
