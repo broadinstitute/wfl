@@ -33,10 +33,6 @@
       (util/deep-merge inputs)
       (util/prefix-keys pipeline)))
 
-(defn ^:private per-workflow-default-options [{:keys [output]}]
-  "Cause workflow outputs to be at `{output}/{pipeline}/{workflow uuid}/{pipeline task}/execution/`."
-  {:final_workflow_outputs_dir output})
-
 (def ^:private known-cromwells
   ["https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
    "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"])
@@ -70,19 +66,23 @@
          projects (map (partial str prefix "execution0") (range 1 6))
          buckets  (map (partial str prefix "short-execution") (range 1 11))
          roots    (map (partial format "gs://%s/") buckets)]
-     {:cromwell                  {:labels            [:data_type
-                                                      :project
-                                                      :regulatory_designation
-                                                      :sample_name
-                                                      :version]
-                                  :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-                                  :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
+     {:cromwell {:labels            [:data_type
+                                     :project
+                                     :regulatory_designation
+                                     :sample_name
+                                     :version]
+                 :monitoring_script
+                 "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
+                 :url
+                 "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
       :google
       {:jes_roots (vec roots)
        :noAddress false
        :projects  (vec projects)}
-      :google_account_vault_path "secret/dsde/gotc/prod/picard/picard-account.pem"
-      :vault_token_path          "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
+      :google_account_vault_path
+      "secret/dsde/gotc/prod/picard/picard-account.pem"
+      :vault_token_path
+      "gs://broad-dsp-gotc-prod-tokens/picardsa.token"})])
 
 (defn ^:private cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an Whole Genome SG workflow."
@@ -124,15 +124,22 @@
       (jdbc/insert-multi! tx table (map serialize items (range)))
       (workloads/load-workload-for-id tx id))))
 
-(defn start-sg-workload! [tx {:keys [items id executor] :as workload}]
+(defn start-sg-workload!
+  [tx {:keys [executor id items output] :as workload}]
   (letfn [(update-record! [{:keys [id] :as workflow}]
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
     (let [now (OffsetDateTime/now)
-          ;; SG is derivative of WGS and should use precisely the same environments
           executor (is-known-cromwell-url? executor)
-          default-options (util/deep-merge (make-workflow-options executor) (per-workflow-default-options workload))]
-      (run! update-record! (batch/submit-workload! workload executor workflow-wdl cromwellify-workflow-inputs cromwell-label
+          default-options (util/deep-merge
+                           (make-workflow-options executor)
+                           {:final_workflow_outputs_dir output
+                            #_#_:use_relative_output_paths  true})]
+      (run! update-record! (batch/submit-workload! workload
+                                                   executor
+                                                   workflow-wdl
+                                                   cromwellify-workflow-inputs
+                                                   cromwell-label
                                                    default-options))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
