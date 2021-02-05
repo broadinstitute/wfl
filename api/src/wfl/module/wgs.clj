@@ -57,22 +57,17 @@
     {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"]
      :noAddress false
      :projects  ["broad-exomes-dev1"]}
-    :server
-    {:project "broad-gotc-dev"
-     :vault   "secret/dsde/gotc/dev/zero"}
     :google_account_vault_path "secret/dsde/gotc/dev/picard/picard-account.pem"
     :vault_token_path          "gs://broad-dsp-gotc-dev-tokens/picardsa.token"}
    (let [prefix   "broad-realign-"
          projects (map (partial str prefix "execution0") (range 1 6))
          buckets  (map (partial str prefix "short-execution") (range 1 11))
          roots    (map (partial format "gs://%s/") buckets)]
-     {:cromwell                  {:labels            [:data_type
-                                                      :project
-                                                      :regulatory_designation
-                                                      :sample_name
-                                                      :version]
-                                  :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-                                  :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
+     {:labels            [:data_type
+                          :project
+                          :regulatory_designation
+                          :sample_name
+                          :version]
       :google
       {:jes_roots (vec roots)
        :noAddress false
