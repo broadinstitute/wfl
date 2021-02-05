@@ -18,6 +18,15 @@
   "API URL for Data Repo API."
   (partial datarepo-url "api/repository/v1/"))
 
+(defn delete-dataset
+  "Create a dataset with EDN `schema`."
+  [schema]
+  (-> (repository "datasets")
+      (http/post {:content-type :application/json
+                  :headers      (once/get-service-account-header)
+                  :body         (json/write-str schema :escape-slash false)})
+      util/response-body-json))
+
 (defn ^:private ingest
   "Ingest THING to DATASET-ID according to BODY."
   [thing dataset-id body]
@@ -52,24 +61,42 @@
     :path                  path
     :table                 table}))
 
-(defn get-job-result
-  "Get result for JOB-ID."
-  [job-id]
-  (-> (repository "jobs/" job-id "/result")
-      (http/get {:headers (once/get-service-account-header)})
-      util/response-body-json))
-
 (defn poll-job
   "Return result for JOB-ID in ENVIRONMENT when it stops running."
   [job-id]
-  (letfn [(running? []
-            (-> (repository "jobs/" job-id)
-                (http/get {:headers (once/get-service-account-header)})
-                util/response-body-json
-                :job_status
-                #{"running"}))]
+  (let [get-result #(-> (repository "jobs/" job-id "/result")
+                        (http/get {:headers (once/get-service-account-header)})
+                        util/response-body-json)
+        running?   #(-> (repository "jobs/" job-id)
+                        (http/get {:headers (once/get-service-account-header)})
+                        util/response-body-json
+                        :job_status
+                        #{"running"})]
     (while (running?) (.sleep TimeUnit/SECONDS 1))
-    (get-job-result job-id)))
+    (get-result)))
+
+(defn create-dataset
+  "Create a dataset with EDN `schema`."
+  [dataset-request]
+  (-> (repository "datasets")
+      (http/post {:content-type :application/json
+                  :headers      (once/get-service-account-header)
+                  :body         (json/write-str
+                                 dataset-request
+                                 :escape-slash false)})
+      util/response-body-json
+      :id
+      poll-job
+      :id))
+
+(defn delete-dataset
+  "Create a dataset with EDN `schema`."
+  [dataset-id]
+  (-> (repository "datasets/" dataset-id)
+      (http/delete {:headers (once/get-service-account-header)})
+      util/response-body-json
+      :id
+      poll-job))
 
 (comment
   (def successful-file-ingest-response

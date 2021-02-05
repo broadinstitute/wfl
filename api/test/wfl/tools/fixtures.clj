@@ -5,7 +5,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.service.datarepo :as datarepo])
   (:import [java.util UUID]))
 
 (defn method-overload-fixture
@@ -131,4 +132,12 @@
   (util/bracket
    #(pubsub/create-subscription topic (str "wfl-test-subscription-" (UUID/randomUUID)))
    pubsub/delete-subscription
+   f))
+
+(defn with-temporary-dataset
+  "Create a temporary Terra Data Repository Dataset with `dataset-request`"
+  [dataset-request f]
+  (util/bracket
+   #(datarepo/create-dataset dataset-request)
+   datarepo/delete-dataset
    f))
