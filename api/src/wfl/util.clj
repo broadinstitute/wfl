@@ -234,6 +234,16 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
           (vals m)))
 
+(defn unprefix-keys
+  "Remove prefix `p` from all keys in map `m` with that prefix."
+  [m p]
+  (zipmap (map (fn [k] (let [prefix (name p)]
+                         (if (str/starts-with? (name k) prefix)
+                           (keyword (subs (name k) (count prefix)))
+                           k)))
+               (keys m))
+          (vals m)))
+
 (defn absent?
   "Test if `coll` does not contain `key`.
   See also `clojure.core/contains?`
