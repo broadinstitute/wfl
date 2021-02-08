@@ -134,14 +134,14 @@
 
 ;; visible for testing
 (defn make-inputs-to-save [output-url inputs]
-  (let [sample (some inputs [:input_bam :input_cram])
-        [_ base _] (all/bam-or-cram? sample)
-        leaf   (util/basename base)
-        [_ out-dir] (gcs/parse-gs-url base)]
+  (let [sample      (some inputs [:input_bam :input_cram])
+        base        (util/remove-extension sample)
+        basename    (util/basename base)
+        [_ out-dir] (gcs/parse-gs-url (util/unsuffix base basename))]
     (-> inputs
-        (util/assoc-when util/absent? :base_file_name leaf)
-        (util/assoc-when util/absent? :sample_name leaf)
-        (util/assoc-when util/absent? :final_gvcf_base_name leaf)
+        (util/assoc-when util/absent? :base_file_name basename)
+        (util/assoc-when util/absent? :sample_name basename)
+        (util/assoc-when util/absent? :final_gvcf_base_name basename)
         (util/assoc-when util/absent? :destination_cloud_path
                          (str (util/slashify output-url) (util/dirname out-dir))))))
 

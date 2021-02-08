@@ -3,10 +3,8 @@
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
             [wfl.once :as once]
-            [wfl.util :as util]
-            [clojure.string :as str])
-  (:import [org.apache.http HttpException]
-           (java.util.concurrent TimeUnit)))
+            [wfl.util :as util])
+  (:import (java.util.concurrent TimeUnit)))
 
 (def ^:private datarepo-url
   (let [url (-> (System/getenv "TERRA_DATA_REPO_URL")

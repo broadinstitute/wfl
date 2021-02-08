@@ -1,13 +1,12 @@
 (ns wfl.integration.datarepo-test
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [wfl.environments :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.google.storage :as gcs]
-            [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]
-            [wfl.tools.fixtures :as fixtures]
-            [clojure.string :as str])
+            [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))
 
 ;; UUIDs known to the Data Repo.
@@ -16,7 +15,7 @@
 (def profile "390e7a85-d47f-4531-b612-165fc977d3bd")
 
 (deftest delivery
-  (with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
       (testing "delivery succeeds"
         (let [[bucket object] (gcs/parse-gs-url url)
