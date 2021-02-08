@@ -114,19 +114,21 @@
         (dissoc :reference_fasta_prefix))
     inputs))
 
-(defn ^:private make-inputs-to-save
+;; visible for testing
+(defn make-inputs-to-save
   "Return inputs for reprocessing IN-GS into OUT-GS."
   [out-gs inputs]
   (let [sample      (some inputs [:input_bam :input_cram])
-        base        (util/remove-extension sample)
-        basename    (util/basename base)
-        [_ out-dir] (gcs/parse-gs-url (util/unsuffix base basename))]
+        sample-name (util/basename (util/remove-extension sample))]
     (-> inputs
-        (util/assoc-when util/absent? :base_file_name basename)
-        (util/assoc-when util/absent? :sample_name basename)
+        (util/assoc-when util/absent? :base_file_name sample-name)
+        (util/assoc-when util/absent? :sample_name sample-name)
         (util/assoc-when util/absent? :unmapped_bam_suffix ".unmapped.bam")
-        (util/assoc-when util/absent? :final_gvcf_base_name basename)
-        (assoc :destination_cloud_path (str out-gs out-dir)))))
+        (util/assoc-when util/absent? :final_gvcf_base_name sample-name)
+        (util/assoc-when util/absent? :destination_cloud_path
+                         (str
+                          (util/slashify out-gs)
+                          (-> sample gcs/parse-gs-url second util/dirname))))))
 
 (defn ^:private make-workflow-inputs
   "Make the final pipeline inputs from Cromwell URL."
