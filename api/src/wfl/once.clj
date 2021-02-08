@@ -1,5 +1,5 @@
 (ns wfl.once
-  "Manage credentials."
+  "Manage credentials and configurations."
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
             [clojure.string    :as str]
