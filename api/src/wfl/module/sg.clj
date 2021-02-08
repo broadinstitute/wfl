@@ -8,6 +8,7 @@
             [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.clio :as clio]
+            [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
@@ -58,13 +59,14 @@
 
 ;; visible for testing
 (defn make-workflow-options
-  "Make workflow options to run the workflow in Cromwell URL."
-  [url]
+  "Workflow options for Cromwell at `url` to write to `output`."
+  [url output]
   (let [gcr   "us.gcr.io"
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
         {:keys [projects jes_roots]} (options-for-cromwell url)]
     (-> {:backend         "PAPIv2"
+         :final_workflow_outputs_dir output
          :google_project  (rand-nth projects)
          :jes_gcs_root    (rand-nth jes_roots)
          :read_from_cache true
@@ -93,18 +95,14 @@
   (letfn [(update-record! [{:keys [id] :as workflow}]
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
-    (let [now (OffsetDateTime/now)
-          default-options (util/deep-merge
-                           (make-workflow-options executor)
-                           {:final_workflow_outputs_dir output
-                            :use_relative_output_paths  true})]
+    (let [now (OffsetDateTime/now)]
       (run! update-record!
             (batch/submit-workload! workload
                                     executor
                                     workflow-wdl
                                     cromwellify-workflow-inputs
                                     {(keyword wfl/the-name) pipeline}
-                                    default-options))
+                                    (make-workflow-options executor output)))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
@@ -137,25 +135,25 @@
                                     :version]))))
 
 (defn register-workflow-in-clio
-  "Ensure Clio knows the `output` files for `_workflow` of `pipeline`."
-  [output pipeline workload-uuid {:keys [inputs uuid] :as _workflow}]
-  (let [{:keys [base_file_name input_cram sample_name]} (util/parse-json inputs)
-        base_file_name (or base_file_name sample_name
-                           (-> input_cram util/leafname
-                               (util/unsuffix ".cram")))
-        parts [output pipeline workload-uuid uuid base_file_name]
-        path  (partial str (str/join "/" parts) ".aln.mrkdp.")
-        bam   {:bai_path                   (path "bai")
-               :bam_path                   (path "bam")
-               :insert_size_metrics_path   (path "insert_size_metrics")}]
-    (if-let [bam-record (clio-bam-record (select-keys bam [:bam_path]))]
-      bam-record
-      (let [cram (clio-cram-record input_cram)
-            have (-> "" path gcs/parse-gs-url
-                     (->> (apply gcs/list-objects)
-                          (map gcs/gs-object-url))
-                     set)
-            want (-> bam vals set)
+  "Ensure Clio knows the `workflow` outputs of `executor`."
+  [executor {:keys [uuid] :as workflow}]
+  (let [cromwell->clio {:bai                 :bai_path
+                        :bam                 :bam_path
+                        :insert_size_metrics :insert_size_metrics_path}
+        {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
+        bam (-> outputs
+                (util/unprefix-keys (str pipeline "."))
+                (set/rename-keys cromwell->clio)
+                (select-keys (vals cromwell->clio)))]
+    (when (some empty? (vals bam))
+      (throw (ex-info "Bad metadata from executor" {:executor executor
+                                                    :metadata metadata})))
+    (if-let [clio-bam (clio-bam-record (select-keys bam [:bam_path]))]
+      clio-bam
+      (let [get  (comp gcs/gs-object-url first gcs/list-objects)
+            cram (clio-cram-record (:input_cram inputs))
+            have (->> bam vals (map get) set)
+            want (->  bam vals           set)
             need (set/difference want have)]
         (when-not (empty? need)
           (throw (ex-info "Need these output files:" {:need need})))
