@@ -1,35 +1,33 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.api.workloads :as workloads])
-  (:import [java.util UUID]
-           [java.time OffsetDateTime]))
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (defn add-workload-table!
-  "Create row in workload table for `workload-request` using transaction `tx`.
-  Instantiate a CromwellWorkflow table for the workload.
-  Returns: [id table-name]"
-  [tx {:keys [release path] :as _workflow-wdl} {:keys [pipeline] :as workload-request}]
-  (let [[{:keys [id]}]
+  "Use transaction `tx` to add a `CromwellWorkflow` table
+  for a `workload-request` running `workflow-wdl`."
+  [tx workflow-wdl workload-request]
+  (let [{:keys [path release]} workflow-wdl
+        {:keys [pipeline]} workload-request
+        create "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))"
+        setter "UPDATE workload SET pipeline = ?::pipeline WHERE id = ?"
+        [{:keys [id]}]
         (-> workload-request
             (select-keys [:creator :executor :input :output :project])
-            (update :executor all/de-slashify)
+            (update :executor util/de-slashify)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))
         table (format "%s_%09d" pipeline id)]
-    (jdbc/execute! tx
-                   ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
-    (jdbc/db-do-commands tx
-                         (map #(format "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))" %)
-                              [table]))
-    (jdbc/update! tx :workload {:items table} ["id = ?" id])
+    (jdbc/execute!       tx [setter pipeline id])
+    (jdbc/db-do-commands tx [(format create table)])
+    (jdbc/update!        tx :workload {:items table} ["id = ?" id])
     [id table]))
 
 (defn load-batch-workload-impl
@@ -47,9 +45,7 @@
 
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
-  ([workflow env workflow-wdl make-cromwell-inputs! cromwell-label]
-   (submit-workload! workflow env workflow-wdl make-cromwell-inputs! cromwell-label (util/make-options env)))
-  ([{:keys [uuid workflows]} env workflow-wdl make-cromwell-inputs! cromwell-label default-options]
+  ([{:keys [uuid workflows]} url workflow-wdl make-cromwell-inputs! cromwell-label default-options]
    (letfn [(update-workflow [workflow cromwell-uuid]
              (assoc workflow :uuid cromwell-uuid
                     :status "Submitted"
@@ -58,9 +54,9 @@
              (map update-workflow
                   workflows
                   (cromwell/submit-workflows
-                   env
+                   url
                    workflow-wdl
-                   (map (partial make-cromwell-inputs! env) workflows)
+                   (map (partial make-cromwell-inputs! url) workflows)
                    (util/deep-merge default-options options)
                    (merge cromwell-label {:workload uuid}))))]
      (mapcat submit-batch! (group-by :options workflows)))))

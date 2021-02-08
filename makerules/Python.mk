@@ -3,7 +3,7 @@
 # Virtual evironments are created in derived/venv/$(MODULE) and are cleaned on
 # `distclean`
 # Example:
-# REQUIRED_2P_REPOSREQUIRED_PYTHON_ENVIRONMENTITORIES := requirements.txt
+# REQUIRED_PYTHON_ENVIRONMENTITORIES := requirements.txt
 # include $(MAKE_INCLUDE_DIR)/modules.mk
 #
 # # Then use

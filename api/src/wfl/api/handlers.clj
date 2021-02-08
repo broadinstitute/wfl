@@ -11,10 +11,8 @@
             [wfl.module.xx]
             [wfl.module.sg]
             [wfl.jdbc :as jdbc]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
-            [wfl.wfl :as wfl]
-            [wfl.service.gcs :as gcs]))
+            [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres :as postgres]))
 
 (defn succeed
   "A successful response with BODY."
@@ -25,25 +23,6 @@
   "Respond successfully with BODY."
   [body]
   (constantly (succeed body)))
-
-(defn status-counts
-  "Get status counts for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (let [environment (some :environment ((juxt :query :body) parameters))]
-    (logr/infof "status-counts endpoint called: environment=%s" environment)
-    (let [env (wfl/throw-or-environment-keyword! environment)]
-      (succeed (cromwell/status-counts env {:includeSubworkflows false})))))
-
-(defn query-workflows
-  "Get workflows for environment in REQUEST."
-  [{:keys [parameters] :as _request}]
-  (let [{:keys [body environment query]} parameters]
-    (logr/infof "query-workflows endpoint called: body=%s environment=%s query=%s" body environment query)
-    (let [env   (wfl/throw-or-environment-keyword! environment)
-          start (some :start [query body])
-          end   (some :end [query body])
-          query {:includeSubworkflows false :start start :end end}]
-      (succeed {:results (cromwell/query env query)}))))
 
 (defn strip-internals
   "Strip internal properties from the `workload` and its `workflows`."

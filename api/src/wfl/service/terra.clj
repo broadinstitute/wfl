@@ -1,12 +1,9 @@
 (ns wfl.service.terra
   "Analyze data in Terra using the Firecloud/Terra API."
   (:require [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
-            [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.once :as once]
-            [wfl.util :as util])
-  (:import [java.util.concurrent TimeUnit]))
+            [wfl.util :as util]))
 
 (defn workspace-api-url
   [terra-url workspace]

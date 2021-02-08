@@ -5,11 +5,8 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [buddy.sign.jwt :as jwt]
-            [clj-yaml.core :as yaml]
-            [vault.client.http]                             ; vault.core needs this
+            [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
-            [wfl.environments :as env]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
@@ -20,14 +17,21 @@
            [java.util.zip ZipOutputStream ZipEntry]
            [org.apache.commons.io FilenameUtils]))
 
-vault.client.http/http-client                               ; Keep :clint eastwood quiet.
+vault.client.http/http-client           ; Keep :clint eastwood quiet.
 
 (defmacro do-or-nil
-  "Value of BODY or nil if it throws."
+  "Value of `body` or `nil` if it throws."
   [& body]
   `(try (do ~@body)
         (catch Exception x#
           (log/warn x# "Swallowed exception and returned nil in wfl.util/do-or-nil"))))
+
+(defmacro do-or-nil-silently
+  "Value of `body` or `nil` if it throws, without logging exceptions.
+  See also [[do-or-nil]]."
+  [& body]
+  `(try (do ~@body)
+        (catch Exception x#)))
 
 ;; Parsers that will not throw.
 ;;
@@ -38,13 +42,16 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
-;; `x#` used here since `_` will fail in a macro.
-(defmacro do-or-nil-silently
-  "Value of BODY or nil if it throws, without printing any exceptions.
-  See also [[do-or-nil]]."
-  [& body]
-  `(try (do ~@body)
-        (catch Exception x#)))
+(defonce the-system-environment (delay (into {} (System/getenv))))
+
+(defn getenv
+  "`(System/getenv)` as a map, or the value for `key`, or `default`."
+  ([key default]
+   (@the-system-environment key default))
+  ([key]
+   (@the-system-environment key))
+  ([]
+   @the-system-environment))
 
 (defn parse-json
   "Parse the json string STR into a keyword-string map"
@@ -66,13 +73,15 @@ vault.client.http/http-client                               ; Keep :clint eastwo
       (json/pprint content :escape-slash false))))
 
 (defn vault-secrets
-  "Return the vault-secrets at PATH."
+  "Return the secrets at `path` in vault."
   [path]
-  (let [token-path (str (System/getProperty "user.home") "/.vault-token")]
+  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
+                       (str/join "/") slurp do-or-nil)
+                  (getenv "VAULT_TOKEN" "VAULT_TOKEN"))]
     (try (vault/read-secret
           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token (slurp token-path)))
-          path)
+            (vault/authenticate! :token token))
+          path {})
          (catch Throwable e
            (log/warn e "Issue with Vault")
            (log/debug "Perhaps run 'vault login' and try again")))))
@@ -238,17 +247,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [g f & xs]
   (apply g (mapv f xs)))
 
-(defn exome-inputs
-  "Exome inputs for ENVIRONMENT that do not depend on the input file."
-  [environment]
-  (let [{:keys [google_account_vault_path vault_token_path]}
-        (env/stuff environment)]
-    {:unmapped_bam_suffix       ".unmapped.bam"
-     :google_account_vault_path google_account_vault_path
-     :vault_token_path          vault_token_path
-     :papi_settings             {:agg_preemptible_tries 3
-                                 :preemptible_tries     3}}))
-
 (def gatk-docker-inputs
   "This is silly."
   (let [gatk {:gatk_docker "us.gcr.io/broad-gatk/gatk:4.0.10.1"}
@@ -296,27 +294,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
          seeded-shuffle
          (str/join " "))))
 
-(defn make-options
-  "Make options to run the workflow in ENVIRONMENT."
-  [environment]
-  (letfn [(maybe [m k v] (if-some [kv (k v)] (assoc m k kv) m))]
-    (let [gcr   "us.gcr.io"
-          repo  "broad-gotc-prod"
-          image "genomes-in-the-cloud:2.4.3-1564508330"
-          {:keys [cromwell google]} (env/stuff environment)
-          {:keys [projects jes_roots noAddress]} google]
-      (-> {:backend         "PAPIv2"
-           :google_project  (rand-nth projects)
-           :jes_gcs_root    (rand-nth jes_roots)
-           :read_from_cache true
-           :write_to_cache  true
-           :default_runtime_attributes
-           {:docker (str/join "/" [gcr repo image])
-            :zones  google-cloud-zones
-            :maxRetries 1}}
-          (maybe :monitoring_script cromwell)
-          (maybe :noAddress noAddress)))))
-
 (defn is-non-negative!
   "Throw unless integer value of INT-STRING is non-negative."
   [int-string]
@@ -326,26 +303,6 @@ vault.client.http/http-client                               ; Keep :clint eastwo
               (format "%s must be a non-negative integer"
                       (if (nil? result) "" (format " (%s)" result))))))
     result))
-
-(defonce the-system-environment (delay (into {} (System/getenv))))
-
-(defn getenv
-  "(System/getenv) as a map, or the value for KEY, or DEFAULT."
-  ([key default]
-   (@the-system-environment key default))
-  ([key]
-   (@the-system-environment key))
-  ([]
-   @the-system-environment))
-
-(defn spit-yaml
-  "Spit CONTENT into FILE as YAML, optionally adding COMMENTS."
-  [file content & comments]
-  (let [header (if (empty? comments) ""
-                   (str "# " (str/join "\n# " comments) "\n\n"))
-        yaml   (yaml/generate-string content
-                                     :dumper-options {:flow-style :block})]
-    (spit file (str header yaml))))
 
 (defn shell!
   "Run ARGS in a shell and return stdout or throw."
@@ -395,3 +352,33 @@ vault.client.http/http-client                               ; Keep :clint eastwo
   [xs]
   (letfn [(between [[first second] x] (str first x second))]
     (between "()" (str/join "," (map (partial between "''") xs)))))
+
+(defn slashify
+  "Ensure URL ends in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    url
+    (str url "/")))
+
+(defn de-slashify
+  "Ensure URL does not end in a slash /."
+  [url]
+  (if (str/ends-with? url "/")
+    (->> (seq url)
+         drop-last
+         (str/join ""))
+    url))
+
+(defn bracket
+  "`acquire`, `use` and `release` a resource in an exception-safe manner.
+   Parameters
+   ----------
+   acquire - thunk returning newly acquired resource
+   release - function to clean up resource, called before this function returns
+   use     - function that uses the resource"
+  [acquire release use]
+  (let [resource (acquire)]
+    (try
+      (use resource)
+      (finally
+        (release resource)))))

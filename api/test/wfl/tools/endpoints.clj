@@ -2,7 +2,7 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [wfl.once :as once]
-            [wfl.service.gcs :as gcs]
+            [wfl.service.google.storage :as gcs]
             [wfl.util :as util]))
 
 (def server

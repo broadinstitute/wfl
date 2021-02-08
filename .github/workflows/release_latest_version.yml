@@ -105,42 +105,6 @@ jobs:
           echo "GOOGLE_OAUTH_ACCESS_TOKEN=${GOOGLE_OAUTH_ACCESS_TOKEN}" >> $GITHUB_ENV
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(find `pwd` -maxdepth 1 -name sa.json)" >> $GITHUB_ENV
 
-          # use vault token to get SSH private keys
-          mkdir -p ~/.ssh
-
-          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
-              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
-              | jq -r '.data."pipeline-config-deployment_private_key"' > ~/.ssh/pipeline_config_deploy_key
-
-          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
-              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
-              | jq -r '.data."warp-deployment_private_key"' > ~/.ssh/warp_deploy_key
-
-          curl --silent -H "X-Vault-Token: ${VAULT_TOKEN}" -X GET \
-              ${VAULT_ADDR}/v1/secret/dsde/gotc/dev/ci/wfl_deploy_keys \
-              | jq -r '.data."wfl-deployment_private_key"' > ~/.ssh/wfl_deploy_key
-
-          chmod 600 ~/.ssh/pipeline_config_deploy_key
-          chmod 600 ~/.ssh/warp_deploy_key
-          chmod 600 ~/.ssh/wfl_deploy_key
-
-          cat << EOF > ~/.ssh/config
-            Host pipeline-config.github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/pipeline_config_deploy_key
-
-            Host warp.github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/warp_deploy_key
-
-            Host wfl.github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/wfl_deploy_key
-          EOF
-
       - name: Docker Login
         run: |
           docker login \

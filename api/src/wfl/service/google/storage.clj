@@ -1,14 +1,17 @@
-(ns wfl.service.gcs
-  "Talk to Google Cloud Storage for some reason..."
-  (:require [clojure.data.json              :as json]
+(ns wfl.service.google.storage
+  "Wrappers for Google Cloud Storage REST APIs.
+  See https://cloud.google.com/storage/docs/json_api/v1"
+  (:require [clj-http.client                :as http]
+            [clj-http.util                  :as http-util]
+            [clojure.data.json              :as json]
             [clojure.java.io                :as io]
+            [clojure.pprint                 :refer [pprint]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
-            [clj-http.client                :as http]
-            [clj-http.util                  :as http-util]
-            [wfl.once                       :as once])
+            [wfl.once                       :as once]
+            [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))
 
 (def api-url
@@ -44,7 +47,7 @@
     [bucket (or object "")]))
 
 (defn gs-url
-  "Format BUCKET and OBJECT into a gs://bucket/object URL."
+  "Format BUCKET and OBJECT name into a gs://bucket/object URL."
   [bucket object]
   (when-not (and (string?        bucket)
                  (seq            bucket)
@@ -53,6 +56,15 @@
           msg (format fmt bucket)]
       (throw (IllegalArgumentException. msg))))
   (str "gs://" bucket "/" object))
+
+(defn gs-object-url
+  "Format OBJECT into a gs://bucket/name URL."
+  [{:keys [bucket name] :as object}]
+  (when-not (and (map? object) bucket name)
+    (throw (IllegalArgumentException.
+            (str/join \newline ["Object must have :bucket and :name keys:"
+                                (with-out-str (pprint object))]))))
+  (gs-url bucket name))
 
 (defn iam
   "Return IamPolicy response for URL."
@@ -98,8 +110,8 @@
                        (json/read-str :key-fn keyword))]
                (lazy-cat items (when nextPageToken (each nextPageToken)))))]
      (each "")))
-  ([bucket]
-   (list-objects bucket "")))
+  ([url]
+   (apply list-objects (parse-gs-url url))))
 
 (def _-? (set "_-"))
 (def digit? (set "0123456789"))
@@ -199,18 +211,21 @@
    (apply patch-object! metadata (parse-gs-url url))))
 
 (defn copy-object
-  "Copy SRC-URL to DEST-URL or SOBJ in SBUCKET to DOBJ in DBUCKET."
-  ([src-url dest-url]
-   (let [destination (str/replace-first dest-url storage-url "")]
-     (-> {:method  :post                ; :debug true :debug-body true
-          :url     (str src-url "/rewriteTo/" destination)
-          :headers (once/get-auth-header)}
-         http/request :body
-         (json/read-str :key-fn keyword))))
+  "Copy SOBJECT in SBUCKET to DOBJECT in DBUCKET."
   ([sbucket sobject dbucket dobject]
-   (let [src-url  (bucket-object-url sbucket sobject)
-         dest-url (bucket-object-url dbucket dobject)]
-     (copy-object src-url dest-url))))
+   (let [surl (bucket-object-url sbucket sobject)
+         durl (bucket-object-url dbucket dobject)
+         destination (str/replace-first durl storage-url "")]
+     (-> {:method  :post                ; :debug true :debug-body true
+          :url     (str surl "/rewriteTo/" destination)
+          :headers (once/get-auth-header)}
+         http/request
+         :body
+         (json/read-str :key-fn keyword))))
+  ([source-url destination-url]
+   (let [[sbucket sobject] (parse-gs-url source-url)
+         [dbucket dobject] (parse-gs-url destination-url)]
+     (copy-object sbucket sobject dbucket dobject))))
 
 (defn add-object-reader
   "Add USER as a reader on OBJECT in BUCKET in gcs"
@@ -254,3 +269,36 @@
       (throw
        (ex-info "No auth header in request"
                 {:type :clj-http.client/unexceptional-status})))))
+
+;; Google Cloud Storage Bucket Notification Configuration
+;; See https://cloud.google.com/storage/docs/json_api/v1/notifications
+
+(defn create-notification-configuration [bucket topic]
+  (let [payload {:payload_format "JSON_API_V1"
+                 :event_types    ["OBJECT_FINALIZE"]
+                 :topic          topic}]
+    (-> (str bucket-url bucket "/notificationConfigs")
+        (http/post
+         {:headers      (once/get-auth-header)
+          :content-type :json
+          :body         (json/write-str payload :escape-slash false)})
+        :body
+        util/parse-json)))
+
+(defn delete-notification-configuration [bucket {:keys [id]}]
+  (http/delete
+   (str bucket-url bucket "/notificationConfigs/" id)
+   {:headers (once/get-auth-header)}))
+
+(defn list-notification-configurations [bucket]
+  (-> (str bucket-url bucket "/notificationConfigs")
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json
+      :items))
+
+(defn get-cloud-storage-service-account [project]
+  (-> (str storage-url (str/join "/" ["projects" project "serviceAccount"]))
+      (http/get {:headers (once/get-auth-header)})
+      :body
+      util/parse-json))

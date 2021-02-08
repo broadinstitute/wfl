@@ -3,9 +3,7 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.gcs :as gcs]
-            [wfl.environments :as env]
+            [wfl.service.google.storage :as gcs]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
   (:import [java.util UUID]))
@@ -13,12 +11,11 @@
 (defn throw-when-output-exists-already!
   "Throw when GS-OUTPUT-URL output exists already."
   [gs-output-url]
-  (let [[bucket object] (gcs/parse-gs-url gs-output-url)]
-    (when (first (gcs/list-objects bucket object))
-      (throw
-       (IllegalArgumentException.
-        (format "%s: output already exists: %s"
-                wfl/the-name gs-output-url))))))
+  (when (first (gcs/list-objects gs-output-url))
+    (throw
+     (IllegalArgumentException.
+      (format "%s: output already exists: %s"
+              wfl/the-name gs-output-url)))))
 
 (defn bam-or-cram?
   "Nil or a vector with root of PATH and the matching suffix."
@@ -61,26 +58,12 @@
   [in-gs out-gs]
   (letfn [(crams [gs-url]
             (prn (format "%s: reading: %s" wfl/the-name gs-url))
-            [gs-url (->> gs-url gcs/parse-gs-url
-                         (apply gcs/list-objects)
+            [gs-url (->> (gcs/list-objects gs-url)
                          (keep (comp bam-or-cram? :name))
                          count)])]
     (let [gs-urls (into (array-map) (map crams [in-gs out-gs]))
           remaining (apply - (map gs-urls [in-gs out-gs]))]
       (into gs-urls [[:remaining remaining]]))))
-
-(defn workflow-status
-  "Get the status of workflows in ENVIRONMENT."
-  [environment label]
-  (prn (format "%s: querying %s Cromwell: %s"
-               wfl/the-name environment (cromwell/url environment)))
-  (cromwell/status-counts environment {:label label}))
-
-(defn report-status
-  "Report workflow statuses in ENVIRONMENT and file counts."
-  [label environment in-gs out-gs]
-  (pprint (workflow-status environment label))
-  (pprint (count-files in-gs out-gs)))
 
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
@@ -105,28 +88,3 @@
     (jdbc/execute! tx ["UPDATE workload SET pipeline = ?::pipeline WHERE id = ?" pipeline id])
     (jdbc/db-do-commands tx [work])
     [id table]))
-
-(defn slashify
-  "Ensure URL ends in a slash /."
-  [url]
-  (if (str/ends-with? url "/")
-    url
-    (str url "/")))
-
-(defn de-slashify
-  [url]
-  (if (str/ends-with? url "/")
-    (->> (seq url)
-         drop-last
-         (str/join ""))
-    url))
-
-(defn cromwell-environments
-  "Keywords from the set of ENVIRONMENTS with Cromwell URL."
-  ([url]
-   (->> env/stuff
-        (filter #(-> % second :cromwell :url #{url}))
-        keys))
-  ([environments url]
-   (->> url cromwell-environments
-        (filter environments))))

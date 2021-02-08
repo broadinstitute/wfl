@@ -1,12 +1,11 @@
 (ns wfl.service.cromwell
-  "Launch a Cromwell workflow and wait for it to complete."
+  "Common utilities and clients to talk to Cromwell."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clojure.walk :as walk]
             [clj-http.client :as http]
             [wfl.debug :as debug]
-            [wfl.environments :as env]
             [wfl.once :as once]
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
@@ -28,118 +27,14 @@
   "All the statuses a Cromwell workflow can have."
   (into active-statuses final-statuses))
 
-(defn url
-  "URL for GotC Cromwell in ENVIRONMENT."
-  [environment]
-  (get-in env/stuff [environment :cromwell :url]))
+(defn ^:private api
+  "Get the api url given Cromwell URL."
+  [url]
+  (-> url
+      util/de-slashify
+      (str "/api/workflows/v1")))
 
-(defn api
-  "API URL for GotC Cromwell API in ENVIRONMENT."
-  [environment]
-  (str (url environment) "/api/workflows/v1"))
-
-(defn request-json
-  "Response to REQUEST with :body parsed as JSON."
-  [request]
-  (let [{:keys [body] :as response} (http/request request)]
-    (assoc response :body (json/read-str body :key-fn keyword))))
-
-(def bogus-key-character-map
-  "Map bogus characters in metadata keys to replacements."
-  (let [tag (str "%" wfl/the-name "%")
-        bogus {" " "SPACE"
-               "(" "OPEN"
-               ")" "CLOSE"}]
-    (letfn [(wrap [v] (str tag v tag))]
-      (zipmap (keys bogus) (map wrap (vals bogus))))))
-
-(def bogus-key-characters
-  "Set of the bogus characters found in metadata keys"
-  (set (str/join (keys bogus-key-character-map))))
-
-(defn name-bogus-characters
-  "Replace bogus characters in S with their names."
-  [s]
-  (reduce (fn [s [k v]] (str/replace s k v))
-          s bogus-key-character-map))
-
-(defn some-thing
-  "GET or POST THING to ENVIRONMENT Cromwell for workflow with ID, where
-  QUERY-PARAMS is a map of extra query parameters to pass on the URL.
-  HACK: Frob any BOGUS-KEY-CHARACTERS so maps can be keywordized."
-  ([method thing environment id query-params]
-   (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
-     (let [edn (-> {:method  method     ; :debug true :debug-body true
-                    :url     (str (api environment) "/" id "/" thing)
-                    :headers (once/get-auth-header)}
-                   (maybe :query-params query-params)
-                   http/request :body json/read-str)
-           bad (filter (partial some bogus-key-characters) (util/keys-in edn))
-           fix (into {} (for [k bad] [k (name-bogus-characters k)]))]
-       (->> edn
-            (walk/postwalk-replace fix)
-            walk/keywordize-keys))))
-  ([method thing environment id]
-   (some-thing method thing environment id {})))
-
-(defn get-thing
-  "GET the ENVIRONMENT Cromwell THING for the workflow with ID."
-  ([thing environment id query-params]
-   (some-thing :get thing environment id query-params))
-  ([thing environment id]
-   (get-thing thing environment id {})))
-
-(defn post-thing
-  "POST the ENVIRONMENT Cromwell THING for the workflow with ID."
-  [thing environment id]
-  (some-thing :post thing environment id))
-
-(defn status
-  "Status of the workflow with ID on Cromwell in ENVIRONMENT."
-  [environment id]
-  (:status (get-thing "status" environment id)))
-
-(defn release-hold
-  "Let 'On Hold' workflow with ID run on Cromwell in ENVIRONMENT."
-  [environment id]
-  (post-thing "releaseHold" environment id))
-
-(defn release-a-workflow-every-10-seconds
-  "Every 10 seconds release one workflow from WORKFLOW-IDS in ENVIRONMENT."
-  [workflow-ids environment]
-  (when (seq workflow-ids)
-    (util/sleep-seconds 10)
-    (release-hold environment (first workflow-ids))
-    (recur (rest workflow-ids) environment)))
-
-(defn release-workflows-using-agent
-  "Return an agent running release-a-workflow-every-10-seconds on all
-  the workflow IDs returned by FIND-ENVIRONMENT-AND-WORKFLOW-IDS."
-  [find-environment-and-workflow-ids]
-  (let [[environment & workflow-ids] (find-environment-and-workflow-ids)]
-    (send-off (agent workflow-ids)
-              release-a-workflow-every-10-seconds environment)))
-
-(defn metadata
-  "GET the metadata for workflow ID in ENVIRONMENT."
-  ([environment id query-params]
-   (get-thing "metadata" environment id query-params))
-  ([environment id]
-   (metadata environment id {})))
-
-(defn all-metadata
-  "Fetch all metadata from ENVIRONMENT Cromwell for workflow ID."
-  [environment id]
-  (metadata environment id {:expandSubWorkflows true}))
-
-(defn outputs
-  "GET the metadata for workflow ID in ENVIRONMENT."
-  ([environment id query-params]
-   (get-thing "outputs" environment id query-params))
-  ([environment id]
-   (outputs environment id {})))
-
-(defn cromwellify-json-form
+(defn ^:private cromwellify-json-form
   "Translate FORM-PARAMS into the list of single-entry maps that
   Cromwell expects in its query POST request."
   [form-params]
@@ -148,44 +43,41 @@
                             [{k (str v)}]))]
     (mapcat expand form-params)))
 
-(defn query
-  "Lazy results of querying Cromwell in ENVIRONMENT with PARAMS map."
-  [environment params]
-  (let [form-params (merge {:pagesize 999} params)
-        request     {:method       :post                   ;; :debug true :debug-body true
-                     :url          (str (api environment) "/query")
-                     :form-params  (cromwellify-json-form form-params)
-                     :content-type :application/json}]
-    (letfn [(each [page sofar]
-              (let [response (-> request
-                                 (update :form-params conj {:page (str page)})
-                                 (assoc :headers (once/get-auth-header))
-                                 request-json :body)
-                    {:keys [results totalResultsCount]} response
-                    total    (+ sofar (count results))]
-                (lazy-cat results (when (< total totalResultsCount)
-                                    (each (inc page) total)))))]
-      (util/lazy-unchunk (each 1 0)))))
+(defn ^:private request-json
+  "Response to REQUEST with :body parsed as JSON."
+  [request]
+  (let [{:keys [body] :as response} (http/request request)]
+    (assoc response :body (json/read-str body :key-fn keyword))))
 
-;; HACK: (into (array-map) ...) is egregious.
-;;
-(defn status-counts
-  "Map status to workflow counts on Cromwell in ENVIRONMENT with PARAMS
-  map and AUTH-HEADER."
-  [environment params]
-  (letfn [(each [status]
-            (let [form-params (-> {:pagesize 1 :status status}
-                                  (merge params)
-                                  cromwellify-json-form)]
-              [status (-> {:method       :post ;; :debug true :debug-body true
-                           :url          (str (api environment) "/query")
-                           :form-params  form-params
-                           :content-type :application/json
-                           :headers      (once/get-auth-header)}
-                          request-json :body :totalResultsCount)]))]
-    (let [counts (into (array-map) (map each statuses))
-          total  (apply + (map counts statuses))]
-      (into counts [[:total total]]))))
+(def ^:private bogus-key-character-map
+  "Map bogus characters in metadata keys to replacements."
+  (let [tag (str "%" wfl/the-name "%")
+        bogus {" " "SPACE"
+               "(" "OPEN"
+               ")" "CLOSE"}]
+    (letfn [(wrap [v] (str tag v tag))]
+      (zipmap (keys bogus) (map wrap (vals bogus))))))
+
+(def ^:private bogus-key-characters
+  "Set of the bogus characters found in metadata keys"
+  (set (str/join (keys bogus-key-character-map))))
+
+(defn ^:private name-bogus-characters
+  "Replace bogus characters in S with their names."
+  [s]
+  (reduce (fn [s [k v]] (str/replace s k v))
+          s bogus-key-character-map))
+
+(defn ^:private post-workflow
+  "Assemble PARTS into a multipart HTML body and post it to the Cromwell
+  server specified by URL, and return the workflow ID."
+  [url parts]
+  (letfn [(multipartify [[k v]] {:name (name k) :content v})]
+    (-> {:method    :post               ; :debug true :debug-body true
+         :url       url
+         :headers   (once/get-auth-header)
+         :multipart (map multipartify parts)}
+        request-json #_debug/dump :body)))
 
 (defn make-workflow-labels
   "Return workflow labels for WDL."
@@ -197,22 +89,6 @@
      (key-for :wdl)         (last (str/split (:path wdl) #"/"))
      (key-for :wdl-version) (:release wdl)}))
 
-(defn post-workflow
-  "Assemble PARTS into a multipart HTML body and post it to the Cromwell
-  server in ENVIRONMENT, and return the workflow ID."
-  [url parts]
-  (letfn [(multipartify [[k v]] {:name (name k) :content v})]
-    (-> {:method    :post               ; :debug true :debug-body true
-         :url       url
-         :headers   (once/get-auth-header)
-         :multipart (map multipartify parts)}
-        request-json #_debug/dump :body)))
-
-(defn stringify-vals
-  "Stringify all of the values of a Map."
-  [m]
-  (into {} (map (fn [[k v]] [k (str v)]) m)))
-
 (defn wdl-map->url
   "Create a http url for WDL where any imports are relative.
   Uses jsDelivr CDN to avoid GitHub rate-limiting."
@@ -222,7 +98,43 @@
                  (str (or (:repo wdl) "warp") (str "@" (:release wdl)))
                  (:path wdl)]))
 
-(defn partify-workflow
+(defn ^:private stringify-vals
+  "Stringify all of the values of a Map."
+  [m]
+  (into {} (map (fn [[k v]] [k (str v)]) m)))
+
+(defn ^:private some-thing
+  "GET or POST THING to Cromwell given URL for workflow with ID, where
+  QUERY-PARAMS is a map of extra query parameters to pass on the URL.
+  HACK: Frob any BOGUS-KEY-CHARACTERS so maps can be keywordized."
+  ([method thing url id query-params]
+   (letfn [(maybe [m k v] (if (seq v) (assoc m k v) m))]
+     (let [edn (-> {:method  method     ; :debug true :debug-body true
+                    :url     (str (api url) "/" id "/" thing)
+                    :headers (once/get-auth-header)}
+                   (maybe :query-params query-params)
+                   http/request :body json/read-str)
+           bad (filter (partial some bogus-key-characters) (util/keys-in edn))
+           fix (into {} (for [k bad] [k (name-bogus-characters k)]))]
+       (->> edn
+            (walk/postwalk-replace fix)
+            walk/keywordize-keys))))
+  ([method thing url id]
+   (some-thing method thing url id {})))
+
+(defn ^:private get-thing
+  "GET the THING for the workflow with ID from Cromwell URL."
+  ([thing url id query-params]
+   (some-thing :get thing url id query-params))
+  ([thing url id]
+   (get-thing thing url id {})))
+
+(defn ^:private post-thing
+  "POST the THING for the workflow with ID from Cromwell URL."
+  [thing url id]
+  (some-thing :post thing url id))
+
+(defn ^:private partify-workflow
   "Return a map describing a workflow of running WDL
    with DEPENDENCIES, INPUTS, OPTIONS, and LABELS."
   [wdl inputs options labels]
@@ -236,40 +148,106 @@
           (maybe :workflowInputs       (jsonify inputs))
           (maybe :workflowOptions      (jsonify options))))))
 
-(defn hold-workflow
-  "Submit a workflow 'On Hold' to run WDL with INPUTS, OPTIONS,
-  and LABELS on the Cromwell in ENVIRONMENT and return its ID.
-  INPUTS, OPTIONS, and LABELS can be nil.  WDL is a map
-  referencing the workflow file on GitHub, see [[wdl-map->url]].
-  INPUTS and OPTIONS are the standard JSON files for Cromwell.
-  LABELS is a {:key value} map."
-  [environment wdl inputs options labels]
-  (:id (post-workflow (api environment)
-                      (assoc (partify-workflow wdl
-                                               inputs
-                                               options
-                                               labels)
-                             :workflowOnHold "true"))))
+(defn ^:private work-around-cromwell-fail-bug
+  "Wait 2 seconds and ignore up to N times a bogus failure response from
+  Cromwell for workflow ID given URL.  Work around the 'sore spot'
+  reported in https://github.com/broadinstitute/cromwell/issues/2671"
+  [n url id]
+  (util/sleep-seconds 2)
+  (let [fail {"status" "fail" "message" (str "Unrecognized workflow ID: " id)}
+        {:keys [body] :as bug} (try (get-thing "status" url id)
+                                    (catch Exception e (ex-data e)))]
+    (debug/trace [bug n])
+    (when (and (pos? n) bug
+               (= 404 (:status bug))
+               (= fail (json/read-str body)))
+      (recur (dec n) url id))))
+
+(defn abort
+  "Abort the workflow with ID run on Cromwell given URL."
+  [url id]
+  (post-thing "abort" url id))
+
+(defn metadata
+  "GET the metadata for workflow ID given Cromwell URL."
+  ([url id query-params]
+   (get-thing "metadata" url id query-params))
+  ([url id]
+   (metadata url id {})))
+
+(defn all-metadata
+  "Fetch all metadata for workflow ID given Cromwell URL."
+  [url id]
+  (metadata url id {:expandSubWorkflows true}))
+
+(defn query
+  "Lazy results of querying Cromwell given URL with PARAMS map."
+  [url params]
+  (let [form-params (merge {:pagesize 999} params)
+        request     {:method       :post ; :debug true :debug-body true
+                     :url          (str (api url) "/query")
+                     :form-params  (cromwellify-json-form form-params)
+                     :content-type :application/json}]
+    (letfn [(each [page sofar]
+              (let [response (-> request
+                                 (update :form-params conj {:page (str page)})
+                                 (assoc :headers (once/get-auth-header))
+                                 request-json :body)
+                    {:keys [results totalResultsCount]} response
+                    total    (+ sofar (count results))]
+                (lazy-cat results (when (< total totalResultsCount)
+                                    (each (inc page) total)))))]
+      (util/lazy-unchunk (each 1 0)))))
+
+(defn release-hold
+  "Let 'On Hold' workflow with ID run on Cromwell given URL."
+  [url id]
+  (post-thing "releaseHold" url id))
+
+(defn status
+  "Status of the workflow with ID on Cromwell given URL."
+  [url id]
+  (:status (get-thing "status" url id)))
+
+;; HACK: (into (array-map) ...) is egregious.
+;;
+(defn status-counts
+  "Map status to workflow counts on Cromwell given URL with PARAMS
+  map and AUTH-HEADER."
+  [url params]
+  (letfn [(each [status]
+            (let [form-params (-> {:pagesize 1 :status status}
+                                  (merge params)
+                                  cromwellify-json-form)]
+              [status (-> {:method       :post ;; :debug true :debug-body true
+                           :url          (str (api url) "/query")
+                           :form-params  form-params
+                           :content-type :application/json
+                           :headers      (once/get-auth-header)}
+                          request-json :body :totalResultsCount)]))]
+    (let [counts (into (array-map) (map each statuses))
+          total  (apply + (map counts statuses))]
+      (into counts [[:total total]]))))
 
 (defn submit-workflow
   "Submit a workflow to run WDL with INPUTS, OPTIONS, and LABELS
-  on the Cromwell in ENVIRONMENT and return its ID.  INPUTS,
+  on the Cromwell URL and return its ID.  INPUTS,
   OPTIONS, and LABELS can be nil.  WDL is a map referencing the
   workflow file on GitHub, see [[wdl-map->url]].  INPUTS and
   OPTIONS are the standard JSON files for Cromwell.  LABELS is a
   {:key value} map."
-  [environment wdl inputs options labels]
+  [url wdl inputs options labels]
   (->> (partify-workflow wdl
                          inputs
                          options
                          labels)
-       (post-workflow (api environment))
+       (post-workflow (api url))
        :id))
 
 (defn submit-workflows
-  "Submit one or more workflows to cromwell.
+  "Batch submit one or more workflows to cromwell.
   Parameters:
-   ENVIRONMENT - Cromwell Deployment Environment
+   URL         - Cromwell URL
    WDL         - Workflow WDL to be executed, see [[wdl-map->url]]
    INPUTS      - Sequence of workflow inputs
    OPTIONS     - Workflow options for entire batch
@@ -277,44 +255,24 @@
 
   Return:
    List of UUIDS for each workflow as reported by cromwell."
-  [environment wdl inputs options labels]
+  [url wdl inputs options labels]
   (->> (partify-workflow wdl
                          inputs
                          options
                          labels)
-       (post-workflow (str (api environment) "/batch"))
+       (post-workflow (str (api url) "/batch"))
        (mapv :id)))
 
-(defn work-around-cromwell-fail-bug
-  "Wait 2 seconds and ignore up to N times a bogus failure response from
-  Cromwell for workflow ID in ENVIRONMENT.  Work around the 'sore spot'
-  reported in https://github.com/broadinstitute/cromwell/issues/2671"
-  [n environment id]
-  (util/sleep-seconds 2)
-  (let [fail {"status" "fail" "message" (str "Unrecognized workflow ID: " id)}
-        {:keys [body] :as bug} (try (get-thing "status" environment id)
-                                    (catch Exception e (ex-data e)))]
-    (debug/trace [bug n])
-    (when (and (pos? n) bug
-               (= 404 (:status bug))
-               (= fail (json/read-str body)))
-      (recur (dec n) environment id))))
-
 (defn wait-for-workflow-complete
-  "Return status of workflow named by ID when it completes."
-  [environment id]
-  (work-around-cromwell-fail-bug 9 environment id)
-  (loop [environment environment id id]
+  "Return status of workflow named by ID when it completes, given Cromwell URL."
+  [url id]
+  (work-around-cromwell-fail-bug 9 url id)
+  (loop [url url id id]
     (let [seconds 15
-          now (status environment id)]
+          now (status url id)]
       (if (#{"Submitted" "Running"} now)
         (do (log/infof "%s: Sleeping %s seconds on status: %s"
                        id seconds now)
             (util/sleep-seconds seconds)
-            (recur environment id))
-        (status environment id)))))
-
-(defn abort
-  "Abort the workflow with ID run on Cromwell in ENVIRONMENT."
-  [environment id]
-  (post-thing "abort" environment id))
+            (recur url id))
+        (status url id)))))

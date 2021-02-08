@@ -12,7 +12,6 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
-            [wfl.module.all :as all]
             [wfl.module.sg :as sg])
   (:import (java.util.concurrent TimeoutException)))
 
@@ -23,7 +22,7 @@
   []
   (some-> "CROMWELL"
           util/getenv
-          all/de-slashify))
+          util/de-slashify))
 
 (def wgs-inputs
   (let [input-folder
@@ -38,7 +37,7 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -53,7 +52,7 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:aou-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -97,14 +96,14 @@
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
 
-;; (load-cromwell-url-from-env-var!) is turned off as arrays workload
-;; expects a Terra than Cromwell URL which is not consistent with other modules
+;; (load-cromwell-url-from-env-var!) is turned off here because an
+;; arrays workload expects a Terra (rather than Cromwell) URL.
 ;;
 (defn arrays-workload-request
   [identifier]
-  {:executor (or #_(load-cromwell-url-from-env-var!)
-              "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/" identifier)
+  {:executor "https://firecloud-orchestration.dsde-dev.broadinstitute.org"
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/"
+                  identifier)
    :pipeline arrays/pipeline
    :project  "general-dev-billing-account/arrays"
    :items   [{:inputs arrays-sample-terra}]})
@@ -112,41 +111,58 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:gotc-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs {:src src :dst dst}}]})
 
-(def xx-inputs
-  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:input_cram (str storage "NA12878_PLUMBING.cram")}))
-
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:xx-dev :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
    :pipeline xx/pipeline
    :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs xx-inputs}]
+   :items    [{:inputs {:input_cram
+                        (str "gs://broad-gotc-dev-wfl-ptc-test-inputs/"
+                             "single_sample/plumbing/truth/develop/20k/"
+                             "NA12878_PLUMBING.cram")}}]
    :common {:inputs (-> {:disable_sanity_check true}
                         (util/prefix-keys :CheckContamination)
                         (util/prefix-keys :UnmappedBamToAlignedBam)
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
-(def sg-inputs
-  (let [storage "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/"]
-    {:ubam (str storage "NA12878_PLUMBING.unmapped.bam")}))
-
+;; From warp.git ExampleCramToUnmappedBams.plumbing.json
+;;
 (defn sg-workload-request
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:wgs-dev :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/" identifier)
-   :pipeline sg/pipeline
-   :project  (format "(Test) %s" @git-branch)
-   :items    [{:inputs sg-inputs}]})
+  (let [dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
+                             "gdc/dbsnp_144.hg38.vcf.gz"])
+        cram  (str/join "/" ["gs://broad-gotc-test-storage"
+                             "germline_single_sample"
+                             "wgs/plumbing/truth/develop"
+                             "G96830.NA12878"
+                             "NA12878_PLUMBING.cram"])
+        fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
+                             "Homo_sapiens_assembly38.fasta"])
+        vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
+                             "small_exac_common_3.hg38.vcf.gz"])]
+    {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
+     :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
+                              sg/pipeline
+                              identifier])
+     :pipeline sg/pipeline
+     :project  (format "(Test) %s" @git-branch)
+     :items    [{:inputs
+                 {:contamination_vcf       vcf
+                  :contamination_vcf_index (str vcf ".tbi")
+                  :cram_ref_fasta          fasta
+                  :cram_ref_fasta_index    (str fasta ".fai")
+                  :dbsnp_vcf               dbsnp
+                  :dbsnp_vcf_index         (str dbsnp ".tbi")
+                  :input_cram              cram}}]}))
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."
@@ -155,7 +171,7 @@
             (let [skipped? #(-> % :uuid util/uuid-nil?)]
               (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
     (let [interval 10
-          timeout  3600]                                    ; 1 hour
+          timeout  3600]                ; 1 hour
       (loop [elapsed 0 wl workload]
         (when (> elapsed timeout)
           (throw (TimeoutException.

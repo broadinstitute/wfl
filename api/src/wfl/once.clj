@@ -4,25 +4,31 @@
             [clojure.java.io   :as io]
             [clojure.string    :as str]
             [wfl.environments :as env]
-            [wfl.util         :as util]
-            [wfl.wfl         :as wfl])
-  (:import [com.google.auth.oauth2 GoogleCredentials ServiceAccountCredentials]))
+            [wfl.util         :as util])
+  (:import [com.google.auth.oauth2 GoogleCredentials]))
+
+(defonce the-system-environments
+  (reduce #(assoc %1 %2 (System/getenv %2)) {}
+          ["COOKIE_SECRET"
+           "CROMWELL"
+           "GOOGLE_APPLICATION_CREDENTIALS"
+           "WFL_OAUTH2_CLIENT_ID"
+           "WFL_DEPLOY_ENVIRONMENT"]))
 
 (defn authorization-header-with-bearer-token
   "An Authorization header with a Bearer TOKEN."
   [token]
   {"Authorization" (str/join \space ["Bearer" token])})
 
+;; FIXME: it seems we have to use dev and prod
 (defn service-account-credentials
-  "Throw or return credentials for the WFL service account."
+  "Throw or return credentials for the WFL from service account file or vault."
   []
   (some->
-   (if-let [file (util/getenv "GOOGLE_APPLICATION_CREDENTIALS")]
-     (-> file io/file)
-     (-> "WFL_DEPLOY_ENVIRONMENT"
-         (util/getenv "debug")
-         wfl/error-or-environment-keyword
-         env/stuff :server :service-account util/vault-secrets
+   (if-let [sa-file (the-system-environments "GOOGLE_APPLICATION_CREDENTIALS")]
+     (-> sa-file io/file)
+     (-> (get-in env/stuff [:debug :server :service-account])
+         util/vault-secrets
          (json/write-str :escape-slash false)
          .getBytes))
    io/input-stream GoogleCredentials/fromStream
@@ -46,21 +52,18 @@
   (authorization-header-with-bearer-token (service-account-token)))
 
 (defn get-auth-header
-  "An Authorization header with a Bearer token."
+  "An Authorization header with a Bearer token, from service account file
+   or from gcloud command on behalf of you."
   []
   (authorization-header-with-bearer-token
-   (if (util/getenv "WFL_DEPLOY_ENVIRONMENT")
+   (if (the-system-environments "WFL_DEPLOY_ENVIRONMENT")
      (service-account-token)
      (util/shell! "gcloud" "auth" "print-access-token"))))
 
 (def oauth-client-id
-  "The client ID based on, in order, the environment, vault, or the gotc-dev one"
-  (delay (or (not-empty (util/getenv "WFL_OAUTH2_CLIENT_ID"))
+  "The client ID based on, in order, the environment variable, vault, or the gotc-dev one"
+  (delay (or (not-empty (the-system-environments "WFL_OAUTH2_CLIENT_ID"))
              (util/do-or-nil-silently
-              (-> "WFL_DEPLOY_ENVIRONMENT"
-                  (util/getenv "debug")
-                  wfl/error-or-environment-keyword
+              (-> :debug
                   env/stuff :server :vault
-                  util/vault-secrets :oauth2_client_id))
-             ;; Client ID for gotc-dev, the old hardcoded value for backwards-compatibility
-             "450819267403-n17keaafi8u1udtopauapv0ntjklmgrs.apps.googleusercontent.com")))
+                  util/vault-secrets :oauth2_client_id)))))

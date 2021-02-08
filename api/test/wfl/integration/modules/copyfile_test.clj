@@ -45,8 +45,8 @@
             (is (:supports_common_options options))
             (is (:supports_options options))
             (is (:overwritten options)))
-          (verify-submitted-options [env _ _ options _]
-            (let [defaults (util/make-options env)]
+          (verify-submitted-options [url _ _ options _]
+            (let [defaults (copyfile/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (UUID/randomUUID)))]
