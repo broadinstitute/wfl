@@ -9,11 +9,11 @@
             [wfl.wfl         :as wfl]
             [wfl.once :as once])
   (:import [com.google.cloud.bigquery BigQuery
-                                      BigQueryOptions
-                                      JobId
-                                      JobInfo
-                                      QueryJobConfiguration
-                                      BigQuery$DatasetListOption]
+            BigQueryOptions
+            JobId
+            JobInfo
+            QueryJobConfiguration
+            BigQuery$DatasetListOption]
            [java.util ArrayList Collections Random UUID]))
 
 (defn service
@@ -21,9 +21,9 @@
   [project-id]
   (let [credentials (once/service-account-credentials)]
     (-> (BigQueryOptions/newBuilder)
-      (.setCredentials credentials)
-      (.setProjectId project-id)
-      .build .getService)))
+        (.setCredentials credentials)
+        (.setProjectId project-id)
+        .build .getService)))
 
 (comment
   (service "broad-jade-dev-data"))
@@ -35,9 +35,20 @@
             (conj coll (.getDataset (.getDatasetId dataset))))]
     (let [service          (service project-id)
           dataset-iterator (-> service
-                             (.listDatasets (into-array BigQuery$DatasetListOption []))
-                             .iterateAll)]
+                               (.listDatasets (into-array BigQuery$DatasetListOption []))
+                               .iterateAll)]
       (reduce conj-dataset [] dataset-iterator))))
 
 (comment
   (list-datasets "broad-jade-dev-data"))
+
+(defn query-snapshot
+  "Query for a Data Repo dataset SNAPSHOT in BigQuery given PROJECT_ID."
+  [project-id snapshot]
+  (let [service (service project-id)
+        query (format "SELECT * FROM `%s.%s.sample" project-id snapshot)
+        query-config (-> (QueryJobConfiguration/newBuilder) .build)]
+    (.query service query-config)))
+
+(comment
+  (query-snapshot "broad-jade-dev-data" "zerosnapshot"))
