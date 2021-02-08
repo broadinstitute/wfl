@@ -1,7 +1,6 @@
 {
   "name": "assemble_refbased_outputs",
   "description": "COVID-19 assemble_refbased pipeline outputs",
-  "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
   "schema": {
     "tables": [
       {
