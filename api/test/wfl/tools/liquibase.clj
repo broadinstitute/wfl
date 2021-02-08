@@ -1,5 +1,5 @@
 (ns wfl.tools.liquibase
-  (:require [wfl.util :as util])
+  (:require [wfl.once :as once])
   (:import [liquibase.integration.commandline Main]))
 
 (defn run-liquibase
@@ -23,5 +23,5 @@
 (defn -main
   "Migrate the local database schema using Liquibase."
   []
-  (let [user (util/getenv "USER")]
+  (let [user (@once/the-system-environments "USER")]
     (run-liquibase "jdbc:postgresql:wfl" "../database/changelog.xml" user)))

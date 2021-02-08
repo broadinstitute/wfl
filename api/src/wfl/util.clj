@@ -5,8 +5,6 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [vault.client.http]         ; vault.core needs this
-            [vault.core :as vault]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
@@ -42,17 +40,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
-(defonce the-system-environment (delay (into {} (System/getenv))))
-
-(defn getenv
-  "`(System/getenv)` as a map, or the value for `key`, or `default`."
-  ([key default]
-   (@the-system-environment key default))
-  ([key]
-   (@the-system-environment key))
-  ([]
-   @the-system-environment))
-
 (defn parse-json
   "Parse the json string STR into a keyword-string map"
   [str]
@@ -71,20 +58,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (with-open [^Writer out (io/writer file)]
     (binding [*out* out]
       (json/pprint content :escape-slash false))))
-
-(defn vault-secrets
-  "Return the secrets at `path` in vault."
-  [path]
-  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
-                       (str/join "/") slurp do-or-nil)
-                  (getenv "VAULT_TOKEN" "VAULT_TOKEN"))]
-    (try (vault/read-secret
-          (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token token))
-          path {})
-         (catch Throwable e
-           (log/warn e "Issue with Vault")
-           (log/debug "Perhaps run 'vault login' and try again")))))
 
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."

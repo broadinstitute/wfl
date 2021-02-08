@@ -12,7 +12,8 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
-            [wfl.module.sg :as sg])
+            [wfl.module.sg :as sg]
+            [wfl.once :as once])
   (:import (java.util.concurrent TimeoutException)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
@@ -21,7 +22,7 @@
   "Load Cromwell url from the env var CROMWELL."
   []
   (some-> "CROMWELL"
-          util/getenv
+          (@once/the-system-environments)
           util/de-slashify))
 
 (def wgs-inputs

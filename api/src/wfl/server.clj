@@ -13,6 +13,7 @@
             [ring.middleware.session.cookie :as cookie]
             [wfl.api.routes :as routes]
             [wfl.api.workloads :as workloads]
+            [wfl.once :as once]
             [wfl.jdbc :as jdbc]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
@@ -39,7 +40,7 @@
 (def cookie-store
   "A session store for wrap-defaults."
   (cookie/cookie-store
-   {:key     (util/getenv "COOKIE_SECRET" "must be 16 bytes")
+   {:key     (@once/the-system-environments "COOKIE_SECRET")
     :readers (merge *data-readers* tc/data-readers)}))
 
 (defn wrap-defaults

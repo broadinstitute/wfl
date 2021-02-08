@@ -15,7 +15,7 @@
   (let [{:strs [USER
                 WFL_POSTGRES_PASSWORD
                 WFL_POSTGRES_URL
-                WFL_POSTGRES_USERNAME]} (util/getenv)]
+                WFL_POSTGRES_USERNAME]} @once/the-system-environments]
     (assoc {:classname       "org.postgresql.Driver"
             :db-name         "wfl"
             :instance-name   "zero-postgresql"
