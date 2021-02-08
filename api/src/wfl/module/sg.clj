@@ -138,15 +138,16 @@
 
 (defn register-workflow-in-clio
   "Ensure Clio knows the `output` files for `_workflow` of `pipeline`."
-  [output pipeline {:keys [inputs uuid] :as _workflow}]
-  (let [{:keys [base_file_name input_cram]} (util/parse-json inputs)
-        base_file_name (or base_file_name
-                           (-> input_cram util/basename util/remove-extension))
-        parts [output pipeline uuid pipeline "execution" base_file_name]
-        path  (partial str (str/join "/" parts))
-        bam   {:bai_path                   (path ".bai")
-               :bam_path                   (path ".bam")
-               :insert_size_metrics_path   (path ".insert_size_metrics")}]
+  [output pipeline workload-uuid {:keys [inputs uuid] :as _workflow}]
+  (let [{:keys [base_file_name input_cram sample_name]} (util/parse-json inputs)
+        base_file_name (or base_file_name sample_name
+                           (-> input_cram util/leafname
+                               (util/unsuffix ".cram")))
+        parts [output pipeline workload-uuid uuid base_file_name]
+        path  (partial str (str/join "/" parts) ".aln.mrkdp.")
+        bam   {:bai_path                   (path "bai")
+               :bam_path                   (path "bam")
+               :insert_size_metrics_path   (path "insert_size_metrics")}]
     (if-let [bam-record (clio-bam-record (select-keys bam [:bam_path]))]
       bam-record
       (let [cram (clio-cram-record input_cram)
@@ -162,10 +163,10 @@
 
 (defn register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
-  [tx {:keys [id items output uuid] :as workload}]
+  [tx {:keys [items output uuid] :as workload}]
   (->> items
        (postgres/get-table tx)
-       (run! (partial register-workflow-in-clio output pipeline)))
+       (run! (partial register-workflow-in-clio output pipeline uuid)))
   workload)
 
 (defn update-sg-workload!
