@@ -41,3 +41,13 @@
        (xx/make-inputs-to-save output-url
                                {:input_bam "gs://fake-input-bucket/sample.bam"
                                 :arbitrary "hai"}))))
+
+(deftest test-invalid-input-gs-url-throws
+  (is (thrown? Exception
+               (xx/make-inputs-to-save
+                output-url
+                {:input_cram "https://domain/sample.cram"})))
+  (is (thrown? Exception
+               (xx/make-inputs-to-save
+                output-url
+                {:input_cram "https://domain/sample.cram"}))))
