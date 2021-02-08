@@ -72,7 +72,9 @@
     (get-result)))
 
 (defn create-dataset
-  "Create a dataset with EDN `schema`."
+  "Create a dataset with EDN `dataset-request`.
+   See `DatasetRequestModel` in the DataRepo swagger page.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [dataset-request]
   (-> (repository "datasets")
       (http/post {:content-type :application/json
@@ -86,7 +88,7 @@
       :id))
 
 (defn delete-dataset
-  "Create a dataset with EDN `schema`."
+  "Delete the Dataset with `dataset-id`."
   [dataset-id]
   (-> (repository "datasets/" dataset-id)
       (http/delete {:headers (once/get-service-account-header)})
