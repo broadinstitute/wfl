@@ -16,13 +16,11 @@
   "API URL for Data Repo API."
   (partial datarepo-url "api/repository/v1/"))
 
-(defn delete-dataset
-  "Create a dataset with EDN `schema`."
-  [schema]
-  (-> (repository "datasets")
-      (http/post {:content-type :application/json
-                  :headers      (once/get-service-account-header)
-                  :body         (json/write-str schema :escape-slash false)})
+(defn dataset
+  "Query the DataRepo for the Dataset with `dataset-id`."
+  [dataset-id]
+  (-> (repository "datasets/" dataset-id)
+      (http/get {:headers (once/get-service-account-header)})
       util/response-body-json))
 
 (defn ^:private ingest

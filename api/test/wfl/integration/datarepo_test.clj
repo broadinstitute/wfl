@@ -55,4 +55,6 @@
       json/read-str
       ;; give it a unique name to avoid collisions with other tests
       (update "name" #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
-      (fixtures/with-temporary-dataset #(is %))))
+      (fixtures/with-temporary-dataset
+        #(let [dataset (datarepo/dataset %)]
+           (is (= % (:id dataset)))))))
