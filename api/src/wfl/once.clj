@@ -14,30 +14,30 @@
 ;;
 (defonce the-system-environments
   (delay (reduce #(assoc %1 %2 (System/getenv %2)) {}
-           ["COOKIE_SECRET"
-            "CROMWELL"
-            "GOOGLE_APPLICATION_CREDENTIALS"
-            "USER"
-            "VAULT_TOKEN"
-            "WFL_OAUTH2_CLIENT_ID"
-            "WFL_POSTGRES_URL"
-            "WFL_POSTGRES_USERNAME"
-            "WFL_POSTGRES_PASSWORD"
-            "WFL_DEPLOY_ENVIRONMENT"])))
+                 ["COOKIE_SECRET"
+                  "CROMWELL"
+                  "GOOGLE_APPLICATION_CREDENTIALS"
+                  "USER"
+                  "VAULT_TOKEN"
+                  "WFL_OAUTH2_CLIENT_ID"
+                  "WFL_POSTGRES_URL"
+                  "WFL_POSTGRES_USERNAME"
+                  "WFL_POSTGRES_PASSWORD"
+                  "WFL_DEPLOY_ENVIRONMENT"])))
 
 (defn vault-secrets
   "Return the secrets at `path` in vault."
   [path]
   (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
-                    (str/join "/") slurp util/do-or-nil)
-                (@the-system-environments "VAULT_TOKEN"))]
+                       (str/join "/") slurp util/do-or-nil)
+                  (@the-system-environments "VAULT_TOKEN"))]
     (try (vault/read-secret
-           (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-             (vault/authenticate! :token token))
-           path {})
-      (catch Throwable e
-        (log/warn e "Issue with Vault")
-        (log/debug "Perhaps run 'vault login' and try again")))))
+          (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
+            (vault/authenticate! :token token))
+          path {})
+         (catch Throwable e
+           (log/warn e "Issue with Vault")
+           (log/debug "Perhaps run 'vault login' and try again")))))
 
 (defn authorization-header-with-bearer-token
   "An Authorization header with a Bearer TOKEN."
