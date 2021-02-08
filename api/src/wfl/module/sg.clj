@@ -97,7 +97,7 @@
           default-options (util/deep-merge
                            (make-workflow-options executor)
                            {:final_workflow_outputs_dir output
-                            #_#_:use_relative_output_paths  true})]
+                            :use_relative_output_paths  true})]
       (run! update-record!
             (batch/submit-workload! workload
                                     executor
