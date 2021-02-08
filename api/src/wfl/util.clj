@@ -15,8 +15,6 @@
            [java.util.zip ZipOutputStream ZipEntry]
            [org.apache.commons.io FilenameUtils]))
 
-vault.client.http/http-client           ; Keep :clint eastwood quiet.
-
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
   [& body]
