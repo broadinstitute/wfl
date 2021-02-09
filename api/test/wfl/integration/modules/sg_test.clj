@@ -4,7 +4,6 @@
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
-            [wfl.service.google.storage :as gcs]
             [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
@@ -151,7 +150,125 @@
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
 
-(defn ^:private mock-cromwell-query
+(defn mock-clio-add-bam-found
+  "Fail when called because a BAM record already exists for `_md`"
+  [_md]
+  (is false))
+
+(defn mock-clio-add-bam-missing
+  "Add a missing Clio BAM record with metadata `md`."
+  [md]
+  (is md)
+  (letfn [(ok? [v] (or (integer? v) (and (string? v) (seq v))))]
+    (is (every? ok? ((apply juxt clio/add-keys) md))))
+  "-MRu7X3zEzoGeFAVSF-J")
+
+(defn mock-clio-failed
+  "Fail when called with metadata `_md`."
+  [_md]
+  (is false))
+
+(defn mock-clio-query-bam-found
+  "Return a Clio BAM record with metadata `_md`."
+  [{:keys [bam_path] :as _md}]
+  [{:bai_path (str/replace bam_path ".bam" ".bai")
+    :bam_path bam_path
+    :billing_project "hornet-nest"
+    :data_type "WGS"
+    :document_status "Normal"
+    :insert_size_metrics_path
+    (str/replace bam_path ".bam" ".insert_size_metrics")
+    :location "GCP"
+    :notes "Blame tbl for SG test."
+    :project "G96830"
+    :sample_alias "NA12878"
+    :version 23}])
+
+(defn mock-clio-query-bam-missing
+  "Return an empty Clio response for query metadata `_md`."
+  [_md]
+  [])
+
+(defn mock-clio-query-cram-found
+  "Return a Clio CRAM record with metadata `_md`."
+  [{:keys [cram_path] :as _md}]
+  [{:billing_project "hornet-nest"
+    :crai_path (str cram_path ".crai")
+    :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
+    :cram_path cram_path
+    :cram_size 19512619343
+    :cromwell_id "3586c013-4fbb-4997-a3ec-14a021e50d2d"
+    :data_type "WGS"
+    :document_status "Normal"
+    :insert_size_histogram_path
+    (str/replace cram_path ".cram" ".insert_size_histogram.pdf")
+    :insert_size_metrics_path
+    (str/replace cram_path ".cram" ".insert_size_metrics")
+    :location "GCP"
+    :notes "Blame tbl for SG test."
+    :pipeline_version "f1c7883"
+    :project "G96830"
+    :readgroup_md5 "a128cbbe435e12a8959199a8bde5541c"
+    :regulatory_designation "RESEARCH_ONLY"
+    :sample_alias "NA12878"
+    :version 23
+    :workflow_start_date "2021-01-27T19:33:45.746213-05:00"
+    :workspace_name "bike-of-hornets"}])
+
+(defn ^:private mock-cromwell-metadata-failed
+  "Return enough metadata for Cromwell workflow `id` to fail."
+  [_url id]
+  (let [now    (OffsetDateTime/now)]
+    {:end    now
+     :id     id
+     :inputs {:input_cram (str/join "/" ["gs://broad-gotc-test-storage"
+                                         "germline_single_sample/wgs"
+                                         "plumbing/truth/develop"
+                                         "G96830.NA12878"
+                                         "NA12878_PLUMBING.cram"])}
+     :start        now
+     :status       "Failed"
+     :submission   now
+     :workflowName sg/pipeline}))
+
+(defn ^:private mock-cromwell-metadata-succeeded
+  "Return enough metadata for Cromwell workflow `id` to succeed."
+  [_url id]
+  (let [now    (OffsetDateTime/now)
+        prefix (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
+                              "504f94ce-383c-4af6-afb5-2aa8819c74ff"
+                              "GDCWholeGenomeSomaticSingleSample"
+                              id
+                              "call-gatk_applybqsr"
+                              "cacheCopy"
+                              "NA12878_PLUMBING.aln.mrkdp."])]
+    {:end    now
+     :id     id
+     :inputs {:input_cram (str/join "/" ["gs://broad-gotc-test-storage"
+                                         "germline_single_sample/wgs"
+                                         "plumbing/truth/develop"
+                                         "G96830.NA12878"
+                                         "NA12878_PLUMBING.cram"])}
+     :outputs
+     {:GDCWholeGenomeSomaticSingleSample.bai (str prefix "bai")
+      :GDCWholeGenomeSomaticSingleSample.bam (str prefix "bam")
+      :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
+      (str prefix "insert_size_histogram.pdf")
+      :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
+      (str prefix "insert_size_metrics")}
+     :start        now
+     :status       "Succeeded"
+     :submission   now
+     :workflowName sg/pipeline}))
+
+(defn ^:private mock-cromwell-query-failed
+  "Update `status` of all workflows to `Failed`."
+  [_environment _params]
+  (let [{:keys [items]} (make-sg-workload-request)]
+    (map (fn [id] {:id id :status "Failed"})
+         (take (count items) the-uuids))))
+
+(defn ^:private mock-cromwell-query-succeeded
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
   (let [{:keys [items]} (make-sg-workload-request)]
@@ -168,65 +285,58 @@
    :bam_path                 ".bam"
    :insert_size_metrics_path ".insert_size_metrics"})
 
-(defn ^:private expect-clio-bams
-  "Make the Clio BAM records expected from `workload`."
-  [{:keys [output pipeline workflows] :as workload}]
-  (letfn [(make [{:keys [inputs uuid] :as workflow}]
-            (let [{:keys [input_cram sample_name]} inputs
-                  prefix (partial str (str/join "/" [output
-                                                     pipeline
-                                                     uuid
-                                                     pipeline
-                                                     "execution"
-                                                     sample_name]))]
-              (zipmap (keys bam-suffixes) (map prefix (vals bam-suffixes)))))]
-    (let [from-cram (select-keys @workloads/the-clio-cram-record
-                                 [:billing_project
-                                  :data_type
-                                  :document_status
-                                  :location
-                                  :notes
-                                  :project
-                                  :sample_alias
-                                  :version])]
-      (map (partial merge from-cram) (map make workflows)))))
-
-;; The files are all just bogus copies of the README now.
+;; First workloads/update-workload! makes workflow status "Succeeded".
+;; Second workloads/update-workload! may registers outputs with Clio.
 ;;
-(defn ^:private make-bam-outputs
-  "Make the BAM outputs expected from a successful `workload`."
-  [{:keys [output pipeline workflows] :as workload}]
-  (let [readme (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
-                              pipeline
-                              "README.txt"])
-        copy!  (partial gcs/copy-object readme)]
-    (->> workload expect-clio-bams
-         (mapcat (apply juxt (keys bam-suffixes)))
-         (run! copy!)))
-  workload)
+(defn test-clio-updates
+  []
+  (let [{:keys [items] :as request} (make-sg-workload-request)]
+    (-> request
+        workloads/create-workload!
+        workloads/start-workload!
+        workloads/update-workload!
+        workloads/update-workload!
+        (as-> workload
+            (let [{:keys [finished pipeline workflows]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items) (count workflows))))))))
 
-(deftest test-clio-updates
+(deftest test-clio-updates-bam-found
+  (testing "Clio not updated if outputs already known."
+    (with-redefs-fn
+      {#'clio/add-bam              mock-clio-add-bam-found
+       #'clio/query-bam            mock-clio-query-bam-found
+       #'clio/query-cram           mock-clio-query-cram-found
+       #'cromwell/metadata         mock-cromwell-metadata-succeeded
+       #'cromwell/query            mock-cromwell-query-succeeded
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+      test-clio-updates)))
+
+(deftest test-clio-updates-bam-missing
   (testing "Clio updated after workflows finish."
-    (let [where [:items 0 :inputs]
-          {:keys [cram_path project sample_alias]}
-          @workloads/the-clio-cram-record]
-      (with-redefs-fn
-        {#'cromwell/submit-workflows mock-cromwell-submit-workflows
-         #'cromwell/query            mock-cromwell-query}
-        #(-> (make-sg-workload-request)
-             (update :items (comp vector first))
-             (assoc-in (conj where :input_cram)  cram_path)
-             (assoc-in (conj where :project)     project)
-             (assoc-in (conj where :sample_name) sample_alias)
-             workloads/create-workload!
-             workloads/start-workload!
-             workloads/update-workload! ; Make status "Succeeded".
-             make-bam-outputs
-             workloads/update-workload! ; Register outputs with Clio.
-             expect-clio-bams
-             (as-> expected
-                   (let [query (-> expected first (select-keys [:bam_path]))]
-                     (is (= expected (clio/query-bam query))))))))))
+    (with-redefs-fn
+      {#'clio/add-bam              mock-clio-add-bam-missing
+       #'clio/query-bam            mock-clio-query-bam-missing
+       #'clio/query-cram           mock-clio-query-cram-found
+       #'cromwell/metadata         mock-cromwell-metadata-succeeded
+       #'cromwell/query            mock-cromwell-query-succeeded
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+      test-clio-updates)))
+
+(deftest test-clio-updates-cromwell-failed
+  (testing "Clio not updated after workflows fail."
+    (with-redefs-fn
+      {#'clio/add-bam              mock-clio-failed
+       #'clio/query-bam            mock-clio-failed
+       #'clio/query-cram           mock-clio-failed
+       #'cromwell/metadata         mock-cromwell-metadata-failed
+       #'cromwell/query            mock-cromwell-query-failed
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+      test-clio-updates)))
 
 (comment
-  (clojure.test/test-vars [#'test-clio-updates]))
+  (clojure.test/test-vars [#'test-clio-updates-cromwell-failed])
+  (clojure.test/test-vars [#'test-clio-updates-bam-found])
+  (clojure.test/test-vars [#'test-clio-updates-bam-missing])
+  )

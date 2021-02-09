@@ -135,7 +135,7 @@
                                     :sample_alias
                                     :version]))))
 
-(defn final_workflow_outputs_dir_hack
+(defn ^:private final_workflow_outputs_dir_hack
   "Do to `file` what `{:final_workflow_outputs_dir output}` does."
   [output file]
   (->> (str/split file #"/")
@@ -156,23 +156,25 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [uuid] :as workflow}]
-  (let [finalize (partial final_workflow_outputs_dir_hack output)
-        cromwell->clio {:bai                 :bai_path
-                        :bam                 :bam_path
-                        :insert_size_metrics :insert_size_metrics_path}
-        {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
-        bam (-> outputs
-                (util/unprefix-keys (str pipeline "."))
-                (set/rename-keys cromwell->clio)
-                (select-keys (vals cromwell->clio)))
-        final (zipmap (keys bam) (map finalize (vals bam)))]
-    (when (some empty? (vals final))
-      (log/warn "Bad metadata from executor")
-      (log/error {:executor executor :metadata metadata}))
-    #_(log-missing-final-files-for-debugging final)
-    (let [cram (clio-cram-record (:input_cram inputs))]
-      (clio/add-bam (merge cram final)))))
+  [executor output {:keys [status uuid] :as workflow}]
+  (when (= "Succeeded" status)
+    (let [finalize (partial final_workflow_outputs_dir_hack output)
+          cromwell->clio {:bai                 :bai_path
+                          :bam                 :bam_path
+                          :insert_size_metrics :insert_size_metrics_path}
+          {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
+          bam (-> outputs
+                  (util/unprefix-keys (str pipeline "."))
+                  (set/rename-keys cromwell->clio)
+                  (select-keys (vals cromwell->clio)))
+          final (zipmap (keys bam) (map finalize (vals bam)))]
+      (when (some empty? (vals final))
+        (log/warn "Bad metadata from executor")
+        (log/error {:executor executor :metadata metadata}))
+      #_(log-missing-final-files-for-debugging final)
+      (or (clio-bam-record (select-keys final [:bam_path]))
+          (let [cram (clio-cram-record (:input_cram inputs))]
+            (clio/add-bam (merge cram final)))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."

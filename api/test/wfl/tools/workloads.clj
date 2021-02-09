@@ -124,8 +124,10 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/" identifier)
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:debug :cromwell :url]))
+   :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
+                            "xx-test-output" identifier])
    :pipeline xx/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs {:input_cram
