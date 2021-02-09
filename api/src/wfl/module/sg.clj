@@ -135,13 +135,24 @@
                                     :sample_alias
                                     :version]))))
 
-(defn ^:private final_workflow_outputs_dir_hack
+(defn final_workflow_outputs_dir_hack
   "Do to `file` what `{:final_workflow_outputs_dir output}` does."
   [output file]
   (->> (str/split file #"/")
        (drop 3)
        (cons output)
        (str/join "/")))
+
+(defn ^:private log-missing-final-files-for-debugging
+  "Log any `final-files` missing from Clio BAM record for debugging."
+  [final-files]
+  (let [get  (comp gcs/gs-object-url first gcs/list-objects)
+        want (->  final-files vals           set)
+        have (->> final-files vals (map get) set)
+        need (set/difference want have)]
+    (when-not (empty? need)
+      (log/warn "Need output files for Clio.")
+      (log/error {:need need}))))
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
@@ -159,17 +170,9 @@
     (when (some empty? (vals final))
       (log/warn "Bad metadata from executor")
       (log/error {:executor executor :metadata metadata}))
-    (if-let [clio-bam (clio-bam-record (select-keys final [:bam_path]))]
-      clio-bam
-      (let [get  (comp gcs/gs-object-url first gcs/list-objects)
-            cram (clio-cram-record (:input_cram inputs))
-            have (->> final vals (map get) set)
-            want (->  final vals           set)
-            need (set/difference want have)]
-        (when-not (empty? need)
-          (log/warn "Need output files for Clio.")
-          (log/error {:need need}))
-        (clio/add-bam (merge cram final))))))
+    #_(log-missing-final-files-for-debugging final)
+    (let [cram (clio-cram-record (:input_cram inputs))]
+      (clio/add-bam (merge cram final)))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
