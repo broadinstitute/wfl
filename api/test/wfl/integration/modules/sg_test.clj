@@ -1,6 +1,5 @@
 (ns wfl.integration.modules.sg-test
-  (:require [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
@@ -10,8 +9,7 @@
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]]
-            [wfl.module.sg :as sg])
+            [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
@@ -153,48 +151,6 @@
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
 
-(defn ^:private ensure-clio-cram
-  "Ensure there is a CRAM record in Clio suitable for test."
-  []
-  (let [version 23
-        project (str "G96830" \- (UUID/randomUUID))
-        NA12878 (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
-                               "pipeline"
-                               project
-                               "NA12878"
-                               (str \v version) "NA12878"])
-        path    (partial str NA12878)
-        query   {:billing_project        "hornet-nest"
-                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
-                 :cram_path              (path ".cram")
-                 :cram_size              19512619343
-                 :data_type              "WGS"
-                 :document_status        "Normal"
-                 :location               "GCP"
-                 :notes                  "Blame tbl for SG test."
-                 :pipeline_version       "f1c7883"
-                 :project                project
-                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
-                 :regulatory_designation "RESEARCH_ONLY"
-                 :sample_alias           "NA12878"
-                 :version                version
-                 :workspace_name         "bike-of-hornets"}
-        crams   (clio/query-cram query)]
-    (when (> (count crams) 1)
-      (throw (ex-info "More than 1 Clio CRAM record"
-                      (with-out-str (pprint crams)))))
-    (or (first crams)
-        (clio/add-cram
-         (merge query
-                {:crai_path                  (path ".cram.crai")
-                 :cromwell_id                (str (UUID/randomUUID))
-                 :insert_size_histogram_path (path ".insert_size_histogram.pdf")
-                 :insert_size_metrics_path   (path ".insert_size_metrics")
-                 :workflow_start_date        (str (OffsetDateTime/now))})))
-    (first (clio/query-cram query))))
-
-(def ^:private the-clio-cram-record (delay (ensure-clio-cram)))
-
 (defn ^:private mock-cromwell-query
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
@@ -224,14 +180,15 @@
                                                      "execution"
                                                      sample_name]))]
               (zipmap (keys bam-suffixes) (map prefix (vals bam-suffixes)))))]
-    (let [from-cram (select-keys @the-clio-cram-record [:billing_project
-                                                        :data_type
-                                                        :document_status
-                                                        :location
-                                                        :notes
-                                                        :project
-                                                        :sample_alias
-                                                        :version])]
+    (let [from-cram (select-keys @workloads/the-clio-cram-record
+                                 [:billing_project
+                                  :data_type
+                                  :document_status
+                                  :location
+                                  :notes
+                                  :project
+                                  :sample_alias
+                                  :version])]
       (map (partial merge from-cram) (map make workflows)))))
 
 ;; The files are all just bogus copies of the README now.
@@ -251,9 +208,11 @@
 (deftest test-clio-updates
   (testing "Clio updated after workflows finish."
     (let [where [:items 0 :inputs]
-          {:keys [cram_path project sample_alias]} @the-clio-cram-record]
-      (with-redefs-fn {#'cromwell/submit-workflows mock-cromwell-submit-workflows
-                       #'cromwell/query            mock-cromwell-query}
+          {:keys [cram_path project sample_alias]}
+          @workloads/the-clio-cram-record]
+      (with-redefs-fn
+        {#'cromwell/submit-workflows mock-cromwell-submit-workflows
+         #'cromwell/query            mock-cromwell-query}
         #(-> (make-sg-workload-request)
              (update :items (comp vector first))
              (assoc-in (conj where :input_cram)  cram_path)

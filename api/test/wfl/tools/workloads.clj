@@ -8,12 +8,16 @@
             [wfl.module.copyfile :as cp]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
+            [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]]
             [wfl.module.sg :as sg])
-  (:import (java.util.concurrent TimeoutException)))
+  (:import (java.time OffsetDateTime)
+           (java.util.concurrent TimeoutException)
+           (java.util UUID)))
 
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
@@ -134,24 +138,72 @@
                         (util/prefix-keys :ExomeGermlineSingleSample)
                         (util/prefix-keys :ExomeReprocessing))}})
 
+(defn ^:private add-clio-cram
+  "Ensure there are files in GCS to satisfy the Clio `query`."
+  [{:keys [project version] :as query}]
+  (let [suffix {:crai_path                  ".cram.crai"
+                :cram_path                  ".cram"
+                :insert_size_histogram_path ".insert_size_histogram.pdf"
+                :insert_size_metrics_path   ".insert_size_metrics"}
+        prefix #(zipmap (keys suffix) (map (partial str %) (vals suffix)))
+        froms  (prefix (str/join "/" ["gs://broad-gotc-test-storage"
+                                      "germline_single_sample/wgs"
+                                      "plumbing/truth/develop"
+                                      "G96830.NA12878"
+                                      "NA12878_PLUMBING"]))
+        tos    (prefix (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-inputs"
+                                      "pipeline" project "NA12878"
+                                      (str \v version) "NA12878"]))]
+    (clio/add-cram
+     (merge query tos
+            {:cromwell_id         (str (UUID/randomUUID))
+             :workflow_start_date (str (OffsetDateTime/now))}))
+    (dorun (map (fn [k] (gcs/copy-object (k froms) (k tos))) (keys suffix))))
+  (first (clio/query-cram query)))
+
+(defn ^:private ensure-clio-cram
+  "Ensure there is a CRAM record in Clio suitable for test."
+  []
+  (let [version 23
+        project (str "G96830" \- (UUID/randomUUID))
+        query   {:billing_project        "hornet-nest"
+                 :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
+                 :cram_size              19512619343
+                 :data_type              "WGS"
+                 :document_status        "Normal"
+                 :location               "GCP"
+                 :notes                  "Blame tbl for SG test."
+                 :pipeline_version       "f1c7883"
+                 :project                project
+                 :readgroup_md5          "a128cbbe435e12a8959199a8bde5541c"
+                 :regulatory_designation "RESEARCH_ONLY"
+                 :sample_alias           "NA12878"
+                 :version                version
+                 :workspace_name         "bike-of-hornets"}
+        crams   (clio/query-cram query)]
+    (when (> (count crams) 1)
+      (throw (ex-info "More than 1 Clio CRAM record" {:crams crams})))
+    (or (first crams)
+        (add-clio-cram query))))
+
+(def the-clio-cram-record
+  "Use this Clio CRAM record to test SG workloads."
+  (delay (ensure-clio-cram)))
+
 ;; From warp.git ExampleCramToUnmappedBams.plumbing.json
 ;;
 (defn sg-workload-request
   [identifier]
   (let [dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
                              "gdc/dbsnp_144.hg38.vcf.gz"])
-        cram  (str/join "/" ["gs://broad-gotc-test-storage"
-                             "germline_single_sample"
-                             "wgs/plumbing/truth/develop"
-                             "G96830.NA12878"
-                             "NA12878_PLUMBING.cram"])
+        cram  (:cram_path @the-clio-cram-record)
         fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
                              "Homo_sapiens_assembly38.fasta"])
         vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
                              "small_exac_common_3.hg38.vcf.gz"])]
-    {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
+    {:executor (or (load-cromwell-url-from-env-var!)
+                   (get-in stuff [:debug :cromwell :url]))
      :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
-                              sg/pipeline
                               identifier])
      :pipeline sg/pipeline
      :project  (format "(Test) %s" @git-branch)

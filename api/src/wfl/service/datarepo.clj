@@ -113,9 +113,3 @@
      :size            3073329
      :fileId          "271cd32c-2e86-4f46-9eb1-f3ddb44a6c1f"}))
 
-(comment
-  (def schema (json/read-str (slurp "./edmund.json") :key-fn keyword))
-  (make-dataset :debug schema)
-  (get-profiles :debug)
-  (poll-job :debug "7ad4VEI-QZOMQI5pIDymIg")
-  )

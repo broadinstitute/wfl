@@ -3,6 +3,7 @@
   (:require [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -106,24 +107,24 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defn clio-bam-record
-  "Return `nil` or the single Clio record with metadata `bam`, or throw."
+(defn ^:private clio-bam-record
+  "Return `nil` or the single Clio record with `bam`."
   [bam]
   (let [records (clio/query-bam bam)
         n       (count records)]
     (when (> n 1)
-      (throw (ex-info "More than 1 Clio BAM record"
-                      {:bam_record bam :count n})))
+      (log/warn "More than 1 Clio BAM record")
+      (log/error {:bam_record bam :count n}))
     (first records)))
 
-(defn clio-cram-record
+(defn ^:private clio-cram-record
   "Return the useful part of the Clio record for `input_cram` or throw."
   [input_cram]
   (let [records (clio/query-cram {:cram_path input_cram})
         n       (count records)]
     (when (not= 1 n)
-      (throw (ex-info "Expected 1 Clio record with cram_path"
-                      {:cram_path input_cram :count n})))
+      (log/warn "Expected 1 Clio record with cram_path")
+      (log/error {:cram_path input_cram :count n}))
     (-> records first (select-keys [:billing_project
                                     :data_type
                                     :document_status
@@ -134,49 +135,58 @@
                                     :sample_alias
                                     :version]))))
 
-(defn register-workflow-in-clio
+(defn ^:private final_workflow_outputs_dir_hack
+  "Do to `file` what `{:final_workflow_outputs_dir output}` does."
+  [output file]
+  (->> (str/split file #"/")
+       (drop 3)
+       (cons output)
+       (str/join "/")))
+
+(defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor {:keys [uuid] :as workflow}]
-  (let [cromwell->clio {:bai                 :bai_path
+  [executor output {:keys [uuid] :as workflow}]
+  (let [finalize (partial final_workflow_outputs_dir_hack output)
+        cromwell->clio {:bai                 :bai_path
                         :bam                 :bam_path
                         :insert_size_metrics :insert_size_metrics_path}
         {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
         bam (-> outputs
                 (util/unprefix-keys (str pipeline "."))
                 (set/rename-keys cromwell->clio)
-                (select-keys (vals cromwell->clio)))]
-    (when (some empty? (vals bam))
-      (throw (ex-info "Bad metadata from executor" {:executor executor
-                                                    :metadata metadata})))
-    (if-let [clio-bam (clio-bam-record (select-keys bam [:bam_path]))]
+                (select-keys (vals cromwell->clio)))
+        final (zipmap (keys bam) (map finalize (vals bam)))]
+    (when (some empty? (vals final))
+      (log/warn "Bad metadata from executor")
+      (log/error {:executor executor :metadata metadata}))
+    (if-let [clio-bam (clio-bam-record (select-keys final [:bam_path]))]
       clio-bam
       (let [get  (comp gcs/gs-object-url first gcs/list-objects)
             cram (clio-cram-record (:input_cram inputs))
-            have (->> bam vals (map get) set)
-            want (->  bam vals           set)
+            have (->> final vals (map get) set)
+            want (->  final vals           set)
             need (set/difference want have)]
         (when-not (empty? need)
-          (throw (ex-info "Need these output files:" {:need need})))
-        (clio/add-bam (merge cram bam))))))
+          (log/warn "Need output files for Clio.")
+          (log/error {:need need}))
+        (clio/add-bam (merge cram final))))))
 
-(defn register-workload-in-clio
+(defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
-  [tx {:keys [items output uuid] :as workload}]
+  [tx {:keys [executor items output uuid] :as workload}]
   (->> items
        (postgres/get-table tx)
-       (run! (partial register-workflow-in-clio output pipeline uuid)))
+       (run! (partial register-workflow-in-clio executor output)))
   workload)
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [tx {:keys [finished id started] :as workload}]
-  (letfn [(update []
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
-            (workloads/load-workload-for-id tx id))]
-    (cond finished (register-workload-in-clio tx workload)
-          started  (update)
-          :else    workload)))
+  (postgres/batch-update-workflow-statuses! tx workload)
+  (postgres/update-workload-status! tx workload)
+  (let [{:keys [finished] :as result} (workloads/load-workload-for-id tx id)]
+    (when finished (register-workload-in-clio tx workload))
+    result))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)

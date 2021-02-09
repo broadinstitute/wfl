@@ -5,9 +5,7 @@
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
-            [wfl.tools.fixtures         :refer [gcs-test-bucket
-                                                temporary-postgresql-database
-                                                with-temporary-cloud-storage-folder]]
+            [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
             [wfl.util                   :as util])
   (:import (clojure.lang ExceptionInfo)
@@ -112,7 +110,7 @@
 (deftest ^:parallel test-start-sg-workload
   (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
-  (with-temporary-cloud-storage-folder gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
@@ -156,7 +154,7 @@
   (clojure.test/test-vars [#'test-exec-sg-workload]))
 
 (deftest ^:parallel test-exec-copyfile-workload
-  (with-temporary-cloud-storage-folder gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
