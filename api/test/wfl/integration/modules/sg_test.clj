@@ -122,25 +122,26 @@
              workloads/execute-workload!)))))
 
 (deftest test-workflow-options
-  (letfn [(overmap [m] (-> m
-                           (assoc-in [:options :overwritten]      true)
-                           (assoc-in [:options :supports_options] true)))
-          (verify-workflow-options [options]
-            (is (:overwritten             options))
-            (is (:supports_common_options options))
-            (is (:supports_options options)))
-          (verify-submitted-options [url _ inputs options _]
-            (verify-workflow-options options)
-            (let [defaults (sg/make-workflow-options url)]
-              (is (= defaults (select-keys options (keys defaults))))
-              (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
-      #(-> (make-sg-workload-request)
-           (assoc-in [:common :options] {:overwritten             false
-                                         :supports_common_options true})
-           (update :items (partial map overmap))
-           workloads/execute-workload! :workflows
-           (->> (map (comp verify-workflow-options :options)))))))
+  (let [{:keys [output] :as request} (make-sg-workload-request)]
+    (letfn [(overmap [m] (-> m
+                             (assoc-in [:options :overwritten]      true)
+                             (assoc-in [:options :supports_options] true)))
+            (verify-workflow-options [options]
+              (is (:overwritten             options))
+              (is (:supports_common_options options))
+              (is (:supports_options options)))
+            (verify-submitted-options [url _ inputs options _]
+              (verify-workflow-options options)
+              (let [defaults (sg/make-workflow-options url output)]
+                (is (= defaults (select-keys options (keys defaults))))
+                (map (fn [_] (UUID/randomUUID)) inputs)))]
+      (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
+        #(-> request
+             (assoc-in [:common :options] {:overwritten             false
+                                           :supports_common_options true})
+             (update :items (partial map overmap))
+             workloads/execute-workload! :workflows
+             (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (absent? workflow :options)))
@@ -150,12 +151,12 @@
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
 
-(defn mock-clio-add-bam-found
+(defn ^:private mock-clio-add-bam-found
   "Fail when called because a BAM record already exists for `_md`"
   [_md]
   (is false))
 
-(defn mock-clio-add-bam-missing
+(defn ^:private mock-clio-add-bam-missing
   "Add a missing Clio BAM record with metadata `md`."
   [md]
   (is md)
@@ -163,12 +164,12 @@
     (is (every? ok? ((apply juxt clio/add-keys) md))))
   "-MRu7X3zEzoGeFAVSF-J")
 
-(defn mock-clio-failed
+(defn ^:private mock-clio-failed
   "Fail when called with metadata `_md`."
   [_md]
   (is false))
 
-(defn mock-clio-query-bam-found
+(defn ^:private mock-clio-query-bam-found
   "Return a Clio BAM record with metadata `_md`."
   [{:keys [bam_path] :as _md}]
   [{:bai_path (str/replace bam_path ".bam" ".bai")
@@ -184,12 +185,12 @@
     :sample_alias "NA12878"
     :version 23}])
 
-(defn mock-clio-query-bam-missing
+(defn ^:private mock-clio-query-bam-missing
   "Return an empty Clio response for query metadata `_md`."
   [_md]
   [])
 
-(defn mock-clio-query-cram-found
+(defn ^:private mock-clio-query-cram-found
   "Return a Clio CRAM record with metadata `_md`."
   [{:keys [cram_path] :as _md}]
   [{:billing_project "hornet-nest"
@@ -288,7 +289,7 @@
 ;; First workloads/update-workload! makes workflow status "Succeeded".
 ;; Second workloads/update-workload! may registers outputs with Clio.
 ;;
-(defn test-clio-updates
+(defn ^:private test-clio-updates
   []
   (let [{:keys [items] :as request} (make-sg-workload-request)]
     (-> request
@@ -338,4 +339,5 @@
 (comment
   (clojure.test/test-vars [#'test-clio-updates-cromwell-failed])
   (clojure.test/test-vars [#'test-clio-updates-bam-found])
-  (clojure.test/test-vars [#'test-clio-updates-bam-missing]))
+  (clojure.test/test-vars [#'test-clio-updates-bam-missing])
+  (clojure.test/test-vars [#'test-workflow-options]))

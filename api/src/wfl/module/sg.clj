@@ -58,8 +58,7 @@
       (util/deep-merge inputs)
       (util/prefix-keys pipeline)))
 
-;; visible for testing
-(defn make-workflow-options
+(defn make-workflow-options             ; visible for testing
   "Workflow options for Cromwell at `url` to write to `output`."
   [url output]
   (let [gcr   "us.gcr.io"
