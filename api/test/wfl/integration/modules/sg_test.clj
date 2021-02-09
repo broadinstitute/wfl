@@ -297,10 +297,10 @@
         workloads/update-workload!
         workloads/update-workload!
         (as-> workload
-            (let [{:keys [finished pipeline workflows]} workload]
-              (is finished)
-              (is (= sg/pipeline pipeline))
-              (is (= (count items) (count workflows))))))))
+              (let [{:keys [finished pipeline workflows]} workload]
+                (is finished)
+                (is (= sg/pipeline pipeline))
+                (is (= (count items) (count workflows))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
@@ -338,5 +338,4 @@
 (comment
   (clojure.test/test-vars [#'test-clio-updates-cromwell-failed])
   (clojure.test/test-vars [#'test-clio-updates-bam-found])
-  (clojure.test/test-vars [#'test-clio-updates-bam-missing])
-  )
+  (clojure.test/test-vars [#'test-clio-updates-bam-missing]))
