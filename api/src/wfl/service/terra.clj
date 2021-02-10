@@ -65,10 +65,10 @@
          \"general-dev-billing-account/hornet-test\"
          \"./samples.tsv\")"
   [terra-url workspace file]
-  (let [import-url (str (workspace-api-url terra-url workspace) "/flexibleImportEntities")]
-    (-> import-url
-        (http/post {:headers (once/get-auth-header)
-                    :multipart    [{:name "Content/type"
-                                    :content "text/tab-separated-values"}
-                                   {:name "entities"
-                                    :content (slurp file)}]}))))
+  (-> (workspace-api-url terra-url workspace)
+    (str "/flexibleImportEntities")
+    (http/post {:headers (once/get-auth-header)
+                :multipart    [{:name "Content/type"
+                                :content "text/tab-separated-values"}
+                               {:name "entities"
+                                :content (slurp file)}]})))
