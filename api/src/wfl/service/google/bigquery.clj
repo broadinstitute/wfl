@@ -1,15 +1,14 @@
 (ns wfl.service.google.bigquery
   "Wrappers for Google Cloud BigQuery REST APIs.
    See https://cloud.google.com/bigquery/docs/reference/rest."
-  (:require [clojure.data.csv :as csv]
-            [clojure.data.json :as json]
+  (:require [clj-http.client :as http]
+            [clojure.data.csv :as csv]
             [clojure.java.io :as io]
+            [clojure.data.json :as json]
             [clojure.string :as str]
-            [clj-http.client :as http]
-            [wfl.util         :as util]
-            [wfl.service.terra :as terra]
-            [wfl.once :as once])
-  (:import [java.io StringWriter BufferedWriter FileInputStream]))
+            [wfl.once :as once]
+            [wfl.util         :as util])
+  (:import [java.io StringWriter]))
 
 (defn ^:private json-body [response]
   (-> response :body (or "null") util/parse-json))
