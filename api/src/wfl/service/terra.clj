@@ -56,7 +56,7 @@
    ----------
    terra-url  - The URL of Terra instance.
    workspace  - Terra Workspace to upload samples to.
-   file       - A tsv file (string stream) containing sample inputs.
+   file       - A tsv file (or bytes) containing sample inputs.
 
    Example
    -------
@@ -66,9 +66,9 @@
          \"./samples.tsv\")"
   [terra-url workspace file]
   (-> (workspace-api-url terra-url workspace)
-    (str "/flexibleImportEntities")
-    (http/post {:headers (once/get-auth-header)
-                :multipart    [{:name "Content/type"
-                                :content "text/tab-separated-values"}
-                               {:name "entities"
-                                :content (slurp file)}]})))
+      (str "/flexibleImportEntities")
+      (http/post {:headers (once/get-auth-header)
+                  :multipart    [{:name "Content/type"
+                                  :content "text/tab-separated-values"}
+                                 {:name "entities"
+                                  :content (slurp file)}]})))
