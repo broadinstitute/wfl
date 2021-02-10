@@ -10,9 +10,6 @@
             [wfl.util         :as util])
   (:import [java.io StringWriter]))
 
-(defn ^:private json-body [response]
-  (-> response :body (or "null") util/parse-json))
-
 (def ^:private bigquery-url
   "The BigQuery REST API URL."
   (partial str "https://bigquery.googleapis.com/bigquery/v2/"))
@@ -31,7 +28,7 @@
   (-> (str/join "/" ["projects" project "datasets"])
       bigquery-url
       (http/get {:headers (once/get-auth-header)})
-      json-body
+      util/response-body-json
       :datasets))
 
 ;; TODO: we may need to support pagination on this query
@@ -50,7 +47,7 @@
   (-> (str/join "/" ["projects" project "datasets" dataset "tables"])
       bigquery-url
       (http/get {:headers (once/get-auth-header)})
-      json-body
+      util/response-body-json
       :tables))
 
 (def list-views "Function alias for views." list-tables)
@@ -81,7 +78,7 @@
                     :body    (json/write-str
                               {:query query
                                :use_legacy_sql false})})
-        json-body)))
+        util/response-body-json)))
 
 (def query-view-sync "Function alias for views." query-table-sync)
 

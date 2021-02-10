@@ -6,9 +6,6 @@
             [wfl.once :as once]
             [wfl.util :as util]))
 
-(defn ^:private json-body [response]
-  (-> response :body (or "null") util/parse-json))
-
 (defn workspace-api-url
   [terra-url workspace]
   (str terra-url "/api/workspaces/" workspace))
