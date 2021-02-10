@@ -43,6 +43,10 @@
   [str]
   (json/read-str str :key-fn keyword))
 
+(defn response-body-json [response]
+  "Return the :body of the http `response` as JSON"
+  (-> response :body (or "null") parse-json))
+
 (defn slurp-json
   "Nil or the JSON in FILE."
   [file]
@@ -78,7 +82,7 @@
     (subs filename 0 idx)
     filename))
 
-(defn leafname
+(defn basename
   "Strip directory from `filename`."
   [filename]
   (if (= "/" filename)

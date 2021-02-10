@@ -129,17 +129,17 @@
       (util/prefix-keys (keyword pipeline))))
 
 ;; visible for testing
-(defn make-inputs-to-save [output-url inputs]
-  (let [sample (some inputs [:input_bam :input_cram])
-        [_ base _] (all/bam-or-cram? sample)
-        leaf   (util/leafname base)
-        [_ out-dir] (gcs/parse-gs-url base)]
+(defn make-inputs-to-save [out-gs inputs]
+  (let [sample      (some inputs [:input_bam :input_cram])
+        sample-name (util/basename (util/remove-extension sample))
+        ;; parse the sample url eagerly to make sure it's valid
+        [_ object]  (gcs/parse-gs-url sample)]
     (-> inputs
-        (util/assoc-when util/absent? :base_file_name leaf)
-        (util/assoc-when util/absent? :sample_name leaf)
-        (util/assoc-when util/absent? :final_gvcf_base_name leaf)
+        (util/assoc-when util/absent? :base_file_name sample-name)
+        (util/assoc-when util/absent? :sample_name sample-name)
+        (util/assoc-when util/absent? :final_gvcf_base_name sample-name)
         (util/assoc-when util/absent? :destination_cloud_path
-                         (str (util/slashify output-url) (util/dirname out-dir))))))
+                         (str (util/slashify out-gs) (util/dirname object))))))
 
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]

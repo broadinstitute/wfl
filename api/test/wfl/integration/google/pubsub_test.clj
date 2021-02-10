@@ -24,14 +24,14 @@
         ;; messages to the pub/sub topic.
         ;; See https://cloud.google.com/storage/docs/reporting-changes#prereqs
         (give-project-sa-publish-access-to-topic project topic)
-        (fixtures/with-temporary-notification-configuration bucket topic
-          (fn [_]
-            (let [configs (gcs/list-notification-configurations bucket)]
-              (is (< 0 (count configs))))
-            (fixtures/with-temporary-subscription topic
-              (fn [subscription]
-                (is (== 1 (count (pubsub/list-subscriptions topic))))
-                (is (empty? (pubsub/pull-subscription subscription)))
+        (fixtures/with-temporary-subscription topic
+          (fn [subscription]
+            (is (== 1 (count (pubsub/list-subscriptions topic))))
+            (is (empty? (pubsub/pull-subscription subscription)))
+            (fixtures/with-temporary-notification-configuration bucket topic
+              (fn [_]
+                (let [configs (gcs/list-notification-configurations bucket)]
+                  (is (< 0 (count configs))))
                 (fixtures/with-temporary-cloud-storage-folder bucket
                   (fn [url]
                     (let [dest (str url "input.txt")]
