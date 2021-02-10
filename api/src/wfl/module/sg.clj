@@ -123,7 +123,7 @@
         n       (count records)]
     (when (not= 1 n)
       (log/warn "Expected 1 Clio record with cram_path")
-      (log/error {:cram_path input_cram :count n}))
+      (log/error {:count n :cram_path input_cram}))
     (-> records first (select-keys [:billing_project
                                     :data_type
                                     :document_status
@@ -142,16 +142,16 @@
        (cons output)
        (str/join "/")))
 
-(defn ^:private log-missing-final-files-for-debugging
-  "Log any `final-files` missing from Clio BAM record for debugging."
-  [final-files]
-  (let [get  (comp gcs/gs-object-url first gcs/list-objects)
-        want (->  final-files vals           set)
-        have (->> final-files vals (map get) set)
-        need (set/difference want have)]
-    (when-not (empty? need)
-      (log/warn "Need output files for Clio.")
-      (log/error {:need need}))))
+#_(defn ^:private log-missing-final-files-for-debugging
+    "Log any `final-files` missing from Clio BAM record for debugging."
+    [final-files]
+    (let [get  (comp gcs/gs-object-url first gcs/list-objects)
+          want (->  final-files vals           set)
+          have (->> final-files vals (map get) set)
+          need (set/difference want have)]
+      (when-not (empty? need)
+        (log/warn "Need output files for Clio.")
+        (log/error {:need need}))))
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
@@ -171,12 +171,12 @@
         (log/warn "Bad metadata from executor")
         (log/error {:executor executor :metadata metadata}))
       #_(log-missing-final-files-for-debugging final)
-      (try
-        (or (clio-bam-record (select-keys final [:bam_path]))
-            (let [cram (clio-cram-record (:input_cram inputs))]
-              (clio/add-bam (merge cram final))))
-        (catch Throwable x
-          (log/warn x "Add BAM to Clio failed" {:final final}))))))
+      (or (clio-bam-record (select-keys final [:bam_path]))
+          (let [cram (clio-cram-record (:input_cram inputs))
+                bam  (merge cram final)]
+            (try (clio/add-bam bam)
+                 (catch Throwable x
+                   (log/warn x "Add BAM to Clio failed" {:bam bam}))))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
