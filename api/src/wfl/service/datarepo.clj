@@ -2,7 +2,7 @@
   "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
-            [wfl.environments :as env]
+            [wfl.environment :as env]
             [wfl.once :as once])
   (:import [org.apache.http HttpException]))
 

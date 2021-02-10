@@ -2,7 +2,7 @@
   (:require [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [wfl.environments :as env]
+            [wfl.environment :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :refer [with-temporary-cloud-storage-folder]]

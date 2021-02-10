@@ -1,7 +1,7 @@
 (ns wfl.integration.modules.xx-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string :as str]
-            [wfl.environments :as env]
+            [wfl.environment :as env]
             [wfl.module.xx :as xx]
             [wfl.module.batch :as batch]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]

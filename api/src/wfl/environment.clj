@@ -1,4 +1,4 @@
-(ns wfl.environments
+(ns wfl.environment
   "Map environment to various values here.")
 
 ;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases

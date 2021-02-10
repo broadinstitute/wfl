@@ -4,7 +4,7 @@
             [clojure.java.io   :as io]
             [clojure.string    :as str]
             [clojure.tools.logging :as log]
-            [wfl.environments :as env]
+            [wfl.environment :as env]
             [vault.client.http]         ; vault.core needs this
             [vault.core :as vault]
             [wfl.util         :as util])

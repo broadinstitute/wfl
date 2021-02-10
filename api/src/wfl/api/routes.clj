@@ -14,7 +14,7 @@
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.workloads                  :as workloads]
-            [wfl.environments                   :as env]
+            [wfl.environment                   :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl]
             [wfl.once                           :as once])
@@ -46,8 +46,8 @@
            :handler   (fn [_] (handlers/succeed {:oauth2-client-id @once/oauth-client-id}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
-   ["/api/v1/environments"
-    {:get  {:summary "Get all of the environments the server knows"
+   ["/api/v1/wfl.environment"
+    {:get  {:summary "Get all of the wfl.environment the server knows"
             :parameters nil
             :responses {200 {:body map?}}
             :handler (handlers/success env/stuff)}}]
