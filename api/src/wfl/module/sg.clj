@@ -3,7 +3,7 @@
   (:require [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
+            [clojure.tools.logging.readable :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
