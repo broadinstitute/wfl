@@ -1,4 +1,4 @@
-(ns wfl.once
+(ns wfl.auth
   "Manage credentials and configurations."
   (:require [clojure.java.io   :as io]
             [clojure.string    :as str]

@@ -3,7 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))
@@ -42,5 +42,5 @@
   (testing "no \"Authorization\" header in request should throw"
     (is (thrown? Exception (gcs/userinfo {:headers {}}))))
   (testing "fetching userinfo from request with \"Authorization\" header"
-    (let [info (gcs/userinfo {:headers (once/get-auth-header)})]
+    (let [info (gcs/userinfo {:headers (auth/get-auth-header)})]
       (is (:email info)))))

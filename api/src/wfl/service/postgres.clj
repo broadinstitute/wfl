@@ -4,7 +4,7 @@
             [clj-http.client :as http]
             [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.terra :as terra]
             [wfl.util :as util])
@@ -42,7 +42,7 @@
   "`status` of the workflow with `uuid` in `cromwell`."
   [cromwell uuid]
   (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       :body
       util/parse-json
       :status))
