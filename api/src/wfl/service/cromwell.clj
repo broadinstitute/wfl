@@ -6,7 +6,6 @@
             [clojure.walk :as walk]
             [clj-http.client :as http]
             [wfl.debug :as debug]
-            [wfl.service.http-utils :refer [post-multipart]]
             [wfl.once :as once]
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
@@ -73,7 +72,9 @@
   "Assemble PARTS into a multipart HTML body and post it to the Cromwell
   server specified by URL, and return the workflow ID."
   [url parts]
-  (util/response-body-json (post-multipart url parts)))
+  (util/response-body-json
+   (http/post url {:headers   (once/get-auth-header)
+                   :multipart (util/multipart-body parts)})))
 
 (defn make-workflow-labels
   "Return workflow labels for WDL."

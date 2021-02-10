@@ -398,3 +398,9 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
       (use resource)
       (finally
         (release resource)))))
+
+(defn multipart-body
+  "Assemble PARTS into a multipart HTML body."
+  [parts]
+  (letfn [(make-part [[k v]] {:name (name k) :content v})]
+    (map make-part parts)))
