@@ -1,0 +1,168 @@
+{
+  "name": "assemble_refbased_outputs",
+  "description": "COVID-19 assemble_refbased pipeline outputs",
+  "schema": {
+    "tables": [
+      {
+        "name": "assemble_refbased_outputs",
+        "columns": [
+          {
+            "name": "id",
+            "datatype": "string"
+          },
+          {
+            "name": "daterepo_ingest_date",
+            "datatype": "date"
+          },
+          {
+            "name": "assembly_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_ref_variants_vcf_gz",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assembly_length",
+            "datatype": "int64"
+          },
+          {
+            "name": "assembly_length_unambiguous",
+            "datatype": "int64"
+          },
+          {
+            "name": "reference_genome_length",
+            "datatype": "int64"
+          },
+          {
+            "name": "assembly_mean_coverage",
+            "datatype": "float64"
+          },
+          {
+            "name": "dist_to_ref_snps",
+            "datatype": "int64"
+          },
+          {
+            "name": "dist_to_ref_indels",
+            "datatype": "int64"
+          },
+          {
+            "name": "replicate_concordant_sites",
+            "datatype": "int64"
+          },
+          {
+            "name": "replicate_discordant_snps",
+            "datatype": "int64"
+          },
+          {
+            "name": "replicate_discordant_indels",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_read_groups",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_libraries",
+            "datatype": "int64"
+          },
+          {
+            "name": "replicate_discordant_vcf",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_ref_per_input_aligned_flagstat",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "align_to_ref_per_input_reads_provided",
+            "datatype": "int64",
+            "array_of": true
+          },
+          {
+            "name": "align_to_ref_per_input_reads_aligned",
+            "datatype": "int64",
+            "array_of": true
+          },
+          {
+            "name": "align_to_ref_per_input_fastqc",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "align_to_ref_merged_aligned_trimmed_only_bam",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_ref_merged_coverage_plot",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_ref_merged_coverage_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_ref_merged_reads_aligned",
+            "datatype": "int64"
+          },
+          {
+            "name": "align_to_ref_merged_read_pairs_aligned",
+            "datatype": "int64"
+          },
+          {
+            "name": "align_to_ref_merged_bases_aligned",
+            "datatype": "float64"
+          },
+          {
+            "name": "align_to_self_merged_aligned_only_bam",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_self_merged_coverage_plot",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_self_merged_coverage_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "align_to_self_merged_reads_aligned",
+            "datatype": "int64"
+          },
+          {
+            "name": "align_to_self_merged_read_pairs_aligned",
+            "datatype": "int64"
+          },
+          {
+            "name": "align_to_self_merged_bases_aligned",
+            "datatype": "float64"
+          },
+          {
+            "name": "align_to_self_merged_mean_coverage",
+            "datatype": "float64"
+          },
+          {
+            "name": "align_to_ref_viral_core_version",
+            "datatype": "string"
+          },
+          {
+            "name": "ivar_version",
+            "datatype": "string"
+          },
+          {
+            "name": "viral_assemble_version",
+            "datatype": "string"
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "daterepo_ingest_date"
+        }
+      }
+    ]
+  }
+}

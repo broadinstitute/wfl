@@ -1,5 +1,6 @@
 (ns wfl.tools.fixtures
   (:require [clojure.string :as str]
+            [wfl.service.datarepo :as datarepo]
             [wfl.service.google.pubsub :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
@@ -131,4 +132,12 @@
   (util/bracket
    #(pubsub/create-subscription topic (str "wfl-test-subscription-" (UUID/randomUUID)))
    pubsub/delete-subscription
+   f))
+
+(defn with-temporary-dataset
+  "Create a temporary Terra Data Repository Dataset with `dataset-request`"
+  [dataset-request f]
+  (util/bracket
+   #(datarepo/create-dataset dataset-request)
+   datarepo/delete-dataset
    f))
