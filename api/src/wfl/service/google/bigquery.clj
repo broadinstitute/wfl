@@ -49,10 +49,10 @@
      (list-tables \"broad-jade-dev-data\" \"zerosnapshot\")"
   [project dataset]
   (-> (str/join "/" ["projects" project "datasets" dataset "tables"])
-    (bigquery-url)
-    (http/get {:headers (once/get-auth-header)})
-    json-body
-    :tables))
+      (bigquery-url)
+      (http/get {:headers (once/get-auth-header)})
+      json-body
+      :tables))
 
 (def list-views "Function alias for views." list-tables)
 
@@ -76,13 +76,13 @@
      (query-table-sync \"broad-jade-dev-data\" \"zerosnapshot\" \"sample\")"
   [project snapshot table]
   (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
-   (-> (str/join "/" ["projects" project "queries"])
-    (bigquery-url)
-    (http/post {:headers (once/get-auth-header)
-                :body    (json/write-str
-                           {:query query
-                            :use_legacy_sql false})})
-    json-body)))
+    (-> (str/join "/" ["projects" project "queries"])
+        (bigquery-url)
+        (http/post {:headers (once/get-auth-header)
+                    :body    (json/write-str
+                              {:query query
+                               :use_legacy_sql false})})
+        json-body)))
 
 (def query-view-sync "Function alias for views." query-table-sync)
 
@@ -113,12 +113,12 @@
      (let [headers (map :name (get-in table [:schema :fields]))
            rows (map parse-row (get-in table [:rows]))
            contents (-> []
-                      (into [(format-header-for-terra headers)])
-                      (into rows))]
+                        (into [(format-header-for-terra headers)])
+                        (into rows))]
        (with-open [writer (io/writer file)]
          (csv/write-csv writer
-           contents
-           :separator \tab)
+                        contents
+                        :separator \tab)
          file))))
   ([table terra-data-table]
    (-> (dump-table->tsv table terra-data-table (StringWriter.))
