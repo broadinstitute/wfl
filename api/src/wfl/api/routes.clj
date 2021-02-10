@@ -16,8 +16,7 @@
             [wfl.api.workloads                  :as workloads]
             [wfl.environment                   :as env]
             [wfl.api.spec                       :as spec]
-            [wfl.wfl                            :as wfl]
-            [wfl.once                           :as once])
+            [wfl.wfl                            :as wfl])
   (:import (java.sql SQLException)))
 
 (def endpoints
@@ -43,7 +42,7 @@
             :swagger {:tags ["Informational"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
-           :handler   (fn [_] (handlers/succeed {:oauth2-client-id @once/oauth-client-id}))
+           :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/wfl.environment"
