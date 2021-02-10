@@ -3,7 +3,8 @@
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
             [wfl.once :as once]
-            [wfl.util :as util]))
+            [wfl.util :as util]
+            [clojure.string :as str]))
 
 (defn workspace-api-url
   [terra-url workspace]
@@ -37,6 +38,24 @@
         submission-url (str workspace-url "/submissions/" submission-id)
         response (http/get submission-url {:headers (once/get-auth-header)})]
     (util/parse-json (:body response))))
+
+(defn get-workflow
+  "Query the `firecloud-url` for the the `workflow` created by the `submission`
+   in the Terra `workspace`."
+  [firecloud-url workspace submission workflow]
+  (-> (workspace-api-url firecloud-url workspace)
+      (str (str/join "/" ["" "submissions" submission "workflows" workflow]))
+      (http/get {:headers (once/get-auth-header)})
+      util/response-body-json))
+
+(defn get-workflow-outputs
+  "Query the `firecloud-url` for the outputs of the `workflow` created by
+   the `submission` in the Terra `workspace`."
+  [firecloud-url workspace submission workflow]
+  (-> (workspace-api-url firecloud-url workspace)
+      (str (str/join "/" ["" "submissions" submission "workflows" workflow "outputs"]))
+      (http/get {:headers (once/get-auth-header)})
+      util/response-body-json))
 
 (defn get-workflow-status-by-entity
   "Get workflow status given a Terra submission-id and entity-name."

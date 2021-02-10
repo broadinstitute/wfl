@@ -40,3 +40,12 @@
     (is (= xx/pipeline (:name description)))
     (is (some? (:inputs description)))
     (is (some? (:outputs description)))))
+
+(deftest test-get-workflow-outputs
+  (let [firecloud  "https://api.firecloud.org/"
+        workspace  "pathogen-genomic-surveillance/COVID-19_Broad_Viral_NGS"
+        submission "f946783f-d9a1-44db-aa6c-e8b33d6a9a08"
+        workflow   "62144603-716b-495e-887d-965443e18a36"]
+    (let [wf      (terra/get-workflow firecloud workspace submission workflow)
+          outputs (terra/get-workflow-outputs firecloud workspace submission workflow)]
+      (is (some? (-> outputs :tasks ((-> wf :workflowName keyword)) :outputs))))))
