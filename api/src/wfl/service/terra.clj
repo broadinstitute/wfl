@@ -3,6 +3,7 @@
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
             [wfl.once :as once]
+            [wfl.service.http-utils :as http-utils]
             [wfl.util :as util]))
 
 (defn workspace-api-url
@@ -46,3 +47,12 @@
        (filter #(= (:entity-name inputs) (get-in % [:workflowEntity :entityName])))
        (first)
        (:status)))
+
+(defn describe-wdl
+  "Use `firecloud-url` to describe the WDL at `wdl-url`"
+  [firecloud-url wdl-url]
+  (-> (str firecloud-url "/api/womtool/v1/describe")
+      (http-utils/post-multipart {:workflowUrl         wdl-url
+                                  :workflowTypeVersion "1.0"
+                                  :workflowType        "WDL"})
+      util/response-body-json))

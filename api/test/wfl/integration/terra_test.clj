@@ -1,6 +1,8 @@
 (ns wfl.integration.terra-test
-  (:require [clojure.test       :refer [deftest is testing]]
-            [wfl.service.terra  :as terra]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [wfl.service.terra :as terra]
+            [wfl.module.xx :as xx]
+            [wfl.service.cromwell :as cromwell]))
 
 (def terra-url
   "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
@@ -28,3 +30,13 @@
           submission (terra/get-submission terra-url workspace submission-id)
           workflow (first (:workflows submission))]
       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
+
+(deftest test-describe-wdl
+  (let [description (->> xx/workflow-wdl
+                         cromwell/wdl-map->url
+                         (terra/describe-wdl terra-url))]
+    (is (:valid description))
+    (is (empty? (:errors description)))
+    (is (= xx/pipeline (:name description)))
+    (is (some? (:inputs description)))
+    (is (some? (:outputs description)))))
