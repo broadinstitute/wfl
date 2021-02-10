@@ -171,9 +171,12 @@
         (log/warn "Bad metadata from executor")
         (log/error {:executor executor :metadata metadata}))
       #_(log-missing-final-files-for-debugging final)
-      (or (clio-bam-record (select-keys final [:bam_path]))
-          (let [cram (clio-cram-record (:input_cram inputs))]
-            (clio/add-bam (merge cram final)))))))
+      (try
+        (or (clio-bam-record (select-keys final [:bam_path]))
+            (let [cram (clio-cram-record (:input_cram inputs))]
+              (clio/add-bam (merge cram final))))
+        (catch Throwable x
+          (log/warn x "Add BAM to Clio failed" {:final final}))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
