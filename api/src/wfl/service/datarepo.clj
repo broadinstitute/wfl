@@ -2,84 +2,100 @@
   "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
-            [wfl.environments :as env]
-            [wfl.once :as once])
-  (:import [org.apache.http HttpException]))
+            [wfl.once :as once]
+            [wfl.util :as util])
+  (:import (java.util.concurrent TimeUnit)))
 
-(defn dr-url
-  "URL for the Data Repo in ENVIRONMENT."
-  [environment]
-  (get-in env/stuff [environment :data-repo :url]))
+(def ^:private datarepo-url
+  (let [url (-> (System/getenv "TERRA_DATA_REPO_URL")
+                (or "https://jade.datarepo-dev.broadinstitute.org/")
+                util/slashify)]
+    (partial str url)))
 
-(defn api
-  "API URL for Data Repo API in ENVIRONMENT."
-  [environment]
-  (str (dr-url environment) "/api/repository/v1"))
+(def ^:private repository
+  "API URL for Data Repo API."
+  (partial datarepo-url "api/repository/v1/"))
 
-(defn thing-ingest
-  "Ingest THING to DATASET-ID according to BODY in ENVIRONMENT."
-  [environment dataset-id thing body]
-  (let [url (format "%s/datasets/%s/%s" (api environment) dataset-id thing)]
-    (-> {:method       :post            ; :debug true :debug-body true
-         :url          url              ; :throw-exceptions false
-         :content-type :application/json
-         :headers      (once/get-service-account-header)
-         :body         body}
-        http/request :body
-        (json/read-str :key-fn keyword)
-        :id)))
+(defn dataset
+  "Query the DataRepo for the Dataset with `dataset-id`."
+  [dataset-id]
+  (-> (repository "datasets/" dataset-id)
+      (http/get {:headers (once/get-service-account-header)})
+      util/response-body-json))
 
-(defn file-ingest
-  "Ingest SRC file as VDEST in ENVIRONMENT using DATASET-ID and PROFILE-ID."
-  [environment dataset-id profile-id src vdest]
-  (-> {:description "derived from file name + extension?"
-       :profileId   profile-id
-       :source_path src
-       :target_path vdest
-       :mime_type   "text/plain"}
-      (json/write-str :escape-slash false)
-      (->> (thing-ingest environment dataset-id "files"))))
+(defn ^:private ingest
+  "Ingest THING to DATASET-ID according to BODY."
+  [thing dataset-id body]
+  (-> (repository (format "datasets/%s/%s" dataset-id thing))
+      (http/post {:content-type :application/json
+                  :headers      (once/get-service-account-header)
+                  :body         (json/write-str body :escape-slash false)})
+      util/response-body-json
+      :id))
 
-(defn tabular-ingest
-  "Ingest TABLE at PATH to DATASET-ID in ENVIRONMENT and return the job ID."
-  [environment dataset-id path table]
-  (-> {:format                "json"
-       :ignore_unknown_values true
-       :load_tag              "string"
-       :max_bad_records       0
-       :path                  path
-       :table                 table}
-      (json/write-str :escape-slash false)
-      (->> (thing-ingest environment dataset-id "ingest"))))
+(defn ingest-file
+  "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
+  ([dataset-id profile-id source target options]
+   (-> options
+       (util/assoc-when util/absent? :description (util/basename source))
+       (util/assoc-when util/absent? :mime_type "text/plain")
+       (merge {:profileId profile-id :source_path source :target_path target})
+       (->> (ingest "files" dataset-id))))
+  ([dataset-id profile-id source target]
+   (ingest-file dataset-id profile-id source target {})))
 
-(defn get-job-result
-  "Get result for JOB-ID in ENVIRONMENT."
-  [environment job-id]
-  (let [{:keys [body status]}
-        (http/request
-         {:method :get                 ; :debug true :debug-body true
-          :url (format "%s/jobs/%s/result" (api environment) job-id)
-          :headers (once/get-service-account-header)
-          :throw-exceptions false})]
-    (if (== 200 status)
-      (json/read-str body :key-fn keyword)
-      (throw (HttpException. body)))))
+(defn ingest-dataset
+  "Ingest TABLE at PATH to DATASET-ID and return the job ID."
+  [dataset-id path table]
+  (ingest
+   "ingest"
+   dataset-id
+   {:format                "json"
+    :ignore_unknown_values true
+    :load_tag              "string"
+    :max_bad_records       0
+    :path                  path
+    :table                 table}))
 
 (defn poll-job
   "Return result for JOB-ID in ENVIRONMENT when it stops running."
-  [environment job-id]
-  (letfn [(running? []
-            (-> {:method :get ; :debug true :debug-body true
-                 :url (format "%s/jobs/%s" (api environment) job-id)
-                 :headers (once/get-service-account-header)}
-                http/request :body
-                (json/read-str :key-fn keyword)
-                :job_status
-                #{"running"}))]
-    (when (running?)
-      (Thread/sleep 10000)
-      (poll-job environment job-id))
-    (get-job-result environment job-id)))
+  [job-id]
+  (let [get-result #(-> (repository "jobs/" job-id "/result")
+                        (http/get {:headers (once/get-service-account-header)})
+                        util/response-body-json)
+        running?   #(-> (repository "jobs/" job-id)
+                        (http/get {:headers (once/get-service-account-header)})
+                        util/response-body-json
+                        :job_status
+                        #{"running"})]
+    (while (running?) (.sleep TimeUnit/SECONDS 1))
+    (get-result)))
+
+(defn create-dataset
+  "Create a dataset with EDN `dataset-request` and return the id
+   of the created dataset. See `DatasetRequestModel` in the
+   DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [dataset-request]
+  (-> (repository "datasets")
+      (http/post {:content-type :application/json
+                  :headers      (once/get-service-account-header)
+                  :body         (json/write-str
+                                 dataset-request
+                                 :escape-slash false)})
+      util/response-body-json
+      :id
+      poll-job
+      :id))
+
+(defn delete-dataset
+  "Delete the Dataset with `dataset-id`."
+  [dataset-id]
+  (-> (repository "datasets/" dataset-id)
+      (http/delete {:headers (once/get-service-account-header)})
+      util/response-body-json
+      :id
+      poll-job))
 
 (comment
   (def successful-file-ingest-response
