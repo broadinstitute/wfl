@@ -42,18 +42,18 @@
 (defn get-workflow
   "Query the `firecloud-url` for the the `workflow` created by the `submission`
    in the Terra `workspace`."
-  [firecloud-url workspace submission workflow]
+  [firecloud-url workspace submission-id workflow-id]
   (-> (workspace-api-url firecloud-url workspace)
-      (str (str/join "/" ["" "submissions" submission "workflows" workflow]))
+      (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id]))
       (http/get {:headers (once/get-auth-header)})
       util/response-body-json))
 
 (defn get-workflow-outputs
   "Query the `firecloud-url` for the outputs of the `workflow` created by
    the `submission` in the Terra `workspace`."
-  [firecloud-url workspace submission workflow]
+  [firecloud-url workspace submission-id workflow-id]
   (-> (workspace-api-url firecloud-url workspace)
-      (str (str/join "/" ["" "submissions" submission "workflows" workflow "outputs"]))
+      (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id "outputs"]))
       (http/get {:headers (once/get-auth-header)})
       util/response-body-json))
 
