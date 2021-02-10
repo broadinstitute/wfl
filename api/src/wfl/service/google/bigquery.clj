@@ -29,7 +29,7 @@
      (list-datasets \"broad-jade-dev-data\")"
   [project]
   (-> (str/join "/" ["projects" project "datasets"])
-      (bigquery-url)
+      bigquery-url
       (http/get {:headers (once/get-auth-header)})
       json-body
       :datasets))
@@ -48,7 +48,7 @@
      (list-tables \"broad-jade-dev-data\" \"zerosnapshot\")"
   [project dataset]
   (-> (str/join "/" ["projects" project "datasets" dataset "tables"])
-      (bigquery-url)
+      bigquery-url
       (http/get {:headers (once/get-auth-header)})
       json-body
       :tables))
@@ -76,7 +76,7 @@
   [project snapshot table]
   (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
     (-> (str/join "/" ["projects" project "queries"])
-        (bigquery-url)
+        bigquery-url
         (http/post {:headers (once/get-auth-header)
                     :body    (json/write-str
                               {:query query
