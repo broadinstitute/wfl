@@ -72,8 +72,9 @@
     (get-result)))
 
 (defn create-dataset
-  "Create a dataset with EDN `dataset-request`.
-   See `DatasetRequestModel` in the DataRepo swagger page.
+  "Create a dataset with EDN `dataset-request` and return the id
+   of the created dataset. See `DatasetRequestModel` in the
+   DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [dataset-request]
   (-> (repository "datasets")
