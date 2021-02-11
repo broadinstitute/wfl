@@ -19,11 +19,29 @@
 
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
-(defn ^:private make-sg-workload-request
-  []
-  (-> (UUID/randomUUID)
-      workloads/sg-workload-request
-      (assoc :creator (:email @endpoints/userinfo))))
+(def the-sg-workload-request
+  "A request suitable when all external services are mocked."
+  {:executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+   :output "gs://broad-gotc-dev-wfl-sg-test-outputs/",
+   :pipeline "GDCWholeGenomeSomaticSingleSample",
+   :project "(Test) tbl/GH-1178-better-sg-tests",
+   :items
+   [{:inputs
+     {:contamination_vcf
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
+      :contamination_vcf_index
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
+      :cram_ref_fasta
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+      :cram_ref_fasta_index
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+      :dbsnp_vcf
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz",
+      :dbsnp_vcf_index
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi",
+      :input_cram
+      "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}],
+   :creator (:email @endpoints/userinfo)})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -46,10 +64,10 @@
               (is (absent? workload :finished))
               (run! verify-workflow (:workflows workload))))]
     (testing "single-sample workload-request"
-      (go! (make-sg-workload-request)))))
+      (go! the-sg-workload-request))))
 
 (deftest test-update-unstarted
-  (let [workload (-> (make-sg-workload-request)
+  (let [workload (-> the-sg-workload-request
                      workloads/create-workload!
                      workloads/update-workload!)]
     (is (seq  (:workflows workload)))
@@ -61,7 +79,7 @@
                   :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
     (letfn [(ok [inputs]
               (is (= expected (select-keys inputs (keys expected)))))]
-      (run! ok (-> (make-sg-workload-request)
+      (run! ok (-> the-sg-workload-request
                    (assoc-in [:common :inputs] expected)
                    workloads/create-workload! :workflows
                    (->> (map :inputs)))))))
@@ -72,7 +90,7 @@
             (is (:status workflow))
             (is (:updated workflow)))]
     (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(-> (make-sg-workload-request)
+      #(-> the-sg-workload-request
            workloads/create-workload!
            workloads/start-workload!
            (as-> workload
@@ -84,7 +102,7 @@
     (letfn [(go! [inputs]
               (is (absent? inputs :vault_token_path))
               (is (absent? inputs :google_account_vault_path)))]
-      (->> (make-sg-workload-request)
+      (->> the-sg-workload-request
            workloads/create-workload!
            :workflows
            (run! (comp go! :inputs))))))
@@ -115,14 +133,14 @@
                 (UUID/randomUUID)))
             (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
       (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
-        #(-> (make-sg-workload-request)
+        #(-> the-sg-workload-request
              (assoc-in [:common :inputs] {:overwritten            false
                                           :supports_common_inputs true})
              (update :items (partial map overmap))
              workloads/execute-workload!)))))
 
 (deftest test-workflow-options
-  (let [{:keys [output] :as request} (make-sg-workload-request)]
+  (let [{:keys [output] :as request} the-sg-workload-request]
     (letfn [(overmap [m] (-> m
                              (assoc-in [:options :overwritten]      true)
                              (assoc-in [:options :supports_options] true)))
@@ -146,7 +164,7 @@
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (absent? workflow :options)))
           (empty-options [m] (assoc m :options {}))]
-    (run! go! (-> (make-sg-workload-request)
+    (run! go! (-> the-sg-workload-request
                   (assoc-in [:common :options] {})
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
@@ -265,14 +283,14 @@
 (defn ^:private mock-cromwell-query-failed
   "Update `status` of all workflows to `Failed`."
   [_environment _params]
-  (let [{:keys [items]} (make-sg-workload-request)]
+  (let [{:keys [items]} the-sg-workload-request]
     (map (fn [id] {:id id :status "Failed"})
          (take (count items) the-uuids))))
 
 (defn ^:private mock-cromwell-query-succeeded
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
-  (let [{:keys [items]} (make-sg-workload-request)]
+  (let [{:keys [items]} the-sg-workload-request]
     (map (fn [id] {:id id :status "Succeeded"})
          (take (count items) the-uuids))))
 
@@ -291,7 +309,7 @@
 ;;
 (defn ^:private test-clio-updates
   []
-  (let [{:keys [items] :as request} (make-sg-workload-request)]
+  (let [{:keys [items] :as request} the-sg-workload-request]
     (-> request
         workloads/create-workload!
         workloads/start-workload!
@@ -335,9 +353,3 @@
        #'cromwell/query            mock-cromwell-query-failed
        #'cromwell/submit-workflows mock-cromwell-submit-workflows}
       test-clio-updates)))
-
-(comment
-  (clojure.test/test-vars [#'test-clio-updates-cromwell-failed])
-  (clojure.test/test-vars [#'test-clio-updates-bam-found])
-  (clojure.test/test-vars [#'test-clio-updates-bam-missing])
-  (clojure.test/test-vars [#'test-workflow-options]))

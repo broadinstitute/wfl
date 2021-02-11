@@ -168,10 +168,10 @@
   (first (clio/query-cram query)))
 
 (defn ^:private ensure-clio-cram
-  "Ensure there is a CRAM record in Clio suitable for test."
-  []
+  "Ensure there is a unique CRAM record in Clio suitable for test."
+  [identifier]
   (let [version 23
-        project (str "G96830" \- (UUID/randomUUID))
+        project (str "G96830" \- identifier)
         query   {:billing_project        "hornet-nest"
                  :cram_md5               "0cfd2e0890f45e5f836b7a82edb3776b"
                  :cram_size              19512619343
@@ -196,7 +196,7 @@
 ;;
 (defn sg-workload-request
   [identifier]
-  (let [cram  (:cram_path (ensure-clio-cram))
+  (let [cram  (:cram_path (ensure-clio-cram identifier))
         dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
                              "gdc/dbsnp_144.hg38.vcf.gz"])
         fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
