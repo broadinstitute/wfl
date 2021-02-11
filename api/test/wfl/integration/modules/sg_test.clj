@@ -27,7 +27,8 @@
    :project "(Test) tbl/GH-1178-better-sg-tests",
    :items
    [{:inputs
-     {:contamination_vcf
+     {:base_file_name "NA12878"
+      :contamination_vcf
       "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
       :contamination_vcf_index
       "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",

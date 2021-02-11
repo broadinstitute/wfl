@@ -196,7 +196,7 @@
 ;;
 (defn sg-workload-request
   [identifier]
-  (let [cram  (:cram_path (ensure-clio-cram identifier))
+  (let [{:keys [cram_path sample_alias]} (ensure-clio-cram identifier)
         dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
                              "gdc/dbsnp_144.hg38.vcf.gz"])
         fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
@@ -210,13 +210,14 @@
      :pipeline sg/pipeline
      :project  (format "(Test) %s" @git-branch)
      :items    [{:inputs
-                 {:contamination_vcf       vcf
+                 {:base_file_name          sample_alias
+                  :contamination_vcf       vcf
                   :contamination_vcf_index (str vcf ".tbi")
                   :cram_ref_fasta          fasta
                   :cram_ref_fasta_index    (str fasta ".fai")
                   :dbsnp_vcf               dbsnp
                   :dbsnp_vcf_index         (str dbsnp ".tbi")
-                  :input_cram              cram}}]}))
+                  :input_cram              cram_path}}]}))
 
 (defn when-done
   "Call `done!` when all workflows in the `workload` have finished processing."
