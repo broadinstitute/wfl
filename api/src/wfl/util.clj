@@ -237,11 +237,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
 (defn unprefix-keys
   "Remove prefix `p` from all keys in map `m` with that prefix."
   [m p]
-  (zipmap (map (fn [k] (let [prefix (name p)]
-                         (if (str/starts-with? (name k) prefix)
-                           (keyword (subs (name k) (count prefix)))
-                           k)))
-               (keys m))
+  (zipmap (map (fn [k] (keyword (unprefix (name k) (name p)))) (keys m))
           (vals m)))
 
 (defn absent?
@@ -378,7 +374,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "Ensure URL does not end in a slash /."
   [url]
   (if (str/ends-with? url "/")
-    (recur (str/join "" (drop-last url)))
+    (recur (subs url 0 (dec (count url))))
     url))
 
 (defn bracket
