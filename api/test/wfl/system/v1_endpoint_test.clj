@@ -27,14 +27,16 @@
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs status updated uuid] :as _workflow}]
+  [{:keys [inputs labels status updated uuid] :as workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
   (is updated)
   (is uuid)
   (is (= "Succeeded" status)))
 
-(defn ^:private verify-succeeded-workload [workload]
-  (run! verify-succeeded-workflow (:workflows workload)))
+(defn ^:private verify-succeeded-workload
+  [{:keys [pipeline workflows] :as workload}]
+  (run! verify-succeeded-workflow workflows)
+  (workloads/postcheck workload))
 
 (defn ^:private verify-internal-properties-removed [workload]
   (letfn [(go! [key]
@@ -149,9 +151,6 @@
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
   (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
-
-(comment
-  (clojure.test/test-vars [#'test-exec-sg-workload]))
 
 (deftest ^:parallel test-exec-copyfile-workload
   (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket

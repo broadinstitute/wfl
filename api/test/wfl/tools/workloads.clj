@@ -269,3 +269,9 @@
 (defn append-to-workload! [samples workload]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (aou/append-to-workload! tx samples workload)))
+
+(defmulti  postcheck
+  "Implement this to validate `workload` after all workflows complete."
+  (fn [workload] (:pipeline workload)))
+
+(defmethod postcheck :default [_])

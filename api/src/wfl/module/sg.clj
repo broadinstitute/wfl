@@ -134,7 +134,7 @@
                                     :sample_alias
                                     :version]))))
 
-(defn ^:private final_workflow_outputs_dir_hack
+(defn final_workflow_outputs_dir_hack   ; for testing
   "Do to `file` what `{:final_workflow_outputs_dir output}` does."
   [output file]
   (->> (str/split file #"/")

@@ -353,3 +353,14 @@
        #'cromwell/query            mock-cromwell-query-failed
        #'cromwell/submit-workflows mock-cromwell-submit-workflows}
       test-clio-updates)))
+
+(defn workflow-postcheck
+  [output {:keys [uuid] :as _workflow}]
+  (let [md (cromwell/metadata cromwell-url-for-testing uuid)
+        bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
+        bam_path (sg/final_workflow_outputs_dir_hack output bam)]
+    (is (seq (clio/query-bam {:bam_path bam_path})))))
+
+(defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
+  [{:keys [output workflows] :as _workload}]
+  (run! (partial workflow-postcheck output) workflows))
