@@ -118,7 +118,7 @@
              (cromwell->inputs+options url)
              (get-per-sample-inputs per-sample-inputs))
       (update :environment str/lower-case)
-      (util/prefix-keys :Arrays)))
+      (util/prefix-keys :Arrays.)))
 
 ;; visible for testing
 (def default-options

@@ -228,17 +228,25 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                    command (apply pr-str (first arglists))]
                [(str/join " " [" " n command]) (str indent doc)])))))
 
+(defn map-keys
+  "Return map `m` with `f` applied to all its keys."
+  [f m]
+  (into {} (map #(update-in % [0] f) m)))
+
+(defn map-vals
+  "Return map `m` with `f` applied to all its values."
+  [f m]
+  (into {} (map #(update-in % [1] f) m)))
+
 (defn prefix-keys
   "Prefix all keys in map M with P."
   [m p]
-  (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
-          (vals m)))
+  (map-keys (fn [k] (keyword (str (name p) (name k)))) m))
 
 (defn unprefix-keys
   "Remove prefix `p` from all keys in map `m` with that prefix."
   [m p]
-  (zipmap (map (fn [k] (keyword (unprefix (name k) (name p)))) (keys m))
-          (vals m)))
+  (map-keys (fn [k] (keyword (unprefix (name k) (name p)))) m))
 
 (defn absent?
   "Test if `coll` does not contain `key`.

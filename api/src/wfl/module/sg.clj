@@ -56,7 +56,7 @@
   [_env {:keys [inputs] :as _workflow}]
   (-> references/gdc-sg-references
       (util/deep-merge inputs)
-      (util/prefix-keys pipeline)))
+      (util/prefix-keys (str pipeline "."))))
 
 (defn make-workflow-options             ; visible for testing
   "Workflow options for Cromwell at `url` to write to `output`."

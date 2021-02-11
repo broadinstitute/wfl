@@ -49,10 +49,10 @@
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs wgs-inputs}]
    :common   {:inputs (-> {:disable_sanity_check true}
-                          (util/prefix-keys :CheckContamination)
-                          (util/prefix-keys :UnmappedBamToAlignedBam)
-                          (util/prefix-keys :WholeGenomeGermlineSingleSample)
-                          (util/prefix-keys :WholeGenomeReprocessing))}})
+                          (util/prefix-keys :CheckContamination.)
+                          (util/prefix-keys :UnmappedBamToAlignedBam.)
+                          (util/prefix-keys :WholeGenomeGermlineSingleSample.)
+                          (util/prefix-keys :WholeGenomeReprocessing.))}})
 
 (defn aou-workload-request
   "An AllOfUs arrays workload used for testing.
@@ -139,10 +139,10 @@
                              "single_sample/plumbing/truth/develop/20k/"
                              "NA12878_PLUMBING.cram")}}]
    :common {:inputs (-> {:disable_sanity_check true}
-                        (util/prefix-keys :CheckContamination)
-                        (util/prefix-keys :UnmappedBamToAlignedBam)
-                        (util/prefix-keys :ExomeGermlineSingleSample)
-                        (util/prefix-keys :ExomeReprocessing))}})
+                        (util/prefix-keys :CheckContamination.)
+                        (util/prefix-keys :UnmappedBamToAlignedBam.)
+                        (util/prefix-keys :ExomeGermlineSingleSample.)
+                        (util/prefix-keys :ExomeReprocessing.))}})
 
 (defn ^:private add-clio-cram
   "Ensure there are files in GCS to satisfy the Clio `query`."

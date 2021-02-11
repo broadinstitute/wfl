@@ -22,7 +22,7 @@
   (cromwell/submit-workflow
    url
    workflow-wdl
-   (-> inputs (util/prefix-keys pipeline))
+   (-> inputs (util/prefix-keys (str pipeline ".")))
    options
    labels))
 
