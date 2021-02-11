@@ -6,6 +6,7 @@
             [wfl.module.aou :as aou]
             [wfl.module.arrays :as arrays]
             [wfl.module.copyfile :as cp]
+            [wfl.module.sg :as sg]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.service.clio :as clio]
@@ -13,8 +14,7 @@
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
-            [wfl.util :as util :refer [shell!]]
-            [wfl.module.sg :as sg])
+            [wfl.util :as util :refer [shell!]])
   (:import (java.time OffsetDateTime)
            (java.util.concurrent TimeoutException)
            (java.util UUID)))
@@ -41,8 +41,10 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/" identifier)
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:debug :cromwell :url]))
+   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
+                  identifier)
    :pipeline wgs/pipeline
    :project  (format "(Test) %s" @git-branch)
    :items    [{:inputs wgs-inputs}]
@@ -56,7 +58,8 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:debug :cromwell :url]))
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -115,7 +118,8 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:executor (or (load-cromwell-url-from-env-var!) (get-in stuff [:debug :cromwell :url]))
+  {:executor (or (load-cromwell-url-from-env-var!)
+                 (get-in stuff [:debug :cromwell :url]))
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -188,17 +192,13 @@
     (or (first crams)
         (add-clio-cram query))))
 
-(def the-clio-cram-record
-  "Use this Clio CRAM record to test SG workloads."
-  (delay (ensure-clio-cram)))
-
 ;; From warp.git ExampleCramToUnmappedBams.plumbing.json
 ;;
 (defn sg-workload-request
   [identifier]
-  (let [dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
+  (let [cram  (:cram_path (ensure-clio-cram))
+        dbsnp (str/join "/" ["gs://broad-gotc-dev-storage/temp_references"
                              "gdc/dbsnp_144.hg38.vcf.gz"])
-        cram  (:cram_path @the-clio-cram-record)
         fasta (str/join "/" ["gs://gcp-public-data--broad-references/hg38/v0"
                              "Homo_sapiens_assembly38.fasta"])
         vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"

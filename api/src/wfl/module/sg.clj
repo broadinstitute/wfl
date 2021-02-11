@@ -176,7 +176,8 @@
                 bam  (merge cram final)]
             (try (clio/add-bam bam)
                  (catch Throwable x
-                   (log/warn x "Add BAM to Clio failed" {:bam bam}))))))))
+                   (log/error x "Add BAM to Clio failed" {:bam bam
+                                                          :x   x}))))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
