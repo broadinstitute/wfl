@@ -130,7 +130,7 @@
       (select-keys [:google_account_vault_path :vault_token_path])
       (util/deep-merge workflow-defaults)
       (util/deep-merge inputs)
-      (util/prefix-keys (keyword pipeline))))
+      (util/prefix-keys (keyword (str pipeline ".")))))
 
 ;; visible for testing
 (defn make-inputs-to-save [out-gs inputs]
