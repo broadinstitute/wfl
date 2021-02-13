@@ -55,9 +55,6 @@
 (def ^:private assemble-refbased-outputs-dataset
   "test/resources/datasets/assemble-refbased-outputs.json")
 
-(def ^:private dataset-types
-  "test/resources/datasets/dataset-types.json")
-
 (defn ^:private make-dataset-request [dataset-json-path]
   (-> (slurp dataset-json-path)
       json/read-str
