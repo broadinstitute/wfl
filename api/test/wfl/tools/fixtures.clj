@@ -7,7 +7,10 @@
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
             [wfl.util :as util])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           (java.nio.file Files)
+           (org.apache.commons.io FileUtils)
+           (java.nio.file.attribute FileAttribute)))
 
 (defn method-overload-fixture
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
@@ -19,27 +22,6 @@
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
-
-(defn with-temporary-cloud-storage-folder
-  "Create a temporary folder in the Google Cloud storage `bucket` and call
-  `use-folder` with the gs url of the temporary folder. The folder will be
-  deleted after execution transfers from `use-folder`.
-
-  Parameters
-  ----------
-    bucket - name of Google Cloud storage bucket to create temporary folder in
-    use    - function to call with gs url of temporary folder
-
-  Example
-  -------
-    (with-temporary-gcs-folder \"broad-gotc-dev\"
-       (fn [url] #_(use temporary folder at url)))
-  "
-  [bucket use-folder]
-  (util/bracket
-   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
-   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
-   use-folder))
 
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)
@@ -110,6 +92,26 @@
     (create-local-database name)
     (setup-local-database name)))
 
+(defn with-temporary-cloud-storage-folder
+  "Create a temporary folder in the Google Cloud storage `bucket` and call
+  `use-folder` with the gs url of the temporary folder. The folder will be
+  deleted after execution transfers from `use-folder`.
+
+  Parameters
+  ----------
+    bucket     - name of Google Cloud storage bucket to create temporary folder
+    use-folder - function to call with gs url of temporary folder
+
+  Example
+  -------
+    (with-temporary-gcs-folder \"broad-gotc-dev\"
+       (fn [url] #_(use temporary folder at url)))"
+  [bucket use-folder]
+  (util/bracket
+   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
+   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
+   use-folder))
+
 (defn with-temporary-topic
   "Create a temporary Google Cloud Storage Pub/Sub topic."
   [project f]
@@ -141,3 +143,21 @@
    #(datarepo/create-dataset dataset-request)
    datarepo/delete-dataset
    f))
+
+(defn with-temporary-folder
+  "Create a temporary folder on the local filesystem and call `use-folder` with
+  the path to the temporary folder. The folder will be deleted after execution
+  transfers from `use-folder`.
+
+  Parameters
+  ----------
+    use-folder - function to call with temporary folder
+
+  Example
+  -------
+    (with-temporary-folder (fn [folder] #_(use folder)))"
+  [use-folder]
+  (util/bracket
+   #(Files/createTempDirectory "wfl-test-" (into-array FileAttribute []))
+   #(FileUtils/deleteDirectory (.toFile %))
+   (comp use-folder #(.toString %))))

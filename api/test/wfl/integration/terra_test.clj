@@ -1,10 +1,7 @@
 (ns wfl.integration.terra-test
   (:require [clojure.test :refer [deftest is testing]]
-            [wfl.service.terra :as terra]
-            [wfl.module.xx :as xx]
             [wfl.service.cromwell :as cromwell]
-            [clojure.pprint :as pprint]
-            [clojure.string :as str]))
+            [wfl.service.terra :as terra]))
 
 (def terra-url
   "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
@@ -33,16 +30,6 @@
           workflow      (first (:workflows submission))]
       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
 
-(deftest test-describe-wdl
-  (let [description (->> xx/workflow-wdl
-                         cromwell/wdl-map->url
-                         (terra/describe-wdl terra-url))]
-    (is (:valid description))
-    (is (empty? (:errors description)))
-    (is (= xx/pipeline (:name description)))
-    (is (some? (:inputs description)))
-    (is (some? (:outputs description)))))
-
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a
    workflow in the public COVID-19 surveillance workspace, used as an example."
@@ -57,6 +44,17 @@
                 :repo    "viral-pipelines"}]
      ~@body))
 
+(deftest test-describe-wdl
+  (using-assemble-refbased-workflow-bindings
+   (let [description (->> wdl
+                          cromwell/wdl-map->url
+                          (terra/describe-wdl firecloud))]
+     (is (:valid description))
+     (is (empty? (:errors description)))
+     (is (= pipeline (:name description)))
+     (is (some? (:inputs description)))
+     (is (some? (:outputs description))))))
+
 (deftest test-get-workflow
   (using-assemble-refbased-workflow-bindings
    (let [wf (terra/get-workflow firecloud workspace submission workflow)]
@@ -66,27 +64,3 @@
   (using-assemble-refbased-workflow-bindings
    (let [outputs (terra/get-workflow-outputs firecloud workspace submission workflow)]
      (is (some? (-> outputs :tasks ((keyword pipeline)) :outputs))))))
-
-(deftest test-outputs-type-dispatch
-  (letfn [(go! [type name value]
-            (case (:typeName type)
-              "File"     (is (str/starts-with? value "gs://"))
-              "Optional" (when value (go! (:optionalType type) name value))
-              "Array"    (run! (partial go! (:arrayType type) name) value)
-              "String"   (is (string? value) (str name " is not a String"))
-              nil        (is false (str "No type found for " name))
-              (is (number? value))))
-          (make-type-entry [pipeline {:keys [name valueType]}]
-            {(keyword (str pipeline "." name)) valueType})
-          (make-type-environment [firecloud pipeline wdl]
-            (->> (terra/describe-wdl firecloud (cromwell/wdl-map->url wdl))
-                 :outputs
-                 (map (partial make-type-entry pipeline))
-                 (into {})))]
-    (using-assemble-refbased-workflow-bindings
-     (let [name->type (make-type-environment firecloud pipeline wdl)
-           outputs    (-> (terra/get-workflow-outputs firecloud workspace submission workflow)
-                          :tasks
-                          (get (keyword pipeline))
-                          :outputs)]
-       (run! (fn [[name value]] (go! (name->type name) name value)) outputs)))))
