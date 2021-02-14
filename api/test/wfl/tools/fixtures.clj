@@ -57,7 +57,7 @@
   (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
     (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname))))
 
-(defn temporary-postgresql-database [f]
+(defn temporary-postgresql-database
   "Create a temporary PostgreSQL database whose configuration is
    `testing-db-config` for testing. Assumes that the database does not
    already exist.
@@ -71,6 +71,7 @@
    (deftest test-requiring-database-access
      (jdbc/with-db-transaction [tx (testing-db-config)]
       #_(use tx)))"
+  [f]
   (let [name (:db-name (testing-db-config))]
     (create-local-database name)
     (try
