@@ -123,11 +123,11 @@
    "vcf"   "text/plain"})
 
 (defn ^:private evaluate! [x] (x))
-(defn ^:private bind [f g] (comp g f))
 
 (defn ^:private make-ingest! [workload-id {:keys [id defaultProfileId]}]
   (letfn [(sequence [xs] #(mapv evaluate! xs))
-          (return [x] (constantly x))]
+          (return [x] (constantly x))
+          (bind [f g] (comp g f))]
     (fn ingest! [type value]
       (case (:typeName type)
         "File"
@@ -156,31 +156,29 @@
         dsname           identity
         table-name       "assemble_refbased_outputs"
         workflow-id      (UUID/randomUUID)]
-    (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
-      (fn [url]
-        (fixtures/with-temporary-folder
-          (fn [temp]
-            (fixtures/with-temporary-dataset (make-dataset-request dataset-json)
-              (bind
-               datarepo/dataset
-               (fn [dataset]
-                 (let [ingest!    (make-ingest! workflow-id dataset)
-                       table-file (str/join "/" [temp "table.json"])
-                       table-url  (str url "table.json")]
-                   (-> (util/map-vals
-                        evaluate!
-                        (reduce-kv
-                         #(merge %1 {(dsname %2) (ingest! (type %2) %3)})
-                         {}
-                         pipeline-outputs))
-                       (json/write-str :escape-slash false)
-                       (->> (spit table-file)))
-                   (gcs/upload-file table-file table-url)
-                   (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
-                     (gcs/add-object-reader sa table-url))
-                   (let [{:keys [bad_row_count row_count]}
-                         (-> (:id dataset)
-                             (datarepo/ingest-dataset table-url table-name)
-                             datarepo/poll-job)]
-                     (is (= 1 row_count))
-                     (is (= 0 bad_row_count)))))))))))))
+    (fixtures/with-fixtures
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
+       fixtures/with-temporary-folder
+       (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
+      (fn [url temp dataset-id]
+        (let [dataset    (datarepo/dataset dataset-id)
+              ingest!    (make-ingest! workflow-id dataset)
+              table-file (str/join "/" [temp "table.json"])
+              table-url  (str url "table.json")]
+          (-> (util/map-vals
+               evaluate!
+               (reduce-kv
+                #(merge %1 {(dsname %2) (ingest! (type %2) %3)})
+                {}
+                pipeline-outputs))
+              (json/write-str :escape-slash false)
+              (->> (spit table-file)))
+          (gcs/upload-file table-file table-url)
+          (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
+            (gcs/add-object-reader sa table-url))
+          (let [{:keys [bad_row_count row_count]}
+                (-> (:id dataset)
+                    (datarepo/ingest-dataset table-url table-name)
+                    datarepo/poll-job)]
+            (is (= 1 row_count))
+            (is (= 0 bad_row_count))))))))

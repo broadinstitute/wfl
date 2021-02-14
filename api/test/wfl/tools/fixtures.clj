@@ -92,6 +92,29 @@
     (create-local-database name)
     (setup-local-database name)))
 
+(defmacro with-fixtures
+  "Use 0 or more `fixtures` in `use-fixtures`.
+   Parameters
+   ----------
+     fixtures     - list of fixtures missing final lambda (fn [x] ..)
+     use-fixtures - N-ary function accepting each fixture parameter.
+
+   Example
+   -------
+   (with-fixtures [fixture0
+                   (fixture1 x)
+                   ...
+                   fixtureN]
+     (fn [x0 x1 ... xN] ))"
+  [fixtures use-fixtures]
+  (letfn [(go [[f & fs] args]
+              (if (nil? f)
+                `(apply ~use-fixtures ~args)
+                (let [x  (gensym)
+                      g# `(fn [~x] ~(go fs (conj args x)))]
+                  (if (seq? f) (concat f (list g#)) (list f g#)))))]
+    (go fixtures [])))
+
 (defn with-temporary-cloud-storage-folder
   "Create a temporary folder in the Google Cloud storage `bucket` and call
   `use-folder` with the gs url of the temporary folder. The folder will be
