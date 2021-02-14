@@ -105,11 +105,11 @@
                    (fixture1 x)
                    ...
                    fixtureN]
-     (fn [x0 x1 ... xN] ))"
+     (fn [[x0 x1 ... xN]] ))"
   [fixtures use-fixtures]
   (letfn [(go [[f & fs] args]
               (if (nil? f)
-                `(apply ~use-fixtures ~args)
+                `(~use-fixtures ~args)
                 (let [x  (gensym)
                       g# `(fn [~x] ~(go fs (conj args x)))]
                   (if (seq? f) (concat f (list g#)) (list f g#)))))]

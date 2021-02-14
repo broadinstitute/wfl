@@ -20,7 +20,7 @@
     (fixtures/with-fixtures
       [(fixtures/with-temporary-topic project)
        (fixtures/with-temporary-cloud-storage-folder bucket)]
-      (fn [topic url]
+      (fn [[topic url]]
         ;; We need to make sure that the service account of the project that
         ;; owns the storage bucket has the required permissions to publish
         ;; messages to the pub/sub topic.

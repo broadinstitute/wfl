@@ -160,7 +160,7 @@
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        fixtures/with-temporary-folder
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
-      (fn [url temp dataset-id]
+      (fn [[url temp dataset-id]]
         (let [dataset    (datarepo/dataset dataset-id)
               ingest!    (make-ingest! workflow-id dataset)
               table-file (str/join "/" [temp "table.json"])
