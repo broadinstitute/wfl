@@ -179,8 +179,8 @@
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url dataset-id]]
-        (let [table-url  (str url "table.json")
-              ingest!    (partial ingest! workflow-id dataset-id profile)]
+        (let [table-url (str url "table.json")
+              ingest!   (partial ingest! workflow-id dataset-id profile)]
           (-> (->> pipeline-outputs
                    (map (fn [[name value]] {name (ingest! (type name) value)}))
                    (into {})
@@ -191,8 +191,7 @@
           (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
             (gcs/add-object-reader sa table-url))
           (let [{:keys [bad_row_count row_count]}
-                (-> dataset-id
-                    (datarepo/ingest-table table-url table-name)
-                    datarepo/poll-job)]
+                (datarepo/poll-job
+                 (datarepo/ingest-table dataset-id table-url table-name))]
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
