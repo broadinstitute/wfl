@@ -177,20 +177,17 @@
         workflow-id      (UUID/randomUUID)]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
-       fixtures/with-temporary-folder
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
-      (fn [[url temp dataset-id]]
-        (let [table-file (str/join "/" [temp "table.json"])
-              table-url  (str url "table.json")
+      (fn [[url dataset-id]]
+        (let [table-url  (str url "table.json")
               ingest!    (partial ingest! workflow-id dataset-id profile)]
-          (->> pipeline-outputs
-               (map (fn [[name value]] {name (ingest! (type name) value)}))
-               (into {})
-               (util/map-vals run-thunk!)
-               rename-gather
-               (#(json/write-str % :escape-slash false))
-               (spit table-file))
-          (gcs/upload-file table-file table-url)
+          (-> (->> pipeline-outputs
+                   (map (fn [[name value]] {name (ingest! (type name) value)}))
+                   (into {})
+                   (util/map-vals run-thunk!)
+                   rename-gather)
+              (json/write-str :escape-slash false)
+              (gcs/upload-content table-url))
           (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
             (gcs/add-object-reader sa table-url))
           (let [{:keys [bad_row_count row_count]}
