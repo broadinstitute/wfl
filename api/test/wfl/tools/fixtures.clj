@@ -59,19 +59,18 @@
 
 (defn temporary-postgresql-database [f]
   "Create a temporary PostgreSQL database whose configuration is
-  `testing-db-config` for testing. Assumes that the database does not
-  already exist.
+   `testing-db-config` for testing. Assumes that the database does not
+   already exist.
 
-  Example
-  -------
-  ;; Use a clean PostgresSQL database in this test namespace.
-  ;; `:once` creates the database once for the duration of the tests.
-  (clj-test/use-fixtures :once temporary-postgresql-database)
+   Example
+   -------
+   ;; Use a clean PostgresSQL database in this test namespace.
+   ;; `:once` creates the database once for the duration of the tests.
+   (clj-test/use-fixtures :once temporary-postgresql-database)
 
-  (deftest test-requiring-database-access
-    (jdbc/with-db-transaction [tx (testing-db-config)]
-      ;; use tx
-    ))"
+   (deftest test-requiring-database-access
+     (jdbc/with-db-transaction [tx (testing-db-config)]
+      #_(use tx)))"
   (let [name (:db-name (testing-db-config))]
     (create-local-database name)
     (try
@@ -96,16 +95,17 @@
   "Use 0 or more `fixtures` in `use-fixtures`.
    Parameters
    ----------
-     fixtures     - list of fixtures missing final lambda (fn [x] ..)
+     fixtures     - list of fixtures missing the consuming function in the
+                    right-most position.
      use-fixtures - N-ary function accepting each fixture parameter.
 
    Example
    -------
-   (with-fixtures [fixture0
-                   (fixture1 x)
-                   ...
-                   fixtureN]
-     (fn [[x0 x1 ... xN]] ))"
+     (with-fixtures [fixture0
+                     (fixture1 x)
+                     ...
+                     fixtureN]
+       (fn [[x0 x1 ... xN]] ))"
   [fixtures use-fixtures]
   (letfn [(go [[f & fs] args]
               (if (nil? f)
@@ -115,20 +115,38 @@
                   (if (seq? f) (concat f (list g#)) (list f g#)))))]
     (go fixtures [])))
 
+(defn with-temporary-folder
+  "Create a temporary folder in the local filesystem and call `use-folder` with
+   the path to the temporary folder. The folder will be deleted after execution
+   transfers from `use-folder`.
+
+   Parameters
+   ----------
+     use-folder - function to call with temporary folder
+
+   Example
+   -------
+     (with-temporary-folder (fn [folder] #_(use folder)))"
+  [use-folder]
+  (util/bracket
+   #(Files/createTempDirectory "wfl-test-" (into-array FileAttribute []))
+   #(FileUtils/deleteDirectory (.toFile %))
+   (comp use-folder #(.toString %))))
+
 (defn with-temporary-cloud-storage-folder
   "Create a temporary folder in the Google Cloud storage `bucket` and call
-  `use-folder` with the gs url of the temporary folder. The folder will be
-  deleted after execution transfers from `use-folder`.
+   `use-folder` with the gs url of the temporary folder. The folder will be
+   deleted after execution transfers from `use-folder`.
 
-  Parameters
-  ----------
-    bucket     - name of Google Cloud storage bucket to create temporary folder
-    use-folder - function to call with gs url of temporary folder
+   Parameters
+   ----------
+     bucket     - name of Google Cloud storage bucket to create temporary folder
+     use-folder - function to call with gs url of temporary folder
 
-  Example
-  -------
-    (with-temporary-gcs-folder \"broad-gotc-dev\"
-       (fn [url] #_(use temporary folder at url)))"
+   Example
+   -------
+     (with-temporary-gcs-folder \"broad-gotc-dev\"
+        (fn [url] #_(use temporary folder at url)))"
   [bucket use-folder]
   (util/bracket
    #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
@@ -167,20 +185,3 @@
    datarepo/delete-dataset
    f))
 
-(defn with-temporary-folder
-  "Create a temporary folder on the local filesystem and call `use-folder` with
-  the path to the temporary folder. The folder will be deleted after execution
-  transfers from `use-folder`.
-
-  Parameters
-  ----------
-    use-folder - function to call with temporary folder
-
-  Example
-  -------
-    (with-temporary-folder (fn [folder] #_(use folder)))"
-  [use-folder]
-  (util/bracket
-   #(Files/createTempDirectory "wfl-test-" (into-array FileAttribute []))
-   #(FileUtils/deleteDirectory (.toFile %))
-   (comp use-folder #(.toString %))))

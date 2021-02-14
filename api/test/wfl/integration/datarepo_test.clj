@@ -124,7 +124,23 @@
 
 (defn ^:private run-thunk! [x] (x))
 
-(defn ^:private ingest! [workload-id dataset-id profile-id type value]
+(defn ^:private ingest!
+  "Ingest `value` into the dataset specified by `dataset-id` depending on
+   the `value`'s WDL `type` and return a thunk that performs any delayed work
+   and returns an ingest-able value."
+  [workload-id dataset-id profile-id type value]
+  ;; Ingesting objects into TDR is asynchronous is must done in two steps:
+  ;; - Issue an "ingest request" for that object to TDR
+  ;; - Poll the result of the request for the subsequent resource identifier
+  ;;
+  ;; Assuming TDR can fulfil ingest requests in parallel, we can (in theory)
+  ;; increase throughput by issuing all ingest requests up front and then
+  ;; poll for the resource identifiers later.
+  ;;
+  ;; To do this, this function returns a thunk that when run, performs
+  ;; any delayed work needed to ingest an object of that data type (such as
+  ;; polling for a file resource identifier) and returns a value that can
+  ;; be ingested into a dataset table.
   (let [sequence    (fn [xs] #(mapv run-thunk! xs))
         return      (fn [x]   (constantly x))
         bind        (fn [f g] (comp g f))
@@ -146,6 +162,7 @@
            (return nil))
          "Array"
          (letfn [(ingest-elem! [x] (go (:arrayType type) x))]
+           ;; eagerly issue ingest requests for each element in the array
            (sequence (mapv ingest-elem! value)))
          ("Boolean" "Float" "Int" "Number" "String")
          (return value)))
@@ -178,7 +195,7 @@
             (gcs/add-object-reader sa table-url))
           (let [{:keys [bad_row_count row_count]}
                 (-> dataset-id
-                    (datarepo/ingest-dataset table-url table-name)
+                    (datarepo/ingest-table table-url table-name)
                     datarepo/poll-job)]
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
