@@ -122,38 +122,40 @@
    "fasta" "application/octet-stream"
    "vcf"   "text/plain"})
 
-(defn ^:private evaluate! [x] (x))
+(defn ^:private run-thunk! [x] (x))
 
-(defn ^:private make-ingest! [workload-id {:keys [id defaultProfileId]}]
-  (letfn [(sequence [xs] #(mapv evaluate! xs))
-          (return [x] (constantly x))
-          (bind [f g] (comp g f))]
-    (fn ingest! [type value]
-      (case (:typeName type)
-        "File"
-        (let [[bkt obj] (gcs/parse-gs-url value)
-              target (str/join "/" ["" workload-id obj])
-              mime   (mime-type/ext-mime-type value genomics-mime-types)]
-          (-> (get-in env/stuff [:debug :data-repo :service-account])
-              (gcs/add-object-reader bkt obj))
-          (-> (datarepo/ingest-file id defaultProfileId value target {:mime_type mime})
-              return
-              (bind (comp :fileId datarepo/poll-job))))
-        "Optional"
-        (if value
-          (ingest! (:optionalType type) value)
-          (return nil))
-        "Array"
-        (letfn [(ingest-elem! [x] (ingest! (:arrayType type) x))]
-          (sequence (mapv ingest-elem! value)))
-        ("Boolean" "Float" "Int" "Number" "String")
-        (return value)))))
+(defn ^:private ingest! [workload-id dataset-id profile-id type value]
+  (let [sequence    (fn [xs] #(mapv run-thunk! xs))
+        return      (fn [x]   (constantly x))
+        bind        (fn [f g] (comp g f))
+        ingest-file (partial datarepo/ingest-file dataset-id profile-id)]
+    ((fn go [type value]
+       (case (:typeName type)
+         "File"
+         (let [[bkt obj] (gcs/parse-gs-url value)
+               target    (str/join "/" ["" workload-id obj])
+               mime      (mime-type/ext-mime-type value genomics-mime-types)]
+           (-> (get-in env/stuff [:debug :data-repo :service-account])
+               (gcs/add-object-reader bkt obj))
+           (-> (ingest-file value target {:mime_type mime})
+               return
+               (bind (comp :fileId datarepo/poll-job))))
+         "Optional"
+         (if value
+           (go (:optionalType type) value)
+           (return nil))
+         "Array"
+         (letfn [(ingest-elem! [x] (go (:arrayType type) x))]
+           (sequence (mapv ingest-elem! value)))
+         ("Boolean" "Float" "Int" "Number" "String")
+         (return value)))
+     type value)))
 
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     assemble-refbased-outputs-dataset
         pipeline-outputs assemble-refbased-outputs
         type             assemble-refbased-outputs-type-environment
-        dsname           identity
+        rename-gather    identity ;; collect and map outputs onto dataset names
         table-name       "assemble_refbased_outputs"
         workflow-id      (UUID/randomUUID)]
     (fixtures/with-fixtures
@@ -161,23 +163,21 @@
        fixtures/with-temporary-folder
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url temp dataset-id]]
-        (let [dataset    (datarepo/dataset dataset-id)
-              ingest!    (make-ingest! workflow-id dataset)
-              table-file (str/join "/" [temp "table.json"])
-              table-url  (str url "table.json")]
-          (-> (util/map-vals
-               evaluate!
-               (reduce-kv
-                #(merge %1 {(dsname %2) (ingest! (type %2) %3)})
-                {}
-                pipeline-outputs))
-              (json/write-str :escape-slash false)
-              (->> (spit table-file)))
+        (let [table-file (str/join "/" [temp "table.json"])
+              table-url  (str url "table.json")
+              ingest!    (partial ingest! workflow-id dataset-id profile)]
+          (->> pipeline-outputs
+               (map (fn [[name value]] {name (ingest! (type name) value)}))
+               (into {})
+               (util/map-vals run-thunk!)
+               rename-gather
+               (#(json/write-str % :escape-slash false))
+               (spit table-file))
           (gcs/upload-file table-file table-url)
           (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
             (gcs/add-object-reader sa table-url))
           (let [{:keys [bad_row_count row_count]}
-                (-> (:id dataset)
+                (-> dataset-id
                     (datarepo/ingest-dataset table-url table-name)
                     datarepo/poll-job)]
             (is (= 1 row_count))
