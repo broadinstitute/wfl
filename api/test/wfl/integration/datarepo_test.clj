@@ -129,8 +129,8 @@
    the `value`'s WDL `type` and return a thunk that performs any delayed work
    and returns an ingest-able value."
   [workload-id dataset-id profile-id type value]
-  ;; Ingesting objects into TDR is asynchronous is must done in two steps:
-  ;; - Issue an "ingest request" for that object to TDR
+  ;; Ingesting objects into TDR is asynchronous and must be done in two steps:
+  ;; - Issue an "ingest" request for that object to TDR
   ;; - Poll the result of the request for the subsequent resource identifier
   ;;
   ;; Assuming TDR can fulfil ingest requests in parallel, we can (in theory)
