@@ -40,7 +40,7 @@
 (def cookie-store
   "A session store for wrap-defaults."
   (cookie/cookie-store
-   {:key     (env/getenv "COOKIE_SECRET")
+   {:key     (env/getenv "WFL_COOKIE_SECRET")
     :readers (merge *data-readers* tc/data-readers)}))
 
 (defn wrap-defaults

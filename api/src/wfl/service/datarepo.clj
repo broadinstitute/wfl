@@ -7,7 +7,7 @@
   (:import (java.util.concurrent TimeUnit)))
 
 (def ^:private datarepo-url
-  (let [url (-> (System/getenv "TERRA_DATA_REPO_URL")
+  (let [url (-> (System/getenv "WFL_TERRA_DATA_REPO_URL")
                 (or "https://jade.datarepo-dev.broadinstitute.org/")
                 util/slashify)]
     (partial str url)))

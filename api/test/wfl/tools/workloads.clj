@@ -22,9 +22,9 @@
 (def git-branch (delay (util/shell! "git" "branch" "--show-current")))
 
 (defn ^:private load-cromwell-url-from-env-var!
-  "Load Cromwell url from the env var CROMWELL."
+  "Load Cromwell url from the env var WFL_CROMWELL_URL."
   []
-  (some-> "CROMWELL"
+  (some-> "WFL_CROMWELL_URL"
           (env/getenv)
           util/de-slashify))
 
