@@ -133,7 +133,7 @@
                        {:references default-references}
                        (static-inputs url)
                        inputs)
-      (util/prefix-keys (keyword pipeline))))
+      (util/prefix-keys (keyword (str pipeline ".")))))
 
 ;; visible for testing
 (defn make-workflow-options

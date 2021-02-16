@@ -5,9 +5,7 @@
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
-            [wfl.tools.fixtures         :refer [gcs-test-bucket
-                                                temporary-postgresql-database
-                                                with-temporary-cloud-storage-folder]]
+            [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
             [wfl.util                   :as util])
   (:import (clojure.lang ExceptionInfo)
@@ -29,14 +27,16 @@
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs status updated uuid] :as _workflow}]
+  [{:keys [inputs labels status updated uuid] :as workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
   (is updated)
   (is uuid)
   (is (= "Succeeded" status)))
 
-(defn ^:private verify-succeeded-workload [workload]
-  (run! verify-succeeded-workflow (:workflows workload)))
+(defn ^:private verify-succeeded-workload
+  [{:keys [pipeline workflows] :as workload}]
+  (run! verify-succeeded-workflow workflows)
+  (workloads/postcheck workload))
 
 (defn ^:private verify-internal-properties-removed [workload]
   (letfn [(go! [key]
@@ -112,7 +112,7 @@
 (deftest ^:parallel test-start-sg-workload
   (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
-  (with-temporary-cloud-storage-folder gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
@@ -152,11 +152,8 @@
 (deftest ^:parallel test-exec-sg-workload
   (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
 
-(comment
-  (clojure.test/test-vars [#'test-exec-sg-workload]))
-
 (deftest ^:parallel test-exec-copyfile-workload
-  (with-temporary-cloud-storage-folder gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
