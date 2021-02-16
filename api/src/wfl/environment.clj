@@ -10,23 +10,9 @@
 ;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases
 ;;  since this is baked in code. Can we improve this?
 
-(def cromwell-label-keys
-  "Use these keys to extract Cromwell labels from workflow inputs."
-  [:data_type
-   :project
-   :regulatory_designation
-   :sample_name
-   :version])
-
-(def gotc-dev-cromwell
-  {:labels cromwell-label-keys
-   :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-   :url "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"})
-
 (def debug
   "A local environment for development and debugging."
-  {:cromwell gotc-dev-cromwell
-   :data-repo
+  {:data-repo
    {:service-account "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com"
     :url "https://jade.datarepo-dev.broadinstitute.org"}
    :google

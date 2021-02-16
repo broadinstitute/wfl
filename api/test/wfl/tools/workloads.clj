@@ -1,7 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
-            [wfl.environment :refer [stuff] :as env]
+            [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
             [wfl.module.arrays :as arrays]
@@ -41,8 +41,7 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!)
-                 (get-in stuff [:debug :cromwell :url]))
+  {:executor (load-cromwell-url-from-env-var!)
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
    :pipeline wgs/pipeline
@@ -58,8 +57,7 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:executor (or (load-cromwell-url-from-env-var!)
-                 (get-in stuff [:debug :cromwell :url]))
+  {:executor (load-cromwell-url-from-env-var!)
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -118,8 +116,7 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:executor (or (load-cromwell-url-from-env-var!)
-                 (get-in stuff [:debug :cromwell :url]))
+  {:executor (load-cromwell-url-from-env-var!)
    :output   ""
    :pipeline cp/pipeline
    :project  (format "(Test) %s" @git-branch)
@@ -128,8 +125,7 @@
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (or (load-cromwell-url-from-env-var!)
-                 (get-in stuff [:debug :cromwell :url]))
+  {:executor (load-cromwell-url-from-env-var!)
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
    :pipeline xx/pipeline
@@ -203,8 +199,7 @@
                              "Homo_sapiens_assembly38.fasta"])
         vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
                              "small_exac_common_3.hg38.vcf.gz"])]
-    {:executor (or (load-cromwell-url-from-env-var!)
-                   (get-in stuff [:debug :cromwell :url]))
+    {:executor (load-cromwell-url-from-env-var!)
      :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
                               identifier])
      :pipeline sg/pipeline
