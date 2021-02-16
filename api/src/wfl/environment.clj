@@ -63,7 +63,8 @@
 (def ^:private defaults
   "Default values for environment variables, mainly for dev purposes.
    Hide values behind thunks to avoid compile time I/O."
-  {"GOOGLE_APPLICATION_CREDENTIALS"  #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
+  {"COOKIE_SECRET" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
+   "GOOGLE_APPLICATION_CREDENTIALS"  #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
                                           vault-secrets
                                           (json/write-str :escape-slash false)
                                           .getBytes)
