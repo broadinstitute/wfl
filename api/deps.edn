@@ -40,7 +40,7 @@
   com.google.cloud.sql/postgres-socket-factory {:mvn/version "1.0.15"}
   com.google.cloud.sql/jdbc-socket-factory-core {:mvn/version "1.0.15"}}
 
- ;; derived/api/src must come first so wfl.environment.clj is found before
+ ;; derived/api/src must come first so environment.clj is found before
  ;; placeholder in src/.
  :paths ["../derived/api/src" "src" "classes"
          "../derived/api/resources" "resources"]
