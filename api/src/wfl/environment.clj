@@ -62,15 +62,19 @@
 
 (def ^:private defaults
   "Default values for environment variables, mainly for dev purposes.
-   Hide values behind thunks to avoid compile time I/O."
-  {"COOKIE_SECRET" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
+   Hide values behind thunks to avoid compile time I/O. Missing defaults
+   here can lead to NPE exceptions."
+  {"CROMWELL" #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   "COOKIE_SECRET" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "GOOGLE_APPLICATION_CREDENTIALS"  #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
                                           vault-secrets
                                           (json/write-str :escape-slash false)
                                           .getBytes)
    "TERRA_DATA_REPO_URL" #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_DEPLOY_ENVIRONMENT" #(-> nil)
    "WFL_OAUTH2_CLIENT_ID" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_URL" #(-> "jdbc:postgresql:wfl")
+   "WFL_POSTGRES_USERNAME" #(-> nil)
    "WFL_POSTGRES_PASSWORD" #(-> "password")})
 
 (def getenv (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
