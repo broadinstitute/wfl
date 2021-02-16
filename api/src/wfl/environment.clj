@@ -61,14 +61,15 @@
            (log/debug "Perhaps run 'vault login' and try again")))))
 
 (def ^:private defaults
-  "Default values for environment variables, mainly for dev purposes."
-  {"GOOGLE_APPLICATION_CREDENTIALS"  (-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
-                                         vault-secrets
-                                         (json/write-str :escape-slash false)
-                                         .getBytes)
-   "TERRA_DATA_REPO_URL" "https://jade.datarepo-dev.broadinstitute.org/"
-   "WFL_OAUTH2_CLIENT_ID" (-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
-   "WFL_POSTGRES_URL" "jdbc:postgresql:wfl"
-   "WFL_POSTGRES_PASSWORD" "password"})
+  "Default values for environment variables, mainly for dev purposes.
+   Hide values behind thunks to avoid compile time I/O."
+  {"GOOGLE_APPLICATION_CREDENTIALS"  #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
+                                          vault-secrets
+                                          (json/write-str :escape-slash false)
+                                          .getBytes)
+   "TERRA_DATA_REPO_URL" #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_OAUTH2_CLIENT_ID" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
+   "WFL_POSTGRES_URL" #(-> "jdbc:postgresql:wfl")
+   "WFL_POSTGRES_PASSWORD" #(-> "password")})
 
-(def getenv (memoize (fn [name] (or (System/getenv name) (defaults name)))))
+(def getenv (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
