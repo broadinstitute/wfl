@@ -254,7 +254,7 @@
 (defn ^:private mock-cromwell-metadata-succeeded
   "Return enough metadata for Cromwell workflow `id` to succeed."
   [_url id]
-  (let [now    (OffsetDateTime/now)
+  (let [now    (str (OffsetDateTime/now))
         prefix (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
                               "504f94ce-383c-4af6-afb5-2aa8819c74ff"
                               "GDCWholeGenomeSomaticSingleSample"
@@ -272,6 +272,8 @@
      :outputs
      {:GDCWholeGenomeSomaticSingleSample.bai (str prefix "bai")
       :GDCWholeGenomeSomaticSingleSample.bam (str prefix "bam")
+      :GDCWholeGenomeSomaticSingleSample.contamination
+      (str prefix "contam.txt")
       :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
       (str prefix "insert_size_histogram.pdf")
       :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
@@ -317,10 +319,10 @@
         workloads/update-workload!
         workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline workflows]} workload]
-                (is finished)
-                (is (= sg/pipeline pipeline))
-                (is (= (count items) (count workflows))))))))
+            (let [{:keys [finished pipeline workflows]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items) (count workflows))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
