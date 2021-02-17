@@ -180,7 +180,10 @@
             (clio-add-bam clio bam)
             (-> bam
                 (json/write-str :escape-slash false)
-                (gcs/upload-content (str folder "clio-bam-record.json"))))))))
+                (gcs/upload-content (str folder "clio-bam-record.json")))
+            (-> metadata
+                (json/write-str :escape-slash false)
+                (gcs/upload-content (str folder "cromwell-metadata.json"))))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
