@@ -29,7 +29,7 @@
   [url]
   (let [known {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
                {:google_project "broad-exomes-dev1"
-                :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution",}
+                :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
                {:google_project "broad-sg-prod-compute1"
                 :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
