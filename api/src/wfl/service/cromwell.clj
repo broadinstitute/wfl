@@ -46,8 +46,8 @@
 (defn ^:private request-json
   "Response to REQUEST with :body parsed as JSON."
   [request]
-  (let [{:keys [body] :as response} (http/request request)]
-    (assoc response :body (json/read-str body :key-fn keyword))))
+  (-> (http/request request)
+      (update :body (fnil util/parse-json "null"))))
 
 (def ^:private bogus-key-character-map
   "Map bogus characters in metadata keys to replacements."
@@ -72,12 +72,9 @@
   "Assemble PARTS into a multipart HTML body and post it to the Cromwell
   server specified by URL, and return the workflow ID."
   [url parts]
-  (letfn [(multipartify [[k v]] {:name (name k) :content v})]
-    (-> {:method    :post               ; :debug true :debug-body true
-         :url       url
-         :headers   (auth/get-auth-header)
-         :multipart (map multipartify parts)}
-        request-json #_debug/dump :body)))
+  (util/response-body-json
+   (http/post url {:headers   (auth/get-auth-header)
+                   :multipart (util/multipart-body parts)})))
 
 (defn make-workflow-labels
   "Return workflow labels for WDL."

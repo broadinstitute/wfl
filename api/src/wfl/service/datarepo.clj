@@ -44,7 +44,7 @@
   ([dataset-id profile-id source target]
    (ingest-file dataset-id profile-id source target {})))
 
-(defn ingest-dataset
+(defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."
   [dataset-id path table]
   (ingest

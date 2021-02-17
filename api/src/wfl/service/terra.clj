@@ -1,9 +1,10 @@
 (ns wfl.service.terra
   "Analyze data in Terra using the Firecloud/Terra API."
-  (:require [clojure.data.json :as json]
-            [clj-http.client :as http]
-            [wfl.auth :as auth]
-            [wfl.util :as util]))
+  (:require [clj-http.client   :as http]
+            [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.util          :as util]))
 
 (defn workspace-api-url
   [terra-url workspace]
@@ -38,6 +39,24 @@
         response (http/get submission-url {:headers (auth/get-auth-header)})]
     (util/parse-json (:body response))))
 
+(defn get-workflow
+  "Query the `firecloud-url` for the the `workflow` created by the `submission`
+   in the Terra `workspace`."
+  [firecloud-url workspace submission-id workflow-id]
+  (-> (workspace-api-url firecloud-url workspace)
+      (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id]))
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
+(defn get-workflow-outputs
+  "Query the `firecloud-url` for the outputs of the `workflow` created by
+   the `submission` in the Terra `workspace`."
+  [firecloud-url workspace submission-id workflow-id]
+  (-> (workspace-api-url firecloud-url workspace)
+      (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id "outputs"]))
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
 (defn get-workflow-status-by-entity
   "Get workflow status given a Terra submission-id and entity-name."
   [terra-url workspace {:keys [uuid inputs] :as _item}]
@@ -46,3 +65,14 @@
        (filter #(= (:entity-name inputs) (get-in % [:workflowEntity :entityName])))
        (first)
        (:status)))
+
+(defn describe-wdl
+  "Use `firecloud-url` to describe the WDL at `wdl-url`"
+  [firecloud-url wdl-url]
+  (-> (str firecloud-url "/api/womtool/v1/describe")
+      (http/post {:headers   (auth/get-auth-header)
+                  :multipart (util/multipart-body
+                              {:workflowUrl         wdl-url
+                               :workflowTypeVersion "1.0"
+                               :workflowType        "WDL"})})
+      util/response-body-json))

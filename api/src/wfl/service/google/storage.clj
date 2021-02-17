@@ -135,19 +135,22 @@
               "https://cloud.google.com/storage/docs/naming#requirements"
               (s/explain-str ::bucket-name bucket))))))
 
+(defn upload-content
+  "Upload CONTENT to BUCKET with name OBJECT."
+  ([content bucket object]
+   (-> (str upload-url bucket "/o")
+       (http/post {:query-params {:uploadType "media" :name object}
+                   :content-type (.detect (new Tika) content)
+                   :headers      (auth/get-auth-header)
+                   :body         content})
+       util/response-body-json))
+  ([content url]
+   (apply upload-content content (parse-gs-url url))))
+
 (defn upload-file
   "Upload FILE to BUCKET with name OBJECT."
   ([file bucket object]
-   (let [body (io/file file)]
-     (-> {:method       :post           ; :debug true :debug-body true
-          :url          (str upload-url bucket "/o")
-          :query-params {:uploadType "media"
-                         :name       object}
-          :content-type (.detect (new Tika) body)
-          :headers      (auth/get-auth-header)
-          :body         body}
-         http/request :body
-         (json/read-str :key-fn keyword))))
+   (upload-content (io/file file) bucket object))
   ([file url]
    (apply upload-file file (parse-gs-url url))))
 
