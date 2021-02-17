@@ -32,6 +32,7 @@
                                           vault-secrets
                                           (json/write-str :escape-slash false)
                                           .getBytes)
+   "WFL_CLIO_URL" #(-> "https://clio.gotc-dev.broadinstitute.org")
    "WFL_CROMWELL_URL" #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_COOKIE_SECRET" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_DATA_REPO_SA" #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")

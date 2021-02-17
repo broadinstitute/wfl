@@ -156,7 +156,7 @@
   [executor output {:keys [status uuid] :as workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
-          clio (get-in cromwell->strings [executor :clio-url])
+          clio (-> executor cromwell->strings :clio-url)
           cromwell->clio {:bai                 :bai_path
                           :bam                 :bam_path
                           :contamination       :contamination

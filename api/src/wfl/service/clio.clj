@@ -9,7 +9,7 @@
 (defn api
   "The Clio API URL for server at `clio`."
   [clio]
-  (str/join clio "api" "v1"))
+  (str/join "/" [clio "api" "v1"]))
 
 (defn get-authorization-header
   "An Authorization header for talking to Clio where deployed."
@@ -44,13 +44,14 @@
   (let [need (keep (fn [k] (when-not (k md) k)) add-keys)]
     (when-not (empty need)
       (throw (ex-info "Need these metadata keys:" need)))
-    (post (str/join "/" (into [thing "metadata"] ((apply juxt add-keys) md)))
+    (post clio
+          (str/join "/" (into [thing "metadata"] ((apply juxt add-keys) md)))
           (apply dissoc md add-keys))))
 
 (defn add-bam
   "Add a BAM entry with metadata `md` to `clio`."
   [clio md]
-  (add "bam" md))
+  (add clio "bam" md))
 
 (defn add-cram
   "Add a CRAM entry with metadata `md` to `clio`."
@@ -64,5 +65,5 @@
 
 (defn query-cram
   "Return CRAM entries with metadata `md` to `clio`."
-  [md]
-  (post (str/join "/" ["cram" "query"]) md))
+  [clio md]
+  (post clio (str/join "/" ["cram" "query"]) md))
