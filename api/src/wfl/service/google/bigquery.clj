@@ -6,7 +6,7 @@
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [clojure.string :as str]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.util         :as util])
   (:import [java.io StringWriter]))
 
@@ -27,7 +27,7 @@
   [project]
   (-> (str/join "/" ["projects" project "datasets"])
       bigquery-url
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       util/response-body-json
       :datasets))
 
@@ -46,7 +46,7 @@
   [project dataset]
   (-> (str/join "/" ["projects" project "datasets" dataset "tables"])
       bigquery-url
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       util/response-body-json
       :tables))
 
@@ -74,7 +74,7 @@
   (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
     (-> (str/join "/" ["projects" project "queries"])
         bigquery-url
-        (http/post {:headers (once/get-auth-header)
+        (http/post {:headers (auth/get-auth-header)
                     :body    (json/write-str
                               {:query query
                                :use_legacy_sql false})})
