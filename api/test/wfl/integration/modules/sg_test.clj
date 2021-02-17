@@ -171,26 +171,26 @@
                   workloads/create-workload! :workflows))))
 
 (defn ^:private mock-clio-add-bam-found
-  "Fail when called because a BAM record already exists for `_md`"
-  [_md]
+  "Fail because a `_clio` BAM record already exists for `_md`"
+  [_clio _md]
   (is false))
 
 (defn ^:private mock-clio-add-bam-missing
-  "Add a missing Clio BAM record with metadata `md`."
-  [md]
+  "Add a missing `_clio` BAM record with metadata `md`."
+  [_clio md]
   (is md)
   (letfn [(ok? [v] (or (integer? v) (and (string? v) (seq v))))]
     (is (every? ok? ((apply juxt clio/add-keys) md))))
   "-MRu7X3zEzoGeFAVSF-J")
 
 (defn ^:private mock-clio-failed
-  "Fail when called with metadata `_md`."
-  [_md]
+  "Fail when `_clio` called with metadata `_md`."
+  [_clio _md]
   (is false))
 
 (defn ^:private mock-clio-query-bam-found
-  "Return a Clio BAM record with metadata `_md`."
-  [{:keys [bam_path] :as _md}]
+  "Return a `_clio` BAM record with metadata `_md`."
+  [_clio {:keys [bam_path] :as _md}]
   [{:bai_path (str/replace bam_path ".bam" ".bai")
     :bam_path bam_path
     :billing_project "hornet-nest"
@@ -205,13 +205,13 @@
     :version 23}])
 
 (defn ^:private mock-clio-query-bam-missing
-  "Return an empty Clio response for query metadata `_md`."
-  [_md]
+  "Return an empty `_clio` response for query metadata `_md`."
+  [_clio _md]
   [])
 
 (defn ^:private mock-clio-query-cram-found
-  "Return a Clio CRAM record with metadata `_md`."
-  [{:keys [cram_path] :as _md}]
+  "Return a `_clio` CRAM record with metadata `_md`."
+  [_clio {:keys [cram_path] :as _md}]
   [{:billing_project "hornet-nest"
     :crai_path (str cram_path ".crai")
     :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -360,7 +360,7 @@
   (let [md (cromwell/metadata cromwell-url-for-testing uuid)
         bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
         bam_path (sg/final_workflow_outputs_dir_hack output bam)]
-    (is (seq (clio/query-bam {:bam_path bam_path})))))
+    (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
 
 (defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
   [{:keys [output workflows] :as _workload}]

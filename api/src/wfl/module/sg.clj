@@ -24,14 +24,17 @@
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
 
-(defn ^:private options-for-cromwell
+(defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
   [url]
   (let [known {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-               {:google_project "broad-exomes-dev1"
+               {:clio-url       "https://clio.gotc-dev.broadinstitute.org"
+                :google_project "broad-gotc-dev"
                 :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:google_project "broad-sg-prod-compute1"
+               {:clio-url       #_"https://clio.gotc-prod.broadinstitute.org"
+                ,               "https://clio.gotc-dev.broadinstitute.org"
+                :google_project "broad-sg-prod-compute1"
                 :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
         (throw (ex-info "Unknown Cromwell URL provided."
@@ -51,7 +54,7 @@
   (let [gcr   "us.gcr.io"
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
-        {:keys [google_project jes_gcs_root]} (options-for-cromwell url)]
+        {:keys [google_project jes_gcs_root]} (cromwell->strings url)]
     (-> {:backend         "PAPIv2"
          :final_workflow_outputs_dir output
          :google_project  google_project
@@ -94,9 +97,9 @@
     (workloads/load-workload-for-id tx id)))
 
 (defn ^:private clio-bam-record
-  "Return `nil` or the single Clio record with `bam`."
-  [bam]
-  (let [records (clio/query-bam bam)
+  "Return `nil` or the single `clio` record with `bam`."
+  [clio bam]
+  (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
       (log/warn "More than 1 Clio BAM record")
@@ -104,9 +107,9 @@
     (first records)))
 
 (defn ^:private clio-cram-record
-  "Return the useful part of the Clio record for `input_cram` or throw."
-  [input_cram]
-  (let [records (clio/query-cram {:cram_path input_cram})
+  "Return the useful part of the `clio` record for `input_cram` or throw."
+  [clio input_cram]
+  (let [records (clio/query-cram clio {:cram_path input_cram})
         n       (count records)]
     (when (not= 1 n)
       (log/warn "Expected 1 Clio record with cram_path")
@@ -145,6 +148,7 @@
   [executor output {:keys [status uuid] :as workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
+          clio (get-in cromwell->strings [executor :clio-url])
           cromwell->clio {:bai                 :bai_path
                           :bam                 :bam_path
                           :insert_size_metrics :insert_size_metrics_path}
@@ -158,10 +162,10 @@
         (log/warn "Bad metadata from executor")
         (log/error {:executor executor :metadata metadata}))
       #_(log-missing-final-files-for-debugging final)
-      (or (clio-bam-record (select-keys final [:bam_path]))
-          (let [cram (clio-cram-record (:input_cram inputs))
+      (or (clio-bam-record clio (select-keys final [:bam_path]))
+          (let [cram (clio-cram-record clio (:input_cram inputs))
                 bam  (merge cram final)]
-            (try (clio/add-bam bam)
+            (try (clio/add-bam clio bam)
                  (catch Throwable x
                    (log/error x "Add BAM to Clio failed" {:bam bam
                                                           :x   x}))))))))
