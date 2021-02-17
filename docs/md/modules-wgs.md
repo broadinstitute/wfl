@@ -41,9 +41,6 @@ without the `.cram` or `.bam` extension
 
 - [Defaults to](https://github.com/broadinstitute/wfl/blob/main/api/src/wfl/references.clj#L34) `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38`
 
-
-
-
 Note that this pipeline supports specifying arbitrary WDL inputs, either
 at the workload level through `common` or individually via `items`.
 
@@ -59,6 +56,11 @@ ExternalWholeGenomeReprocessing workload supports the following API endpoints:
 | POST | `/api/v1/create`             | Create a new workload                                          |
 | POST | `/api/v1/start`              | Start a workload                                               |
 | POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
+
+???+ warning "Permissions in production"
+    External Whole Genome Reprocessing in `gotc-prod` uses a set of execution projects, please refer to
+    [this page](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
+    when you have questions about permissions.
 
 ### Create Workload: `/api/v1/create`
 Creates a WFL workload. Before processing, confirm that the WFL and Cromwell service accounts have

@@ -10,7 +10,7 @@
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
-            [wfl.once                       :as once]
+            [wfl.auth                       :as auth]
             [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))
 
@@ -74,7 +74,7 @@
          :url          (str bucket-url bucket "/iam")
          ;; :query-params {:project project :prefix prefix}
          :content-type :application/json
-         :headers      (once/get-auth-header)}
+         :headers      (auth/get-auth-header)}
         http/request :body
         (json/read-str :key-fn keyword))))
 
@@ -85,7 +85,7 @@
         :url          bucket-url
         :query-params {:project project :prefix prefix}
         :content-type :application/json
-        :headers      (once/get-auth-header)}
+        :headers      (auth/get-auth-header)}
        http/request :body
        (json/read-str :key-fn keyword)
        :items
@@ -101,7 +101,7 @@
                    (-> {:method       :get
                         :url          (str bucket-url bucket "/o")
                         :content-type :application/json
-                        :headers      (once/get-auth-header)
+                        :headers      (auth/get-auth-header)
                         :query-params {:prefix prefix
                                        :maxResults 999
                                        :pageToken pageToken}}
@@ -144,7 +144,7 @@
           :query-params {:uploadType "media"
                          :name       object}
           :content-type (.detect (new Tika) body)
-          :headers      (once/get-auth-header)
+          :headers      (auth/get-auth-header)
           :body         body}
          http/request :body
          (json/read-str :key-fn keyword))))
@@ -158,7 +158,7 @@
      (-> {:method       :get            ; :debug true :debug-body true
           :url          (bucket-object-url bucket object)
           :query-params {:alt "media"}
-          :headers      (once/get-auth-header)
+          :headers      (auth/get-auth-header)
           :as           :stream}
          http/request :body
          (io/copy out))))
@@ -171,7 +171,7 @@
    (http/request {:method  :post
                   :url     (str upload-url bucket "/o")
                   :query-params {:name object}
-                  :headers (once/get-auth-header)}))
+                  :headers (auth/get-auth-header)}))
   ([url]
    (apply create-object (parse-gs-url url))))
 
@@ -180,7 +180,7 @@
   ([bucket object]
    (http/request {:method  :delete      ; :debug true :debug-body true
                   :url     (bucket-object-url bucket object)
-                  :headers (once/get-auth-header)}))
+                  :headers (auth/get-auth-header)}))
   ([url]
    (apply delete-object (parse-gs-url url))))
 
@@ -189,7 +189,7 @@
   ([bucket object params]
    (-> {:method       :get              ; :debug true :debug-body true
         :url          (str (bucket-object-url bucket object) params)
-        :headers      (once/get-auth-header)}
+        :headers      (auth/get-auth-header)}
        http/request
        :body
        (json/read-str :key-fn keyword)))
@@ -203,7 +203,7 @@
    (-> {:method       :patch            ; :debug true :debug-body true
         :url          (bucket-object-url bucket object)
         :content-type :application/json
-        :headers      (once/get-auth-header)
+        :headers      (auth/get-auth-header)
         :body         (json/write-str metadata :escape-slash false)}
        http/request :body
        (json/read-str :key-fn keyword)))
@@ -218,7 +218,7 @@
          destination (str/replace-first durl storage-url "")]
      (-> {:method  :post                ; :debug true :debug-body true
           :url     (str surl "/rewriteTo/" destination)
-          :headers (once/get-auth-header)}
+          :headers (auth/get-auth-header)}
          http/request
          :body
          (json/read-str :key-fn keyword))))
@@ -252,7 +252,7 @@
       (-> {:method       :patch         ; :debug true :debug-body true
            :url          (:selfLink (first buckets))
            :content-type :application/json
-           :headers      (once/get-auth-header)
+           :headers      (auth/get-auth-header)
            :body         (json/write-str metadata :escape-slash false)}
           http/request :body (json/read-str :key-fn keyword)))))
 
@@ -279,7 +279,7 @@
                  :topic          topic}]
     (-> (str bucket-url bucket "/notificationConfigs")
         (http/post
-         {:headers      (once/get-auth-header)
+         {:headers      (auth/get-auth-header)
           :content-type :json
           :body         (json/write-str payload :escape-slash false)})
         :body
@@ -288,17 +288,17 @@
 (defn delete-notification-configuration [bucket {:keys [id]}]
   (http/delete
    (str bucket-url bucket "/notificationConfigs/" id)
-   {:headers (once/get-auth-header)}))
+   {:headers (auth/get-auth-header)}))
 
 (defn list-notification-configurations [bucket]
   (-> (str bucket-url bucket "/notificationConfigs")
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       :body
       util/parse-json
       :items))
 
 (defn get-cloud-storage-service-account [project]
   (-> (str storage-url (str/join "/" ["projects" project "serviceAccount"]))
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       :body
       util/parse-json))

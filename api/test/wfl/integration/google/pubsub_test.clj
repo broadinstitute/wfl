@@ -1,7 +1,7 @@
 (ns wfl.integration.google.pubsub-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.google.pubsub :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]))
@@ -12,7 +12,7 @@
      topic
      {"roles/pubsub.publisher" [(str "serviceAccount:" sa)]
       "roles/pubsub.editor"    [(str "serviceAccount:"
-                                     (once/service-account-email))]})))
+                                     (auth/service-account-email))]})))
 
 (deftest test-cloud-storage-pubsub
   (let [project "broad-gotc-dev-storage"

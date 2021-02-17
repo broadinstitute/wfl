@@ -2,8 +2,9 @@
   "Talk to the Postgres database."
   (:require [clojure.string :as str]
             [clj-http.client :as http]
+            [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.terra :as terra]
             [wfl.util :as util])
@@ -12,19 +13,15 @@
 (defn wfl-db-config
   "Get the database configuration."
   []
-  (let [{:strs [USER
-                WFL_POSTGRES_PASSWORD
-                WFL_POSTGRES_URL
-                WFL_POSTGRES_USERNAME]} (util/getenv)]
-    (assoc {:classname       "org.postgresql.Driver"
-            :db-name         "wfl"
-            :instance-name   "zero-postgresql"
-            ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
-            :isolation-level :serializable
-            :subprotocol     "postgresql"}
-           :connection-uri (or WFL_POSTGRES_URL "jdbc:postgresql:wfl")
-           :password (or WFL_POSTGRES_PASSWORD "password")
-           :user (or WFL_POSTGRES_USERNAME USER "postgres"))))
+  (assoc {:classname       "org.postgresql.Driver"
+          :db-name         "wfl"
+          :instance-name   "zero-postgresql"
+          ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
+          :isolation-level :serializable
+          :subprotocol     "postgresql"}
+         :connection-uri (env/getenv "WFL_POSTGRES_URL")
+         :password (env/getenv "WFL_POSTGRES_PASSWORD")
+         :user (or (env/getenv "WFL_POSTGRES_USERNAME") (env/getenv "USER") "postgres")))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."
@@ -45,7 +42,7 @@
   "`status` of the workflow with `uuid` in `cromwell`."
   [cromwell uuid]
   (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       :body
       util/parse-json
       :status))
