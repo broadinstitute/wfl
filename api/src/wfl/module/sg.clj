@@ -28,24 +28,11 @@
   "Map Cromwell URL to its options or throw."
   [url]
   (let [known {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"],
-                :projects  ["broad-exomes-dev1"]}
+               {:google_project "broad-exomes-dev1"
+                :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution",}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:jes_roots ["gs://broad-realign-short-execution1/"
-                            "gs://broad-realign-short-execution2/"
-                            "gs://broad-realign-short-execution3/"
-                            "gs://broad-realign-short-execution4/"
-                            "gs://broad-realign-short-execution5/"
-                            "gs://broad-realign-short-execution6/"
-                            "gs://broad-realign-short-execution7/"
-                            "gs://broad-realign-short-execution8/"
-                            "gs://broad-realign-short-execution9/"
-                            "gs://broad-realign-short-execution10/"],
-                :projects ["broad-realign-execution01"
-                           "broad-realign-execution02"
-                           "broad-realign-execution03"
-                           "broad-realign-execution04"
-                           "broad-realign-execution05"]}}]
+               {:google_project "broad-sg-prod-compute1"
+                :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
         (throw (ex-info "Unknown Cromwell URL provided."
                         {:cromwell        url
@@ -64,11 +51,11 @@
   (let [gcr   "us.gcr.io"
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
-        {:keys [projects jes_roots]} (options-for-cromwell url)]
+        {:keys [google_project jes_gcs_root]} (options-for-cromwell url)]
     (-> {:backend         "PAPIv2"
          :final_workflow_outputs_dir output
-         :google_project  (rand-nth projects)
-         :jes_gcs_root    (rand-nth jes_roots)
+         :google_project  google_project
+         :jes_gcs_root    jes_gcs_root
          :read_from_cache true
          :write_to_cache  true
          :default_runtime_attributes
