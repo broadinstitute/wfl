@@ -24,7 +24,7 @@
               table       (str file-id ".tabular.json")
               vcf-url     (gcs/gs-url bucket (str object vcf))
               ingest-file (partial datarepo/ingest-file dataset profile)
-              drsa        (get-in env/stuff [:debug :data-repo :service-account])]
+              drsa        (env/getenv "WFL_DATA_REPO_SA")]
           (letfn [(stage [file content]
                     (spit file content)
                     (gcs/upload-file file bucket (str object file))

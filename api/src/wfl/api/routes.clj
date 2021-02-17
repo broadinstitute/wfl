@@ -45,11 +45,6 @@
            :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
-   ["/api/v1/environment"
-    {:get  {:summary "Get all of the environment the server knows"
-            :parameters nil
-            :responses {200 {:body map?}}
-            :handler (handlers/success env/stuff)}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::spec/append-to-aou-request}
