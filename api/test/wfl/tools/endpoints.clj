@@ -1,7 +1,7 @@
 (ns wfl.tools.endpoints
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.google.storage :as gcs]
             [wfl.util :as util]))
 
@@ -12,7 +12,7 @@
     "http://localhost:3000"))
 
 (def userinfo
-  (delay (gcs/userinfo {:headers (once/get-auth-header)})))
+  (delay (gcs/userinfo {:headers (auth/get-auth-header)})))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
@@ -23,7 +23,7 @@
 (defn get-workload-status
   "Query v1 api for the status of the workload with UUID"
   [uuid]
-  (let [auth-header (once/get-auth-header)
+  (let [auth-header (auth/get-auth-header)
         response    (client/get (str server "/api/v1/workload")
                                 {:headers      auth-header
                                  :query-params {:uuid uuid}})]
@@ -33,7 +33,7 @@
   "Query v1 api for all workloads"
   []
   (let [response (client/get (str server "/api/v1/workload")
-                             {:headers (once/get-auth-header)})]
+                             {:headers (auth/get-auth-header)})]
     (util/parse-json (:body response))))
 
 (defn create-workload
@@ -41,7 +41,7 @@
   [workload]
   (let [payload  (json/write-str workload :escape-slash false)
         response (client/post (str server "/api/v1/create")
-                              {:headers      (once/get-auth-header)
+                              {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
                                :body         payload})]
@@ -53,7 +53,7 @@
   (let [payload  (-> (select-keys workload [:uuid])
                      (json/write-str :escape-slash false))
         response (client/post (str server "/api/v1/start")
-                              {:headers      (once/get-auth-header)
+                              {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
                                :body         payload})]
@@ -66,7 +66,7 @@
                      (assoc :notifications samples)
                      (json/write-str :escape-slash false))
         response (client/post (str server "/api/v1/append_to_aou")
-                              {:headers      (once/get-auth-header)
+                              {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
                                :body         payload})]
@@ -77,7 +77,7 @@
   [workload-request]
   (let [payload  (json/write-str workload-request :escape-slash false)
         response (client/post (str server "/api/v1/exec")
-                              {:headers      (once/get-auth-header)
+                              {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
                                :body         payload})]

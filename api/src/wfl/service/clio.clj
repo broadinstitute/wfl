@@ -4,7 +4,7 @@
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
-            [wfl.once :as once]))
+            [wfl.auth :as auth]))
 
 (def url
   "The Clio API URL."
@@ -13,7 +13,7 @@
 (defn get-authorization-header
   "An Authorization header for talking to Clio where deployed."
   []
-  (once/authorization-header-with-bearer-token (once/service-account-token)))
+  (auth/authorization-header-with-bearer-token (auth/service-account-token)))
 
 (defn post
   "Post THING to Clio server with metadata MD."

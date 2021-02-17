@@ -1,10 +1,10 @@
 (ns wfl.service.terra
   "Analyze data in Terra using the Firecloud/Terra API."
-  (:require [clojure.data.json :as json]
-            [clj-http.client :as http]
-            [wfl.once :as once]
-            [wfl.util :as util]
-            [clojure.string :as str]))
+  (:require [clj-http.client   :as http]
+            [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.util          :as util]))
 
 (defn workspace-api-url
   [terra-url workspace]
@@ -20,7 +20,7 @@
      (http/post
       submission-url
       {:content-type :application/json
-       :headers   (once/get-auth-header)
+       :headers   (auth/get-auth-header)
        :body      (json/write-str
                    {:methodConfigurationNamespace method-configuration-namespace
                     :methodConfigurationName method-configuration-name
@@ -36,7 +36,7 @@
   [terra-url workspace submission-id]
   (let [workspace-url (workspace-api-url terra-url workspace)
         submission-url (str workspace-url "/submissions/" submission-id)
-        response (http/get submission-url {:headers (once/get-auth-header)})]
+        response (http/get submission-url {:headers (auth/get-auth-header)})]
     (util/parse-json (:body response))))
 
 (defn get-workflow
@@ -45,7 +45,7 @@
   [firecloud-url workspace submission-id workflow-id]
   (-> (workspace-api-url firecloud-url workspace)
       (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id]))
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
 (defn get-workflow-outputs
@@ -54,7 +54,7 @@
   [firecloud-url workspace submission-id workflow-id]
   (-> (workspace-api-url firecloud-url workspace)
       (str (str/join "/" ["" "submissions" submission-id "workflows" workflow-id "outputs"]))
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
 (defn get-workflow-status-by-entity
@@ -70,7 +70,7 @@
   "Use `firecloud-url` to describe the WDL at `wdl-url`"
   [firecloud-url wdl-url]
   (-> (str firecloud-url "/api/womtool/v1/describe")
-      (http/post {:headers   (once/get-auth-header)
+      (http/post {:headers   (auth/get-auth-header)
                   :multipart (util/multipart-body
                               {:workflowUrl         wdl-url
                                :workflowTypeVersion "1.0"

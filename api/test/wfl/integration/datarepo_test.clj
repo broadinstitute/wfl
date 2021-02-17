@@ -1,10 +1,9 @@
 (ns wfl.integration.datarepo-test
   (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [ring.util.mime-type :as mime-type]
-            [wfl.environments :as env]
+            [wfl.environment :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]
@@ -151,7 +150,7 @@
          (let [[bkt obj] (gcs/parse-gs-url value)
                target    (str/join "/" ["" workload-id obj])
                mime      (mime-type/ext-mime-type value genomics-mime-types)]
-           (-> (get-in env/stuff [:debug :data-repo :service-account])
+           (-> (env/getenv "WFL_DATA_REPO_SA")
                (gcs/add-object-reader bkt obj))
            (-> (ingest-file value target {:mime_type mime})
                return
@@ -188,8 +187,7 @@
                    rename-gather)
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
-          (let [sa (get-in env/stuff [:debug :data-repo :service-account])]
-            (gcs/add-object-reader sa table-url))
+          (gcs/add-object-reader (env/getenv "WFL_DATA_REPO_SA") table-url)
           (let [{:keys [bad_row_count row_count]}
                 (datarepo/poll-job
                  (datarepo/ingest-table dataset-id table-url table-name))]

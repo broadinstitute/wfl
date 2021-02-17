@@ -2,12 +2,12 @@
   "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
             [clj-http.client :as http]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.util :as util])
   (:import (java.util.concurrent TimeUnit)))
 
 (def ^:private datarepo-url
-  (let [url (-> (System/getenv "TERRA_DATA_REPO_URL")
+  (let [url (-> (System/getenv "WFL_TERRA_DATA_REPO_URL")
                 (or "https://jade.datarepo-dev.broadinstitute.org/")
                 util/slashify)]
     (partial str url)))
@@ -20,7 +20,7 @@
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
   (-> (repository "datasets/" dataset-id)
-      (http/get {:headers (once/get-service-account-header)})
+      (http/get {:headers (auth/get-service-account-header)})
       util/response-body-json))
 
 (defn ^:private ingest
@@ -28,7 +28,7 @@
   [thing dataset-id body]
   (-> (repository (format "datasets/%s/%s" dataset-id thing))
       (http/post {:content-type :application/json
-                  :headers      (once/get-service-account-header)
+                  :headers      (auth/get-service-account-header)
                   :body         (json/write-str body :escape-slash false)})
       util/response-body-json
       :id))
@@ -61,10 +61,10 @@
   "Return result for JOB-ID in ENVIRONMENT when it stops running."
   [job-id]
   (let [get-result #(-> (repository "jobs/" job-id "/result")
-                        (http/get {:headers (once/get-service-account-header)})
+                        (http/get {:headers (auth/get-service-account-header)})
                         util/response-body-json)
         running?   #(-> (repository "jobs/" job-id)
-                        (http/get {:headers (once/get-service-account-header)})
+                        (http/get {:headers (auth/get-service-account-header)})
                         util/response-body-json
                         :job_status
                         #{"running"})]
@@ -79,7 +79,7 @@
   [dataset-request]
   (-> (repository "datasets")
       (http/post {:content-type :application/json
-                  :headers      (once/get-service-account-header)
+                  :headers      (auth/get-service-account-header)
                   :body         (json/write-str
                                  dataset-request
                                  :escape-slash false)})
@@ -92,7 +92,7 @@
   "Delete the Dataset with `dataset-id`."
   [dataset-id]
   (-> (repository "datasets/" dataset-id)
-      (http/delete {:headers (once/get-service-account-header)})
+      (http/delete {:headers (auth/get-service-account-header)})
       util/response-body-json
       :id
       poll-job))

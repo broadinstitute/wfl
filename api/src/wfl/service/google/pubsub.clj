@@ -4,7 +4,7 @@
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]
             [clojure.string :as str]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.util :refer [response-body-json]]))
 
 (def ^:private pubsub-url
@@ -28,7 +28,7 @@
        #_(;; use topic ))"
   [project topic-id]
   (-> (pubsub-url (str/join "/" ["projects" project "topics" topic-id]))
-      (http/put {:headers (once/get-auth-header)})
+      (http/put {:headers (auth/get-auth-header)})
       response-body-json
       :name))
 
@@ -40,7 +40,7 @@
    topic - Google Cloud Pub/Sub topic in the form
            \"/projects/PROJECT/topics/TOPIC-ID\""
   [topic]
-  (http/delete (pubsub-url topic) {:headers (once/get-auth-header)}))
+  (http/delete (pubsub-url topic) {:headers (auth/get-auth-header)}))
 
 (defn list-topics
   "List Pub/Sub topics in `project`. See also `create-topic`. Returns a list
@@ -52,7 +52,7 @@
            \"/projects/PROJECT/topics/TOPIC-ID\""
   [project]
   (-> (pubsub-url (str/join "/" ["projects" project "topics"]))
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       response-body-json
       :topics))
 
@@ -71,7 +71,7 @@
   [subscription message-responses]
   (http/post
    (pubsub-url subscription ":acknowledge")
-   {:headers (once/get-auth-header)
+   {:headers (auth/get-auth-header)
     :body    (json/write-str
               {:ackIds (map :ackId message-responses)}
               :escape-slash false)}))
@@ -98,7 +98,7 @@
     (-> (pubsub-url
          (str/join "/" ["projects" project "subscriptions" subscription-id]))
         (http/put
-         {:headers      (once/get-auth-header)
+         {:headers      (auth/get-auth-header)
           :content-type :json
           :body         (json/write-str {:topic topic} :escape-slash false)})
         response-body-json
@@ -112,7 +112,7 @@
    subscription - Google Cloud Pub/Sub subscription in the form
                   \"/projects/PROJECT/subscriptions/SUBSCRIPTION-ID\""
   [subscription]
-  (http/delete (pubsub-url subscription) {:headers (once/get-auth-header)}))
+  (http/delete (pubsub-url subscription) {:headers (auth/get-auth-header)}))
 
 (defn list-subscriptions
   "List active Pub/Sub subscriptions for the specified `project` or `topic`.
@@ -125,7 +125,7 @@
                       \"/projects/PROJECT/topics/TOPIC-ID\""
   [project-or-topic]
   (-> (pubsub-url project-or-topic "/subscriptions")
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       response-body-json
       :subscriptions))
 
@@ -140,7 +140,7 @@
                   \"/projects/PROJECT/subscriptions/SUBSCRIPTION-ID\""
   [subscription]
   (-> (pubsub-url subscription ":pull")
-      (http/post {:headers (once/get-auth-header)
+      (http/post {:headers (auth/get-auth-header)
                   :body    (json/write-str
                             {:maxMessages 100}
                             :escape-slash false)})
@@ -158,7 +158,7 @@
               reference for more information."
   [resource]
   (-> (pubsub-url resource ":getIamPolicy")
-      (http/get {:headers (once/get-auth-header)})
+      (http/get {:headers (auth/get-auth-header)})
       response-body-json))
 
 (defn set-iam-policy
@@ -176,7 +176,7 @@
   (letfn [(make-binding [[role members]] {:role role :members members})]
     (http/post
      (pubsub-url resource ":setIamPolicy")
-     {:headers      (once/get-auth-header)
+     {:headers      (auth/get-auth-header)
       :content-type :json
       :body         (json/write-str
                      {:policy {:bindings (map make-binding role->members)}}
