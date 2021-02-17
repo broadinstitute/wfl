@@ -4,7 +4,6 @@
             [clojure.data.json :as json]
             [clojure.string    :as str]
             [wfl.auth          :as auth]
-            [wfl.once :as once]
             [wfl.util          :as util]))
 
 (defn workspace-api-url
@@ -86,7 +85,7 @@
   [terra-url workspace file]
   (-> (workspace-api-url terra-url workspace)
       (str "/flexibleImportEntities")
-      (http/post {:headers (once/get-auth-header)
+      (http/post {:headers (auth/get-auth-header)
                   :multipart    [{:name "Content/type"
                                   :content "text/tab-separated-values"}
                                  {:name "entities"
