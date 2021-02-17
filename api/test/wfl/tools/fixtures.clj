@@ -7,7 +7,10 @@
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
             [wfl.util :as util])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           (java.nio.file Files)
+           (org.apache.commons.io FileUtils)
+           (java.nio.file.attribute FileAttribute)))
 
 (defn method-overload-fixture
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
@@ -19,27 +22,6 @@
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
-
-(defn with-temporary-cloud-storage-folder
-  "Create a temporary folder in the Google Cloud storage `bucket` and call
-  `use-folder` with the gs url of the temporary folder. The folder will be
-  deleted after execution transfers from `use-folder`.
-
-  Parameters
-  ----------
-    bucket - name of Google Cloud storage bucket to create temporary folder in
-    use    - function to call with gs url of temporary folder
-
-  Example
-  -------
-    (with-temporary-gcs-folder \"broad-gotc-dev\"
-       (fn [url] #_(use temporary folder at url)))
-  "
-  [bucket use-folder]
-  (util/bracket
-   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
-   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
-   use-folder))
 
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)
@@ -75,21 +57,21 @@
   (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
     (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname))))
 
-(defn temporary-postgresql-database [f]
+(defn temporary-postgresql-database
   "Create a temporary PostgreSQL database whose configuration is
-  `testing-db-config` for testing. Assumes that the database does not
-  already exist.
+   `testing-db-config` for testing. Assumes that the database does not
+   already exist.
 
-  Example
-  -------
-  ;; Use a clean PostgresSQL database in this test namespace.
-  ;; `:once` creates the database once for the duration of the tests.
-  (clj-test/use-fixtures :once temporary-postgresql-database)
+   Example
+   -------
+   ;; Use a clean PostgresSQL database in this test namespace.
+   ;; `:once` creates the database once for the duration of the tests.
+   (clj-test/use-fixtures :once temporary-postgresql-database)
 
-  (deftest test-requiring-database-access
-    (jdbc/with-db-transaction [tx (testing-db-config)]
-      ;; use tx
-    ))"
+   (deftest test-requiring-database-access
+     (jdbc/with-db-transaction [tx (testing-db-config)]
+      #_(use tx)))"
+  [f]
   (let [name (:db-name (testing-db-config))]
     (create-local-database name)
     (try
@@ -109,6 +91,68 @@
   (let [name (:db-name config)]
     (create-local-database name)
     (setup-local-database name)))
+
+(defmacro with-fixtures
+  "Use 0 or more `fixtures` in `use-fixtures`.
+   Parameters
+   ----------
+     fixtures     - list of fixtures missing the consuming function in the
+                    right-most position.
+     use-fixtures - N-ary function accepting each fixture parameter.
+
+   Example
+   -------
+     (with-fixtures [fixture0
+                     (fixture1 x)
+                     ...
+                     fixtureN]
+       (fn [[x0 x1 ... xN]] ))"
+  [fixtures use-fixtures]
+  (letfn [(go [[f & fs] args]
+              (if (nil? f)
+                `(~use-fixtures ~args)
+                (let [x  (gensym)
+                      g# `(fn [~x] ~(go fs (conj args x)))]
+                  (if (seq? f) (concat f (list g#)) (list f g#)))))]
+    (go fixtures [])))
+
+(defn with-temporary-folder
+  "Create a temporary folder in the local filesystem and call `use-folder` with
+   the path to the temporary folder. The folder will be deleted after execution
+   transfers from `use-folder`.
+
+   Parameters
+   ----------
+     use-folder - function to call with temporary folder
+
+   Example
+   -------
+     (with-temporary-folder (fn [folder] #_(use folder)))"
+  [use-folder]
+  (util/bracket
+   #(Files/createTempDirectory "wfl-test-" (into-array FileAttribute []))
+   #(FileUtils/deleteDirectory (.toFile %))
+   (comp use-folder #(.toString %))))
+
+(defn with-temporary-cloud-storage-folder
+  "Create a temporary folder in the Google Cloud storage `bucket` and call
+   `use-folder` with the gs url of the temporary folder. The folder will be
+   deleted after execution transfers from `use-folder`.
+
+   Parameters
+   ----------
+     bucket     - name of Google Cloud storage bucket to create temporary folder
+     use-folder - function to call with gs url of temporary folder
+
+   Example
+   -------
+     (with-temporary-gcs-folder \"broad-gotc-dev\"
+        (fn [url] #_(use temporary folder at url)))"
+  [bucket use-folder]
+  (util/bracket
+   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
+   #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
+   use-folder))
 
 (defn with-temporary-topic
   "Create a temporary Google Cloud Storage Pub/Sub topic."
@@ -141,3 +185,4 @@
    #(datarepo/create-dataset dataset-request)
    datarepo/delete-dataset
    f))
+

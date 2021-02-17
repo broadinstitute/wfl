@@ -7,14 +7,6 @@
         "name": "assemble_refbased_outputs",
         "columns": [
           {
-            "name": "id",
-            "datatype": "string"
-          },
-          {
-            "name": "daterepo_ingest_date",
-            "datatype": "date"
-          },
-          {
             "name": "assembly_fasta",
             "datatype": "fileref"
           },
@@ -155,12 +147,10 @@
             "datatype": "string"
           }
         ],
-        "primaryKey": [
-          "id"
-        ],
+        "primaryKey": [],
         "partitionMode": "date",
         "datePartitionOptions": {
-          "column": "daterepo_ingest_date"
+          "column": "datarepo_ingest_date"
         }
       }
     ]

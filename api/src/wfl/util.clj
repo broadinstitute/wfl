@@ -5,8 +5,6 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [vault.client.http]         ; vault.core needs this
-            [vault.core :as vault]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime]
@@ -16,8 +14,6 @@
            [java.util ArrayList Collections Random UUID]
            [java.util.zip ZipOutputStream ZipEntry]
            [org.apache.commons.io FilenameUtils]))
-
-vault.client.http/http-client           ; Keep :clint eastwood quiet.
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -42,17 +38,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "Parse json `object` into keyword->object map recursively"
   (json/read-str object :key-fn keyword))
 
-(defonce the-system-environment (delay (into {} (System/getenv))))
-
-(defn getenv
-  "`(System/getenv)` as a map, or the value for `key`, or `default`."
-  ([key default]
-   (@the-system-environment key default))
-  ([key]
-   (@the-system-environment key))
-  ([]
-   @the-system-environment))
-
 (defn parse-json
   "Parse the json string STR into a keyword-string map"
   [str]
@@ -75,20 +60,6 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   (with-open [^Writer out (io/writer file)]
     (binding [*out* out]
       (json/pprint content :escape-slash false))))
-
-(defn vault-secrets
-  "Return the secrets at `path` in vault."
-  [path]
-  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
-                       (str/join "/") slurp do-or-nil)
-                  (getenv "VAULT_TOKEN" "VAULT_TOKEN"))]
-    (try (vault/read-secret
-          (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token token))
-          path {})
-         (catch Throwable e
-           (log/warn e "Issue with Vault")
-           (log/debug "Perhaps run 'vault login' and try again")))))
 
 (defn unprefix
   "Return the STRING with its PREFIX stripped off."
@@ -228,11 +199,25 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
                    command (apply pr-str (first arglists))]
                [(str/join " " [" " n command]) (str indent doc)])))))
 
+(defn map-keys
+  "Return map `m` with `f` applied to all its keys."
+  [f m]
+  (into {} (map #(update-in % [0] f) m)))
+
+(defn map-vals
+  "Return map `m` with `f` applied to all its values."
+  [f m]
+  (into {} (map #(update-in % [1] f) m)))
+
 (defn prefix-keys
   "Prefix all keys in map M with P."
   [m p]
-  (zipmap (map (fn [k] (keyword (str (name p) "." (name k)))) (keys m))
-          (vals m)))
+  (map-keys (fn [k] (keyword (str (name p) (name k)))) m))
+
+(defn unprefix-keys
+  "Remove prefix `p` from all keys in map `m` with that prefix."
+  [m p]
+  (map-keys (fn [k] (keyword (unprefix (name k) (name p)))) m))
 
 (defn absent?
   "Test if `coll` does not contain `key`.
@@ -368,9 +353,7 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
   "Ensure URL does not end in a slash /."
   [url]
   (if (str/ends-with? url "/")
-    (->> (seq url)
-         drop-last
-         (str/join ""))
+    (recur (subs url 0 (dec (count url))))
     url))
 
 (defn bracket
@@ -386,3 +369,9 @@ vault.client.http/http-client           ; Keep :clint eastwood quiet.
       (use resource)
       (finally
         (release resource)))))
+
+(defn multipart-body
+  "Assemble PARTS into a multipart HTML body."
+  [parts]
+  (letfn [(make-part [[k v]] {:name (name k) :content v})]
+    (map make-part parts)))

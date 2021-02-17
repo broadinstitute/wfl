@@ -9,6 +9,7 @@
 (defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
 
 ;; shared
+(s/def ::base_file_name string?)
 (s/def ::commit (s/and string? (comp (partial == 40) count)))
 (s/def ::contamination_vcf string?)
 (s/def ::contamination_vcf_index string?)
@@ -109,8 +110,9 @@
 ;; xx (External Exome Reprocessing)
 (s/def ::xx-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
 
-;; sg (Whole Genome Somatic single Sample)
-(s/def ::sg-workflow-inputs (s/keys :req-un [::contamination_vcf
+;; sg (GDC Whole Genome Somatic single Sample)
+(s/def ::sg-workflow-inputs (s/keys :req-un [::base_file_name
+                                             ::contamination_vcf
                                              ::contamination_vcf_index
                                              ::cram_ref_fasta
                                              ::cram_ref_fasta_index

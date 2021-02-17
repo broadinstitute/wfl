@@ -22,7 +22,7 @@
   (cromwell/submit-workflow
    url
    workflow-wdl
-   (-> inputs (util/prefix-keys pipeline))
+   (-> inputs (util/prefix-keys (str pipeline ".")))
    options
    labels))
 
@@ -49,13 +49,11 @@
          projects (map (partial str prefix "execution0") (range 1 6))
          buckets  (map (partial str prefix "short-execution") (range 1 11))
          roots    (map (partial format "gs://%s/") buckets)]
-     {:cromwell                  {:labels            [:data_type
-                                                      :project
-                                                      :regulatory_designation
-                                                      :sample_name
-                                                      :version]
-                                  :monitoring_script "gs://broad-gotc-prod-cromwell-monitoring/monitoring.sh"
-                                  :url               "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"}
+     {:labels            [:data_type
+                          :project
+                          :regulatory_designation
+                          :sample_name
+                          :version]
       :google
       {:jes_roots (vec roots)
        :noAddress false

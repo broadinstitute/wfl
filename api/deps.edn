@@ -41,7 +41,7 @@
   com.google.cloud.sql/postgres-socket-factory {:mvn/version "1.0.15"}
   com.google.cloud.sql/jdbc-socket-factory-core {:mvn/version "1.0.15"}}
 
- ;; derived/api/src must come first so environments.clj is found before
+ ;; derived/api/src must come first so environment.clj is found before
  ;; placeholder in src/.
  :paths ["../derived/api/src" "src" "classes"
          "../derived/api/resources" "resources"]
@@ -76,6 +76,7 @@
 
   :test
   {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.632"}
+                 org.apache.commons/commons-io {:mvn/version "1.3.2"}
                  org.liquibase/liquibase-core  {:mvn/version "4.0.0"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
    :extra-paths ["test"]

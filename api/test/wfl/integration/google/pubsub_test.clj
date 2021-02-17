@@ -1,7 +1,7 @@
 (ns wfl.integration.google.pubsub-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
-            [wfl.once :as once]
+            [wfl.auth :as auth]
             [wfl.service.google.pubsub :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]))
@@ -12,13 +12,15 @@
      topic
      {"roles/pubsub.publisher" [(str "serviceAccount:" sa)]
       "roles/pubsub.editor"    [(str "serviceAccount:"
-                                     (once/service-account-email))]})))
+                                     (auth/service-account-email))]})))
 
 (deftest test-cloud-storage-pubsub
   (let [project "broad-gotc-dev-storage"
         bucket  fixtures/gcs-test-bucket]
-    (fixtures/with-temporary-topic project
-      (fn [topic]
+    (fixtures/with-fixtures
+      [(fixtures/with-temporary-topic project)
+       (fixtures/with-temporary-cloud-storage-folder bucket)]
+      (fn [[topic url]]
         ;; We need to make sure that the service account of the project that
         ;; owns the storage bucket has the required permissions to publish
         ;; messages to the pub/sub topic.
@@ -32,12 +34,10 @@
               (fn [_]
                 (let [configs (gcs/list-notification-configurations bucket)]
                   (is (< 0 (count configs))))
-                (fixtures/with-temporary-cloud-storage-folder bucket
-                  (fn [url]
-                    (let [dest (str url "input.txt")]
-                      (gcs/upload-file
-                       (str/join "/" ["test" "resources" "copy-me.txt"])
-                       dest)
-                      (let [messages (pubsub/pull-subscription subscription)]
-                        (is (< 0 (count messages)))
-                        (pubsub/acknowledge subscription messages)))))))))))))
+                (let [dest (str url "input.txt")]
+                  (gcs/upload-file
+                   (str/join "/" ["test" "resources" "copy-me.txt"])
+                   dest)
+                  (let [messages (pubsub/pull-subscription subscription)]
+                    (is (< 0 (count messages)))
+                    (pubsub/acknowledge subscription messages)))))))))))
