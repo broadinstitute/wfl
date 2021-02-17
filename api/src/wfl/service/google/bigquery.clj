@@ -50,8 +50,6 @@
       util/response-body-json
       :tables))
 
-(def list-views "Function alias for views." list-tables)
-
 (defn query-table-sync
   "Query for a BigQuery TABLE within a Data Repo SNAPSHOT in
    Google Cloud PROJECT synchronously. Using non-legacy query
@@ -79,8 +77,6 @@
                               {:query query
                                :use_legacy_sql false})})
         util/response-body-json)))
-
-(def query-view-sync "Function alias for views." query-table-sync)
 
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
@@ -119,8 +115,6 @@
   ([table terra-data-table]
    (-> (dump-table->tsv table terra-data-table (StringWriter.))
        .toString .getBytes)))
-
-(def dump-view->tsv "Function alias for views." dump-table->tsv)
 
 (comment
   (let [table {:kind "bigquery#queryResponse",
