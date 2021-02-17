@@ -143,6 +143,14 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
+(defn ^:private clio-add-bam
+  "Add `bam` record to `clio`."
+  [clio bam]
+  (try (clio/add-bam clio bam)
+       (catch Throwable x
+         (log/error x "Add BAM to Clio failed" {:bam bam
+                                                :x   x}))))
+
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
   [executor output {:keys [status uuid] :as workflow}]
@@ -151,6 +159,7 @@
           clio (get-in cromwell->strings [executor :clio-url])
           cromwell->clio {:bai                 :bai_path
                           :bam                 :bam_path
+                          :contamination       :contamination
                           :insert_size_metrics :insert_size_metrics_path}
           {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
           bam (-> outputs
@@ -163,12 +172,15 @@
         (log/error {:executor executor :metadata metadata}))
       #_(log-missing-final-files-for-debugging final)
       (or (clio-bam-record clio (select-keys final [:bam_path]))
-          (let [cram (clio-cram-record clio (:input_cram inputs))
-                bam  (merge cram final)]
-            (try (clio/add-bam clio bam)
-                 (catch Throwable x
-                   (log/error x "Add BAM to Clio failed" {:bam bam
-                                                          :x   x}))))))))
+          (let [cram   (clio-cram-record clio (:input_cram inputs))
+                bam    (-> cram (merge final) (dissoc :contamination))
+                contam (:contamination final)
+                suffix (last (str/split contam #"/"))
+                folder (str (util/unsuffix contam suffix))]
+            (clio-add-bam clio bam)
+            (-> bam
+                (json/write-str :escape-slash false)
+                (gcs/upload-content (str folder "clio-bam-record.json"))))))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
