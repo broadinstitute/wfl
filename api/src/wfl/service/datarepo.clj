@@ -1,16 +1,15 @@
 (ns wfl.service.datarepo
   "Do stuff in the data repo."
-  (:require [clojure.data.json :as json]
-            [clj-http.client   :as http]
+  (:require [clj-http.client   :as http]
+            [clojure.data.json :as json]
             [wfl.auth          :as auth]
+            [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
             [wfl.util          :as util])
   (:import (java.util.concurrent TimeUnit)))
 
 (def ^:private datarepo-url
-  (let [url (-> (System/getenv "WFL_TERRA_DATA_REPO_URL")
-                (or "https://jade.datarepo-dev.broadinstitute.org/")
-                util/slashify)]
+  (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
     (partial str url)))
 
 (def ^:private repository
