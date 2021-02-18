@@ -1,17 +1,17 @@
 (ns wfl.unit.mime-type-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [wfl.mime-type :as mime-type]
+  (:require [clojure.test        :refer [deftest is testing]]
+            [wfl.mime-type       :as mime-type]
             [wfl.tools.workflows :as workflows]))
 
 (deftest test-mime-types
-  (let [cases [[".pdf" "application/pdf"]
-               [".txt" "text/plain"]
-               [".bam" "application/octet-stream"]
-               [".cram" "application/octet-stream"]
-               [".vcf" "text/plain"]
-               [".gz" "application/gzip"]
+  (let [cases [[".pdf"   "application/pdf"]
+               [".txt"   "text/plain"]
+               [".bam"   "application/octet-stream"]
+               [".cram"  "application/octet-stream"]
+               [".vcf"   "text/plain"]
+               [".gz"    "application/gzip"]
                [".fasta" "application/octet-stream"]
-               [".html" "text/html"]]]
+               [".html"  "text/html"]]]
     (doseq [[filename expected] cases]
       (testing filename
         (is (= expected (mime-type/ext-mime-type filename)))))))
