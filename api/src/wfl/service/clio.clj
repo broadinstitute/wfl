@@ -11,18 +11,13 @@
   [clio]
   (str/join "/" [clio "api" "v1"]))
 
-(defn get-authorization-header
-  "An Authorization header for talking to Clio where deployed."
-  []
-  (auth/authorization-header-with-bearer-token (auth/service-account-token)))
-
 (defn post
   "Post `thing` to `clio` server with metadata `md`."
   [clio thing md]
   (-> {:url     (str/join "/" [(api clio) thing])
        :method  :post                   ; :debug true :debug-body true
        :headers (merge {"Content-Type" "application/json"}
-                       (get-authorization-header))
+                       (auth/get-service-account-header))
        :body    (json/write-str md :escape-slash false)}
       http/request :body
       (json/read-str :key-fn keyword)))
