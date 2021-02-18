@@ -18,7 +18,7 @@
 (def the-sg-workload-request
   "A request suitable when all external services are mocked."
   {:executor @workloads/cromwell-url
-   :output   "gs://broad-gotc-dev-wfl-sg-test-outputs/"
+   :output   "gs://broad-gotc-dev-wfl-sg-test-outputs"
    :pipeline "GDCWholeGenomeSomaticSingleSample"
    :project  @workloads/project
    :items
