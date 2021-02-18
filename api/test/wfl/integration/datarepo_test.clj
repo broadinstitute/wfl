@@ -18,6 +18,9 @@
 (def ^:private assemble-refbased-outputs-dataset
   "test/resources/datasets/assemble-refbased-outputs.json")
 
+(def ^:private augur-from-assemblies-outputs-dataset
+  "test/resources/datasets/augur-from-assemblies-outputs.json")
+
 (defn ^:private make-dataset-request [dataset-json-path]
   (-> (slurp dataset-json-path)
       json/read-str
@@ -27,7 +30,8 @@
 
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
-  (doseq [definition [assemble-refbased-outputs-dataset]]
+  (doseq [definition [assemble-refbased-outputs-dataset
+                      augur-from-assemblies-outputs-dataset]]
     (testing (str "creating dataset " (util/basename definition))
       (fixtures/with-temporary-dataset (make-dataset-request definition)
         #(let [dataset (datarepo/dataset %)]
