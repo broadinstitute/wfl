@@ -1,4 +1,10 @@
-(ns wfl.tools.workflows)
+(ns wfl.tools.workflows
+  (:require [clojure.set :as set]))
+
+(defn make-object-type [parameters]
+  (->> parameters
+       (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
+       (assoc {:typeName "Object"} :objectFieldNames)))
 
 (def assemble-refbased-description
   "As described by womtool"

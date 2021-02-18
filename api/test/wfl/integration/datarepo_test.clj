@@ -35,11 +35,6 @@
         #(let [dataset (datarepo/dataset %)]
            (is (= % (:id dataset))))))))
 
-(defn ^:private make-object-type [parameters]
-  (->> parameters
-       (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
-       (assoc {:typeName "Object"} :objectFieldNames)))
-
 (defn ^:private run-thunk! [x] (x))
 
 (defn ^:private ingest!
@@ -99,7 +94,7 @@
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     assemble-refbased-outputs-dataset
         pipeline-outputs workflows/assemble-refbased-outputs
-        outputs-type     (make-object-type
+        outputs-type     (workflows/make-object-type
                           (:outputs workflows/assemble-refbased-description))
         rename-gather    identity ;; collect and map outputs onto dataset names
         table-name       "assemble_refbased_outputs"
