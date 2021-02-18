@@ -3,15 +3,11 @@
             [clojure.data.json :as json]
             [wfl.auth :as auth]
             [wfl.environment :as env]
-            [wfl.service.google.storage :as gcs]
             [wfl.util :as util]))
 
 (def ^:private wfl-url
   "The WFL server URL to test."
   (delay (env/getenv "WFL_WFL_URL")))
-
-(def email
-  (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"

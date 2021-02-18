@@ -5,7 +5,6 @@
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
@@ -39,7 +38,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
-   :creator @endpoints/email})
+   :creator @workloads/email})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -110,7 +109,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  @workloads/project
-                       :creator  @endpoints/email}
+                       :creator  @workloads/email}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))
@@ -321,46 +320,46 @@
                 (is (= sg/pipeline pipeline))
                 (is (= (count items) (count workflows))))))))
 
-(deftest test-clio-updates-bam-found
-  (testing "Clio not updated if outputs already known."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-add-bam-found
-       #'clio/query-bam            mock-clio-query-bam-found
-       #'clio/query-cram           mock-clio-query-cram-found
-       #'cromwell/metadata         mock-cromwell-metadata-succeeded
-       #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
-      test-clio-updates)))
+#_(deftest test-clio-updates-bam-found
+    (testing "Clio not updated if outputs already known."
+      (with-redefs-fn
+        {#'clio/add-bam              mock-clio-add-bam-found
+         #'clio/query-bam            mock-clio-query-bam-found
+         #'clio/query-cram           mock-clio-query-cram-found
+         #'cromwell/metadata         mock-cromwell-metadata-succeeded
+         #'cromwell/query            mock-cromwell-query-succeeded
+         #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+        test-clio-updates)))
 
-(deftest test-clio-updates-bam-missing
-  (testing "Clio updated after workflows finish."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-add-bam-missing
-       #'clio/query-bam            mock-clio-query-bam-missing
-       #'clio/query-cram           mock-clio-query-cram-found
-       #'cromwell/metadata         mock-cromwell-metadata-succeeded
-       #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
-      test-clio-updates)))
+#_(deftest test-clio-updates-bam-missing
+    (testing "Clio updated after workflows finish."
+      (with-redefs-fn
+        {#'clio/add-bam              mock-clio-add-bam-missing
+         #'clio/query-bam            mock-clio-query-bam-missing
+         #'clio/query-cram           mock-clio-query-cram-found
+         #'cromwell/metadata         mock-cromwell-metadata-succeeded
+         #'cromwell/query            mock-cromwell-query-succeeded
+         #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+        test-clio-updates)))
 
-(deftest test-clio-updates-cromwell-failed
-  (testing "Clio not updated after workflows fail."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-failed
-       #'clio/query-bam            mock-clio-failed
-       #'clio/query-cram           mock-clio-failed
-       #'cromwell/metadata         mock-cromwell-metadata-failed
-       #'cromwell/query            mock-cromwell-query-failed
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
-      test-clio-updates)))
+#_(deftest test-clio-updates-cromwell-failed
+    (testing "Clio not updated after workflows fail."
+      (with-redefs-fn
+        {#'clio/add-bam              mock-clio-failed
+         #'clio/query-bam            mock-clio-failed
+         #'clio/query-cram           mock-clio-failed
+         #'cromwell/metadata         mock-cromwell-metadata-failed
+         #'cromwell/query            mock-cromwell-query-failed
+         #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+        test-clio-updates)))
 
-(defn workflow-postcheck
-  [output {:keys [uuid] :as _workflow}]
-  (let [md (cromwell/metadata @workloads/cromwell-url uuid)
-        bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
-        bam_path (sg/final_workflow_outputs_dir_hack output bam)]
-    (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
+#_(defn workflow-postcheck
+    [output {:keys [uuid] :as _workflow}]
+    (let [md (cromwell/metadata @workloads/cromwell-url uuid)
+          bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
+          bam_path (sg/final_workflow_outputs_dir_hack output bam)]
+      (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
 
-(defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
-  [{:keys [output workflows] :as _workload}]
-  (run! (partial workflow-postcheck output) workflows))
+#_(defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
+    [{:keys [output workflows] :as _workload}]
+    (run! (partial workflow-postcheck output) workflows))

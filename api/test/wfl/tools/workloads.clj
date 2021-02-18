@@ -1,6 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
+            [wfl.auth :as auth]
             [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
@@ -20,6 +21,9 @@
            (java.util UUID)))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))
+
+(def email
+  (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
 (def ^:private git-branch
   (delay (util/shell! "git" "branch" "--show-current")))

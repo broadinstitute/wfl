@@ -3,8 +3,7 @@
             [wfl.api.spec]
             [wfl.service.terra :as terra]
             [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.tools.endpoints :as endpoints])
+            [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
@@ -17,7 +16,7 @@
 
 (defn ^:private make-arrays-workload-request []
   (-> (workloads/arrays-workload-request (UUID/randomUUID))
-      (assoc :creator @endpoints/email)))
+      (assoc :creator @workloads/email)))
 
 (defn ^:private check-inputs
   [workflow]

@@ -5,7 +5,6 @@
             [wfl.module.xx :as xx]
             [wfl.module.batch :as batch]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
@@ -17,7 +16,7 @@
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
       workloads/xx-workload-request
-      (assoc :creator @endpoints/email)))
+      (assoc :creator @workloads/email)))
 
 (defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
@@ -63,7 +62,7 @@
            workloads/start-workload!
            (as-> workload
                  (is (:started workload))
-             (run! go! (:workflows workload)))))))
+                 (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -79,7 +78,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  @workloads/project
-                       :creator  @endpoints/email}
+                       :creator  @workloads/email}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))
