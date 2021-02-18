@@ -5,9 +5,7 @@
             [wfl.module.xx :as xx]
             [wfl.module.batch :as batch]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
@@ -18,7 +16,7 @@
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
       workloads/xx-workload-request
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator (:email @workloads/userinfo))))
 
 (defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
@@ -80,7 +78,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  @workloads/project
-                       :creator  (:email @endpoints/userinfo)}
+                       :creator  (:email @workloads/userinfo)}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))

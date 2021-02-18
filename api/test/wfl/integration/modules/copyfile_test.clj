@@ -5,7 +5,6 @@
             [wfl.module.all :as all]
             [wfl.module.copyfile :as copyfile]
             [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflow]]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util])
@@ -16,7 +15,7 @@
 (defn ^:private make-copyfile-workload-request
   [src dst]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator (:email @workloads/userinfo))))
 
 (defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]

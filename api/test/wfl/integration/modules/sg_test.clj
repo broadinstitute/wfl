@@ -5,7 +5,6 @@
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
@@ -39,7 +38,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
-   :creator (:email @endpoints/userinfo)})
+   :creator (:email @workloads/userinfo)})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -110,7 +109,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  @workloads/project
-                       :creator  (:email @endpoints/userinfo)}
+                       :creator  (:email @workloads/userinfo)}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))
