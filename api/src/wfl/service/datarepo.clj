@@ -8,9 +8,9 @@
             [wfl.util          :as util])
   (:import (java.util.concurrent TimeUnit)))
 
-(def ^:private datarepo-url
+(defn ^:private datarepo-url [& parts]
   (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
-    (partial str url)))
+    (apply str url parts)))
 
 (def ^:private repository
   "API URL for Data Repo API."
