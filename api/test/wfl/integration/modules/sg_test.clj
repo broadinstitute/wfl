@@ -12,36 +12,33 @@
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
-(def ^:private cromwell-url-for-testing
-  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
 (def the-sg-workload-request
   "A request suitable when all external services are mocked."
-  {:executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   :output "gs://broad-gotc-dev-wfl-sg-test-outputs/",
-   :pipeline "GDCWholeGenomeSomaticSingleSample",
-   :project "(Test) tbl/GH-1178-better-sg-tests",
+  {:executor @workloads/cromwell-url
+   :output "gs://broad-gotc-dev-wfl-sg-test-outputs/"
+   :pipeline "GDCWholeGenomeSomaticSingleSample"
+   :project "(Test) tbl/GH-1178-better-sg-tests"
    :items
    [{:inputs
      {:base_file_name "NA12878"
       :contamination_vcf
-      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz"
       :contamination_vcf_index
-      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi"
       :cram_ref_fasta
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
       :cram_ref_fasta_index
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
       :dbsnp_vcf
-      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz",
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz"
       :dbsnp_vcf_index
-      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi",
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
-      "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}],
+      "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
    :creator @endpoints/email})
 
 (defn mock-submit-workload
@@ -109,7 +106,7 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor cromwell-url-for-testing
+  (let [workload (->> {:executor @workloads/cromwell-url
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  @workloads/project
@@ -359,7 +356,7 @@
 
 (defn workflow-postcheck
   [output {:keys [uuid] :as _workflow}]
-  (let [md (cromwell/metadata cromwell-url-for-testing uuid)
+  (let [md (cromwell/metadata @workloads/cromwell-url uuid)
         bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
         bam_path (sg/final_workflow_outputs_dir_hack output bam)]
     (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))

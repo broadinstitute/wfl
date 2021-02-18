@@ -4,16 +4,13 @@
             [wfl.environment :as env]
             [wfl.module.xx :as xx]
             [wfl.module.batch :as batch]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflows]]
+            [wfl.service.cromwell :as cromwell]
             [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
-
-(def ^:private cromwell-url-for-testing
-  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -78,7 +75,7 @@
            :workflows
            (run! (comp go! :inputs))))))
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor cromwell-url-for-testing
+  (let [workload (->> {:executor @workloads/cromwell-url
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  @workloads/project
@@ -110,7 +107,7 @@
                (verify-workflow-inputs (into {} (map strip-prefix in)))
                (UUID/randomUUID))
              inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
       (fn []
         (->
          (make-xx-workload-request)
@@ -132,7 +129,7 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
       (fn []
         (->
          (make-xx-workload-request)

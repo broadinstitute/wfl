@@ -27,7 +27,7 @@
 (def project
   (delay (format "(Test) %s" (str @git-branch))))
 
-(def ^:private cromwell-url (delay (env/getenv "WFL_CROMWELL_URL")))
+(def cromwell-url (delay (env/getenv "WFL_CROMWELL_URL")))
 
 (def wgs-inputs
   (let [input-folder

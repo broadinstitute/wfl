@@ -2,11 +2,12 @@
 
 set -ex
 
+# export WFL_CLIO_URL="https://clio.gotc-dev.broadinstitute.org"
+# export WFL_CROMWELL_URL="https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+
 declare -r WFL=${0%/*}
 
 trap 'kill 0' EXIT
-
-test "$1" && export WFL_DEPLOY_ENVIRONMENT="$1"
 
 npm run serve --prefix=derived/ui -- --port 8080 &
 

@@ -11,9 +11,6 @@
   (:import (clojure.lang ExceptionInfo)
            (java.util UUID)))
 
-(def ^:private cromwell-url
-  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
@@ -162,7 +159,8 @@
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
 (deftest ^:parallel test-append-to-aou-workload
-  (let [await    (partial cromwell/wait-for-workflow-complete cromwell-url)
+  (let [await    (partial cromwell/wait-for-workflow-complete
+                          @workloads/cromwell-url)
         workload (endpoints/exec-workload
                   (workloads/aou-workload-request (UUID/randomUUID)))]
     (testing "appending sample successfully launches an aou workflow"
