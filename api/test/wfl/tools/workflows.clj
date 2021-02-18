@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]))
 
 (defn make-object-type [parameters]
+  "Collect `parameters` description into an \"Object\" type."
   (->> parameters
        (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
        (assoc {:typeName "Object"} :objectFieldNames)))
