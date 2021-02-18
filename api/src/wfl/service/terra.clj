@@ -66,6 +66,31 @@
        (first)
        (:status)))
 
+(defn import-entities
+  "Import sample entities into a Terra WORKSPACE from a tsv FILE.
+   The upload requires owner permission on the workspace.
+
+   Parameters
+   ----------
+   terra-url  - The URL of Terra instance.
+   workspace  - Terra Workspace to upload samples to.
+   file       - A tsv file (or bytes) containing sample inputs.
+
+   Example
+   -------
+     (import-entities
+         \"https://firecloud-orchestration.dsde-dev.broadinstitute.org\"
+         \"general-dev-billing-account/hornet-test\"
+         \"./samples.tsv\")"
+  [terra-url workspace file]
+  (-> (workspace-api-url terra-url workspace)
+      (str "/flexibleImportEntities")
+      (http/post {:headers (auth/get-auth-header)
+                  :multipart    [{:name "Content/type"
+                                  :content "text/tab-separated-values"}
+                                 {:name "entities"
+                                  :content (slurp file)}]})))
+
 (defn describe-wdl
   "Use `firecloud-url` to describe the WDL at `wdl-url`"
   [firecloud-url wdl-url]
