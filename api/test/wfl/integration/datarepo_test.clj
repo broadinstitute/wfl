@@ -43,8 +43,8 @@
 
 (defn ^:private make-object-type [parameters]
   (->> parameters
-    (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
-    (assoc {:typeName "Object"} :objectFieldNames)))
+       (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
+       (assoc {:typeName "Object"} :objectFieldNames)))
 
 (defn ^:private run-thunk! [x] (x))
 
@@ -70,16 +70,16 @@
         return        (fn [x]   (constantly x))
         bind          (fn [f g] (comp g f))
         ingest-file   (partial datarepo/ingest-file dataset-id profile-id)
-        type-env      (fn [t]
-                        (->> (:objectFieldNames t)
+        type-env      (fn [type]
+                        (->> (:objectFieldNames type)
                              (map #(-> {(-> % :fieldName keyword) (:fieldType %)}))
                              (into {})))]
     ((fn go [type value]
        (case (:typeName type)
          "Array"
-         (letfn [(ingest-elem! [x] (go (:arrayType type) x))]
+         (letfn [(go-elem [x] (go (:arrayType type) x))]
            ;; eagerly issue ingest requests for each element in the array
-           (sequence (mapv ingest-elem! value)))
+           (sequence (mapv go-elem value)))
          ("Boolean" "Float" "Int" "Number" "String")
          (return value)
          "File"
@@ -92,11 +92,9 @@
                return
                (bind (comp :fileId datarepo/poll-job))))
          "Object"
-         (if value
-           (let [name->type (type-env type)]
-             (sequence-vals
-               (mapv (fn [[k v]] [k (go (name->type k) v)]) value)))
-           (return nil))
+         (let [name->type (type-env type)]
+           (sequence-vals
+            (mapv (fn [[k v]] [k (go (name->type k) v)]) value)))
          "Optional"
          (if value
            (go (:optionalType type) value)
