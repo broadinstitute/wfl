@@ -25,7 +25,8 @@
             (is (= 1 (count result)))
             (is (= object (select-keys (first result) (keys object))))))
         (testing "copy"
-          (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
+          (is (gcs/copy-object bucket (str src-folder  "test")
+                               bucket (str dest-folder "test"))))
         (testing "download"
           (let [local-file-name (str/join "-" ["wfl" "test" (UUID/randomUUID)])]
             (gcs/download-file local-file-name bucket (str dest-folder "test"))

@@ -18,7 +18,8 @@
         lower-project "test-project"
         bogus-project "bogus"]
     (letfn [(create-copyfile-workload! [project]
-              (-> (make-copyfile-workload-request-with-project "gs://fake/input" "gs://fake/output" project)
+              (-> (make-copyfile-workload-request-with-project
+                   "gs://fake/input" "gs://fake/output" project)
                   workloads/create-workload!))
             (create-a-bunch-copyfile-workloads! []
               (dotimes [n 2] (create-copyfile-workload! upper-project))
@@ -30,5 +31,7 @@
       (testing "No matching returns empty list"
         (is empty? (workloads/load-workloads-with-project bogus-project)))
       (testing "Query project parameter is case-sensitive"
-        (let [fetched-workloads (workloads/load-workloads-with-project upper-project)]
-          (verify-copyfile-workloads-identity upper-project fetched-workloads))))))
+        (let [fetched-workloads (workloads/load-workloads-with-project
+                                 upper-project)]
+          (verify-copyfile-workloads-identity upper-project
+                                              fetched-workloads))))))
