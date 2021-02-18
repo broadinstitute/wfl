@@ -5,6 +5,7 @@
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
@@ -252,7 +253,7 @@
   [_url id]
   (let [now    (str (OffsetDateTime/now))
         prefix (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
-                              "504f94ce-383c-4af6-afb5-2aa8819c74ff"
+                              "SOME-UUID"
                               "GDCWholeGenomeSomaticSingleSample"
                               id
                               "call-gatk_applybqsr"
@@ -297,6 +298,25 @@
   [_environment _wdl inputs _options _labels]
   (take (count inputs) the-uuids))
 
+(defn mock-gcs-upload-content-fail
+  "Fail when called because nothing should be uploaded."
+  [_content _url]
+  (is false))
+
+(defn mock-gcs-upload-content
+  "Mock uploading `content` to `url`."
+  [content url]
+  (letfn [(parse [url] (drop-last (str/split url #"/")))
+          (tail? [end] (str/ends-with? url end))]
+    (let [md  [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
+          ok? (partial = (parse url))
+          edn (util/parse-json content)]
+      (is (cond (tail? "/clio-bam-record.json")
+                (ok? (parse (:bai_path edn)))
+                (tail? "/cromwell-metadata.json")
+                (ok? (parse (get-in edn md)))
+                :else false)))))
+
 (def ^:private bam-suffixes
   "Map Clio BAM record fields to expected file suffixes."
   {:bai_path                 ".bai"
@@ -328,7 +348,8 @@
        #'clio/query-cram           mock-clio-query-cram-found
        #'cromwell/metadata         mock-cromwell-metadata-succeeded
        #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content-fail}
       test-clio-updates)))
 
 (deftest test-clio-updates-bam-missing
@@ -339,7 +360,8 @@
        #'clio/query-cram           mock-clio-query-cram-found
        #'cromwell/metadata         mock-cromwell-metadata-succeeded
        #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content}
       test-clio-updates)))
 
 (deftest test-clio-updates-cromwell-failed
@@ -350,7 +372,8 @@
        #'clio/query-cram           mock-clio-failed
        #'cromwell/metadata         mock-cromwell-metadata-failed
        #'cromwell/query            mock-cromwell-query-failed
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content-fail}
       test-clio-updates)))
 
 (defn workflow-postcheck
