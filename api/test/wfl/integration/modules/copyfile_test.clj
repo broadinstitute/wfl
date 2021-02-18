@@ -16,7 +16,7 @@
 (defn ^:private make-copyfile-workload-request
   [src dst]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator @endpoints/email)))
 
 (defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]

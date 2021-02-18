@@ -8,10 +8,6 @@
             [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))
 
-(def project
-  "Test in this Google Cloud project."
-  "broad-gotc-dev-storage")
-
 (deftest object-test
   (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]

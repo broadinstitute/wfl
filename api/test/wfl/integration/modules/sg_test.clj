@@ -42,7 +42,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi",
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}],
-   :creator (:email @endpoints/userinfo)})
+   :creator @endpoints/email})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -112,8 +112,8 @@
   (let [workload (->> {:executor cromwell-url-for-testing
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
-                       :project  (format "(Test) %s" @workloads/git-branch)
-                       :creator  (:email @endpoints/userinfo)}
+                       :project  @workloads/project
+                       :creator  @endpoints/email}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))

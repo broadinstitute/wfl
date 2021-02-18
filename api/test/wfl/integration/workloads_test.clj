@@ -11,7 +11,7 @@
 (defn ^:private make-copyfile-workload-request-with-project
   [src dst project]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo) :project project)))
+      (assoc :creator @endpoints/email :project project)))
 
 (deftest test-loading-copyfile-workloads-with-project
   (let [upper-project "TEST-PROJECT"

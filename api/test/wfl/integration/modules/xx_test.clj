@@ -20,7 +20,7 @@
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
       workloads/xx-workload-request
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator @endpoints/email)))
 
 (defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
@@ -81,8 +81,8 @@
   (let [workload (->> {:executor cromwell-url-for-testing
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
-                       :project  (format "(Test) %s" @workloads/git-branch)
-                       :creator  (:email @endpoints/userinfo)}
+                       :project  @workloads/project
+                       :creator  @endpoints/email}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))

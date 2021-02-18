@@ -26,9 +26,9 @@
   (.getClientEmail (service-account-credentials)))
 
 (defn ^:private service-account-token
-  "A bearer token for the WFL service account."
+  "Nil or a bearer token for the WFL service account."
   []
-  (-> (service-account-credentials) .refreshAccessToken .getTokenValue))
+  (some-> (service-account-credentials) .refreshAccessToken .getTokenValue))
 
 (defn get-service-account-header
   "An Authorization header with a service account Bearer token."
@@ -40,6 +40,5 @@
    or from gcloud command on behalf of you."
   []
   (authorization-header-with-bearer-token
-   (if (env/getenv "WFL_DEPLOY_ENVIRONMENT")
-     (service-account-token)
-     (util/shell! "gcloud" "auth" "print-access-token"))))
+   (or (service-account-token)
+       (util/shell! "gcloud" "auth" "print-access-token"))))

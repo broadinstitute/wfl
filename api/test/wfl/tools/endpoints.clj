@@ -2,29 +2,28 @@
   (:require [clj-http.client :as client]
             [clojure.data.json :as json]
             [wfl.auth :as auth]
+            [wfl.environment :as env]
             [wfl.service.google.storage :as gcs]
             [wfl.util :as util]))
 
-(def server
+(def ^:private server
   "The WFL server URL to test."
-  (if (System/getenv "WFL_DEPLOY_ENVIRONMENT")
-    "https://dev-wfl.gotc-dev.broadinstitute.org"
-    "http://localhost:3000"))
+  (delay (env/getenv "WFL_WFL_URL")))
 
-(def userinfo
-  (delay (gcs/userinfo {:headers (auth/get-auth-header)})))
+(def email
+  (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
   []
-  (let [response (client/get (str server "/oauth2id"))]
+  (let [response (client/get (str @server "/oauth2id"))]
     (first (util/parse-json (:body response)))))
 
 (defn get-workload-status
   "Query v1 api for the status of the workload with UUID"
   [uuid]
   (let [auth-header (auth/get-auth-header)
-        response    (client/get (str server "/api/v1/workload")
+        response    (client/get (str @server "/api/v1/workload")
                                 {:headers      auth-header
                                  :query-params {:uuid uuid}})]
     (first (util/parse-json (:body response)))))
@@ -32,7 +31,7 @@
 (defn get-workloads
   "Query v1 api for all workloads"
   []
-  (let [response (client/get (str server "/api/v1/workload")
+  (let [response (client/get (str @server "/api/v1/workload")
                              {:headers (auth/get-auth-header)})]
     (util/parse-json (:body response))))
 
@@ -40,7 +39,7 @@
   "Create workload defined by WORKLOAD"
   [workload]
   (let [payload  (json/write-str workload :escape-slash false)
-        response (client/post (str server "/api/v1/create")
+        response (client/post (str @server "/api/v1/create")
                               {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
@@ -52,7 +51,7 @@
   [workload]
   (let [payload  (-> (select-keys workload [:uuid])
                      (json/write-str :escape-slash false))
-        response (client/post (str server "/api/v1/start")
+        response (client/post (str @server "/api/v1/start")
                               {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
@@ -65,7 +64,7 @@
   (let [payload  (-> (select-keys workload [:uuid])
                      (assoc :notifications samples)
                      (json/write-str :escape-slash false))
-        response (client/post (str server "/api/v1/append_to_aou")
+        response (client/post (str @server "/api/v1/append_to_aou")
                               {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json
@@ -76,7 +75,7 @@
   "Create and start workload defined by WORKLOAD"
   [workload-request]
   (let [payload  (json/write-str workload-request :escape-slash false)
-        response (client/post (str server "/api/v1/exec")
+        response (client/post (str @server "/api/v1/exec")
                               {:headers      (auth/get-auth-header)
                                :content-type :json
                                :accept       :json

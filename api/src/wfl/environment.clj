@@ -26,21 +26,32 @@
 
 (def ^:private defaults
   "Default values for environment variables, mainly for dev purposes.
-   Hide values behind thunks to avoid compile time I/O. Missing defaults
-   here can lead to NPE exceptions."
-  {"GOOGLE_APPLICATION_CREDENTIALS"  #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
-                                          vault-secrets
-                                          (json/write-str :escape-slash false)
-                                          .getBytes)
-   "WFL_CLIO_URL" #(-> "https://clio.gotc-dev.broadinstitute.org")
-   "WFL_CROMWELL_URL" #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-   "WFL_COOKIE_SECRET" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
-   "WFL_DATA_REPO_SA" #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
-   "WFL_TERRA_DATA_REPO_URL" #(-> "https://jade.datarepo-dev.broadinstitute.org/")
-   "WFL_DEPLOY_ENVIRONMENT" #(-> nil)
-   "WFL_OAUTH2_CLIENT_ID" #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
-   "WFL_POSTGRES_URL" #(-> "jdbc:postgresql:wfl")
-   "WFL_POSTGRES_USERNAME" #(-> nil)
-   "WFL_POSTGRES_PASSWORD" #(-> "password")})
+   Hide values behind thunks to avoid compile time I/O.
+   Missing defaults here can lead to NPE exceptions."
+  {"GOOGLE_APPLICATION_CREDENTIALS"
+   #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
+        vault-secrets
+        (json/write-str :escape-slash false)
+        .getBytes)
+   "WFL_CLIO_URL"
+   #(-> "https://clio.gotc-dev.broadinstitute.org")
+   "WFL_COOKIE_SECRET"
+   #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
+   "WFL_CROMWELL_URL"
+   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   "WFL_DATA_REPO_SA"
+   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
+   "WFL_OAUTH2_CLIENT_ID"
+   #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
+   "WFL_POSTGRES_PASSWORD"
+   #(-> "password")
+   "WFL_POSTGRES_URL"
+   #(-> "jdbc:postgresql:wfl")
+   "WFL_POSTGRES_USERNAME"
+   #(-> nil)
+   "WFL_TERRA_DATA_REPO_URL"
+   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_WFL_URL"
+   #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
 (def getenv (memoize (fn [name] (or (System/getenv name) ((defaults name))))))

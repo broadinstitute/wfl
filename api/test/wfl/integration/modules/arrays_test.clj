@@ -17,7 +17,7 @@
 
 (defn ^:private make-arrays-workload-request []
   (-> (workloads/arrays-workload-request (UUID/randomUUID))
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator @endpoints/email)))
 
 (defn ^:private check-inputs
   [workflow]
