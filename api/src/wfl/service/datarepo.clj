@@ -1,9 +1,10 @@
 (ns wfl.service.datarepo
   "Do stuff in the data repo."
   (:require [clojure.data.json :as json]
-            [clj-http.client :as http]
-            [wfl.auth :as auth]
-            [wfl.util :as util])
+            [clj-http.client   :as http]
+            [wfl.auth          :as auth]
+            [wfl.mime-type     :as mime-type]
+            [wfl.util          :as util])
   (:import (java.util.concurrent TimeUnit)))
 
 (def ^:private datarepo-url
@@ -35,14 +36,12 @@
 
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
-  ([dataset-id profile-id source target options]
-   (-> options
-       (util/assoc-when util/absent? :description (util/basename source))
-       (util/assoc-when util/absent? :mime_type "text/plain")
-       (merge {:profileId profile-id :source_path source :target_path target})
-       (->> (ingest "files" dataset-id))))
-  ([dataset-id profile-id source target]
-   (ingest-file dataset-id profile-id source target {})))
+  [dataset-id profile-id source target]
+  (ingest "files" dataset-id {:description (util/basename source)
+                              :profileId   profile-id
+                              :mime_type   (mime-type/ext-mime-type source)
+                              :source_path source
+                              :target_path target}))
 
 (defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."

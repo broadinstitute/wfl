@@ -1,15 +1,13 @@
 (ns wfl.integration.datarepo-test
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
-            [wfl.environment :as env]
-            [wfl.mime-type :as mime-type]
-            [wfl.service.datarepo :as datarepo]
+  (:require [clojure.data.json          :as json]
+            [clojure.string             :as str]
+            [clojure.test               :refer [deftest is testing]]
+            [wfl.environment            :as env]
+            [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as gcs]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workflows :as workflows]
-            [wfl.util :as util]
-            [clojure.set :as set])
+            [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.workflows        :as workflows]
+            [wfl.util                   :as util])
   (:import [java.util UUID]))
 
 ;; UUIDs known to the Data Repo.
@@ -73,11 +71,10 @@
          (return value)
          "File"
          (let [[bkt obj] (gcs/parse-gs-url value)
-               target    (str/join "/" ["" workload-id obj])
-               mime      (mime-type/ext-mime-type value)]
+               target    (str/join "/" ["" workload-id obj])]
            (-> (env/getenv "WFL_DATA_REPO_SA")
                (gcs/add-object-reader bkt obj))
-           (-> (ingest-file value target {:mime_type mime})
+           (-> (ingest-file value target)
                return
                (bind (comp :fileId datarepo/poll-job))))
          "Object"
