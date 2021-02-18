@@ -90,9 +90,11 @@
 
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     assemble-refbased-outputs-dataset
-        pipeline-outputs workflows/assemble-refbased-outputs
-        outputs-type     (workflows/make-object-type
-                          (:outputs workflows/assemble-refbased-description))
+        pipeline-outputs (workflows/read-resource "assemble-refbased-outputs")
+        outputs-type     (-> "assemble-refbased-description"
+                             workflows/read-resource
+                             :outputs
+                             workflows/make-object-type)
         rename-gather    identity ;; collect and map outputs onto dataset names
         table-name       "assemble_refbased_outputs"
         workflow-id      (UUID/randomUUID)]
