@@ -38,7 +38,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
-   :creator @workloads/email})
+   :creator "@workloads/email"})        ; quoted to avoid log spam
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
