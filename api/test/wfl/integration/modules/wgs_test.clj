@@ -21,7 +21,7 @@
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
       workloads/wgs-workload-request
-      (assoc :creator (:email @workloads/userinfo))))
+      (assoc :creator @workloads/email)))
 
 (defn ^:private strip-prefix [[k v]]
   [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])
