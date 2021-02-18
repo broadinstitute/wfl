@@ -13,8 +13,8 @@
                [".fasta" "application/octet-stream"]
                [".html"  "text/html"]]]
     (doseq [[filename expected] cases]
-      (testing filename
-        (is (= expected (mime-type/ext-mime-type filename)))))))
+      (is (= expected (mime-type/ext-mime-type filename))
+          (str filename " does not have the expected mime-type")))))
 
 (defn ^:private get-files
   "Return a list of files contained in the workflow parameters"
@@ -44,4 +44,4 @@
       (let [type (workflows/make-object-type description)]
         (doseq [filename (get-files type values)]
           (is (some? (mime-type/ext-mime-type filename))
-              (str filename " did not have a mime-type")))))))
+              (str filename " does not have a mime-type")))))))
