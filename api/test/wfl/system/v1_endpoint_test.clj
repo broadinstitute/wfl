@@ -59,7 +59,7 @@
                     (endpoints/create-workload request)]
                 (is uuid "workloads should be been assigned a uuid")
                 (is created "should have a created timestamp")
-                (is (= @workloads/email creator)
+                (is (= (:email @workloads/userinfo) creator)
                     "creator inferred from auth token")
                 (is (not started) "hasn't been started in cromwell")
                 (letfn [(included [m] (select-keys m [:pipeline :project]))]
@@ -125,7 +125,7 @@
       (is uuid    "workloads should have a uuid")
       (is created "should have a created timestamp")
       (is started "should have a started timestamp")
-      (is (= @workloads/email creator)
+      (is (= (:email @workloads/userinfo) creator)
           "creator inferred from auth token")
       (letfn [(included [m] (select-keys m [:pipeline :project]))]
         (is (= (included request) (included workload))))

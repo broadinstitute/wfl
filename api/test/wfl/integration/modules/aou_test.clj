@@ -18,7 +18,7 @@
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
-      (assoc :creator @workloads/email)))
+      (assoc :creator (:email @workloads/userinfo))))
 
 (defn ^:private inc-version [sample]
   (update sample :analysis_version_number inc))

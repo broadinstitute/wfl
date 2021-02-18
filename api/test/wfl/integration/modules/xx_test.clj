@@ -16,7 +16,7 @@
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
       workloads/xx-workload-request
-      (assoc :creator @workloads/email)))
+      (assoc :creator (:email @workloads/userinfo))))
 
 (defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
   (let [now       (OffsetDateTime/now)
@@ -62,7 +62,7 @@
            workloads/start-workload!
            (as-> workload
                  (is (:started workload))
-             (run! go! (:workflows workload)))))))
+                 (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -78,7 +78,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
                        :pipeline xx/pipeline
                        :project  @workloads/project
-                       :creator  @workloads/email}
+                       :creator  (:email @workloads/userinfo)}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))

@@ -38,7 +38,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
-   :creator @workloads/email})
+   :creator (:email @workloads/userinfo)})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -92,7 +92,7 @@
            workloads/start-workload!
            (as-> workload
                  (is (:started workload))
-             (run! go! (:workflows workload)))))))
+                 (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -109,7 +109,7 @@
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
                        :project  @workloads/project
-                       :creator  @workloads/email}
+                       :creator  (:email @workloads/userinfo)}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))
