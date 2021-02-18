@@ -1,8 +1,8 @@
 (ns wfl.integration.modules.wgs-test
   (:require [clojure.set :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete
-                                          submit-workflows]]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.module.wgs :as wgs]
@@ -21,7 +21,7 @@
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
       workloads/wgs-workload-request
-      (assoc :creator (:email @workloads/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn ^:private strip-prefix [[k v]]
   [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])
@@ -58,7 +58,7 @@
                 :workflows)))))
 
 (deftest test-start-wgs-workload!
-  (with-redefs-fn {#'submit-workflows mock-submit-workflows}
+  (with-redefs-fn {#'cromwell/submit-workflows mock-submit-workflows}
     #(let [workload (-> (make-wgs-workload-request)
                         workloads/create-workload!
                         workloads/start-workload!)]
@@ -115,13 +115,13 @@
                (UUID/randomUUID))
              inputs))]
     (with-redefs-fn
-      {#'submit-workflows verify-inputs}
+      {#'cromwell/submit-workflows verify-inputs}
       #(-> (make-wgs-workload-request)
            (update :items use-input_bam)
            (workloads/execute-workload!)
            (as-> workload
                  (is (:started workload))
-             (run! go! (:workflows workload)))))))
+                 (run! go! (:workflows workload)))))))
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
@@ -137,7 +137,7 @@
                (verify-workflow-inputs (into {} (map strip-prefix in)))
                (UUID/randomUUID))
              inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -167,7 +167,7 @@
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
               (testing (str "default inputs when given only " key)
-                (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+                (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
                   #(workloads/execute-workload! request)))))]
     (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
     (test-with-input :input_cram (:input_cram workloads/wgs-inputs))))
@@ -182,7 +182,7 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
       (fn []
         (->
          (make-wgs-workload-request)

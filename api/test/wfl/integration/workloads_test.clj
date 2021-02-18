@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.test :refer :all]
             [wfl.module.copyfile :as copyfile]
+            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]))
 
@@ -10,7 +11,7 @@
 (defn ^:private make-copyfile-workload-request-with-project
   [src dst project]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @workloads/userinfo) :project project)))
+      (assoc :creator (:email @endpoints/userinfo) :project project)))
 
 (deftest test-loading-copyfile-workloads-with-project
   (let [upper-project "TEST-PROJECT"

@@ -4,6 +4,7 @@
             [wfl.api.spec]
             [wfl.util :as util]
             [wfl.module.aou :as aou]
+            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.service.postgres :as postgres]
@@ -18,7 +19,7 @@
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
-      (assoc :creator (:email @workloads/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn ^:private inc-version [sample]
   (update sample :analysis_version_number inc))

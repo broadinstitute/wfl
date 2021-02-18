@@ -3,7 +3,11 @@
             [clojure.data.json :as json]
             [wfl.auth :as auth]
             [wfl.environment :as env]
+            [wfl.service.google.storage :as gcs]
             [wfl.util :as util]))
+
+(def userinfo
+  (delay (gcs/userinfo {:headers (auth/get-auth-header)})))
 
 (def ^:private wfl-url
   "The WFL server URL to test."

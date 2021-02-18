@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
             [wfl.service.terra :as terra]
+            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))
@@ -16,7 +17,7 @@
 
 (defn ^:private make-arrays-workload-request []
   (-> (workloads/arrays-workload-request (UUID/randomUUID))
-      (assoc :creator (:email @workloads/userinfo))))
+      (assoc :creator (:email @endpoints/userinfo))))
 
 (defn ^:private check-inputs
   [workflow]
