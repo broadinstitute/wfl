@@ -2,8 +2,8 @@
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
-            [ring.util.mime-type :as mime-type]
             [wfl.environment :as env]
+            [wfl.mime-type :as mime-type]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]
@@ -34,12 +34,6 @@
       (fixtures/with-temporary-dataset (make-dataset-request definition)
         #(let [dataset (datarepo/dataset %)]
            (is (= % (:id dataset))))))))
-
-(def ^:private genomics-mime-types
-  {"bam"   "application/octet-stream"
-   "cram"  "application/octet-stream"
-   "fasta" "application/octet-stream"
-   "vcf"   "text/plain"})
 
 (defn ^:private make-object-type [parameters]
   (->> parameters
@@ -85,7 +79,7 @@
          "File"
          (let [[bkt obj] (gcs/parse-gs-url value)
                target    (str/join "/" ["" workload-id obj])
-               mime      (mime-type/ext-mime-type value genomics-mime-types)]
+               mime      (mime-type/ext-mime-type value)]
            (-> (env/getenv "WFL_DATA_REPO_SA")
                (gcs/add-object-reader bkt obj))
            (-> (ingest-file value target {:mime_type mime})
