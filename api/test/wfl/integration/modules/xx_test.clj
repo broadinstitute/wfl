@@ -62,7 +62,7 @@
            workloads/start-workload!
            (as-> workload
                  (is (:started workload))
-                 (run! go! (:workflows workload)))))))
+             (run! go! (:workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
