@@ -38,11 +38,7 @@
    Parameters
    ----------
    project  - Google Cloud Project to list the BigQuery datasets in.
-   dataset  - Dataset of the tables/views to list.
-
-   Example
-   -------
-     (list-tables \"broad-jade-dev-data\" \"zerosnapshot\")"
+   dataset  - Dataset of the tables/views to list."
   [project dataset]
   (-> (str/join "/" ["projects" project "datasets" dataset "tables"])
       bigquery-url
@@ -63,11 +59,7 @@
    ----------
    project  - Google Cloud Project to list the BigQuery datasets in.
    snapshot - Data Repo Snapshot.
-   table    - BigQuery table/view name.
-
-   Example
-   -------
-     (query-table-sync \"broad-jade-dev-data\" \"zerosnapshot\" \"sample\")"
+   table    - BigQuery table/view name."
   [project snapshot table]
   (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
     (-> (str/join "/" ["projects" project "queries"])
@@ -95,7 +87,6 @@
 
    Example
    -------
-
      (dump-table->tsv table \"datarepo_row\" \"dumped.tsv\")
      (dump-table->tsv table \"datarepo_row\")"
   ([table terra-data-table file]
@@ -115,20 +106,3 @@
   ([table terra-data-table]
    (-> (dump-table->tsv table terra-data-table (StringWriter.))
        .toString .getBytes)))
-
-(comment
-  (let [table {:kind "bigquery#queryResponse",
-               :schema {:fields [{:name "datarepo_row_id", :type "STRING", :mode "NULLABLE"}
-                                 {:name "vcf", :type "STRING", :mode "NULLABLE"}
-                                 {:name "id", :type "STRING", :mode "NULLABLE"}
-                                 {:name "vcf_index", :type "STRING", :mode "NULLABLE"}]},
-               :jobReference {:projectId "broad-jade-dev-data", :jobId "job_Zd6Ld4uCl8kmuFkiGKsPdk5OnBNP", :location "US"},
-               :totalRows "1",
-               :rows [{:f [{:v "8d529c08-bc21-4ea0-9254-d99b9c12dfd2"}
-                           {:v "drs://jade.datarepo-dev.broadinstitute.org/v1_f1c765c6-5446-4aef-bdbe-c741ff09c27c_f2a7d885-4fd3-4faf-bd16-06219a8eef99"}
-                           {:v "wfl-test-a830fe00-7ef2-430a-9d5e-fa0c18dc99e1/"}
-                           {:v "drs://jade.datarepo-dev.broadinstitute.org/v1_f1c765c6-5446-4aef-bdbe-c741ff09c27c_2b67ed53-ccac-49c6-8ad6-8952a1dfaf98"}]}],
-               :totalBytesProcessed "221025",
-               :jobComplete true,
-               :cacheHit false}]
-    (dump-table->tsv table "datarepo_row" "samples.tsv")))
