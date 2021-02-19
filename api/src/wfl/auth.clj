@@ -40,5 +40,5 @@
    or from gcloud command on behalf of you."
   []
   (authorization-header-with-bearer-token
-   (or (service-account-token)
+   (or #_(service-account-token)
        (util/shell! "gcloud" "auth" "print-access-token"))))

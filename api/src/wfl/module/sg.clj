@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
+            [wfl.auth :as auth]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
             [wfl.references :as references]
@@ -280,11 +281,22 @@
       clojure.java.io/writer
       (->> (clojure.pprint/pprint crams)))
   cram
-  (-> workload
-      (json/write
-       (-> "./workload-request.json"
-           clojure.java.io/file
-           clojure.java.io/writer)
-       :escape-slash false))
+  workload
+  (let [file (clojure.java.io/file "workload-request.edn")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (clojure.pprint/pprint workload writer)))
+  (let [file (clojure.java.io/file "workload-request.json")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (json/write workload writer :escape-slash false)))
+  (defn execute
+    [workload]
+    (let [payload  (json/write-str workload :escape-slash false)
+          response (clj-http.client/post
+                    (str "http://localhost:3000" "/api/v1/exec")
+                    {:headers      (auth/get-auth-header)
+                     :content-type :json
+                     :accept       :json
+                     :body         payload})]
+      (util/parse-json (:body response))))
+  (execute workload)
   )
-
