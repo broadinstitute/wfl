@@ -4,7 +4,8 @@
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
-            [wfl.auth :as auth]))
+            [wfl.auth :as auth]
+            [wfl.util :as util]))
 
 (defn api
   "The Clio API URL for server at `clio`."
@@ -62,3 +63,32 @@
   "Return CRAM entries with metadata `md` to `clio`."
   [clio md]
   (post clio (str/join "/" ["cram" "query"]) md))
+
+(defn sample->clio-cram
+  "Clio CRAM metadata for SAMPLE."
+  [sample]
+  (let [translation {:location     "Processing Location"
+                     :project      "Project"
+                     :sample_alias "Collaborator Sample ID"
+                     :version      "Version"}]
+    (letfn [(translate [m [k v]] (assoc m k (sample v)))]
+      (reduce translate {:data_type "WGS"} translation))))
+
+(defn tsv->crams
+  "Translate TSV file to Clio CRAM records."
+  [tsv]
+  (map sample->clio-cram (util/map-tsv-file tsv)))
+
+(comment
+  (def dev  "https://clio.gotc-dev.broadinstitute.org")
+  (def prod "https://clio.gotc-prod.broadinstitute.org")
+  (def tsv
+    "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
+  (util/map-tsv-file tsv)
+  (def crams (tsv->crams tsv))
+  (count crams)
+  (def cram (first crams))
+  (query-cram dev cram)
+  (query-cram prod cram)
+  cram
+  )
