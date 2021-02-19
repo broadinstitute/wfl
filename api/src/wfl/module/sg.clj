@@ -227,7 +227,7 @@
 (defn tsv->crams
   "Translate TSV file to CRAM records from `clio`."
   [clio tsv]
-  (map (comp (partial clio/query-cram clio) sample->clio-cram)
+  (map (comp first (partial clio/query-cram clio) sample->clio-cram)
        (util/map-tsv-file tsv)))
 
 (defn cram->inputs
@@ -235,9 +235,12 @@
   [cram]
   (let [translation {:base_file_name :sample_alias
                      :input_cram     :cram_path}
-        contam "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz"
-        fasta  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
-        dbsnp  "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz"
+        contam (str "gs://gatk-best-practices/somatic-hg38"
+                    "/small_exac_common_3.hg38.vcf.gz")
+        fasta  (str "gs://gcp-public-data--broad-references/hg38/v0"
+                    "/Homo_sapiens_assembly38.fasta")
+        dbsnp  (str "gs://broad-gotc-dev-storage/temp_references"
+                    "/gdc/dbsnp_144.hg38.vcf.gz")
         bogus  {:contamination_vcf       contam
                 :contamination_vcf_index (str contam ".tbi")
                 :cram_ref_fasta          fasta
@@ -263,17 +266,25 @@
     (def tsv
       "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
     (def crams (tsv->crams prod tsv))
-    (def cram (first crams)))
+    (def cram (first crams))
+    (def workload (crams->workload crams))
+    )
   (util/map-tsv-file tsv)
   (count crams)
   (query-cram dev cram)
   (query-cram prod cram)
   crams
-  (crams->workload crams)
+  workload
   (-> "./clio-cram-records.edn"
       clojure.java.io/file
       clojure.java.io/writer
       (->> (clojure.pprint/pprint crams)))
   cram
+  (-> workload
+      (json/write
+       (-> "./workload-request.json"
+           clojure.java.io/file
+           clojure.java.io/writer)
+       :escape-slash false))
   )
 
