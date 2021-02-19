@@ -3,7 +3,6 @@
             [clojure.test :refer [deftest testing is] :as clj-test]
             [wfl.service.cromwell :refer [wait-for-workflow-complete
                                           submit-workflows]]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.module.wgs :as wgs]
@@ -22,7 +21,7 @@
 (defn ^:private make-wgs-workload-request []
   (-> (UUID/randomUUID)
       workloads/wgs-workload-request
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator @workloads/email)))
 
 (defn ^:private strip-prefix [[k v]]
   [(keyword (util/unprefix (str k) ":ExternalWholeGenomeReprocessing.")) v])

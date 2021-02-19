@@ -8,10 +8,6 @@
             [wfl.tools.fixtures :as fixtures])
   (:import [java.util UUID]))
 
-(def project
-  "Test in this Google Cloud project."
-  "broad-gotc-dev-storage")
-
 (deftest object-test
   (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
     (fn [url]
@@ -29,7 +25,8 @@
             (is (= 1 (count result)))
             (is (= object (select-keys (first result) (keys object))))))
         (testing "copy"
-          (is (gcs/copy-object bucket (str src-folder "test") bucket (str dest-folder "test"))))
+          (is (gcs/copy-object bucket (str src-folder  "test")
+                               bucket (str dest-folder "test"))))
         (testing "download"
           (let [local-file-name (str/join "-" ["wfl" "test" (UUID/randomUUID)])]
             (gcs/download-file local-file-name bucket (str dest-folder "test"))

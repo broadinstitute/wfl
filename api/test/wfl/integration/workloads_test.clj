@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.test :refer :all]
             [wfl.module.copyfile :as copyfile]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]))
 
@@ -11,14 +10,15 @@
 (defn ^:private make-copyfile-workload-request-with-project
   [src dst project]
   (-> (workloads/copyfile-workload-request src dst)
-      (assoc :creator (:email @endpoints/userinfo) :project project)))
+      (assoc :creator @workloads/email :project project)))
 
 (deftest test-loading-copyfile-workloads-with-project
   (let [upper-project "TEST-PROJECT"
         lower-project "test-project"
         bogus-project "bogus"]
     (letfn [(create-copyfile-workload! [project]
-              (-> (make-copyfile-workload-request-with-project "gs://fake/input" "gs://fake/output" project)
+              (-> (make-copyfile-workload-request-with-project
+                   "gs://fake/input" "gs://fake/output" project)
                   workloads/create-workload!))
             (create-a-bunch-copyfile-workloads! []
               (dotimes [n 2] (create-copyfile-workload! upper-project))
@@ -30,5 +30,7 @@
       (testing "No matching returns empty list"
         (is empty? (workloads/load-workloads-with-project bogus-project)))
       (testing "Query project parameter is case-sensitive"
-        (let [fetched-workloads (workloads/load-workloads-with-project upper-project)]
-          (verify-copyfile-workloads-identity upper-project fetched-workloads))))))
+        (let [fetched-workloads (workloads/load-workloads-with-project
+                                 upper-project)]
+          (verify-copyfile-workloads-identity upper-project
+                                              fetched-workloads))))))

@@ -71,6 +71,13 @@ $(INTEGRATION): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
 	$(TEE) $(DERIVED_MODULE_DIR)/integration.log
 	@$(TOUCH) $@
 
+$(SYSTEM): $(TEST_SCM_SRC) $(TEST_SCM_RESOURCES) $(CLOJURE_PROJECT)
+	$(EXPORT) CPCACHE=$(CPCACHE_DIR);            \
+	$(EXPORT) WFL_WFL_URL=http://localhost:3000; \
+	$(CLOJURE) $(CLJFLAGS) -M:parallel-test wfl.system.v1-endpoint-test | \
+	$(TEE) $(DERIVED_MODULE_DIR)/system.log
+	@$(TOUCH) $@
+
 DOCKER_API_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
 	$(DOCKER) build --file $< --tag $(DOCKER_API_IMAGE) $(PROJECT_DIR)

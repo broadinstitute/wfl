@@ -6,7 +6,6 @@
             [wfl.module.aou :as aou]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.tools.endpoints :as endpoints]
             [wfl.service.postgres :as postgres]
             [wfl.jdbc :as jdbc])
   (:import (java.util UUID)))
@@ -19,7 +18,7 @@
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
-      (assoc :creator (:email @endpoints/userinfo))))
+      (assoc :creator @workloads/email)))
 
 (defn ^:private inc-version [sample]
   (update sample :analysis_version_number inc))

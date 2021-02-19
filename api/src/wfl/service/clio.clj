@@ -1,27 +1,23 @@
 (ns wfl.service.clio
-  "Talk to Clio for some reason ..."
+  "Manage Clio's BAM and CRAM indexes."
   (:require [clojure.data.json :as json]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.auth :as auth]))
 
-(def url
-  "The Clio API URL."
-  "https://clio.gotc-dev.broadinstitute.org/api/v1")
-
-(defn get-authorization-header
-  "An Authorization header for talking to Clio where deployed."
-  []
-  (auth/authorization-header-with-bearer-token (auth/service-account-token)))
+(defn api
+  "The Clio API URL for server at `clio`."
+  [clio]
+  (str/join "/" [clio "api" "v1"]))
 
 (defn post
-  "Post THING to Clio server with metadata MD."
-  [thing md]
-  (-> {:url     (str/join "/" [url thing])
+  "Post `thing` to `clio` server with metadata `md`."
+  [clio thing md]
+  (-> {:url     (str/join "/" [(api clio) thing])
        :method  :post                   ; :debug true :debug-body true
        :headers (merge {"Content-Type" "application/json"}
-                       (get-authorization-header))
+                       (auth/get-service-account-header))
        :body    (json/write-str md :escape-slash false)}
       http/request :body
       (json/read-str :key-fn keyword)))
@@ -38,29 +34,31 @@
 ;; Return a Firebase Push ID string like this: "-MRu7X3zEzoGeFAVSF-J"
 ;;
 (defn ^:private add
-  [thing md]
+  "Add `thing` with metadata `md` to server at `clio`."
+  [clio thing md]
   (let [need (keep (fn [k] (when-not (k md) k)) add-keys)]
     (when-not (empty need)
       (throw (ex-info "Need these metadata keys:" need)))
-    (post (str/join "/" (into [thing "metadata"] ((apply juxt add-keys) md)))
+    (post clio
+          (str/join "/" (into [thing "metadata"] ((apply juxt add-keys) md)))
           (apply dissoc md add-keys))))
 
 (defn add-bam
-  "Add a BAM entry with metadata MD."
-  [md]
-  (add "bam" md))
+  "Add a BAM entry with metadata `md` to `clio`."
+  [clio md]
+  (add clio "bam" md))
 
 (defn add-cram
-  "Add a CRAM entry with metadata MD."
-  [md]
-  (add "cram" md))
+  "Add a CRAM entry with metadata `md` to `clio`."
+  [clio md]
+  (add clio "cram" md))
 
 (defn query-bam
-  "Return BAM entries with metadata MD."
-  [md]
-  (post (str/join "/" ["bam" "query"]) md))
+  "Return BAM entries with metadata `md` to `clio`."
+  [clio md]
+  (post clio (str/join "/" ["bam" "query"]) md))
 
 (defn query-cram
-  "Return CRAM entries with metadata MD."
-  [md]
-  (post (str/join "/" ["cram" "query"]) md))
+  "Return CRAM entries with metadata `md` to `clio`."
+  [clio md]
+  (post clio (str/join "/" ["cram" "query"]) md))

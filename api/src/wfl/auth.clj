@@ -6,27 +6,26 @@
             [wfl.util         :as util])
   (:import [com.google.auth.oauth2 GoogleCredentials]))
 
-(defn authorization-header-with-bearer-token
+(defn ^:private authorization-header-with-bearer-token
   "An Authorization header with a Bearer TOKEN."
   [token]
   {"Authorization" (str/join \space ["Bearer" token])})
 
-(defn service-account-credentials
-  "Throw or return credentials for the WFL from service account file or vault."
+(defn ^:private service-account-credentials
+  "Nil or credentials for WFL from the environment."
   []
-  (some->
-   (env/getenv "GOOGLE_APPLICATION_CREDENTIALS")
-   io/input-stream GoogleCredentials/fromStream
-   (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
-                   "https://www.googleapis.com/auth/userinfo.email"
-                   "https://www.googleapis.com/auth/userinfo.profile"])))
+  (some-> (env/getenv "GOOGLE_APPLICATION_CREDENTIALS")
+          io/input-stream GoogleCredentials/fromStream
+          (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
+                          "https://www.googleapis.com/auth/userinfo.email"
+                          "https://www.googleapis.com/auth/userinfo.profile"])))
 
 (defn service-account-email
   "The client_email for the WFL service account."
   []
   (.getClientEmail (service-account-credentials)))
 
-(defn service-account-token
+(defn ^:private service-account-token
   "A bearer token for the WFL service account."
   []
   (-> (service-account-credentials) .refreshAccessToken .getTokenValue))
@@ -41,6 +40,5 @@
    or from gcloud command on behalf of you."
   []
   (authorization-header-with-bearer-token
-   (if (env/getenv "WFL_DEPLOY_ENVIRONMENT")
-     (service-account-token)
-     (util/shell! "gcloud" "auth" "print-access-token"))))
+   (or (service-account-token)
+       (util/shell! "gcloud" "auth" "print-access-token"))))

@@ -1,6 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
+            [wfl.auth :as auth]
             [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
             [wfl.module.aou :as aou]
@@ -19,14 +20,18 @@
            (java.util.concurrent TimeoutException)
            (java.util UUID)))
 
-(def git-branch (delay (util/shell! "git" "branch" "--show-current")))
+(def clio-url (delay (env/getenv "WFL_CLIO_URL")))
 
-(defn ^:private load-cromwell-url-from-env-var!
-  "Load Cromwell url from the env var WFL_CROMWELL_URL."
-  []
-  (some-> "WFL_CROMWELL_URL"
-          (env/getenv)
-          util/de-slashify))
+(def email
+  (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
+
+(def ^:private git-branch
+  (delay (util/shell! "git" "branch" "--show-current")))
+
+(def project
+  (delay (format "(Test) %s" (str @git-branch))))
+
+(def cromwell-url (delay (env/getenv "WFL_CROMWELL_URL")))
 
 (def wgs-inputs
   (let [input-folder
@@ -41,11 +46,11 @@
 (defn wgs-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (load-cromwell-url-from-env-var!)
+  {:executor @cromwell-url
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
    :pipeline wgs/pipeline
-   :project  (format "(Test) %s" @git-branch)
+   :project  @project
    :items    [{:inputs wgs-inputs}]
    :common   {:inputs (-> {:disable_sanity_check true}
                           (util/prefix-keys :CheckContamination.)
@@ -57,7 +62,7 @@
   "An AllOfUs arrays workload used for testing.
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
-  {:executor (load-cromwell-url-from-env-var!)
+  {:executor @cromwell-url
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -101,9 +106,6 @@
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
 
-;; (load-cromwell-url-from-env-var!) is turned off here because an
-;; arrays workload expects a Terra (rather than Cromwell) URL.
-;;
 (defn arrays-workload-request
   [identifier]
   {:executor "https://firecloud-orchestration.dsde-dev.broadinstitute.org"
@@ -116,20 +118,20 @@
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
-  {:executor (load-cromwell-url-from-env-var!)
+  {:executor @cromwell-url
    :output   ""
    :pipeline cp/pipeline
-   :project  (format "(Test) %s" @git-branch)
+   :project  @project
    :items    [{:inputs {:src src :dst dst}}]})
 
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
-  {:executor (load-cromwell-url-from-env-var!)
+  {:executor @cromwell-url
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
    :pipeline xx/pipeline
-   :project  (format "(Test) %s" @git-branch)
+   :project  @project
    :items    [{:inputs {:input_cram
                         (str "gs://broad-gotc-dev-wfl-ptc-test-inputs/"
                              "single_sample/plumbing/truth/develop/20k/"
@@ -157,11 +159,12 @@
                                       "pipeline" project "NA12878"
                                       (str \v version) "NA12878"]))]
     (clio/add-cram
+     @clio-url
      (merge query tos
             {:cromwell_id         (str (UUID/randomUUID))
              :workflow_start_date (str (OffsetDateTime/now))}))
     (dorun (map (fn [k] (gcs/copy-object (k froms) (k tos))) (keys suffix))))
-  (first (clio/query-cram query)))
+  (first (clio/query-cram @clio-url query)))
 
 (defn ^:private ensure-clio-cram
   "Ensure there is a unique CRAM record in Clio suitable for test."
@@ -182,7 +185,7 @@
                  :sample_alias           "NA12878"
                  :version                version
                  :workspace_name         "bike-of-hornets"}
-        crams   (clio/query-cram query)]
+        crams   (clio/query-cram @clio-url query)]
     (when (> (count crams) 1)
       (throw (ex-info "More than 1 Clio CRAM record" {:crams crams})))
     (or (first crams)
@@ -199,11 +202,11 @@
                              "Homo_sapiens_assembly38.fasta"])
         vcf   (str/join "/" ["gs://gatk-best-practices/somatic-hg38"
                              "small_exac_common_3.hg38.vcf.gz"])]
-    {:executor (load-cromwell-url-from-env-var!)
+    {:executor @cromwell-url
      :output   (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
                               identifier])
      :pipeline sg/pipeline
-     :project  (format "(Test) %s" @git-branch)
+     :project  @project
      :items    [{:inputs
                  {:base_file_name          sample_alias
                   :contamination_vcf       vcf

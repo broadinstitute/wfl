@@ -24,28 +24,17 @@
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
 
-(defn ^:private options-for-cromwell
+(defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
   [url]
   (let [known {"https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
-               {:jes_roots ["gs://broad-gotc-dev-cromwell-execution"],
-                :projects  ["broad-exomes-dev1"]}
+               {:clio-url       "https://clio.gotc-dev.broadinstitute.org"
+                :google_project "broad-gotc-dev"
+                :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:jes_roots ["gs://broad-realign-short-execution1/"
-                            "gs://broad-realign-short-execution2/"
-                            "gs://broad-realign-short-execution3/"
-                            "gs://broad-realign-short-execution4/"
-                            "gs://broad-realign-short-execution5/"
-                            "gs://broad-realign-short-execution6/"
-                            "gs://broad-realign-short-execution7/"
-                            "gs://broad-realign-short-execution8/"
-                            "gs://broad-realign-short-execution9/"
-                            "gs://broad-realign-short-execution10/"],
-                :projects ["broad-realign-execution01"
-                           "broad-realign-execution02"
-                           "broad-realign-execution03"
-                           "broad-realign-execution04"
-                           "broad-realign-execution05"]}}]
+               {:clio-url       "https://clio.gotc-prod.broadinstitute.org"
+                :google_project "broad-sg-prod-compute1"
+                :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
         (throw (ex-info "Unknown Cromwell URL provided."
                         {:cromwell        url
@@ -64,11 +53,11 @@
   (let [gcr   "us.gcr.io"
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
-        {:keys [projects jes_roots]} (options-for-cromwell url)]
+        {:keys [google_project jes_gcs_root]} (cromwell->strings url)]
     (-> {:backend         "PAPIv2"
          :final_workflow_outputs_dir output
-         :google_project  (rand-nth projects)
-         :jes_gcs_root    (rand-nth jes_roots)
+         :google_project  google_project
+         :jes_gcs_root    jes_gcs_root
          :read_from_cache true
          :write_to_cache  true
          :default_runtime_attributes
@@ -107,9 +96,9 @@
     (workloads/load-workload-for-id tx id)))
 
 (defn ^:private clio-bam-record
-  "Return `nil` or the single Clio record with `bam`."
-  [bam]
-  (let [records (clio/query-bam bam)
+  "Return `nil` or the single `clio` record with `bam`."
+  [clio bam]
+  (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
       (log/warn "More than 1 Clio BAM record")
@@ -117,9 +106,9 @@
     (first records)))
 
 (defn ^:private clio-cram-record
-  "Return the useful part of the Clio record for `input_cram` or throw."
-  [input_cram]
-  (let [records (clio/query-cram {:cram_path input_cram})
+  "Return the useful part of the `clio` record for `input_cram` or throw."
+  [clio input_cram]
+  (let [records (clio/query-cram clio {:cram_path input_cram})
         n       (count records)]
     (when (not= 1 n)
       (log/warn "Expected 1 Clio record with cram_path")
@@ -153,15 +142,43 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
+(defn ^:private clio-add-bam
+  "Add `bam` record to `clio`."
+  [clio bam]
+  (try (clio/add-bam clio bam)
+       (catch Throwable x
+         (log/error x "Add BAM to Clio failed" {:bam bam
+                                                :x   x}))))
+
+(defn maybe-update-clio-and-write-final-files
+  "Maybe update `clio-url` with `final` and write files and `metadata`."
+  [clio-url final {:keys [inputs] :as metadata}]
+  #_(log-missing-final-files-for-debugging final)
+  (or (clio-bam-record clio-url (select-keys final [:bam_path]))
+      (let [cram   (clio-cram-record clio-url (:input_cram inputs))
+            bam    (-> cram (merge final) (dissoc :contamination))
+            contam (:contamination final)
+            suffix (last (str/split contam #"/"))
+            folder (str (util/unsuffix contam suffix))]
+        (clio-add-bam clio-url bam)
+        (-> bam
+            (json/write-str :escape-slash false)
+            (gcs/upload-content (str folder "clio-bam-record.json")))
+        (-> metadata
+            (json/write-str :escape-slash false)
+            (gcs/upload-content (str folder "cromwell-metadata.json"))))))
+
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
   [executor output {:keys [status uuid] :as workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
+          clio-url (-> executor cromwell->strings :clio-url)
           cromwell->clio {:bai                 :bai_path
                           :bam                 :bam_path
+                          :contamination       :contamination
                           :insert_size_metrics :insert_size_metrics_path}
-          {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
+          {:keys [outputs] :as metadata} (cromwell/metadata executor uuid)
           bam (-> outputs
                   (util/unprefix-keys (str pipeline "."))
                   (set/rename-keys cromwell->clio)
@@ -170,14 +187,7 @@
       (when (some empty? (vals final))
         (log/warn "Bad metadata from executor")
         (log/error {:executor executor :metadata metadata}))
-      #_(log-missing-final-files-for-debugging final)
-      (or (clio-bam-record (select-keys final [:bam_path]))
-          (let [cram (clio-cram-record (:input_cram inputs))
-                bam  (merge cram final)]
-            (try (clio/add-bam bam)
-                 (catch Throwable x
-                   (log/error x "Add BAM to Clio failed" {:bam bam
-                                                          :x   x}))))))))
+      (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."

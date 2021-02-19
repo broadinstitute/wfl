@@ -5,15 +5,12 @@
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.endpoints :as endpoints]
+            [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util :refer [absent?]])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
-
-(def ^:private cromwell-url-for-testing
-  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -21,28 +18,28 @@
 
 (def the-sg-workload-request
   "A request suitable when all external services are mocked."
-  {:executor "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-   :output "gs://broad-gotc-dev-wfl-sg-test-outputs/",
-   :pipeline "GDCWholeGenomeSomaticSingleSample",
-   :project "(Test) tbl/GH-1178-better-sg-tests",
+  {:executor @workloads/cromwell-url
+   :output   "gs://broad-gotc-dev-wfl-sg-test-outputs"
+   :pipeline "GDCWholeGenomeSomaticSingleSample"
+   :project  @workloads/project
    :items
    [{:inputs
      {:base_file_name "NA12878"
       :contamination_vcf
-      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz"
       :contamination_vcf_index
-      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
+      "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi"
       :cram_ref_fasta
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
       :cram_ref_fasta_index
-      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+      "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai"
       :dbsnp_vcf
-      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz",
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz"
       :dbsnp_vcf_index
-      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi",
+      "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
-      "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}],
-   :creator (:email @endpoints/userinfo)})
+      "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
+   :creator "@workloads/email"})        ; quoted to avoid log spam
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -109,11 +106,11 @@
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
-  (let [workload (->> {:executor cromwell-url-for-testing
+  (let [workload (->> {:executor @workloads/cromwell-url
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
                        :pipeline sg/pipeline
-                       :project  (format "(Test) %s" @workloads/git-branch)
-                       :creator  (:email @endpoints/userinfo)}
+                       :project  @workloads/project
+                       :creator  @workloads/email}
                       workloads/execute-workload!
                       workloads/update-workload!)]
     (is (:finished workload))))
@@ -171,26 +168,26 @@
                   workloads/create-workload! :workflows))))
 
 (defn ^:private mock-clio-add-bam-found
-  "Fail when called because a BAM record already exists for `_md`"
-  [_md]
+  "Fail because a `_clio` BAM record already exists for `_md`"
+  [_clio _md]
   (is false))
 
 (defn ^:private mock-clio-add-bam-missing
-  "Add a missing Clio BAM record with metadata `md`."
-  [md]
+  "Add a missing `_clio` BAM record with metadata `md`."
+  [_clio md]
   (is md)
   (letfn [(ok? [v] (or (integer? v) (and (string? v) (seq v))))]
     (is (every? ok? ((apply juxt clio/add-keys) md))))
   "-MRu7X3zEzoGeFAVSF-J")
 
 (defn ^:private mock-clio-failed
-  "Fail when called with metadata `_md`."
-  [_md]
+  "Fail when `_clio` called with metadata `_md`."
+  [_clio _md]
   (is false))
 
 (defn ^:private mock-clio-query-bam-found
-  "Return a Clio BAM record with metadata `_md`."
-  [{:keys [bam_path] :as _md}]
+  "Return a `_clio` BAM record with metadata `_md`."
+  [_clio {:keys [bam_path] :as _md}]
   [{:bai_path (str/replace bam_path ".bam" ".bai")
     :bam_path bam_path
     :billing_project "hornet-nest"
@@ -205,13 +202,13 @@
     :version 23}])
 
 (defn ^:private mock-clio-query-bam-missing
-  "Return an empty Clio response for query metadata `_md`."
-  [_md]
+  "Return an empty `_clio` response for query metadata `_md`."
+  [_clio _md]
   [])
 
 (defn ^:private mock-clio-query-cram-found
-  "Return a Clio CRAM record with metadata `_md`."
-  [{:keys [cram_path] :as _md}]
+  "Return a `_clio` CRAM record with metadata `_md`."
+  [_clio {:keys [cram_path] :as _md}]
   [{:billing_project "hornet-nest"
     :crai_path (str cram_path ".crai")
     :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -254,9 +251,9 @@
 (defn ^:private mock-cromwell-metadata-succeeded
   "Return enough metadata for Cromwell workflow `id` to succeed."
   [_url id]
-  (let [now    (OffsetDateTime/now)
+  (let [now    (str (OffsetDateTime/now))
         prefix (str/join "/" ["gs://broad-gotc-dev-wfl-sg-test-outputs"
-                              "504f94ce-383c-4af6-afb5-2aa8819c74ff"
+                              "SOME-UUID"
                               "GDCWholeGenomeSomaticSingleSample"
                               id
                               "call-gatk_applybqsr"
@@ -272,6 +269,8 @@
      :outputs
      {:GDCWholeGenomeSomaticSingleSample.bai (str prefix "bai")
       :GDCWholeGenomeSomaticSingleSample.bam (str prefix "bam")
+      :GDCWholeGenomeSomaticSingleSample.contamination
+      (str prefix "contam.txt")
       :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
       (str prefix "insert_size_histogram.pdf")
       :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
@@ -298,6 +297,25 @@
 (defn ^:private mock-cromwell-submit-workflows
   [_environment _wdl inputs _options _labels]
   (take (count inputs) the-uuids))
+
+(defn mock-gcs-upload-content-fail
+  "Fail when called because nothing should be uploaded."
+  [_content _url]
+  (is false))
+
+(defn mock-gcs-upload-content
+  "Mock uploading `content` to `url`."
+  [content url]
+  (letfn [(parse [url] (drop-last (str/split url #"/")))
+          (tail? [end] (str/ends-with? url end))]
+    (let [md  [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
+          ok? (partial = (parse url))
+          edn (util/parse-json content)]
+      (is (cond (tail? "/clio-bam-record.json")
+                (ok? (parse (:bai_path edn)))
+                (tail? "/cromwell-metadata.json")
+                (ok? (parse (get-in edn md)))
+                :else false)))))
 
 (def ^:private bam-suffixes
   "Map Clio BAM record fields to expected file suffixes."
@@ -330,7 +348,8 @@
        #'clio/query-cram           mock-clio-query-cram-found
        #'cromwell/metadata         mock-cromwell-metadata-succeeded
        #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content-fail}
       test-clio-updates)))
 
 (deftest test-clio-updates-bam-missing
@@ -341,7 +360,8 @@
        #'clio/query-cram           mock-clio-query-cram-found
        #'cromwell/metadata         mock-cromwell-metadata-succeeded
        #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content}
       test-clio-updates)))
 
 (deftest test-clio-updates-cromwell-failed
@@ -352,15 +372,16 @@
        #'clio/query-cram           mock-clio-failed
        #'cromwell/metadata         mock-cromwell-metadata-failed
        #'cromwell/query            mock-cromwell-query-failed
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows}
+       #'cromwell/submit-workflows mock-cromwell-submit-workflows
+       #'gcs/upload-content        mock-gcs-upload-content-fail}
       test-clio-updates)))
 
 (defn workflow-postcheck
   [output {:keys [uuid] :as _workflow}]
-  (let [md (cromwell/metadata cromwell-url-for-testing uuid)
+  (let [md (cromwell/metadata @workloads/cromwell-url uuid)
         bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
         bam_path (sg/final_workflow_outputs_dir_hack output bam)]
-    (is (seq (clio/query-bam {:bam_path bam_path})))))
+    (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
 
 (defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
   [{:keys [output workflows] :as _workload}]
