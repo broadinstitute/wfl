@@ -80,6 +80,32 @@
   (map (comp (partial query-cram clio) sample->clio-cram)
        (util/map-tsv-file tsv)))
 
+(defn cram->inputs
+  "Translate Clio `cram` record to SG workflow inputs."
+  [cram]
+  (let [translation {:base_file_name :sample_alias
+                     :input_cram     :cram_path}
+        contam "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz"
+        fasta  "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta"
+        dbsnp  "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz"
+        bogus  {:contamination_vcf       contam
+                :contamination_vcf_index (str contam ".tbi")
+                :cram_ref_fasta          fasta
+                :cram_ref_fasta_index    (str fasta ".fai")
+                :dbsnp_vcf               dbsnp
+                :dbsnp_vcf_index         (str dbsnp ".tbi")}]
+    (letfn [(translate [m [k v]] (assoc m k (v cram)))]
+      {:inputs (reduce translate bogus translation)})))
+
+(defn crams->workload
+  "Return a workload request to process `crams` with SG pipeline"
+  [crams]
+  {:executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+   :output   "gs://broad-prod-somatic-genomes-output"
+   :pipeline "GDCWholeGenomeSomaticSingleSample"
+   :project  "(Test) tbl/GH-1196-sg-prod-data"
+   :items    (mapv cram->inputs crams)})
+
 (comment
   (do
     (def dev  "https://clio.gotc-dev.broadinstitute.org")
@@ -93,9 +119,11 @@
   (query-cram dev cram)
   (query-cram prod cram)
   crams
+  (crams->workload crams)
   (-> "./clio-cram-records.edn"
       clojure.java.io/file
       clojure.java.io/writer
       (->> (clojure.pprint/pprint crams)))
   cram
   )
+
