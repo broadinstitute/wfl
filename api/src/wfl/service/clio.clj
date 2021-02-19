@@ -80,15 +80,21 @@
   (map sample->clio-cram (util/map-tsv-file tsv)))
 
 (comment
-  (def dev  "https://clio.gotc-dev.broadinstitute.org")
-  (def prod "https://clio.gotc-prod.broadinstitute.org")
-  (def tsv
-    "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
+  (do
+    (def dev  "https://clio.gotc-dev.broadinstitute.org")
+    (def prod "https://clio.gotc-prod.broadinstitute.org")
+    (def tsv
+      "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
+    (def crams (tsv->crams tsv))
+    (def cram (first crams)))
   (util/map-tsv-file tsv)
-  (def crams (tsv->crams tsv))
   (count crams)
-  (def cram (first crams))
   (query-cram dev cram)
   (query-cram prod cram)
+  crams
+  (-> "./clio-crams.edn"
+      clojure.java.io/file
+      clojure.java.io/writer
+      (->> (clojure.pprint/pprint crams)))
   cram
   )
