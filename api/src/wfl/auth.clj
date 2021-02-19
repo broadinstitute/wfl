@@ -28,7 +28,7 @@
 (defn ^:private service-account-token
   "Nil or a bearer token for the WFL service account."
   []
-  (some-> (service-account-credentials) .refreshAccessToken .getTokenValue))
+  (-> (service-account-credentials) .refreshAccessToken .getTokenValue))
 
 (defn get-service-account-header
   "An Authorization header with a service account Bearer token."

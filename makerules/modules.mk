@@ -24,13 +24,13 @@ MAKE_TARGETS := prebuild lint build unit integration check images system
 # 	$(PYTHON) -m pylint $(PYLINT_OPTIONS)
 # 	@$(TOUCH) $@
 
-BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
-IMAGES      := $(DERIVED_MODULE_DIR)/images.$(TIMESTAMP)
-INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
-LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)    
 PREBUILD    := $(DERIVED_MODULE_DIR)/prebuild.$(TIMESTAMP)
-SYSTEM      := $(DERIVED_MODULE_DIR)/system.$(TIMESTAMP)  
+LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)    
+BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
 UNIT        := $(DERIVED_MODULE_DIR)/unit.$(TIMESTAMP)  
+INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
+IMAGES      := $(DERIVED_MODULE_DIR)/images.$(TIMESTAMP)
+SYSTEM      := $(DERIVED_MODULE_DIR)/system.$(TIMESTAMP)
 
 .PHONY:	all $(MAKE_TARGETS)
 all: $(MAKE_TARGETS)
@@ -39,10 +39,10 @@ all: $(MAKE_TARGETS)
 $(PREBUILD):    $(shell eval $(MKDIR) $(DERIVED_MODULE_DIR))
 $(LINT):        $(PREBUILD)
 $(BUILD):       $(LINT)
-$(IMAGES):      $(BUILD)
-$(INTEGRATION): $(BUILD)
-$(SYSTEM):      $(BUILD)
 $(UNIT):        $(BUILD)
+$(INTEGRATION): $(BUILD)
+$(IMAGES):      $(BUILD)
+$(SYSTEM):      $(BUILD)
 
 check: unit integration
 
