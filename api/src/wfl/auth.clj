@@ -26,7 +26,7 @@
   (.getClientEmail (service-account-credentials)))
 
 (defn ^:private service-account-token
-  "Nil or a bearer token for the WFL service account."
+  "A bearer token for the WFL service account."
   []
   (-> (service-account-credentials) .refreshAccessToken .getTokenValue))
 
