@@ -17,6 +17,8 @@
                            :ancestral_traits_to_infer {:description "A list of metadata traits to use for ancestral node inference (see https://nextstrain-augur.readthedocs.io/en/stable/usage/cli/traits.html). Multiple traits may be specified; must correspond exactly to column headers in metadata file. Omitting these values will skip ancestral trait inference, and ancestral nodes will not have estimated values for metadata."},
                            :sample_metadata           {:description "Metadata in tab-separated text format. See https://nextstrain-augur.readthedocs.io/en/stable/faq/metadata.html for details.",
                                                        :patterns    ["*.txt" "*.tsv"]},
+                           :auspice_config            {:description "A file specifying options to customize the auspice export; see: https://nextstrain.github.io/auspice/customise-client/introduction",
+                                                       :patterns    ["*.json" "*.txt"]},
                            :genbank_gb                {:description "A 'genbank' formatted gene annotation file that is used to calculate coding consequences of observed mutations. Must correspond to the same coordinate space as ref_fasta. Typically downloaded from the same NCBI accession number as ref_fasta.",
                                                        :patterns    ["*.gb" "*.gbf"]},
                            :clades_tsv                {:description "A TSV file containing clade mutation positions in four columns: [clade  gene    site    alt]; see: https://nextstrain.org/docs/tutorials/defining-clades",
@@ -106,9 +108,19 @@
                             :typeDisplayName "File?",
                             :optional        true,
                             :default         nil}
+                           {:name            "auspice_config",
+                            :valueType       {:typeName "File"},
+                            :typeDisplayName "File",
+                            :optional        false,
+                            :default         nil}
                            {:name            "clades_tsv",
                             :valueType       {:typeName "Optional", :optionalType {:typeName "File"}},
                             :typeDisplayName "File?",
+                            :optional        true,
+                            :default         nil}
+                           {:name            "draft_augur_tree.cpus",
+                            :valueType       {:typeName "Optional", :optionalType {:typeName "Int"}},
+                            :typeDisplayName "Int?",
                             :optional        true,
                             :default         nil}
                            {:name            "draft_augur_tree.docker",
@@ -140,11 +152,6 @@
                             :valueType       {:typeName "Optional", :optionalType {:typeName "File"}},
                             :typeDisplayName "File?",
                             :optional        true,
-                            :default         nil}
-                           {:name            "export_auspice_json.auspice_config",
-                            :valueType       {:typeName "File"},
-                            :typeDisplayName "File",
-                            :optional        false,
                             :default         nil}
                            {:name            "export_auspice_json.color_by_metadata",
                             :valueType       {:typeName     "Optional",
@@ -206,8 +213,11 @@
                             :optional        true,
                             :default         nil}
                            {:name            "filter_subsample_sequences.exclude_where",
-                            :valueType       {:typeName "Optional", :optionalType {:typeName "String"}},
-                            :typeDisplayName "String?",
+                            :valueType       {:typeName     "Optional",
+                                              :optionalType {:typeName  "Array",
+                                                             :arrayType {:typeName "String"},
+                                                             :nonEmpty  false}},
+                            :typeDisplayName "Array[String]?",
                             :optional        true,
                             :default         nil}
                            {:name            "filter_subsample_sequences.group_by",
@@ -221,8 +231,11 @@
                             :optional        true,
                             :default         nil}
                            {:name            "filter_subsample_sequences.include_where",
-                            :valueType       {:typeName "Optional", :optionalType {:typeName "String"}},
-                            :typeDisplayName "String?",
+                            :valueType       {:typeName     "Optional",
+                                              :optionalType {:typeName  "Array",
+                                                             :arrayType {:typeName "String"},
+                                                             :nonEmpty  false}},
+                            :typeDisplayName "Array[String]?",
                             :optional        true,
                             :default         nil}
                            {:name            "filter_subsample_sequences.max_date",
@@ -265,16 +278,36 @@
                             :typeDisplayName "File",
                             :optional        false,
                             :default         nil}
+                           {:name            "mafft.cpus",
+                            :valueType       {:typeName "Int"},
+                            :typeDisplayName "Int",
+                            :optional        true,
+                            :default         "32"}
                            {:name            "mafft.docker",
                             :valueType       {:typeName "String"},
                             :typeDisplayName "String",
                             :optional        true,
-                            :default         "\"quay.io/broadinstitute/viral-phylo:2.1.4.0\""}
+                            :default         "\"quay.io/broadinstitute/viral-phylo:2.1.12.0\""}
                            {:name            "mafft.keep_length",
                             :valueType       {:typeName "Boolean"},
                             :typeDisplayName "Boolean",
                             :optional        true,
                             :default         "true"}
+                           {:name            "mafft.large",
+                            :valueType       {:typeName "Boolean"},
+                            :typeDisplayName "Boolean",
+                            :optional        true,
+                            :default         "false"}
+                           {:name            "mafft.mem_size",
+                            :valueType       {:typeName "Int"},
+                            :typeDisplayName "Int",
+                            :optional        true,
+                            :default         "60"}
+                           {:name            "mafft.memsavetree",
+                            :valueType       {:typeName "Boolean"},
+                            :typeDisplayName "Boolean",
+                            :optional        true,
+                            :default         "false"}
                            {:name            "mafft.remove_reference",
                             :valueType       {:typeName "Boolean"},
                             :typeDisplayName "Boolean",
@@ -371,6 +404,11 @@
                             :typeDisplayName "File",
                             :optional        false,
                             :default         nil}
+                           {:name            "snp_sites.allow_wildcard_bases",
+                            :valueType       {:typeName "Boolean"},
+                            :typeDisplayName "Boolean",
+                            :optional        true,
+                            :default         "true"}
                            {:name            "snp_sites.docker",
                             :valueType       {:typeName "String"},
                             :typeDisplayName "String",
