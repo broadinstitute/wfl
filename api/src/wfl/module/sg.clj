@@ -151,17 +151,35 @@
          (log/error x "Add BAM to Clio failed" {:bam bam
                                                 :x   x}))))
 
+(defn maybe-update-clio-and-write-final-files
+  "Maybe update `clio-url` with `final` and write files and `metadata`."
+  [clio-url final {:keys [inputs] :as metadata}]
+  #_(log-missing-final-files-for-debugging final)
+  (or (clio-bam-record clio-url (select-keys final [:bam_path]))
+      (let [cram   (clio-cram-record clio-url (:input_cram inputs))
+            bam    (-> cram (merge final) (dissoc :contamination))
+            contam (:contamination final)
+            suffix (last (str/split contam #"/"))
+            folder (str (util/unsuffix contam suffix))]
+        (clio-add-bam clio-url bam)
+        (-> bam
+            (json/write-str :escape-slash false)
+            (gcs/upload-content (str folder "clio-bam-record.json")))
+        (-> metadata
+            (json/write-str :escape-slash false)
+            (gcs/upload-content (str folder "cromwell-metadata.json"))))))
+
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
   [executor output {:keys [status uuid] :as workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
-          clio (-> executor cromwell->strings :clio-url)
+          clio-url (-> executor cromwell->strings :clio-url)
           cromwell->clio {:bai                 :bai_path
                           :bam                 :bam_path
                           :contamination       :contamination
                           :insert_size_metrics :insert_size_metrics_path}
-          {:keys [inputs outputs] :as metadata} (cromwell/metadata executor uuid)
+          {:keys [outputs] :as metadata} (cromwell/metadata executor uuid)
           bam (-> outputs
                   (util/unprefix-keys (str pipeline "."))
                   (set/rename-keys cromwell->clio)
@@ -170,20 +188,7 @@
       (when (some empty? (vals final))
         (log/warn "Bad metadata from executor")
         (log/error {:executor executor :metadata metadata}))
-      #_(log-missing-final-files-for-debugging final)
-      (or (clio-bam-record clio (select-keys final [:bam_path]))
-          (let [cram   (clio-cram-record clio (:input_cram inputs))
-                bam    (-> cram (merge final) (dissoc :contamination))
-                contam (:contamination final)
-                suffix (last (str/split contam #"/"))
-                folder (str (util/unsuffix contam suffix))]
-            (clio-add-bam clio bam)
-            (-> bam
-                (json/write-str :escape-slash false)
-                (gcs/upload-content (str folder "clio-bam-record.json")))
-            (-> metadata
-                (json/write-str :escape-slash false)
-                (gcs/upload-content (str folder "cromwell-metadata.json"))))))))
+      (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
 (defn ^:private register-workload-in-clio
   "Use `tx` to register `workload` outputs with Clio."
