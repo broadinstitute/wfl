@@ -75,9 +75,10 @@
       (reduce translate {:data_type "WGS"} translation))))
 
 (defn tsv->crams
-  "Translate TSV file to Clio CRAM records."
-  [tsv]
-  (map sample->clio-cram (util/map-tsv-file tsv)))
+  "Translate TSV file to CRAM records from `clio`."
+  [clio tsv]
+  (map (comp (partial query-cram clio) sample->clio-cram)
+       (util/map-tsv-file tsv)))
 
 (comment
   (do
@@ -85,14 +86,14 @@
     (def prod "https://clio.gotc-prod.broadinstitute.org")
     (def tsv
       "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
-    (def crams (tsv->crams tsv))
+    (def crams (tsv->crams prod tsv))
     (def cram (first crams)))
   (util/map-tsv-file tsv)
   (count crams)
   (query-cram dev cram)
   (query-cram prod cram)
   crams
-  (-> "./clio-crams.edn"
+  (-> "./clio-cram-records.edn"
       clojure.java.io/file
       clojure.java.io/writer
       (->> (clojure.pprint/pprint crams)))
