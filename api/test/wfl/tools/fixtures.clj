@@ -194,3 +194,8 @@
    #(let [prev @env/testing] (swap! env/testing merge new-env) prev)
    #(reset! env/testing %)
    (fn [_] (f))))
+
+(defn temporary-environment
+  "Adapter for clojure.test/use-fixtures"
+  [env]
+  (partial with-temporary-environment env))

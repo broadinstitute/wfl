@@ -6,11 +6,11 @@
             [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
-(use-fixtures :once fixtures/temporary-postgresql-database)
 (use-fixtures
-  #(fixtures/with-temporary-environment
-     {"WFL_FIRECLOUD_URL" "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}
-     %))
+  :once
+  fixtures/temporary-postgresql-database
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}))
 
 (defn ^:private mock-terra-create-submission [& _] (UUID/randomUUID))
 
