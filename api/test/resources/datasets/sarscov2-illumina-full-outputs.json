@@ -1,0 +1,229 @@
+{
+  "name": "sarscov2_illumina_full_outputs",
+  "description": "COVID-19 sarscov2_illumina_full pipeline outputs",
+  "schema": {
+    "tables": [
+      {
+        "name": "sarscov2_illumina_full_outputs",
+        "columns": [
+          {
+            "name": "raw_reads_unaligned_bams",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "cleaned_reads_unaligned_bams",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "cleaned_bams_tiny",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "meta_by_filename_json",
+            "datatype": "fileref"
+          },
+          {
+            "name": "read_counts_raw",
+            "datatype": "int64",
+            "is_array": true
+          },
+          {
+            "name": "read_counts_depleted",
+            "datatype": "int64",
+            "is_array": true
+          },
+          {
+            "name": "sra_metadata",
+            "datatype": "fileref"
+          },
+          {
+            "name": "cleaned_bam_uris",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assemblies_fasta",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "passing_assemblies_fasta",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "submittable_assemblies_fasta",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "max_ntc_bases",
+            "datatype": "int64"
+          },
+          {
+            "name": "demux_metrics",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "demux_commonBarcodes",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "demux_outlierBarcodes",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "multiqc_report_raw",
+            "datatype": "fileref"
+          },
+          {
+            "name": "multiqc_report_cleaned",
+            "datatype": "fileref"
+          },
+          {
+            "name": "spikein_counts",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assembly_stats_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submission_zip",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submission_xml",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submit_ready",
+            "datatype": "fileref"
+          },
+          {
+            "name": "vadr_outputs",
+            "datatype": "fileref",
+            "is_array": true
+          },
+          {
+            "name": "genbank_source_table",
+            "datatype": "fileref"
+          },
+          {
+            "name": "gisaid_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "gisaid_meta_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "genbank_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "nextmeta_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assembled_ids",
+            "datatype": "string",
+            "is_array": true
+          },
+          {
+            "name": "submittable_ids",
+            "datatype": "string",
+            "is_array": true
+          },
+          {
+            "name": "failed_assembly_ids",
+            "datatype": "string",
+            "is_array": true
+          },
+          {
+            "name": "failed_annotation_ids",
+            "datatype": "string",
+            "is_array": true
+          },
+          {
+            "name": "num_read_files",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_assembled",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_failed_assembly",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_submittable",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_failed_annotation",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_samples",
+            "datatype": "int64"
+          },
+          {
+            "name": "data_table_status",
+            "datatype": "string"
+          }
+        ],
+        "primaryKey": [
+          "raw_reads_unaligned_bams",
+          "cleaned_reads_unaligned_bams",
+          "cleaned_bams_tiny",
+          "meta_by_filename_json",
+          "read_counts_raw",
+          "read_counts_depleted",
+          "sra_metadata",
+          "cleaned_bam_uris",
+          "assemblies_fasta",
+          "passing_assemblies_fasta",
+          "submittable_assemblies_fasta",
+          "max_ntc_bases",
+          "demux_metrics",
+          "demux_commonBarcodes",
+          "demux_outlierBarcodes",
+          "multiqc_report_raw",
+          "multiqc_report_cleaned",
+          "spikein_counts",
+          "assembly_stats_tsv",
+          "submission_zip",
+          "submission_xml",
+          "submit_ready",
+          "vadr_outputs",
+          "genbank_source_table",
+          "gisaid_fasta",
+          "gisaid_meta_tsv",
+          "genbank_fasta",
+          "nextmeta_tsv",
+          "assembled_ids",
+          "submittable_ids",
+          "failed_assembly_ids",
+          "failed_annotation_ids",
+          "num_read_files",
+          "num_assembled",
+          "num_failed_assembly",
+          "num_submittable",
+          "num_failed_annotation",
+          "num_samples"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      }
+    ]
+  }
+}

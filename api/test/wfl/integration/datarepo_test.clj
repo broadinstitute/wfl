@@ -26,7 +26,7 @@
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
   (doseq [definition ["assemble-refbased-outputs.json"
-                      "augur-from-assemblies-outputs.json"]]
+                      "sarscov2-illumina-full-outputs.json"]]
     (testing (str "creating dataset " (util/basename definition))
       (fixtures/with-temporary-dataset (make-dataset-request definition)
         #(let [dataset (datarepo/dataset %)]
