@@ -6,8 +6,8 @@
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
             [wfl.references :as references]
+            [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
-            [wfl.service.terra :as terra]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
@@ -125,8 +125,8 @@
               (let [inputs           (:inputs workflow)
                     entity-type      (:entity-type inputs)
                     entity-name      (:entity-name inputs)]
-                [id (terra/create-submission executor project method-configuration-name
-                                             method-configuration-namespace entity-type entity-name)]))
+                [id (firecloud/create-submission executor project method-configuration-name
+                                                 method-configuration-namespace entity-type entity-name)]))
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items

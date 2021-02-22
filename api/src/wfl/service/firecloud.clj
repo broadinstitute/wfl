@@ -1,4 +1,4 @@
-(ns wfl.service.terra
+(ns wfl.service.firecloud
   "Analyze data in Terra using the Firecloud/Terra API."
   (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
@@ -7,37 +7,35 @@
             [wfl.util          :as util]))
 
 (defn workspace-api-url
-  [terra-url workspace]
-  (str terra-url "/api/workspaces/" workspace))
+  [firecloud-url workspace]
+  (str firecloud-url "/api/workspaces/" workspace))
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [terra-url workspace method-configuration-name
+  [firecloud-url workspace method-configuration-name
    method-configuration-namespace entity-type entity-name]
-  (let [workspace-url (workspace-api-url terra-url workspace)
-        submission-url (str workspace-url "/submissions")]
-    (->
-     (http/post
-      submission-url
-      {:content-type :application/json
-       :headers   (auth/get-auth-header)
-       :body      (json/write-str
-                   {:methodConfigurationNamespace method-configuration-namespace
-                    :methodConfigurationName method-configuration-name
-                    :entityType entity-type
-                    :entityName entity-name
-                    :useCallCache true} :escape-slash false)})
-     :body
-     (util/parse-json)
-     :submissionId)))
+  (-> {:method       :post
+       :url          (str (workspace-api-url firecloud-url workspace) "/submissions")
+       :headers      (auth/get-auth-header)
+       :content-type :application/json
+       :body         (json/write-str
+                      {:methodConfigurationNamespace method-configuration-namespace
+                       :methodConfigurationName method-configuration-name
+                       :entityType entity-type
+                       :entityName entity-name
+                       :useCallCache true}
+                      :escape-slash false)}
+      http/request
+      util/response-body-json
+      :submissionId))
 
 (defn get-submission
   "Get information about a Terra Cromwell submission."
-  [terra-url workspace submission-id]
-  (let [workspace-url (workspace-api-url terra-url workspace)
-        submission-url (str workspace-url "/submissions/" submission-id)
-        response (http/get submission-url {:headers (auth/get-auth-header)})]
-    (util/parse-json (:body response))))
+  [firecloud-url workspace submission-id]
+  (let [workspace-url (workspace-api-url firecloud-url workspace)]
+    (-> (str workspace-url "/submissions/" submission-id)
+        (http/get {:headers (auth/get-auth-header)})
+        util/response-body-json)))
 
 (defn get-workflow
   "Query the `firecloud-url` for the the `workflow` created by the `submission`

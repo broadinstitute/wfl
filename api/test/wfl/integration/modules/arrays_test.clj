@@ -1,7 +1,7 @@
 (ns wfl.integration.modules.arrays-test
   (:require [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
-            [wfl.service.terra :as terra]
+            [wfl.service.firecloud :as terra]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))

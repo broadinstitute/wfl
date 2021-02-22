@@ -1,9 +1,9 @@
 (ns wfl.integration.terra-test
   (:require [clojure.test :refer [deftest is testing]]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.terra :as terra]))
+            [wfl.service.firecloud :as firecloud]))
 
-(def terra-url
+(def firecloud-url
   "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
 
 (def workspace
@@ -23,13 +23,13 @@
 
 (deftest test-terra-submission
   (testing "A workflow is created for the entity"
-    (let [submission-id (terra/create-submission terra-url
-                                                 workspace
-                                                 method-configuration-name
-                                                 method-configuration-namespace
-                                                 entity-type
-                                                 entity-name)
-          submission    (terra/get-submission terra-url workspace submission-id)
+    (let [submission-id (firecloud/create-submission firecloud-url
+                                                     workspace
+                                                     method-configuration-name
+                                                     method-configuration-namespace
+                                                     entity-type
+                                                     entity-name)
+          submission    (firecloud/get-submission firecloud-url workspace submission-id)
           workflow      (first (:workflows submission))]
       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
 
@@ -49,7 +49,7 @@
 
 (deftest test-describe-wdl
   (using-assemble-refbased-workflow-bindings
-   (let [description (terra/describe-wdl firecloud (cromwell/wdl-map->url wdl))]
+   (let [description (firecloud/describe-wdl firecloud (cromwell/wdl-map->url wdl))]
      (is (:valid description))
      (is (empty? (:errors description)))
      (is (= pipeline (:name description)))
@@ -58,10 +58,10 @@
 
 (deftest test-get-workflow
   (using-assemble-refbased-workflow-bindings
-   (let [wf (terra/get-workflow firecloud workspace submission workflow)]
+   (let [wf (firecloud/get-workflow firecloud workspace submission workflow)]
      (is (= pipeline (:workflowName wf))))))
 
 (deftest test-get-workflow-outputs
   (using-assemble-refbased-workflow-bindings
-   (let [outputs (terra/get-workflow-outputs firecloud workspace submission workflow)]
+   (let [outputs (firecloud/get-workflow-outputs firecloud workspace submission workflow)]
      (is (some? (-> outputs :tasks ((keyword pipeline)) :outputs))))))
