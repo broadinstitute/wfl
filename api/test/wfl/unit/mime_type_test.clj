@@ -42,7 +42,7 @@
   (let [cases [[(workflows/read-resource "assemble-refbased-outputs")
                 (-> "assemble-refbased-description" workflows/read-resource :outputs)]
                [{} ;; TODO: run workflow and get sample outputs
-                (-> "augur-from-assemblies-description" workflows/read-resource :outputs)]]]
+                (-> "sarscov2-illumina-full-description" workflows/read-resource :outputs)]]]
     (doseq [[values description] cases]
       (let [type (workflows/make-object-type description)]
         (doseq [filename (get-files type values)]
