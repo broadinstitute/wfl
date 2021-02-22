@@ -17,17 +17,16 @@
 (def entity-name "200598830050_R07C01-1")
 
 (deftest test-terra-submission
-  (testing "A workflow is created for the entity"
-    (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
-      #(let [submission-id (firecloud/create-submission
-                            workspace
-                            method-configuration-name
-                            method-configuration-namespace
-                            entity-type
-                            entity-name)
-             submission    (firecloud/get-submission workspace submission-id)
-             workflow      (first (:workflows submission))]
-         (is (= entity-name (get-in workflow [:workflowEntity :entityName])))))))
+  (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
+    #(let [submission-id (firecloud/create-submission
+                          workspace
+                          method-configuration-name
+                          method-configuration-namespace
+                          entity-type
+                          entity-name)
+           submission    (firecloud/get-submission workspace submission-id)
+           workflow      (first (:workflows submission))]
+       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a
