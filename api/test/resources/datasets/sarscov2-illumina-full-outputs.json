@@ -1,6 +1,7 @@
 {
   "name": "sarscov2_illumina_full_outputs",
   "description": "COVID-19 sarscov2_illumina_full pipeline outputs",
+  "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
   "schema": {
     "tables": [
       {
@@ -9,17 +10,17 @@
           {
             "name": "raw_reads_unaligned_bams",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "cleaned_reads_unaligned_bams",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "cleaned_bams_tiny",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "meta_by_filename_json",
@@ -28,12 +29,12 @@
           {
             "name": "read_counts_raw",
             "datatype": "int64",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "read_counts_depleted",
             "datatype": "int64",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "sra_metadata",
@@ -46,17 +47,17 @@
           {
             "name": "assemblies_fasta",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "passing_assemblies_fasta",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "submittable_assemblies_fasta",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "max_ntc_bases",
@@ -65,17 +66,17 @@
           {
             "name": "demux_metrics",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "demux_commonBarcodes",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "demux_outlierBarcodes",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "multiqc_report_raw",
@@ -108,7 +109,7 @@
           {
             "name": "vadr_outputs",
             "datatype": "fileref",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "genbank_source_table",
@@ -133,22 +134,22 @@
           {
             "name": "assembled_ids",
             "datatype": "string",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "submittable_ids",
             "datatype": "string",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "failed_assembly_ids",
             "datatype": "string",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "failed_annotation_ids",
             "datatype": "string",
-            "is_array": true
+            "array_of": true
           },
           {
             "name": "num_read_files",
@@ -180,21 +181,10 @@
           }
         ],
         "primaryKey": [
-          "raw_reads_unaligned_bams",
-          "cleaned_reads_unaligned_bams",
-          "cleaned_bams_tiny",
           "meta_by_filename_json",
-          "read_counts_raw",
-          "read_counts_depleted",
           "sra_metadata",
           "cleaned_bam_uris",
-          "assemblies_fasta",
-          "passing_assemblies_fasta",
-          "submittable_assemblies_fasta",
           "max_ntc_bases",
-          "demux_metrics",
-          "demux_commonBarcodes",
-          "demux_outlierBarcodes",
           "multiqc_report_raw",
           "multiqc_report_cleaned",
           "spikein_counts",
@@ -202,16 +192,11 @@
           "submission_zip",
           "submission_xml",
           "submit_ready",
-          "vadr_outputs",
           "genbank_source_table",
           "gisaid_fasta",
           "gisaid_meta_tsv",
           "genbank_fasta",
           "nextmeta_tsv",
-          "assembled_ids",
-          "submittable_ids",
-          "failed_assembly_ids",
-          "failed_annotation_ids",
           "num_read_files",
           "num_assembled",
           "num_failed_assembly",
