@@ -54,9 +54,7 @@
           "reference_fasta",
           "amplicon_bed_prefix",
           "instrument_model",
-          "sra_title",
-          "min_genome_bases",
-          "max_vadr_alerts"
+          "sra_title"
         ],
         "partitionMode": "date",
         "datePartitionOptions": {
