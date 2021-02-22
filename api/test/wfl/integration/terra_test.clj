@@ -23,9 +23,12 @@
 
 (deftest test-terra-submission
   (testing "A workflow is created for the entity"
-    (let [submission-id (terra/create-submission terra-url workspace
-                                                 method-configuration-name method-configuration-namespace
-                                                 entity-type entity-name)
+    (let [submission-id (terra/create-submission terra-url
+                                                 workspace
+                                                 method-configuration-name
+                                                 method-configuration-namespace
+                                                 entity-type
+                                                 entity-name)
           submission    (terra/get-submission terra-url workspace submission-id)
           workflow      (first (:workflows submission))]
       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
