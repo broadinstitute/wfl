@@ -1,0 +1,68 @@
+{
+  "name": "sarscov2_illumina_full_inputs",
+  "description": "COVID-19 sarscov2_illumina_full pipeline inputs",
+  "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
+  "schema": {
+    "tables": [
+      {
+        "name": "sarscov2_illumina_full_inputs",
+        "columns": [
+          {
+            "name": "flowcell_tgz",
+            "datatype": "fileref"
+          },
+          {
+            "name": "reference_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "amplicon_bed_prefix",
+            "datatype": "string"
+          },
+          {
+            "name": "biosample_attributes",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "instrument_model",
+            "datatype": "string"
+          },
+          {
+            "name": "sra_title",
+            "datatype": "string"
+          },
+          {
+            "name": "min_genome_bases",
+            "datatype": "int64"
+          },
+          {
+            "name": "max_vadr_alerts",
+            "datatype": "int64"
+          },
+          {
+            "name": "workspace_name",
+            "datatype": "string"
+          },
+          {
+            "name": "terra_project",
+            "datatype": "string"
+          }
+        ],
+        "primaryKey": [
+          "flowcell_tgz",
+          "reference_fasta",
+          "amplicon_bed_prefix",
+          "instrument_model",
+          "sra_title",
+          "min_genome_bases",
+          "max_vadr_alerts"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      }
+    ]
+  }
+}
