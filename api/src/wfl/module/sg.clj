@@ -240,7 +240,7 @@
                     "/small_exac_common_3.hg38.vcf.gz")
         fasta  (str "gs://gcp-public-data--broad-references/hg38/v0"
                     "/Homo_sapiens_assembly38.fasta")
-        dbsnp  (str "gs://broad-gotc-dev-storage/temp_references"
+        dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
                     "/gdc/dbsnp_144.hg38.vcf.gz")
         bogus  {:contamination_vcf       contam
                 :contamination_vcf_index (str contam ".tbi")
