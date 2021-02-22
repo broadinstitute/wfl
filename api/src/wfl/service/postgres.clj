@@ -74,8 +74,8 @@
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [executor project]} workflow]
-            (firecloud/get-workflow-status-by-entity executor project workflow))]
+  (letfn [(get-terra-status [{:keys [project]} workflow]
+            (firecloud/get-workflow-status-by-entity project workflow))]
     (make-update-workflows get-terra-status)))
 
 (defn batch-update-workflow-statuses!

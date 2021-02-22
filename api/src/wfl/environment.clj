@@ -51,7 +51,14 @@
    #(-> nil)
    "WFL_TERRA_DATA_REPO_URL"
    #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_FIRECLOUD_URL"
+   (constantly "https://api.firecloud.org/")
    "WFL_WFL_URL"
    #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
-(def getenv (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
+(def ^:private __getenv
+  (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
+
+(def testing "Override the environment for testing" (atom {}))
+
+(defn getenv [name] (or (@testing name) (__getenv name)))

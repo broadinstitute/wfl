@@ -6,7 +6,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.environment :as env])
   (:import [java.util UUID]
            (java.nio.file Files)
            (org.apache.commons.io FileUtils)
@@ -186,3 +187,10 @@
    datarepo/delete-dataset
    f))
 
+(defn with-temporary-environment
+  "Temporarily override the environment with the key-value mapping in `env`"
+  [new-env f]
+  (util/bracket
+   #(let [prev @env/testing] (swap! env/testing merge new-env) prev)
+   #(reset! env/testing %)
+   (fn [_] (f))))

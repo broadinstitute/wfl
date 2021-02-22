@@ -125,8 +125,12 @@
               (let [inputs           (:inputs workflow)
                     entity-type      (:entity-type inputs)
                     entity-name      (:entity-name inputs)]
-                [id (firecloud/create-submission executor project method-configuration-name
-                                                 method-configuration-namespace entity-type entity-name)]))
+                [id (firecloud/create-submission
+                     project
+                     method-configuration-name
+                     method-configuration-namespace
+                     entity-type
+                     entity-name)]))
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items
