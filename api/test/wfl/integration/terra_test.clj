@@ -23,9 +23,12 @@
 
 (deftest test-terra-submission
   (testing "A workflow is created for the entity"
-    (let [submission-id (terra/create-submission terra-url workspace
-                                                 method-configuration-name method-configuration-namespace
-                                                 entity-type entity-name)
+    (let [submission-id (terra/create-submission terra-url
+                                                 workspace
+                                                 method-configuration-name
+                                                 method-configuration-namespace
+                                                 entity-type
+                                                 entity-name)
           submission    (terra/get-submission terra-url workspace submission-id)
           workflow      (first (:workflows submission))]
       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
@@ -46,9 +49,7 @@
 
 (deftest test-describe-wdl
   (using-assemble-refbased-workflow-bindings
-   (let [description (->> wdl
-                          cromwell/wdl-map->url
-                          (terra/describe-wdl firecloud))]
+   (let [description (terra/describe-wdl firecloud (cromwell/wdl-map->url wdl))]
      (is (:valid description))
      (is (empty? (:errors description)))
      (is (= pipeline (:name description)))

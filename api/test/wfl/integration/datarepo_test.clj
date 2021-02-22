@@ -15,11 +15,9 @@
 (def dataset "f359303e-15d7-4cd8-a4c7-c50499c90252")
 (def profile "390e7a85-d47f-4531-b612-165fc977d3bd")
 
-(def ^:private assemble-refbased-outputs-dataset
-  "test/resources/datasets/assemble-refbased-outputs.json")
-
-(defn ^:private make-dataset-request [dataset-json-path]
-  (-> (slurp dataset-json-path)
+(defn ^:private make-dataset-request [dataset-basename]
+  (-> (str "test/resources/datasets/" dataset-basename)
+      slurp
       json/read-str
     ;; give it a unique name to avoid collisions with other tests
       (update "name" #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
@@ -27,7 +25,9 @@
 
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
-  (doseq [definition [assemble-refbased-outputs-dataset]]
+  (doseq [definition ["assemble-refbased-outputs.json"
+                      "sarscov2-illumina-full-inputs.json"
+                      "sarscov2-illumina-full-outputs.json"]]
     (testing (str "creating dataset " (util/basename definition))
       (fixtures/with-temporary-dataset (make-dataset-request definition)
         #(let [dataset (datarepo/dataset %)]
@@ -89,7 +89,7 @@
      type value)))
 
 (deftest test-ingest-workflow-outputs
-  (let [dataset-json     assemble-refbased-outputs-dataset
+  (let [dataset-json     "assemble-refbased-outputs.json"
         pipeline-outputs (workflows/read-resource "assemble-refbased-outputs")
         outputs-type     (-> "assemble-refbased-description"
                              workflows/read-resource

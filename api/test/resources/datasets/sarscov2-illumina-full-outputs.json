@@ -1,0 +1,214 @@
+{
+  "name": "sarscov2_illumina_full_outputs",
+  "description": "COVID-19 sarscov2_illumina_full pipeline outputs",
+  "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
+  "schema": {
+    "tables": [
+      {
+        "name": "sarscov2_illumina_full_outputs",
+        "columns": [
+          {
+            "name": "raw_reads_unaligned_bams",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "cleaned_reads_unaligned_bams",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "cleaned_bams_tiny",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "meta_by_filename_json",
+            "datatype": "fileref"
+          },
+          {
+            "name": "read_counts_raw",
+            "datatype": "int64",
+            "array_of": true
+          },
+          {
+            "name": "read_counts_depleted",
+            "datatype": "int64",
+            "array_of": true
+          },
+          {
+            "name": "sra_metadata",
+            "datatype": "fileref"
+          },
+          {
+            "name": "cleaned_bam_uris",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assemblies_fasta",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "passing_assemblies_fasta",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "submittable_assemblies_fasta",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "max_ntc_bases",
+            "datatype": "int64"
+          },
+          {
+            "name": "demux_metrics",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "demux_commonBarcodes",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "demux_outlierBarcodes",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "multiqc_report_raw",
+            "datatype": "fileref"
+          },
+          {
+            "name": "multiqc_report_cleaned",
+            "datatype": "fileref"
+          },
+          {
+            "name": "spikein_counts",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assembly_stats_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submission_zip",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submission_xml",
+            "datatype": "fileref"
+          },
+          {
+            "name": "submit_ready",
+            "datatype": "fileref"
+          },
+          {
+            "name": "vadr_outputs",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "genbank_source_table",
+            "datatype": "fileref"
+          },
+          {
+            "name": "gisaid_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "gisaid_meta_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "genbank_fasta",
+            "datatype": "fileref"
+          },
+          {
+            "name": "nextmeta_tsv",
+            "datatype": "fileref"
+          },
+          {
+            "name": "assembled_ids",
+            "datatype": "string",
+            "array_of": true
+          },
+          {
+            "name": "submittable_ids",
+            "datatype": "string",
+            "array_of": true
+          },
+          {
+            "name": "failed_assembly_ids",
+            "datatype": "string",
+            "array_of": true
+          },
+          {
+            "name": "failed_annotation_ids",
+            "datatype": "string",
+            "array_of": true
+          },
+          {
+            "name": "num_read_files",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_assembled",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_failed_assembly",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_submittable",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_failed_annotation",
+            "datatype": "int64"
+          },
+          {
+            "name": "num_samples",
+            "datatype": "int64"
+          },
+          {
+            "name": "data_table_status",
+            "datatype": "string"
+          }
+        ],
+        "primaryKey": [
+          "meta_by_filename_json",
+          "sra_metadata",
+          "cleaned_bam_uris",
+          "max_ntc_bases",
+          "multiqc_report_raw",
+          "multiqc_report_cleaned",
+          "spikein_counts",
+          "assembly_stats_tsv",
+          "submission_zip",
+          "submission_xml",
+          "submit_ready",
+          "genbank_source_table",
+          "gisaid_fasta",
+          "gisaid_meta_tsv",
+          "genbank_fasta",
+          "nextmeta_tsv",
+          "num_read_files",
+          "num_assembled",
+          "num_failed_assembly",
+          "num_submittable",
+          "num_failed_annotation",
+          "num_samples"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      }
+    ]
+  }
+}
