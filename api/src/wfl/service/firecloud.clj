@@ -78,16 +78,12 @@
 
    Parameters
    ----------
-   terra-url  - The URL of Terra instance.
    workspace  - Terra Workspace to upload samples to.
    file       - A tsv file (or bytes) containing sample inputs.
 
    Example
    -------
-     (import-entities
-         \"https://firecloud-orchestration.dsde-dev.broadinstitute.org\"
-         \"general-dev-billing-account/hornet-test\"
-         \"./samples.tsv\")"
+     (import-entities \"workspace-namespace/workspace-name\" \"./samples.tsv\")"
   [workspace file]
   (-> (workspace-api-url workspace "/flexibleImportEntities")
       (http/post {:headers   (auth/get-auth-header)
