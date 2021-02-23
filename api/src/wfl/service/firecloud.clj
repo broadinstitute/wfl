@@ -90,11 +90,10 @@
          \"./samples.tsv\")"
   [workspace file]
   (-> (workspace-api-url workspace "/flexibleImportEntities")
-      (http/post {:headers (auth/get-auth-header)
-                  :multipart    [{:name "Content/type"
-                                  :content "text/tab-separated-values"}
-                                 {:name "entities"
-                                  :content (slurp file)}]})))
+      (http/post {:headers   (auth/get-auth-header)
+                  :multipart (util/multipart-body
+                              {:Content/type "text/tab-separated-values"
+                               :entities     (slurp file)})})))
 
 (defn describe-wdl
   "Use `firecloud-url` to describe the WDL at `wdl-url`"
