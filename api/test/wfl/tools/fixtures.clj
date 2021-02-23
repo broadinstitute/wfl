@@ -190,7 +190,7 @@
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
    The original environment will be restored after `f` returns. No guarantees
-   thread safety are made.
+   are made for thread safety.
 
    Parameters
    ----------
