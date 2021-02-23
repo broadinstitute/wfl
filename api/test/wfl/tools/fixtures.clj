@@ -6,7 +6,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
-            [wfl.util :as util])
+            [wfl.util :as util]
+            [wfl.environment :as env])
   (:import [java.util UUID]
            (java.nio.file Files)
            (org.apache.commons.io FileUtils)
@@ -186,3 +187,30 @@
    datarepo/delete-dataset
    f))
 
+(defn with-temporary-environment
+  "Temporarily override the environment with the key-value mapping in `env`.
+   The original environment will be restored after `f` returns. No guarantees
+   are made for thread safety - in the same way as you wouldn't use a regex to
+   parse xhtml [1], don't mix this with multi-threaded code.
+
+   Parameters
+   ----------
+     new-env - map of environment variable names to their new values.
+     f       - Action to execute in the new environment.
+
+   Example
+   -------
+     (with-temporary-environment {\"WFL_WFL_URL\" \"http://localhost:3000/\"}
+       (fn [] #_(use updated environment)))
+
+   [1]: https://stackoverflow.com/a/1732454"
+  [new-env f]
+  (util/bracket
+   #(let [prev @env/testing] (swap! env/testing merge new-env) prev)
+   #(reset! env/testing %)
+   (fn [_] (f))))
+
+(defn temporary-environment
+  "Adapter for clojure.test/use-fixtures"
+  [env]
+  (partial with-temporary-environment env))

@@ -1,18 +1,20 @@
 (ns wfl.integration.modules.arrays-test
   (:require [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
-            [wfl.service.terra :as terra]
+            [wfl.service.firecloud :as terra]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
-(use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures
+  :once
+  fixtures/temporary-postgresql-database
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}))
 
-(defn ^:private mock-terra-create-submission [& _]
-  (UUID/randomUUID))
+(defn ^:private mock-terra-create-submission [& _] (UUID/randomUUID))
 
-(defn ^:private mock-get-workflow-status-by-entity [& _]
-  "Succeeded")
+(defn ^:private mock-get-workflow-status-by-entity [& _] "Succeeded")
 
 (defn ^:private make-arrays-workload-request []
   (-> (workloads/arrays-workload-request (UUID/randomUUID))

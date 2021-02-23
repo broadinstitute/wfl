@@ -6,7 +6,7 @@
             [wfl.jdbc :as jdbc]
             [wfl.auth :as auth]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.terra :as terra]
+            [wfl.service.firecloud :as firecloud]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]))
 
@@ -74,8 +74,8 @@
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [executor project]} workflow]
-            (terra/get-workflow-status-by-entity executor project workflow))]
+  (letfn [(get-terra-status [{:keys [project]} workflow]
+            (firecloud/get-workflow-status-by-entity project workflow))]
     (make-update-workflows get-terra-status)))
 
 (defn batch-update-workflow-statuses!

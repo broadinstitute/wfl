@@ -24,10 +24,10 @@
            (log/warn e "Issue with Vault")
            (log/debug "Perhaps run 'vault login' and try again")))))
 
+;; Keep this map pure - defer any IO to the thunk returned by this map.
 (def ^:private defaults
-  "Default values for environment variables, mainly for dev purposes.
-   Hide values behind thunks to avoid compile time I/O.
-   Missing defaults here can lead to NPE exceptions."
+  "Default actions (thunks) for computing environment variables, mainly for
+   development, testing and documentation purposes."
   {"GOOGLE_APPLICATION_CREDENTIALS"
    #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
         vault-secrets
@@ -51,7 +51,18 @@
    #(-> nil)
    "WFL_TERRA_DATA_REPO_URL"
    #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_FIRECLOUD_URL"
+   #(-> "https://api.firecloud.org/")
    "WFL_WFL_URL"
    #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
-(def getenv (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
+(def ^:private __getenv (memoize #(or (System/getenv %) ((defaults %)))))
+(def testing
+  "Override the environment used by `getenv` for testing. DO NOT USE THIS.
+  Use `wfl.tools.fixtures/with-temporary-environment` instead."
+  (atom {}))
+
+(defn getenv
+  "Lookup the value of the environment variable specified by `name`."
+  [name]
+  (or (@testing name) (__getenv name)))

@@ -108,7 +108,7 @@
 
 (defn arrays-workload-request
   [identifier]
-  {:executor "https://firecloud-orchestration.dsde-dev.broadinstitute.org"
+  {:executor (env/getenv "WFL_FIRECLOUD_URL")
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/"
                   identifier)
    :pipeline arrays/pipeline
