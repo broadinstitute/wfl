@@ -60,11 +60,11 @@
   (let [payload (-> (select-keys workload [:uuid])
                     (assoc :notifications samples)
                     (json/write-str :escape-slash false))]
-    (-> (wfl-url "/api/v1/append_to_aou"))
-    (http/post {:headers      (auth/get-auth-header)
-                :content-type :application/json
-                :body         payload})
-    util/response-body-json))
+    (-> (wfl-url "/api/v1/append_to_aou")
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         payload})
+        util/response-body-json)))
 
 (defn exec-workload
   "Create and start workload defined by WORKLOAD"
