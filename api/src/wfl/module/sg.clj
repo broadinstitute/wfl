@@ -269,8 +269,7 @@
       "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
     (def crams (tsv->crams prod tsv))
     (def cram (first crams))
-    (def workload (crams->workload crams))
-    )
+    (def workload (crams->workload crams)))
   (util/map-tsv-file tsv)
   (count crams)
   (query-cram dev cram)
@@ -299,5 +298,4 @@
                      :accept       :json
                      :body         payload})]
       (util/parse-json (:body response))))
-  (execute workload)
-  )
+  (execute workload))
