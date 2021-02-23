@@ -13,7 +13,7 @@
 
 (def pipeline "GPArrays")
 
-(def method-configuration-name "Arrays")
+(def methodconfig-name "Arrays")
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -118,19 +118,14 @@
 
 (defn start-arrays-workload!
   "Use transaction TX to start the WORKLOAD."
-  [tx {:keys [executor items project uuid] :as workload}]
+  [tx {:keys [items project uuid] :as workload}]
   (let [now (OffsetDateTime/now)
-        method-configuration-namespace (first (str/split project #"/"))]
-    (letfn [(submit! [{:keys [id] :as workflow}]
-              (let [inputs           (:inputs workflow)
-                    entity-type      (:entity-type inputs)
-                    entity-name      (:entity-name inputs)]
-                [id (firecloud/create-submission
-                     project
-                     method-configuration-name
-                     method-configuration-namespace
-                     entity-type
-                     entity-name)]))
+        methodconfig-ns (first (str/split project #"/"))]
+    (letfn [(submit! [{:keys [id inputs] :as _workflow}]
+              [id (firecloud/create-submission
+                   project
+                   (str/join "/" [methodconfig-ns methodconfig-name])
+                   (mapv inputs [:entity-type :entity-name]))])
             (update! [tx [id uuid]]
               (when uuid
                 (jdbc/update! tx items

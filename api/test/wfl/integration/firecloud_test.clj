@@ -2,31 +2,37 @@
   (:require [clojure.test :refer [deftest is testing]]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.firecloud :as firecloud]
-            [wfl.tools.fixtures :as fixtures]))
+            [wfl.util :as util]))
 
-(def firecloud-dev "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
+;; Of the form NAMESPACE/NAME
+(def workspace "wfl-dev/Illumina-Genotyping-Array")
 
-(def workspace "general-dev-billing-account/arrays")
+;; Of the form NAMESPACE/NAME
+(def method-configuration "warp-pipelines/IlluminaGenotypingArray")
 
-(def method-configuration-name "Arrays")
+;; An entity is a pair [Type Name]
+(def entity ["sample" "NA12878"])
 
-(def method-configuration-namespace "general-dev-billing-account")
+;; A submission that was manually created
+(def well-known-submission "12ea8b91-737d-4838-972e-05f3c80f3881")
+(def well-known-workflow   "1d5c211a-810f-49c5-be3a-e9502d7828d1")
 
-(def entity-type "sample")
+(deftest test-get-submission
+  (let [submission (firecloud/get-submission workspace well-known-submission)]
+    (is (= "Done" (:status submission)))
+    (let [[workflow & rest] (:workflows submission)]
+      (is (empty? rest))
+      (is (= well-known-workflow (:workflowId workflow)))
+      (is (#{"Succeeded"} (:status workflow))))))
 
-(def entity-name "200598830050_R07C01-1")
-
-(deftest test-terra-submission
-  (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
-    #(let [submission-id (firecloud/create-submission
-                          workspace
-                          method-configuration-name
-                          method-configuration-namespace
-                          entity-type
-                          entity-name)
-           submission    (firecloud/get-submission workspace submission-id)
-           workflow      (first (:workflows submission))]
-       (is (= entity-name (get-in workflow [:workflowEntity :entityName]))))))
+(deftest test-create-submission
+  (util/bracket
+   #(firecloud/create-submission workspace method-configuration entity)
+   #(firecloud/abort-submission workspace %)
+   (fn [submission-id]
+     (let [submission (firecloud/get-submission workspace submission-id)
+           workflow   (-> submission :workflows first)]
+       (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a

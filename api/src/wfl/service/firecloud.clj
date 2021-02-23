@@ -13,27 +13,30 @@
 
 (def workspace-api-url (partial firecloud-url "api/workspaces/"))
 
+(defn abort-submission
+  "Abort the submission with `submission-id` in the Terra `workspace`."
+  [workspace submission-id]
+  (-> (workspace-api-url (str/join "/" [workspace "submissions" submission-id]))
+      (http/delete {:headers (auth/get-auth-header)})))
+
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [workspace
-   method-configuration-name
-   method-configuration-namespace
-   entity-type
-   entity-name]
-  (-> {:method       :post
-       :url          (workspace-api-url workspace "/submissions")
-       :headers      (auth/get-auth-header)
-       :content-type :application/json
-       :body         (json/write-str
-                      {:methodConfigurationNamespace method-configuration-namespace
-                       :methodConfigurationName method-configuration-name
-                       :entityType entity-type
-                       :entityName entity-name
-                       :useCallCache true}
-                      :escape-slash false)}
-      http/request
-      util/response-body-json
-      :submissionId))
+  [workspace methodconfig [etype ename]]
+  (let [[mcns mcn] (str/split methodconfig #"/")]
+    (-> {:method       :post
+         :url          (workspace-api-url workspace "/submissions")
+         :headers      (auth/get-auth-header)
+         :content-type :application/json
+         :body         (json/write-str
+                        {:methodConfigurationNamespace mcns
+                         :methodConfigurationName mcn
+                         :entityType etype
+                         :entityName ename
+                         :useCallCache true}
+                        :escape-slash false)}
+        http/request
+        util/response-body-json
+        :submissionId)))
 
 (defn get-submission
   "Get information about a Terra Cromwell submission."

@@ -78,7 +78,7 @@
 (deftest ^:excluded test-create-arrays-workload
   (testing "Excluded. See GH-1209"
     #_(test-create-workload
-        (workloads/arrays-workload-request (UUID/randomUUID)))))
+       (workloads/arrays-workload-request (UUID/randomUUID)))))
 
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
@@ -148,8 +148,8 @@
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:excluded ^:parallel test-exec-arrays-workload
   (testing "Excluded. See GH-1209."
-  #_(test-exec-workload
-      (workloads/arrays-workload-request (UUID/randomUUID)))))
+    #_(test-exec-workload
+       (workloads/arrays-workload-request (UUID/randomUUID)))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
