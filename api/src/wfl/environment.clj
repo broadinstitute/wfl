@@ -25,40 +25,42 @@
            (log/debug "Perhaps run 'vault login' and try again")))))
 
 (def ^:private defaults
-  "Default values for environment variables, mainly for dev purposes.
-   Hide values behind thunks to avoid compile time I/O.
-   Missing defaults here can lead to NPE exceptions."
+  "Default actions (thunks) for computing environment variables, mainly for
+   development, testing and documentation purposes."
+  ;; Keep this map pure - if you need to perform any IO, defer the computation
+  ;; to the thunk returned by this map.
   {"GOOGLE_APPLICATION_CREDENTIALS"
    #(-> "secret/dsde/gotc/dev/wfl/wfl-non-prod-service-account.json"
         vault-secrets
         (json/write-str :escape-slash false)
         .getBytes)
    "WFL_CLIO_URL"
-   #(-> "https://clio.gotc-dev.broadinstitute.org")
+   (constantly "https://clio.gotc-dev.broadinstitute.org")
    "WFL_COOKIE_SECRET"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_CROMWELL_URL"
-   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   (constantly "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_DATA_REPO_SA"
-   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
+   (constantly "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
-   #(-> "password")
+   (constantly "password")
    "WFL_POSTGRES_URL"
-   #(-> "jdbc:postgresql:wfl")
+   (constantly "jdbc:postgresql:wfl")
    "WFL_POSTGRES_USERNAME"
-   #(-> nil)
+   (constantly nil)
    "WFL_TERRA_DATA_REPO_URL"
-   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   (constantly "https://jade.datarepo-dev.broadinstitute.org/")
    "WFL_FIRECLOUD_URL"
    (constantly "https://api.firecloud.org/")
    "WFL_WFL_URL"
-   #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
+   (constantly "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
-(def ^:private __getenv
-  (memoize (fn [name] (or (System/getenv name) ((defaults name))))))
+(def ^:private __getenv (memoize #(or (System/getenv %) ((defaults %)))))
+(def testing "Override the environment used by `getenv` for testing." (atom {}))
 
-(def testing "Override the environment for testing" (atom {}))
-
-(defn getenv [name] (or (@testing name) (__getenv name)))
+(defn getenv
+  "Lookup the value of the environment variable specified by `name`."
+  [name]
+  (or (@testing name) (__getenv name)))

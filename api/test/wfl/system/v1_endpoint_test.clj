@@ -11,6 +11,7 @@
   (:import (clojure.lang ExceptionInfo)
            (java.util UUID)))
 
+(def firecloud-dev "https://firecloud-orchestration.dsde-dev.broadinstitute.org")
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
@@ -76,7 +77,10 @@
 (deftest test-create-aou-workload
   (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest test-create-arrays-workload
-  (test-create-workload (workloads/arrays-workload-request (UUID/randomUUID))))
+  (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
+    #(test-create-workload
+      (workloads/arrays-workload-request (UUID/randomUUID)))))
+
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest test-create-sg-workload
@@ -103,7 +107,8 @@
 (deftest ^:parallel test-start-aou-workload
   (test-start-workload (create-aou-workload)))
 (deftest ^:parallel test-start-arrays-workload
-  (test-start-workload (create-arrays-workload)))
+  (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
+    (test-start-workload (create-arrays-workload))))
 (deftest ^:parallel test-start-xx-workload
   (test-start-workload (create-xx-workload)))
 (deftest ^:parallel test-start-sg-workload
@@ -143,7 +148,8 @@
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-arrays-workload
-  (test-exec-workload (workloads/arrays-workload-request (UUID/randomUUID))))
+  (fixtures/with-temporary-environment {"WFL_FIRECLOUD_URL" firecloud-dev}
+    (test-exec-workload (workloads/arrays-workload-request (UUID/randomUUID)))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
