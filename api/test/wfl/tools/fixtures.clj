@@ -190,7 +190,8 @@
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
    The original environment will be restored after `f` returns. No guarantees
-   are made for thread safety.
+   are made for thread safety - in the same way as you wouldn't use a regex to
+   parse xhtml [1], don't mix this with multi-threaded code.
 
    Parameters
    ----------
@@ -200,7 +201,9 @@
    Example
    -------
      (with-temporary-environment {\"WFL_WFL_URL\" \"http://localhost:3000/\"}
-       (fn [] #_(use updated environment)))"
+       (fn [] #_(use updated environment)))
+
+   [1]: https://stackoverflow.com/a/1732454"
   [new-env f]
   (util/bracket
    #(let [prev @env/testing] (swap! env/testing merge new-env) prev)
