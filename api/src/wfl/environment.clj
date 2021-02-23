@@ -35,27 +35,27 @@
         (json/write-str :escape-slash false)
         .getBytes)
    "WFL_CLIO_URL"
-   (constantly "https://clio.gotc-dev.broadinstitute.org")
+   #(-> "https://clio.gotc-dev.broadinstitute.org")
    "WFL_COOKIE_SECRET"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_CROMWELL_URL"
-   (constantly "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_DATA_REPO_SA"
-   (constantly "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
+   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
-   (constantly "password")
+   #(-> "password")
    "WFL_POSTGRES_URL"
-   (constantly "jdbc:postgresql:wfl")
+   #(-> "jdbc:postgresql:wfl")
    "WFL_POSTGRES_USERNAME"
-   (constantly nil)
+   #(-> nil)
    "WFL_TERRA_DATA_REPO_URL"
-   (constantly "https://jade.datarepo-dev.broadinstitute.org/")
+   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
    "WFL_FIRECLOUD_URL"
-   (constantly "https://api.firecloud.org/")
+   #(-> "https://api.firecloud.org/")
    "WFL_WFL_URL"
-   (constantly "https://dev-wfl.gotc-dev.broadinstitute.org")})
+   #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
 (def ^:private __getenv (memoize #(or (System/getenv %) ((defaults %)))))
 (def testing "Override the environment used by `getenv` for testing." (atom {}))
