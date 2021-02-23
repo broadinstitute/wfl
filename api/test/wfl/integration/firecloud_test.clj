@@ -32,7 +32,8 @@
    (fn [submission-id]
      (let [submission (firecloud/get-submission workspace submission-id)
            workflow   (-> submission :workflows first)]
-       (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))))))
+       (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
+       (is (#{"Queued" "Submitted"} (:status workflow)))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a
