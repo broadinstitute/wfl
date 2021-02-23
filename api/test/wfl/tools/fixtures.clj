@@ -188,7 +188,19 @@
    f))
 
 (defn with-temporary-environment
-  "Temporarily override the environment with the key-value mapping in `env`"
+  "Temporarily override the environment with the key-value mapping in `env`.
+   The original environment will be restored after `f` returns. No guarantees
+   thread safety are made.
+
+   Parameters
+   ----------
+     new-env - map of environment variable names to their new values.
+     f       - Action to execute in the new environment.
+
+   Example
+   -------
+     (with-temporary-environment {\"WFL_WFL_URL\" \"http://localhost:3000/\"}
+       (fn [] #_(use updated environment)))"
   [new-env f]
   (util/bracket
    #(let [prev @env/testing] (swap! env/testing merge new-env) prev)

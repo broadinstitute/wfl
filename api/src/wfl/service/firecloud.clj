@@ -21,7 +21,7 @@
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [workspace methodconfig [etype ename]]
+  [workspace methodconfig [entity-type entity-name :as _entity]]
   (let [[mcns mcn] (str/split methodconfig #"/")]
     (-> {:method       :post
          :url          (workspace-api-url workspace "/submissions")
@@ -30,8 +30,8 @@
          :body         (json/write-str
                         {:methodConfigurationNamespace mcns
                          :methodConfigurationName mcn
-                         :entityType etype
-                         :entityName ename
+                         :entityType entity-type
+                         :entityName entity-name
                          :useCallCache true}
                         :escape-slash false)}
         http/request
@@ -39,7 +39,7 @@
         :submissionId)))
 
 (defn get-submission
-  "Get information about a Terra Cromwell submission."
+  "Return the submission in the Terra `workspace` with `submission-id`."
   [workspace submission-id]
   (-> (workspace-api-url workspace "/submissions/" submission-id)
       (http/get {:headers (auth/get-auth-header)})
@@ -66,11 +66,12 @@
 (defn get-workflow-status-by-entity
   "Get workflow status given a Terra submission-id and entity-name."
   [workspace {:keys [uuid inputs] :as _item}]
-  (->> (get-submission workspace uuid)
-       :workflows
-       (filter #(= (:entity-name inputs) (get-in % [:workflowEntity :entityName])))
-       first
-       :status))
+  (let [name (:entity-name inputs)]
+    (->> (get-submission workspace uuid)
+         :workflows
+         (filter #(= name (get-in % [:workflowEntity :entityName])))
+         first
+         :status)))
 
 (defn import-entities
   "Import sample entities into a Terra WORKSPACE from a tsv FILE.
@@ -78,8 +79,8 @@
 
    Parameters
    ----------
-   workspace  - Terra Workspace to upload samples to.
-   file       - A tsv file (or bytes) containing sample inputs.
+     workspace  - Terra Workspace to upload samples to.
+     file       - A tsv file (or bytes) containing sample inputs.
 
    Example
    -------
