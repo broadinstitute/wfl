@@ -28,8 +28,8 @@
     ((fn go [type value]
        (case (:typeName type)
          "Array"
-         (letfn [(go-elem [x] (go (:arrayType type) x))]
-           (mapcat go-elem value))
+         (let [{:keys [arrayType]} type]
+           (mapcat #(go arrayType %) value))
          "File"
          [value]
          "Object"

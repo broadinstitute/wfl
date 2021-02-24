@@ -64,9 +64,9 @@
     ((fn go [type value]
        (case (:typeName type)
          "Array"
-         (letfn [(go-elem [x] (go (:arrayType type) x))]
+         (let [{:keys [arrayType]} type]
            ;; eagerly issue ingest requests for each element in the array
-           (sequence (mapv go-elem value)))
+           (sequence (mapv #(go arrayType %) value)))
          ("Boolean" "Float" "Int" "Number" "String")
          (return value)
          "File"
