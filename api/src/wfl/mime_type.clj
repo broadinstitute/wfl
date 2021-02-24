@@ -1,17 +1,29 @@
 (ns wfl.mime-type
   (:require [clojure.string :as str]
-            [ring.util.mime-type :as mime-type]))
+            [ring.util.mime-type :as mime-type]
+            [wfl.util :as util]))
 
 (def ^:private mime-types
   "mime-types for file extensions commonly used in computational biology."
-  (let [bio-mimes {"bam"   "application/octet-stream"
-                   "cram"  "application/octet-stream"
-                   "fasta" "application/octet-stream"
-                   "vcf"   "text/plain"}]
-    (merge mime-type/default-mime-types bio-mimes)))
+  (let [extensions
+        {"bam"     "application/octet-stream"
+         "cram"    "application/octet-stream"
+         "fasta"   "application/octet-stream"
+         "genbank" "application/octet-stream"
+         "ready"   "text/plain"
+         "tsv"     "text/tab-separated-values"
+         "vcf"     "text/plain"}]
+    (merge mime-type/default-mime-types extensions)))
+
+;; visible for testing
+(defn ext-mime-type-no-default
+  "Look up the mime-type of the filename by file extension."
+  [filename]
+  (loop [filename (util/basename filename)]
+    (if-let [ext (util/extension filename)]
+      (or (mime-types ext) (recur (util/remove-extension filename))))))
 
 (defn ext-mime-type
   "Look up the mime-type of the filename by file extension."
   [filename]
-  (if-let [ext (last (str/split filename #"\."))]
-    (mime-types ext)))
+  (or (ext-mime-type-no-default filename) "application/octet-stream"))
