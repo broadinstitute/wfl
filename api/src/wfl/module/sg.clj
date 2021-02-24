@@ -21,7 +21,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "d7d1019db51e1a215e31644a26a19ccace25f463"
+  {:release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f"
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
 
@@ -243,9 +243,10 @@
                     "/Homo_sapiens_assembly38.fasta")
         dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
                     "/gdc/dbsnp_144.hg38.vcf.gz")
-        overrides  {:picard_markduplicates.additional_disk 200
-                    :picard_markduplicates.cpu               1
-                    :picard_markduplicates.mem              96}
+        overrides  {:picard_markduplicates.additional_disk             400
+                    :picard_markduplicates.cpu                           1
+                    :picard_markduplicates.mem                          96
+                    :picard_markduplicates.sorting_collection_size_ratio 0.125}
         references {:contamination_vcf       contam
                     :contamination_vcf_index (str contam ".tbi")
                     :cram_ref_fasta          fasta
@@ -305,16 +306,16 @@
       (util/parse-json (:body response))))
   (execute (workload))
   (execute (update-in workload [:items] (comp vector first)))
-  {:started "2021-02-24T17:41:18Z",
+  {:started "2021-02-24T20:15:21Z",
    :creator "wfl-prod@broad-gotc-prod.iam.gserviceaccount.com",
    :pipeline "GDCWholeGenomeSomaticSingleSample",
-   :release "d7d1019db51e1a215e31644a26a19ccace25f463",
-   :created "2021-02-24T17:41:18Z",
+   :release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f",
+   :created "2021-02-24T20:15:21Z",
    :output "gs://broad-prod-somatic-genomes-output",
    :workflows
    [{:status "Submitted",
-     :updated "2021-02-24T17:41:19Z",
-     :uuid "d3cca3d7-8dcd-4226-94bf-4847dfeba34e",
+     :updated "2021-02-24T20:15:22Z",
+     :uuid "2fbf663c-4f8f-4c7d-8ef7-b7bb2739089c",
      :inputs
      {:contamination_vcf
       "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
@@ -327,19 +328,21 @@
       :cram_ref_fasta_index
       "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
       :base_file_name "EOMI-B21C-NB1-A-1-0-D-A82T-36",
+      :picard_markduplicates.sorting_collection_size_ratio 0.125,
       :dbsnp_vcf
       "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
       :picard_markduplicates.mem 96,
       :picard_markduplicates.cpu 1,
       :contamination_vcf_index
       "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
-      :picard_markduplicates.additional_disk 200}}],
+      :picard_markduplicates.additional_disk 400},
+     :options
+     {:monitoring_script
+      "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"}}],
    :project "(Test) tbl/GH-1196-sg-prod-data",
    :commit "c1db94192cab396c4dc03fb93908fb5e1098cd47",
    :wdl
    "beta-pipelines/broad/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
-   :uuid "a56d2ad1-ae81-45df-b719-d7e71b2ae734",
+   :uuid "8f9689d6-de2a-4ce2-97a2-a6732316627e",
    :executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
-   :version "0.6.0"}
-  (dedupe)
-  )
+   :version "0.6.0"})
