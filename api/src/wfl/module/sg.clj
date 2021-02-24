@@ -243,14 +243,17 @@
                     "/Homo_sapiens_assembly38.fasta")
         dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
                     "/gdc/dbsnp_144.hg38.vcf.gz")
-        bogus  {:contamination_vcf       contam
-                :contamination_vcf_index (str contam ".tbi")
-                :cram_ref_fasta          fasta
-                :cram_ref_fasta_index    (str fasta ".fai")
-                :dbsnp_vcf               dbsnp
-                :dbsnp_vcf_index         (str dbsnp ".tbi")}]
+        overrides  {:picard_markduplicates.additional_disk 100
+                    :picard_markduplicates.cpu               1
+                    :picard_markduplicates.mem              48}
+        references {:contamination_vcf       contam
+                    :contamination_vcf_index (str contam ".tbi")
+                    :cram_ref_fasta          fasta
+                    :cram_ref_fasta_index    (str fasta ".fai")
+                    :dbsnp_vcf               dbsnp
+                    :dbsnp_vcf_index         (str dbsnp ".tbi")}]
     (letfn [(translate [m [k v]] (assoc m k (v cram)))]
-      {:inputs (reduce translate bogus translation)})))
+      {:inputs (merge (reduce translate references translation) overrides)})))
 
 (defn crams->workload
   "Return a workload request to process `crams` with SG pipeline"
@@ -298,4 +301,5 @@
                      :accept       :json
                      :body         payload})]
       (util/parse-json (:body response))))
-  (execute workload))
+  (execute (workload))
+  (execute (update-in workload [:items] (comp vector first))))
