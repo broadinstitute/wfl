@@ -6,7 +6,9 @@
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
             [wfl.util          :as util])
-  (:import (java.util.concurrent TimeUnit)))
+  (:import (java.util.concurrent TimeUnit)
+           (java.time OffsetDateTime)
+           (java.sql Timestamp)))
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
@@ -33,14 +35,34 @@
       util/response-body-json
       :id))
 
+(defn ^:private new-load-tag []
+  (str (Timestamp/from (.toInstant (OffsetDateTime/now)))))
+
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
   [dataset-id profile-id source target]
   (ingest "files" dataset-id {:description (util/basename source)
-                              :profileId   profile-id
+                              :loadTag     (new-load-tag)
                               :mime_type   (mime-type/ext-mime-type source)
+                              :profileId   profile-id
                               :source_path source
                               :target_path target}))
+
+(defn bulk-ingest
+  "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
+  [dataset-id profile-id source->target]
+  (letfn [(make-file-load [source target]
+            {:description (util/basename source)
+             :mimeType    (mime-type/ext-mime-type source)
+             :sourcePath  source
+             :targetPath  target})]
+    (ingest
+     "files/bulk/array"
+     dataset-id
+     {:profileId          profile-id
+      :loadArray          (map #(apply make-file-load %) source->target)
+      :loadTag            (new-load-tag)
+      :maxFailedFileLoads 0})))
 
 (defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."

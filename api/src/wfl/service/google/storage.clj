@@ -67,16 +67,20 @@
   (gs-url bucket name))
 
 (defn iam
-  "Return IamPolicy response for URL."
-  [url]
-  (let [[bucket _] (parse-gs-url url)]
-    (-> {:method       :get             ; :debug true :debug-body true
-         :url          (str bucket-url bucket "/iam")
-         ;; :query-params {:project project :prefix prefix}
-         :content-type :application/json
-         :headers      (auth/get-auth-header)}
-        http/request :body
-        (json/read-str :key-fn keyword))))
+  "Return IamPolicy response for `bucket`."
+  [bucket]
+  (-> (str bucket-url bucket "/iam")
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
+(defn set-iam
+  "Set IamPolicy `bucket` to `policy`."
+  [bucket policy]
+  (-> (str bucket-url bucket "/iam")
+      (http/put {:headers      (auth/get-auth-header)
+                 :content-type :application/json
+                 :body         (json/write-str policy :escape-slash false)})
+      util/response-body-json))
 
 (defn list-buckets
   "The buckets in PROJECT named with optional PREFIX."
@@ -241,6 +245,13 @@
      (patch-object! acl-entry bucket object)))
   ([email url]
    (apply add-object-reader email (parse-gs-url url))))
+
+(defn add-storage-object-viewer
+  "Give service-account `email` the \"Storage Object Viewer\" role in `bucket`."
+  [email bucket]
+  (let [new-binding [{:role   "roles/storage.objectViewer"
+                      :members [(str "serviceAccount:" email)]}]]
+    (set-iam bucket (update (iam bucket) :bindings cons new-binding))))
 
 (defn patch-bucket!
   "Patch BUCKET in PROJECT with METADATA."
