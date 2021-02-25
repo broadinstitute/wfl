@@ -48,8 +48,13 @@
           (ingest-batch [batch]
             (->> (for [[bkt obj] batch] [(mk-url bkt obj) (target-name obj)])
                  (datarepo/bulk-ingest dataset-id profile-id)))]
+    ;; TDR limits size of bulk ingest request to 1000 files. Muscles says
+    ;; requests at this limit are "probably fine" and testing with large
+    ;; numbers of files (and size thereof) supports this. If this is becomes
+    ;; a serious bottleneck, suggest we benchmark and adjust the `split-at`
+    ;; value input accordingly.
     (->> bkt-obj-pairs
-         (split-at 1000) ;; muscles says this is "probably fine"
+         (split-at 1000)
          (mapv ingest-batch)
          (mapcat #(-> % datarepo/poll-job :loadFileResults)))))
 
@@ -60,7 +65,7 @@
                              workflows/read-resource
                              :outputs
                              workflows/make-object-type)
-        rename-gather    identity                           ;; collect and map outputs onto dataset names
+        rename-gather    identity ;; collect and map outputs onto dataset names
         table-name       "assemble_refbased_outputs"
         workflow-id      (UUID/randomUUID)
         tdr-sa           (env/getenv "WFL_DATA_REPO_SA")]

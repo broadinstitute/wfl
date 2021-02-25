@@ -35,6 +35,9 @@
       util/response-body-json
       :id))
 
+;; While TDR does assign `loadTag`s, they're not always unique - submitting
+;; requests in parallel can cause bad things to happen. Use this to create a
+;; unique `loadTag` instead.
 (defn ^:private new-load-tag []
   (str (Timestamp/from (.toInstant (OffsetDateTime/now)))))
 
@@ -116,20 +119,3 @@
       util/response-body-json
       :id
       poll-job))
-
-(comment
-  (def successful-file-ingest-response
-    {:description     "something derived from file name + extension?"
-     :path            "/zero-test/NA12878_PLUMBING.g.vcf.gz"
-     :directoryDetail nil
-     :collectionId    "f359303e-15d7-4cd8-a4c7-c50499c90252"
-     :fileDetail      {:datasetId "f359303e-15d7-4cd8-a4c7-c50499c90252"
-                       :mimeType  "text/plain"
-                       :accessUrl "gs://broad-jade-dev-data-bucket/f359303e-15d7-4cd8-a4c7-c50499c90252/271cd32c-2e86-4f46-9eb1-f3ddb44a6c1f"}
-     :fileType        "file"
-     :created         "2019-11-26T15:41:06.508Z"
-     :checksums       [{:checksum "591d9cec" :type "crc32c"}
-                       {:checksum "24f38b33c6eac4dd3569e0c4547ced88" :type "md5"}]
-     :size            3073329
-     :fileId          "271cd32c-2e86-4f46-9eb1-f3ddb44a6c1f"}))
-
