@@ -38,9 +38,8 @@
    `typeName` and `value` of non-traversable types."
   [f type object]
   (letfn [(make-type-environment [{:keys [objectFieldNames]}]
-            (into {}
-                  (for [{:keys [fieldName fieldType]} objectFieldNames]
-                    {(keyword fieldName) fieldType})))]
+            (into {} (for [{:keys [fieldName fieldType]} objectFieldNames]
+                       [(keyword fieldName) fieldType])))]
     ((fn go [type value]
        (case (:typeName type)
          "Array"
@@ -54,21 +53,29 @@
          (f (:typeName type) value)))
      type object)))
 
-(defn ^:private update-files-with-file-ids
+(defn ^:private replace-urls-with-file-ids
   [file->fileid type value]
   (-> (fn [type value]
         (case type
           ("Boolean" "Float" "Int" "Number" "String") value
           "File"                                      (file->fileid value)
-          (throw (ex-info "Unknown type" {:type  type :value value}))))
+          (throw (ex-info "Unknown type" {:type type :value value}))))
       (traverse type value)))
 
 (defn ^:private get-files [type value]
   (letfn [(f [type object] (if (= "File" type) [object] []))]
     (flatten (vals (traverse f type value)))))
 
-(defn ^:private unique-buckets [objects]
-  (into #{} (map first objects)))
+(defn ^:private ingest-files [workflow-id dataset-id profile-id bkt-obj-pairs]
+  (letfn [(target-name  [obj]     (str/join "/" ["" workflow-id obj]))
+          (mk-url       [bkt obj] (format "gs://%s/%s" bkt obj))
+          (ingest-batch [batch]
+            (->> (for [[bkt obj] batch] [(mk-url bkt obj) (target-name obj)])
+                 (datarepo/bulk-ingest dataset-id profile-id)))]
+    (->> bkt-obj-pairs
+         (split-at 1000) ;; muscles says this is "probably fine"
+         (mapv ingest-batch)
+         (mapcat #(-> % datarepo/poll-job :loadFileResults)))))
 
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     "assemble-refbased-outputs.json"
@@ -85,25 +92,16 @@
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url dataset-id]]
-        (let [files     (map gcs/parse-gs-url
-                             (set (get-files outputs-type pipeline-outputs)))
-              table-url (str url "table.json")
-              target    (fn [obj] (str/join "/" ["" workflow-id obj]))]
+        (let [bkt-obj-pairs (map gcs/parse-gs-url
+                                 (set (get-files outputs-type pipeline-outputs)))
+              table-url     (str url "table.json")]
           (run!
            (partial gcs/add-storage-object-viewer tdr-sa)
-           (unique-buckets files))
-          (-> (->> files
-                   (split-at 1000)
-                   (mapv (fn [files]
-                           (datarepo/bulk-ingest
-                            dataset-id
-                            profile
-                            (for [[bkt obj] files]
-                              [(format "gs://%s/%s" bkt obj) (target obj)]))))
-                   (mapcat #(-> % datarepo/poll-job :loadFileResults))
-                   (map (fn [{:keys [sourcePath fileId]}] {sourcePath fileId}))
+           (into #{} (map first bkt-obj-pairs)))
+          (-> (->> (ingest-files workflow-id dataset-id profile bkt-obj-pairs)
+                   (map #(mapv % [:sourcePath :fileId]))
                    (into {}))
-              (update-files-with-file-ids outputs-type pipeline-outputs)
+              (replace-urls-with-file-ids outputs-type pipeline-outputs)
               rename-gather
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
