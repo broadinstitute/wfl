@@ -6,9 +6,8 @@
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
             [wfl.util          :as util])
-  (:import (java.util.concurrent TimeUnit)
-           (java.time OffsetDateTime)
-           (java.sql Timestamp)))
+  (:import (java.time Instant)
+           (java.util.concurrent TimeUnit)))
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
@@ -39,7 +38,7 @@
 ;; requests in parallel can cause bad things to happen. Use this to create a
 ;; unique `loadTag` instead.
 (defn ^:private new-load-tag []
-  (str (Timestamp/from (.toInstant (OffsetDateTime/now)))))
+  (str "workflow-launcher:" (Instant/now)))
 
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
