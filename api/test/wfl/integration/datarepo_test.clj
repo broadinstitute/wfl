@@ -33,26 +33,6 @@
         #(let [dataset (datarepo/dataset %)]
            (is (= % (:id dataset))))))))
 
-(defn ^:private traverse
-  "Traverse the `Traversable` data-types in `type`, calling `f` with the
-   `typeName` and `value` of non-traversable types."
-  [f type object]
-  (letfn [(make-type-environment [{:keys [objectFieldNames]}]
-            (into {} (for [{:keys [fieldName fieldType]} objectFieldNames]
-                       [(keyword fieldName) fieldType])))]
-    ((fn go [type value]
-       (case (:typeName type)
-         "Array"
-         (let [array-type (:arrayType type)]
-           (map #(go array-type %) value))
-         "Object"
-         (let [name->type (make-type-environment type)]
-           (into {} (map (fn [[k v]] [k (go (name->type k) v)]) value)))
-         "Optional"
-         (when value (go (:optionalType type) value))
-         (f (:typeName type) value)))
-     type object)))
-
 (defn ^:private replace-urls-with-file-ids
   [file->fileid type value]
   (-> (fn [type value]
@@ -60,11 +40,7 @@
           ("Boolean" "Float" "Int" "Number" "String") value
           "File"                                      (file->fileid value)
           (throw (ex-info "Unknown type" {:type type :value value}))))
-      (traverse type value)))
-
-(defn ^:private get-files [type value]
-  (letfn [(f [type object] (if (= "File" type) [object] []))]
-    (flatten (vals (traverse f type value)))))
+      (workflows/traverse type value)))
 
 (defn ^:private ingest-files [workflow-id dataset-id profile-id bkt-obj-pairs]
   (letfn [(target-name  [obj]     (str/join "/" ["" workflow-id obj]))
@@ -92,8 +68,9 @@
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url dataset-id]]
-        (let [bkt-obj-pairs (map gcs/parse-gs-url
-                                 (set (get-files outputs-type pipeline-outputs)))
+        (let [bkt-obj-pairs (map
+                              gcs/parse-gs-url
+                              (set (workflows/get-files outputs-type pipeline-outputs)))
               table-url     (str url "table.json")]
           (run!
            (partial gcs/add-storage-object-viewer tdr-sa)
