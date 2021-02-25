@@ -33,60 +33,30 @@
         #(let [dataset (datarepo/dataset %)]
            (is (= % (:id dataset))))))))
 
-(defn ^:private run-thunk! [x] (x))
+(defn ^:private replace-urls-with-file-ids
+  [file->fileid type value]
+  (-> (fn [type value]
+        (case type
+          ("Boolean" "Float" "Int" "Number" "String") value
+          "File"                                      (file->fileid value)
+          (throw (ex-info "Unknown type" {:type type :value value}))))
+      (workflows/traverse type value)))
 
-(defn ^:private ingest!
-  "Ingest `value` into the dataset specified by `dataset-id` depending on
-   the `value`'s WDL `type` and return a thunk that performs any delayed work
-   and returns an ingest-able value."
-  [workload-id dataset-id profile-id type value]
-  ;; Ingesting objects into TDR is asynchronous and must be done in two steps:
-  ;; - Issue an "ingest" request for that object to TDR
-  ;; - Poll the result of the request for the subsequent resource identifier
-  ;;
-  ;; Assuming TDR can fulfil ingest requests in parallel, we can (in theory)
-  ;; increase throughput by issuing all ingest requests up front and then
-  ;; poll for the resource identifiers later.
-  ;;
-  ;; To do this, this function returns a thunk that when run, performs
-  ;; any delayed work needed to ingest an object of that data type (such as
-  ;; polling for a file resource identifier) and returns a value that can
-  ;; be ingested into a dataset table.
-  (let [sequence      (fn [xs] #(mapv run-thunk! xs))
-        sequence-vals (fn [m]  #(util/map-vals run-thunk! m))
-        return        (fn [x]   (constantly x))
-        bind          (fn [f g] (comp g f))
-        ingest-file   (partial datarepo/ingest-file dataset-id profile-id)
-        type-env      (fn [type]
-                        (->> (:objectFieldNames type)
-                             (map #(-> {(-> % :fieldName keyword) (:fieldType %)}))
-                             (into {})))]
-    ((fn go [type value]
-       (case (:typeName type)
-         "Array"
-         (letfn [(go-elem [x] (go (:arrayType type) x))]
-           ;; eagerly issue ingest requests for each element in the array
-           (sequence (mapv go-elem value)))
-         ("Boolean" "Float" "Int" "Number" "String")
-         (return value)
-         "File"
-         (let [[bkt obj] (gcs/parse-gs-url value)
-               target    (str/join "/" ["" workload-id obj])]
-           (-> (env/getenv "WFL_DATA_REPO_SA")
-               (gcs/add-object-reader bkt obj))
-           (-> (ingest-file value target)
-               return
-               (bind (comp :fileId datarepo/poll-job))))
-         "Object"
-         (let [name->type (type-env type)]
-           (sequence-vals
-            (mapv (fn [[k v]] [k (go (name->type k) v)]) value)))
-         "Optional"
-         (if value
-           (go (:optionalType type) value)
-           (return nil))
-         (throw (ex-info "No method to ingest type" {:typeName type}))))
-     type value)))
+(defn ^:private ingest-files [workflow-id dataset-id profile-id bkt-obj-pairs]
+  (letfn [(target-name  [obj]     (str/join "/" ["" workflow-id obj]))
+          (mk-url       [bkt obj] (format "gs://%s/%s" bkt obj))
+          (ingest-batch [batch]
+            (->> (for [[bkt obj] batch] [(mk-url bkt obj) (target-name obj)])
+                 (datarepo/bulk-ingest dataset-id profile-id)))]
+    ;; TDR limits size of bulk ingest request to 1000 files. Muscles says
+    ;; requests at this limit are "probably fine" and testing with large
+    ;; numbers of files (and size thereof) supports this. If this is becomes
+    ;; a serious bottleneck, suggest we benchmark and adjust the `split-at`
+    ;; value input accordingly.
+    (->> bkt-obj-pairs
+         (split-at 1000)
+         (mapv ingest-batch)
+         (mapcat #(-> % datarepo/poll-job :loadFileResults)))))
 
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     "assemble-refbased-outputs.json"
@@ -97,19 +67,27 @@
                              workflows/make-object-type)
         rename-gather    identity ;; collect and map outputs onto dataset names
         table-name       "assemble_refbased_outputs"
-        workflow-id      (UUID/randomUUID)]
+        workflow-id      (UUID/randomUUID)
+        tdr-sa           (env/getenv "WFL_DATA_REPO_SA")]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url dataset-id]]
-        (let [table-url (str url "table.json")]
-          (-> pipeline-outputs
-              (->> (ingest! workflow-id dataset-id profile outputs-type))
-              run-thunk!
+        (let [bkt-obj-pairs (map
+                             gcs/parse-gs-url
+                             (set (workflows/get-files outputs-type pipeline-outputs)))
+              table-url     (str url "table.json")]
+          (run!
+           (partial gcs/add-storage-object-viewer tdr-sa)
+           (into #{} (map first bkt-obj-pairs)))
+          (-> (->> (ingest-files workflow-id dataset-id profile bkt-obj-pairs)
+                   (map #(mapv % [:sourcePath :fileId]))
+                   (into {}))
+              (replace-urls-with-file-ids outputs-type pipeline-outputs)
               rename-gather
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
-          (gcs/add-object-reader (env/getenv "WFL_DATA_REPO_SA") table-url)
+          (gcs/add-object-reader tdr-sa table-url)
           (let [{:keys [bad_row_count row_count]}
                 (datarepo/poll-job
                  (datarepo/ingest-table dataset-id table-url table-name))]

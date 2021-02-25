@@ -8,7 +8,7 @@
 
 (defn ^:private give-project-sa-publish-access-to-topic [project topic]
   (let [sa (-> project gcs/get-cloud-storage-service-account :email_address)]
-    (pubsub/set-iam-policy
+    (pubsub/add-iam-policy
      topic
      {"roles/pubsub.publisher" [(str "serviceAccount:" sa)]
       "roles/pubsub.editor"    [(str "serviceAccount:"

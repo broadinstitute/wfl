@@ -6,7 +6,8 @@
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
             [wfl.util          :as util])
-  (:import (java.util.concurrent TimeUnit)))
+  (:import (java.time Instant)
+           (java.util.concurrent TimeUnit)))
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
@@ -33,14 +34,37 @@
       util/response-body-json
       :id))
 
+;; While TDR does assign `loadTag`s, they're not always unique - submitting
+;; requests in parallel can cause bad things to happen. Use this to create a
+;; unique `loadTag` instead.
+(defn ^:private new-load-tag []
+  (str "workflow-launcher:" (Instant/now)))
+
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
   [dataset-id profile-id source target]
   (ingest "files" dataset-id {:description (util/basename source)
-                              :profileId   profile-id
+                              :loadTag     (new-load-tag)
                               :mime_type   (mime-type/ext-mime-type source)
+                              :profileId   profile-id
                               :source_path source
                               :target_path target}))
+
+(defn bulk-ingest
+  "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
+  [dataset-id profile-id source->target]
+  (letfn [(make-file-load [source target]
+            {:description (util/basename source)
+             :mimeType    (mime-type/ext-mime-type source)
+             :sourcePath  source
+             :targetPath  target})]
+    (ingest
+     "files/bulk/array"
+     dataset-id
+     {:profileId          profile-id
+      :loadArray          (map #(apply make-file-load %) source->target)
+      :loadTag            (new-load-tag)
+      :maxFailedFileLoads 0})))
 
 (defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."
@@ -94,20 +118,3 @@
       util/response-body-json
       :id
       poll-job))
-
-(comment
-  (def successful-file-ingest-response
-    {:description     "something derived from file name + extension?"
-     :path            "/zero-test/NA12878_PLUMBING.g.vcf.gz"
-     :directoryDetail nil
-     :collectionId    "f359303e-15d7-4cd8-a4c7-c50499c90252"
-     :fileDetail      {:datasetId "f359303e-15d7-4cd8-a4c7-c50499c90252"
-                       :mimeType  "text/plain"
-                       :accessUrl "gs://broad-jade-dev-data-bucket/f359303e-15d7-4cd8-a4c7-c50499c90252/271cd32c-2e86-4f46-9eb1-f3ddb44a6c1f"}
-     :fileType        "file"
-     :created         "2019-11-26T15:41:06.508Z"
-     :checksums       [{:checksum "591d9cec" :type "crc32c"}
-                       {:checksum "24f38b33c6eac4dd3569e0c4547ced88" :type "md5"}]
-     :size            3073329
-     :fileId          "271cd32c-2e86-4f46-9eb1-f3ddb44a6c1f"}))
-

@@ -163,6 +163,17 @@
 
 (defn set-iam-policy
   "Set the IAM policy for the given Pub/Sub `resource` with the specified
+   `policy` bindings. A Pub/Sub `resource` is a topic, a subscription or a
+   snapshot."
+  [resource policy]
+  (http/post
+   (pubsub-url resource ":setIamPolicy")
+   {:headers      (auth/get-auth-header)
+    :content-type :json
+    :body         (json/write-str {:policy policy} :escape-slash false)}))
+
+(defn add-iam-policy
+  "Augment the IAM policy for the given Pub/Sub `resource` with the specified
    role->member bindings. A Pub/Sub `resource` is a topic, a subscription or a
    snapshot.
 
@@ -173,11 +184,8 @@
    role->members - map from a Google Cloud Pub/Sub role to a list of members.
                    See https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles"
   [resource role->members]
-  (letfn [(make-binding [[role members]] {:role role :members members})]
-    (http/post
-     (pubsub-url resource ":setIamPolicy")
-     {:headers      (auth/get-auth-header)
-      :content-type :json
-      :body         (json/write-str
-                     {:policy {:bindings (map make-binding role->members)}}
-                     :escape-slash false)})))
+  (letfn [(make-binding [[role members]] [{:role role :members members}])]
+    (set-iam-policy
+     resource
+     (-> (get-iam-policy resource)
+         (update :bindings #(concat % (map make-binding role->members)))))))

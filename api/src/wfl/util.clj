@@ -34,14 +34,10 @@
 (defn parse-int [s] (do-or-nil (Integer/parseInt s)))
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
-(defn parse-json [^String object]
-  "Parse json `object` into keyword->object map recursively"
-  (json/read-str object :key-fn keyword))
-
 (defn parse-json
-  "Parse the json string STR into a keyword-string map"
-  [str]
-  (json/read-str str :key-fn keyword))
+  "Parse json `object` into keyword->object map recursively"
+  [^String object]
+  (json/read-str object :key-fn keyword))
 
 (defn response-body-json [response]
   "Return the :body of the http `response` as JSON"
@@ -81,6 +77,12 @@
   (if-let [idx (str/last-index-of filename ".")]
     (subs filename 0 idx)
     filename))
+
+(defn extension
+  "Return the (last) file extension from `filename`, if one exists."
+  [filename]
+  (if-let [idx (str/last-index-of filename ".")]
+    (subs filename (inc idx) (count filename))))
 
 (defn basename
   "Strip directory from `filename`."
