@@ -69,8 +69,8 @@
        (fixtures/with-temporary-dataset (make-dataset-request dataset-json))]
       (fn [[url dataset-id]]
         (let [bkt-obj-pairs (map
-                              gcs/parse-gs-url
-                              (set (workflows/get-files outputs-type pipeline-outputs)))
+                             gcs/parse-gs-url
+                             (set (workflows/get-files outputs-type pipeline-outputs)))
               table-url     (str url "table.json")]
           (run!
            (partial gcs/add-storage-object-viewer tdr-sa)
