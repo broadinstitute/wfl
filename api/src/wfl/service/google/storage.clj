@@ -66,14 +66,14 @@
                                 (with-out-str (pprint object))]))))
   (gs-url bucket name))
 
-(defn iam
+(defn get-iam-policy
   "Return IamPolicy response for `bucket`."
   [bucket]
   (-> (str bucket-url bucket "/iam")
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn set-iam
+(defn set-iam-policy
   "Set IamPolicy `bucket` to `policy`."
   [bucket policy]
   (-> (str bucket-url bucket "/iam")
@@ -251,7 +251,9 @@
   [email bucket]
   (let [new-binding [{:role   "roles/storage.objectViewer"
                       :members [(str "serviceAccount:" email)]}]]
-    (set-iam bucket (update (iam bucket) :bindings cons new-binding))))
+    (-> (get-iam-policy bucket)
+        (update :bindings cons new-binding)
+        (->> (set-iam-policy bucket)))))
 
 (defn patch-bucket!
   "Patch BUCKET in PROJECT with METADATA."
