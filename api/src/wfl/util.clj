@@ -369,7 +369,6 @@
   (let [resource (acquire)]
     (try
       (use resource)
-      (catch Exception e (print e))
       (finally
         (release resource)))))
 
