@@ -39,8 +39,12 @@
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_CROMWELL_URL"
    #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-   "WFL_DATA_REPO_SA"
+   "WFL_TERRA_DATA_REPO_URL"
+   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   "WFL_TERRA_DATA_REPO_SA"
    #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
+   "WFL_TERRA_DATA_REPO_DEFAULT_PROFILE"
+   #(-> "390e7a85-d47f-4531-b612-165fc977d3bd")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
@@ -49,14 +53,13 @@
    #(-> "jdbc:postgresql:wfl")
    "WFL_POSTGRES_USERNAME"
    #(-> nil)
-   "WFL_TERRA_DATA_REPO_URL"
-   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
    "WFL_FIRECLOUD_URL"
    #(-> "https://api.firecloud.org/")
    "WFL_WFL_URL"
    #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
-(def ^:private __getenv (memoize #(or (System/getenv %) ((defaults %)))))
+(def ^:private __getenv
+  (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))
 (def testing
   "Override the environment used by `getenv` for testing. DO NOT USE THIS.
   Use `wfl.tools.fixtures/with-temporary-environment` instead."
