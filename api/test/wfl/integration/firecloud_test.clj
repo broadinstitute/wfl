@@ -29,11 +29,15 @@
   (util/bracket
    #(firecloud/create-submission workspace method-configuration entity)
    #(firecloud/abort-submission workspace %)
-   (fn [submission-id]
-     (let [submission (firecloud/get-submission workspace submission-id)
-           workflow   (-> submission :workflows first)]
-       (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
-       (is (#{"Queued" "Submitted"} (:status workflow)))))))
+   #(let [workflow (-> (firecloud/get-submission workspace %) :workflows first)]
+      (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
+      (is (#{"Queued" "Submitted"}
+            ;; GH-1212: `get-submission` can return the workflow before it has
+            ;; been queued. In such cases :status is nil so try again
+           (or (:status workflow) (-> (firecloud/get-submission workspace %)
+                                      :workflows
+                                      first
+                                      :status)))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a
