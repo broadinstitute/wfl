@@ -67,7 +67,7 @@
         util/response-body-json)))
 
 (defn exec-workload
-  "Create and start workload defined by WORKLOAD"
+  "Create and start workload defined by `workload-request`."
   [workload-request]
   (let [payload (json/write-str workload-request :escape-slash false)]
     (-> (wfl-url "/api/v1/exec")
@@ -75,4 +75,3 @@
                     :content-type :application/json
                     :body         payload})
         util/response-body-json)))
-

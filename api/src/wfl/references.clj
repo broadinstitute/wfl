@@ -68,7 +68,7 @@
 
 (def gdc-sg-references
   "References for the GDC Somatic WGS alignment pipeline."
-  (let [prefix   "gs://broad-gotc-dev-storage/temp_references/gdc/GRCh38.d1.vd1"
+  (let [prefix "gs://gcp-public-data--broad-references/hg38/v0/gdc/GRCh38.d1.vd1"
         suffixes {:ref_amb   ".fa.amb"
                   :ref_ann   ".fa.ann"
                   :ref_bwt   ".fa.bwt"
