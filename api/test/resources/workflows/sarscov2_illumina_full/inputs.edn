@@ -1,0 +1,21 @@
+{:package_genbank_ftp_submission.account_name        "broad_gcid-srv",
+ :package_genbank_ftp_submission.author_template_sbt "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/authors-broad_mgh_dph.sbt",
+ :flowcell_tgz                                       "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/201025_SL-NVQ_0282_BHTHC3DRXX.tar.gz",
+ :gisaid_meta_prep.submitting_lab_addr               "75 Ames St, Cambridge, MA 02142, USA",
+ :terra_project                                      "wfl-dev",
+ :package_genbank_ftp_submission.spuid_namespace     "Broad_GCID",
+ :demux_deplete.sample_rename_map                    "gs://fc-ac04311b-a7a7-4613-b9e9-2c7e1ed3fa72/input_files/sample_rename_map-2021.01.01.txt",
+ :amplicon_bed_prefix                                "gs://pathogen-public-dbs/v1/amplicon_primers-",
+ :gisaid_meta_prep.username                          "dpark",
+ :biosample_attributes                               ["gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/biosample-20210103-attributes.tsv"],
+ :demux_deplete.samplesheets                         ["gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/SeqPrep_Batch26_27-combined-samplesheet_extra.tsv"
+                                                      "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/SeqPrep_Batch26_27-combined-samplesheet_extra.tsv"],
+ :demux_deplete.blastDbs                             ["gs://pathogen-public-dbs/v0/GRCh37.68_ncRNA.fasta.zst"
+                                                      "gs://pathogen-public-dbs/v0/hybsel_probe_adapters.fasta"],
+ :instrument_model                                   "Illumina NovaSeq 6000",
+ :demux_deplete.bwaDbs                               ["gs://pathogen-public-dbs/v0/hg19.bwa_idx.tar.zst"],
+ :gisaid_meta_prep.submitting_lab_name               "Infectious Disease Program, Broad Institute of Harvard and MIT",
+ :demux_deplete.spikein_db                           "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/ercc_sdsi_spike-ins-20210123.fasta",
+ :reference_fasta                                    "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/ref-sarscov2-NC_045512.2.fasta",
+ :sra_title                                          "Metagenomic RNA-Seq of SARS-CoV-2 from patients",
+ :workspace_name                                     "SARSCoV2-Illumina-Full"}

@@ -1,0 +1,2 @@
+{:reads_unmapped_bams ["gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/inputs/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.bam"]
+ :reference_fasta     "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/inputs/ref-sarscov2-NC_045512.2.fasta"}
