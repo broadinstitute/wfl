@@ -60,8 +60,8 @@
 
 (deftest test-ingest-workflow-outputs
   (let [dataset-json     "assemble-refbased-outputs.json"
-        pipeline-outputs (workflows/read-resource "assemble-refbased/outputs")
-        outputs-type     (-> "assemble-refbased/description"
+        pipeline-outputs (workflows/read-resource "assemble_refbased/outputs")
+        outputs-type     (-> "assemble_refbased/description"
                              workflows/read-resource
                              :outputs
                              workflows/make-object-type)
