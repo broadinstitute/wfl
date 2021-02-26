@@ -41,12 +41,9 @@ $(POM_IN): $(CLOJURE_PROJECT)
 $(POM_OUT): $(POM_IN) $(PREBUILD)
 	$(CLOJURE) -X:update-the-pom :in '"$(POM_IN)"' :out '"$@"'
 
-$(API_DIR): $(SCM_SRC)
-	$(MKDIR) $(CLASSES_DIR)
+$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT)
+	@$(MKDIR) $(CLASSES_DIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M -e "(compile 'wfl.main)"
-
-$(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT) $(API_DIR)
-	@$(MKDIR) $(DERIVED_TARGET_DIR)
 	$(CLOJURE) -M:uberjar -m uberdeps.uberjar \
 		--level error --multi-release --main-class wfl.main \
 		--target $(JAR)
@@ -54,7 +51,6 @@ $(BUILD): $(SCM_SRC) $(SCM_RESOURCES) $(POM_OUT) $(API_DIR)
 	@$(TOUCH) $@
 
 # Run `clojure -M:format` in this directory when this fails.
-#
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
 	$(CLOJURE) -M:lint -m cljfmt.main check
 	@$(TOUCH) $@
