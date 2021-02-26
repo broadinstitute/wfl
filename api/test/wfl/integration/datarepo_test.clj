@@ -1,14 +1,13 @@
 (ns wfl.integration.datarepo-test
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]]
-            [wfl.environment :as env]
-            [wfl.service.datarepo :as datarepo]
+  (:require [clojure.data.json          :as json]
+            [clojure.test               :refer [deftest is testing]]
+            [wfl.environment            :as env]
+            [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as gcs]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workflows :as workflows]
-            [wfl.util :as util]
-            [wfl.tools.datasets :as datasets])
+            [wfl.tools.datasets         :as datasets]
+            [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.workflows        :as workflows]
+            [wfl.util                   :as util])
   (:import [java.util UUID]))
 
 (deftest test-create-dataset

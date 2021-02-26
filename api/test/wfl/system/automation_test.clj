@@ -1,12 +1,12 @@
 (ns wfl.system.automation-test
-  (:require [clojure.test :refer [deftest is]]
-            [wfl.tools.datasets :as datasets]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workflows :as workflows]
-            [wfl.environment :as env]
+  (:require [clojure.data.json          :as json]
+            [clojure.test               :refer [deftest is]]
+            [wfl.environment            :as env]
             [wfl.service.google.storage :as storage]
-            [wfl.service.datarepo :as datarepo]
-            [clojure.data.json :as json])
+            [wfl.service.datarepo       :as datarepo]
+            [wfl.tools.datasets         :as datasets]
+            [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.workflows        :as workflows])
   (:import (java.util UUID)))
 
 (defn ^:private replace-urls-with-file-ids
