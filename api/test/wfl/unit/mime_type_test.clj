@@ -21,7 +21,7 @@
 (deftest test-workflow-mime-types
   (let [exclude? #{"gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/outputs/call-demux_deplete/demux_deplete/955c74b3-854a-4075-839f-856d0f41e020/call-sra_meta_prep/write_lines_bc5302b8fdd987961b17ced77e1da4ab.tmp"}
         cases [[(workflows/read-resource "assemble_refbased/outputs")
-                (-> "assemble-refbased/description" workflows/read-resource :outputs)]
+                (-> "assemble_refbased/description" workflows/read-resource :outputs)]
                [(workflows/read-resource "sarscov2_illumina_full/outputs")
                 (-> "sarscov2_illumina_full/description" workflows/read-resource :outputs)]]]
     (doseq [[values description] cases]
