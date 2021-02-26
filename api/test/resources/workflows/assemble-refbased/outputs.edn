@@ -1,36 +1,34 @@
-{:num_read_groups                              2
- :align_to_ref_merged_coverage_plot            "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-plot_ref_coverage/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.coverage_plot.pdf"
- :align_to_ref_viral_core_version              "v2.1.19"
- :align_to_self_merged_coverage_plot           "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-plot_self_coverage/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.coverage_plot.pdf"
- :assembly_length_unambiguous                  29903
- :assembly_mean_coverage                       1064.1900143798282
- :align_to_self_merged_bases_aligned           31834594
- :align_to_ref_merged_bases_aligned            31822474
- :align_to_ref_per_input_aligned_flagstat      ["gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-align_to_ref/shard-0/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.all.bam.flagstat.txt"
-                                                "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-align_to_ref/shard-1/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L2.cleaned.all.bam.flagstat.txt"]
- :reference_genome_length                      29903
- :align_to_ref_per_input_reads_provided        [539844 555716]
- :align_to_ref_merged_coverage_tsv             "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-plot_ref_coverage/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.coverage_plot.txt"
- :assembly_length                              29903
- :replicate_discordant_indels                  0
- :align_to_ref_merged_aligned_trimmed_only_bam "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-merge_align_to_ref/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.align_to_ref.trimmed.bam"
- :align_to_ref_per_input_reads_aligned         [157936 157138]
- :replicate_discordant_vcf                     "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-run_discordance/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.discordant.vcf"
- :viral_assemble_version                       "v2.1.16"
- :dist_to_ref_snps                             19
- :align_to_self_merged_aligned_only_bam        "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-merge_align_to_self/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.merge_align_to_self.bam"
- :num_libraries                                1
- :align_to_self_merged_read_pairs_aligned      315194
- :align_to_ref_variants_vcf_gz                 "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-call_consensus/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.sites.vcf.gz"
- :align_to_ref_merged_read_pairs_aligned       315074
- :align_to_self_merged_coverage_tsv            "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-plot_self_coverage/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.coverage_plot.txt"
- :replicate_concordant_sites                   29857
- :align_to_self_merged_reads_aligned           315194
- :dist_to_ref_indels                           0
- :replicate_discordant_snps                    0
- :ivar_version                                 "iVar version 1.3"
- :assembly_fasta                               "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-call_consensus/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.fasta"
- :align_to_self_merged_mean_coverage           1064.595324883791
- :align_to_ref_merged_reads_aligned            315074
- :align_to_ref_per_input_fastqc                ["gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-align_to_ref/shard-0/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L1.cleaned.mapped_fastqc.html"
-                                                "gs://broad-gotc-dev-wfl-ptc-test-inputs/covid-19/assemble_refbased/call-align_to_ref/shard-1/MA_MGH_02760.lERCC-00134_RandomPrimer-SSIV_NexteraXT_RNA_0352325199_cDNA_0369438842_LIB_13215203_G2_HTHC3DRXX_L2.cleaned.mapped_fastqc.html"]}
+{:assembly_mean_coverage                       0.46610707955723507,
+ :align_to_ref_merged_bases_aligned            13938,
+ :align_to_self_merged_reads_aligned           68,
+ :align_to_self_merged_aligned_only_bam        "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-merge_align_to_self/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.merge_align_to_self.bam",
+ :ivar_version                                 "iVar version 1.3.1",
+ :replicate_discordant_snps                    0,
+ :dist_to_ref_snps                             0,
+ :align_to_self_merged_coverage_tsv            "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-plot_self_coverage/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.coverage_plot.txt",
+ :num_read_groups                              1,
+ :replicate_concordant_sites                   4,
+ :align_to_ref_merged_aligned_trimmed_only_bam "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-merge_align_to_ref/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.align_to_ref.trimmed.bam",
+ :assembly_length_unambiguous                  34,
+ :align_to_ref_merged_reads_aligned            138,
+ :align_to_self_merged_bases_aligned           6868,
+ :align_to_ref_merged_coverage_tsv             "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-plot_ref_coverage/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.coverage_plot.txt",
+ :replicate_discordant_vcf                     "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-run_discordance/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.discordant.vcf",
+ :align_to_self_merged_read_pairs_aligned      68,
+ :align_to_self_merged_mean_coverage           202,
+ :align_to_ref_viral_core_version              "v2.1.19",
+ :align_to_ref_per_input_fastqc                ["gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-align_to_ref/shard-0/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.mapped_fastqc.html"],
+ :align_to_self_merged_coverage_plot           "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-plot_self_coverage/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.coverage_plot.pdf",
+ :align_to_ref_per_input_reads_aligned         [138],
+ :replicate_discordant_indels                  0,
+ :dist_to_ref_indels                           0,
+ :num_libraries                                1,
+ :align_to_ref_variants_vcf_gz                 "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-call_consensus/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.sites.vcf.gz",
+ :align_to_ref_merged_read_pairs_aligned       138,
+ :align_to_ref_per_input_reads_provided        [925564],
+ :align_to_ref_merged_coverage_plot            "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-plot_ref_coverage/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.coverage_plot.pdf",
+ :viral_assemble_version                       "v2.1.16",
+ :reference_genome_length                      29903,
+ :align_to_ref_per_input_aligned_flagstat      ["gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-align_to_ref/shard-0/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.all.bam.flagstat.txt"],
+ :assembly_length                              34,
+ :assembly_fasta                               "gs://broad-gotc-dev-wfl-ptc-test-inputs/assemble_refbased/outputs/call-call_consensus/MA_DPH_00001.lERCC-00012_SSIII_Random_Hexamers_NexteraXT_RNA_0311243209_cDNA_xx-tube_LIB_TS01287602_N-A.cleaned.fasta"}
