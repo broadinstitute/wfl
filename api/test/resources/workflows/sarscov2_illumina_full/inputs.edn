@@ -8,7 +8,6 @@
  :gisaid_meta_prep.submitting_lab_name               "Infectious Disease Program, Broad Institute of Harvard and MIT",
  :gisaid_meta_prep.submitting_lab_addr               "75 Ames St, Cambridge, MA 02142, USA",
  :gisaid_meta_prep.username                          "dpark",
- :gisaid_meta_prep.submitting_lab_addr               "75 Ames St, Cambridge, MA 02142, USA",
  :package_genbank_ftp_submission.account_name        "broad_gcid-srv",
  :package_genbank_ftp_submission.author_template_sbt "gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/inputs/authors-broad_mgh_dph.sbt",
  :package_genbank_ftp_submission.spuid_namespace     "Broad_GCID",
