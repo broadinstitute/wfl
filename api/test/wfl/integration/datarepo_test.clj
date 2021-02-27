@@ -45,11 +45,9 @@
       [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset (datasets/unique-dataset-request dataset-json))]
       (fn [[url dataset-id]]
-        (let [bkt-obj-pairs (map
-                             gcs/parse-gs-url
-                             (workflows/get-files outputs-type pipeline-outputs))
-              table-url     (str url "table.json")]
-          (-> (datasets/ingest-files workflow-id dataset-id profile bkt-obj-pairs)
+        (let [table-url     (str url "table.json")]
+          (-> (->> (workflows/get-files outputs-type pipeline-outputs)
+                   (datasets/ingest-files workflow-id dataset-id profile))
               (replace-urls-with-file-ids outputs-type pipeline-outputs)
               rename-gather
               (json/write-str :escape-slash false)

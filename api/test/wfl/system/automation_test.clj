@@ -31,9 +31,7 @@
               table-name      "sarscov2_illumina_full_inputs"
               unique-prefix   (UUID/randomUUID)
               table-url       (str temp "inputs.json")]
-          (-> (->> inputs
-                   (workflows/get-files inputs-type)
-                   (map storage/parse-gs-url)
+          (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files unique-prefix source tdr-profile))
               (replace-urls-with-file-ids inputs-type inputs)
               (json/write-str :escape-slash false)
@@ -50,9 +48,7 @@
               table-name       "sarscov2_illumina_full_outputs"
               unique-prefix    (UUID/randomUUID)
               table-url     (str temp "outputs.json")]
-          (-> (->> outputs
-                   (workflows/get-files outputs-type)
-                   (map storage/parse-gs-url)
+          (-> (->> (workflows/get-files outputs-type outputs)
                    (datasets/ingest-files unique-prefix sink tdr-profile))
               (replace-urls-with-file-ids outputs-type outputs)
               (json/write-str :escape-slash false)
