@@ -1,5 +1,4 @@
-{
- :flowcell_tgz         "flowcell_tgz",
+{:flowcell_tgz         "flowcell_tgz",
  :reference_fasta      "reference_fasta",
  :amplicon_bed_prefix  "amplicon_bed_prefix",
  :biosample_attributes "biosample_attributes",
