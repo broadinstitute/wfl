@@ -1,12 +1,12 @@
 (ns wfl.system.automation-test
-  (:require [clojure.data.json :as json]
-            [clojure.test :refer [deftest is]]
-            [wfl.environment :as env]
-            [wfl.service.datarepo :as datarepo]
+  (:require [clojure.data.json          :as json]
+            [clojure.test               :refer [deftest is]]
+            [wfl.environment            :as env]
+            [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as storage]
-            [wfl.tools.datasets :as datasets]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workflows :as workflows])
+            [wfl.tools.datasets         :as datasets]
+            [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.workflows        :as workflows])
   (:import (java.util UUID)))
 
 (defn ^:private replace-urls-with-file-ids
@@ -42,7 +42,6 @@
               table-name    "sarscov2_illumina_full_inputs"
               unique-prefix (UUID/randomUUID)
               table-url     (str temp "inputs.json")
-
               ;; Proposed nomenclature:
               ;; An `inputmap` tells workflow-launcher how to map names into
               ;; pipeline inputs.
@@ -51,27 +50,7 @@
               ;;
               ;; I think a user would specify something like this in the initial
               ;; workload request.
-              outputmap     {:flowcell_tgz         :flowcell_tgz
-                             :reference_fasta      :reference_fasta
-                             :amplicon_bed_prefix  :amplicon_bed_prefix
-                             :biosample_attributes :biosample_attributes
-                             :instrument_model     :instrument_model
-                             :min_genome_bases     :min_genome_bases
-                             :max_vadr_alerts      :max_vadr_alerts
-                             :sra_title            :sra_title
-                             :workspace_name       "$SARSCoV2-Illumina-Full"
-                             :terra_project        "$wfl-dev"
-                             :extra                [:demux_deplete.spikein_db
-                                                    :demux_deplete.samplesheets
-                                                    :demux_deplete.sample_rename_map
-                                                    :demux_deplete.bwaDbs
-                                                    :demux_deplete.blastDbs
-                                                    :gisaid_meta_prep.username
-                                                    :gisaid_meta_prep.submitting_lab_addr
-                                                    :package_genbank_ftp_submission.spuid_namespace
-                                                    :gisaid_meta_prep.submitting_lab_name
-                                                    :package_genbank_ftp_submission.author_template_sbt
-                                                    :package_genbank_ftp_submission.account_name]}]
+              outputmap     (workflows/read-resource "sarscov2_illumina_full/inputs-outputmap")]
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)

@@ -44,7 +44,10 @@
     (into
      {}
      (for [[k v] mapping]
-       (cond (keyword?    v) [k (v values)]
-             (literal?    v) [k (subs v 1 (count v))]
-             (sequential? v) [k (json/write-str (select-keys values v))]
+       (cond (keyword?     v) [k (v values)]
+             (literal?     v) [k (subs v 1 (count v))]
+             (map?         v) [k (json/write-str
+                                   (rename-gather values v)
+                                   :escape-slash false)]
+             (sequential?  v) [k (mapv values v)]
              :else           (throw (ex-info "unknown type" {:type v})))))))
