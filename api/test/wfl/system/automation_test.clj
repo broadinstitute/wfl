@@ -19,10 +19,10 @@
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
 
-(defn ^:private rename-gather [values outputmap]
+(defn ^:private rename-gather [values mapping]
   (let [literal? #(str/starts-with? % "$")]
     (into {}
-          (for [[k v] outputmap]
+          (for [[k v] mapping]
             (cond (keyword?    v) [k (v values)]
                   (literal?    v) [k (subs v 1 (count v))]
                   (sequential? v) [k (json/write-str (select-keys values v))]
@@ -61,6 +61,15 @@
               table-name    "sarscov2_illumina_full_inputs"
               unique-prefix (UUID/randomUUID)
               table-url     (str temp "inputs.json")
+
+              ;; Proposed nomenclature:
+              ;; An `inputmap` tells workflow-launcher how to map names into
+              ;; pipeline inputs.
+              ;; An `outputmap` tells workflow-launcher how to names into
+              ;; dataset table columns.
+              ;;
+              ;; I think a user would specify something like this in the initial
+              ;; workload request.
               outputmap     {:flowcell_tgz         :flowcell_tgz
                              :reference_fasta      :reference_fasta
                              :amplicon_bed_prefix  :amplicon_bed_prefix
