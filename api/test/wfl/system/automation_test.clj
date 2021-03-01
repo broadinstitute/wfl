@@ -58,6 +58,7 @@
                              :instrument_model     :instrument_model
                              :min_genome_bases     :min_genome_bases
                              :max_vadr_alerts      :max_vadr_alerts
+                             :sra_title            :sra_title
                              :workspace_name       "$SARSCoV2-Illumina-Full"
                              :terra_project        "$wfl-dev"
                              :extra                [:demux_deplete.spikein_db
