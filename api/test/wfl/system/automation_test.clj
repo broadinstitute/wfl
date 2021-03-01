@@ -1,6 +1,5 @@
 (ns wfl.system.automation-test
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
             [clojure.test :refer [deftest is]]
             [wfl.environment :as env]
             [wfl.service.datarepo :as datarepo]
@@ -18,24 +17,6 @@
           "File"                                      (file->fileid value)
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
-
-(defn ^:private rename-gather [values mapping]
-  (let [literal? #(str/starts-with? % "$")]
-    (into {}
-          (for [[k v] mapping]
-            (cond (keyword?    v) [k (v values)]
-                  (literal?    v) [k (subs v 1 (count v))]
-                  (sequential? v) [k (json/write-str (select-keys values v))]
-                  :else           (throw (ex-info "unknown type" {:type v})))))))
-
-(deftest test-rename-gather
-  (let [inputs (workflows/read-resource "sarscov2_illumina_full/inputs")]
-    (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
-           (rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
-    (is (= {:instrument_model "Illumina NovaSeq 6000"}
-           (rename-gather inputs {:instrument_model :instrument_model})))
-    (is (= {:extras "{\"package_genbank_ftp_submission.account_name\":\"broad_gcid-srv\"}"}
-           (rename-gather inputs {:extras [:package_genbank_ftp_submission.account_name]})))))
 
 (deftest test-automate-sarscov2-illumina-full
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
@@ -93,7 +74,7 @@
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
-              (rename-gather outputmap)
+              (datasets/rename-gather outputmap)
               (json/write-str :escape-slash false)
               (storage/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}

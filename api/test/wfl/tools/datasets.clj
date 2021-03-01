@@ -36,3 +36,15 @@
          (mapcat #(-> % datarepo/poll-job :loadFileResults))
          (map #(mapv % [:sourcePath :fileId]))
          (into {}))))
+
+(defn rename-gather
+  "Transform the `values` using the transformation defined in `mapping`."
+  [values mapping]
+  (let [literal? #(str/starts-with? % "$")]
+    (into
+     {}
+     (for [[k v] mapping]
+       (cond (keyword?    v) [k (v values)]
+             (literal?    v) [k (subs v 1 (count v))]
+             (sequential? v) [k (json/write-str (select-keys values v))]
+             :else           (throw (ex-info "unknown type" {:type v})))))))
