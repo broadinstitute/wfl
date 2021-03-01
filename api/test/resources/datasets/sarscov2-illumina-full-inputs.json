@@ -47,6 +47,10 @@
           {
             "name": "terra_project",
             "datatype": "string"
+          },
+          {
+            "name": "extra",
+            "datatype": "string"
           }
         ],
         "primaryKey": [

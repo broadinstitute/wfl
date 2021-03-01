@@ -1,12 +1,13 @@
 (ns wfl.system.automation-test
-  (:require [clojure.data.json          :as json]
-            [clojure.test               :refer [deftest is]]
-            [wfl.environment            :as env]
+  (:require [clojure.data.json :as json]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is]]
+            [wfl.environment :as env]
+            [wfl.service.datarepo :as datarepo]
             [wfl.service.google.storage :as storage]
-            [wfl.service.datarepo       :as datarepo]
-            [wfl.tools.datasets         :as datasets]
-            [wfl.tools.fixtures         :as fixtures]
-            [wfl.tools.workflows        :as workflows])
+            [wfl.tools.datasets :as datasets]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.workflows :as workflows])
   (:import (java.util UUID)))
 
 (defn ^:private replace-urls-with-file-ids
@@ -18,10 +19,29 @@
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
 
+(defn ^:private rename-gather [values outputmap]
+  (let [literal? #(str/starts-with? % "$")]
+    (into {}
+          (for [[k v] outputmap]
+            (cond (keyword?    v) [k (v values)]
+                  (literal?    v) [k (subs v 1 (count v))]
+                  (sequential? v) [k (json/write-str (select-keys values v))]
+                  :else           (throw (ex-info "unknown type" {:type v})))))))
+
+(deftest test-rename-gather
+  (let [inputs (workflows/read-resource "sarscov2_illumina_full/inputs")]
+    (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
+           (rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
+    (is (= {:instrument_model "Illumina NovaSeq 6000"}
+           (rename-gather inputs {:instrument_model :instrument_model})))
+    (is (= {:extras "{\"package_genbank_ftp_submission.account_name\":\"broad_gcid-srv\"}"}
+           (rename-gather inputs {:extras [:package_genbank_ftp_submission.account_name]})))))
+
 (deftest test-automate-sarscov2-illumina-full
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
+      [(fixtures/with-temporary-cloud-storage-folder
+         "broad-gotc-dev-wfl-ptc-test-inputs")
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request
           tdr-profile
@@ -40,14 +60,33 @@
                                 workflows/make-object-type)
               table-name    "sarscov2_illumina_full_inputs"
               unique-prefix (UUID/randomUUID)
-              table-url     (str temp "inputs.json")]
+              table-url     (str temp "inputs.json")
+              outputmap     {:flowcell_tgz         :flowcell_tgz
+                             :reference_fasta      :reference_fasta
+                             :amplicon_bed_prefix  :amplicon_bed_prefix
+                             :biosample_attributes :biosample_attributes
+                             :instrument_model     :instrument_model
+                             :min_genome_bases     :min_genome_bases
+                             :max_vadr_alerts      :max_vadr_alerts
+                             :workspace_name       "$SARSCoV2-Illumina-Full"
+                             :terra_project        "$wfl-dev"
+                             :extra                [:demux_deplete.spikein_db
+                                                    :demux_deplete.samplesheets
+                                                    :demux_deplete.sample_rename_map
+                                                    :demux_deplete.bwaDbs
+                                                    :demux_deplete.blastDbs
+                                                    :gisaid_meta_prep.username
+                                                    :gisaid_meta_prep.submitting_lab_addr
+                                                    :package_genbank_ftp_submission.spuid_namespace
+                                                    :gisaid_meta_prep.submitting_lab_name
+                                                    :package_genbank_ftp_submission.author_template_sbt
+                                                    :package_genbank_ftp_submission.account_name]}]
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
+              (rename-gather outputmap)
               (json/write-str :escape-slash false)
               (storage/upload-content table-url))
-          ;; TODO: adjust schema to accept additional argument - TDR silently
-          ;; ignores unknown column names
           (let [{:keys [bad_row_count row_count]}
                 (datarepo/poll-job
                  (datarepo/ingest-table source table-url table-name))]
