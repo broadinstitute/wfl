@@ -40,14 +40,12 @@
 (defn rename-gather
   "Transform the `values` using the transformation defined in `mapping`."
   [values mapping]
-  (let [literal? #(str/starts-with? % "$")]
-    (into
-     {}
-     (for [[k v] mapping]
-       (cond (keyword?     v) [k (v values)]
-             (literal?     v) [k (subs v 1 (count v))]
-             (map?         v) [k (json/write-str
-                                   (rename-gather values v)
-                                   :escape-slash false)]
-             (sequential?  v) [k (mapv values v)]
-             :else           (throw (ex-info "unknown type" {:type v})))))))
+  (letfn [(literal? [x] (str/starts-with? x "$"))
+          (go! [v]
+            (cond (literal? v) (subs v 1 (count v))
+                  (string?  v) (get values (keyword v))
+                  (map?     v) (json/write-str (rename-gather values v)
+                                               :escape-slash false)
+                  (coll?    v) (remove nil? (map go! v))
+                  :else        (throw (ex-info "unknown type" {:type v}))))]
+    (into {} (for [[k v] mapping] [k (go! v)]))))
