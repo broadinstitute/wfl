@@ -46,7 +46,7 @@
               ;; Proposed nomenclature:
               ;; An `inputmap` tells workflow-launcher how to map names into
               ;; pipeline inputs.
-              ;; An `outputmap` tells workflow-launcher how to names into
+              ;; An `outputmap` tells workflow-launcher how to map names into
               ;; dataset table columns.
               ;;
               ;; I think a user would specify something like this in the initial
