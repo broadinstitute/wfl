@@ -37,10 +37,6 @@
    #(-> "https://clio.gotc-dev.broadinstitute.org")
    "WFL_COOKIE_SECRET"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
-   "WFL_CROMWELL_URL"
-   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-   "WFL_DATA_REPO_SA"
-   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
@@ -49,10 +45,15 @@
    #(-> "jdbc:postgresql:wfl")
    "WFL_POSTGRES_USERNAME"
    #(-> nil)
-   "WFL_TERRA_DATA_REPO_URL"
-   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   ;; -- test parameters below this line --
+   "WFL_CROMWELL_URL"
+   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   "WFL_DATA_REPO_SA"
+   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
    "WFL_FIRECLOUD_URL"
    #(-> "https://api.firecloud.org/")
+   "WFL_TERRA_DATA_REPO_URL"
+   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
    "WFL_WFL_URL"
    #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
