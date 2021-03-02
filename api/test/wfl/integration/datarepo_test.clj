@@ -43,7 +43,8 @@
         tdr-profile      (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         tdr-sa           (env/getenv "WFL_TDR_SA")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder "broad-gotc-dev-wfl-ptc-test-inputs")
+      [(fixtures/with-temporary-cloud-storage-folder
+         "broad-gotc-dev-wfl-ptc-test-inputs")
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[url dataset-id]]

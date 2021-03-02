@@ -33,7 +33,7 @@
     (->> (split-at 1000 files)
          (mapv ingest-batch)
          (mapcat #(-> % datarepo/poll-job :loadFileResults))
-         (map #(mapv % [:sourcePath :fileId]))
+         (map (juxt :sourcePath :fileId))
          (into {}))))
 
 (defn rename-gather
