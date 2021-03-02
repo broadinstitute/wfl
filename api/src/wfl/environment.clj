@@ -63,8 +63,8 @@
   (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))
 
 (def testing
-  "Override the environment used by `getenv` for testing. DO NOT USE THIS.
-  Use `wfl.tools.fixtures/with-temporary-environment` instead."
+  "Override the environment used by `getenv` for testing. Use
+  `wfl.tools.fixtures/with-temporary-environment` instead of this."
   (atom {}))
 
 (defn getenv
