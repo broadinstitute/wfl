@@ -42,19 +42,16 @@
               table-name    "sarscov2_illumina_full_inputs"
               unique-prefix (UUID/randomUUID)
               table-url     (str temp "inputs.json")
-              ;; Proposed nomenclature:
-              ;; An `inputmap` tells workflow-launcher how to map names into
-              ;; pipeline inputs.
-              ;; An `outputmap` tells workflow-launcher how to map names into
-              ;; dataset table columns.
-              ;;
+              ;; This defines how we'll convert the inputs of the pipeline into
+              ;; a form that can be ingested as a new row in the dataset.
               ;; I think a user would specify something like this in the initial
-              ;; workload request.
-              outputmap     (workflows/read-resource "sarscov2_illumina_full/inputs-outputmap")]
+              ;; workload request, one mapping for dataset to inputs and one for
+              ;; outputs to dataset.
+              inputs-to-dataset (workflows/read-resource "sarscov2_illumina_full/inputs-to-dataset")]
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
-              (datasets/rename-gather outputmap)
+              (datasets/rename-gather inputs-to-dataset)
               (json/write-str :escape-slash false)
               (storage/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}

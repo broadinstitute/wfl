@@ -7,12 +7,11 @@
 
 (defn unique-dataset-request
   "Create a dataset request for a uniquely-named dataset defined by the json
-   file `dataset-basename` with the specified `tdr-profile`."
+   file `dataset-basename` and `tdr-profile`."
   [tdr-profile dataset-basename]
   (-> (str "test/resources/datasets/" dataset-basename)
       slurp
       json/read-str
-      ;; give it a unique name to avoid collisions with other tests
       (update "name" #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
       (update "defaultProfileId" (constantly tdr-profile))))
 
@@ -46,6 +45,6 @@
                   (string?  v) (get values (keyword v))
                   (map?     v) (json/write-str (rename-gather values v)
                                                :escape-slash false)
-                  (coll?    v) (remove nil? (map go! v))
+                  (coll?    v) (keep go! v)
                   :else        (throw (ex-info "unknown type" {:type v}))))]
     (into {} (for [[k v] mapping] [k (go! v)]))))
