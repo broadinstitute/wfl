@@ -1,11 +1,12 @@
 (ns wfl.environment
   "Map environment to various values here."
-  (:require [clojure.data.json  :as json]
+  (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [vault.client.http]         ; vault.core needs this
-            [vault.core :as vault]
-            [wfl.util  :as util]))
+            [vault.client.http] ; vault.core needs this
+            [vault.core :as vault]))
+
+(declare getenv)
 
 ;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases
 ;;  since this is baked in code. Can we improve this?
@@ -13,16 +14,14 @@
 (defn ^:private vault-secrets
   "Return the secrets at `path` in vault."
   [path]
-  (let [token (or (->> [(System/getProperty "user.home") ".vault-token"]
-                       (str/join "/") slurp util/do-or-nil)
-                  (System/getenv "VAULT_TOKEN"))]
-    (try (vault/read-secret
-          (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
-            (vault/authenticate! :token token))
-          path {})
-         (catch Throwable e
-           (log/warn e "Issue with Vault")
-           (log/debug "Perhaps run 'vault login' and try again")))))
+  (let [token (or (getenv "VAULT_TOKEN")
+                  (->> [(System/getProperty "user.home") ".vault-token"]
+                       (str/join "/")
+                       slurp))]
+    (vault/read-secret
+     (doto (vault/new-client "https://clotho.broadinstitute.org:8200/")
+       (vault/authenticate! :token token))
+     path {})))
 
 ;; Keep this map pure - defer any IO to the thunk returned by this map.
 (def ^:private defaults
@@ -64,11 +63,12 @@
   (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))
 
 (def testing
-  "Override the environment used by `getenv` for testing. DO NOT USE THIS.
-  Use `wfl.tools.fixtures/with-temporary-environment` instead."
+  "Override the environment used by `getenv` for testing. Use
+  `wfl.tools.fixtures/with-temporary-environment` instead of this."
   (atom {}))
 
 (defn getenv
   "Lookup the value of the environment variable specified by `name`."
   [name]
+  (log/debugf "Reading environment variable %s" name)
   (or (@testing name) (__getenv name)))
