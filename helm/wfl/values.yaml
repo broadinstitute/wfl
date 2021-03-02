@@ -20,11 +20,11 @@ api:
   deployment:
     containerPort: 80
   env:
+    WFL_CLIO_URL: "https://clio.gotc-prod.broadinstitute.org"
     WFL_COOKIE_SECRET: ""
-    WFL_LIVE_SERVER_MODE: "true"
+    WFL_OAUTH2_CLIENT_ID: ""
     WFL_POSTGRES_PASSWORD: ""
     WFL_POSTGRES_USERNAME: ""
-    WFL_OAUTH2_CLIENT_ID: ""
 
   resources: {}
   secrets:
