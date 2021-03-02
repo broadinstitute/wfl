@@ -46,5 +46,6 @@
                   (map?     v) (json/write-str (rename-gather values v)
                                                :escape-slash false)
                   (coll?    v) (keep go! v)
-                  :else        (throw (ex-info "unknown type" {:type v}))))]
+                  :else        (throw (ex-info "Unknown operation"
+                                               {:operation v}))))]
     (into {} (for [[k v] mapping] [k (go! v)]))))
