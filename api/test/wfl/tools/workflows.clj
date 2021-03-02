@@ -40,6 +40,6 @@
      type object)))
 
 (defn get-files [type value]
-  "Return all values in `value` with WDL type `File`."
+  "Return the unique set of objects in `value` of WDL type `File`."
   (letfn [(f [type object] (if (= "File" type) [object] []))]
-    (flatten (vals (traverse f type value)))))
+    (set (flatten (vals (traverse f type value))))))
