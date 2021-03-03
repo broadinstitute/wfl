@@ -77,7 +77,8 @@
             (jdbc/update! tx items colls ["id = ?" id]))
           (stop! [_]
             (let [now (OffsetDateTime/now)]
-              (util/unless-> workload :started #(patch! {:started now} %))
+              (util/unless-> workload :started #(patch! {:started now
+                                                         :finished now} %))
               (patch! {:stopped now} workload)
               (workloads/load-workload-for-id tx id)))]
     (util/unless-> workload #(or (:stopped %) (:finished %)) stop!)))

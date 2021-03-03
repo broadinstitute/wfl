@@ -171,3 +171,5 @@
                      unnilify))
          (assoc workload :workflows)
          unnilify)))
+
+(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
