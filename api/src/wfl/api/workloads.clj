@@ -104,9 +104,9 @@
   :default
   [_ body]
   (throw
-    (ex-info "Failed to stop workload - no such pipeline"
-      {:cause body
-       :type  ::invalid-pipeline})))
+   (ex-info "Failed to stop workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
