@@ -17,6 +17,10 @@
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
 
+(defmulti stop-workload!
+  "(transaction workload) -> workload"
+  (fn [_ body] (:pipeline body)))
+
 (defmulti execute-workload!
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
@@ -95,6 +99,14 @@
    (ex-info "Failed to start workload - no such pipeline"
             {:cause body
              :type  ::invalid-pipeline})))
+
+(defmethod stop-workload!
+  :default
+  [_ body]
+  (throw
+    (ex-info "Failed to stop workload - no such pipeline"
+      {:cause body
+       :type  ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
