@@ -248,6 +248,8 @@
   [tx notifications {:keys [uuid items output executor] :as workload}]
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started yet!" uuid))))
+  (when (:stopped workload)
+    (throw (Exception. (format "Workload %s has been stopped" uuid))))
   (letfn [(submit! [url sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
                   workflow-options (util/deep-merge default-options
