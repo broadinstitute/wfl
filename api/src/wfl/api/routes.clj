@@ -65,6 +65,11 @@
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
+   ["/api/v1/stop"
+    {:post {:summary    "Stop a workload, allow all active workflows to complete."
+            :parameters {:body ::spec/uuid-kv}
+            :responses  {200 {:body ::spec/workload-response}}
+            :handler    handlers/stop-workload}}]
    ["/api/v1/exec"
     {:post {:summary    "Create and start a new workload."
             :parameters {:body ::spec/workload-request}

@@ -12,7 +12,8 @@
             [wfl.module.sg]
             [wfl.jdbc :as jdbc]
             [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]))
+            [wfl.service.postgres :as postgres]
+            [wfl.util :as util]))
 
 (defn succeed
   "A successful response with BODY."
@@ -56,20 +57,18 @@
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (succeed
-   (map strip-internals
-        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (if-let [uuid (-> request :parameters :query :uuid)]
-            (do
-              (logr/infof "getting workload by uuid %s" uuid)
-              [(workloads/load-workload-for-uuid tx uuid)])
-            (if-let [project (-> request :parameters :query :project)]
-              (do
-                (logr/infof "getting workloads by project %s" project)
-                (workloads/load-workloads-with-project tx project))
-              (do
-                (logr/infof "getting all workloads")
-                (workloads/load-workloads tx))))))))
+  (let [query (get-in request [:parameters :query])]
+    (map
+     strip-internals
+     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+       (if-let [uuid (:uuid query)]
+         (do (logr/infof "getting workload by uuid %s" uuid)
+             [(workloads/load-workload-for-uuid tx uuid)])
+         (if-let [prj (:project query)]
+           (do (logr/infof "getting workloads by project %s" prj)
+               (workloads/load-workloads-with-project tx prj))
+           (do (logr/infof "getting all workloads")
+               (workloads/load-workloads tx))))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
@@ -78,14 +77,19 @@
     (let [{uuid :uuid} (:body-params request)]
       (logr/infof "post-start endpoint called: uuid=%s" uuid)
       (let [workload (workloads/load-workload-for-uuid tx uuid)]
-        (->>
-         (if (:started workload)
-           workload
-           (do
-             (logr/infof "starting workload %s" uuid)
-             (workloads/start-workload! tx workload)))
-         strip-internals
-         succeed)))))
+        (-> workload
+            (util/unless-> :started #(workloads/start-workload! tx %))
+            strip-internals
+            succeed)))))
+
+(defn stop-workload
+  "Stop a workload, allowing all active processing to complete."
+  [request]
+  (let [uuid (-> request :parameters :query :uuid)]
+    (logr/infof "stop-workload called workload:%s" uuid)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (workloads/load-workload-for-uuid tx uuid)
+           (workloads/stop-workload! tx)))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
