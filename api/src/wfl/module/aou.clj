@@ -9,7 +9,8 @@
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.module.batch :as batch])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]
            [java.util UUID]))
@@ -267,22 +268,18 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->>
-   (add-aou-workload! tx request)
-   (workloads/load-workload-for-id tx)))
+  (->> (add-aou-workload! tx request)
+       (workloads/load-workload-for-id tx)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
+(defoverload workloads/stop-workload!  pipeline batch/stop-workload!)
 
-;; The arrays module is always "open" for appending workflows - once started,
-;; it cannot be stopped!
 (defmethod workloads/update-workload!
   pipeline
   [tx workload]
-  (if-not (:started workload)
-    workload
-    (try
-      (postgres/update-workflow-statuses! tx workload)
-      (workloads/load-workload-for-id tx (:id workload))
-      (catch Throwable cause
-        (throw (ex-info "Error updating aou workload"
-                        {:workload workload} cause))))))
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/update-workflow-statuses! tx workload)
+            (when (:stopped workload)
+              (postgres/update-workload-status! tx workload))
+            (workloads/load-workload-for-id tx id))]
+    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))

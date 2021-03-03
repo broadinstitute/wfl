@@ -64,21 +64,21 @@
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [tx workload]
-  (letfn [(update! [{:keys [id]}]
+  (letfn [(update! [{:keys [id] :as workload}]
             (postgres/batch-update-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
-    (util/unless-> workload #(or (:finished %) (not (:started %))) update!)))
+    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))
 
 (defn stop-workload!
   "Use transaction TX to stop the WORKLOAD."
   [tx {:keys [id] :as workload}]
-  (letfn [(patch! [colls {:keys [items]}]
-            (jdbc/update! tx items colls ["id = ?" id]))
-          (stop! [_]
+  (letfn [(patch-workload! [cols]
+            (jdbc/update! tx :workload cols ["id = ?" id]))
+          (stop! [{:keys [id] :as workload}]
             (let [now (OffsetDateTime/now)]
-              (util/unless-> workload :started #(patch! {:started now
-                                                         :finished now} %))
-              (patch! {:stopped now} workload)
+              (when-not (:started workload)
+                (patch-workload! {:started now :finished now}))
+              (patch-workload! {:stopped now} id)
               (workloads/load-workload-for-id tx id)))]
     (util/unless-> workload #(or (:stopped %) (:finished %)) stop!)))
