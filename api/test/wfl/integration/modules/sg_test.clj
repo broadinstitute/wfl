@@ -382,7 +382,7 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'batch/submit-workload!                   mock-submit-workload
+    {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
      #'sg/register-workload-in-clio             (fn [x _] x)}
     #(as-> (the-sg-workload-request) $

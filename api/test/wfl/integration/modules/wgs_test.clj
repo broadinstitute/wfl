@@ -1,17 +1,18 @@
 (ns wfl.integration.modules.wgs-test
-  (:require [clojure.set :refer [rename-keys]]
-            [clojure.test :refer [deftest testing is] :as clj-test]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete
-                                          submit-workflows]]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.util :as util]
-            [wfl.references :as references]
-            [clojure.string :as str])
-  (:import (java.util UUID)))
+  (:require [clojure.set          :refer [rename-keys]]
+            [clojure.test         :refer [deftest testing is] :as clj-test]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.tools.fixtures   :as fixtures]
+            [wfl.tools.workloads  :as workloads]
+            [wfl.module.wgs       :as wgs]
+            [wfl.jdbc             :as jdbc]
+            [wfl.module.all       :as all]
+            [wfl.util             :as util :refer [absent?]]
+            [wfl.references       :as references]
+            [clojure.string       :as str]
+            [wfl.service.postgres :as postgres])
+  (:import (java.util UUID)
+           (java.time OffsetDateTime)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -58,7 +59,7 @@
                 :workflows)))))
 
 (deftest test-start-wgs-workload!
-  (with-redefs-fn {#'submit-workflows mock-submit-workflows}
+  (with-redefs-fn {#'cromwell/submit-workflows mock-submit-workflows}
     #(let [workload (-> (make-wgs-workload-request)
                         workloads/create-workload!
                         workloads/start-workload!)]
@@ -68,13 +69,6 @@
                   (not-any? (partial contains? workflow) (keys workloads/wgs-inputs))
                   "Inputs are not at the top-level"))]
          (run! check-nesting (:workflows workload))))))
-
-(deftest test-update-unstarted
-  (let [workload (->> (make-wgs-workload-request)
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
-    (is (nil? (:submitted workload)))))
 
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
@@ -115,7 +109,7 @@
                (UUID/randomUUID))
              inputs))]
     (with-redefs-fn
-      {#'submit-workflows verify-inputs}
+      {#'cromwell/submit-workflows verify-inputs}
       #(-> (make-wgs-workload-request)
            (update :items use-input_bam)
            (workloads/execute-workload!)
@@ -137,7 +131,7 @@
                (verify-workflow-inputs (into {} (map strip-prefix in)))
                (UUID/randomUUID))
              inputs))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -167,7 +161,7 @@
             (let [request (-> (make-wgs-workload-request)
                               (assoc :items [{:inputs {key value}}]))]
               (testing (str "default inputs when given only " key)
-                (with-redefs-fn {#'submit-workflows verify-submitted-inputs}
+                (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
                   #(workloads/execute-workload! request)))))]
     (test-with-input :input_bam (:input_cram workloads/wgs-inputs))
     (test-with-input :input_cram (:input_cram workloads/wgs-inputs))))
@@ -182,7 +176,7 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (map (fn [_] (UUID/randomUUID)) inputs)))]
-    (with-redefs-fn {#'submit-workflows verify-submitted-options}
+    (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
       (fn []
         (->
          (make-wgs-workload-request)
@@ -202,3 +196,55 @@
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
                   :workflows))))
+
+(defn mock-batch-update-workflow-statuses!
+  [tx {:keys [workflows items] :as _workload}]
+  (letfn [(update! [{:keys [id]}]
+            (jdbc/update! tx items
+                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          ["id = ?" id]))]
+    (run! update! workflows)))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'cromwell/submit-workflows                mock-submit-workflows
+     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    #(as-> (make-wgs-workload-request) $
+       (doto (workloads/create-workload! $)
+         (-> (contains? :created)  is)
+         (-> (absent?   :started)  is)
+         (-> (absent?   :stopped)  is)
+         (-> (absent?   :finished) is))
+       (doto (workloads/update-workload! $)
+         (-> (contains? :created)  is)
+         (-> (absent?   :started)  is)
+         (-> (absent?   :stopped)  is)
+         (-> (absent?   :finished) is))
+       (doto (workloads/start-workload! $)
+         (-> (contains? :created)  is)
+         (-> (contains? :started)  is)
+         (-> (absent?   :stopped)  is)
+         (-> (absent?   :finished) is))
+       (doto (workloads/stop-workload! $)
+         (-> (contains? :created)  is)
+         (-> (contains? :started)  is)
+         (-> (contains? :stopped)  is)
+         (-> (absent?   :finished) is))
+       (doto (workloads/update-workload! $)
+         (-> (contains? :created)  is)
+         (-> (contains? :started)  is)
+         (-> (contains? :stopped)  is)
+         (-> (contains? :finished) is)))))
+
+(deftest test-stop-workload-state-transition
+  (as-> (make-wgs-workload-request) $
+    (doto (workloads/create-workload! $)
+      (-> (contains? :created)  is)
+      (-> (absent?   :started)  is)
+      (-> (absent?   :stopped)  is)
+      (-> (absent?   :finished) is))
+    (doto (workloads/stop-workload! $)
+      (-> (contains? :created)  is)
+      (-> (contains? :started)  is)
+      (-> (contains? :stopped)  is)
+      (-> (contains? :finished) is))))
