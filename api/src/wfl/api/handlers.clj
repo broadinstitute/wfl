@@ -85,11 +85,13 @@
 (defn stop-workload
   "Stop a workload, allowing all active processing to complete."
   [request]
-  (let [uuid (-> request :parameters :query :uuid)]
+  (let [{uuid :uuid} (:body-params request)]
     (logr/infof "stop-workload called workload:%s" uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
-           (workloads/stop-workload! tx)))))
+           (workloads/stop-workload! tx)
+           strip-internals
+           succeed))))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"

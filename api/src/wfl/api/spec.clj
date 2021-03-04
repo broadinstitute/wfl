@@ -51,6 +51,7 @@
 (s/def ::workload-response (s/keys :opt-un [::finished
                                             ::input
                                             ::started
+                                            ::stopped
                                             ::wdl
                                             ::workflows]
                                    :req-un [::commit

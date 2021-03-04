@@ -229,7 +229,7 @@
         (when (> elapsed timeout)
           (throw (TimeoutException.
                   (format "Timed out waiting for workload %s" uuid))))
-        (if (every? finished? (:workflows wl))
+        (if (or (:finished workload) (every? finished? (:workflows wl)))
           (done! wl)
           (do
             (log/infof "Waiting for workload %s to complete" uuid)
