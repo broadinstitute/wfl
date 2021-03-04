@@ -118,3 +118,82 @@
       util/response-body-json
       :id
       poll-job))
+
+(defn create-snapshot
+  "Create a snapshot from standard SQL query,
+   assert or row-ids, based on `snapshot-request`.
+
+   See `SnapshotRequestModel` in the
+   DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/
+
+   Note the TDR is under active development,
+   the endpoint spec is getting changed so the
+   spec in this function is not consistent with
+   the TDR Swagger page in order to make the
+   request work."
+  [snapshot-request]
+  (-> (repository "snapshots")
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
+      :id
+      poll-job))
+
+(defn list-snapshots
+  "List all Snapshots the caller has access to.
+   Hard-coded to return 999 pages for now.
+
+   Parameters
+   ----------
+   dataset-ids      - Optionally filter the result snapshots
+                      where provided datasets are source datasets.
+
+   Example
+   -------
+     (list-snapshots)
+     (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\" \"85efdfea-52fb-4698-bee6-eef76104a7f4\")"
+  [& dataset-ids]
+  (letfn [(maybe [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
+    (-> (http/get (repository "snapshots")
+          (-> {:headers (auth/get-service-account-header)
+               :query-params {:limit 999}}
+            (maybe :query-params dataset-ids)))
+      util/response-body-json)))
+
+(defn delete-snapshot
+  "Delete the Snapshot with `snapshot-id`."
+  [dataset-id]
+  (-> (repository "snapshots/" dataset-id)
+    (http/delete {:headers (auth/get-service-account-header)})
+    util/response-body-json
+    :id
+    poll-job))
+
+(comment
+  (delete-snapshot "2450996e-3a9b-4311-9aa2-82bacb8f17bd")
+  )
+
+(defn snapshot
+  "Query the DataRepo for the Snapshot with `snapshot-id`."
+  [snapshot-id]
+  (-> (repository "snapshots/" snapshot-id)
+    (http/get {:headers (auth/get-service-account-header)})
+    util/response-body-json))
+
+(comment
+  (snapshot "2450996e-3a9b-4311-9aa2-82bacb8f17bd")
+  )
+
+(comment
+  (dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
+  (let [snapshot-request {:contents  [{:datasetName "zerotest_partition"
+                                       :mode        "byQuery"
+                                       :querySpec   {:assetName "sample_asset"
+                                                     :query     "SELECT zerotest_partition.sample.datarepo_row_id FROM zerotest_partition.sample"}}]
+                          :description "Rex test snapshot by query"
+                          :name      "zerotest_partition_snapshot_by_query"
+                          :profileId "390e7a85-d47f-4531-b612-165fc977d3bd"}]
+    (create-snapshot snapshot-request))
+  (list-snapshots "85efdfea-52fb-4698-bee6-eef76104a7f4"))
