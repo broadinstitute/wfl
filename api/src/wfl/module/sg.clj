@@ -189,22 +189,23 @@
         (log/error {:executor executor :metadata metadata}))
       (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
-(defn ^:private register-workload-in-clio
-  "Use `tx` to register `workload` outputs with Clio."
-  [tx {:keys [executor items output uuid] :as workload}]
-  (->> items
-       (postgres/get-table tx)
-       (run! (partial register-workflow-in-clio executor output)))
-  workload)
+;; visible for testing
+(defn register-workload-in-clio
+  "Use `tx` to register `_workload` outputs with Clio."
+  [{:keys [executor items output] :as _workload} tx]
+  (run!
+   (partial register-workflow-in-clio executor output)
+   (postgres/get-table tx items)))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
-  [tx {:keys [finished id started] :as workload}]
-  (postgres/batch-update-workflow-statuses! tx workload)
-  (postgres/update-workload-status! tx workload)
-  (let [{:keys [finished] :as result} (workloads/load-workload-for-id tx id)]
-    (when finished (register-workload-in-clio tx workload))
-    result))
+  [tx workload]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/batch-update-workflow-statuses! tx workload)
+            (postgres/update-workload-status! tx workload)
+            (doto (workloads/load-workload-for-id tx id)
+              (register-workload-in-clio tx)))]
+    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
