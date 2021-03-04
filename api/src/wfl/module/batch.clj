@@ -79,6 +79,6 @@
             (let [now (OffsetDateTime/now)]
               (when-not (:started workload)
                 (patch-workload! {:started now :finished now}))
-              (patch-workload! {:stopped now} id)
+              (patch-workload! {:stopped now})
               (workloads/load-workload-for-id tx id)))]
     (util/unless-> workload #(or (:stopped %) (:finished %)) stop!)))

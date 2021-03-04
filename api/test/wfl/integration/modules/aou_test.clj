@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.test :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
-            [wfl.util :as util]
+            [wfl.util :as util :refer [absent?]]
             [wfl.module.aou :as aou]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
@@ -46,21 +46,71 @@
            (is (s/valid? :wfl.api.spec/append-to-aou-response response))
            (is (empty? response)))))))
 
-(deftest test-update-unstarted
-  (let [workload (->> (make-aou-workload-request)
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
-    (is (nil? (:submitted workload)))))
-
 (deftest test-append-to-aou-not-started
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
-    #(is
-      (thrown? Exception
-               (workloads/append-to-workload! [workloads/aou-sample]
-                                              (workloads/create-workload! (make-aou-workload-request)))))))
+    #(let [workload (workloads/create-workload! (make-aou-workload-request))]
+       (is (thrown? Exception (workloads/append-to-workload!
+                               [workloads/aou-sample]
+                               workload))))))
 
-(deftest test-aou-cannot-be-stopped!
+(deftest test-append-to-stopped-aou-workload
+  (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
+    #(as-> (workloads/create-workload! (make-aou-workload-request)) workload
+       (workloads/start-workload! workload)
+       (workloads/stop-workload! workload)
+       (is (thrown? Exception (workloads/append-to-workload!
+                               [workloads/aou-sample]
+                               workload))))))
+
+(deftest test-workload-state-transition
+  (-> (make-aou-workload-request)
+      (as-> request
+            (doto (workloads/create-workload! request)
+              (-> (contains? :created)  is)
+              (-> (absent?   :started)  is)
+              (-> (absent?   :stopped)  is)
+              (-> (absent?   :finished) is)))
+      (as-> workload
+            (doto (workloads/update-workload! workload)
+              (-> (contains? :created)  is)
+              (-> (absent?   :started)  is)
+              (-> (absent?   :stopped)  is)
+              (-> (absent?   :finished) is)))
+      (as-> workload
+            (doto (workloads/start-workload! workload)
+              (-> (contains? :created)  is)
+              (-> (contains? :started)  is)
+              (-> (absent?   :stopped)  is)
+              (-> (absent?   :finished) is)))
+      (as-> workload
+            (doto (workloads/stop-workload! workload)
+              (-> (contains? :created)  is)
+              (-> (contains? :started)  is)
+              (-> (contains? :stopped)  is)
+              (-> (absent?   :finished) is)))
+      (as-> workload
+            (doto (workloads/update-workload! workload)
+              (-> (contains? :created)  is)
+              (-> (contains? :started)  is)
+              (-> (contains? :stopped)  is)
+              (-> (contains? :finished) is)))))
+
+(deftest test-stop-workload-state-transition
+  (-> (make-aou-workload-request)
+      (as-> request
+            (doto (workloads/create-workload! request)
+              (-> (contains? :created)  is)
+              (-> (absent?   :started)  is)
+              (-> (absent?   :stopped)  is)
+              (-> (absent?   :finished) is)))
+      (as-> workload
+            (doto (workloads/stop-workload! workload)
+              (-> (contains? :created)  is)
+              (-> (contains? :started)  is)
+              (-> (contains? :stopped)  is)
+              (-> (contains? :finished) is)))))
+
+(deftest test-aou-workload-not-finished-until-stopped
   (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload
                    #'postgres/update-workflow-statuses! mock-update-statuses!}
     #(let [workload (-> (make-aou-workload-request)

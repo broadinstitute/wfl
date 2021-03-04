@@ -245,6 +245,10 @@
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/start-workload! tx workload)))
 
+(defn stop-workload! [workload]
+  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+    (wfl.api.workloads/stop-workload! tx workload)))
+
 (defn execute-workload! [workload-request]
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
     (wfl.api.workloads/execute-workload! tx workload-request)))
