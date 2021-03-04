@@ -32,6 +32,7 @@
 (s/def ::release string?)
 (s/def ::status (set (conj cromwell/statuses "skipped")))
 (s/def ::started inst?)
+(s/def ::stopped inst?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))

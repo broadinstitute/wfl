@@ -100,7 +100,7 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflow                 (constantly (UUID/randomUUID))
+    {#'cromwell/submit-workflow                 (fn [& _] (UUID/randomUUID))
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
     #(as-> (make-copyfile-workload-request "gs://b/in" "gs://b/out") $
        (doto (workloads/create-workload! $)

@@ -4,13 +4,13 @@
             [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
+            [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.module.batch :as batch])
+            [wfl.wfl :as wfl])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]
            [java.util UUID]))

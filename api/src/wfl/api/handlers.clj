@@ -57,33 +57,27 @@
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (let [query (get-in request [:parameters :query])]
+  (let [{:keys [uuid project]} (get-in request [:parameters :query])]
     (succeed
-     (map
-      strip-internals
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (if-let [uuid (:uuid query)]
-          (do (logr/infof "getting workload by uuid %s" uuid)
-              [(workloads/load-workload-for-uuid tx uuid)])
-          (if-let [prj (:project query)]
-            (do (logr/infof "getting workloads by project %s" prj)
-                (workloads/load-workloads-with-project tx prj))
-            (do (logr/infof "getting all workloads")
-                (workloads/load-workloads tx)))))))))
+     (map strip-internals
+          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+            (cond uuid    [(workloads/load-workload-for-uuid tx uuid)]
+                  project (workloads/load-workloads-with-project tx project)
+                  :else   (workloads/load-workloads tx)))))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
   [request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [{uuid :uuid} (:body-params request)]
-      (logr/infof "post-start endpoint called: uuid=%s" uuid)
+  (let [{uuid :uuid} (:body-params request)]
+    (logr/infof "post-start endpoint called: uuid=%s" uuid)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (-> (workloads/load-workload-for-uuid tx uuid)
           (util/unless-> :started #(workloads/start-workload! tx %))
           strip-internals
           succeed))))
 
 (defn stop-workload
-  "Stop a workload, allowing all active processing to complete."
+  "Stop managing workflows for the workload specified by 'request'."
   [request]
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "stop-workload called workload:%s" uuid)
@@ -100,10 +94,9 @@
                              (rename-keys {:cromwell :executor}))]
     (logr/info "post-exec endpoint called: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->>
-       (gcs/userinfo request)
-       :email
-       (assoc workload-request :creator)
-       (workloads/execute-workload! tx)
-       strip-internals
-       succeed))))
+      (->> (gcs/userinfo request)
+           :email
+           (assoc workload-request :creator)
+           (workloads/execute-workload! tx)
+           strip-internals
+           succeed))))

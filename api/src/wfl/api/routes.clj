@@ -66,7 +66,7 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
-    {:post {:summary    "Stop a workload, allow all active workflows to complete."
+    {:post {:summary    "Stop managing workflows for the workload specified by 'request'."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/stop-workload}}]
