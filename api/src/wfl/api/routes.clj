@@ -69,7 +69,7 @@
     {:post {:summary    "Stop managing workflows for the workload specified by 'request'."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
-            :handler    handlers/stop-workload}}]
+            :handler    handlers/post-stop}}]
    ["/api/v1/exec"
     {:post {:summary    "Create and start a new workload."
             :parameters {:body ::spec/workload-request}

@@ -47,7 +47,7 @@
   (let [workload-request (-> (:body-params request)
                              (rename-keys {:cromwell :executor}))
         {:keys [email]}  (gcs/userinfo request)]
-    (logr/info "post-create endpoint called: " workload-request)
+    (logr/info "POST /api/v1/create with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (assoc workload-request :creator email)
            (workloads/create-workload! tx)
@@ -57,7 +57,8 @@
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (let [{:keys [uuid project]} (get-in request [:parameters :query])]
+  (let [{:keys [uuid project] :as query} (get-in request [:parameters :query])]
+    (logr/info "GET /api/v1/workload with query: " query)
     (succeed
      (map strip-internals
           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -69,18 +70,18 @@
   "Start the workload with UUID in REQUEST."
   [request]
   (let [{uuid :uuid} (:body-params request)]
-    (logr/infof "post-start endpoint called: uuid=%s" uuid)
+    (logr/infof "POST /api/v1/start with uuid: " uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (-> (workloads/load-workload-for-uuid tx uuid)
           (util/unless-> :started #(workloads/start-workload! tx %))
           strip-internals
           succeed))))
 
-(defn stop-workload
+(defn post-stop
   "Stop managing workflows for the workload specified by 'request'."
   [request]
   (let [{uuid :uuid} (:body-params request)]
-    (logr/infof "stop-workload called workload:%s" uuid)
+    (logr/infof "POST /api/v1/stop with uuid: %s" uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/stop-workload! tx)
@@ -92,7 +93,7 @@
   [request]
   (let [workload-request (-> (:body-params request)
                              (rename-keys {:cromwell :executor}))]
-    (logr/info "post-exec endpoint called: " workload-request)
+    (logr/info "POST /api/v1/exec with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (gcs/userinfo request)
            :email
