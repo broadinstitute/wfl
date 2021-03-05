@@ -1,14 +1,17 @@
 (ns wfl.integration.modules.copyfile-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string :as str]
+            [wfl.integration.modules.shared :as shared]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.module.copyfile :as copyfile]
-            [wfl.service.cromwell :refer [wait-for-workflow-complete submit-workflow]]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
             [wfl.util :as util])
-  (:import (java.util UUID)))
+  (:import (java.util UUID)
+           (java.time OffsetDateTime)))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -26,13 +29,6 @@
         (jdbc/update! tx :workload {:version "0.3.8"} ["id = ?" id])
         id))))
 
-(deftest test-update-unstarted
-  (let [workload (->> (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
-    (is (nil? (:submitted workload)))))
-
 (deftest test-loading-old-copyfile-workload
   (let [id       (old-create-copyfile-workload!)
         workload (workloads/load-workload-for-id id)]
@@ -49,7 +45,7 @@
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
               (UUID/randomUUID)))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-options}
+    (with-redefs-fn {#'cromwell/submit-workflow verify-submitted-options}
       (fn []
         (->
          (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")
@@ -75,7 +71,7 @@
             (is (every? #(prefixed? :copyfile %) (keys inputs)))
             (verify-workflow-inputs (into {} (map strip-prefix inputs)))
             (UUID/randomUUID))]
-    (with-redefs-fn {#'submit-workflow verify-submitted-inputs}
+    (with-redefs-fn {#'cromwell/submit-workflow verify-submitted-inputs}
       (fn []
         (->
          (make-copyfile-workload-request "gs://fake/foo" "gs://fake/bar")
@@ -94,3 +90,22 @@
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
                   :workflows))))
+
+(defn mock-batch-update-workflow-statuses!
+  [tx {:keys [workflows items] :as _workload}]
+  (letfn [(update! [{:keys [id]}]
+            (jdbc/update! tx items
+                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          ["id = ?" id]))]
+    (run! update! workflows)))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'cromwell/submit-workflow                 (fn [& _] (UUID/randomUUID))
+     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    #(shared/run-workload-state-transition-test!
+      (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test!
+   (make-copyfile-workload-request "gs://b/in" "gs://b/out")))

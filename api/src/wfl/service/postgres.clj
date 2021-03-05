@@ -90,11 +90,17 @@
                             ["uuid = ?" uuid]))]
       (run! update! uuid->status))))
 
+(defn active-workflows
+  "Use `tx` to query all the workflows in `_workload` whose :status is not in
+  `finished?`"
+  [tx {:keys [items] :as _workload}]
+  (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
+    (->> (util/to-quoted-comma-separated-list finished?)
+         (format query items)
+         (jdbc/query tx))))
+
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
-  [tx {:keys [id items] :as _workload}]
-  (let [select "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
-        query (format select (util/to-quoted-comma-separated-list finished?))]
-    (when (empty? (jdbc/query tx (format query items)))
-      (jdbc/update! tx :workload
-                    {:finished (OffsetDateTime/now)} ["id = ?" id]))))
+  [tx {:keys [id] :as workload}]
+  (when (empty? (active-workflows tx workload))
+    (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))

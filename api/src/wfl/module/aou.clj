@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
+            [wfl.module.batch :as batch]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
@@ -246,7 +247,9 @@
   - All samples being appended will be submitted immediately."
   [tx notifications {:keys [uuid items output executor] :as workload}]
   (when-not (:started workload)
-    (throw (Exception. (format "Workload %s is not started yet!" uuid))))
+    (throw (Exception. (format "Workload %s is not started" uuid))))
+  (when (:stopped workload)
+    (throw (Exception. (format "Workload %s has been stopped" uuid))))
   (letfn [(submit! [url sample]
             (let [output-path      (str output (str/join "/" (primary-values sample)))
                   workflow-options (util/deep-merge default-options
@@ -267,22 +270,18 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->>
-   (add-aou-workload! tx request)
-   (workloads/load-workload-for-id tx)))
+  (->> (add-aou-workload! tx request)
+       (workloads/load-workload-for-id tx)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
+(defoverload workloads/stop-workload!  pipeline batch/stop-workload!)
 
-;; The arrays module is always "open" for appending workflows - once started,
-;; it cannot be stopped!
 (defmethod workloads/update-workload!
   pipeline
-  [tx workload]
-  (if-not (:started workload)
-    workload
-    (try
-      (postgres/update-workflow-statuses! tx workload)
-      (workloads/load-workload-for-id tx (:id workload))
-      (catch Throwable cause
-        (throw (ex-info "Error updating aou workload"
-                        {:workload workload} cause))))))
+  [tx {:keys [started finished] :as workload}]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/update-workflow-statuses! tx workload)
+            (when (:stopped workload)
+              (postgres/update-workload-status! tx workload))
+            (workloads/load-workload-for-id tx id))]
+    (if (and started (not finished)) (update! workload) workload)))

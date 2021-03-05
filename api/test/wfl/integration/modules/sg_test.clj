@@ -1,6 +1,7 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [wfl.integration.modules.shared :as shared]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
@@ -8,7 +9,9 @@
             [wfl.service.google.storage :as gcs]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]])
+            [wfl.util :as util :refer [absent?]]
+            [wfl.service.postgres :as postgres]
+            [wfl.jdbc :as jdbc])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
@@ -16,7 +19,8 @@
 
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
-(def the-sg-workload-request
+(defn the-sg-workload-request
+  []
   "A request suitable when all external services are mocked."
   {:executor @workloads/cromwell-url
    :output   "gs://broad-gotc-dev-wfl-sg-test-outputs"
@@ -39,7 +43,7 @@
       "gs://broad-gotc-dev-storage/temp_references/gdc/dbsnp_144.hg38.vcf.gz.tbi"
       :input_cram
       "gs://broad-gotc-dev-wfl-sg-test-inputs/pipeline/G96830/NA12878/v23/NA12878.cram"}}]
-   :creator "@workloads/email"})        ; quoted to avoid log spam
+   :creator @workloads/email})
 
 (defn mock-submit-workload
   [{:keys [workflows]} _ _ _ _ _]
@@ -62,22 +66,14 @@
               (is (absent? workload :finished))
               (run! verify-workflow (:workflows workload))))]
     (testing "single-sample workload-request"
-      (go! the-sg-workload-request))))
-
-(deftest test-update-unstarted
-  (let [workload (-> the-sg-workload-request
-                     workloads/create-workload!
-                     workloads/update-workload!)]
-    (is (seq  (:workflows workload)))
-    (is (nil? (:finished  workload)))
-    (is (nil? (:submitted workload)))))
+      (go! (the-sg-workload-request)))))
 
 (deftest test-create-workload-with-common-inputs
   (let [expected {:biobambam_bamtofastq.max_retries 2
                   :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
     (letfn [(ok [inputs]
               (is (= expected (select-keys inputs (keys expected)))))]
-      (run! ok (-> the-sg-workload-request
+      (run! ok (-> (the-sg-workload-request)
                    (assoc-in [:common :inputs] expected)
                    workloads/create-workload! :workflows
                    (->> (map :inputs)))))))
@@ -88,7 +84,7 @@
             (is (:status workflow))
             (is (:updated workflow)))]
     (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(-> the-sg-workload-request
+      #(-> (the-sg-workload-request)
            workloads/create-workload!
            workloads/start-workload!
            (as-> workload
@@ -100,20 +96,10 @@
     (letfn [(go! [inputs]
               (is (absent? inputs :vault_token_path))
               (is (absent? inputs :google_account_vault_path)))]
-      (->> the-sg-workload-request
+      (->> (the-sg-workload-request)
            workloads/create-workload!
            :workflows
            (run! (comp go! :inputs))))))
-
-(deftest test-create-empty-workload
-  (let [workload (->> {:executor @workloads/cromwell-url
-                       :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/sg-test-output/"
-                       :pipeline sg/pipeline
-                       :project  @workloads/project
-                       :creator  @workloads/email}
-                      workloads/execute-workload!
-                      workloads/update-workload!)]
-    (is (:finished workload))))
 
 (deftest test-submitted-workflow-inputs
   (let [prefix (str sg/pipeline ".")]
@@ -131,14 +117,14 @@
                 (UUID/randomUUID)))
             (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
       (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
-        #(-> the-sg-workload-request
+        #(-> (the-sg-workload-request)
              (assoc-in [:common :inputs] {:overwritten            false
                                           :supports_common_inputs true})
              (update :items (partial map overmap))
              workloads/execute-workload!)))))
 
 (deftest test-workflow-options
-  (let [{:keys [output] :as request} the-sg-workload-request]
+  (let [{:keys [output] :as request} (the-sg-workload-request)]
     (letfn [(overmap [m] (-> m
                              (assoc-in [:options :overwritten]      true)
                              (assoc-in [:options :supports_options] true)))
@@ -162,7 +148,7 @@
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (absent? workflow :options)))
           (empty-options [m] (assoc m :options {}))]
-    (run! go! (-> the-sg-workload-request
+    (run! go! (-> (the-sg-workload-request)
                   (assoc-in [:common :options] {})
                   (update :items (partial map empty-options))
                   workloads/create-workload! :workflows))))
@@ -283,14 +269,14 @@
 (defn ^:private mock-cromwell-query-failed
   "Update `status` of all workflows to `Failed`."
   [_environment _params]
-  (let [{:keys [items]} the-sg-workload-request]
+  (let [{:keys [items]} (the-sg-workload-request)]
     (map (fn [id] {:id id :status "Failed"})
          (take (count items) the-uuids))))
 
 (defn ^:private mock-cromwell-query-succeeded
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
-  (let [{:keys [items]} the-sg-workload-request]
+  (let [{:keys [items]} (the-sg-workload-request)]
     (map (fn [id] {:id id :status "Succeeded"})
          (take (count items) the-uuids))))
 
@@ -328,7 +314,7 @@
 ;;
 (defn ^:private test-clio-updates
   []
-  (let [{:keys [items] :as request} the-sg-workload-request]
+  (let [{:keys [items] :as request} (the-sg-workload-request)]
     (-> request
         workloads/create-workload!
         workloads/start-workload!
@@ -386,3 +372,21 @@
 (defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
   [{:keys [output workflows] :as _workload}]
   (run! (partial workflow-postcheck output) workflows))
+
+(defn ^:private mock-batch-update-workflow-statuses!
+  [tx {:keys [workflows items] :as _workload}]
+  (letfn [(update! [{:keys [id]}]
+            (jdbc/update! tx items
+                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          ["id = ?" id]))]
+    (run! update! workflows)))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
+     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
+     #'sg/register-workload-in-clio             (fn [x _] x)}
+    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))

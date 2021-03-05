@@ -54,6 +54,16 @@
                     :body         payload})
         util/response-body-json)))
 
+(defn stop-workload
+  "Stop processing WORKLOAD. WORKLOAD must be known to the server."
+  [workload]
+  (let [payload (json/write-str (select-keys workload [:uuid]))]
+    (-> (wfl-url "/api/v1/stop")
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         payload})
+        util/response-body-json)))
+
 (defn append-to-aou-workload
   "Append SAMPLES to the aou WORKLOAD"
   [samples workload]

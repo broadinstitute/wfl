@@ -121,6 +121,31 @@
             (gcs/upload-file src))
         (test-start-workload (create-copyfile-workload src dst))))))
 
+(defn ^:private test-stop-workload
+  [{:keys [uuid pipeline] :as workload}]
+  (letfn [(verify-no-workflows-run [{:keys [workflows] :as workload}]
+            (is (:finished workload))
+            (is (every? (comp nil? :uuid) workflows))
+            (is (every? (comp nil? :status) workflows)))]
+    (testing (format "calling api/v1/start with %s workload" pipeline)
+      (let [workload (endpoints/stop-workload workload)]
+        (is (= uuid (:uuid workload)))
+        (is (not (:started workload)))
+        (is (:stopped workload))
+        (verify-internal-properties-removed workload)
+        (workloads/when-done verify-no-workflows-run workload)))))
+
+(deftest ^:parallel test-stop-wgs-workload
+  (test-stop-workload (create-wgs-workload)))
+(deftest ^:parallel test-stop-aou-workload
+  (test-stop-workload (create-aou-workload)))
+(deftest ^:parallel test-stop-xx-workload
+  (test-stop-workload (create-xx-workload)))
+(deftest ^:parallel test-stop-sg-workload
+  (test-stop-workload (create-sg-workload)))
+(deftest ^:parallel test-stop-copyfile-workload
+  (test-stop-workload (create-copyfile-workload "gs://b/in" "gs://b/out")))
+
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
