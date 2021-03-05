@@ -247,7 +247,7 @@
   - All samples being appended will be submitted immediately."
   [tx notifications {:keys [uuid items output executor] :as workload}]
   (when-not (:started workload)
-    (throw (Exception. (format "Workload %s is not started yet!" uuid))))
+    (throw (Exception. (format "Workload %s is not started" uuid))))
   (when (:stopped workload)
     (throw (Exception. (format "Workload %s has been stopped" uuid))))
   (letfn [(submit! [url sample]
@@ -278,10 +278,10 @@
 
 (defmethod workloads/update-workload!
   pipeline
-  [tx workload]
+  [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
             (postgres/update-workflow-statuses! tx workload)
             (when (:stopped workload)
               (postgres/update-workload-status! tx workload))
             (workloads/load-workload-for-id tx id))]
-    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))
+    (if (and started (not finished)) (update! workload) workload)))

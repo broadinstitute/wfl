@@ -108,9 +108,6 @@
     (apply merge-with deep-merge a maps)
     (apply merge-with deep-merge maps)))
 
-(defn when->   [x p f] (if     (p x) (f x) x))
-(defn unless-> [x p f] (if-not (p x) (f x) x))
-
 (defmacro assoc-when
   "Associate `key` `value` mapping in `coll` when `pred key value`,
   otherwise `coll`"

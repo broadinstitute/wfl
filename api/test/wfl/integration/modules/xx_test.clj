@@ -194,6 +194,6 @@
       (-> (absent?   :finished) is))
     (doto (workloads/stop-workload! $)
       (-> (contains? :created)  is)
-      (-> (contains? :started)  is)
+      (-> (absent?   :started)  is)
       (-> (contains? :stopped)  is)
       (-> (contains? :finished) is))))

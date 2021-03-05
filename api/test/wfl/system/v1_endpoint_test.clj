@@ -130,7 +130,7 @@
     (testing (format "calling api/v1/start with %s workload" pipeline)
       (let [workload (endpoints/stop-workload workload)]
         (is (= uuid (:uuid workload)))
-        (is (:started workload))
+        (is (not (:started workload)))
         (is (:stopped workload))
         (verify-internal-properties-removed workload)
         (workloads/when-done verify-no-workflows-run workload)))))

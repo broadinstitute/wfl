@@ -72,10 +72,11 @@
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "POST /api/v1/start with uuid: " uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (-> (workloads/load-workload-for-uuid tx uuid)
-          (util/unless-> :started #(workloads/start-workload! tx %))
-          strip-internals
-          succeed))))
+      (let [{:keys [started] :as workload}
+            (workloads/load-workload-for-uuid tx uuid)]
+        (-> (if-not started (workloads/start-workload! tx workload) workload)
+            strip-internals
+            succeed)))))
 
 (defn post-stop
   "Stop managing workflows for the workload specified by 'request'."

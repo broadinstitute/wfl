@@ -149,12 +149,12 @@
 
 (defmethod workloads/update-workload!
   pipeline
-  [tx workload]
+  [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
             (postgres/update-terra-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
-    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))
+    (if (and started (not finished)) (update! workload) workload)))
 
 (defmethod workloads/load-workload-impl
   pipeline

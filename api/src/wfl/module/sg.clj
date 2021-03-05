@@ -199,13 +199,13 @@
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
-  [tx workload]
+  [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
             (postgres/batch-update-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
             (doto (workloads/load-workload-for-id tx id)
               (register-workload-in-clio tx)))]
-    (util/when-> workload #(and (:started %) (not (:finished %))) update!)))
+    (if (and started (not finished)) (update! workload) workload)))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
