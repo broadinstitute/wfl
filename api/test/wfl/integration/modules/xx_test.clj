@@ -1,13 +1,14 @@
 (ns wfl.integration.modules.xx-test
-  (:require [clojure.test         :refer [deftest testing is use-fixtures]]
-            [clojure.string       :as str]
-            [wfl.module.xx        :as xx]
+  (:require [clojure.test :refer [deftest testing is use-fixtures]]
+            [clojure.string :as str]
+            [wfl.integration.modules.shared :as shared]
+            [wfl.module.xx :as xx]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
-            [wfl.tools.fixtures   :as fixtures]
-            [wfl.tools.workloads  :as workloads]
-            [wfl.util             :as util :refer [absent?]]
-            [wfl.jdbc             :as jdbc])
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.workloads :as workloads]
+            [wfl.util :as util :refer [absent?]]
+            [wfl.jdbc :as jdbc])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
@@ -158,42 +159,7 @@
   (with-redefs-fn
     {#'cromwell/submit-workflows                mock-submit-workflows
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
-    #(as-> (make-xx-workload-request) $
-       (doto (workloads/create-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/start-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/stop-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (contains? :finished) is)))))
+    #(shared/run-workload-state-transition-test! (make-xx-workload-request))))
 
 (deftest test-stop-workload-state-transition
-  (as-> (make-xx-workload-request) $
-    (doto (workloads/create-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (absent?   :stopped)  is)
-      (-> (absent?   :finished) is))
-    (doto (workloads/stop-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (contains? :stopped)  is)
-      (-> (contains? :finished) is))))
+  (shared/run-stop-workload-state-transition-test! (make-xx-workload-request)))

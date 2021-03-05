@@ -1,6 +1,7 @@
 (ns wfl.integration.modules.copyfile-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string :as str]
+            [wfl.integration.modules.shared :as shared]
             [wfl.jdbc :as jdbc]
             [wfl.module.all :as all]
             [wfl.module.copyfile :as copyfile]
@@ -8,7 +9,7 @@
             [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]])
+            [wfl.util :as util])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
@@ -102,42 +103,9 @@
   (with-redefs-fn
     {#'cromwell/submit-workflow                 (fn [& _] (UUID/randomUUID))
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
-    #(as-> (make-copyfile-workload-request "gs://b/in" "gs://b/out") $
-       (doto (workloads/create-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/start-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/stop-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (contains? :finished) is)))))
+    #(shared/run-workload-state-transition-test!
+      (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))
 
 (deftest test-stop-workload-state-transition
-  (as-> (make-copyfile-workload-request "gs://b/in" "gs://b/out") $
-    (doto (workloads/create-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (absent?   :stopped)  is)
-      (-> (absent?   :finished) is))
-    (doto (workloads/stop-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (contains? :stopped)  is)
-      (-> (contains? :finished) is))))
+  (shared/run-stop-workload-state-transition-test!
+   (make-copyfile-workload-request "gs://b/in" "gs://b/out")))

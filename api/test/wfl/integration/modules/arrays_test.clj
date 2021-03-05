@@ -1,9 +1,9 @@
 (ns wfl.integration.modules.arrays-test
-  (:require [clojure.test          :refer [testing is deftest use-fixtures]]
+  (:require [clojure.test :refer [testing is deftest use-fixtures]]
+            [wfl.integration.modules.shared :as shared]
             [wfl.service.firecloud :as terra]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.workloads   :as workloads]
-            [wfl.util              :refer [absent?]])
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.workloads :as workloads])
   (:import (java.util UUID)))
 
 (use-fixtures
@@ -44,45 +44,12 @@
   (with-redefs-fn
     {#'terra/create-submission             mock-terra-create-submission
      #'terra/get-workflow-status-by-entity mock-get-workflow-status-by-entity}
-    #(as-> (make-arrays-workload-request) $
-       (doto (workloads/create-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/start-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/stop-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (contains? :finished) is)))))
+    #(shared/run-workload-state-transition-test!
+      (make-arrays-workload-request))))
 
 (deftest test-stop-workload-state-transition
-  (as-> (make-arrays-workload-request) $
-    (doto (workloads/create-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (absent?   :stopped)  is)
-      (-> (absent?   :finished) is))
-    (doto (workloads/stop-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (contains? :stopped)  is)
-      (-> (contains? :finished) is))))
+  (shared/run-stop-workload-state-transition-test!
+   (make-arrays-workload-request)))
 
 (deftest test-start-arrays-workload!
   (with-redefs-fn {#'terra/create-submission mock-terra-create-submission}

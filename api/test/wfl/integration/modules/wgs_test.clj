@@ -1,15 +1,16 @@
 (ns wfl.integration.modules.wgs-test
-  (:require [clojure.set          :refer [rename-keys]]
-            [clojure.test         :refer [deftest testing is] :as clj-test]
+  (:require [clojure.set :refer [rename-keys]]
+            [clojure.test :refer [deftest testing is] :as clj-test]
+            [wfl.integration.modules.shared :as shared]
             [wfl.service.cromwell :as cromwell]
-            [wfl.tools.fixtures   :as fixtures]
-            [wfl.tools.workloads  :as workloads]
-            [wfl.module.wgs       :as wgs]
-            [wfl.jdbc             :as jdbc]
-            [wfl.module.all       :as all]
-            [wfl.util             :as util :refer [absent?]]
-            [wfl.references       :as references]
-            [clojure.string       :as str]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.workloads :as workloads]
+            [wfl.module.wgs :as wgs]
+            [wfl.jdbc :as jdbc]
+            [wfl.module.all :as all]
+            [wfl.util :as util]
+            [wfl.references :as references]
+            [clojure.string :as str]
             [wfl.service.postgres :as postgres])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
@@ -209,42 +210,7 @@
   (with-redefs-fn
     {#'cromwell/submit-workflows                mock-submit-workflows
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
-    #(as-> (make-wgs-workload-request) $
-       (doto (workloads/create-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/start-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/stop-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (contains? :finished) is)))))
+    #(shared/run-workload-state-transition-test! (make-wgs-workload-request))))
 
 (deftest test-stop-workload-state-transition
-  (as-> (make-wgs-workload-request) $
-    (doto (workloads/create-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (absent?   :stopped)  is)
-      (-> (absent?   :finished) is))
-    (doto (workloads/stop-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (contains? :stopped)  is)
-      (-> (contains? :finished) is))))
+  (shared/run-stop-workload-state-transition-test! (make-wgs-workload-request)))

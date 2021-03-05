@@ -1,6 +1,7 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [wfl.integration.modules.shared :as shared]
             [wfl.module.batch :as batch]
             [wfl.module.sg :as sg]
             [wfl.service.clio :as clio]
@@ -385,42 +386,7 @@
     {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
      #'sg/register-workload-in-clio             (fn [x _] x)}
-    #(as-> (the-sg-workload-request) $
-       (doto (workloads/create-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (absent?   :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/start-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (absent?   :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/stop-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (absent?   :finished) is))
-       (doto (workloads/update-workload! $)
-         (-> (contains? :created)  is)
-         (-> (contains? :started)  is)
-         (-> (contains? :stopped)  is)
-         (-> (contains? :finished) is)))))
+    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))
 
 (deftest test-stop-workload-state-transition
-  (as-> (the-sg-workload-request) $
-    (doto (workloads/create-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (absent?   :stopped)  is)
-      (-> (absent?   :finished) is))
-    (doto (workloads/stop-workload! $)
-      (-> (contains? :created)  is)
-      (-> (absent?   :started)  is)
-      (-> (contains? :stopped)  is)
-      (-> (contains? :finished) is))))
+  (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))
