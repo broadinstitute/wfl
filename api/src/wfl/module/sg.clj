@@ -33,8 +33,8 @@
                 :google_project "broad-gotc-dev"
                 :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:clio-url       #_"https://clio.gotc-prod.broadinstitute.org"
-                ,               "https://clio.gotc-dev.broadinstitute.org"
+               {:clio-url       "https://clio.gotc-prod.broadinstitute.org"
+                ,               #_"https://clio.gotc-dev.broadinstitute.org"
                 :google_project "broad-sg-prod-compute1"
                 :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
@@ -273,31 +273,27 @@
    :items    (mapv cram->inputs crams)})
 
 (comment
+  "export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/wfl-prod-service-account.json"
   (do
-    (def samples
-      ["EOMI-B21C-NB1-A-1-0-D-A82T-36"
-       "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
-       "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
-       "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"])
     (def dev  "https://clio.gotc-dev.broadinstitute.org")
     (def prod "https://clio.gotc-prod.broadinstitute.org")
     (def tsv
       "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
     (def crams (tsv->crams prod tsv))
     (def cram (first crams))
-    (def workload (crams->workload crams)))
+    (def raw-workload (crams->workload crams)))
   (util/map-tsv-file tsv)
   (count crams)
-  (query-cram dev cram)
-  (query-cram prod cram)
   crams
-  workload
-  (-> "./clio-cram-records.edn"
-      clojure.java.io/file
-      clojure.java.io/writer
-      (->> (clojure.pprint/pprint crams)))
-  cram
-  workload
+  (def workload
+    (let [{:keys [items]} raw-workload
+          keep?           #{"EOMI-B21C-NB1-A-1-0-D-A82T-36"
+                            "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
+                            "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
+                            "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"}]
+      (-> workload :items
+          (->> (filter (comp keep? :base_file_name :inputs))
+               (assoc workload :items)))))
   (let [file (clojure.java.io/file "workload-request.edn")]
     (with-open [writer (clojure.java.io/writer file)]
       (clojure.pprint/pprint workload writer)))
