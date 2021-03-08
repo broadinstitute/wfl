@@ -252,7 +252,7 @@
                     :dbsnp_vcf               dbsnp
                     :dbsnp_vcf_index         (str dbsnp ".tbi")}]
     (letfn [(translate [m [k v]] (assoc m k (v cram)))]
-      {:inputs (merge (reduce translate references translation) overrides)
+      {:inputs  (reduce translate references translation)
        :options {:monitoring_script
                  "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"}})))
 
