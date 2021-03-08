@@ -1,6 +1,7 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.json :as json]
+  (:require [clojure.data.csv :as csv]
+            [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
@@ -378,6 +379,7 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
+
 (defn today
   "Return a ^LocalDate of today's date in UTC."
   []
@@ -388,3 +390,11 @@
    backward or forward depends on the sign of n."
   [^Integer n]
   (.plus (today) n ChronoUnit/DAYS))
+
+(defn map-tsv-file
+  "Parse TSV file into maps of column names across rows."
+  [tsv]
+  (with-open [in (io/reader tsv)]
+    (let [[header & rows] (csv/read-csv in :separator \tab)]
+      (doall (map (partial zipmap header) rows)))))
+

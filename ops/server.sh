@@ -2,9 +2,9 @@
 
 set -ex
 
-# export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/api/wfl-non-prod-sa.json
-# export WFL_CLIO_URL=https://clio.gotc-dev.broadinstitute.org
-# export WFL_CROMWELL_URL=https://cromwell-gotc-auth.gotc-dev.broadinstitute.org
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/api/wfl-prod-sa.json
+export WFL_CLIO_URL=https://clio.gotc-dev.broadinstitute.org
+export WFL_CROMWELL_URL=https://cromwell-gotc-auth.gotc-prod.broadinstitute.org
 
 declare -r WFL=${0%/*}
 
