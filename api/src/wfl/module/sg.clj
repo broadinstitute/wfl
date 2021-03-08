@@ -5,6 +5,7 @@
             [clojure.string :as str]
             [clojure.tools.logging.readable :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
+            [wfl.auth :as auth]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
             [wfl.references :as references]
@@ -32,7 +33,8 @@
                 :google_project "broad-gotc-dev"
                 :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:clio-url       "https://clio.gotc-prod.broadinstitute.org"
+               {:clio-url       #_"https://clio.gotc-prod.broadinstitute.org"
+                ,               "https://clio.gotc-dev.broadinstitute.org"
                 :google_project "broad-sg-prod-compute1"
                 :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
@@ -189,13 +191,13 @@
         (log/error {:executor executor :metadata metadata}))
       (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
-;; visible for testing
-(defn register-workload-in-clio
-  "Use `tx` to register `_workload` outputs with Clio."
-  [{:keys [executor items output] :as _workload} tx]
-  (run!
-   (partial register-workflow-in-clio executor output)
-   (postgres/get-table tx items)))
+(defn ^:private register-workload-in-clio
+  "Use `tx` to register `workload` outputs with Clio."
+  [tx {:keys [executor items output uuid] :as workload}]
+  (->> items
+       (postgres/get-table tx)
+       (run! (partial register-workflow-in-clio executor output)))
+  workload)
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
@@ -213,3 +215,99 @@
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline
   batch/load-batch-workload-impl)
+
+;; Hacks follow.  Blame tbl.
+
+(defn sample->clio-cram
+  "Clio CRAM metadata for SAMPLE."
+  [sample]
+  (let [translation {:location     "Processing Location"
+                     :project      "Project"
+                     :sample_alias "Collaborator Sample ID"
+                     :version      "Version"}]
+    (letfn [(translate [m [k v]] (assoc m k (sample v)))]
+      (reduce translate {:data_type "WGS"} translation))))
+
+(defn tsv->crams
+  "Translate TSV file to CRAM records from `clio`."
+  [clio tsv]
+  (map (comp first (partial clio/query-cram clio) sample->clio-cram)
+       (util/map-tsv-file tsv)))
+
+(defn cram->inputs
+  "Translate Clio `cram` record to SG workflow inputs."
+  [cram]
+  (let [translation {:base_file_name :sample_alias
+                     :input_cram     :cram_path}
+        contam (str "gs://gatk-best-practices/somatic-hg38"
+                    "/small_exac_common_3.hg38.vcf.gz")
+        fasta  (str "gs://gcp-public-data--broad-references/hg38/v0"
+                    "/Homo_sapiens_assembly38.fasta")
+        dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
+                    "/gdc/dbsnp_144.hg38.vcf.gz")
+        overrides  {:picard_markduplicates.additional_disk             400
+                    :picard_markduplicates.cpu                           1
+                    :picard_markduplicates.mem                          96
+                    :picard_markduplicates.sorting_collection_size_ratio 0.125
+                    :sort_and_index_markdup_bam.additional_disk        100
+                    :sort_and_index_markdup_bam.cpu                      8
+                    :sort_and_index_markdup_bam.mem                     32}
+        references {:contamination_vcf       contam
+                    :contamination_vcf_index (str contam ".tbi")
+                    :cram_ref_fasta          fasta
+                    :cram_ref_fasta_index    (str fasta ".fai")
+                    :dbsnp_vcf               dbsnp
+                    :dbsnp_vcf_index         (str dbsnp ".tbi")}]
+    (letfn [(translate [m [k v]] (assoc m k (v cram)))]
+      {:inputs (merge (reduce translate references translation) overrides)
+       :options {:monitoring_script
+                 "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"}})))
+
+(defn crams->workload
+  "Return a workload request to process `crams` with SG pipeline"
+  [crams]
+  {:executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+   :output   "gs://broad-prod-somatic-genomes-output"
+   :pipeline "GDCWholeGenomeSomaticSingleSample"
+   :project  "(Test) tbl/GH-1196-sg-prod-data"
+   :items    (mapv cram->inputs crams)})
+
+(comment
+  (do
+    (def dev  "https://clio.gotc-dev.broadinstitute.org")
+    (def prod "https://clio.gotc-prod.broadinstitute.org")
+    (def tsv
+      "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
+    (def crams (tsv->crams prod tsv))
+    (def cram (first crams))
+    (def workload (crams->workload crams)))
+  (util/map-tsv-file tsv)
+  (count crams)
+  (query-cram dev cram)
+  (query-cram prod cram)
+  crams
+  workload
+  (-> "./clio-cram-records.edn"
+      clojure.java.io/file
+      clojure.java.io/writer
+      (->> (clojure.pprint/pprint crams)))
+  cram
+  workload
+  (let [file (clojure.java.io/file "workload-request.edn")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (clojure.pprint/pprint workload writer)))
+  (let [file (clojure.java.io/file "workload-request.json")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (json/write workload writer :escape-slash false)))
+  (defn execute
+    [workload]
+    (let [payload  (json/write-str workload :escape-slash false)
+          response (clj-http.client/post
+                    (str "http://localhost:3000" "/api/v1/exec")
+                    {:headers      (auth/get-auth-header)
+                     :content-type :json
+                     :accept       :json
+                     :body         payload})]
+      (util/parse-json (:body response))))
+  (execute (workload))
+  (execute (update-in workload [:items] (comp vector first))))
