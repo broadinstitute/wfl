@@ -117,3 +117,10 @@
       util/response-body-json
       :id
       poll-job))
+
+(defn find-snapshots
+  "Return snapshots in the Dataset with `dataset-id`."
+  [dataset-id]
+  (-> (repository "snapshots/" dataset-id)
+      (http/get {:headers (auth/get-service-account-header)})
+      util/response-body-json))
