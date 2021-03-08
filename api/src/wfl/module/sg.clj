@@ -284,7 +284,7 @@
                             "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
                             "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
                             "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"}]
-      (-> workload :items
+      (-> raw-workload :items
           (->> (filter (comp keep? :base_file_name :inputs))
                (assoc workload :items)))))
   (let [file (clojure.java.io/file "workload-request.edn")]
