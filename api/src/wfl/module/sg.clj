@@ -33,8 +33,8 @@
                 :google_project "broad-gotc-dev"
                 :jes_gcs_root   "gs://broad-gotc-dev-cromwell-execution"}
                "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
-               {:clio-url       "https://clio.gotc-prod.broadinstitute.org"
-                ,               #_"https://clio.gotc-dev.broadinstitute.org"
+               {:clio-url       #_"https://clio.gotc-prod.broadinstitute.org"
+                ,               "https://clio.gotc-dev.broadinstitute.org"
                 :google_project "broad-sg-prod-compute1"
                 :jes_gcs_root   "gs://broad-sg-prod-execution1/"}}]
     (or (-> url util/de-slashify known)
@@ -310,5 +310,5 @@
                      :accept       :json
                      :body         payload})]
       (util/parse-json (:body response))))
-  (execute (workload))
+  (execute workload)
   (execute (update-in workload [:items] (comp vector first))))

@@ -2,7 +2,7 @@
 
 set -ex
 
-export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/api/wfl-prod-sa.json
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/wfl-prod-service-account.json
 export WFL_CLIO_URL=https://clio.gotc-dev.broadinstitute.org
 export WFL_CROMWELL_URL=https://cromwell-gotc-auth.gotc-prod.broadinstitute.org
 
