@@ -1,6 +1,6 @@
 (ns wfl.integration.modules.arrays-test
   (:require [clojure.test :refer [testing is deftest use-fixtures]]
-            [wfl.api.spec]
+            [wfl.integration.modules.shared :as shared]
             [wfl.service.firecloud :as terra]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
@@ -40,12 +40,16 @@
                      workloads/create-workload!)]
     (run! check-inputs (:workflows workload))))
 
-(deftest test-update-unstarted
-  (let [workload (->> (make-arrays-workload-request)
-                      workloads/create-workload!
-                      workloads/update-workload!)]
-    (is (nil? (:finished workload)))
-    (is (nil? (:submitted workload)))))
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'terra/create-submission             mock-terra-create-submission
+     #'terra/get-workflow-status-by-entity mock-get-workflow-status-by-entity}
+    #(shared/run-workload-state-transition-test!
+      (make-arrays-workload-request))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test!
+   (make-arrays-workload-request)))
 
 (deftest test-start-arrays-workload!
   (with-redefs-fn {#'terra/create-submission mock-terra-create-submission}

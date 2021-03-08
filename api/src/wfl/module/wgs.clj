@@ -193,6 +193,7 @@
     (workloads/load-workload-for-id tx id)))
 
 (defoverload workloads/update-workload! pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!   pipeline batch/stop-workload!)
 
 (defmethod workloads/load-workload-impl
   pipeline

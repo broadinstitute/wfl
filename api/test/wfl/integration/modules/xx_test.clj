@@ -1,29 +1,26 @@
 (ns wfl.integration.modules.xx-test
-  (:require [clojure.test :refer [deftest testing is] :as clj-test]
+  (:require [clojure.test :refer [deftest testing is use-fixtures]]
             [clojure.string :as str]
-            [wfl.environment :as env]
+            [wfl.integration.modules.shared :as shared]
             [wfl.module.xx :as xx]
-            [wfl.module.batch :as batch]
             [wfl.service.cromwell :as cromwell]
+            [wfl.service.postgres :as postgres]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]])
+            [wfl.util :as util :refer [absent?]]
+            [wfl.jdbc :as jdbc])
   (:import (java.time OffsetDateTime)
            (java.util UUID)))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-xx-workload-request []
   (-> (UUID/randomUUID)
       workloads/xx-workload-request
       (assoc :creator @workloads/email)))
 
-(defn mock-submit-workload [{:keys [workflows]} _ _ _ _ _]
-  (let [now       (OffsetDateTime/now)
-        do-submit #(assoc % :uuid (UUID/randomUUID)
-                          :status "Submitted"
-                          :updated now)]
-    (map do-submit workflows)))
+(defn ^:private mock-submit-workflows [_ _ inputs _ _]
+  (map (fn [_] (UUID/randomUUID)) inputs))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -56,7 +53,7 @@
             (is (:uuid workflow))
             (is (:status workflow))
             (is (:updated workflow)))]
-    (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
+    (with-redefs-fn {#'cromwell/submit-workflows mock-submit-workflows}
       #(-> (make-xx-workload-request)
            workloads/create-workload!
            workloads/start-workload!
@@ -73,6 +70,7 @@
            workloads/create-workload!
            :workflows
            (run! (comp go! :inputs))))))
+
 (deftest test-create-empty-workload
   (let [workload (->> {:executor @workloads/cromwell-url
                        :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/"
@@ -148,3 +146,20 @@
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
                   :workflows))))
+
+(defn mock-batch-update-workflow-statuses!
+  [tx {:keys [workflows items] :as _workload}]
+  (letfn [(update! [{:keys [id]}]
+            (jdbc/update! tx items
+                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          ["id = ?" id]))]
+    (run! update! workflows)))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'cromwell/submit-workflows                mock-submit-workflows
+     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    #(shared/run-workload-state-transition-test! (make-xx-workload-request))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test! (make-xx-workload-request)))

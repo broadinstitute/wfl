@@ -10,7 +10,7 @@
            (java.util.concurrent TimeUnit)))
 
 (defn ^:private datarepo-url [& parts]
-  (let [url (util/slashify (env/getenv "WFL_TERRA_DATA_REPO_URL"))]
+  (let [url (util/slashify (env/getenv "WFL_TDR_URL"))]
     (apply str url parts)))
 
 (def ^:private repository
@@ -73,7 +73,6 @@
    "ingest"
    dataset-id
    {:format                "json"
-    :ignore_unknown_values true
     :load_tag              "string"
     :max_bad_records       0
     :path                  path

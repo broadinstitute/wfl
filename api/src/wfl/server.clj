@@ -37,8 +37,9 @@
         (->> (str/join \newline))
         (format wfl/the-name title))))
 
-(def cookie-store
-  "A session store for wrap-defaults."
+(defn ^:private cookie-store
+  "Create a session store for wrap-defaults."
+  []
   (cookie/cookie-store
    {:key     (env/getenv "WFL_COOKIE_SECRET")
     :readers (merge *data-readers* tc/data-readers)}))
@@ -50,7 +51,7 @@
    (-> defaults/api-defaults
        (assoc :proxy true)
        (assoc-in [:session :cookie-attrs :same-site] :lax)
-       (assoc-in [:session :store] cookie-store))))
+       (assoc-in [:session :store] (cookie-store)))))
 
 (defn wrap-internal-error
   [handler]
@@ -67,8 +68,9 @@
   [handler]
   `(reload/wrap-reload (var ~handler) {:dirs ["src"]}))
 
-(def app
+(defn app
   "Wrap routes to compile in standard features."
+  []
   (-> routes/routes
       wrap-reload-for-development-only
       wrap-params
@@ -109,7 +111,7 @@
   referenced, blocks until the server ends."
   [port]
   (log/infof "starting jetty webserver on port %s" port)
-  (let [server    (jetty/run-jetty app {:port port :join? false})]
+  (let [server (jetty/run-jetty (app) {:port port :join? false})]
     (reify Future
       (cancel [_ _] (throw (UnsupportedOperationException.)))
       (get [_] (.join server))
@@ -124,9 +126,8 @@
   (loop []
     (if-let [f (first (filter future-done? futures))]
       (do @f nil)
-      (do
-        (.sleep TimeUnit/SECONDS 1)
-        (recur)))))
+      (do (.sleep TimeUnit/SECONDS 20)
+          (recur)))))
 
 (defn run
   "Run child server in ENVIRONMENT on PORT."

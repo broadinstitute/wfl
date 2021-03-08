@@ -138,36 +138,31 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->> request
-       (add-arrays-workload! tx)
+  (->> (add-arrays-workload! tx request)
        (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
-  (do
-    (start-arrays-workload! tx workload)
-    (workloads/load-workload-for-id tx id)))
+  (do (start-arrays-workload! tx workload)
+      (workloads/load-workload-for-id tx id)))
 
 (defmethod workloads/update-workload!
   pipeline
-  [tx workload]
-  (if (or (:finished workload) (not (:started workload)))
-    workload
-    (try
-      (postgres/update-terra-workflow-statuses! tx workload)
-      (postgres/update-workload-status! tx workload)
-      (workloads/load-workload-for-id tx (:id workload))
-      (catch Throwable cause
-        (throw (ex-info "Error updating arrays workload"
-                        {:workload workload} cause))))))
+  [tx {:keys [started finished] :as workload}]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/update-terra-workflow-statuses! tx workload)
+            (postgres/update-workload-status! tx workload)
+            (workloads/load-workload-for-id tx id))]
+    (if (and started (not finished)) (update! workload) workload)))
 
 (defmethod workloads/load-workload-impl
   pipeline
   [tx {:keys [items] :as workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))]
     (->> (postgres/get-table tx items)
-         (mapv (comp #(update % :inputs util/parse-json)
-                     unnilify))
+         (mapv (comp #(update % :inputs util/parse-json) unnilify))
          (assoc workload :workflows)
          unnilify)))
+
+(defoverload workloads/stop-workload! pipeline batch/stop-workload!)

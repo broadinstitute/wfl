@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.service.postgres :as postgres]
-            [wfl.util :as util]))
+            [wfl.util :as util]
+            [clojure.tools.logging :as log]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -14,6 +15,10 @@
   (fn [_ body] (:pipeline body)))
 
 (defmulti start-workload!
+  "(transaction workload) -> workload"
+  (fn [_ body] (:pipeline body)))
+
+(defmulti stop-workload!
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
 
@@ -43,6 +48,7 @@
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
   [tx uuid]
+  (log/debugf "Loading workload uuid=%s" uuid)
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid"
@@ -53,6 +59,7 @@
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
+  (log/debugf "Loading workload id=%s" id)
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching id"
@@ -63,6 +70,7 @@
 (defn load-workloads-with-project
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
+  (log/debugf "Loading workloads with project=\"%s\"" project)
   (let [do-load   (partial load-workload-impl tx)]
     (mapv do-load
           (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
@@ -70,6 +78,7 @@
 (defn load-workloads
   "Use transaction `tx` to load all known `workloads`."
   [tx]
+  (log/debug "Loading all workloads")
   (let [do-load (partial load-workload-impl tx)]
     (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))
 
@@ -93,6 +102,14 @@
   [_ body]
   (throw
    (ex-info "Failed to start workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
+
+(defmethod stop-workload!
+  :default
+  [_ body]
+  (throw
+   (ex-info "Failed to stop workload - no such pipeline"
             {:cause body
              :type  ::invalid-pipeline})))
 

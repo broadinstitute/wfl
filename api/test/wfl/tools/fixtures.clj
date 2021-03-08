@@ -30,13 +30,15 @@
       (merge {:connection-uri "jdbc:postgresql:postgres"
               :db-name        "postgres"})))
 
-(def testing-db-config
-  (let [name (str "wfltest" (str/replace (UUID/randomUUID) "-" ""))]
-    (-> (postgres/wfl-db-config)
-        (dissoc :instance-name)
-        (merge {:connection-uri (str "jdbc:postgresql:" name)
-                :db-name        name})
-        constantly)))
+(def ^:private test-db-name
+  (str "wfltest" (str/replace (UUID/randomUUID) "-" "")))
+
+(defn testing-db-config
+  []
+  (-> (postgres/wfl-db-config)
+      (dissoc :instance-name)
+      (merge {:connection-uri (str "jdbc:postgresql:" test-db-name)
+              :db-name        test-db-name})))
 
 (defn ^:private create-local-database
   "Create a local PostgreSQL database with DBNAME."
