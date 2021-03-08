@@ -170,29 +170,9 @@
     :id
     poll-job))
 
-(comment
-  (delete-snapshot "2450996e-3a9b-4311-9aa2-82bacb8f17bd")
-  )
-
 (defn snapshot
   "Query the DataRepo for the Snapshot with `snapshot-id`."
   [snapshot-id]
   (-> (repository "snapshots/" snapshot-id)
     (http/get {:headers (auth/get-service-account-header)})
     util/response-body-json))
-
-(comment
-  (snapshot "2450996e-3a9b-4311-9aa2-82bacb8f17bd")
-  )
-
-(comment
-  (dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
-  (let [snapshot-request {:contents  [{:datasetName "zerotest_partition"
-                                       :mode        "byQuery"
-                                       :querySpec   {:assetName "sample_asset"
-                                                     :query     "SELECT zerotest_partition.sample.datarepo_row_id FROM zerotest_partition.sample"}}]
-                          :description "Rex test snapshot by query"
-                          :name      "zerotest_partition_snapshot_by_query"
-                          :profileId "390e7a85-d47f-4531-b612-165fc977d3bd"}]
-    (create-snapshot snapshot-request))
-  (list-snapshots "85efdfea-52fb-4698-bee6-eef76104a7f4"))
