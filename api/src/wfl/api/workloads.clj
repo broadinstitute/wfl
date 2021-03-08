@@ -127,13 +127,13 @@
              :type  ::invalid-pipeline})))
 
 (defn default-load-workload-impl
-  [tx workload]
+  [tx {:keys [items] :as workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
             (let [keep [:id :finished :status :updated :uuid :options]]
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (postgres/get-table tx (:items workload))
+    (->> (postgres/get-table tx items)
          (mapv (comp unnilify split-inputs load-options))
          (assoc workload :workflows)
          unnilify)))

@@ -191,13 +191,13 @@
         (log/error {:executor executor :metadata metadata}))
       (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
-(defn ^:private register-workload-in-clio
-  "Use `tx` to register `workload` outputs with Clio."
-  [tx {:keys [executor items output uuid] :as workload}]
-  (->> items
-       (postgres/get-table tx)
-       (run! (partial register-workflow-in-clio executor output)))
-  workload)
+;; visible for testing
+(defn register-workload-in-clio
+  "Use `tx` to register `_workload` outputs with Clio."
+  [{:keys [executor items output] :as _workload} tx]
+  (run!
+   (partial register-workflow-in-clio executor output)
+   (postgres/get-table tx items)))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
