@@ -36,7 +36,8 @@
   [tx table]
   (if (and table (table-exists? tx table))
     (jdbc/query tx (format "SELECT * FROM %s" table))
-    (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
+    (throw (ex-info (format "Table %s does not exist" table)
+                    {:cause "no-such-table"}))))
 
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."
