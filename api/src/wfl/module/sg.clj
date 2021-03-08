@@ -245,13 +245,6 @@
                     "/Homo_sapiens_assembly38.fasta")
         dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
                     "/gdc/dbsnp_144.hg38.vcf.gz")
-        overrides  {:picard_markduplicates.additional_disk             400
-                    :picard_markduplicates.cpu                           1
-                    :picard_markduplicates.mem                          96
-                    :picard_markduplicates.sorting_collection_size_ratio 0.125
-                    :sort_and_index_markdup_bam.additional_disk        100
-                    :sort_and_index_markdup_bam.cpu                      8
-                    :sort_and_index_markdup_bam.mem                     32}
         references {:contamination_vcf       contam
                     :contamination_vcf_index (str contam ".tbi")
                     :cram_ref_fasta          fasta
@@ -269,7 +262,7 @@
   {:executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
    :output   "gs://broad-prod-somatic-genomes-output"
    :pipeline "GDCWholeGenomeSomaticSingleSample"
-   :project  "(Test) tbl/GH-1196-sg-prod-data"
+   :project  "(Test) tbl/GH-1196-sg-prod-data-reprise"
    :items    (mapv cram->inputs crams)})
 
 (comment
