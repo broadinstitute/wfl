@@ -21,9 +21,9 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f"
-   :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
-                 "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
+  {:path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
+                 "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")
+   :release "e4dc2ffe11bf037fb1bda1fbabbb64a7b3f5e127"})
 
 (defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
@@ -274,6 +274,11 @@
 
 (comment
   (do
+    (def samples
+      ["EOMI-B21C-NB1-A-1-0-D-A82T-36"
+       "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
+       "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
+       "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"])
     (def dev  "https://clio.gotc-dev.broadinstitute.org")
     (def prod "https://clio.gotc-prod.broadinstitute.org")
     (def tsv
