@@ -239,20 +239,22 @@
   [cram]
   (let [translation {:base_file_name :sample_alias
                      :input_cram     :cram_path}
-        contam (str "gs://gatk-best-practices/somatic-hg38"
-                    "/small_exac_common_3.hg38.vcf.gz")
-        fasta  (str "gs://gcp-public-data--broad-references/hg38/v0"
-                    "/Homo_sapiens_assembly38.fasta")
-        dbsnp  (str "gs://gcp-public-data--broad-references/hg38/v0"
-                    "/gdc/dbsnp_144.hg38.vcf.gz")
-        references {:contamination_vcf       contam
-                    :contamination_vcf_index (str contam ".tbi")
-                    :cram_ref_fasta          fasta
-                    :cram_ref_fasta_index    (str fasta ".fai")
-                    :dbsnp_vcf               dbsnp
-                    :dbsnp_vcf_index         (str dbsnp ".tbi")}]
+        contam      (str "gs://gatk-best-practices/somatic-hg38"
+                         "/small_exac_common_3.hg38.vcf.gz")
+        fasta       (str "gs://gcp-public-data--broad-references/hg38/v0"
+                         "/Homo_sapiens_assembly38.fasta")
+        dbsnp       (str "gs://gcp-public-data--broad-references/hg38/v0"
+                         "/gdc/dbsnp_144.hg38.vcf.gz")
+        references  {:contamination_vcf       contam
+                     :contamination_vcf_index (str contam ".tbi")
+                     :cram_ref_fasta          fasta
+                     :cram_ref_fasta_index    (str fasta ".fai")
+                     :dbsnp_vcf               dbsnp
+                     :dbsnp_vcf_index         (str dbsnp ".tbi")}]
     (letfn [(translate [m [k v]] (assoc m k (v cram)))]
-      {:inputs  (reduce translate references translation)
+      {:inputs  (-> (reduce translate references translation)
+                    (assoc :picard_markduplicates.sorting_collection_size_ratio
+                           0.125))
        :options {:monitoring_script
                  "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"}})))
 
