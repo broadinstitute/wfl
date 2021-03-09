@@ -47,21 +47,21 @@
       :tables))
 
 (defn query-table-sync
-  "Query for a BigQuery TABLE within a Data Repo SNAPSHOT in
+  "Query for a BigQuery TABLE within a Data Repo DATASET in
    Google Cloud PROJECT synchronously. Using non-legacy query
    SQL syntax. Note: table and views are interchangeable BigQuery
    concepts here, so both of them work as `TABLE`.
 
-   At least `data custodian` permission on the snapshot is
+   At least `data custodian` permission on the dataset is
    required for running the query job.
 
    Parameters
    ----------
    project  - Google Cloud Project to list the BigQuery datasets in.
-   snapshot - Data Repo Snapshot.
+   dataset  - Data Repo Dataset (note they usually starts with `datarepo_`).
    table    - BigQuery table/view name."
-  [project snapshot table]
-  (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
+  [project dataset table]
+  (let [query (format "SELECT * FROM `%s.%s.%s`" project dataset table)]
     (-> (str/join "/" ["projects" project "queries"])
         bigquery-url
         (http/post {:headers (auth/get-auth-header)
