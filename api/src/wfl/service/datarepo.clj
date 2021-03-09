@@ -156,23 +156,74 @@
   [& dataset-ids]
   (letfn [(maybe [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
     (-> (http/get (repository "snapshots")
-          (-> {:headers (auth/get-service-account-header)
-               :query-params {:limit 999}}
-            (maybe :query-params dataset-ids)))
-      util/response-body-json)))
+                  (-> {:headers (auth/get-service-account-header)
+                       :query-params {:limit 999}}
+                      (maybe :query-params dataset-ids)))
+        util/response-body-json)))
 
 (defn delete-snapshot
   "Delete the Snapshot with `snapshot-id`."
   [dataset-id]
   (-> (repository "snapshots/" dataset-id)
-    (http/delete {:headers (auth/get-service-account-header)})
-    util/response-body-json
-    :id
-    poll-job))
+      (http/delete {:headers (auth/get-service-account-header)})
+      util/response-body-json
+      :id
+      poll-job))
 
 (defn snapshot
   "Query the DataRepo for the Snapshot with `snapshot-id`."
   [snapshot-id]
   (-> (repository "snapshots/" snapshot-id)
-    (http/get {:headers (auth/get-service-account-header)})
-    util/response-body-json))
+      (http/get {:headers (auth/get-service-account-header)})
+      util/response-body-json))
+
+;; visible for testing
+(defn compose-create-snapshot-query-payload
+  "Helper function for composing snapshot payload from `dataset` and `table`,
+   given a date range specified by exclusive `start` and inclusive `end`.
+
+   Parameters
+   ----------
+   _dataset   - Dataset information response from TDR.
+   table      - Name of the table in the dataset schema to query from.
+   start      - The start date object in the timeframe to query exclusively.
+   end        - The end date object in the timeframe to query inclusively.
+
+   Example
+   -------
+   (compose-create-snapshot-query-payload
+    {:name             \"sarscov2_illumina_full_inputs\"
+     :description      \"COVID-19 sarscov2_illumina_full pipeline inputs\",
+     :defaultProfileId \"390e7a85-d47f-4531-b612-165fc977d3bd\"}
+    \"sarscov2_illumina_full_inputs\"
+    (java.util.Date.)
+    (java.util.Date.))"
+  [{:keys [name defaultProfileId description] :as _dataset} table start end]
+  ;; FIXME: BigQuery supports parameterized queries, but how can we prevent SQL Injection here?
+  (let [select-from (->> [name table]
+                         cycle
+                         (take 4)
+                         (apply format "SELECT %s.%s.datarepo_row_id FROM %s.%s"))
+        where       (format "WHERE (%s.%s.datarepo_ingest_date > '%tF' AND %s.%s.datarepo_ingest_date <= '%tF')"
+                            name table start name table end)
+        query       (format "%s %s" select-from where)]
+    {:contents    [{:datasetName name
+                    :mode        "byQuery"
+                    :querySpec   {:assetName "sample_asset"
+                                  :query     query}}]
+     :description description
+     :name        name
+     :profileId   defaultProfileId}))
+
+(comment
+  (dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
+
+  (-> (dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
+      (compose-create-snapshot-query-payload "sarscov2_illumina_full_inputs" (util/str->date "2021-01-01") (java.util.Date.))
+      create-snapshot)
+
+  (list-snapshots "85efdfea-52fb-4698-bee6-eef76104a7f4")
+
+  (snapshot "b79a0a92-f100-4120-b371-3662439e59f8")
+
+  (delete-snapshot "b79a0a92-f100-4120-b371-3662439e59f8"))

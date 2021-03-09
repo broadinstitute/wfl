@@ -7,6 +7,7 @@
             [clojure.tools.logging :as log]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
+           [java.text SimpleDateFormat]
            [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
            [java.nio.file Files]
@@ -377,3 +378,10 @@
   [parts]
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
+
+(defn str->date
+  "Parse date string S to date object, with optional FORMAT."
+  ([s format]
+   (.parse (SimpleDateFormat. format) s))
+  ([s]
+   (str->date s "yyyy-MM-dd")))
