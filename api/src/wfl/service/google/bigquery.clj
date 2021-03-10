@@ -70,6 +70,22 @@
                                :use_legacy_sql false})})
         util/response-body-json)))
 
+(defn query-sync
+  "Given QUERY, look for rows in a BigQuery table within a
+   Google Cloud PROJECT synchronously, using non-legacy query
+   SQL syntax. Return flatten rows."
+  [project query]
+  (letfn [(parse-row [row] (map :v (:f row)))]
+    (-> (str/join "/" ["projects" project "queries"])
+        bigquery-url
+        (http/post {:headers (auth/get-auth-header)
+                    :body    (json/write-str
+                              {:query          query
+                               :use_legacy_sql false})})
+        util/response-body-json
+        (get-in [:rows])
+        (->> (map parse-row) flatten))))
+
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
    Will dump the tsv contents to bytes if no FILE is provided.

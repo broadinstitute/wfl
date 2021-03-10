@@ -5,6 +5,7 @@
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
+            [wfl.service.google.bigquery :as bigquery]
             [wfl.util          :as util])
   (:import (java.time Instant)
            (java.util.concurrent TimeUnit)))
@@ -178,52 +179,63 @@
       util/response-body-json))
 
 ;; visible for testing
-(defn compose-create-snapshot-query-payload
-  "Helper function for composing snapshot payload from `dataset` and `table`,
+(defn compose-snapshot-query
+  "Helper function for composing row-id query payload from `dataset` and `table`,
    given a date range specified by exclusive `start` and inclusive `end`.
+
+   Note if there are no matching rows between (start, end], TDR will throw
+   a 400 exception.
+
+   Note TDR prefixes datasets in BigQuery with `datarepo_`.
 
    Parameters
    ----------
    _dataset   - Dataset information response from TDR.
    table      - Name of the table in the dataset schema to query from.
    start      - The start date object in the timeframe to query exclusively.
-   end        - The end date object in the timeframe to query inclusively.
+   end        - The end date object in the timeframe to query inclusively."
+  [{:keys [name dataProject] :as _dataset} table start end]
+  (let [dataset-name (str "datarepo_" name)]
+    (->> [dataProject dataset-name table start end]
+         (apply format "SELECT
+                        datarepo_row_id
+                     FROM
+                        `%s.%s.%s`
+                     WHERE
+                        datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"))))
 
-   Example
-   -------
-   (compose-create-snapshot-query-payload
-    {:name             \"sarscov2_illumina_full_inputs\"
-     :description      \"COVID-19 sarscov2_illumina_full pipeline inputs\",
-     :defaultProfileId \"390e7a85-d47f-4531-b612-165fc977d3bd\"}
-    \"sarscov2_illumina_full_inputs\"
-    (java.util.Date.)
-    (java.util.Date.))"
-  [{:keys [name defaultProfileId description] :as _dataset} table start end]
-  ;; FIXME: BigQuery supports parameterized queries, but how can we prevent SQL Injection here?
-  (let [select-from (->> [name table]
-                         cycle
-                         (take 4)
-                         (apply format "SELECT %s.%s.datarepo_row_id FROM %s.%s"))
-        where       (format "WHERE (%s.%s.datarepo_ingest_date > '%tF' AND %s.%s.datarepo_ingest_date <= '%tF')"
-                            name table start name table end)
-        query       (format "%s %s" select-from where)]
-    {:contents    [{:datasetName name
-                    :mode        "byQuery"
-                    :querySpec   {:assetName "sample_asset"
-                                  :query     query}}]
-     :description description
-     :name        name
-     :profileId   defaultProfileId}))
+(defn ^:private all-columns
+  "Parse out all column names for a `table` in TDR `dataset`."
+  [dataset table]
+  (-> dataset
+      (get-in [:schema :tables])
+      (->> (filter #(= (:name %) table)))
+      first
+      :columns
+      (#(map :name %))))
+
+;; visible for testing
+(defn compose-snapshot-request
+  "Compose the request for TDR snapshot creation by row-id."
+  [{:keys [name defaultProfileId description] :as dataset} table row-ids]
+  {:contents    [{:datasetName name
+                  :mode        "byRowId"
+                  :rowIdSpec   {:tables   [{:columns	(vec (all-columns dataset table))
+                                            :rowIds	(vec row-ids)
+                                            :tableName table}]}}]
+   :description description
+   :name        name
+   :profileId   defaultProfileId})
 
 (comment
-  (dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
-
-  (-> (dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
-      (compose-create-snapshot-query-payload "sarscov2_illumina_full_inputs" (util/str->date "2021-01-01") (java.util.Date.))
-      create-snapshot)
-
-  (list-snapshots "85efdfea-52fb-4698-bee6-eef76104a7f4")
-
-  (snapshot "b79a0a92-f100-4120-b371-3662439e59f8")
-
-  (delete-snapshot "b79a0a92-f100-4120-b371-3662439e59f8"))
+  ;; FIXME: Getting 500 error from TDR
+  (let [{:keys [dataProject] :as dataset}
+        (dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
+        table     "sarscov2_illumina_full_inputs"
+        start     "2021-03-07"
+        end       "2021-03-09"]
+    (->> (compose-snapshot-query dataset table start end)
+         (bigquery/query-sync dataProject)
+         (compose-snapshot-request dataset table)
+         (json/write)
+         create-snapshot)))
