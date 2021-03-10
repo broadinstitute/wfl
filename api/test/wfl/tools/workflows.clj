@@ -7,7 +7,7 @@
   [parameters]
   (->> parameters
        (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
-       (assoc {:typeName "Object"} :objectFieldNames)))
+       (assoc {:typeName "Object"} :objectFieldTypes)))
 
 (defn read-resource
   "Read the EDN file `name` relative to `test/resources/workflows/`, omitting
@@ -20,11 +20,11 @@
    (slurp (str "test/resources/workflows/" name ".edn"))))
 
 (defn traverse
-  "Traverse the workflow `type`, calling `f` on the values with the `typeName`
-   and `value` of non-traversable types."
+  "Use the workflow `type` to traverse the `object`, calling `f` on the values
+   with primitive types."
   [f type object]
-  (letfn [(make-type-environment [{:keys [objectFieldNames]}]
-            (into {} (for [{:keys [fieldName fieldType]} objectFieldNames]
+  (letfn [(make-type-environment [{:keys [objectFieldTypes]}]
+            (into {} (for [{:keys [fieldName fieldType]} objectFieldTypes]
                        [(keyword fieldName) fieldType])))]
     ((fn go [type value]
        (case (:typeName type)
@@ -42,7 +42,31 @@
          (f (:typeName type) value)))
      type object)))
 
+(defn foldl
+  "Use the workflow `type` to left-fold the `object`, calling `f` on the values
+   with primitive types with the current state."
+  [f init type object]
+  (letfn [(make-type-environment [{:keys [objectFieldTypes]}]
+            (into {} (for [{:keys [fieldName fieldType]} objectFieldTypes]
+                       [(keyword fieldName) fieldType])))]
+    ((fn go [state type value]
+       (case (:typeName type)
+         "Array"
+         (let [array-type (:arrayType type)]
+           (reduce #(go %1 array-type %2) state value))
+         "Object"
+         (let [name->type (make-type-environment type)]
+           (reduce-kv #(go %1 (name->type %2) %3) state value))
+         "Optional"
+         (if value (go state (:optionalType type) value) state)
+         "Pair"
+         (let [{:keys [leftType rightType]} (:pairType type)]
+           (-> (go state leftType  (first value))
+               (go       rightType (second value))))
+         (f state (:typeName type) value)))
+     init type object)))
+
 (defn get-files [type value]
   "Return the unique set of objects in `value` of WDL type `File`."
-  (letfn [(f [type object] (if (= "File" type) [object] []))]
-    (set (flatten (vals (traverse f type value))))))
+  (letfn [(f [files type object] (if (= "File" type) (cons object files) files))]
+    (set (foldl f [] type value))))

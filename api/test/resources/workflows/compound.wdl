@@ -15,7 +15,7 @@ workflow compound {
     input {
         Array[String]      inarray
         Map[String, File]  inmap
-        String?            inoptional
+        File?              inoptional
         Pair[Int, Float]   inpair
         Struct             instruct
     }
@@ -23,7 +23,7 @@ workflow compound {
     output {
         Array[Boolean]     outarray       = inarray
         Map[String, File]  outmap         = inmap
-        String?            outoptional    = inoptional
+        File?              outoptional    = inoptional
         Pair[Int, Float]   outpair        = inpair
         Struct             outstruct      = instruct
     }

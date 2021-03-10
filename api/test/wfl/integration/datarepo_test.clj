@@ -14,8 +14,7 @@
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
-    (doseq [definition ["assemble-refbased-outputs.json"
-                        "sarscov2-illumina-full-inputs.json"
+    (doseq [definition ["sarscov2-illumina-full-inputs.json"
                         "sarscov2-illumina-full-outputs.json"
                         "testing-dataset.json"]]
       (testing (str "creating dataset " (util/basename definition))
@@ -28,8 +27,8 @@
   [file->fileid type value]
   (-> (fn [type value]
         (case type
-          ("Boolean" "Byte" "Float" "Int" "Number" "String") value
-          "File"                                             (file->fileid value)
+          ("Boolean" "Float" "Int" "Number" "String") value
+          "File"                                      (file->fileid value)
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
 
@@ -50,18 +49,21 @@
    :string  "outstring"})
 
 (def ^:private compound-outputs
-  {:outarray   ["foo" "bar" "baz"]
-   :outpair    [3, pi]})
+  {:outarray    ["foo" "bar" "baz"]
+   :outoptional nil
+   :outpair     [3, pi]
+   :outstruct   {:value 5}})
 
 (def ^:private from-compound-outputs
   {:strings "outarray"
-   :floats  "inpair"})
+   :floats  "inpair"
+   :fileref "outoptional"
+   :string  {:box "outstruct"}})
 
 (deftest test-ingest-pipeline-outputs
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
-        tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        tdr-sa       (env/getenv "WFL_TDR_SA")]
+        tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-cloud-storage-folder
          "broad-gotc-dev-wfl-ptc-test-inputs")
