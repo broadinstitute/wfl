@@ -3,7 +3,7 @@ version 1.0
 workflow primitive {
 
     meta {
-        description: "A stub workflow to test handling WDL's primitive types."
+        description: "A stub workflow to test handling WDL primitive types."
         author: "Hornet"
         email:  "hornet@broadinstitute.org"
     }

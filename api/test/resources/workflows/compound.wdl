@@ -7,7 +7,7 @@ struct Struct {
 workflow compound {
 
     meta {
-        description: "A stub workflow to test handling WDL's compound types."
+        description: "A stub workflow to test handling WDL compound types."
         author: "Hornet"
         email:  "hornet@broadinstitute.org"
     }
