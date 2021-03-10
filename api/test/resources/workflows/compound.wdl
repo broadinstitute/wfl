@@ -21,7 +21,7 @@ workflow compound {
     }
 
     output {
-        Array[Boolean]     outarray       = inarray
+        Array[String]      outarray       = inarray
         Map[String, File]  outmap         = inmap
         File?              outoptional    = inoptional
         Pair[Int, Float]   outpair        = inpair
