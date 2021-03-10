@@ -33,10 +33,12 @@
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
 
+(def ^:private pi (* 4 (Math/atan 1)))
+
 (def ^:private primitive-outputs
   {:outbool   true
    :outfile   "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
-   :outfloat  (* 4 (Math/atan 1))
+   :outfloat  pi
    :outint    27
    :outstring "Hello, World!"})
 
@@ -46,6 +48,14 @@
    :float   "outfloat"
    :integer "outint"
    :string  "outstring"})
+
+(def ^:private compound-outputs
+  {:outarray   ["foo" "bar" "baz"]
+   :outpair    [3, pi]})
+
+(def ^:private from-compound-outputs
+  {:strings "outarray"
+   :floats  "inpair"})
 
 (deftest test-ingest-pipeline-outputs
   (let [dataset-json "testing-dataset.json"
@@ -66,9 +76,9 @@
                       :outputs
                       workflows/make-object-type)
                   (UUID/randomUUID)]
-                 [primitive-outputs
-                  from-primitive-outputs
-                  (-> (slurp "test/resources/workflows/primitive.wdl")
+                 [compound-outputs
+                  from-compound-outputs
+                  (-> (slurp "test/resources/workflows/compound.wdl")
                       firecloud/describe-workflow
                       :outputs
                       workflows/make-object-type)

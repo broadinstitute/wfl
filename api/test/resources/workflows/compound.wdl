@@ -13,7 +13,7 @@ workflow compound {
     }
 
     input {
-        Array[Boolean]     inarray
+        Array[String]      inarray
         Map[String, File]  inmap
         String?            inoptional
         Pair[Int, Float]   inpair

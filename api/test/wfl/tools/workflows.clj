@@ -36,6 +36,9 @@
            (into {} (map (fn [[k v]] [k (go (name->type k) v)]) value)))
          "Optional"
          (when value (go (:optionalType type) value))
+         "Pair"
+         (let [ts (mapv (:pairType type) [:leftType :rightType])]
+           (map go ts value))
          (f (:typeName type) value)))
      type object)))
 
