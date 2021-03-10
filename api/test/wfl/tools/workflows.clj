@@ -31,6 +31,9 @@
          "Array"
          (let [array-type (:arrayType type)]
            (map #(go array-type %) value))
+         "Map"
+         (let [{:keys [keyType valueType]} (:mapType type)]
+           (into {} (map (fn [[k v]] [(go keyType k) (go valueType v)]) value)))
          "Object"
          (let [name->type (make-type-environment type)]
            (into {} (map (fn [[k v]] [k (go (name->type k) v)]) value)))
@@ -54,6 +57,9 @@
          "Array"
          (let [array-type (:arrayType type)]
            (reduce #(go %1 array-type %2) state value))
+         "Map"
+         (let [{:keys [keyType valueType]} (:mapType type)]
+           (reduce-kv #(-> (go %1 keyType %2) (go valueType %3)) state value))
          "Object"
          (let [name->type (make-type-environment type)]
            (reduce-kv #(go %1 (name->type %2) %3) state value))

@@ -50,6 +50,7 @@
 
 (def ^:private compound-outputs
   {:outarray    ["foo" "bar" "baz"]
+   :outmap      {"bam" "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"}
    :outoptional nil
    :outpair     [3, pi]
    :outstruct   {:value 5}})
@@ -58,7 +59,7 @@
   {:strings "outarray"
    :floats  "inpair"
    :fileref "outoptional"
-   :string  {:box "outstruct"}})
+   :string  {:struct "outstruct" :map "outmap"}})
 
 (deftest test-ingest-pipeline-outputs
   (let [dataset-json "testing-dataset.json"
