@@ -11,15 +11,15 @@
    -------
    (read-resource \"assemble_refbased.edn\")"
   [suffix]
-  (let [files           (mapcat
-                         (fn [folder]
-                           (->> (file-seq (io/file folder))
-                                (map #(.getCanonicalPath %))
-                                (filter #(str/ends-with? % suffix))))
-                         ["resources"
-                          "test/resources"
-                          "../derived/api/resources"
-                          "../derived/api/test/resources"])]
+  (let [files (mapcat
+               (fn [folder]
+                 (->> (file-seq (io/file folder))
+                      (map #(.getCanonicalPath %))
+                      (filter #(str/ends-with? % suffix))))
+               ["resources"
+                "test/resources"
+                "../derived/api/resources"
+                "../derived/api/test/resources"])]
     (cond
       (empty? files)      (throw (FileNotFoundException. (str "No such file " suffix)))
       (< 1 (count files)) (throw (IllegalArgumentException. (str "No unique file named " suffix)))
