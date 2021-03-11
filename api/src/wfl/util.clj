@@ -401,11 +401,12 @@
 
 (defn now
   "Return timestamp of now in ^Instant format."
+  []
   (Instant/now))
 
 (defn n-day-from-now
   "Return the timestamp of n-days from now, either
    backward or forward depends on the sign of n,
    in ^Instant format."
-  ([^Integer n]
-   (.plus (Instant/now) n ChronoUnit/DAYS)))
+  [^Integer n]
+  (.plus (Instant/now) n ChronoUnit/DAYS))
