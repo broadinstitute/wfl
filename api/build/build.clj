@@ -3,10 +3,6 @@
             [clojure.java.io       :as io]
             [clojure.pprint        :refer [pprint]]
             [clojure.string        :as str]
-            [wfl.module.aou        :as aou]
-            [wfl.module.wgs        :as wgs]
-            [wfl.module.xx         :as xx]
-            [wfl.module.sg         :as sg]
             [wfl.service.firecloud :as firecloud]
             [wfl.util              :as util])
   (:import (java.time Instant)))
@@ -16,24 +12,17 @@
 ;;
 (def the-version
   "A map of version information."
-  (letfn [(make-name->release [{:keys [release path]}]
-            [(util/basename path) release])]
-    (let [built     (str (Instant/now))
-          commit    (util/shell! "git" "rev-parse" "HEAD")
-          committed (->> commit
-                         (util/shell! "git" "show" "-s" "--format=%cI")
-                         Instant/parse
-                         str)]
-      (into
-        {:version   (or (System/getenv "WFL_VERSION") "devel")
-         :commit    commit
-         :committed committed
-         :built     built
-         :user      (or (System/getenv "USER") "wfl")}
-        (map make-name->release [aou/workflow-wdl
-                                 sg/workflow-wdl
-                                 wgs/workflow-wdl
-                                 xx/workflow-wdl])))))
+  (let [built     (str (Instant/now))
+        commit    (util/shell! "git" "rev-parse" "HEAD")
+        committed (->> commit
+                       (util/shell! "git" "show" "-s" "--format=%cI")
+                       Instant/parse
+                       str)]
+    {:version   (or (System/getenv "WFL_VERSION") "devel")
+     :commit    commit
+     :committed committed
+     :built     built
+     :user      (or (System/getenv "USER") "wfl")}))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
