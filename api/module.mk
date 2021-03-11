@@ -30,6 +30,7 @@ TEST_SCM_SRC       = $(shell $(FIND) $(TEST_DIR) -type f -name "*.$(CLJ)")
 JAR          := $(DERIVED_TARGET_DIR)/wfl-$(WFL_VERSION).jar
 JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
+$(PREBUILD): $(MODULE_DIR)/build/build.$(CLJ)
 $(PREBUILD): $(SCM_RESOURCES) $(TEST_SCM_RESOURCES)
 	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR)
 	$(CLOJURE) -X:prebuild

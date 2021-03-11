@@ -9,35 +9,31 @@
             [wfl.module.sg         :as sg]
             [wfl.service.firecloud :as firecloud]
             [wfl.util              :as util])
-  (:import [java.time OffsetDateTime]
-           [java.time.temporal ChronoUnit]))
+  (:import (java.time Instant)))
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
 (def the-version
   "A map of version information."
-  (letfn [(frob [{:keys [release path]}]
-            [(last (str/split path #"/")) release])]
-    (let [built     (-> (OffsetDateTime/now)
-                        (.truncatedTo ChronoUnit/SECONDS)
-                        .toInstant .toString)
+  (letfn [(make-name->release [{:keys [release path]}]
+            [(util/basename path) release])]
+    (let [built     (str (Instant/now))
           commit    (util/shell! "git" "rev-parse" "HEAD")
           committed (->> commit
                          (util/shell! "git" "show" "-s" "--format=%cI")
-                         OffsetDateTime/parse .toInstant .toString)
-          clean?    (util/do-or-nil-silently
-                     (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                         Instant/parse
+                         str)]
       (into
-       {:version          (or (System/getenv "WFL_VERSION") "devel")
-        :commit           commit
-        :committed        committed
-        :built            built
-        :user             (or (System/getenv "USER") "wfl")}
-       (map frob [aou/workflow-wdl
-                  sg/workflow-wdl
-                  wgs/workflow-wdl
-                  xx/workflow-wdl])))))
+        {:version   (or (System/getenv "WFL_VERSION") "devel")
+         :commit    commit
+         :committed committed
+         :built     built
+         :user      (or (System/getenv "USER") "wfl")}
+        (map make-name->release [aou/workflow-wdl
+                                 sg/workflow-wdl
+                                 wgs/workflow-wdl
+                                 xx/workflow-wdl])))))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
