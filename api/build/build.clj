@@ -23,20 +23,20 @@
                         .toInstant .toString)
           commit    (util/shell! "git" "rev-parse" "HEAD")
           committed (->> commit
-                      (util/shell! "git" "show" "-s" "--format=%cI")
-                      OffsetDateTime/parse .toInstant .toString)
+                         (util/shell! "git" "show" "-s" "--format=%cI")
+                         OffsetDateTime/parse .toInstant .toString)
           clean?    (util/do-or-nil-silently
-                      (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                     (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
       (into
-        {:version   (or (System/getenv "WFL_VERSION") "devel")
-         :commit    commit
-         :committed committed
-         :built     built
-         :user      (or (System/getenv "USER") "wfl")}
-        (map frob [aou/workflow-wdl
-                   sg/workflow-wdl
-                   wgs/workflow-wdl
-                   xx/workflow-wdl])))))
+       {:version          (or (System/getenv "WFL_VERSION") "devel")
+        :commit           commit
+        :committed        committed
+        :built            built
+        :user             (or (System/getenv "USER") "wfl")}
+       (map frob [aou/workflow-wdl
+                  sg/workflow-wdl
+                  wgs/workflow-wdl
+                  xx/workflow-wdl])))))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
