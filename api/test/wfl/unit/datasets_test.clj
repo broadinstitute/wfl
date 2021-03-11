@@ -4,7 +4,7 @@
             [wfl.tools.datasets :as datasets]))
 
 (deftest test-rename-gather
-  (let [inputs (workflows/read-resource "sarscov2_illumina_full/inputs")]
+  (let [inputs (workflows/read-resource "sarscov2_illumina_full/inputs.edn")]
     (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
            (datasets/rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
     (is (= {:instrument_model "Illumina NovaSeq 6000"}

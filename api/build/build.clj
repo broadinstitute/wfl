@@ -1,14 +1,14 @@
 (ns build
-  "Build support originating in build.boot."
-  (:require [clojure.data.xml :as xml]
-            [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
-            [wfl.module.aou :as aou]
-            [wfl.module.wgs :as wgs]
-            [wfl.module.xx :as xx]
-            [wfl.module.sg :as sg]
-            [wfl.util :as util])
+  (:require [clojure.data.xml      :as xml]
+            [clojure.java.io       :as io]
+            [clojure.pprint        :refer [pprint]]
+            [clojure.string        :as str]
+            [wfl.module.aou        :as aou]
+            [wfl.module.wgs        :as wgs]
+            [wfl.module.xx         :as xx]
+            [wfl.module.sg         :as sg]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.util              :as util])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
 
@@ -75,10 +75,29 @@
           (->> (spit out)))))
   (System/exit 0))
 
+(defn ^:private write-workflow-description [resources wdl]
+  (let [workflow (util/remove-extension (util/basename wdl))
+        file     (io/file (str resources "/workflows/" workflow ".edn"))]
+    (io/make-parents file)
+    (with-open [out (io/writer file)]
+      (binding [*out* out]
+        (pprint
+          (firecloud/describe-workflow (slurp wdl)))))))
+
+(defn ^:private find-wdls []
+  (mapcat
+    (fn [directory]
+      (->> (file-seq (io/file directory))
+           (filter #(-> (.getName %) util/extension (= "wdl")))
+           (map #(.getCanonicalPath %))))
+    ["resources" "test/resources"]))
+
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (let [api "../derived/api"]
+  (let [derived (str/join "/" [".." "derived" "api"])]
     (pprint the-version)
-    (write-the-version-file (io/file api "resources" "wfl") the-version))
-  (System/exit 0))
+    (write-the-version-file (io/file derived "resources" "wfl") the-version)
+    (run!
+      #(write-workflow-description (io/file derived "test" "resources") %)
+      (find-wdls))))

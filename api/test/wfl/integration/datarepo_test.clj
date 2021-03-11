@@ -74,15 +74,13 @@
         (doseq [[outputs from-outputs outputs-type workflow-id]
                 [[primitive-outputs
                   from-primitive-outputs
-                  (-> (slurp "test/resources/workflows/primitive.wdl")
-                      firecloud/describe-workflow
+                  (-> (workflows/read-resource "primitive.edn")
                       :outputs
                       workflows/make-object-type)
                   (UUID/randomUUID)]
                  [compound-outputs
                   from-compound-outputs
-                  (-> (slurp "test/resources/workflows/compound.wdl")
-                      firecloud/describe-workflow
+                  (-> (workflows/read-resource "compound.edn")
                       :outputs
                       workflows/make-object-type)
                   (UUID/randomUUID)]]]
