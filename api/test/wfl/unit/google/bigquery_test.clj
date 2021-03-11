@@ -39,6 +39,6 @@
     (deftest test-dump-table->tsv
       (let [terra-table-name "test-name"
             contents (-> (bigquery/dump-table->tsv dr-view-content "test-name")
-                       slurp
-                       (csv/read-csv :separator \tab))]
+                         slurp
+                         (csv/read-csv :separator \tab))]
         (is (= (format "entity:%s_id" terra-table-name) (first (first contents))) "The result TSV header is not properly formatted!")))))

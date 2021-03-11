@@ -57,12 +57,12 @@
    query    - BigQuery Standard SQL query string."
   [project query]
   (-> (str/join "/" ["projects" project "queries"])
-    bigquery-url
-    (http/post {:headers (auth/get-auth-header)
-                :body    (json/write-str
-                           {:query          query
-                            :use_legacy_sql false})})
-    util/response-body-json))
+      bigquery-url
+      (http/post {:headers (auth/get-auth-header)
+                  :body    (json/write-str
+                            {:query          query
+                             :use_legacy_sql false})})
+      util/response-body-json))
 
 ;; visible for testing
 (defn parse-row
