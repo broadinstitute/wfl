@@ -1,10 +1,5 @@
 (ns wfl.tools.workflows
-  (:require [clojure.edn :as edn]
-            [clojure.set :as set]
-            [clojure.java.io :as io]
-            [wfl.util :as util]
-            [clojure.string :as str])
-  (:import (java.io FileNotFoundException)))
+  (:require [clojure.set :as set]))
 
 (defn make-object-type
   "Collect `parameters` description into an \"Object\" type."
@@ -12,30 +7,6 @@
   (->> parameters
        (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
        (assoc {:typeName "Object"} :objectFieldTypes)))
-
-(defn read-resource
-  "Read the  uniquely named resource file `name`.
-   Example
-   -------
-   (read-resource \"assemble_refbased.edn\")"
-  [name]
-  (let [files (mapcat
-               (fn [directory]
-                 (->> (file-seq (io/file directory))
-                      (map #(.getCanonicalPath %))
-                      (filter #(str/ends-with? % name))))
-               ["resources"
-                "test/resources"
-                "../derived/api/resources"
-                "../derived/api/test/resources"])]
-    (cond
-      (empty? files)      (throw (FileNotFoundException. (str "No such file " name)))
-      (< 1 (count files)) (throw (IllegalArgumentException. (str "No unique file named " name)))
-      :else               (let [contents (slurp (first files))]
-                            (case (util/extension name)
-                              "edn"  (edn/read-string contents)
-                              "json" (util/parse-json contents)
-                              contents)))))
 
 (defn traverse
   "Use the workflow `type` to traverse the `object`, calling `f` on the values

@@ -3,10 +3,10 @@
             [clojure.test               :refer [deftest is testing]]
             [wfl.environment            :as env]
             [wfl.service.datarepo       :as datarepo]
-            [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.datasets         :as datasets]
             [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.resources        :as resources]
             [wfl.tools.workflows        :as workflows]
             [wfl.util                   :as util])
   (:import [java.util UUID]))
@@ -74,13 +74,13 @@
         (doseq [[outputs from-outputs outputs-type workflow-id]
                 [[primitive-outputs
                   from-primitive-outputs
-                  (-> (workflows/read-resource "primitive.edn")
+                  (-> (resources/read-resource "primitive.edn")
                       :outputs
                       workflows/make-object-type)
                   (UUID/randomUUID)]
                  [compound-outputs
                   from-compound-outputs
-                  (-> (workflows/read-resource "compound.edn")
+                  (-> (resources/read-resource "compound.edn")
                       :outputs
                       workflows/make-object-type)
                   (UUID/randomUUID)]]]
