@@ -46,45 +46,35 @@
       util/response-body-json
       :tables))
 
-(defn query-table-sync
-  "Query for a BigQuery TABLE within a Data Repo DATASET in
-   Google Cloud PROJECT synchronously. Using non-legacy query
-   SQL syntax. Note: table and views are interchangeable BigQuery
-   concepts here, so both of them work as `TABLE`.
-
-   At least `data custodian` permission on the dataset is
-   required for running the query job.
+(defn query-sync
+  "Given QUERY, look for rows in a BigQuery table within a
+   Google Cloud PROJECT synchronously, using non-legacy query
+   SQL syntax. Return flatten rows.
 
    Parameters
    ----------
    project  - Google Cloud Project to list the BigQuery datasets in.
-   dataset  - Data Repo Dataset (note they usually starts with `datarepo_`).
-   table    - BigQuery table/view name."
-  [project dataset table]
-  (let [query (format "SELECT * FROM `%s.%s.%s`" project dataset table)]
-    (-> (str/join "/" ["projects" project "queries"])
-        bigquery-url
-        (http/post {:headers (auth/get-auth-header)
-                    :body    (json/write-str
-                              {:query query
-                               :use_legacy_sql false})})
-        util/response-body-json)))
-
-(defn query-sync
-  "Given QUERY, look for rows in a BigQuery table within a
-   Google Cloud PROJECT synchronously, using non-legacy query
-   SQL syntax. Return flatten rows."
+   query    - BigQuery Standard SQL query string."
   [project query]
-  (letfn [(parse-row [row] (map :v (:f row)))]
-    (-> (str/join "/" ["projects" project "queries"])
-        bigquery-url
-        (http/post {:headers (auth/get-auth-header)
-                    :body    (json/write-str
-                              {:query          query
-                               :use_legacy_sql false})})
-        util/response-body-json
-        (get-in [:rows])
-        (->> (map parse-row) flatten))))
+  (-> (str/join "/" ["projects" project "queries"])
+    bigquery-url
+    (http/post {:headers (auth/get-auth-header)
+                :body    (json/write-str
+                           {:query          query
+                            :use_legacy_sql false})})
+    util/response-body-json))
+
+;; visible for testing
+(defn parse-row
+  "Parse row information from BigQuery `rows` entry in query response."
+  [rows]
+  (map :v (:f rows)))
+
+(defn flatten-rows
+  "Given BigQuery `query-response`, return all flatten rows."
+  [query-response]
+  (->> (get-in query-response [:rows])
+       (mapcat parse-row)))
 
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
@@ -106,8 +96,7 @@
      (dump-table->tsv table \"datarepo_row\" \"dumped.tsv\")
      (dump-table->tsv table \"datarepo_row\")"
   ([table terra-data-table file]
-   (letfn [(parse-row [row] (map :v (:f row)))
-           (format-header-for-terra [header]
+   (letfn [(format-header-for-terra [header]
              (cons (format "entity:%s_id" terra-data-table) (rest header)))]
      (let [headers (map :name (get-in table [:schema :fields]))
            rows (map parse-row (get-in table [:rows]))
