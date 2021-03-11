@@ -55,9 +55,11 @@
   (let [type    (make-output-type "compound.edn")
         outputs {:outarray  ["clojure" "is" "fun"]}]
     (testing "foldl"
-      (is (= 3 (count (filtering-type #(= % "String") type outputs)))))
+      (is (= (:outarray outputs)
+             (workflows/foldl #(conj %1 %3) [] type outputs))))
     (testing "traverse"
-      (is (= (util/map-vals #(map vector %) outputs) (vectorize type outputs))))))
+      (is (= (util/map-vals #(map vector %) outputs)
+             (vectorize type outputs))))))
 
 (deftest test-map-types
   (let [type    (make-output-type "compound.edn")
@@ -82,11 +84,11 @@
 
 (deftest test-pair-types
   (let [type    (make-output-type "compound.edn")
-        outputs {:outpair [3 3.14]}]
+        outputs {:outpair '(3 3.14)}]
     (testing "foldl"
       (is (= #{3.14} (filtering-type #(= % "Float") type outputs))))
     (testing "traverse"
-      (is (= {:outpair [9 3.14]}
+      (is (= {:outpair '(9 3.14)}
              (workflows/traverse
               (fn [type v] (if (= type "Int") (* v v) v))
               type
