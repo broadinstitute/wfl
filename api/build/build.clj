@@ -81,6 +81,6 @@
   (let [derived (str/join "/" [".." "derived" "api"])]
     (pprint the-version)
     (write-the-version-file (io/file derived "resources" "wfl") the-version)
-    (run!
-      #(write-workflow-description (io/file derived "test" "resources") %)
-      (find-wdls))))
+    (doseq [wdl (find-wdls)]
+      (printf "generating workflow description for %s\n" (util/basename wdl))
+      (write-workflow-description (io/file derived "test" "resources") wdl))))
