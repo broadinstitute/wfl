@@ -1,33 +1,47 @@
 (ns build
-  (:require [clojure.data.xml      :as xml]
-            [clojure.java.io       :as io]
-            [clojure.pprint        :refer [pprint]]
-            [clojure.string        :as str]
+  (:require [clojure.data.xml :as xml]
+            [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
+            [clojure.string :as str]
+            [wfl.module.aou :as aou]
+            [wfl.module.wgs :as wgs]
+            [wfl.module.xx :as xx]
+            [wfl.module.sg :as sg]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util              :as util])
-  (:import (java.time Instant)))
+            [wfl.util :as util])
+  (:import [java.time OffsetDateTime]
+           [java.time.temporal ChronoUnit]))
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
 (def the-version
   "A map of version information."
-  (let [built     (str (Instant/now))
-        commit    (util/shell! "git" "rev-parse" "HEAD")
-        committed (->> commit
-                       (util/shell! "git" "show" "-s" "--format=%cI")
-                       Instant/parse
-                       str)]
-    {:version   (or (System/getenv "WFL_VERSION") "devel")
-     :commit    commit
-     :committed committed
-     :built     built
-     :user      (or (System/getenv "USER") "wfl")}))
+  (letfn [(frob [{:keys [release path]}] [(util/basename path) release])]
+    (let [built     (-> (OffsetDateTime/now)
+                        (.truncatedTo ChronoUnit/SECONDS)
+                        .toInstant .toString)
+          commit    (util/shell! "git" "rev-parse" "HEAD")
+          committed (->> commit
+                      (util/shell! "git" "show" "-s" "--format=%cI")
+                      OffsetDateTime/parse .toInstant .toString)
+          clean?    (util/do-or-nil-silently
+                      (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+      (into
+        {:version   (or (System/getenv "WFL_VERSION") "devel")
+         :commit    commit
+         :committed committed
+         :built     built
+         :user      (or (System/getenv "USER") "wfl")}
+        (map frob [aou/workflow-wdl
+                   sg/workflow-wdl
+                   wgs/workflow-wdl
+                   xx/workflow-wdl])))))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
   [resources version]
-  (let [file (io/file resources "version.edn")]
+  (let [file (io/file resources "wfl" "version.edn")]
     (io/make-parents file)
     (with-open [out (io/writer file)]
       (binding [*out* out]
@@ -62,25 +76,28 @@
 
 (defn ^:private write-workflow-description [resources wdl]
   (let [workflow (util/remove-extension (util/basename wdl))
-        file     (io/file (str resources "/workflows/" workflow ".edn"))]
-    (io/make-parents file)
-    (with-open [out (io/writer file)]
-      (binding [*out* out]
-        (-> (slurp wdl) firecloud/describe-workflow pprint)))))
+        file     (io/file resources "workflows" (str workflow ".edn"))]
+    (when-not (.exists file)
+      (printf "generating workflow description %s\n" (util/basename wdl))
+      (io/make-parents file)
+      (with-open [out (io/writer file)]
+        (binding [*out* out]
+          (-> (slurp wdl) firecloud/describe-workflow pprint))))))
 
 (defn ^:private find-wdls []
-  (mapcat
-    (fn [folder] (->> (file-seq (io/file folder))
-                      (map #(.getCanonicalPath %))
-                      (filter #(= (util/extension %) "wdl"))))
-    ["resources" "test/resources"]))
+  (letfn [(list-wdls [folder]
+            (->> (file-seq (io/file folder))
+                 (map #(.getCanonicalPath %))
+                 (filter #(= (util/extension %) "wdl"))))]
+  (mapcat list-wdls ["resources" "test/resources"])))
 
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (let [derived (str/join "/" [".." "derived" "api"])]
+  (let [derived        (str/join "/" [".." "derived" "api"])
+        resources      (io/file derived "resources")
+        test-resources (io/file derived "test" "resources")]
     (pprint the-version)
-    (write-the-version-file (io/file derived "resources" "wfl") the-version)
-    (doseq [wdl (find-wdls)]
-      (printf "generating workflow description for %s\n" (util/basename wdl))
-      (write-workflow-description (io/file derived "test" "resources") wdl))))
+    (write-the-version-file resources the-version)
+    (run! #(write-workflow-description test-resources %) (find-wdls))
+    (System/exit 0)))
