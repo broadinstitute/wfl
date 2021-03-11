@@ -81,15 +81,13 @@
     (io/make-parents file)
     (with-open [out (io/writer file)]
       (binding [*out* out]
-        (pprint
-          (firecloud/describe-workflow (slurp wdl)))))))
+        (-> (slurp wdl) firecloud/describe-workflow pprint)))))
 
 (defn ^:private find-wdls []
   (mapcat
-    (fn [directory]
-      (->> (file-seq (io/file directory))
-           (filter #(-> (.getName %) util/extension (= "wdl")))
-           (map #(.getCanonicalPath %))))
+    (fn [folder] (->> (file-seq (io/file folder))
+                      (map #(.getCanonicalPath %))
+                      (filter #(= (util/extension %) "wdl"))))
     ["resources" "test/resources"]))
 
 (defn prebuild
