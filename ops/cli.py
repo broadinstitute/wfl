@@ -230,12 +230,11 @@ def publish_docker_images(config: WflInstanceConfig) -> None:
     success("Published Docker images")
 
 
-def helm_deploy_wfl(config: WflInstanceConfig) -> None:
+def helmfile_deploy_wfl(config: WflInstanceConfig) -> None:
     """Deploy the pushed docker images for the stored version to the stored cluster."""
     info(f"=>  Deploying to {config.cluster_name} in {config.cluster_namespace} namespace")
-    info("    This must run on a non-split VPN (or on a specifically-allowed Jenkins agent)", plain=True)
-    shell(f"helm upgrade {config.instance_id}-wfl gotc-charts/wfl -f {config.rendered_values_file} --install "
-          f"--namespace {config.cluster_namespace}")
+    info("    This must run on a non-split VPN", plain=True)
+    shell(f"helmfile --selector name={config.instance_id}-wfl sync")
     success("WFL deployed")
 
 
@@ -377,12 +376,10 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         infer_missing_arguments,
         check_git_tag,
         configure_kubectl,
-        configure_helm,
-        render_values_file,
         print_config,
         exit_if_dry_run,
         configure_cloud_sql_proxy,
-        helm_deploy_wfl,
+        helmfile_deploy_wfl,
         run_liquibase_migration,
         stop_cloud_sql_proxy,
         print_deployment_success
