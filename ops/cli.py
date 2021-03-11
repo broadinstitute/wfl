@@ -347,26 +347,6 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         configure_cloud_sql_proxy,
         print_cloud_sql_proxy_instructions
     ],
-    "deploy": [
-        check_env_instance_present,
-        read_version,
-        infer_missing_arguments_pre_validate,
-        validate_cloud_sql_name,
-        validate_cluster_name,
-        infer_missing_arguments,
-        configure_kubectl,
-        configure_helm,
-        render_values_file,
-        print_config,
-        exit_if_dry_run,
-        prompt_deploy_version,
-        configure_cloud_sql_proxy,
-        publish_docker_images,
-        helm_deploy_wfl,
-        run_liquibase_migration,
-        stop_cloud_sql_proxy,
-        print_deployment_success
-    ],
     "deploy-from-tag": [
         check_env_instance_present,
         read_version,
