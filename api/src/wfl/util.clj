@@ -8,7 +8,8 @@
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
            [java.text SimpleDateFormat]
-           [java.time OffsetDateTime]
+           [java.time OffsetDateTime Instant ZoneOffset ZoneId]
+           [java.time.format DateTimeFormatter]
            [java.time.temporal ChronoUnit]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -380,8 +381,31 @@
     (map make-part parts)))
 
 (defn str->date
-  "Parse date string S to date object, with optional FORMAT."
+  "Parse date string `s` to date object, with optional `format`."
   ([s format]
    (.parse (SimpleDateFormat. format) s))
   ([s]
    (str->date s "yyyy-MM-dd")))
+
+(defn datetime->str
+  "Parse `datetime` object into string, with optional `format`.
+
+   Note this function uses UTC as the time zone offset by default."
+  ([^Instant datetime format]
+   (let [formatter (-> format
+                       DateTimeFormatter/ofPattern
+                       (.withZone (ZoneId/from ZoneOffset/UTC)))]
+     (.format formatter datetime)))
+  ([^Instant datetime]
+   (datetime->str datetime "yyyy-MM-dd")))
+
+(defn now
+  "Return timestamp of now in ^Instant format."
+  (Instant/now))
+
+(defn n-day-from-now
+  "Return the timestamp of n-days from now, either
+   backward or forward depends on the sign of n,
+   in ^Instant format."
+  ([^Integer n]
+   (.plus (Instant/now) n ChronoUnit/DAYS)))
