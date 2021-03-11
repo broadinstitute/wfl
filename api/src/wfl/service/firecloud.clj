@@ -94,8 +94,7 @@
 
 (defn describe-workflow
   "Get a machine-readbale description of the `workflow`, including its inputs
-   and outputs. `workflow` can either be a java.net.URL of the workflow or the
-   workflow source code."
+   and outputs. `workflow` can either be a url or the workflow source code."
   [workflow]
   (letfn [(url? [s] (some #(str/starts-with? s %) ["http://" "https://"]))]
     (-> (firecloud-url "/api/womtool/v1/describe")
