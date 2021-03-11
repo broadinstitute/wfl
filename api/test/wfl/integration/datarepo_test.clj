@@ -4,8 +4,10 @@
             [wfl.environment            :as env]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.google.bigquery :as bigquery]
             [wfl.tools.datasets         :as datasets]
             [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.workflows        :as workflows]
             [wfl.util                   :as util])
   (:import [java.util UUID]))
@@ -59,3 +61,28 @@
                  (datarepo/ingest-table dataset-id table-url table-name))]
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
+
+(deftest test-create-snapshot
+  ;; To test given a dataset, we can query BigQuery for row-ids
+  ;; and use them to create a snapshot!
+  (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
+        definition "sarscov2-illumina-full-inputs.json"]
+    (testing "creating snapshots from dataset"
+      (fixtures/with-temporary-dataset
+        (datasets/unique-dataset-request tdr-profile definition)
+        (fn [dataset-id]
+          (let [{:keys [dataProject] :as dataset} (datarepo/dataset dataset-id)
+                table     "sarscov2_illumina_full_inputs"
+                today     (util/datetime->str (util/now))
+                yesterday (util/datetime->str (util/n-day-from-now -1))
+                row-ids   (->> (datarepo/compose-snapshot-query dataset table yesterday today)
+                               (bigquery/query-sync dataProject)
+                               (bigquery/flatten-rows)
+                               ; the fixture does not support cleaning up multiple snapshots yet
+                               (take 1))]
+            (fixtures/with-temporary-snapshot
+              (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+              #(let [snapshot (datarepo/snapshot %)]
+                 (is (= % (:id snapshot)))))))))))
+
+
