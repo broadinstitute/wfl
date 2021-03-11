@@ -1,10 +1,10 @@
 (ns wfl.unit.datasets-test
   (:require [clojure.test :refer :all]
-            [wfl.tools.workflows :as workflows]
-            [wfl.tools.datasets :as datasets]))
+            [wfl.tools.datasets :as datasets]
+            [wfl.tools.resources :as resources]))
 
 (deftest test-rename-gather
-  (let [inputs (workflows/read-resource "sarscov2_illumina_full/inputs.edn")]
+  (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
     (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
            (datasets/rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
     (is (= {:instrument_model "Illumina NovaSeq 6000"}
