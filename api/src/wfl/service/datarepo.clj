@@ -119,19 +119,18 @@
       :id
       poll-job))
 
+;; Note the TDR is under active development,
+;; the endpoint spec is getting changed so the
+;; spec in this function is not consistent with
+;; the TDR Swagger page in order to make the
+;; request work.
 (defn create-snapshot
   "Create a snapshot from standard SQL query,
    assert or row-ids, based on `snapshot-request`.
 
    See `SnapshotRequestModel` in the
    DataRepo swagger page for more information.
-   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/
-
-   Note the TDR is under active development,
-   the endpoint spec is getting changed so the
-   spec in this function is not consistent with
-   the TDR Swagger page in order to make the
-   request work."
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
   (-> (repository "snapshots")
       (http/post {:headers      (auth/get-service-account-header)
