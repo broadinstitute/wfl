@@ -138,7 +138,8 @@
                   :form-params  snapshot-request})
       util/response-body-json
       :id
-      poll-job))
+      poll-job
+      :id))
 
 (defn list-snapshots
   "List all Snapshots the caller has access to.
@@ -156,15 +157,15 @@
   [& dataset-ids]
   (letfn [(maybe [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
     (-> (http/get (repository "snapshots")
-                  (-> {:headers (auth/get-service-account-header)
-                       :query-params {:limit 999}}
-                      (maybe :query-params dataset-ids)))
+                  (maybe {:headers (auth/get-service-account-header)
+                          :query-params {:limit 999}}
+                         :query-params dataset-ids))
         util/response-body-json)))
 
 (defn delete-snapshot
   "Delete the Snapshot with `snapshot-id`."
-  [dataset-id]
-  (-> (repository "snapshots/" dataset-id)
+  [snapshot-id]
+  (-> (repository "snapshots/" snapshot-id)
       (http/delete {:headers (auth/get-service-account-header)})
       util/response-body-json
       :id
