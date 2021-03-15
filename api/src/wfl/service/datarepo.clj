@@ -208,9 +208,9 @@
   "Legalize TDR columns by stripping out columns that are Array[File] types, as
    TDR does not support them yet."
   [cols]
-  (-> cols
-      (->> (filter #(not (and (= (:datatype %) "fileref")
-                              (= (:array_of %) true)))))))
+  (letfn [(is-fileref-array? [{:keys [datatype array_of]}]
+            (and (= datatype "fileref") array_of))]
+    (remove is-fileref-array? cols)))
 
 (defn ^:private all-columns
   "Parse out and legalize all column names for a `table` in TDR `dataset`."
