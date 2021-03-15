@@ -77,27 +77,21 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
+(def ^:private testing-dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
+
 (deftest test-create-snapshot
   ;; To test given a dataset, we can query BigQuery for row-ids
   ;; and use them to create a snapshot!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        definition "sarscov2-illumina-full-inputs.json"]
-    (testing "creating snapshots from dataset"
-      (fixtures/with-temporary-dataset
-        (datasets/unique-dataset-request tdr-profile definition)
-        (fn [dataset-id]
-          (let [{:keys [dataProject] :as dataset} (datarepo/dataset dataset-id)
-                table     "sarscov2_illumina_full_inputs"
-                today     (util/datetime->str (util/now))
-                yesterday (util/datetime->str (util/n-day-from-now -1))
-                row-ids   (->> (datarepo/compose-snapshot-query dataset table yesterday today)
-                               (bigquery/query-sync dataProject)
-                               (bigquery/flatten-rows)
-                               ; the fixture does not support cleaning up multiple snapshots yet
-                               (take 1))]
-            (fixtures/with-temporary-snapshot
-              (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
-              #(let [snapshot (datarepo/snapshot %)]
-                 (is (= % (:id snapshot)))))))))))
-
-
+        {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
+        table     "sarscov2_illumina_full_inputs"
+        start-datetime "2021-03-07"
+        end-datetime   "2021-03-08"
+        row-ids (->> (datarepo/compose-snapshot-query dataset table start-datetime end-datetime)
+                     (bigquery/query-sync dataProject)
+                     (bigquery/flatten-rows))]
+    (testing "creating snapshot"
+      (fixtures/with-temporary-snapshot
+        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+        #(let [snapshot (datarepo/snapshot %)]
+           (is (= % (:id snapshot))))))))
