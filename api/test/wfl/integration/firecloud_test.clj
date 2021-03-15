@@ -52,14 +52,23 @@
                 :repo    "viral-pipelines"}]
      ~@body))
 
-(deftest test-describe-wdl
+(deftest test-describe-workflow-url
   (using-assemble-refbased-workflow-bindings
-   (let [description (firecloud/describe-wdl (cromwell/wdl-map->url wdl))]
+   (let [description (firecloud/describe-workflow (cromwell/wdl-map->url wdl))]
      (is (:valid description))
      (is (empty? (:errors description)))
      (is (= pipeline (:name description)))
      (is (some? (:inputs description)))
      (is (some? (:outputs description))))))
+
+(deftest test-describe-workflow-source
+  (let [description (firecloud/describe-workflow
+                     (slurp "resources/wdl/copyfile.wdl"))]
+    (is (:valid description))
+    (is (empty? (:errors description)))
+    (is (= "copyfile" (:name description)))
+    (is (some? (:inputs description)))
+    (is (empty? (:outputs description)))))
 
 (deftest test-get-workflow
   (using-assemble-refbased-workflow-bindings

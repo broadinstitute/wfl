@@ -11,6 +11,6 @@
   (let [edn          (wfl/get-the-version)
         has-version? #(= (:release %) (-> % :path basename edn))]
     (is (every? has-version? [aou/workflow-wdl
-                              #_sg/workflow-wdl ; Now a commit hash. =tbl
+                              sg/workflow-wdl
                               wgs/workflow-wdl
                               xx/workflow-wdl]))))
