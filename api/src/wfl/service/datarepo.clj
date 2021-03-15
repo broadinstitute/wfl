@@ -195,14 +195,15 @@
    start      - The start date object in the timeframe to query exclusively.
    end        - The end date object in the timeframe to query inclusively."
   [{:keys [name dataProject] :as _dataset} table start end]
-  (let [dataset-name (str "datarepo_" name)]
+  (let [dataset-name (str "datarepo_" name)
+        query "SELECT
+                 datarepo_row_id
+               FROM
+                 `%s.%s.%s`
+               WHERE
+                 datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"]
     (->> [dataProject dataset-name table start end]
-         (apply format "SELECT
-                        datarepo_row_id
-                     FROM
-                        `%s.%s.%s`
-                     WHERE
-                        datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"))))
+         (apply format query))))
 
 (defn ^:private legalize-tdr-columns
   "Legalize TDR columns by stripping out columns that are Array[File] types, as
