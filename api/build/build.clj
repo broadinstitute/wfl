@@ -78,7 +78,7 @@
   (let [workflow (util/remove-extension (util/basename wdl))
         file     (io/file resources "workflows" (str workflow ".edn"))]
     (when-not (.exists file)
-      (printf "generating workflow description %s\n" (util/basename wdl))
+      (println "generating description for" (util/basename wdl))
       (io/make-parents file)
       (with-open [out (io/writer file)]
         (binding [*out* out]
