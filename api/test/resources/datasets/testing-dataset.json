@@ -1,0 +1,54 @@
+{
+  "name": "testing_dataset",
+  "description": "Testing snapshotting and ingesting mock pipeline inputs of various types into the Terra Data Repository.",
+  "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
+  "schema": {
+    "tables": [
+      {
+        "name": "parameters",
+        "columns": [
+          {
+            "name": "boolean",
+            "datatype": "boolean"
+          },
+          {
+            "name": "fileref",
+            "datatype": "fileref"
+          },
+          {
+            "name": "float",
+            "datatype": "float64"
+          },
+          {
+            "name": "integer",
+            "datatype": "int64"
+          },
+          {
+            "name": "string",
+            "datatype": "string"
+          },
+          {
+            "name": "floats",
+            "datatype": "float64",
+            "array_of": true
+          },
+          {
+            "name": "integers",
+            "datatype": "int64",
+            "array_of": true
+          },
+          {
+            "name": "strings",
+            "datatype": "string",
+            "array_of": true
+          }
+        ],
+        "primaryKey": [],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      }
+    ]
+  }
+}

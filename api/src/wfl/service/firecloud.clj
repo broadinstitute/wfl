@@ -92,13 +92,15 @@
                               {:Content/type "text/tab-separated-values"
                                :entities     (slurp file)})})))
 
-(defn describe-wdl
-  "Use `firecloud-url` to describe the WDL at `wdl-url`"
-  [wdl-url]
-  (-> (firecloud-url "/api/womtool/v1/describe")
-      (http/post {:headers   (auth/get-auth-header)
-                  :multipart (util/multipart-body
-                              {:workflowUrl         wdl-url
-                               :workflowTypeVersion "1.0"
-                               :workflowType        "WDL"})})
-      util/response-body-json))
+(defn describe-workflow
+  "Get a machine-readbale description of the `workflow`, including its inputs
+   and outputs. `workflow` can either be a url or the workflow source code."
+  [workflow]
+  (letfn [(url? [s] (some #(str/starts-with? s %) ["http://" "https://"]))]
+    (-> (firecloud-url "/api/womtool/v1/describe")
+        (http/post {:headers   (auth/get-auth-header)
+                    :multipart (util/multipart-body
+                                (if (url? workflow)
+                                  {:workflowUrl workflow}
+                                  {:workflowSource workflow}))})
+        util/response-body-json)))

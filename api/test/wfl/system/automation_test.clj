@@ -6,6 +6,7 @@
             [wfl.service.google.storage :as storage]
             [wfl.tools.datasets         :as datasets]
             [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.resources        :as resources]
             [wfl.tools.workflows        :as workflows])
   (:import (java.util UUID)))
 
@@ -34,9 +35,9 @@
       (fn [[temp source sink]]
         ;; TODO: create + start the workload
         ;; upload a sample
-        (let [inputs        (workflows/read-resource "sarscov2_illumina_full/inputs")
-              inputs-type   (-> "sarscov2_illumina_full/description"
-                                workflows/read-resource
+        (let [inputs        (resources/read-resource "sarscov2_illumina_full/inputs.edn")
+              inputs-type   (-> "sarscov2_illumina_full.edn"
+                                resources/read-resource
                                 :inputs
                                 workflows/make-object-type)
               table-name    "sarscov2_illumina_full_inputs"
@@ -47,7 +48,7 @@
               ;; I think a user would specify something like this in the initial
               ;; workload request, one mapping for dataset to inputs and one for
               ;; outputs to dataset.
-              from-inputs (workflows/read-resource "sarscov2_illumina_full/dataset-from-inputs")]
+              from-inputs (resources/read-resource "sarscov2_illumina_full/dataset-from-inputs.edn")]
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
@@ -61,9 +62,9 @@
             (is (= 0 bad_row_count))))
         ;; At this point, workflow-launcher should run the workflow. The code
         ;; below simulates this effect.
-        (let [outputs       (workflows/read-resource "sarscov2_illumina_full/outputs")
-              outputs-type  (-> "sarscov2_illumina_full/description"
-                                workflows/read-resource
+        (let [outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")
+              outputs-type  (-> "sarscov2_illumina_full.edn"
+                                resources/read-resource
                                 :outputs
                                 workflows/make-object-type)
               table-name    "sarscov2_illumina_full_outputs"
