@@ -1,18 +1,31 @@
 (ns wfl.tools.snapshots
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
-            [wfl.environment            :as env]
             [wfl.service.google.bigquery :as bigquery]
             [wfl.service.datarepo :as datarepo]
             [wfl.util          :as util])
   (:import (java.util UUID)))
 
+(defn ^:private legalize-tdr-columns
+  "Legalize TDR columns by stripping out columns that are Array[File] types, as
+   TDR does not support them yet."
+  [cols]
+  (letfn [(is-fileref-array? [{:keys [datatype array_of]}]
+            (and (= datatype "fileref") array_of))]
+    (remove is-fileref-array? cols)))
+
 (defn unique-snapshot-request
   "Create a snapshot request for uniquely-named snapshot defined by a
     `dataset` map, `table` name and `tdr-profile`."
   [tdr-profile dataset table row-ids]
-  (let [the-request (->> row-ids
-                         (datarepo/compose-snapshot-request dataset table))]
+  (let [columns     (-> (datarepo/all-columns dataset table)
+                        legalize-tdr-columns
+                        (#(map :name %))
+                        set
+                        (conj "datarepo_row_id")
+                        vec)
+        the-request (->> row-ids
+                         (datarepo/compose-snapshot-request dataset columns table))]
     (-> the-request
         (update :name #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
         (update :profileId (constantly tdr-profile)))))

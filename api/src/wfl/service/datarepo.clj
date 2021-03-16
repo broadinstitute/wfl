@@ -5,7 +5,6 @@
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
-            [wfl.service.google.bigquery :as bigquery]
             [wfl.util          :as util])
   (:import (java.time Instant)
            (java.util.concurrent TimeUnit)))
@@ -205,35 +204,24 @@
     (->> [dataProject dataset-name table start end]
          (apply format query))))
 
-(defn ^:private legalize-tdr-columns
-  "Legalize TDR columns by stripping out columns that are Array[File] types, as
-   TDR does not support them yet."
-  [cols]
-  (letfn [(is-fileref-array? [{:keys [datatype array_of]}]
-            (and (= datatype "fileref") array_of))]
-    (remove is-fileref-array? cols)))
-
-(defn ^:private all-columns
-  "Parse out and legalize all column names for a `table` in TDR `dataset`."
+(defn all-columns
+  "Parse out information of all columns for a `table` in TDR `dataset`."
   [dataset table]
   (-> dataset
       (get-in [:schema :tables])
       (->> (filter #(= (:name %) table)))
       first
-      :columns
-      legalize-tdr-columns
-      (#(map :name %))))
+      :columns))
 
 ;; visible for testing
 (defn compose-snapshot-request
   "Compose the request for TDR snapshot creation by `row-ids`
-   from `table` and `dataset`.
+   and `columns` from `table` and a `dataset` map.
 
    Note TDR uses snapshot names as unique identifier so the
    name must be unique between snapshots."
-  [{:keys [name defaultProfileId description] :as dataset} table row-ids]
-  (let [columns (-> (all-columns dataset table) set (conj "datarepo_row_id") vec)
-        row-ids (vec row-ids)]
+  [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
+  (let [row-ids (vec row-ids)]
     {:contents    [{:datasetName name
                     :mode        "byRowId"
                     :rowIdSpec   {:tables   [{:columns columns
