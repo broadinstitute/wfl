@@ -44,7 +44,7 @@
   (let [{:keys [dataProject]} dataset
         table                table
         today                (util/datetime->str (util/now))
-        yesterday            (util/datetime->str (util/n-day-from-now -1))
+        yesterday            (util/datetime->str (util/days-from-now -1))
         row-ids (->> (datarepo/compose-snapshot-query dataset table yesterday today)
                      (bigquery/query-sync dataProject)
                      (bigquery/flatten-rows))
