@@ -380,22 +380,15 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
-(defn str->date
-  "Parse date string `s` to date object, with optional `format`."
-  ([s format]
-   (.parse (SimpleDateFormat. format) s))
-  ([s]
-   (str->date s "yyyy-MM-dd")))
-
 (defn datetime->str
   "Parse `datetime` object into string, with optional `format`.
 
    Note this function uses UTC as the time zone offset by default."
-  ([^Instant datetime format]
+  ([^OffsetDateTime datetime format]
    (let [formatter (-> format
                        DateTimeFormatter/ofPattern)]
      (.format formatter datetime)))
-  ([^Instant datetime]
+  ([^OffsetDateTime datetime]
    (datetime->str datetime "yyyy-MM-dd")))
 
 ;; see https://github.com/broadinstitute/wfl/pull/338#discussion_r592618718
