@@ -6,6 +6,7 @@
             [wfl.util          :as util])
   (:import (java.util UUID)))
 
+;; See https://broadinstitute.slack.com/archives/CD4HBRFMG/p1614139411043700
 (defn ^:private legalize-tdr-columns
   "Legalize TDR columns by stripping out columns that are Array[File] types, as
    TDR does not support them yet."
@@ -15,28 +16,21 @@
     (remove is-fileref-array? cols)))
 
 (defn unique-snapshot-request
-  "Create a snapshot request for uniquely-named snapshot defined by a
-   `dataset` map, `table` name and `tdr-profile`."
+  "Wrap `table` from `dataset` in a snapshot with a unique name for `tdr-profile`."
   [tdr-profile dataset table row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
                         legalize-tdr-columns
-                        (#(map :name %))
-                        set
-                        (conj "datarepo_row_id")
-                        vec)
-        the-request (->> row-ids
-                         (datarepo/compose-snapshot-request dataset columns table))]
-    (-> the-request
+                        (->> (map :name) set)
+                        (conj "datarepo_row_id"))]
+    (-> (datarepo/compose-snapshot-request dataset columns table row-ids)
         (update :name #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
         (update :profileId (constantly tdr-profile)))))
 
-;; TDR dis-encourages snapshotting by `row-id`s with a large number
-;; of rows in the request due to performance issues. Ruchi says it's
-;; probably fine to start with snapshotting by 500-row sized batches
-;; of rows. As TDR scales up, this number will likely to increase.
+;; Partition row IDs into batches of 500 to keep TDR happy.
+;; Ask Ruchi for the reference to the bug ticket if there's one.
 (defn create-snapshots
-  "Create uniquely-named snapshots in TDR with `tdr-profile`, `dataset`
-   map and `table` name.
+  "Return snapshot requests of up to 500 row ID
+   from `table` in `dataset` for `tdr-profile`.
 
    Note the dataset row query time range is set to (yesterday, today]
    for testing purposes for now."
@@ -49,6 +43,9 @@
                      (bigquery/query-sync dataProject)
                      flatten)
         unique-request-batch (partial unique-snapshot-request tdr-profile dataset table)]
-    (->> (partition-all 500 row-ids)
+    (->> (datarepo/compose-snapshot-query dataset table yesterday today)
+         (bigquery/query-sync dataProject)
+         flatten
+         (partition-all 500)
          (map unique-request-batch)
-         (map datarepo/create-snapshot))))
+         (map (partial unique-snapshot-request tdr-profile dataset table)))))

@@ -1,16 +1,16 @@
 (ns wfl.integration.datarepo-test
-  (:require [clojure.data.json          :as json]
-            [clojure.test               :refer [deftest is testing]]
-            [wfl.environment            :as env]
-            [wfl.service.datarepo       :as datarepo]
-            [wfl.service.google.storage :as gcs]
+  (:require [clojure.data.json           :as json]
+            [clojure.test                :refer [deftest is testing]]
+            [wfl.environment             :as env]
+            [wfl.service.datarepo        :as datarepo]
+            [wfl.service.google.storage  :as gcs]
             [wfl.service.google.bigquery :as bigquery]
-            [wfl.tools.datasets         :as datasets]
-            [wfl.tools.fixtures         :as fixtures]
+            [wfl.tools.datasets          :as datasets]
+            [wfl.tools.fixtures          :as fixtures]
             [wfl.tools.snapshots         :as snapshots]
-            [wfl.tools.resources        :as resources]
-            [wfl.tools.workflows        :as workflows]
-            [wfl.util                   :as util])
+            [wfl.tools.resources         :as resources]
+            [wfl.tools.workflows         :as workflows]
+            [wfl.util                    :as util])
   (:import [java.util UUID]))
 
 (deftest test-create-dataset
@@ -79,9 +79,8 @@
 
 (def ^:private testing-dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
 
+;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
-  ;; To test given a dataset, we can query BigQuery for row-ids
-  ;; and use them to create a snapshot!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
         table     "sarscov2_illumina_full_inputs"
