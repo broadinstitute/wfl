@@ -38,7 +38,7 @@ class WflInstanceConfig:
     db_connection_name: str = None
     rendered_values_file: str = None
     vault_token_path: str = None
-    wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}/.."
+    wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}"
     current_changelog: str = None
 
 
@@ -52,7 +52,7 @@ def check_env_instance_present(config: WflInstanceConfig) -> None:
 def read_version(config: WflInstanceConfig) -> None:
     if not config.version:
         info("=>  Reading version from file at `./version`")
-        with open(f"{config.wfl_root_folder}/version") as version_file:
+        with open(f"{config.wfl_root_folder}/../version") as version_file:
             config.version = version_file.read().strip()
     else:
         info(f"=>  Version overridden, using {config.version} instead of `./version`")
