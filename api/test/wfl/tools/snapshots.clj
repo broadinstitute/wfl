@@ -16,7 +16,7 @@
 
 (defn unique-snapshot-request
   "Create a snapshot request for uniquely-named snapshot defined by a
-    `dataset` map, `table` name and `tdr-profile`."
+   `dataset` map, `table` name and `tdr-profile`."
   [tdr-profile dataset table row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
                         legalize-tdr-columns
@@ -43,8 +43,8 @@
   [tdr-profile dataset table]
   (let [{:keys [dataProject]} dataset
         table                table
-        today                (util/datetime->str (util/now))
-        yesterday            (util/datetime->str (util/days-from-now -1))
+        today                (util/today)
+        yesterday            (util/days-from-today -1)
         row-ids (->> (datarepo/compose-snapshot-query dataset table yesterday today)
                      (bigquery/query-sync dataProject)
                      (bigquery/flatten-rows))

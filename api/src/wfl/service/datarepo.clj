@@ -201,7 +201,7 @@
                  `%s.%s.%s`
                WHERE
                  datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"]
-    (->> [dataProject dataset-name table start end] (apply format query))))
+    (format query dataProject dataset-name table start end)))
 
 (defn all-columns
   "Parse out information of all columns for a `table` in TDR `dataset`."
