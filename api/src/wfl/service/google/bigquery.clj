@@ -56,24 +56,15 @@
    project  - Google Cloud Project to list the BigQuery datasets in.
    query    - BigQuery Standard SQL query string."
   [project query]
-  (-> (str/join "/" ["projects" project "queries"])
-      bigquery-url
-      (http/post {:headers (auth/get-auth-header)
-                  :body    (json/write-str
-                            {:query          query
-                             :use_legacy_sql false})})
-      util/response-body-json))
-
-(defn ^:private parse-row
-  "Parse row information from BigQuery `rows` entry in query response."
-  [rows]
-  (map :v (:f rows)))
-
-(defn flatten-rows
-  "Given BigQuery `query-response`, return all flatten rows."
-  [query-response]
-  (->> (get-in query-response [:rows])
-       (mapcat parse-row)))
+  (letfn [(flatten-rows [rows] (mapv #(map :v (:f %)) rows))]
+    (-> (str/join "/" ["projects" project "queries"])
+        bigquery-url
+        (http/post {:headers (auth/get-auth-header)
+                    :body    (json/write-str
+                              {:query          query
+                               :use_legacy_sql false})})
+        util/response-body-json
+        (update :rows flatten-rows))))
 
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
@@ -86,7 +77,7 @@
 
    Parameters
    ----------
-   table            - BigQuery table/view name.
+   table            - BigQuery table/view body with the rows field flatten.
    terra-data-table - The `table` name in the Terra workspace to import the TSV.
    file             - [optional] TSV file name to dump.
 
@@ -98,7 +89,7 @@
    (letfn [(format-header-for-terra [header]
              (cons (format "entity:%s_id" terra-data-table) (rest header)))]
      (let [headers (map :name (get-in table [:schema :fields]))
-           rows (map parse-row (get-in table [:rows]))
+           rows (get-in table [:rows])
            contents (-> []
                         (into [(format-header-for-terra headers)])
                         (into rows))]
@@ -108,5 +99,4 @@
                         :separator \tab)
          file))))
   ([table terra-data-table]
-   (-> (dump-table->tsv table terra-data-table (StringWriter.))
-       .toString .getBytes)))
+   (str (dump-table->tsv table terra-data-table (StringWriter.)))))

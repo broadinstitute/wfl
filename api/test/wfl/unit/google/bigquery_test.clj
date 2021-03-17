@@ -23,16 +23,9 @@
    :jobComplete true,
    :cacheHit false})
 
-(deftest test-flatten-rows
-  (testing "Can parse and flatten rows given bigquery query result"
-    (is (= (* (read-string (:totalRows dr-view-content))
-              (count (get-in dr-view-content [:schema :fields])))
-           (count (bigquery/flatten-rows dr-view-content))))))
-
 (deftest test-dump-table->tsv
   (testing "Dumping from BigQuery table response to TSV works"
     (let [terra-table-name "test-name"
           contents (-> (bigquery/dump-table->tsv dr-view-content "test-name")
-                       slurp
                        (csv/read-csv :separator \tab))]
       (is (= (format "entity:%s_id" terra-table-name) (first (first contents))) "The result TSV header is not properly formatted!"))))

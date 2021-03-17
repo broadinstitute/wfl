@@ -47,7 +47,7 @@
         yesterday            (util/days-from-today -1)
         row-ids (->> (datarepo/compose-snapshot-query dataset table yesterday today)
                      (bigquery/query-sync dataProject)
-                     (bigquery/flatten-rows))
+                     flatten)
         unique-request-batch (partial unique-snapshot-request tdr-profile dataset table)]
     (->> (partition-all 500 row-ids)
          (map unique-request-batch)
