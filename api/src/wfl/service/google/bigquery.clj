@@ -64,8 +64,7 @@
                              :use_legacy_sql false})})
       util/response-body-json))
 
-;; visible for testing
-(defn parse-row
+(defn ^:private parse-row
   "Parse row information from BigQuery `rows` entry in query response."
   [rows]
   (map :v (:f rows)))

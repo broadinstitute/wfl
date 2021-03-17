@@ -201,17 +201,15 @@
                  `%s.%s.%s`
                WHERE
                  datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"]
-    (->> [dataProject dataset-name table start end]
-         (apply format query))))
+    (->> [dataProject dataset-name table start end] (apply format query))))
 
 (defn all-columns
   "Parse out information of all columns for a `table` in TDR `dataset`."
   [dataset table]
-  (-> dataset
-      (get-in [:schema :tables])
-      (->> (filter #(= (:name %) table)))
-      first
-      :columns))
+  (->> (get-in dataset [:schema :tables])
+       (filter #(= (:name %) table))
+       first
+       :columns))
 
 ;; visible for testing
 (defn compose-snapshot-request

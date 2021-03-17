@@ -400,13 +400,12 @@
 
 ;; see https://github.com/broadinstitute/wfl/pull/338#discussion_r592618718
 (defn now
-  "Return timestamp of now in ^OffsetDateTime format."
+  "Return now in ^OffsetDateTime."
   []
   (OffsetDateTime/now))
 
 (defn days-from-now
-  "Return the timestamp of n-days from now, either
-   backward or forward depends on the sign of n,
-   in ^OffsetDateTime format."
+  "Return n-days from now in ^OffsetDateTime, either
+   backward or forward depends on the sign of n."
   [^Integer n]
   (.plus (now) n ChronoUnit/DAYS))

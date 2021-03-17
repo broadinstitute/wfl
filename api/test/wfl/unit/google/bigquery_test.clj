@@ -23,11 +23,6 @@
    :jobComplete true,
    :cacheHit false})
 
-(deftest test-parse-row
-  (testing "Can parse row information given rows content"
-    (is (= (read-string (:totalRows dr-view-content))
-           (count (map bigquery/parse-row (:rows dr-view-content)))))))
-
 (deftest test-flatten-rows
   (testing "Can parse and flatten rows given bigquery query result"
     (is (= (* (read-string (:totalRows dr-view-content))
