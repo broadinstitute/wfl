@@ -89,7 +89,7 @@
         end-datetime   "2021-03-08"
         row-ids (->> (datarepo/compose-snapshot-query dataset table start-datetime end-datetime)
                      (bigquery/query-sync dataProject)
-                     (bigquery/flatten-rows))]
+                     flatten)]
     (testing "creating snapshot"
       (fixtures/with-temporary-snapshot
         (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
