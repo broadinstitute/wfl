@@ -6,7 +6,7 @@
             [wfl.util          :as util])
   (:import (java.util UUID)))
 
-;; See https://broadinstitute.slack.com/archives/CD4HBRFMG/p1614139411043700
+;; See https://broadworkbench.atlassian.net/browse/DR-1696
 (defn ^:private legalize-tdr-columns
   "Legalize TDR columns by stripping out columns that are Array[File] types, as
    TDR does not support them yet."
@@ -22,7 +22,7 @@
                         legalize-tdr-columns
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))]
-    (-> (datarepo/compose-snapshot-request dataset columns table row-ids)
+    (-> (datarepo/make-snapshot-request dataset columns table row-ids)
         (update :name #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
         (update :profileId (constantly tdr-profile)))))
 
@@ -39,11 +39,11 @@
         table                table
         today                (util/today)
         yesterday            (util/days-from-today -1)
-        row-ids (->> (datarepo/compose-snapshot-query dataset table yesterday today)
+        row-ids (->> (datarepo/make-snapshot-query dataset table yesterday today)
                      (bigquery/query-sync dataProject)
                      flatten)
         unique-request-batch (partial unique-snapshot-request tdr-profile dataset table)]
-    (->> (datarepo/compose-snapshot-query dataset table yesterday today)
+    (->> (datarepo/make-snapshot-query dataset table yesterday today)
          (bigquery/query-sync dataProject)
          flatten
          (partition-all 500)

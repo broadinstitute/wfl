@@ -86,7 +86,7 @@
         table     "sarscov2_illumina_full_inputs"
         start-datetime "2021-03-07"
         end-datetime   "2021-03-08"
-        row-ids (->> (datarepo/compose-snapshot-query dataset table start-datetime end-datetime)
+        row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
                      (bigquery/query-sync dataProject)
                      flatten)]
     (testing "creating snapshot"

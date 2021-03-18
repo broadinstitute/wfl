@@ -2,6 +2,7 @@
   "Do stuff in the data repo."
   (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
+            [clojure.string    :as str]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
@@ -123,9 +124,10 @@
 ;; spec in this function is not consistent with
 ;; the TDR Swagger page in order to make the
 ;; request work.
+;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
 (defn create-snapshot
-  "Create a snapshot from standard SQL query,
-   assert or row-ids, based on `snapshot-request`.
+  "Return snapshot-id when the snapshot defined
+   by `snapshot-request` is ready.
 
    See `SnapshotRequestModel` in the
    DataRepo swagger page for more information.
@@ -141,7 +143,8 @@
       :id))
 
 (defn list-snapshots
-  "List all Snapshots the caller has access to.
+  "Return snapshots optionally filtered by source dataset,
+   where dataset-ids identify the source datasets.
    Hard-coded to return 999 pages for now.
 
    Parameters
@@ -154,11 +157,11 @@
      (list-snapshots)
      (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\" \"85efdfea-52fb-4698-bee6-eef76104a7f4\")"
   [& dataset-ids]
-  (letfn [(maybe [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
+  (letfn [(maybe-merge [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
     (-> (http/get (repository "snapshots")
-                  (maybe {:headers (auth/get-service-account-header)
-                          :query-params {:limit 999}}
-                         :query-params dataset-ids))
+                  (maybe-merge {:headers (auth/get-service-account-header)
+                                :query-params {:limit 999}}
+                               :query-params dataset-ids))
         util/response-body-json)))
 
 (defn delete-snapshot
@@ -171,21 +174,18 @@
       poll-job))
 
 (defn snapshot
-  "Query the DataRepo for the Snapshot with `snapshot-id`."
+  "Return the snapshot with `snapshot-id`."
   [snapshot-id]
   (-> (repository "snapshots/" snapshot-id)
       (http/get {:headers (auth/get-service-account-header)})
       util/response-body-json))
 
-;; visible for testing
-(defn compose-snapshot-query
-  "Helper function for composing row-id query payload from `dataset` and `table`,
+;; Note if there are no matching rows between (start, end], TDR will throw
+;; a 400 exception.
+;; Note TDR prefixes datasets in BigQuery with `datarepo_`.
+(defn make-snapshot-query
+  "Make row-id query payload from `dataset` and `table`,
    given a date range specified by exclusive `start` and inclusive `end`.
-
-   Note if there are no matching rows between (start, end], TDR will throw
-   a 400 exception.
-
-   Note TDR prefixes datasets in BigQuery with `datarepo_`.
 
    Parameters
    ----------
@@ -195,29 +195,25 @@
    end        - The end date object in the timeframe to query inclusively."
   [{:keys [name dataProject] :as _dataset} table start end]
   (let [dataset-name (str "datarepo_" name)
-        query "SELECT
-                 datarepo_row_id
-               FROM
-                 `%s.%s.%s`
-               WHERE
-                 datarepo_ingest_date > '%s' AND datarepo_ingest_date <= '%s'"]
+        query (str/join \newline ["SELECT datarepo_row_id"
+                                  "FROM `%s.%s.%s`"
+                                  "WHERE datarepo_ingest_date >= '%s'"
+                                  "AND datarepo_ingest_date < '%s'"])]
     (format query dataProject dataset-name table start end)))
 
 (defn all-columns
-  "Parse out information of all columns for a `table` in TDR `dataset`."
+  "Return all of the columns of `table` in `dataset` content."
   [dataset table]
   (->> (get-in dataset [:schema :tables])
        (filter #(= (:name %) table))
        first
        :columns))
 
-;; visible for testing
-(defn compose-snapshot-request
-  "Compose the request for TDR snapshot creation by `row-ids`
-   and `columns` from `table` and a `dataset` map.
-
-   Note TDR uses snapshot names as unique identifier so the
-   name must be unique between snapshots."
+;; Note TDR uses snapshot names as unique identifier so the
+;; name must be unique among snapshots.
+(defn make-snapshot-request
+  "Return a snapshot request for `row-ids`and `columns`
+   from `table` name in `_dataset`."
   [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
   (let [row-ids (vec row-ids)]
     {:contents    [{:datasetName name

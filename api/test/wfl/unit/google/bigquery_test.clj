@@ -30,4 +30,4 @@
           contents (-> (bigquery/dump-table->tsv dr-view-content "test-name")
                        (csv/read-csv :separator \tab))]
       (is (= (format "entity:%s_id" terra-table-name)
-             (first (first contents))) "The result TSV header is not properly formatted!"))))
+             ((comp first first) contents)) "The result TSV header is not properly formatted!"))))
