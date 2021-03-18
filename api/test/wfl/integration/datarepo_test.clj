@@ -77,7 +77,7 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "28dbedad-ca6b-4a4a-bd9a-b351b5be3617")
+(def ^:private testing-dataset "3b41c460-d994-47a4-9bf7-c59861e858a6")
 
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
