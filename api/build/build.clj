@@ -1,5 +1,4 @@
 (ns build
-  "Build support originating in build.boot."
   (:require [clojure.data.xml :as xml]
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
@@ -8,6 +7,7 @@
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
             [wfl.module.sg :as sg]
+            [wfl.service.firecloud :as firecloud]
             [wfl.util :as util])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
@@ -17,8 +17,7 @@
 ;;
 (def the-version
   "A map of version information."
-  (letfn [(frob [{:keys [release path]}]
-            [(last (str/split path #"/")) release])]
+  (letfn [(frob [{:keys [release path]}] [(util/basename path) release])]
     (let [built     (-> (OffsetDateTime/now)
                         (.truncatedTo ChronoUnit/SECONDS)
                         .toInstant .toString)
@@ -42,7 +41,7 @@
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
   [resources version]
-  (let [file (io/file resources "version.edn")]
+  (let [file (io/file resources "wfl" "version.edn")]
     (io/make-parents file)
     (with-open [out (io/writer file)]
       (binding [*out* out]
@@ -75,10 +74,30 @@
           (->> (spit out)))))
   (System/exit 0))
 
+(defn ^:private write-workflow-description [resources wdl]
+  (let [workflow (util/remove-extension (util/basename wdl))
+        file     (io/file resources "workflows" (str workflow ".edn"))]
+    (when-not (.exists file)
+      (println "generating description for" (util/basename wdl))
+      (io/make-parents file)
+      (with-open [out (io/writer file)]
+        (binding [*out* out]
+          (-> (slurp wdl) firecloud/describe-workflow pprint))))))
+
+(defn ^:private find-wdls []
+  (letfn [(list-wdls [folder]
+            (->> (file-seq (io/file folder))
+                 (map #(.getCanonicalPath %))
+                 (filter #(= (util/extension %) "wdl"))))]
+  (mapcat list-wdls ["resources" "test/resources"])))
+
 (defn prebuild
   "Stage any needed resources on the class path."
   [_opts]
-  (let [api "../derived/api"]
+  (let [derived        (str/join "/" [".." "derived" "api"])
+        resources      (io/file derived "resources")
+        test-resources (io/file derived "test" "resources")]
     (pprint the-version)
-    (write-the-version-file (io/file api "resources" "wfl") the-version))
-  (System/exit 0))
+    (write-the-version-file resources the-version)
+    (run! #(write-workflow-description test-resources %) (find-wdls))
+    (System/exit 0)))
