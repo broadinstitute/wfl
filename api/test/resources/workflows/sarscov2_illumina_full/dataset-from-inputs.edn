@@ -1,21 +1,7 @@
-{:flowcell_tgz         "flowcell_tgz",
- :reference_fasta      "reference_fasta",
- :amplicon_bed_prefix  "amplicon_bed_prefix",
- :biosample_attributes "biosample_attributes",
- :instrument_model     "instrument_model",
- :min_genome_bases     "min_genome_bases",
- :max_vadr_alerts      "max_vadr_alerts",
- :sra_title            "sra_title",
- :workspace_name       "$SARSCoV2-Illumina-Full",
- :terra_project        "$wfl-dev",
- :extra                {:demux_deplete.spikein_db                           "demux_deplete.spikein_db",
-                        :demux_deplete.samplesheets                         "demux_deplete.samplesheets",
-                        :demux_deplete.sample_rename_map                    "demux_deplete.sample_rename_map",
-                        :demux_deplete.bwaDbs                               "demux_deplete.bwaDbs",
-                        :demux_deplete.blastDbs                             "demux_deplete.blastDbs",
-                        :gisaid_meta_prep.username                          "gisaid_meta_prep.username",
-                        :gisaid_meta_prep.submitting_lab_addr               "gisaid_meta_prep.submitting_lab_addr",
-                        :gisaid_meta_prep.submitting_lab_name               "gisaid_meta_prep.submitting_lab_name",
-                        :package_genbank_ftp_submission.spuid_namespace     "package_genbank_ftp_submission.spuid_namespace",
-                        :package_genbank_ftp_submission.author_template_sbt "package_genbank_ftp_submission.author_template_sbt",
-                        :package_genbank_ftp_submission.account_name        "package_genbank_ftp_submission.account_name"}}
+{:authors_sbt       "package_genbank_ftp_submission.author_template_sbt"
+ :biosample_map     "biosample_attributes"
+ :flowcell_tgz      "flowcell_tgz"
+ :instrument_model  "instrument_model"
+ :sample_rename_map "demux_deplete.sample_rename_map"
+ :samplesheets      "demux_deplete.samplesheets"
+ :title             "sra_title"}

@@ -1,0 +1,8 @@
+{:authors_sbt       "06f18b9b-a1c6-46ee-953c-7b58b2f8b8dd",
+ :biosample_map     ["024efc25-f858-4276-bdbb-3b2f77cc18e0"],
+ :flowcell_tgz      "86c1691f-a579-4911-bc90-4c5cc7410337",
+ :instrument_model  "Illumina NovaSeq 6000",
+ :sample_rename_map "104f5172-eb8c-46f7-a07b-54de1b015e9a",
+ :samplesheets      ["2eb0f6aa-20d7-42e9-89a3-c6603ab3705d"
+                     "2eb0f6aa-20d7-42e9-89a3-c6603ab3705d"],
+ :title             "Metagenomic RNA-Seq of SARS-CoV-2 from patients"}

@@ -47,7 +47,7 @@
    "WFL_POSTGRES_USERNAME"
    #(-> nil)
    "WFL_FIRECLOUD_URL"
-   #(-> "https://api.firecloud.org/")
+   #(-> "https://api.firecloud.org")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"

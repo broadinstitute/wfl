@@ -8,15 +8,21 @@
             [wfl.util :as util]))
 
 (defn ^:private firecloud-url [& parts]
-  (let [url (util/slashify (env/getenv "WFL_FIRECLOUD_URL"))]
-    (apply str url parts)))
+  (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
+    (str/join "/" (conj parts url))))
 
-(def workspace-api-url (partial firecloud-url "api/workspaces/"))
+(def ^:private workspace-api-url
+  (partial firecloud-url "api" "workspaces"))
+
+(defn ^:private get-workspace-json [& parts]
+  (-> (apply workspace-api-url parts)
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
   [workspace submission-id]
-  (-> (workspace-api-url (str/join "/" [workspace "submissions" submission-id]))
+  (-> (workspace-api-url workspace "submissions" submission-id)
       (http/delete {:headers (auth/get-auth-header)})))
 
 (defn create-submission
@@ -38,30 +44,32 @@
         util/response-body-json
         :submissionId)))
 
+(defn list-entities
+  "List the entity types along with their attributes in `workspace`."
+  [workspace]
+  (get-workspace-json workspace "entities"))
+
+(defn get-workspace
+  "Get a single `workspace`'s details"
+  [workspace]
+  (get-workspace-json workspace))
+
 (defn get-submission
   "Return the submission in the Terra `workspace` with `submission-id`."
   [workspace submission-id]
-  (-> (workspace-api-url workspace "/submissions/" submission-id)
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
+  (get-workspace-json workspace "submissions" submission-id))
 
 (defn get-workflow
   "Query the `firecloud-url` for the the `workflow` created by the `submission`
    in the Terra `workspace`."
   [workspace submission-id workflow-id]
-  (-> (str/join "/" [workspace "submissions" submission-id "workflows" workflow-id])
-      workspace-api-url
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
+  (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id))
 
 (defn get-workflow-outputs
   "Query the `firecloud-url` for the outputs of the `workflow` created by
    the `submission` in the Terra `workspace`."
   [workspace submission-id workflow-id]
-  (-> (str/join "/" [workspace "submissions" submission-id "workflows" workflow-id "outputs"])
-      workspace-api-url
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
+  (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id "outputs"))
 
 (defn get-workflow-status-by-entity
   "Get workflow status given a Terra submission-id and entity-name."
@@ -93,7 +101,7 @@
                                :entities     (slurp file)})})))
 
 (defn describe-workflow
-  "Get a machine-readbale description of the `workflow`, including its inputs
+  "Get a machine-readable description of the `workflow`, including its inputs
    and outputs. `workflow` can either be a url or the workflow source code."
   [workflow]
   (letfn [(url? [s] (some #(str/starts-with? s %) ["http://" "https://"]))]
