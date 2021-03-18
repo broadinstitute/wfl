@@ -120,9 +120,6 @@ For the release process, please refer to the [release guide](../dev-release/)
 
 11. Merge the PR.
 
-Deployment can be done to [sandboxes](../dev-sandbox/) if you build images locally and use `./ops/cli.py deploy`, but
-for deploying to a shared environment you'll generally want to follow the [release process](../dev-release/).
-
 
 
 ## Development Tips
@@ -239,9 +236,7 @@ You can use `--password=$ENV_SOMETHING` to supply it.
     ```
     clojure -M:liquibase
     ```
-    if you are working aginst a local database. If you are working with a CloudSQL
-    database, the liquibase migration is a encoded step of the `cli.py`'s `deploy`
-    command.
+    if you are working aginst a local database. 
 
 ### Diagnosis
 
