@@ -46,29 +46,25 @@
       util/response-body-json
       :tables))
 
-(defn query-table-sync
-  "Query for a BigQuery TABLE within a Data Repo SNAPSHOT in
-   Google Cloud PROJECT synchronously. Using non-legacy query
-   SQL syntax. Note: table and views are interchangeable BigQuery
-   concepts here, so both of them work as `TABLE`.
-
-   At least `data custodian` permission on the snapshot is
-   required for running the query job.
+(defn query-sync
+  "Given QUERY, look for rows in a BigQuery table within a
+   Google Cloud PROJECT synchronously, using non-legacy query
+   SQL syntax. Return flatten rows.
 
    Parameters
    ----------
    project  - Google Cloud Project to list the BigQuery datasets in.
-   snapshot - Data Repo Snapshot.
-   table    - BigQuery table/view name."
-  [project snapshot table]
-  (let [query (format "SELECT * FROM `%s.%s.%s`" project snapshot table)]
+   query    - BigQuery Standard SQL query string."
+  [project query]
+  (letfn [(flatten-rows [rows] (mapv #(map :v (:f %)) rows))]
     (-> (str/join "/" ["projects" project "queries"])
         bigquery-url
         (http/post {:headers (auth/get-auth-header)
                     :body    (json/write-str
-                              {:query query
+                              {:query          query
                                :use_legacy_sql false})})
-        util/response-body-json)))
+        util/response-body-json
+        (update :rows flatten-rows))))
 
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
@@ -81,7 +77,7 @@
 
    Parameters
    ----------
-   table            - BigQuery table/view name.
+   table            - BigQuery table/view body with the rows field flatten.
    terra-data-table - The `table` name in the Terra workspace to import the TSV.
    file             - [optional] TSV file name to dump.
 
@@ -90,11 +86,10 @@
      (dump-table->tsv table \"datarepo_row\" \"dumped.tsv\")
      (dump-table->tsv table \"datarepo_row\")"
   ([table terra-data-table file]
-   (letfn [(parse-row [row] (map :v (:f row)))
-           (format-header-for-terra [header]
+   (letfn [(format-header-for-terra [header]
              (cons (format "entity:%s_id" terra-data-table) (rest header)))]
      (let [headers (map :name (get-in table [:schema :fields]))
-           rows (map parse-row (get-in table [:rows]))
+           rows (get-in table [:rows])
            contents (-> []
                         (into [(format-header-for-terra headers)])
                         (into rows))]
@@ -104,5 +99,4 @@
                         :separator \tab)
          file))))
   ([table terra-data-table]
-   (-> (dump-table->tsv table terra-data-table (StringWriter.))
-       .toString .getBytes)))
+   (str (dump-table->tsv table terra-data-table (StringWriter.)))))

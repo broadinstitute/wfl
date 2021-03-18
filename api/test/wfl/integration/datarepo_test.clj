@@ -1,14 +1,16 @@
 (ns wfl.integration.datarepo-test
-  (:require [clojure.data.json          :as json]
-            [clojure.test               :refer [deftest is testing]]
-            [wfl.environment            :as env]
-            [wfl.service.datarepo       :as datarepo]
-            [wfl.service.google.storage :as gcs]
-            [wfl.tools.datasets         :as datasets]
-            [wfl.tools.fixtures         :as fixtures]
-            [wfl.tools.resources        :as resources]
-            [wfl.tools.workflows        :as workflows]
-            [wfl.util                   :as util])
+  (:require [clojure.data.json           :as json]
+            [clojure.test                :refer [deftest is testing]]
+            [wfl.environment             :as env]
+            [wfl.service.datarepo        :as datarepo]
+            [wfl.service.google.storage  :as gcs]
+            [wfl.service.google.bigquery :as bigquery]
+            [wfl.tools.datasets          :as datasets]
+            [wfl.tools.fixtures          :as fixtures]
+            [wfl.tools.snapshots         :as snapshots]
+            [wfl.tools.resources         :as resources]
+            [wfl.tools.workflows         :as workflows]
+            [wfl.util                    :as util])
   (:import [java.util UUID]))
 
 (deftest test-create-dataset
@@ -74,3 +76,21 @@
                  (datarepo/ingest-table dataset table-url table-name))]
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
+
+(def ^:private testing-dataset "3b41c460-d994-47a4-9bf7-c59861e858a6")
+
+;; Get row-ids from BigQuery and use them to create a snapshot.
+(deftest test-create-snapshot
+  (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
+        {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
+        table     "flowcell"
+        start-datetime "2021-03-17"
+        end-datetime   "2021-03-19"
+        row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
+                     (bigquery/query-sync dataProject)
+                     :rows flatten)]
+    (testing "creating snapshot"
+      (fixtures/with-temporary-snapshot
+        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+        #(let [snapshot (datarepo/snapshot %)]
+           (is (= % (:id snapshot))))))))

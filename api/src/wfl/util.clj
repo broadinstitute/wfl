@@ -7,7 +7,7 @@
             [clojure.tools.logging :as log]
             [wfl.wfl :as wfl])
   (:import [java.io File Writer IOException]
-           [java.time OffsetDateTime]
+           [java.time OffsetDateTime Clock LocalDate]
            [java.time.temporal ChronoUnit]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -377,3 +377,14 @@
   [parts]
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
+
+(defn today
+  "Return a ^LocalDate of today's date in UTC."
+  []
+  (LocalDate/now (Clock/systemUTC)))
+
+(defn days-from-today
+  "Return n-days from today's date in ^LocalDate, either
+   backward or forward depends on the sign of n."
+  [^Integer n]
+  (.plus (today) n ChronoUnit/DAYS))

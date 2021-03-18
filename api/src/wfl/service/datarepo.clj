@@ -2,6 +2,7 @@
   "Do stuff in the data repo."
   (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
+            [clojure.string    :as str]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.mime-type     :as mime-type]
@@ -117,3 +118,109 @@
       util/response-body-json
       :id
       poll-job))
+
+;; Note the TDR is under active development,
+;; the endpoint spec is getting changed so the
+;; spec in this function is not consistent with
+;; the TDR Swagger page in order to make the
+;; request work.
+;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
+(defn create-snapshot
+  "Return snapshot-id when the snapshot defined
+   by `snapshot-request` is ready.
+
+   See `SnapshotRequestModel` in the
+   DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [snapshot-request]
+  (-> (repository "snapshots")
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
+      :id
+      poll-job
+      :id))
+
+(defn list-snapshots
+  "Return snapshots optionally filtered by source dataset,
+   where dataset-ids identify the source datasets.
+   Hard-coded to return 999 pages for now.
+
+   Parameters
+   ----------
+   dataset-ids      - Optionally filter the result snapshots
+                      where provided datasets are source datasets.
+
+   Example
+   -------
+     (list-snapshots)
+     (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\" \"85efdfea-52fb-4698-bee6-eef76104a7f4\")"
+  [& dataset-ids]
+  (letfn [(maybe-merge [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
+    (-> (http/get (repository "snapshots")
+                  (maybe-merge {:headers (auth/get-service-account-header)
+                                :query-params {:limit 999}}
+                               :query-params dataset-ids))
+        util/response-body-json)))
+
+(defn delete-snapshot
+  "Delete the Snapshot with `snapshot-id`."
+  [snapshot-id]
+  (-> (repository "snapshots/" snapshot-id)
+      (http/delete {:headers (auth/get-service-account-header)})
+      util/response-body-json
+      :id
+      poll-job))
+
+(defn snapshot
+  "Return the snapshot with `snapshot-id`."
+  [snapshot-id]
+  (-> (repository "snapshots/" snapshot-id)
+      (http/get {:headers (auth/get-service-account-header)})
+      util/response-body-json))
+
+;; Note if there are no matching rows between (start, end], TDR will throw
+;; a 400 exception.
+;; Note TDR prefixes datasets in BigQuery with `datarepo_`.
+(defn make-snapshot-query
+  "Make row-id query payload from `dataset` and `table`,
+   given a date range specified by exclusive `start` and inclusive `end`.
+
+   Parameters
+   ----------
+   _dataset   - Dataset information response from TDR.
+   table      - Name of the table in the dataset schema to query from.
+   start      - The start date object in the timeframe to query exclusively.
+   end        - The end date object in the timeframe to query inclusively."
+  [{:keys [name dataProject] :as _dataset} table start end]
+  (let [dataset-name (str "datarepo_" name)
+        query (str/join \newline ["SELECT datarepo_row_id"
+                                  "FROM `%s.%s.%s`"
+                                  "WHERE datarepo_ingest_date > '%s'"
+                                  "AND datarepo_ingest_date <= '%s'"])]
+    (format query dataProject dataset-name table start end)))
+
+(defn all-columns
+  "Return all of the columns of `table` in `dataset` content."
+  [dataset table]
+  (->> (get-in dataset [:schema :tables])
+       (filter #(= (:name %) table))
+       first
+       :columns))
+
+;; Note TDR uses snapshot names as unique identifier so the
+;; name must be unique among snapshots.
+(defn make-snapshot-request
+  "Return a snapshot request for `row-ids`and `columns`
+   from `table` name in `_dataset`."
+  [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
+  (let [row-ids (vec row-ids)]
+    {:contents    [{:datasetName name
+                    :mode        "byRowId"
+                    :rowIdSpec   {:tables   [{:columns columns
+                                              :rowIds	 row-ids
+                                              :tableName table}]}}]
+     :description description
+     :name        name
+     :profileId   defaultProfileId}))

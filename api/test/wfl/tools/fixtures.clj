@@ -189,6 +189,14 @@
    datarepo/delete-dataset
    f))
 
+(defn with-temporary-snapshot
+  "Create a temporary Terra Data Repository Snapshot with `snapshot-request`"
+  [snapshot-request f]
+  (util/bracket
+   #(datarepo/create-snapshot snapshot-request)
+   datarepo/delete-snapshot
+   f))
+
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
    The original environment will be restored after `f` returns. No guarantees
