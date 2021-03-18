@@ -84,11 +84,11 @@
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
         table     "flowcell"
-        start-datetime "2021-03-07"
-        end-datetime   "2021-03-08"
+        start-datetime "2021-03-17"
+        end-datetime   "2021-03-19"
         row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
                      (bigquery/query-sync dataProject)
-                     flatten)]
+                     :rows flatten)]
     (testing "creating snapshot"
       (fixtures/with-temporary-snapshot
         (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)

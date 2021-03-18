@@ -197,8 +197,8 @@
   (let [dataset-name (str "datarepo_" name)
         query (str/join \newline ["SELECT datarepo_row_id"
                                   "FROM `%s.%s.%s`"
-                                  "WHERE datarepo_ingest_date >= '%s'"
-                                  "AND datarepo_ingest_date < '%s'"])]
+                                  "WHERE datarepo_ingest_date > '%s'"
+                                  "AND datarepo_ingest_date <= '%s'"])]
     (format query dataProject dataset-name table start end)))
 
 (defn all-columns
