@@ -83,7 +83,7 @@
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
-        table     "sarscov2_illumina_full_inputs"
+        table     "flowcell"
         start-datetime "2021-03-07"
         end-datetime   "2021-03-08"
         row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
