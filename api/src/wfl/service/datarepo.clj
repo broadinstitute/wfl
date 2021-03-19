@@ -11,24 +11,27 @@
            (java.util.concurrent TimeUnit)))
 
 (defn ^:private datarepo-url [& parts]
-  (let [url (util/slashify (env/getenv "WFL_TDR_URL"))]
-    (apply str url parts)))
+  (let [url (util/de-slashify (env/getenv "WFL_TDR_URL"))]
+    (str/join "/" (conj parts url))))
 
 (def ^:private repository
   "API URL for Data Repo API."
-  (partial datarepo-url "api/repository/v1/"))
+  (partial datarepo-url "api/repository/v1"))
+
+(defn ^:private get-repository-json [& parts]
+  (-> (apply repository parts)
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
 
 (defn dataset
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
-  (-> (repository "datasets/" dataset-id)
-      (http/get {:headers (auth/get-service-account-header)})
-      util/response-body-json))
+  (get-repository-json "datasets" dataset-id))
 
 (defn ^:private ingest
   "Ingest THING to DATASET-ID according to BODY."
   [thing dataset-id body]
-  (-> (repository (format "datasets/%s/%s" dataset-id thing))
+  (-> (repository "datasets" dataset-id thing)
       (http/post {:content-type :application/json
                   :headers      (auth/get-service-account-header)
                   :body         (json/write-str body :escape-slash false)})
@@ -38,8 +41,7 @@
 ;; While TDR does assign `loadTag`s, they're not always unique - submitting
 ;; requests in parallel can cause bad things to happen. Use this to create a
 ;; unique `loadTag` instead.
-(defn ^:private new-load-tag []
-  (str "workflow-launcher:" (Instant/now)))
+(defn ^:private new-load-tag [] (str "workflow-launcher:" (Instant/now)))
 
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
@@ -74,24 +76,23 @@
    "ingest"
    dataset-id
    {:format                "json"
-    :load_tag              "string"
+    :load_tag              (new-load-tag)
     :max_bad_records       0
     :path                  path
     :table                 table}))
 
 (defn poll-job
   "Return result for JOB-ID in ENVIRONMENT when it stops running."
-  [job-id]
-  (let [get-result #(-> (repository "jobs/" job-id "/result")
-                        (http/get {:headers (auth/get-service-account-header)})
-                        util/response-body-json)
-        running?   #(-> (repository "jobs/" job-id)
-                        (http/get {:headers (auth/get-service-account-header)})
-                        util/response-body-json
-                        :job_status
-                        #{"running"})]
-    (while (running?) (.sleep TimeUnit/SECONDS 1))
-    (get-result)))
+  ([job-id seconds]
+   (let [result   #(get-repository-json "jobs" job-id "result")
+         running? #(-> (get-repository-json "jobs" job-id)
+                       :job_status
+                       #{"running"})]
+     (while (running?)
+       (.sleep TimeUnit/SECONDS seconds))
+     (result)))
+  ([job-id]
+   (poll-job job-id 5)))
 
 (defn create-dataset
   "Create a dataset with EDN `dataset-request` and return the id
@@ -113,7 +114,7 @@
 (defn delete-dataset
   "Delete the Dataset with `dataset-id`."
   [dataset-id]
-  (-> (repository "datasets/" dataset-id)
+  (-> (repository "datasets" dataset-id)
       (http/delete {:headers (auth/get-service-account-header)})
       util/response-body-json
       :id
@@ -167,7 +168,7 @@
 (defn delete-snapshot
   "Delete the Snapshot with `snapshot-id`."
   [snapshot-id]
-  (-> (repository "snapshots/" snapshot-id)
+  (-> (repository "snapshots" snapshot-id)
       (http/delete {:headers (auth/get-service-account-header)})
       util/response-body-json
       :id
@@ -176,9 +177,7 @@
 (defn snapshot
   "Return the snapshot with `snapshot-id`."
   [snapshot-id]
-  (-> (repository "snapshots/" snapshot-id)
-      (http/get {:headers (auth/get-service-account-header)})
-      util/response-body-json))
+  (get-repository-json "snapshots" snapshot-id))
 
 ;; Note if there are no matching rows between (start, end], TDR will throw
 ;; a 400 exception.
