@@ -213,3 +213,106 @@
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline
   batch/load-batch-workload-impl)
+
+;; Hacks follow.  Blame tbl.
+(comment
+  "export GOOGLE_APPLICATION_CREDENTIALS=/Users/tbl/Broad/wfl/wfl-prod-service-account.json"
+  (do
+    (defn map-tsv-file
+      "Parse TSV file into maps of column names across rows."
+      [tsv]
+      (with-open [in (clojure.java.io/reader tsv)]
+        (let [[header & rows] (clojure.data.csv/read-csv in :separator \tab)]
+          (doall (map (partial zipmap header) rows)))))
+
+    (defn sample->clio-cram
+      "Clio CRAM metadata for SAMPLE."
+      [sample]
+      (let [translation {:location     "Processing Location"
+                         :project      "Project"
+                         :sample_alias "Collaborator Sample ID"
+                         :version      "Version"}]
+        (letfn [(translate [m [k v]] (assoc m k (sample v)))]
+          (reduce translate {:data_type "WGS"} translation))))
+
+    (defn tsv->crams
+      "Translate TSV file to CRAM records from `clio`."
+      [clio tsv]
+      (map (comp first (partial clio/query-cram clio) sample->clio-cram)
+           (map-tsv-file tsv)))
+
+    (defn cram->inputs
+      "Translate Clio `cram` record to SG workflow inputs."
+      [cram]
+      (let [translation {:base_file_name :sample_alias
+                         :input_cram     :cram_path}
+            contam      (str "gs://gatk-best-practices/somatic-hg38"
+                             "/small_exac_common_3.hg38.vcf.gz")
+            fasta       (str "gs://gcp-public-data--broad-references/hg38/v0"
+                             "/Homo_sapiens_assembly38.fasta")
+            dbsnp       (str "gs://gcp-public-data--broad-references/hg38/v0"
+                             "/gdc/dbsnp_144.hg38.vcf.gz")
+            references  {:contamination_vcf       contam
+                         :contamination_vcf_index (str contam ".tbi")
+                         :cram_ref_fasta          fasta
+                         :cram_ref_fasta_index    (str fasta ".fai")
+                         :dbsnp_vcf               dbsnp
+                         :dbsnp_vcf_index         (str dbsnp ".tbi")}]
+        (letfn [(translate [m [k v]] (assoc m k (v cram)))]
+          {:inputs  (-> (reduce translate references translation)
+                        (assoc :picard_markduplicates.sorting_collection_size_ratio
+                               0.125))
+           :options {:monitoring_script
+                     "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"}})))
+
+    (defn crams->workload
+      "Return a workload request to process `crams` with SG pipeline"
+      [crams]
+      {:executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
+       :output   "gs://broad-prod-somatic-genomes-output"
+       :pipeline "GDCWholeGenomeSomaticSingleSample"
+       :project  "(Test) tbl/GH-1196-sg-prod-data-reprise"
+       :items    (mapv cram->inputs crams)})
+
+    (defn execute
+      [workload]
+      (let [payload  (json/write-str workload :escape-slash false)
+            response (clj-http.client/post
+                      (str "http://localhost:3000" "/api/v1/exec")
+                      {:headers      (auth/get-auth-header)
+                       :content-type :json
+                       :accept       :json
+                       :body         payload})]
+        (util/parse-json (:body response))))
+
+    (def dev  "https://clio.gotc-dev.broadinstitute.org")
+    (def prod "https://clio.gotc-prod.broadinstitute.org")
+    (def tsv
+      "../NCI_EOMI_Ship1_WGS_SeqComplete_94samples_forGDCPipelineTesting.tsv")
+    (def crams (tsv->crams prod tsv))
+    (def cram (first crams))
+    (def raw-workload (crams->workload crams)))
+  
+  (map-tsv-file tsv)
+  (count crams)
+  crams
+  
+  (def workload
+    (let [{:keys [items]} raw-workload
+          keep?           #{"EOMI-B21C-NB1-A-1-0-D-A82T-36"
+                            "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
+                            "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
+                            "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"}]
+      (-> raw-workload :items
+          (->> (filter (comp keep? :base_file_name :inputs))
+               (assoc raw-workload :items)))))
+  
+  (let [file (clojure.java.io/file "workload-request.edn")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (clojure.pprint/pprint workload writer)))
+  (let [file (clojure.java.io/file "workload-request.json")]
+    (with-open [writer (clojure.java.io/writer file)]
+      (json/write workload writer :escape-slash false)))
+  
+  (execute workload)
+  (execute (update-in workload [:items] (comp vector first))))
