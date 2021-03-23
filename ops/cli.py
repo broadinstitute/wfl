@@ -45,21 +45,6 @@ def exit_if_dry_run(config: WflInstanceConfig) -> None:
         exit(0)
 
 
-def publish_docker_images(config: WflInstanceConfig) -> None:
-    """Publish existing docker images for the stored version."""
-    info(f"=>  Publishing Docker images for version {config.version}")
-    for module in ["api", "ui"]:
-        shell(f"docker push broadinstitute/workflow-launcher-{module}:{config.version}")
-    success("Published Docker images")
-
-
-def make_git_tag(config: WflInstanceConfig) -> None:
-    info("=>  Tagging current commit with version")
-    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'", cwd=config.wfl_root_folder)
-    shell(f"git push origin v{config.version}", cwd=config.wfl_root_folder)
-    success(f"Tag 'v{config.version}' created and pushed")
-
-
 def _markdownify_commit_msg(commit: str) -> str:
     """Turn a single commit message to markdown style."""
     try:
@@ -106,12 +91,6 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         get_git_commits_since_last_tag,
         exit_if_dry_run,
         write_changelog
-    ],
-    "tag-and-push-images": [
-        read_version,
-        exit_if_dry_run,
-        make_git_tag,
-        publish_docker_images
     ]
 }
 
