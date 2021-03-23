@@ -5,17 +5,11 @@ WFL Deployment Script
 usage: python3 cli.py -h
 """
 import argparse
-import json
 import os
 import re
-import shutil
-import subprocess
 from dataclasses import dataclass
-from pprint import PrettyPrinter
 from typing import Callable, Dict, List
 
-import yaml
-from render_ctmpl import render_ctmpl
 from util.misc import error, info, shell, success, warn
 
 
@@ -86,7 +80,7 @@ def write_changelog(config: WflInstanceConfig) -> None:
 
 
 command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
-    "release": [
+    "changelog": [
         read_version,
         get_git_commits_since_last_tag,
         exit_if_dry_run,
@@ -97,8 +91,8 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
 
 def cli() -> WflInstanceConfig:
     """Configure the arguments, help text, and parsing."""
-    parser = argparse.ArgumentParser(description="deploy or connect to WFL infrastructure",
-                                     usage="%(prog)s [-h] [-d] COMMAND [ENV INSTANCE] [...]")
+    parser = argparse.ArgumentParser(description="CLI for generating release changelog of WFL",
+                                     usage="%(prog)s [-h] [-d] COMMAND")
 
     parser.add_argument("command", choices=command_mapping.keys(), metavar="COMMAND",
                         help=f"one of [{', '.join(command_mapping.keys())}]")
