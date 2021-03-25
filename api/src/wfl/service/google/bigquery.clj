@@ -46,6 +46,13 @@
       util/response-body-json
       :tables))
 
+(defn ^:private normalize-table [{:keys [schema] :as response}]
+  (let [repeated? (mapv #(= "REPEATED" (:mode %)) (:fields schema))]
+    (letfn [(flatten-row [idx row]
+              (if (repeated? idx) (map :v (:v row)) (:v row)))
+            (transform [root] (map-indexed flatten-row (:f root)))]
+      (update response :rows #(map transform %)))))
+
 (defn query-sync
   "Given QUERY, look for rows in a BigQuery table within a
    Google Cloud PROJECT synchronously, using non-legacy query
@@ -56,15 +63,13 @@
    project  - Google Cloud Project to list the BigQuery datasets in.
    query    - BigQuery Standard SQL query string."
   [project query]
-  (letfn [(flatten-rows [rows] (mapv #(map :v (:f %)) rows))]
-    (-> (str/join "/" ["projects" project "queries"])
-        bigquery-url
-        (http/post {:headers (auth/get-auth-header)
-                    :body    (json/write-str
-                              {:query          query
-                               :use_legacy_sql false})})
-        util/response-body-json
-        (update :rows flatten-rows))))
+  (-> (str/join "/" ["projects" project "queries"])
+      bigquery-url
+      (http/post {:headers (auth/get-auth-header)
+                  :body    (json/write-str {:query          query
+                                            :use_legacy_sql false})})
+      util/response-body-json
+      normalize-table))
 
 (defn dump-table->tsv
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.

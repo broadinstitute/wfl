@@ -1,12 +1,13 @@
 (ns wfl.service.datarepo
   "Do stuff in the data repo."
-  (:require [clj-http.client   :as http]
-            [clojure.data.json :as json]
-            [clojure.string    :as str]
-            [wfl.auth          :as auth]
-            [wfl.environment   :as env]
-            [wfl.mime-type     :as mime-type]
-            [wfl.util          :as util])
+  (:require [clj-http.client             :as http]
+            [clojure.data.json           :as json]
+            [clojure.string              :as str]
+            [wfl.auth                    :as auth]
+            [wfl.environment             :as env]
+            [wfl.mime-type               :as mime-type]
+            [wfl.service.google.bigquery :as bigquery]
+            [wfl.util                    :as util])
   (:import (java.time Instant)
            (java.util.concurrent TimeUnit)))
 
@@ -120,11 +121,9 @@
       :id
       poll-job))
 
-;; Note the TDR is under active development,
-;; the endpoint spec is getting changed so the
-;; spec in this function is not consistent with
-;; the TDR Swagger page in order to make the
-;; request work.
+;; Note the TDR is under active development, the endpoint spec is getting
+;; changed so the spec in this function is not consistent with the TDR Swagger
+;; page in order to make the request work.
 ;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
 (defn create-snapshot
   "Return snapshot-id when the snapshot defined
@@ -179,27 +178,6 @@
   [snapshot-id]
   (get-repository-json "snapshots" snapshot-id))
 
-;; Note if there are no matching rows between (start, end], TDR will throw
-;; a 400 exception.
-;; Note TDR prefixes datasets in BigQuery with `datarepo_`.
-(defn make-snapshot-query
-  "Make row-id query payload from `dataset` and `table`,
-   given a date range specified by exclusive `start` and inclusive `end`.
-
-   Parameters
-   ----------
-   _dataset   - Dataset information response from TDR.
-   table      - Name of the table in the dataset schema to query from.
-   start      - The start date object in the timeframe to query exclusively.
-   end        - The end date object in the timeframe to query inclusively."
-  [{:keys [name dataProject] :as _dataset} table start end]
-  (let [dataset-name (str "datarepo_" name)
-        query (str/join \newline ["SELECT datarepo_row_id"
-                                  "FROM `%s.%s.%s`"
-                                  "WHERE datarepo_ingest_date > '%s'"
-                                  "AND datarepo_ingest_date <= '%s'"])]
-    (format query dataProject dataset-name table start end)))
-
 (defn all-columns
   "Return all of the columns of `table` in `dataset` content."
   [dataset table]
@@ -223,3 +201,48 @@
      :description description
      :name        name
      :profileId   defaultProfileId}))
+
+;; hack - TDR adds the "datarepo_" prefix to the dataset name in BigQuery
+;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
+;; in a future release.
+(defn ^:private bigquery-name
+  "Get the BigQuery name of the dataset or snapshot"
+  [{:keys [name] :as dataset-or-snapshot}]
+  (letfn [(snapshot? [x] (util/absent? x :defaultSnapshotId))]
+    (if (snapshot? dataset-or-snapshot) name (str "datarepo_" name))))
+
+(defn ^:private query-table-impl
+  ([{:keys [dataProject] :as dataset} table col-spec]
+   (let [bq-name (bigquery-name dataset)]
+     (->> (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)
+          (bigquery/query-sync dataProject)))))
+
+(defn query-table
+  "Query everything or optionally the `columns` in `table` in the Terra DataRepo
+  `dataset`, where `dataset` is a DataRepo dataset or a snapshot of a dataset."
+  ([dataset table]
+   (query-table-impl dataset table "*"))
+  ([dataset table columns]
+   (->> (util/to-comma-separated-list (map name columns))
+        (query-table-impl dataset table))))
+
+(defn ^:private query-table-between-impl
+  [{:keys [dataProject] :as dataset} table [start end] col-spec]
+  (let [bq-name (bigquery-name dataset)
+        query   "SELECT %s
+                 FROM   `%s.%s.%s`
+                 WHERE  datarepo_ingest_date > '%s'
+                 AND    datarepo_ingest_date <= '%s'"]
+    (->> (format query col-spec dataProject bq-name table start end)
+         (bigquery/query-sync dataProject))))
+
+(defn query-table-between
+  "Query everything or optionally the `columns` in `table` in the Terra DataRepo
+   `dataset` in the closed-open `interval` of `datarepo_ingest_date`, where
+   `dataset` is a DataRepo dataset or a snapshot of a dataset. If no rows match
+   the `interval`, TDR will respond with error 400."
+  ([dataset table interval]
+   (query-table-between-impl dataset table interval "*"))
+  ([dataset table interval columns]
+   (->> (util/to-comma-separated-list (map name columns))
+        (query-table-between-impl dataset table interval))))

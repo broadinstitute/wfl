@@ -336,13 +336,23 @@
       (with-open [in (io/input-stream resource)] (io/copy in file))
       file)))
 
+(defn between
+  "Place the `middle` lexeme between [`first` `second`]."
+  [[first second] middle] (str first middle second))
+
+(defn to-comma-separated-list
+  "Return the sequence `xs` composed into a comma-separated list string.
+  Example:
+    (to-comma-separated-list '['x 'y 'z]) => \"(x,y,z)\""
+  [xs]
+  (between "()" (str/join "," xs)))
+
 (defn to-quoted-comma-separated-list
   "Return the sequence `xs` composed into a comma-separated list string.
   Example:
     (to-quoted-comma-separated-list '[x y z]) => \"('x','y','z')\""
   [xs]
-  (letfn [(between [[first second] x] (str first x second))]
-    (between "()" (str/join "," (map (partial between "''") xs)))))
+  (between "()" (str/join "," (map (partial between "''") xs))))
 
 (defn slashify
   "Ensure URL ends in a slash /."

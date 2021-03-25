@@ -35,16 +35,10 @@
    Note the dataset row query time range is set to (yesterday, today]
    for testing purposes for now."
   [tdr-profile dataset table]
-  (let [{:keys [dataProject]} dataset
-        table                table
-        today                (util/today)
+  (let [today                (util/today)
         yesterday            (util/days-from-today -1)
-        row-ids (->> (datarepo/make-snapshot-query dataset table yesterday today)
-                     (bigquery/query-sync dataProject)
-                     flatten)
         unique-request-batch (partial unique-snapshot-request tdr-profile dataset table)]
-    (->> (datarepo/make-snapshot-query dataset table yesterday today)
-         (bigquery/query-sync dataProject)
+    (->> (datarepo/query-table-between dataset table [yesterday today] [:datarepo_row_id])
          flatten
          (partition-all 500)
          (map unique-request-batch)

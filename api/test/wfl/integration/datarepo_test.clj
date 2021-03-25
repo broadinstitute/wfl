@@ -82,15 +82,26 @@
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
-        table     "flowcell"
-        start-datetime "2021-03-17"
-        end-datetime   "2021-03-19"
-        row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
-                     (bigquery/query-sync dataProject)
-                     :rows flatten)]
+        dataset     (datarepo/dataset testing-dataset)
+        table       "flowcell"
+        from        "2021-03-17"
+        until       "2021-03-19"
+        row-ids     (-> (datarepo/query-table-between
+                         dataset
+                         table
+                         [from until]
+                         [:datarepo_row_id])
+                        :rows
+                        flatten)]
     (testing "creating snapshot"
       (fixtures/with-temporary-snapshot
         (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
         #(let [snapshot (datarepo/snapshot %)]
            (is (= % (:id snapshot))))))))
+
+(deftest test-flattened-query-result
+  (let [samplesheets (-> (datarepo/dataset testing-dataset)
+                         (datarepo/query-table "flowcell" [:samplesheets])
+                         :rows
+                         (->> (mapcat first)))]
+    (is (every? string? samplesheets) "Nested arrays were not normalized.")))
