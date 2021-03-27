@@ -112,7 +112,7 @@
   (fn [x] (partial f x)))
 
 (defn >>>
-  "Right-to-left function composition, ie `(= (>>> f g) (comp g f))`."
+  "Left-to-right function composition, ie `(= (>>> f g) (comp g f))`."
   [f & fs]
   (reduce #(comp %2 %1) f fs))
 
