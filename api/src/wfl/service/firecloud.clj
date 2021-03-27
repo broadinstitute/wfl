@@ -12,7 +12,7 @@
     (str/join "/" (conj parts url))))
 
 (def ^:private workspace-api-url
-  (partial firecloud-url "api" "workspaces"))
+  (partial firecloud-url "api/workspaces"))
 
 (defn ^:private get-workspace-json [& parts]
   (-> (apply workspace-api-url parts)
