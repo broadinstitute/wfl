@@ -105,3 +105,56 @@
                          :rows
                          (->> (mapcat first)))]
     (is (every? string? samplesheets) "Nested arrays were not normalized.")))
+
+(defn curry
+  "Curry the binary function `f`, ie `(= (curry f) (fn [x] (fn [y] (f x y)))`."
+  [f]
+  (fn [x] (partial f x)))
+
+(defn >>>
+  "Right-to-left function composition, ie `(= (>>> f g) (comp g f))`."
+  [f & fs]
+  (reduce #(comp %2 %1) f fs))
+
+(defn table->map-view
+  "Create a hash-map 'view' of the BigQuery `table`. A 'view' is one"
+  [{:keys [schema rows] :as _table}]
+  (let [make-entry (fn [idx field] [(-> field :name keyword) idx])
+        key->index (into {} (map-indexed make-entry (:fields schema)))]
+    (map (curry #(when-let [idx (key->index %2)] (%1 idx))) rows)))
+
+(defn maps->table
+  "Transform a list of maps into a table with columns given by `attributes`."
+  [maps attributes]
+  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) attributes)}}
+        f     #(reduce (fn [row attr] (conj row (% attr))) [] attributes)]
+    (assoc table :rows (map f maps))))
+
+;; wip
+(deftest test-import-snapshot
+  (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
+        dataset     (datarepo/dataset testing-dataset)
+        table       "flowcell"
+        from        "2021-03-17"
+        until       "2021-03-19"
+        row-ids     (-> (datarepo/query-table-between
+                         dataset
+                         table
+                         [from until]
+                         [:datarepo_row_id])
+                        :rows
+                        flatten)
+        from-dataset (resources/read-resource "entity-from-dataset.edn")
+        workspace   "wfl-dev/SARSCoV2-Illumina-Full"
+        entity      (util/randomize table)]
+    (testing "creating snapshot"
+      (fixtures/with-temporary-snapshot
+        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+        (>>> datarepo/snapshot
+             #(datarepo/query-table % table)
+             table->map-view
+             (partial map #(datasets/rename-gather % from-dataset))
+             (let [columns (vec (keys from-dataset))] #(maps->table % columns))
+             (fn [data]
+               (let [data' (bigquery/dump-table->tsv data entity)]
+                 (is data'))))))))

@@ -1,0 +1,8 @@
+{:flowcell_id       "datarepo_row_id"
+ :authors_sbt       "authors_sbt"
+ :biosample_map     "biosample_map"
+ :flowcell_tgz      "flowcell_tgz"
+ :instrument_model  "instrument_model"
+ :sample_rename_map "sample_rename_map"
+ :samplesheets      "samplesheets"
+ :title             "title"}

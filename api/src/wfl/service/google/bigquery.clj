@@ -48,10 +48,10 @@
 
 (defn ^:private normalize-table [{:keys [schema] :as response}]
   (let [repeated? (mapv #(= "REPEATED" (:mode %)) (:fields schema))]
-    (letfn [(flatten-row [idx row]
-              (if (repeated? idx) (map :v (:v row)) (:v row)))
-            (transform [root] (map-indexed flatten-row (:f root)))]
-      (update response :rows #(map transform %)))))
+    (letfn [(flatten-column [idx column]
+              (if (repeated? idx) (mapv :v (:v column)) (:v column)))
+            (flatten-row [row] (vec (map-indexed flatten-column (:f row))))]
+      (update response :rows #(map flatten-row %)))))
 
 (defn query-sync
   "Given QUERY, look for rows in a BigQuery table within a
@@ -93,15 +93,10 @@
   ([table terra-data-table file]
    (letfn [(format-header-for-terra [header]
              (cons (format "entity:%s_id" terra-data-table) (rest header)))]
-     (let [headers (map :name (get-in table [:schema :fields]))
-           rows (get-in table [:rows])
-           contents (-> []
-                        (into [(format-header-for-terra headers)])
-                        (into rows))]
+     (let [headers  (map :name (get-in table [:schema :fields]))
+           contents (conj (:rows table) (format-header-for-terra headers))]
        (with-open [writer (io/writer file)]
-         (csv/write-csv writer
-                        contents
-                        :separator \tab)
+         (csv/write-csv writer contents :separator \tab)
          file))))
   ([table terra-data-table]
    (str (dump-table->tsv table terra-data-table (StringWriter.)))))

@@ -398,3 +398,8 @@
    backward or forward depends on the sign of n."
   [^Integer n]
   (.plus (today) n ChronoUnit/DAYS))
+
+(defn randomize
+  "Append a random suffix to `string`."
+  [string]
+  (-> string (str (UUID/randomUUID)) (str/replace "-" "")))
