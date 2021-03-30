@@ -17,6 +17,10 @@
             "array_of": true
           },
           {
+            "name": "flowcell_id",
+            "datatype": "string"
+          },
+          {
             "name": "flowcell_tgz",
             "datatype": "fileref"
           },
@@ -38,16 +42,22 @@
             "datatype": "string"
           },
           {
+            "name": "updated",
+            "datatype": "datetime"
+          },
+          {
             "name": "extra",
             "datatype": "string"
           }
         ],
         "primaryKey": [
           "authors_sbt",
+          "flowcell_id",
           "flowcell_tgz",
           "instrument_model",
           "sample_rename_map",
-          "title"
+          "title",
+          "updated"
         ],
         "partitionMode": "date",
         "datePartitionOptions": {

@@ -44,11 +44,6 @@
         util/response-body-json
         :submissionId)))
 
-(defn list-entities
-  "List the entity types along with their attributes in `workspace`."
-  [workspace]
-  (get-workspace-json workspace "entities"))
-
 (defn get-workspace
   "Get a single `workspace`'s details"
   [workspace]
@@ -81,6 +76,20 @@
          first
          :status)))
 
+(defn delete-entities
+  "Delete the `entities` from the Terra `workspace`.
+   Parameters
+   ----------
+     workspace - Terra Workspace to delete entities from
+     entities  - list of entity `[type name]` pairs"
+  [workspace entities]
+  (letfn [(make-entity [[type name]] {:entityType type :entityName name})]
+    (-> (workspace-api-url workspace "entities" "delete")
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         (json/write-str (map make-entity entities))})
+        util/response-body-json)))
+
 (defn import-entities
   "Import sample entities into a Terra WORKSPACE from a tsv FILE.
    The upload requires owner permission on the workspace.
@@ -94,11 +103,21 @@
    -------
      (import-entities \"workspace-namespace/workspace-name\" \"./samples.tsv\")"
   [workspace file]
-  (-> (workspace-api-url workspace "/flexibleImportEntities")
+  (-> (workspace-api-url workspace "flexibleImportEntities")
       (http/post {:headers   (auth/get-auth-header)
                   :multipart (util/multipart-body
                               {:Content/type "text/tab-separated-values"
                                :entities     (slurp file)})})))
+
+(defn list-entities
+  "List all entities with `entity-type` in `workspace`."
+  [workspace entity-type]
+  (get-workspace-json workspace "entities" entity-type))
+
+(defn list-entity-types
+  "List the entity types along with their attributes in `workspace`."
+  [workspace]
+  (get-workspace-json workspace "entities"))
 
 (defn describe-workflow
   "Get a machine-readable description of the `workflow`, including its inputs

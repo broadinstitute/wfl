@@ -1,11 +1,11 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.json :as json]
-            [clojure.java.io :as io]
-            [clojure.java.shell :as shell]
-            [clojure.string :as str]
+  (:require [clojure.data.json     :as json]
+            [clojure.java.io       :as io]
+            [clojure.java.shell    :as shell]
+            [clojure.string        :as str]
             [clojure.tools.logging :as log]
-            [wfl.wfl :as wfl])
+            [wfl.wfl               :as wfl])
   (:import [java.io File Writer IOException]
            [java.time OffsetDateTime Clock LocalDate]
            [java.time.temporal ChronoUnit]
@@ -13,7 +13,8 @@
            [java.nio.file.attribute FileAttribute]
            [java.util ArrayList Collections Random UUID]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [org.apache.commons.io FilenameUtils]
+           (java.util.concurrent TimeUnit TimeoutException)))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -403,3 +404,25 @@
   "Append a random suffix to `string`."
   [string]
   (-> string (str (UUID/randomUUID)) (str/replace "-" "")))
+
+(defn curry
+  "Curry the function `f` such that its arguments may be supplied across two
+   applications."
+  [f]
+  (fn [x & xs] (apply partial f x xs)))
+
+(defn >>>
+  "Left-to-right function composition, ie `(= (>>> f g) (comp g f))`."
+  [f & fs]
+  (reduce #(comp %2 %1) f fs))
+
+(defn poll-while [predicate thunk]
+  (loop [attempt 1]
+    (let [x (thunk)]
+      (if (predicate x)
+        x
+        (do (when (< 3 attempt)
+              (throw (TimeoutException. "Max number of attempts exceeded")))
+            (log/debugf "Sleeping - attempt #%s" attempt)
+            (.sleep TimeUnit/MILLISECONDS 100)
+            (recur (inc attempt)))))))
