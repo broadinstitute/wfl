@@ -379,7 +379,6 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
-
 (defn today
   "Return a ^LocalDate of today's date in UTC."
   []
