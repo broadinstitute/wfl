@@ -20,11 +20,9 @@
 
 (deftest test-dump-table->tsv
   (let [terra-table-name "test-name"
-        contents (-> (bigquery/dump-table->tsv dr-view-content "test-name")
-                     (csv/read-csv :separator \tab)
-                     doall)]
+        contents (-> (bigquery/dump-table->tsv dr-view-content terra-table-name)
+                     (csv/read-csv :separator \tab))]
     (is (= 3 (count contents)) "expect 3 rows (headers + 2 of data)")
     (is (= 5 (count (first contents))) "first row has additional column for the entity")
     (is (every? #(= 4 %) (map count (rest contents))) "data rows have same number of columns as fields")
-    (is (= (format "entity:%s_id" terra-table-name)
-           (ffirst contents) "The result TSV header is not properly formatted!"))))
+    (is (= (format "entity:%s_id" terra-table-name) (ffirst contents)) "The result TSV header is not properly formatted!")))
