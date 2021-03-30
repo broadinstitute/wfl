@@ -22,8 +22,7 @@
 (deftest test-automate-sarscov2-illumina-full
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder
-         "broad-gotc-dev-wfl-ptc-test-inputs")
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request
           tdr-profile

@@ -91,12 +91,12 @@
      (dump-table->tsv table \"datarepo_row\" \"dumped.tsv\")
      (dump-table->tsv table \"datarepo_row\")"
   ([table terra-data-table file]
-   (letfn [(format-header-for-terra [header]
-             (cons (format "entity:%s_id" terra-data-table) (rest header)))]
-     (let [headers  (map :name (get-in table [:schema :fields]))
-           contents (conj (:rows table) (format-header-for-terra headers))]
+   (letfn [(append-entity-type [header]
+             (cons (format "entity:%s_id" terra-data-table) header))]
+     (let [columns (map :name (get-in table [:schema :fields]))]
        (with-open [writer (io/writer file)]
-         (csv/write-csv writer contents :separator \tab)
+         (csv/write-csv writer [(append-entity-type columns)] :separator \tab)
+         (csv/write-csv writer (:rows table) :separator \tab)
          file))))
   ([table terra-data-table]
    (str (dump-table->tsv table terra-data-table (StringWriter.)))))

@@ -1,10 +1,10 @@
-{:authors_sbt       "06f18b9b-a1c6-46ee-953c-7b58b2f8b8dd"
- :biosample_map     ["024efc25-f858-4276-bdbb-3b2f77cc18e0"]
- :flowcell_id       "Test Flowcell"
- :flowcell_tgz      "86c1691f-a579-4911-bc90-4c5cc7410337"
- :instrument_model  "Illumina NovaSeq 6000"
- :sample_rename_map "104f5172-eb8c-46f7-a07b-54de1b015e9a"
- :samplesheets      ["2eb0f6aa-20d7-42e9-89a3-c6603ab3705d"
-                     "2eb0f6aa-20d7-42e9-89a3-c6603ab3705d"]
- :title             "Metagenomic RNA-Seq of SARS-CoV-2 from patients"
- :updated           "2021-03-30 20:46:39.74759589"}
+{:authors_sbt "bf6f5630-c967-4fb1-9e4a-bece8da4ca55"
+ :biosample_map ["41f632af-b6b2-44a9-a874-c406a2e6ac86"]
+ :instrument_model "Illumina NovaSeq 6000"
+ :flowcell_id "Test Flowcell"
+ :flowcell_tgz "fd60edc6-e08b-4032-8b62-1e9a34bdd1b3"
+ :samplesheets ["d3cc9164-3cd0-43b3-84ac-f5daa4aba9ee"
+                "d3cc9164-3cd0-43b3-84ac-f5daa4aba9ee"]
+ :sample_rename_map "401b81ca-da3f-4f91-8cef-39297062c891"
+ :title "Metagenomic RNA-Seq of SARS-CoV-2 from patients"
+ :updated "2021-03-30 20:46:39+00"}
