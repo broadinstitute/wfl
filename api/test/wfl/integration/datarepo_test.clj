@@ -125,8 +125,8 @@
   [from-dataset entity-type maps]
   (let [columns (vec (keys from-dataset))]
     (-> (map #(datasets/rename-gather % from-dataset) maps)
-      (maps->table columns)
-      (bigquery/dump-table->tsv entity-type))))
+        (maps->table columns)
+        (bigquery/dump-table->tsv entity-type))))
 
 (defn import-snapshot
   "Import the BigQuery table `snapshot` into the `table` in the Terra
@@ -136,8 +136,8 @@
   [workspace table primary-key snapshot from-snapshot]
   (let [maps (table->map-view snapshot)]
     (->> (make-entity-import-request-tsv from-snapshot table maps)
-      .getBytes
-      (firecloud/import-entities workspace))
+         .getBytes
+         (firecloud/import-entities workspace))
     (map (comp #(-> [table %]) #(% primary-key)) maps)))
 
 ;; not sure where this should live!
