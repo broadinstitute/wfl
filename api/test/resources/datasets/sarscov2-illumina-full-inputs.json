@@ -43,7 +43,7 @@
           },
           {
             "name": "updated",
-            "datatype": "datetime"
+            "datatype": "timestamp"
           },
           {
             "name": "extra",
