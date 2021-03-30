@@ -20,7 +20,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f"
+  {:release "bbe4f54f7f8527fba4a330a750db8d4ac8d68c17"
    :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
                  "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
 
