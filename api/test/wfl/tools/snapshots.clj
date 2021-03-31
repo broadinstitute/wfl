@@ -10,7 +10,7 @@
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))]
     (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-        #_(update :name util/randomize)
+        (update :name util/randomize)
         (update :profileId (constantly tdr-profile)))))
 
 ;; Partition row IDs into batches of 500 to keep TDR happy.

@@ -94,11 +94,10 @@
                          [:datarepo_row_id])
                         :rows
                         flatten)]
-    (testing "creating snapshot"
-      (fixtures/with-temporary-snapshot
-        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
-        #(let [snapshot (datarepo/snapshot %)]
-           (is (= % (:id snapshot))))))))
+    (fixtures/with-temporary-snapshot
+      (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+      #(let [snapshot (datarepo/snapshot %)]
+         (is (= % (:id snapshot)))))))
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/dataset testing-dataset)
@@ -134,9 +133,8 @@
    `workspace`, using `from-snapshot` to map column names in `snapshot` to the
    names in the workspace `table`.
    Return `[entity name]` pairs of the entities imported into the workspace."
-  [workspace entity snapshot from-snapshot]
-  (let [primary-key (-> entity name (str "_id") keyword)
-        maps        (table->map-view snapshot)]
+  [workspace entity primary-key snapshot from-snapshot]
+  (let [maps (table->map-view snapshot)]
     (->> (make-entity-import-request-tsv from-snapshot primary-key maps)
          .getBytes
          (firecloud/import-entities workspace))
@@ -147,12 +145,13 @@
 (deftest test-import-snapshot
   (let [dataset-table "flowcell"
         entity        "flowcell"
+        entity-key    :flowcell_id
         from-dataset  (resources/read-resource "entity-from-dataset.edn")]
     (fixtures/with-temporary-workspace
       (fn [workspace]
         ((>>> datarepo/snapshot
               #(datarepo/query-table % dataset-table)
-              #(import-snapshot workspace entity % from-dataset)
+              #(import-snapshot workspace entity entity-key % from-dataset)
               (fn [entities]
                 (try
                   (let [names (->> #(firecloud/list-entities workspace entity)
