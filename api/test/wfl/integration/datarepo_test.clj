@@ -128,13 +128,13 @@
         (maps->table (columns from-dataset))
         bigquery/dump-table->tsv)))
 
-(defn import-snapshot
-  "Import the BigQuery table `snapshot` into the `entity` in the Terra
-   `workspace`, using `from-snapshot` to map column names in `snapshot` to the
-   names in the workspace `table`.
-   Return `[entity name]` pairs of the entities imported into the workspace."
-  [workspace entity primary-key snapshot from-snapshot]
-  (let [maps (table->map-view snapshot)]
+(defn import-table
+  "Import the BigQuery `table` into the `entity` in the Terra `workspace`,
+   using `from-snapshot` to map column names in `snapshot` to the names in the
+   workspace `table`. Return `[entity name]` pairs of the entities imported
+   into the workspace."
+  [table workspace entity primary-key from-snapshot]
+  (let [maps (table->map-view table)]
     (->> (make-entity-import-request-tsv from-snapshot primary-key maps)
          .getBytes
          (firecloud/import-entities workspace))
@@ -149,16 +149,15 @@
         from-dataset  (resources/read-resource "entity-from-dataset.edn")]
     (fixtures/with-temporary-workspace
       (fn [workspace]
-        ((>>> datarepo/snapshot
-              #(datarepo/query-table % dataset-table)
-              #(import-snapshot workspace entity entity-key % from-dataset)
-              (fn [entities]
-                (try
-                  (let [names (->> #(firecloud/list-entities workspace entity)
-                                   (util/poll-while empty?)
-                                   (map :name)
-                                   set)]
-                    (doseq [[_ name] entities] (is (contains? names name))))
-                  (finally (firecloud/delete-entities workspace entities)))))
-         snapshot-id)))))
+        (let [entities
+              (-> (datarepo/snapshot snapshot-id)
+                  (datarepo/query-table dataset-table)
+                  (import-table workspace entity entity-key from-dataset))]
+          (try
+            (let [names (->> #(firecloud/list-entities workspace entity)
+                             (util/poll-while empty?)
+                             (map :name)
+                             set)]
+              (doseq [[_ name] entities] (is (contains? names name))))
+            (finally (firecloud/delete-entities workspace entities))))))))
 
