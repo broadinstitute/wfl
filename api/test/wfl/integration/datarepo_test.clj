@@ -78,15 +78,15 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "3b41c460-d994-47a4-9bf7-c59861e858a6")
+(def ^:private testing-dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
 
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset     (datarepo/dataset testing-dataset)
         table       "flowcell"
-        from        "2021-03-17"
-        until       "2021-03-19"
+        from        "2021-03-30"
+        until       "2021-03-31"
         row-ids     (-> (datarepo/query-table-between
                          dataset
                          table
@@ -122,54 +122,44 @@
     (assoc table :rows (map f maps))))
 
 (defn ^:private make-entity-import-request-tsv
-  [from-dataset entity-type maps]
-  (let [columns (vec (keys from-dataset))]
+  [from-dataset primary-key maps]
+  ;; the columns need to be ordered such that that primary key comes first
+  (let [columns (>>> #(dissoc % primary-key) keys sort #(cons primary-key %))]
     (-> (map #(datasets/rename-gather % from-dataset) maps)
-        (maps->table columns)
-        (bigquery/dump-table->tsv entity-type))))
+        (maps->table (columns from-dataset))
+        bigquery/dump-table->tsv)))
 
 (defn import-snapshot
-  "Import the BigQuery table `snapshot` into the `table` in the Terra
+  "Import the BigQuery table `snapshot` into the `entity` in the Terra
    `workspace`, using `from-snapshot` to map column names in `snapshot` to the
    names in the workspace `table`.
-   Return `[table name]` pairs of the entities imported into the workspace."
-  [workspace table primary-key snapshot from-snapshot]
-  (let [maps (table->map-view snapshot)]
-    (->> (make-entity-import-request-tsv from-snapshot table maps)
+   Return `[entity name]` pairs of the entities imported into the workspace."
+  [workspace entity snapshot from-snapshot]
+  (let [primary-key (-> entity name (str "_id") keyword)
+        maps        (table->map-view snapshot)]
+    (->> (make-entity-import-request-tsv from-snapshot primary-key maps)
          .getBytes
          (firecloud/import-entities workspace))
-    (map (comp #(-> [table %]) #(% primary-key)) maps)))
+    (map (comp #(-> [entity %]) #(% primary-key)) maps)))
 
 ;; not sure where this should live!
+(def ^:private snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
 (deftest test-import-snapshot
-  (let [tdr-profile   (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        dataset       (datarepo/dataset testing-dataset)
-        table         "flowcell"
-        from          "2021-03-17"
-        until         "2021-03-19"
-        row-ids       (-> (datarepo/query-table-between
-                           dataset
-                           table
-                           [from until]
-                           [:datarepo_row_id])
-                          :rows
-                          flatten)
-        from-dataset  (resources/read-resource "entity-from-dataset.edn")
-        workspace     "wfl-dev/SARSCoV2-Illumina-Full"
-        entity-type   (util/randomize table)
-        entity-id-key :flowcell_id]
-    (testing "creating snapshot"
-      (fixtures/with-temporary-snapshot
-        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
-        (>>> datarepo/snapshot
-             #(datarepo/query-table % table)
-             #(import-snapshot workspace entity-type entity-id-key % from-dataset)
-             (fn [entities]
-               (try
-                 (let [names (->> #(firecloud/list-entities workspace entity-type)
-                                  (util/poll-while empty?)
-                                  (map :name)
-                                  set)]
-                   (doseq [[_ name] entities] (is (contains? names name))))
-                 (finally (firecloud/delete-entities workspace entities)))))))))
+  (let [dataset-table "flowcell"
+        entity        "flowcell"
+        from-dataset  (resources/read-resource "entity-from-dataset.edn")]
+    (fixtures/with-temporary-workspace
+      (fn [workspace]
+        ((>>> datarepo/snapshot
+              #(datarepo/query-table % dataset-table)
+              #(import-snapshot workspace entity % from-dataset)
+              (fn [entities]
+                (try
+                  (let [names (->> #(firecloud/list-entities workspace entity)
+                                   (util/poll-while empty?)
+                                   (map :name)
+                                   set)]
+                    (doseq [[_ name] entities] (is (contains? names name))))
+                  (finally (firecloud/delete-entities workspace entities)))))
+         snapshot-id)))))
 

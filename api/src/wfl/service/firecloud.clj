@@ -44,6 +44,28 @@
         util/response-body-json
         :submissionId)))
 
+(defn create-workspace
+  "Create an empty Terra workspace with the fully-qualified `workspace` name,
+   granting access to the `firecloud-group`."
+  [workspace firecloud-group]
+  (let [[namespace name] (str/split workspace #"/")
+        payload {:namespace           namespace
+                 :name                name
+                 :attributes          {:description ""}
+                 :authorizationDomain [{:membersGroupName firecloud-group}]}]
+    (-> (workspace-api-url)
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         (json/write-str payload)})
+        util/response-body-json)))
+
+(defn delete-workspace
+  "Delete the terra `workspace` and all data within."
+  [workspace]
+  (-> (workspace-api-url workspace)
+      (http/delete {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
 (defn get-workspace
   "Get a single `workspace`'s details"
   [workspace]

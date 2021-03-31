@@ -5,7 +5,7 @@
 
 ;; mock output from bigquery/query-sync
 (def ^:private dr-view-content
-  {:schema {:fields [{:mode "NULLABLE" :name "datarepo_row_id" :type "STRING"}
+  {:schema {:fields [{:mode "NULLABLE" :name "test-name_id" :type "STRING"}
                      {:mode "NULLABLE" :name "vcf" :type "STRING"}
                      {:mode "NULLABLE" :name "id" :type "STRING"}
                      {:mode "NULLABLE" :name "vcf_index" :type "STRING"}]}
@@ -19,10 +19,8 @@
            "drs://jade.datarepo-dev.broadinstitute.org/v1_f1c765c6-5446-4aef-bdbe-c741ff09c27c_2b67ed53-ccac-49c6-8ad6-8952a1dfaf98"]]})
 
 (deftest test-dump-table->tsv
-  (let [terra-table-name "test-name"
-        contents (-> (bigquery/dump-table->tsv dr-view-content terra-table-name)
+  (let [contents (-> (bigquery/dump-table->tsv dr-view-content)
                      (csv/read-csv :separator \tab))]
     (is (= 3 (count contents)) "expect 3 rows (headers + 2 of data)")
-    (is (= 5 (count (first contents))) "first row has additional column for the entity")
-    (is (every? #(= 4 %) (map count (rest contents))) "data rows have same number of columns as fields")
-    (is (= (format "entity:%s_id" terra-table-name) (ffirst contents)) "The result TSV header is not properly formatted!")))
+    (is (every? #(= 4 %) (map count contents)) "rows have same number of columns as fields")
+    (is (= "entity:test-name_id" (ffirst contents)) "The result TSV header is not properly formatted!")))

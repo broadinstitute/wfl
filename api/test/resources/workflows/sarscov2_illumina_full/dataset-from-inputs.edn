@@ -1,6 +1,6 @@
 {:authors_sbt       "package_genbank_ftp_submission.author_template_sbt"
  :biosample_map     "biosample_attributes"
- :flowcell_id       "$Test Flowcell"
+ :flowcell_id       "$Test_Flowcell"
  :flowcell_tgz      "flowcell_tgz"
  :instrument_model  "instrument_model"
  :sample_rename_map "demux_deplete.sample_rename_map"

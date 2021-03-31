@@ -75,28 +75,28 @@
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
    Will dump the tsv contents to bytes if no FILE is provided.
 
-   The first row header must follow the format 'entity:{data_table}_id'.
-   For example, 'entity:sample_id' will upload the tsv data into a `sample`
-   table in the workspace (or create one if it does not exist). If the
-   table already contains a sample with that id, it will get overwritten.
+   The first column of the table must be the table primary key,
+   i.e. [entity-type]_id. For example, 'entity:sample_id' will upload the tsv
+   data into a `sample` table in the workspace (or create one if it does not
+   exist). If the table already contains a sample with that id, it will get
+   overwritten.
 
    Parameters
    ----------
    table            - BigQuery table/view body with the rows field flatten.
-   terra-data-table - The `table` name in the Terra workspace to import the TSV.
    file             - [optional] TSV file name to dump.
 
    Example
    -------
-     (dump-table->tsv table \"datarepo_row\" \"dumped.tsv\")
-     (dump-table->tsv table \"datarepo_row\")"
-  ([table terra-data-table file]
-   (letfn [(append-entity-type [header]
-             (cons (format "entity:%s_id" terra-data-table) header))]
+     (dump-table->tsv table \"dumped.tsv\")
+     (dump-table->tsv table)"
+  ([table file]
+   (letfn [(format-entity-type [[head & rest]]
+             (cons (format "entity:%s" head) rest))]
      (let [columns (map :name (get-in table [:schema :fields]))]
        (with-open [writer (io/writer file)]
-         (csv/write-csv writer [(append-entity-type columns)] :separator \tab)
+         (csv/write-csv writer [(format-entity-type columns)] :separator \tab)
          (csv/write-csv writer (:rows table) :separator \tab)
          file))))
-  ([table terra-data-table]
-   (str (dump-table->tsv table terra-data-table (StringWriter.)))))
+  ([table]
+   (str (dump-table->tsv table (StringWriter.)))))
