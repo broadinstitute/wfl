@@ -85,12 +85,10 @@
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset     (datarepo/dataset testing-dataset)
         table       "flowcell"
-        from        "2021-03-30"
-        until       "2021-03-31"
         row-ids     (-> (datarepo/query-table-between
                          dataset
                          table
-                         [from until]
+                         ["2021-03-30" "2021-03-31"]
                          [:datarepo_row_id])
                         :rows
                         flatten)]
@@ -158,6 +156,6 @@
                              (util/poll-while empty?)
                              (map :name)
                              set)]
-              (doseq [[_ name] entities] (is (contains? names name))))
+              (doseq [[_ name] entities] (is (names name))))
             (finally (firecloud/delete-entities workspace entities))))))))
 

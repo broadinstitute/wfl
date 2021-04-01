@@ -5,10 +5,10 @@
 
 ;; mock output from bigquery/query-sync
 (def ^:private dr-view-content
-  {:schema {:fields [{:mode "NULLABLE" :name "test-name_id" :type "STRING"}
-                     {:mode "NULLABLE" :name "vcf" :type "STRING"}
-                     {:mode "NULLABLE" :name "id" :type "STRING"}
-                     {:mode "NULLABLE" :name "vcf_index" :type "STRING"}]}
+  {:schema {:fields [{:name "test-name_id" :type "STRING" :mode "NULLABLE"}
+                     {:name "vcf"          :type "STRING" :mode "NULLABLE"}
+                     {:name "id"           :type "STRING" :mode "NULLABLE"}
+                     {:name "vcf_index"    :type "STRING" :mode "NULLABLE"}]}
    :rows [["8d529c08-bc21-4ea0-9254-d99b9c12dfd2"
            "drs://jade.datarepo-dev.broadinstitute.org/v1_f1c765c6-5446-4aef-bdbe-c741ff09c27c_f2a7d885-4fd3-4faf-bd16-06219a8eef99"
            "wfl-test-a830fe00-7ef2-430a-9d5e-fa0c18dc99e1/"

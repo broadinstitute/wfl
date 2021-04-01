@@ -9,7 +9,7 @@
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
-    (str/join "/" (conj parts url))))
+    (str/join "/" (cons url parts))))
 
 (def ^:private workspace-api-url
   (partial firecloud-url "api/workspaces"))
@@ -30,7 +30,7 @@
   [workspace methodconfig [entity-type entity-name :as _entity]]
   (let [[mcns mcn] (str/split methodconfig #"/")]
     (-> {:method       :post
-         :url          (workspace-api-url workspace "/submissions")
+         :url          (workspace-api-url workspace "submissions")
          :headers      (auth/get-auth-header)
          :content-type :application/json
          :body         (json/write-str

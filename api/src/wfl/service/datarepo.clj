@@ -13,7 +13,7 @@
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_TDR_URL"))]
-    (str/join "/" (conj parts url))))
+    (str/join "/" (cons url parts))))
 
 (def ^:private repository
   "API URL for Data Repo API."
@@ -42,7 +42,8 @@
 ;; While TDR does assign `loadTag`s, they're not always unique - submitting
 ;; requests in parallel can cause bad things to happen. Use this to create a
 ;; unique `loadTag` instead.
-(defn ^:private new-load-tag [] (str "workflow-launcher:" (Instant/now)))
+(defn ^:private new-load-tag []
+  (str "workflow-launcher:" (Instant/now)))
 
 (defn ingest-file
   "Ingest `source` file as `target` using `dataset-id` and `profile-id`."
@@ -76,21 +77,21 @@
   (ingest
    "ingest"
    dataset-id
-   {:format                "json"
-    :load_tag              (new-load-tag)
-    :max_bad_records       0
-    :path                  path
-    :table                 table}))
+    {:format          "json"
+     :load_tag        (new-load-tag)
+     :max_bad_records 0
+     :path            path
+     :table           table}))
 
 (defn poll-job
-  "Return result for JOB-ID in ENVIRONMENT when it stops running."
+  "Poll the job with `job-id` every `seconds` [default: 5] and return its
+   result."
   ([job-id seconds]
    (let [result   #(get-repository-json "jobs" job-id "result")
          running? #(-> (get-repository-json "jobs" job-id)
                        :job_status
                        #{"running"})]
-     (while (running?)
-       (.sleep TimeUnit/SECONDS seconds))
+     (while (running?) (.sleep TimeUnit/SECONDS seconds))
      (result)))
   ([job-id]
    (poll-job job-id 5)))
@@ -113,7 +114,7 @@
       :id))
 
 (defn delete-dataset
-  "Delete the Dataset with `dataset-id`."
+  "Delete the dataset with `dataset-id`."
   [dataset-id]
   (-> (repository "datasets" dataset-id)
       (http/delete {:headers (auth/get-service-account-header)})
@@ -126,11 +127,8 @@
 ;; page in order to make the request work.
 ;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
 (defn create-snapshot
-  "Return snapshot-id when the snapshot defined
-   by `snapshot-request` is ready.
-
-   See `SnapshotRequestModel` in the
-   DataRepo swagger page for more information.
+  "Return snapshot-id when the snapshot defined by `snapshot-request` is ready.
+   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
   (-> (repository "snapshots")
@@ -143,9 +141,8 @@
       :id))
 
 (defn list-snapshots
-  "Return snapshots optionally filtered by source dataset,
-   where dataset-ids identify the source datasets.
-   Hard-coded to return 999 pages for now.
+  "Return snapshots optionally filtered by source dataset, where dataset-ids
+   identify the source datasets. Hard-coded to return 999 pages for now.
 
    Parameters
    ----------
@@ -155,7 +152,7 @@
    Example
    -------
      (list-snapshots)
-     (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\" \"85efdfea-52fb-4698-bee6-eef76104a7f4\")"
+     (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\")"
   [& dataset-ids]
   (letfn [(maybe-merge [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
     (-> (http/get (repository "snapshots")
@@ -189,8 +186,8 @@
 ;; Note TDR uses snapshot names as unique identifier so the
 ;; name must be unique among snapshots.
 (defn make-snapshot-request
-  "Return a snapshot request for `row-ids`and `columns`
-   from `table` name in `_dataset`."
+  "Return a snapshot request for `row-ids`and `columns` from `table` name
+   in `_dataset`."
   [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
   (let [row-ids (vec row-ids)]
     {:contents    [{:datasetName name
