@@ -119,43 +119,46 @@
     (assoc table :rows (map f maps))))
 
 (defn ^:private make-entity-import-request-tsv
-  [from-dataset primary-key maps]
-  ;; the columns need to be ordered such that that primary key comes first
-  (let [columns (>>> #(dissoc % primary-key) keys sort #(cons primary-key %))]
-    (-> (map #(datasets/rename-gather % from-dataset) maps)
-        (maps->table (columns from-dataset))
-        bigquery/dump-table->tsv)))
+  [from-dataset columns maps]
+  (-> (map #(datasets/rename-gather % from-dataset) maps)
+      (maps->table columns)
+      bigquery/dump-table->tsv))
 
 (defn import-table
   "Import the BigQuery `table` into the `entity` in the Terra `workspace`,
    using `from-snapshot` to map column names in `snapshot` to the names in the
    workspace `table`. Return `[entity name]` pairs of the entities imported
    into the workspace."
-  [table workspace entity primary-key from-snapshot]
+  [table workspace [primary-key & _ :as columns] from-snapshot]
   (let [maps (table->map-view table)]
-    (->> (make-entity-import-request-tsv from-snapshot primary-key maps)
+    (->> (make-entity-import-request-tsv from-snapshot columns maps)
          .getBytes
          (firecloud/import-entities workspace))
-    (map (comp #(-> [entity %]) #(% primary-key)) maps)))
+    (map #(% primary-key) maps)))
 
-;; not sure where this should live!
 (def ^:private snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
+
+(def ^:private entity-columns
+  "Return the columns in the `entity-type`."
+  (>>> (juxt :idName :attributeNames)
+       #(apply cons %)
+       #(mapv keyword %)))
+
 (deftest test-import-snapshot
   (let [dataset-table "flowcell"
         entity        "flowcell"
-        entity-key    :flowcell_id
-        from-dataset  (resources/read-resource "entity-from-dataset.edn")]
+        from-dataset  (resources/read-resource "entity-from-dataset.edn")
+        columns       (-> (firecloud/get-entities "wfl-dev/SARSCoV2-Illumina-Full")
+                          :flowcell
+                          entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
-        (let [entities
-              (-> (datarepo/snapshot snapshot-id)
-                  (datarepo/query-table dataset-table)
-                  (import-table workspace entity entity-key from-dataset))]
-          (try
-            (let [names (->> #(firecloud/list-entities workspace entity)
-                             (util/poll-while empty?)
-                             (map :name)
-                             set)]
-              (doseq [[_ name] entities] (is (names name))))
-            (finally (firecloud/delete-entities workspace entities))))))))
-
+        (let [entities (-> (datarepo/snapshot snapshot-id)
+                           (datarepo/query-table dataset-table)
+                           (import-table workspace columns from-dataset))
+              names    (->> #(firecloud/list-entities workspace entity)
+                            (comp not-empty)
+                            util/poll
+                            (map :name)
+                            set)]
+          (is (every? names entities)))))))

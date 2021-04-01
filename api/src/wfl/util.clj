@@ -7,14 +7,14 @@
             [clojure.tools.logging :as log]
             [wfl.wfl               :as wfl])
   (:import [java.io File Writer IOException]
-           [java.time OffsetDateTime Clock LocalDate]
-           [java.time.temporal ChronoUnit]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
+           [java.time OffsetDateTime Clock LocalDate]
+           [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
+           [java.util.concurrent TimeUnit TimeoutException]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]
-           (java.util.concurrent TimeUnit TimeoutException)))
+           [org.apache.commons.io FilenameUtils]))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -416,13 +416,19 @@
   [f & fs]
   (reduce #(comp %2 %1) f fs))
 
-(defn poll-while [predicate thunk]
-  (loop [attempt 1]
-    (let [x (thunk)]
-      (if-not (predicate x)
-        x
-        (do (when (< 3 attempt)
-              (throw (TimeoutException. "Max number of attempts exceeded")))
-            (log/debugf "Sleeping - attempt #%s" attempt)
-            (.sleep TimeUnit/MILLISECONDS 100)
-            (recur (inc attempt)))))))
+(defn poll
+  "Poll `task!` every `seconds` [default: 1], attempting at most `max-attempts`
+   [default: 3]."
+  ([task! seconds max-attempts]
+   (loop [attempt 1]
+     (if-let [result (task!)]
+       result
+       (do (when (<= max-attempts attempt)
+             (throw (TimeoutException. "Max number of attempts exceeded")))
+           (log/debugf "Sleeping - attempt #%s of %s" attempt max-attempts)
+           (.sleep TimeUnit/SECONDS seconds)
+           (recur (inc attempt))))))
+  ([task seconds]
+   (poll task seconds 3))
+  ([task]
+   (poll task 1)))

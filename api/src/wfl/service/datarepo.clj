@@ -77,11 +77,11 @@
   (ingest
    "ingest"
    dataset-id
-    {:format          "json"
-     :load_tag        (new-load-tag)
-     :max_bad_records 0
-     :path            path
-     :table           table}))
+   {:format          "json"
+    :load_tag        (new-load-tag)
+    :max_bad_records 0
+    :path            path
+    :table           table}))
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
@@ -203,7 +203,7 @@
 ;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
 ;; in a future release.
 (defn ^:private bigquery-name
-  "Get the BigQuery name of the dataset or snapshot"
+  "Return the BigQuery name of the `dataset-or-snapshot`."
   [{:keys [name] :as dataset-or-snapshot}]
   (letfn [(snapshot? [x] (util/absent? x :defaultSnapshotId))]
     (if (snapshot? dataset-or-snapshot) name (str "datarepo_" name))))
@@ -235,7 +235,7 @@
 
 (defn query-table-between
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
-   `dataset` in the closed-open `interval` of `datarepo_ingest_date`, where
+   `dataset` in the open-closed `interval` of `datarepo_ingest_date`, where
    `dataset` is a DataRepo dataset or a snapshot of a dataset. If no rows match
    the `interval`, TDR will respond with error 400."
   ([dataset table interval]

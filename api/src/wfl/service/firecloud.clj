@@ -66,11 +66,6 @@
       (http/delete {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn get-workspace
-  "Get a single `workspace`'s details"
-  [workspace]
-  (get-workspace-json workspace))
-
 (defn get-submission
   "Return the submission in the Terra `workspace` with `submission-id`."
   [workspace submission-id]
@@ -97,6 +92,11 @@
          (filter #(= name (get-in % [:workflowEntity :entityName])))
          first
          :status)))
+
+(defn get-entities
+  "Return the entity types and their attributes in a `workspace`."
+  [workspace]
+  (get-workspace-json workspace "entities"))
 
 (defn delete-entities
   "Delete the `entities` from the Terra `workspace`.
@@ -148,8 +148,8 @@
   (letfn [(url? [s] (some #(str/starts-with? s %) ["http://" "https://"]))]
     (-> (firecloud-url "/api/womtool/v1/describe")
         (http/post {:headers   (auth/get-auth-header)
-                    :multipart (util/multipart-body
-                                (if (url? workflow)
-                                  {:workflowUrl workflow}
-                                  {:workflowSource workflow}))})
+                    :multipart (util/multipart-body {(if (url? workflow)
+                                                       :workflowUrl
+                                                       :workflowSource)
+                                                     workflow})})
         util/response-body-json)))
