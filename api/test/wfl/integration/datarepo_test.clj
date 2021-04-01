@@ -105,17 +105,17 @@
     (is (every? string? samplesheets) "Nested arrays were not normalized.")))
 
 (defn ^:private table->map-view
-  "Create a hash-map 'view' of the BigQuery `table`. A 'view' is one"
+  "Create a hash-map 'view' of (adapter for) the BigQuery `table`."
   [{:keys [schema rows] :as _table}]
   (let [make-entry (fn [idx field] [(-> field :name keyword) idx])
         key->index (into {} (map-indexed make-entry (:fields schema)))]
     (map (util/curry #(when-let [idx (key->index %2)] (%1 idx))) rows)))
 
 (defn ^:private maps->table
-  "Transform a list of maps into a table with columns given by `attributes`."
-  [maps attributes]
-  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) attributes)}}
-        f     #(reduce (fn [row attr] (conj row (% attr))) [] attributes)]
+  "Transform a list of maps into a table with `columns`."
+  [maps columns]
+  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) columns)}}
+        f     #(reduce (fn [row attr] (conj row (% attr))) [] columns)]
     (assoc table :rows (map f maps))))
 
 (defn ^:private make-entity-import-request-tsv
@@ -126,9 +126,8 @@
 
 (defn import-table
   "Import the BigQuery `table` into the `entity` in the Terra `workspace`,
-   using `from-snapshot` to map column names in `snapshot` to the names in the
-   workspace `table`. Return `[entity name]` pairs of the entities imported
-   into the workspace."
+   using `from-snapshot` to map column names in `table` to the `columns` in the
+   workspace entity. Return the names of the entities imported into `workspace`"
   [table workspace [primary-key & _ :as columns] from-snapshot]
   (let [maps (table->map-view table)]
     (->> (make-entity-import-request-tsv from-snapshot columns maps)
