@@ -1,9 +1,9 @@
 (ns wfl.tools.datasets
-  (:require [clojure.string :as str]
-            [clojure.data.json :as json]
-            [wfl.service.datarepo :as datarepo]
-            [wfl.service.google.storage :as storage])
-  (:import (java.util UUID)))
+  (:require [clojure.string             :as str]
+            [clojure.data.json          :as json]
+            [wfl.service.datarepo       :as datarepo]
+            [wfl.service.google.storage :as storage]
+            [wfl.util                   :as util]))
 
 (defn unique-dataset-request
   "Create a dataset request for a uniquely-named dataset defined by the json
@@ -12,7 +12,7 @@
   (-> (str "test/resources/datasets/" dataset-basename)
       slurp
       json/read-str
-      (update "name" #(str % (-> (UUID/randomUUID) (str/replace "-" ""))))
+      (update "name" util/randomize)
       (update "defaultProfileId" (constantly tdr-profile))))
 
 ;; TDR limits size of bulk ingest request to 1000 files. Muscles says
@@ -42,7 +42,7 @@
   (letfn [(literal? [x] (str/starts-with? x "$"))
           (go! [v]
             (cond (literal? v) (subs v 1 (count v))
-                  (string?  v) (get values (keyword v))
+                  (string?  v) (values (keyword v))
                   (map?     v) (json/write-str (rename-gather values v)
                                                :escape-slash false)
                   (coll?    v) (keep go! v)

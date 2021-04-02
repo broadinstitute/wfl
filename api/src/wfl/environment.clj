@@ -37,7 +37,7 @@
    "WFL_COOKIE_SECRET"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_TDR_URL"
-   #(-> "https://jade.datarepo-dev.broadinstitute.org/")
+   #(-> "https://jade.datarepo-dev.broadinstitute.org")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
@@ -47,7 +47,7 @@
    "WFL_POSTGRES_USERNAME"
    #(-> nil)
    "WFL_FIRECLOUD_URL"
-   #(-> "https://api.firecloud.org/")
+   #(-> "https://api.firecloud.org")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"

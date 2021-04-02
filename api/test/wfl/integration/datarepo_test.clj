@@ -3,6 +3,7 @@
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
             [wfl.service.datarepo        :as datarepo]
+            [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]
             [wfl.service.google.bigquery :as bigquery]
             [wfl.tools.datasets          :as datasets]
@@ -10,7 +11,7 @@
             [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.resources         :as resources]
             [wfl.tools.workflows         :as workflows]
-            [wfl.util                    :as util])
+            [wfl.util                    :as util :refer [>>>]])
   (:import [java.util UUID]))
 
 (deftest test-create-dataset
@@ -77,20 +78,86 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "3b41c460-d994-47a4-9bf7-c59861e858a6")
+(def ^:private testing-dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
 
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
-        table     "flowcell"
-        start-datetime "2021-03-17"
-        end-datetime   "2021-03-19"
-        row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
-                     (bigquery/query-sync dataProject)
-                     :rows flatten)]
-    (testing "creating snapshot"
-      (fixtures/with-temporary-snapshot
-        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
-        #(let [snapshot (datarepo/snapshot %)]
-           (is (= % (:id snapshot))))))))
+        dataset     (datarepo/dataset testing-dataset)
+        table       "flowcell"
+        row-ids     (-> (datarepo/query-table-between
+                         dataset
+                         table
+                         ["2021-03-30" "2021-03-31"]
+                         [:datarepo_row_id])
+                        :rows
+                        flatten)]
+    (fixtures/with-temporary-snapshot
+      (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+      #(let [snapshot (datarepo/snapshot %)]
+         (is (= % (:id snapshot)))))))
+
+(deftest test-flattened-query-result
+  (let [samplesheets (-> (datarepo/dataset testing-dataset)
+                         (datarepo/query-table "flowcell" [:samplesheets])
+                         :rows
+                         (->> (mapcat first)))]
+    (is (every? string? samplesheets) "Nested arrays were not normalized.")))
+
+(defn ^:private table->map-view
+  "Create a hash-map 'view' of (adapter for) the BigQuery `table`."
+  [{:keys [schema rows] :as _table}]
+  (let [make-entry (fn [idx field] [(-> field :name keyword) idx])
+        key->index (into {} (map-indexed make-entry (:fields schema)))]
+    (map (util/curry #(when-let [idx (key->index %2)] (%1 idx))) rows)))
+
+(defn ^:private maps->table
+  "Transform a list of maps into a table with `columns`."
+  [maps columns]
+  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) columns)}}
+        f     #(reduce (fn [row attr] (conj row (% attr))) [] columns)]
+    (assoc table :rows (map f maps))))
+
+(defn ^:private make-entity-import-request-tsv
+  [from-dataset columns maps]
+  (-> (map #(datasets/rename-gather % from-dataset) maps)
+      (maps->table columns)
+      bigquery/dump-table->tsv))
+
+(defn import-table
+  "Import the BigQuery `table` into the `entity` in the Terra `workspace`,
+   using `from-snapshot` to map column names in `table` to the `columns` in the
+   workspace entity. Return the names of the entities imported into `workspace`"
+  [table workspace [primary-key & _ :as columns] from-snapshot]
+  (let [maps (table->map-view table)]
+    (->> (make-entity-import-request-tsv from-snapshot columns maps)
+         .getBytes
+         (firecloud/import-entities workspace))
+    (map #(% primary-key) maps)))
+
+(def ^:private snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
+
+(def ^:private entity-columns
+  "Return the columns in the `entity-type`."
+  (>>> (juxt :idName :attributeNames)
+       #(apply cons %)
+       #(mapv keyword %)))
+
+(deftest test-import-snapshot
+  (let [dataset-table "flowcell"
+        entity        "flowcell"
+        from-dataset  (resources/read-resource "entity-from-dataset.edn")
+        columns       (-> (firecloud/list-entity-types "wfl-dev/SARSCoV2-Illumina-Full")
+                          :flowcell
+                          entity-columns)]
+    (fixtures/with-temporary-workspace
+      (fn [workspace]
+        (let [entities (-> (datarepo/snapshot snapshot-id)
+                           (datarepo/query-table dataset-table)
+                           (import-table workspace columns from-dataset))
+              names    (->> #(firecloud/list-entities workspace entity)
+                            (comp not-empty)
+                            util/poll
+                            (map :name)
+                            set)]
+          (is (every? names entities)))))))

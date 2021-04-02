@@ -22,8 +22,7 @@
 (deftest test-automate-sarscov2-illumina-full
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder
-         "broad-gotc-dev-wfl-ptc-test-inputs")
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request
           tdr-profile
@@ -35,20 +34,21 @@
       (fn [[temp source sink]]
         ;; TODO: create + start the workload
         ;; upload a sample
-        (let [inputs        (resources/read-resource "sarscov2_illumina_full/inputs.edn")
+        (let [;; This defines how we'll convert the inputs of the pipeline into
+              ;; a form that can be ingested as a new row in the dataset.
+              ;; I think a user would specify something like this in the initial
+              ;; workload request, one mapping for dataset to workspace entity
+              ;; names and one for outputs to dataset.
+              from-inputs   (resources/read-resource "sarscov2_illumina_full/dataset-from-inputs.edn")
+              inputs        (-> (resources/read-resource "sarscov2_illumina_full/inputs.edn")
+                                (select-keys (map keyword (vals from-inputs))))
               inputs-type   (-> "sarscov2_illumina_full.edn"
                                 resources/read-resource
                                 :inputs
                                 workflows/make-object-type)
-              table-name    "sarscov2_illumina_full_inputs"
+              table-name    "flowcell"
               unique-prefix (UUID/randomUUID)
-              table-url     (str temp "inputs.json")
-              ;; This defines how we'll convert the inputs of the pipeline into
-              ;; a form that can be ingested as a new row in the dataset.
-              ;; I think a user would specify something like this in the initial
-              ;; workload request, one mapping for dataset to inputs and one for
-              ;; outputs to dataset.
-              from-inputs (resources/read-resource "sarscov2_illumina_full/dataset-from-inputs.edn")]
+              table-url     (str temp "inputs.json")]
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
