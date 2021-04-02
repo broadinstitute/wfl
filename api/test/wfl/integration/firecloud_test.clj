@@ -38,6 +38,22 @@
                                       :workflows
                                       first
                                       :status)))))))
+;; TODO: tests for 0 and 1 entities.
+(deftest test-create-submissions
+  (util/bracket
+    #(firecloud/create-submissions workspace method-configuration entity entity entity)
+    #(doseq [submission-id %]
+       (firecloud/abort-submission workspace submission-id))
+    #(doseq [submission-id %]
+       (let [workflow (-> (firecloud/get-submission workspace submission-id) :workflows first)]
+         (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
+         (is (#{"Queued" "Submitted"}
+              ;; GH-1212: `get-submission` can return the workflow before it has
+              ;; been queued. In such cases :status is nil so try again
+              (or (:status workflow) (-> (firecloud/get-submission workspace submission-id)
+                                         :workflows
+                                         first
+                                         :status))))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a

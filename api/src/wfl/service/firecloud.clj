@@ -38,6 +38,29 @@
         util/response-body-json
         :submissionId)))
 
+;; OLIVIA START
+;; Second pass: creates one submission in a workspace encompassing all specified entities (1+).
+;; Third pass: consolidate to single method supporting 1+ entities.
+
+(defn create-submissions
+  "First pass:
+  Creates one submission in `workspace` for each element of `_entities` using the specified
+  `methodconfig`.
+
+  QUESTIONS:
+  Should we enforce entity count > 0?
+  Is `entity` a reserved word?
+  Should I hang tight for Ed's PR to be merged?
+  Does FireCloud support submission creation with multiple entities?
+
+  TODO:
+  Add specifications for inputs, usage examples"
+  [workspace methodconfig & _entities]
+  {:pre [(seq _entities)]} ; Checks for at least one entity specified.  Desired?
+  (for [_entity _entities] (create-submission workspace methodconfig _entity)))
+
+;; OLIVIA END
+
 (defn get-submission
   "Return the submission in the Terra `workspace` with `submission-id`."
   [workspace submission-id]
