@@ -1,52 +1,49 @@
 {
   "name": "sarscov2_illumina_full_inputs",
-  "description": "COVID-19 sarscov2_illumina_full pipeline inputs",
+  "description": "initial flowcell values for the sarscov2_illumina_full COVID-19 surveillance pipeline",
   "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
   "schema": {
     "tables": [
       {
-        "name": "sarscov2_illumina_full_inputs",
+        "name": "flowcell",
         "columns": [
           {
-            "name": "flowcell_tgz",
+            "name": "authors_sbt",
             "datatype": "fileref"
           },
           {
-            "name": "reference_fasta",
-            "datatype": "fileref"
+            "name": "biosample_map",
+            "datatype": "fileref",
+            "array_of": true
           },
           {
-            "name": "amplicon_bed_prefix",
+            "name": "flowcell_id",
             "datatype": "string"
           },
           {
-            "name": "biosample_attributes",
-            "datatype": "fileref",
-            "array_of": true
+            "name": "flowcell_tgz",
+            "datatype": "fileref"
           },
           {
             "name": "instrument_model",
             "datatype": "string"
           },
           {
-            "name": "sra_title",
+            "name": "sample_rename_map",
+            "datatype": "fileref"
+          },
+          {
+            "name": "samplesheets",
+            "datatype": "fileref",
+            "array_of": true
+          },
+          {
+            "name": "title",
             "datatype": "string"
           },
           {
-            "name": "min_genome_bases",
-            "datatype": "int64"
-          },
-          {
-            "name": "max_vadr_alerts",
-            "datatype": "int64"
-          },
-          {
-            "name": "workspace_name",
-            "datatype": "string"
-          },
-          {
-            "name": "terra_project",
-            "datatype": "string"
+            "name": "updated",
+            "datatype": "timestamp"
           },
           {
             "name": "extra",
@@ -54,11 +51,13 @@
           }
         ],
         "primaryKey": [
+          "authors_sbt",
+          "flowcell_id",
           "flowcell_tgz",
-          "reference_fasta",
-          "amplicon_bed_prefix",
           "instrument_model",
-          "sra_title"
+          "sample_rename_map",
+          "title",
+          "updated"
         ],
         "partitionMode": "date",
         "datePartitionOptions": {

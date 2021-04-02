@@ -1,9 +1,0 @@
-{:instrument_model     "Illumina NovaSeq 6000"
- :workspace_name       "SARSCoV2-Illumina-Full"
- :terra_project        "wfl-dev"
- :flowcell_tgz         "093314e1-688e-49cb-90af-b392d104a57f"
- :sra_title            "Metagenomic RNA-Seq of SARS-CoV-2 from patients"
- :biosample_attributes ["d1830e0c-a1dc-448b-816c-b4f656c21876"]
- :amplicon_bed_prefix  "gs://pathogen-public-dbs/v1/amplicon_primers-"
- :reference_fasta      "a2599579-aa20-4f9b-a0a0-99b5043ec0b4"
- :extra                "{\"demux_deplete.spikein_db\":\"5613ae0f-7df9-460b-8cab-58b7f97f924f\",\"demux_deplete.samplesheets\":[\"7dbe165d-aef0-4a5c-bdff-d717e7a3f084\",\"7dbe165d-aef0-4a5c-bdff-d717e7a3f084\"],\"demux_deplete.sample_rename_map\":\"93b5ccd4-cf50-4dc4-9c9f-91a45afbb588\",\"demux_deplete.bwaDbs\":[\"85c66634-6c80-4133-92b1-22b955f36e42\"],\"demux_deplete.blastDbs\":[\"84d52a91-dfc6-421c-ae6f-a68118fa901d\",\"6aacab93-027a-4513-a609-c25143faef04\"],\"gisaid_meta_prep.username\":\"dpark\",\"gisaid_meta_prep.submitting_lab_addr\":\"75 Ames St, Cambridge, MA 02142, USA\",\"package_genbank_ftp_submission.spuid_namespace\":\"Broad_GCID\",\"gisaid_meta_prep.submitting_lab_name\":\"Infectious Disease Program, Broad Institute of Harvard and MIT\",\"package_genbank_ftp_submission.author_template_sbt\":\"f96db65e-668a-41d1-95cf-4e3457742500\",\"package_genbank_ftp_submission.account_name\":\"broad_gcid-srv\"}"}

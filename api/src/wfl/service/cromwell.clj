@@ -263,13 +263,6 @@
 (defn wait-for-workflow-complete
   "Return status of workflow named by ID when it completes, given Cromwell URL."
   [url id]
-  (work-around-cromwell-fail-bug 9 url id)
-  (loop [url url id id]
-    (let [seconds 15
-          now (status url id)]
-      (if (#{"Submitted" "Running"} now)
-        (do (log/infof "%s: Sleeping %s seconds on status: %s"
-                       id seconds now)
-            (util/sleep-seconds seconds)
-            (recur url id))
-        (status url id)))))
+  (let [finished? (comp (set final-statuses) #(status url id))]
+    (work-around-cromwell-fail-bug 9 url id)
+    (util/poll finished? 15 (Integer/MAX_VALUE))))

@@ -7,7 +7,8 @@
             [wfl.tools.liquibase :as liquibase]
             [wfl.jdbc :as jdbc]
             [wfl.util :as util]
-            [wfl.environment :as env])
+            [wfl.environment :as env]
+            [wfl.service.firecloud :as firecloud])
   (:import [java.util UUID]
            (java.nio.file Files)
            (org.apache.commons.io FileUtils)
@@ -195,6 +196,15 @@
   (util/bracket
    #(datarepo/create-snapshot snapshot-request)
    datarepo/delete-snapshot
+   f))
+
+(defn with-temporary-workspace
+  "Create and use a temporary Terra Workspace."
+  [f]
+  (util/bracket
+   #(doto (util/randomize "wfl-dev/test-workspace")
+      (firecloud/create-workspace "workflow-launcher-dev"))
+   firecloud/delete-workspace
    f))
 
 (defn with-temporary-environment
