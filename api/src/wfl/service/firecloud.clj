@@ -49,21 +49,21 @@
 ;; Third pass: consolidate to single method supporting 1+ entities.
 
 (defn create-submissions
-  "First pass:
-  Creates one submission in `workspace` for each element of `_entities` using the specified
-  `methodconfig`.
+  "
+  First pass:
+  Creates one submission in `workspace` for each of the specified `entities` using `methodconfig`.
+  Throws an `AssertionError` if no entities specified.
+  Returns a sequence of submission-ids for the newly-created submissions.
 
-  QUESTIONS:
-  Should we enforce entity count > 0?
-  Is `entity` a reserved word?
-  Should I hang tight for Ed's PR to be merged?
-  Does FireCloud support submission creation with multiple entities?
-
-  TODO:
-  Add specifications for inputs, usage examples"
-  [workspace methodconfig & _entities]
-  {:pre [(seq _entities)]} ; Checks for at least one entity specified.  Desired?
-  (for [_entity _entities] (create-submission workspace methodconfig _entity)))
+  Parameters
+  ----------
+  workspace    - Fully-qualified Terra Workspace in which the submissions will be created.
+  methodconfig - Fully-qualified method configuration.
+  entities     - [optional] Pairs of the form [Type Name]
+  "
+  [workspace methodconfig & entities]
+  {:pre [(seq entities)]}
+  (for [entity entities] (create-submission workspace methodconfig entity)))
 
 ;; OLIVIA END
 
