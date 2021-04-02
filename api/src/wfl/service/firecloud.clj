@@ -93,11 +93,6 @@
          first
          :status)))
 
-(defn get-entities
-  "Return the entity types and their attributes in a `workspace`."
-  [workspace]
-  (get-workspace-json workspace "entities"))
-
 (defn delete-entities
   "Delete the `entities` from the Terra `workspace`.
    Parameters
