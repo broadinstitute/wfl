@@ -20,9 +20,9 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "bbe4f54f7f8527fba4a330a750db8d4ac8d68c17"
-   :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
-                 "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
+  {:release "cbe2ef98e941c4e416902911ae9766da75248174"
+   :path    (str "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/"
+                 pipeline ".wdl")})
 
 (defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
@@ -269,7 +269,7 @@
       [crams]
       {:executor "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org"
        :output   "gs://broad-prod-somatic-genomes-output"
-       :pipeline "GDCWholeGenomeSomaticSingleSample"
+       :pipeline pipeline
        :project  "(Test) tbl/GH-1196-sg-prod-data-reprise"
        :items    (mapv cram->inputs crams)})
 
