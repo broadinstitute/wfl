@@ -173,7 +173,29 @@
 (defn snapshot
   "Return the snapshot with `snapshot-id`."
   [snapshot-id]
-  (get-repository-json "snapshots" snapshot-id))
+  (-> (repository "snapshots/" snapshot-id)
+      (http/get {:headers (auth/get-service-account-header)})
+      util/response-body-json))
+
+;; Note if there are no matching rows between (start, end], TDR will throw
+;; a 400 exception.
+;; Note TDR prefixes datasets in BigQuery with `datarepo_`.
+(defn make-snapshot-query
+  "Make row-id query payload from `dataset` and `table`,
+   given a date range specified by exclusive `start` and inclusive `end`.
+
+   Parameters
+   ----------
+   _dataset   - Dataset information response from TDR.
+   table      - Name of the table in the dataset schema to query from.
+   start      - The start datetime object in the timeframe. Format like 2021-03-29 00:00:00
+   end        - The end datetime object in the timeframe. Format like 2021-03-29 00:00:00"
+  [{:keys [name dataProject] :as _dataset} table start end]
+  (let [dataset-name (str "datarepo_" name)
+        query (str/join \newline ["SELECT datarepo_row_id"
+                                  "FROM `%s.%s.%s`"
+                                  "WHERE updated BETWEEN '%s' AND '%s'"])]
+    (format query dataProject dataset-name table start end)))
 
 (defn all-columns
   "Return all of the columns of `table` in `dataset` content."

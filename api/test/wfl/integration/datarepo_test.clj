@@ -80,9 +80,11 @@
 
 (def ^:private testing-dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
 
+(comment (datarepo/dataset testing-dataset))
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
+<<<<<<< HEAD
         dataset     (datarepo/dataset testing-dataset)
         table       "flowcell"
         row-ids     (-> (datarepo/query-table-between
@@ -161,3 +163,17 @@
                             (map :name)
                             set)]
           (is (every? names entities)))))))
+=======
+        {:keys [dataProject] :as dataset} (datarepo/dataset testing-dataset)
+        table     "flowcell"
+        start-datetime "2021-03-29 00:00:00" #_"1617036399" #_"3/29/2021, 4:46:39"
+        end-datetime   "2021-03-31 00:00:00" #_"1617209199" #_"4/01/2021, 4:46:39"
+        row-ids (->> (datarepo/make-snapshot-query dataset table start-datetime end-datetime)
+                     (bigquery/query-sync dataProject)
+                     :rows flatten)]
+    (testing "creating snapshot"
+      (fixtures/with-temporary-snapshot
+        (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
+        #(let [snapshot (datarepo/snapshot %)]
+           (is (= % (:id snapshot))))))))
+>>>>>>> a439b72... Changing the creation of a snapshot so that it uses a datetime field rather than a date field, to be more precise in the case of several snapshots being made within small windows
