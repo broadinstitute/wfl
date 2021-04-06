@@ -385,7 +385,7 @@
   (with-redefs-fn
     {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
      #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
-     #'sg/register-workload-in-clio             (fn [x _] x)}
+     #'sg/register-workload-in-clio             (constantly nil)}
     #(shared/run-workload-state-transition-test! (the-sg-workload-request))))
 
 (deftest test-stop-workload-state-transition

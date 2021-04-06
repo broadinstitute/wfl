@@ -170,7 +170,7 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [status uuid] :as workflow}]
+  [executor output {:keys [status uuid] :as _workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
           clio-url (-> executor cromwell->strings :clio-url)
@@ -192,19 +192,18 @@
 ;; visible for testing
 (defn register-workload-in-clio
   "Use `tx` to register `_workload` outputs with Clio."
-  [{:keys [executor items output] :as _workload} tx]
-  (run!
-   (partial register-workflow-in-clio executor output)
-   (postgres/get-table tx items)))
+  [{:keys [executor output workflows] :as _workload}]
+  (run! (partial register-workflow-in-clio executor output) workflows))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
-  [tx {:keys [started finished] :as workload}]
+  [{:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
-            (doto (workloads/load-workload-for-id tx id)
-              (register-workload-in-clio tx)))]
+            (doto (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                    (postgres/batch-update-workflow-statuses! tx workload)
+                    (postgres/update-workload-status! tx workload)
+                    (workloads/load-workload-for-id tx id))
+              register-workload-in-clio))]
     (if (and started (not finished)) (update! workload) workload)))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
