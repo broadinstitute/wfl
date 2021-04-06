@@ -11,24 +11,24 @@
 
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
-  "(transaction workload-request) -> workload"
-  (fn [_ body] (:pipeline body)))
+  "workload-request -> workload"
+  (fn [body] (:pipeline body)))
 
 (defmulti start-workload!
-  "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  "workload -> workload"
+  (fn [body] (:pipeline body)))
 
 (defmulti stop-workload!
-  "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  "workload -> workload"
+  (fn [body] (:pipeline body)))
 
 (defmulti execute-workload!
-  "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  "workload -> workload"
+  (fn [body] (:pipeline body)))
 
 (defmulti update-workload!
-  "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  "workload -> workload"
+  (fn [body] (:pipeline body)))
 
 ;; loading utilities
 (defmulti load-workload-impl
@@ -91,7 +91,7 @@
 ;; :default implementations
 (defmethod create-workload!
   :default
-  [_ body]
+  [body]
   (throw
    (ex-info "Failed to create workload - no such pipeline"
             {:cause body
@@ -99,7 +99,7 @@
 
 (defmethod start-workload!
   :default
-  [_ body]
+  [body]
   (throw
    (ex-info "Failed to start workload - no such pipeline"
             {:cause body
@@ -107,7 +107,7 @@
 
 (defmethod stop-workload!
   :default
-  [_ body]
+  [body]
   (throw
    (ex-info "Failed to stop workload - no such pipeline"
             {:cause body
@@ -115,12 +115,12 @@
 
 (defmethod execute-workload!
   :default
-  [tx workload-request]
-  (start-workload! tx (create-workload! tx workload-request)))
+  [workload-request]
+  (start-workload! (create-workload! workload-request)))
 
 (defmethod update-workload!
   :default
-  [_ body]
+  [body]
   (throw
    (ex-info "Failed to update workload - no such pipeline"
             {:cause body
