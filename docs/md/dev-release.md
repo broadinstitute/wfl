@@ -6,7 +6,8 @@ in order to release a new version of WFL:
 1. Create a release branch based off `develop`
    - release branch names follow the convention `release/X.Y.Z-rc`
    - the version string should match that specified in `version`
-2. Identify and cherry-pick the commits from `develop` that you want to release
+2. Identify and cherry-pick additional commits from `develop` that you want
+   to release (e.g. late features and bug fixes).
 3. Create a pull request into `main`. You will need to run
    `./ops/cli.py release` to generate the changelog for this release (the `-d`
    flag can be used to do a dry run without writing to the `CHANGELOG.md`file).
