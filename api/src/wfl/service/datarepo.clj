@@ -228,8 +228,7 @@
   (let [bq-name (bigquery-name dataset)
         query   "SELECT %s
                  FROM   `%s.%s.%s`
-                 WHERE  datarepo_ingest_date > '%s'
-                 AND    datarepo_ingest_date <= '%s'"]
+                 WHERE updated BETWEEN '%s' AND '%s'"]
     (->> (format query col-spec dataProject bq-name table start end)
          (bigquery/query-sync dataProject))))
 
