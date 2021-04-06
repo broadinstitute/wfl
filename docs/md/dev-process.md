@@ -1,26 +1,22 @@
 # Development Process
 
-This is a development process
-we are tying to standardize
-within the team,
-and encourage ourselves
-to follow in most cases.
+This is a development process we are tying to standardize within the team and
+encourage ourselves to follow in most cases.
 
 ## The Swagger page
 
-WFL ships with a swaggger UI that documents all of the
-available endpoints. It's available at path `/swagger`, e.g.
+WFL ships with a swaggger UI that documents all of the available endpoints.
+It's available at path `/swagger`, e.g.
 https://dev-wfl.gotc-dev.broadinstitute.org/swagger
 
 ## Development Setup
 
-Clojure development feels very different from Scala and Java
-development. It even differs markedly from development in other
-*dynamic languages* such as Python or Ruby.
+Clojure development feels very different from Scala and Java development. It
+even differs markedly from development in other *dynamic languages* such as
+Python or Ruby.
 
-Get a demonstration from someone familiar with Clojure
-development before you spend too much time trying to figure
-things out on your own.
+Get a demonstration from someone familiar with Clojure development before you
+spend too much time trying to figure things out on your own.
 
 Find a local Cursive user for guidance if you like IntelliJ.
 [Rex Wang](mailto:chengche@broadinstitute.org) and
@@ -31,15 +27,16 @@ The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:
 
 ???+ tip
-    It is recommended to run `prebuild` before launching IntelliJ
-    as it sets up all libraries and derived resources and sources:
+    Run `make prebuild` before launching IntelliJ as it sets up all libraries
+    and derived resources and sources:
     ```bash
     make TARGET=prebuild - jN
     ```
 
 1. *Outside of IntelliJ*, `clone` the repo.
 2. *Now inside of IntelliJ*, import the project.
-3. Use the Project Structure window (Help -> Find Action -> Project Structure) to set a JDK as the Project SDK
+3. Use the Project Structure window (Help -> Find Action -> Project Structure)
+   to set a JDK as the Project SDK
 
 There is also a
 [Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
@@ -53,10 +50,8 @@ used to Emacs. (I can help if CIDER gives you trouble.)
 
 ## Process
 
-We always make feature branches from `main`,
-make pull requests,
-ask for reviews
-and merge back to `main` on Github.
+We base feature branches off `develop`, make pull requests, ask for reviews
+and merge back to `develop` on Github.
 
 For the release process, please refer to the [release guide](../dev-release/)
 
@@ -65,10 +60,10 @@ For the release process, please refer to the [release guide](../dev-release/)
     git@github.com:broadinstitute/wfl.git
     ```
 
-2. Start from the latest copy of the remote main
+2. Start from the latest copy of the remote develop
     ```
-    git checkout main
-    git pull origin main
+    git checkout develop
+    git pull origin develop
     ```
 
 3. Create a feature branch
@@ -77,7 +72,7 @@ For the release process, please refer to the [release guide](../dev-release/)
     shown below so JIRA could pick up the branch and link it
     to our JIRA board._
     ```
-    git checkout -b tbl/GH-666-feature-branch-something
+    git checkout -B tbl/GH-666-feature-branch-something
     ```
 
 4. Start your work, add and commit your changes
@@ -86,19 +81,20 @@ For the release process, please refer to the [release guide](../dev-release/)
     git commit -m "Update the readme file."
     ```
 
-5. [Optional] Rebase onto lastest main: only if you want to get updates from the main
+5. [Optional] Rebase onto lastest develop if you want to get updates
     ```
-    git checkout main
-    git pull origin main
+    git checkout develop
+    git pull origin develop --ff
     git checkout tbl/GH-666-feature-branch-something
-    git rebase main
+    git rebase develop
     ```
 
-    alternatively, you could use the following commands without switching branches:
+    alternatively, you could use the following commands without switching
+    branches:
     ```
     git checkout tbl/GH-666-feature-branch-something
-    git fetch origin main
-    git merge main
+    git fetch origin develop
+    git merge develop
     ```
 
 6. Push branch to Github in the early stage of your development (recommended):
@@ -106,13 +102,15 @@ For the release process, please refer to the [release guide](../dev-release/)
     git push --set-upstream origin tbl/GH-666-feature-branch-something
     ```
 
-7. Create the pull request on Github UI. Be sure to fill out the PR description following the PR template instructions.
+7. Create the pull request on Github UI. Be sure to fill out the PR description
+   following the PR template instructions.
 
-    - If the PR is still in development, make sure use the dropdown menu and choose `Create draft pull request`
+    - If the PR is still in development, make sure use the dropdown menu and
+      choose `Create draft pull request`
 
     - If the PR is ready for review, click `Create pull request`.
 
-8. Look for a reviewer in the team.
+8. Look for reviewer(s) in the team.
 
 9. Address reviewer comments with more commits.
 
@@ -126,53 +124,39 @@ For the release process, please refer to the [release guide](../dev-release/)
 
 Here are some tips for WFL development.
 
-Some of this advice might help
-when testing Liquibase migration
-or other changes
-that affect WFL's Postgres database.
+Some of this advice might help when testing Liquibase migration or other
+changes that affect WFL's Postgres database.
 
 
 ### migrating a database
 
-To change WFL's Postgres database schema,
-add a changeset XML file
-in the `database/changesets` directory.
-Name the file for a recent or the current date
-followed by something describing the change.
-That will ensure that the changesets
-list in the order in which they apply.
-Note that the `id` and `logicalFilePath` attributes
-are derived from the changeset's file name.
-Then add the changeset file
-to the `database/changlog.xml` file.
+To change WFL's Postgres database schema, add a changeset XML file in the
+`database/changesets` directory. Name the file for a recent or the current date
+followed by something describing the change. That will ensure that the
+changesets list in the order in which they apply. Note that the `id` and
+`logicalFilePath` attributes are derived from the changeset's file name.
+Then add the changeset file to the `database/changlog.xml` file.
 
-Test the changes against a local _scratch database_.
-See the next section for suggestions.
+Test the changes against a local _scratch database_. See the next section for
+suggestions.
 
 ### debugging JDBC SQL
 
-Something seems to swallow SQL exceptions
-raised by Postgres and the JDBC library.
-Wrap suspect `clojure.java.jdbc` calls
-in `wfl.util/do-or-nil` to ensure
-that any exceptions show up
-in the server logs.
+Something seems to swallow SQL exceptions raised by Postgres and the JDBC
+library. Wrap suspect `clojure.java.jdbc` calls in `wfl.util/do-or-nil` to
+ensure that any exceptions show up in the server logs.
 
 ### debugging API specs
 
-If an API references an undefined spec,
-HTTP requests and responses might silently fail
-or the Swagger page will fail to render.
-Check the `clojure.spec.alpha/def`s
-in `wfl.api.routes` for typos
-before tearing your hair out.
+If an API references an undefined spec, HTTP requests and responses might
+silently fail or the Swagger page will fail to render. Check the
+`clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
+hair out.
 
 ### hacking a scratch database
 
-You can test against a local Postgres
-before running Liquibase or SQL
-against a shared database
-in `gotc-dev` or *gasp* production.
+You can test against a local Postgres before running Liquibase or SQL against a
+shared database in `gotc-dev` or *gasp* production.
 
 First install Postgres locally.
 
@@ -180,25 +164,17 @@ First install Postgres locally.
 brew install postgresql@11
 ```
 
-You need version 11 because that
-is what Google's hosted service supports,
+You need version 11 because that is what Google's hosted service supports,
 and there are differences in the SQL syntax.
 
-Modify the value of `WFL_POSTGRES_URL`
-in `(postgres/wfl-db-config)` to redirect
-the WFL server's database
-to a local Postgres server.
-With that hack in place,
-running `./ops/server.sh`
-(or however you launch a local WFL server)
-will connect the server to a local Postgres.
+Modify the value of `WFL_POSTGRES_URL` in `(postgres/wfl-db-config)` to redirect
+the WFL server's database to a local Postgres server. With that hack in place,
+running `./ops/server.sh` (or however you launch a local WFL server) will
+connect the server to a local Postgres.
 
-Now any changes to WFL state
-will affect only your local database.
-That includes running Liquibase,
-so don't forget to reset `:debug` to `env`
-before deploying your changes
-after merging a PR.
+Now any changes to WFL state will affect only your local database.
+That includes running Liquibase, so don't forget to reset `:debug` to `env`
+before deploying your changes after merging a PR.
 
 ### Useful hacks for debugging Postgres/Liquibase locally
 
@@ -208,22 +184,27 @@ pg_ctl -D /usr/local/var/postgresql@11 start
 ```
 
 !!! tip
-    It might be useful to set up some an alias for postgres if you are using zsh, for
-    example:
+    It might be useful to set up some an alias for postgres if you are using
+    zsh, for example:
     ```
     alias pq="pg_ctl -D /usr/local/var/postgresql@11"
     ```
-    thus you could use `pq start` or `pq stop` to easily spin up and turn down the db.
+    thus you could use `pq start` or `pq stop` to easily spin up and turn down
+    the db.
 
 
 Running `liquibase update`:
 ```bash
-liquibase --classpath=$(clojure -Spath) --url=jdbc:postgresql:wfl --changeLogFile=database/changelog.xml --username=$USER update
+liquibase --classpath=$(clojure -Spath)          \
+          --url=jdbc:postgresql:wfl               \
+          --changeLogFile=database/changelog.xml \
+          --username=$USER update
 ```
-For the above, the username and password need to be correct for the target environment.
+For the above, the username and password need to be correct for the target
+environment.
 
-If you're running a local server with the postgres command above, you don't need a
-password and can omit it.
+If you're running a local server with the postgres command above, you don't
+need a password and can omit it.
 
 Otherwise, you may be able to find this data in the Vault entry for the
 environment's server --
@@ -231,36 +212,9 @@ environment's server --
 You can use `--password=$ENV_SOMETHING` to supply it.
 
 !!! tip
-    It is more convenient to use the following alias to migrate the database schema
-    from within the `api` directory:
+    It is more convenient to use the following alias to migrate the database
+    schema from within the `api` directory:
     ```
     clojure -M:liquibase
     ```
-    if you are working aginst a local database. 
-
-### Diagnosis
-
-Workflow Launcher has a diagnostic command, `dx`,
-for debugging problems.
-
-Run `wfl dx` to get a list of the diagnostics available.
-
-```bash
-$ java -jar derived/api/target/wfl.jar dx
-
-wfl dx: tools to help debug workflow problems.
-
-Usage: wfl dx <tool> [<arg> ...]
-Where: <tool> is the name of some diagnostic tool.
-       <arg> ... are optional arguments to <tool>.
-
-The <tool>s and their <arg>s are named here.
-  all-metadata environment & ids
-    All workflow metadata for IDS from Cromwell in ENVIRONMENT.
-  event-timing environment id
-    Time per event type for workflow with ID in ENVIRONMENT.
-...
-Error: Must specify a dx <tool> to run.
-BTW: You ran: wfl dx
-wm28d-f87:wfl yanc$
-```
+    if you are working with a local database. 
