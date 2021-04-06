@@ -90,17 +90,24 @@
                             ["uuid = ?" uuid]))]
       (run! update! uuid->status))))
 
+(def ^:private active-workflow-query
+  (format "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
+          (util/to-quoted-comma-separated-list finished?)))
+
 (defn active-workflows
   "Use `tx` to query all the workflows in `_workload` whose :status is not in
   `finished?`"
   [tx {:keys [items] :as _workload}]
-  (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
-    (->> (util/to-quoted-comma-separated-list finished?)
-         (format query items)
-         (jdbc/query tx))))
+  (jdbc/query tx (format active-workflow-query items)))
 
 (defn update-workload-status!
   "Use `tx` to mark `workload` finished when all `workflows` are finished."
   [tx {:keys [id] :as workload}]
   (when (empty? (active-workflows tx workload))
     (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))
+
+(defn run-tx!
+  "Execute `f` in the context of a database transaction `tx`."
+  [f]
+  (jdbc/with-db-transaction [tx (wfl-db-config)] (f tx)))
+

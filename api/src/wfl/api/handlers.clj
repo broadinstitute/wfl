@@ -9,7 +9,6 @@
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
-            [wfl.jdbc                       :as jdbc]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]))
 
@@ -34,10 +33,9 @@
   [request]
   (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
     (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (workloads/load-workload-for-uuid tx uuid)
-           (aou/append-to-workload! tx notifications)
-           succeed))))
+    (postgres/run-tx! #(->> (workloads/load-workload-for-uuid uuid %)
+                            (aou/append-to-workload! % notifications)
+                            succeed))))
 
 (defn post-create
   "Create the workload described in REQUEST."
@@ -56,12 +54,12 @@
   [request]
   (let [{:keys [uuid project] :as query} (get-in request [:parameters :query])]
     (logr/info "GET /api/v1/workload with query: " query)
-    (succeed
-     (map strip-internals
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (cond uuid    [(workloads/load-workload-for-uuid tx uuid)]
-                  project (workloads/load-workloads-with-project tx project)
-                  :else   (workloads/load-workloads tx)))))))
+    (->> #(cond uuid    [(workloads/load-workload-for-uuid uuid %)]
+                project (workloads/load-workloads-with-project project %)
+                :else   (workloads/load-workloads %))
+         postgres/run-tx!
+         (map strip-internals)
+         succeed)))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
@@ -69,8 +67,7 @@
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "POST /api/v1/start with uuid: " uuid)
     (let [{:keys [started] :as workload}
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (workloads/load-workload-for-uuid tx uuid))]
+          (postgres/run-tx! (partial workloads/load-workload-for-uuid uuid))]
       (-> workload
           (cond-> started workloads/start-workload!)
           strip-internals
@@ -81,8 +78,8 @@
   [request]
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "POST /api/v1/stop with uuid: %s" uuid)
-    (-> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (workloads/load-workload-for-uuid tx uuid))
+    (-> (partial workloads/load-workload-for-uuid uuid)
+        postgres/run-tx!
         workloads/stop-workload!
         strip-internals
         succeed)))

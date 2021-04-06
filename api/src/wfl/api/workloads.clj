@@ -35,11 +35,11 @@
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.
   NOTE: do NOT call directly in product code - this is only meant to be called
   within this namespace."
-  (fn [_ body] (:pipeline body)))
+  (fn [body _] (:pipeline body)))
 
-(defn ^:private try-load-workload-impl [tx workload]
+(defn ^:private try-load-workload-impl [workload tx]
   (try
-    (load-workload-impl tx workload)
+    (load-workload-impl workload tx)
     (catch Throwable cause
       (throw (ex-info (str "Error loading workload - " (.getMessage cause))
                       (assoc (ex-data cause) :workload workload)
@@ -47,40 +47,38 @@
 
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
-  [tx uuid]
+  [uuid tx]
   (log/debugf "Loading workload uuid=%s" uuid)
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid"
                       {:cause {:uuid uuid}
                        :type  ::workload-not-found})))
-    (try-load-workload-impl tx (first workloads))))
+    (try-load-workload-impl (first workloads) tx)))
 
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
-  [tx id]
+  [id tx]
   (log/debugf "Loading workload id=%s" id)
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching id"
                       {:cause {:id id}
                        :type  ::workload-not-found})))
-    (try-load-workload-impl tx (first workloads))))
+    (try-load-workload-impl (first workloads) tx)))
 
 (defn load-workloads-with-project
   "Use transaction `tx` to load `workload`(s) with `project`."
-  [tx project]
+  [project tx]
   (log/debugf "Loading workloads with project=\"%s\"" project)
-  (let [do-load   (partial load-workload-impl tx)]
-    (mapv do-load
-          (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+  (mapv #(load-workload-impl % tx)
+        (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project])))
 
 (defn load-workloads
   "Use transaction `tx` to load all known `workloads`."
   [tx]
   (log/debug "Loading all workloads")
-  (let [do-load (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))
+  (mapv #(load-workload-impl % tx) (jdbc/query tx ["SELECT * FROM workload"])))
 
 ;; helper utility for point-free multi-method implementation registration.
 (defmacro defoverload
@@ -127,7 +125,7 @@
              :type  ::invalid-pipeline})))
 
 (defn default-load-workload-impl
-  [tx workload]
+  [workload tx]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
             (let [keep [:id :finished :status :updated :uuid :options]]

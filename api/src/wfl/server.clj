@@ -87,8 +87,7 @@
   (letfn [(do-update! [{:keys [id uuid]}]
             (try
               (workloads/update-workload!
-               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (workloads/load-workload-for-id tx id)))
+               (postgres/run-tx! (partial workloads/load-workload-for-id id)))
               (catch PSQLException ex
                 (log/warnf "Failed to load workload %s" uuid)
                 (log/warn ex))
@@ -98,10 +97,10 @@
           (update-workloads! []
             (log/info "updating workloads")
             (run! do-update!
-                  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (jdbc/query tx "SELECT id,uuid  FROM   workload
-                                    WHERE  started  IS NOT NULL
-                                    AND    finished IS     NULL"))))]
+                  (postgres/run-tx!
+                   #(jdbc/query % "SELECT id,uuid  FROM   workload
+                                   WHERE  started  IS NOT NULL
+                                   AND    finished IS     NULL"))))]
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
