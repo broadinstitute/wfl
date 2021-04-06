@@ -198,13 +198,16 @@
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (doto (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (postgres/batch-update-workflow-statuses! tx workload)
-                    (postgres/update-workload-status! tx workload)
-                    (workloads/load-workload-for-id tx id))
-              register-workload-in-clio))]
-    (if (and started (not finished)) (update! workload) workload)))
+  (letfn [(update! [{:keys [id] :as workload} tx]
+            (postgres/batch-update-workflow-statuses! workload tx)
+            (postgres/update-workload-status! workload tx)
+            (workloads/load-workload-for-id id tx))]
+    (let [workload' (if (and started (not finished))
+                      (postgres/run-tx! (partial update! workload))
+                      workload)]
+      (when (and (:finished workload') (not finished))
+        (register-workload-in-clio workload'))
+      workload')))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)

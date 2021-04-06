@@ -179,7 +179,6 @@
 (defoverload workloads/create-workload! pipeline create-wgs-workload!)
 
 ;; TODO: move the URL validation up to workload creation
-;;
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [items id executor] :as workload}]

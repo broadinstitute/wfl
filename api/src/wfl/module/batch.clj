@@ -64,12 +64,13 @@
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (postgres/batch-update-workflow-statuses! tx workload)
-              (postgres/update-workload-status! tx workload)
-              (workloads/load-workload-for-id tx id)))]
-    (if (and started (not finished)) (update! workload) workload)))
+  (letfn [(update! [{:keys [id] :as workload} tx]
+            (postgres/batch-update-workflow-statuses! workload tx)
+            (postgres/update-workload-status! workload tx)
+            (workloads/load-workload-for-id id tx))]
+    (if (and started (not finished))
+      (postgres/run-tx! (partial update! workload))
+      workload)))
 
 (defn stop-workload!
   "Use transaction TX to stop the WORKLOAD."

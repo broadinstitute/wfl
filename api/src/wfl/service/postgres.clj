@@ -107,7 +107,7 @@
     (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))
 
 (defn run-tx!
-  "Execute `f` in the context of a database transaction `tx`."
+  "Execute `f` in the context of a database transaction."
   [f]
-  (jdbc/with-db-transaction [tx (wfl-db-config)] (f tx)))
-
+  (jdbc/with-db-transaction [tx (wfl-db-config)]
+    (f tx)))
