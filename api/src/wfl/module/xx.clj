@@ -154,7 +154,7 @@
                                                 (make-inputs-to-save output %)))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
-      (workloads/load-workload-for-id tx id))))
+      (workloads/load-workload-for-id id tx))))
 
 ;; TODO: move the URL validation up to workload creation
 ;;
@@ -166,7 +166,7 @@
           executor (is-known-cromwell-url? executor)]
       (run! update-record! (batch/submit-workload! workload executor workflow-wdl cromwellify-workflow-inputs cromwell-label (make-workflow-options executor)))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
-    (workloads/load-workload-for-id tx id)))
+    (workloads/load-workload-for-id id tx)))
 
 (defoverload workloads/create-workload! pipeline create-xx-workload!)
 (defoverload workloads/start-workload! pipeline start-xx-workload!)

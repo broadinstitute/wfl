@@ -77,7 +77,7 @@
                 (update :inputs  #(merge-to-json (:inputs  common) %))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
-      (workloads/load-workload-for-id tx id))))
+      (workloads/load-workload-for-id id tx))))
 
 (defn start-sg-workload!
   [tx {:keys [executor id items output] :as workload}]
@@ -93,7 +93,7 @@
                                     {(keyword wfl/the-name) pipeline}
                                     (make-workflow-options executor output)))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
-    (workloads/load-workload-for-id tx id)))
+    (workloads/load-workload-for-id id tx)))
 
 (defn ^:private clio-bam-record
   "Return `nil` or the single `clio` record with `bam`."

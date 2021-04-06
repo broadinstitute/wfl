@@ -111,10 +111,9 @@
                 (update :options #(merge-to-json (:options common) %))))]
     (let [[id table] (batch/add-workload-table! tx workflow-wdl request)]
       (jdbc/insert-multi! tx table (map serialize items (range)))
-      (workloads/load-workload-for-id tx id))))
+      (workloads/load-workload-for-id id tx))))
 
 ;; TODO: move the URL validation up to workload creation
-;;
 (defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
   [tx {:keys [items uuid executor] :as workload}]
@@ -137,9 +136,8 @@
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
-  (do
-    (start-copyfile-workload! tx workload)
-    (workloads/load-workload-for-id tx id)))
+  (do (start-copyfile-workload! tx workload)
+      (workloads/load-workload-for-id id tx)))
 
 (defoverload workloads/update-workload! pipeline batch/update-workload!)
 (defoverload workloads/stop-workload!   pipeline batch/stop-workload!)

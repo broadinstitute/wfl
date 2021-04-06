@@ -138,14 +138,14 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->> (add-arrays-workload! tx request)
-       (workloads/load-workload-for-id tx)))
+  (-> (add-arrays-workload! tx request)
+      (workloads/load-workload-for-id tx)))
 
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
   (do (start-arrays-workload! tx workload)
-      (workloads/load-workload-for-id tx id)))
+      (workloads/load-workload-for-id id tx)))
 
 (defmethod workloads/update-workload!
   pipeline
