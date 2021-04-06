@@ -18,7 +18,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent Future TimeUnit)
+  (:import (clojure.lang ExceptionInfo)
+           (java.util.concurrent Future TimeUnit)
            (org.postgresql.util PSQLException)))
 
 (def description
@@ -85,19 +86,22 @@
   []
   (letfn [(do-update! [{:keys [id uuid]}]
             (try
-              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (->> (workloads/load-workload-for-id tx id)
-                     (workloads/update-workload! tx)))
+              (workloads/update-workload!
+               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                 (workloads/load-workload-for-id tx id)))
               (catch PSQLException ex
+                (log/warnf "Failed to load workload %s" uuid)
+                (log/warn ex))
+              (catch ExceptionInfo ex
                 (log/warnf "Failed to update workload %s" uuid)
                 (log/warn ex))))
           (update-workloads! []
             (log/info "updating workloads")
             (run! do-update!
                   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (jdbc/query tx [(str/join " " ["SELECT id,uuid FROM workload"
-                                                   "WHERE started IS NOT NULL"
-                                                   "AND finished IS NULL"])]))))]
+                    (jdbc/query tx "SELECT id,uuid  FROM   workload
+                                    WHERE  started  IS NOT NULL
+                                    AND    finished IS     NULL"))))]
     (log/info "starting workload update loop")
     (update-workloads!)
     (future
