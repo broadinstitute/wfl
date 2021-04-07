@@ -309,16 +309,11 @@
    :bam_path                 ".bam"
    :insert_size_metrics_path ".insert_size_metrics"})
 
-;; First workloads/update-workload! makes workflow status "Succeeded".
-;; Second workloads/update-workload! may registers outputs with Clio.
-;;
 (defn ^:private test-clio-updates
   []
   (let [{:keys [items] :as request} (the-sg-workload-request)]
     (-> request
-        workloads/create-workload!
-        workloads/start-workload!
-        workloads/update-workload!
+        workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
               (let [{:keys [finished pipeline workflows]} workload]
@@ -382,11 +377,14 @@
     (run! update! workflows)))
 
 (deftest test-workload-state-transition
-  (with-redefs-fn
-    {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
-     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
-     #'sg/register-workload-in-clio             (constantly nil)}
-    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))
+  (let [count           (atom 0)
+        increment-count (fn [_] (swap! count inc))]
+    (with-redefs-fn
+      {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
+       #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
+       #'sg/register-workload-in-clio             increment-count}
+      #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
+    (is (== 1 @count) "Clio was updated more than once")))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))

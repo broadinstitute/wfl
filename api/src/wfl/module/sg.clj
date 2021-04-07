@@ -191,7 +191,7 @@
 
 ;; visible for testing
 (defn register-workload-in-clio
-  "Use `tx` to register `_workload` outputs with Clio."
+  "Register `_workload` outputs with Clio."
   [{:keys [executor output workflows] :as _workload}]
   (run! (partial register-workflow-in-clio executor output) workflows))
 
@@ -202,12 +202,11 @@
             (postgres/batch-update-workflow-statuses! workload tx)
             (postgres/update-workload-status! workload tx)
             (workloads/load-workload-for-id id tx))]
-    (let [workload' (if (and started (not finished))
-                      (postgres/run-tx! (partial update! workload))
-                      workload)]
-      (when (and (:finished workload') (not finished))
-        (register-workload-in-clio workload'))
-      workload')))
+    (if (and started (not finished))
+      (let [workload' (postgres/run-tx! (partial update! workload))]
+        (when (:finished workload') (register-workload-in-clio workload'))
+        workload')
+      workload)))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
