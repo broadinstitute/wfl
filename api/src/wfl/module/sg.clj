@@ -20,9 +20,8 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f"
-   :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
-                 "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
+  {:release "GDCWholeGenomeSomaticSingleSample_v1.1.0"
+   :path    "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
 
 (defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
