@@ -88,7 +88,8 @@
         row-ids     (-> (datarepo/query-table-between
                          dataset
                          table
-                         ["2021-03-30" "2021-03-31"]
+                         "updated"
+                         ["2021-03-29 00:00:00" "2021-03-31 00:00:00"]
                          [:datarepo_row_id])
                         :rows
                         flatten)]

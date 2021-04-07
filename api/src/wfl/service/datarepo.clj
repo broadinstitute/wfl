@@ -224,13 +224,12 @@
         (query-table-impl dataset table))))
 
 (defn ^:private query-table-between-impl
-  [{:keys [dataProject] :as dataset} table [start end] col-spec]
+  [{:keys [dataProject] :as dataset} table column-name [start end] col-spec]
   (let [bq-name (bigquery-name dataset)
         query   "SELECT %s
                  FROM   `%s.%s.%s`
-                 WHERE  datarepo_ingest_date > '%s'
-                 AND    datarepo_ingest_date <= '%s'"]
-    (->> (format query col-spec dataProject bq-name table start end)
+                 WHERE %s BETWEEN '%s' AND '%s'"]
+    (->> (format query col-spec dataProject bq-name table column-name start end)
          (bigquery/query-sync dataProject))))
 
 (defn query-table-between
@@ -238,8 +237,8 @@
    `dataset` in the open-closed `interval` of `datarepo_ingest_date`, where
    `dataset` is a DataRepo dataset or a snapshot of a dataset. If no rows match
    the `interval`, TDR will respond with error 400."
-  ([dataset table interval]
-   (query-table-between-impl dataset table interval "*"))
-  ([dataset table interval columns]
+  ([dataset table column-name interval]
+   (query-table-between-impl dataset table column-name interval "*"))
+  ([dataset table column-name interval columns]
    (->> (util/to-comma-separated-list (map name columns))
-        (query-table-between-impl dataset table interval))))
+        (query-table-between-impl dataset table column-name interval))))
