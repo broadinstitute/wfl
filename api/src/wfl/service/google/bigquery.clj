@@ -1,13 +1,11 @@
 (ns wfl.service.google.bigquery
   "Wrappers for Google Cloud BigQuery REST APIs.
    See https://cloud.google.com/bigquery/docs/reference/rest."
-  (:require [clj-http.client :as http]
-            [clojure.data.csv :as csv]
-            [clojure.java.io :as io]
+  (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.auth :as auth]
-            [wfl.util         :as util])
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.util          :as util])
   (:import [java.io StringWriter]))
 
 (def ^:private bigquery-url
@@ -75,12 +73,6 @@
   "Dump a BigQuery TABLE/view into a tsv FILE that's supported by Terra.
    Will dump the tsv contents to bytes if no FILE is provided.
 
-   The first column of the table must be the table primary key,
-   i.e. [entity-type]_id. For example, 'entity:sample_id' will upload the tsv
-   data into a `sample` table in the workspace (or create one if it does not
-   exist). If the table already contains a sample with that id, it will get
-   overwritten.
-
    Parameters
    ----------
    table            - BigQuery table/view body with the rows field flatten.
@@ -91,12 +83,7 @@
      (dump-table->tsv table \"dumped.tsv\")
      (dump-table->tsv table)"
   ([table file]
-   (letfn [(format-entity-type [[head & rest]]
-             (cons (format "entity:%s" head) rest))]
-     (let [columns (map :name (get-in table [:schema :fields]))]
-       (with-open [writer (io/writer file)]
-         (csv/write-csv writer [(format-entity-type columns)] :separator \tab)
-         (csv/write-csv writer (:rows table) :separator \tab)
-         file))))
+   (let [columns (map :name (get-in table [:schema :fields]))]
+     (util/columns-rows->terra-tsv :entity columns (:rows table) file)))
   ([table]
    (str (dump-table->tsv table (StringWriter.)))))

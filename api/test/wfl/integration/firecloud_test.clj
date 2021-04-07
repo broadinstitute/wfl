@@ -25,6 +25,40 @@
       (is (= well-known-workflow (:workflowId workflow)))
       (is (#{"Succeeded"} (:status workflow))))))
 
+(deftest test-create-submissions-for-entity-set-no-entities
+  (is (thrown? AssertionError (firecloud/create-submission-for-entity-set workspace method-configuration))))
+
+(deftest test-create-submissions-for-entity-set-one-entity
+  (util/bracket
+   #(firecloud/create-submission-for-entity-set workspace method-configuration entity)
+   #(firecloud/abort-submission workspace %)
+   #(let [workflow (-> (firecloud/get-submission workspace %) :workflows first)]
+      (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
+      (is (#{"Queued" "Submitted"}
+            ;; GH-1212: `get-submission` can return the workflow before it has
+            ;; been queued. In such cases :status is nil so try again
+           (or (:status workflow) (-> (firecloud/get-submission workspace %)
+                                      :workflows
+                                      first
+                                      :status)))))))
+
+;; TODO: tests for import-entity-set, consolidate-entities-to-set, submission creation for >1 entity.
+;; TODO: consolidate tests for single method in a single test.
+
+(deftest test-create-submission
+  (util/bracket
+   #(firecloud/create-submission workspace method-configuration entity)
+   #(firecloud/abort-submission workspace %)
+   #(let [workflow (-> (firecloud/get-submission workspace %) :workflows first)]
+      (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
+      (is (#{"Queued" "Submitted"}
+            ;; GH-1212: `get-submission` can return the workflow before it has
+            ;; been queued. In such cases :status is nil so try again
+           (or (:status workflow) (-> (firecloud/get-submission workspace %)
+                                      :workflows
+                                      first
+                                      :status)))))))
+
 (deftest test-create-submission
   (util/bracket
    #(firecloud/create-submission workspace method-configuration entity)
@@ -38,23 +72,6 @@
                                       :workflows
                                       first
                                       :status)))))))
-
-;; TODO: tests for 0 and 1 entities.
-(deftest test-create-submissions
-  (util/bracket
-   #(firecloud/create-submissions workspace method-configuration entity entity entity)
-   #(doseq [submission-id %]
-      (firecloud/abort-submission workspace submission-id))
-   #(doseq [submission-id %]
-      (let [workflow (-> (firecloud/get-submission workspace submission-id) :workflows first)]
-        (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
-        (is (#{"Queued" "Submitted"}
-             ;; GH-1212: `get-submission` can return the workflow before it has
-             ;; been queued. In such cases :status is nil so try again
-             (or (:status workflow) (-> (firecloud/get-submission workspace submission-id)
-                                        :workflows
-                                        first
-                                        :status))))))))
 
 (defmacro ^:private using-assemble-refbased-workflow-bindings
   "Define a set of workflow bindings for use in `body`. The values refer to a

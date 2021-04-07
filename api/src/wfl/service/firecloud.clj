@@ -5,7 +5,8 @@
             [clojure.string :as str]
             [wfl.auth :as auth]
             [wfl.environment :as env]
-            [wfl.util :as util]))
+            [wfl.util :as util])
+  (:import [java.util UUID]))
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
@@ -43,29 +44,6 @@
         http/request
         util/response-body-json
         :submissionId)))
-
-;; OLIVIA START
-;; Second pass: creates one submission in a workspace encompassing all specified entities (1+).
-;; Third pass: consolidate to single method supporting 1+ entities.
-
-(defn create-submissions
-  "
-  First pass:
-  Creates one submission in `workspace` for each of the specified `entities` using `methodconfig`.
-  Throws an `AssertionError` if no entities specified.
-  Returns a sequence of submission-ids for the newly-created submissions.
-
-  Parameters
-  ----------
-  workspace    - Fully-qualified Terra Workspace in which the submissions will be created.
-  methodconfig - Fully-qualified method configuration.
-  entities     - [optional] Pairs of the form [Type Name]
-  "
-  [workspace methodconfig & entities]
-  {:pre [(seq entities)]}
-  (for [entity entities] (create-submission workspace methodconfig entity)))
-
-;; OLIVIA END
 
 (defn create-workspace
   "Create an empty Terra workspace with the fully-qualified `workspace` name,
@@ -148,6 +126,81 @@
                   :multipart (util/multipart-body
                               {:Content/type "text/tab-separated-values"
                                :entities     (slurp file)})})))
+
+(defn import-entity-set
+  "
+  Formats existing sample ENTITIES into a Terra-compatible tsv
+  and uploads to WORKSPACE as an entity set entry identified by SET-NAME.
+
+  All entity references should correspond to existing entities.
+  All entity references should be of the same type.
+
+  Parameters
+  ----------
+    workspace - Fully-qualified Terra Workspace in which the entity set
+                will be created
+    set-name  - Unique identifier for the entity set
+    entities  - List of entity [Type Name] pairs
+
+  Example
+  -------
+    (import-entity-set \"workspace-namespace/workspace-name\"
+                       \"c25ee04b-...\"
+                       [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
+  "
+  [workspace set-name [[entity-type _] & _ :as entities]]
+  ;; TODO: Should we enforce common entity-type for all entities?
+  (let [columns [entity-type entity-type]
+        rows (for [[_ entity-name] entities] [set-name entity-name])]
+    (->> (util/columns-rows->terra-tsv :membership columns rows)
+         .getBytes
+         (import-entities workspace))))
+
+(defn consolidate-entities-to-set
+  "
+  Optionally consolidates ENTITIES into an entity set.
+  Returns the [Type Name] pair for the resulting entity,
+  or the passed-in entity if it was the only one specified.
+
+  Parameters
+  ----------
+    workspace - Fully-qualified Terra Workspace in which the entity set
+                would be created
+    entities  - List of entity [Type Name] pairs
+
+  Example
+  -------
+    (consolidate-entities-to-set \"workspace-namespace/workspace-name\"
+                                 [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
+  "
+  [workspace [entity & maybe-entities :as entities]]
+  ;; TODO: Should we enforce common entity-type for all entities?
+  (if (seq maybe-entities)
+    (let [id (str (UUID/randomUUID)) ; TODO: do we have access to a workload-affiliated UUID?
+          response (import-entity-set workspace id entities)]
+      [(:body response) id])
+    entity))
+
+(defn create-submission-for-entity-set
+  "
+  Optionally consolidates ENTITIES into an entity set and uses it to create a
+  submission in WORKSPACE with METHODCONFIG.
+
+  At least one entity should be specified.
+
+  Parameters
+  ----------
+    workspace    - Fully-qualified Terra Workspace in which the submission
+                   will be created.
+    methodconfig - Fully-qualified method configuration.
+    entities     - [Optional] Entity [Type Name] pairs
+  "
+  [workspace methodconfig & entities]
+  ;; TODO: refactor create-submission to support entity set specification.
+  ;; TODO: instead of variadic approach, should we take in a list of entities?
+  {:pre [(seq entities)]}
+  (->> (consolidate-entities-to-set workspace entities)
+       (create-submission workspace methodconfig)))
 
 (defn list-entities
   "List all entities with `entity-type` in `workspace`."
