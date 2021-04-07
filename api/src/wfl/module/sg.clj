@@ -20,7 +20,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "8f774f1b49b7a6e02f1ff77544894106c3b6a136"
+  {:release (str pipeline "_v1.1.0")
    :path    (str "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/"
                  pipeline ".wdl")})
 
@@ -298,10 +298,7 @@
 
   (def workload
     (let [{:keys [items]} raw-workload
-          keep?           #{"EOMI-B21C-NB1-A-1-0-D-A82T-36"
-                            "EOMI-B21C-TTP1-A-1-1-D-A82T-36"
-                            "EOMI-B2BJ-NB1-A-1-0-D-A82T-36"
-                            "EOMI-B2BJ-TTP1-A-1-1-D-A82T-36"}]
+          keep?           #{"EOMI-B21C-NB1-A-1-0-D-A82T-36"}]
       (-> raw-workload :items
           (->> (filter (comp keep? :base_file_name :inputs))
                (assoc raw-workload :items)))))
