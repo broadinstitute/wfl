@@ -212,4 +212,3 @@
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline
   batch/load-batch-workload-impl)
-
