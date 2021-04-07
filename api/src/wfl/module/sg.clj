@@ -291,11 +291,11 @@
     (def crams (tsv->crams prod tsv))
     (def cram (first crams))
     (def raw-workload (crams->workload crams)))
-  
+
   (map-tsv-file tsv)
   (count crams)
   crams
-  
+
   (def workload
     (let [{:keys [items]} raw-workload
           keep?           #{"EOMI-B21C-NB1-A-1-0-D-A82T-36"
@@ -305,13 +305,13 @@
       (-> raw-workload :items
           (->> (filter (comp keep? :base_file_name :inputs))
                (assoc raw-workload :items)))))
-  
+
   (let [file (clojure.java.io/file "workload-request.edn")]
     (with-open [writer (clojure.java.io/writer file)]
       (clojure.pprint/pprint workload writer)))
   (let [file (clojure.java.io/file "workload-request.json")]
     (with-open [writer (clojure.java.io/writer file)]
       (json/write workload writer :escape-slash false)))
-  
+
   (execute workload)
   (execute (update-in workload [:items] (comp vector first))))
