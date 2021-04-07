@@ -384,7 +384,7 @@
        #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
        #'sg/register-workload-in-clio             increment-count}
       #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
-    (is (= 1 @count) "Clio was updated more than once")))
+    (is (== 1 @count) "Clio was updated more than once")))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))

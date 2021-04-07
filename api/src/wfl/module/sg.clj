@@ -191,6 +191,7 @@
 
 ;; visible for testing
 (defn register-workload-in-clio
+  "Register `_workload` outputs with Clio."
   [{:keys [executor output workflows] :as _workload}]
   (run! (partial register-workflow-in-clio executor output) workflows))
 
