@@ -68,7 +68,7 @@
            (remove (comp nil? :uuid))
            (remove (comp finished? :status))
            (mapv #(get-status! workload %))
-           (map-m update!)))))
+           (run-m update!)))))
 
 (def update-workflow-statuses!
   "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."

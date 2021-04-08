@@ -5,6 +5,7 @@
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
+            [wfl.reader :refer :all]
             [wfl.references :as references]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
@@ -281,10 +282,11 @@
   pipeline
   [{:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/update-workflow-statuses! workload)
-            (when (:stopped workload)
-              (postgres/update-workload-status! workload tx))
-            (workloads/load-workload-for-id id tx))]
+            (sequence-m
+             (postgres/update-workflow-statuses! workload)
+             (when-m (:stopped workload)
+               (postgres/update-workload-status! workload))
+             (workloads/load-workload-for-id id)))]
     (if (and started (not finished))
-      (postgres/run-tx! (partial update! workload))
+      (postgres/run-tx! (update! workload))
       workload)))

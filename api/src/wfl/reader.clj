@@ -7,20 +7,28 @@
 
 (def ask (return identity))
 
-
 (defmacro let-m
-  [steps & body]
+  [steps & mexprs]
   (assert (vector? steps)       "a vector for its steps")
   (assert (even? (count steps)) "an even number of forms in steps vector")
   (let [x (gensym)
         g (fn [ys [y reader]] (conj ys y (list reader x)))]
     `(fn [~x] (let ~(reduce g [] (partition 2 steps))
-                ~@(mapv (fn [ma] (list ma x)) body)))))
+                ~@(mapv (fn [ma] (list ma x)) mexprs)))))
+
+(defmacro on-exception
+  [mexpr mhandler]
+  (let [x  (gensym) ex (gensym)]
+    `(fn [~x]
+       (try
+         ~(list mexpr x)
+         (catch Exception ~ex)
+         ~(list (list mhandler ex) x)))))
 
 (defn map-m [f readers]
   (fn [x] (mapv #(-> x % f) readers)))
 
-(defn sequence-m [readers] (map-m identity readers))
+(defn sequence-m [& readers] (map-m identity readers))
 
 (defn run-m [f readers]
   (fn [x] (run! #(-> x % f) readers)))
