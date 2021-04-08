@@ -16,14 +16,13 @@
     `(fn [~x] (let ~(reduce g [] (partition 2 steps))
                 ~@(mapv (fn [ma] (list ma x)) mexprs)))))
 
-(defmacro on-exception
-  [mexpr mhandler]
-  (let [x  (gensym) ex (gensym)]
-    `(fn [~x]
-       (try
-         ~(list mexpr x)
-         (catch Exception ~ex)
-         ~(list (list mhandler ex) x)))))
+(defn catch-m
+  [ma handler]
+  (fn [x]
+    (try
+      (ma x)
+      (catch Exception ex
+        ((handler ex) x)))))
 
 (defn map-m [f readers]
   (fn [x] (mapv #(-> x % f) readers)))

@@ -39,12 +39,12 @@
   (fn [body _] (:pipeline body)))
 
 (defn ^:private try-load-workload-impl [workload]
-  (on-exception
-    (load-workload-impl workload)
-    (fn [cause]
-      (throw (ex-info (str "Error loading workload - " (.getMessage cause))
-                      (assoc (ex-data cause) :workload workload)
-                      cause)))))
+  (catch-m
+   (load-workload-impl workload)
+   (fn [cause]
+     (throw (ex-info (str "Error loading workload - " (.getMessage cause))
+                     (assoc (ex-data cause) :workload workload)
+                     cause)))))
 
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
