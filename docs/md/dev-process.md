@@ -5,9 +5,13 @@ encourage ourselves to follow in most cases.
 
 ## The Swagger page
 
-WFL ships with a swaggger UI that documents all of the available endpoints.
-It's available at path `/swagger`, e.g.
+WFL ships with a swagger UI that documents all available endpoints. It's
+available at path `/swagger`, e.g.
 https://dev-wfl.gotc-dev.broadinstitute.org/swagger
+
+!!! tip
+To access the swagger page locally, you'll need to start a development server
+and access via the UI. See the development tips below for more information.
 
 ## Development Setup
 
@@ -30,7 +34,7 @@ differ from Cursive's docs:
     Run `make prebuild` before launching IntelliJ as it sets up all libraries
     and derived resources and sources:
     ```bash
-    make TARGET=prebuild - jN
+    make TARGET=prebuild -jN
     ```
 
 1. *Outside of IntelliJ*, `clone` the repo.
