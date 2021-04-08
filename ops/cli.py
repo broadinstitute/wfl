@@ -5,13 +5,12 @@ WFL Deployment Script
 usage: python3 cli.py -h
 """
 import argparse
-import os
 import re
+
 from dataclasses import dataclass
-from typing import Callable, Dict, List
-
-from util.misc import error, info, shell, success, warn
-
+from os.path     import dirname, realpath
+from typing      import Callable, Dict, List
+from util.misc   import error, info, shell, success, warn
 
 @dataclass
 class WflInstanceConfig:
@@ -19,14 +18,14 @@ class WflInstanceConfig:
     command: str
     dry_run: bool = False
     version: str = None
-    wfl_root_folder: str = f"{os.path.dirname(os.path.realpath(__file__))}"
+    wfl_root_folder: str = f"{dirname(dirname(realpath(__file__)))}"
     current_changelog: str = None
 
 
 def read_version(config: WflInstanceConfig) -> None:
     if not config.version:
         info("=>  Reading version from file at `./version`")
-        with open(f"{config.wfl_root_folder}/../version") as version_file:
+        with open(f"{config.wfl_root_folder}/version") as version_file:
             config.version = version_file.read().strip()
     else:
         info(f"=>  Version overridden, using {config.version} instead of `./version`")
@@ -37,6 +36,21 @@ def exit_if_dry_run(config: WflInstanceConfig) -> None:
     if config.dry_run:
         warn("Exiting due to --dry-run")
         exit(0)
+
+
+def publish_docker_images(config: WflInstanceConfig) -> None:
+    """Publish existing docker images for the stored version."""
+    info(f"=>  Publishing Docker images for version {config.version}")
+    for module in ["api", "ui"]:
+        shell(f"docker push broadinstitute/workflow-launcher-{module}:{config.version}")
+    success("Published Docker images")
+
+
+def make_git_tag(config: WflInstanceConfig) -> None:
+    info("=>  Tagging current commit with version")
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'", cwd=config.wfl_root_folder)
+    shell(f"git push origin v{config.version}", cwd=config.wfl_root_folder)
+    success(f"Tag 'v{config.version}' created and pushed")
 
 
 def _markdownify_commit_msg(commit: str) -> str:
@@ -85,6 +99,12 @@ command_mapping: Dict[str, List[Callable[[WflInstanceConfig], None]]] = {
         get_git_commits_since_last_tag,
         exit_if_dry_run,
         write_changelog
+    ],
+    "tag-and-push-images": [
+        read_version,
+        exit_if_dry_run,
+        make_git_tag,
+        publish_docker_images
     ]
 }
 
