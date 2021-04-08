@@ -1,12 +1,9 @@
 name: Release Latest Version
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: branch, tag or SHA to checkout.
-        required: false
-        default: 'main'
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -32,8 +29,6 @@ jobs:
     steps:
       - name: prepare sources
         uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.ref }}
 
       - name: Configure Git
         run: |
