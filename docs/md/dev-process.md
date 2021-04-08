@@ -76,7 +76,7 @@ For the release process, please refer to the [release guide](../dev-release/)
     shown below so JIRA could pick up the branch and link it
     to our JIRA board._
     ```
-    git checkout -B tbl/GH-666-feature-branch-something
+    git checkout -b tbl/GH-666-feature-branch-something
     ```
 
 4. Start your work, add and commit your changes
