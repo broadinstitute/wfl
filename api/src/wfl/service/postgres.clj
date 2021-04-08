@@ -43,15 +43,6 @@
                       {:cause "no-such-table"})))
     (jdbc/query (format "SELECT * FROM %s" table))))
 
-(defn ^:private cromwell-status
-  "`status` of the workflow with `uuid` in `cromwell`."
-  [cromwell uuid]
-  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (auth/get-auth-header)})
-      :body
-      util/parse-json
-      :status))
-
 (def ^:private finished?
   "Test if a workflow `:status` is in a terminal state."
   (set (conj cromwell/final-statuses "skipped")))
@@ -72,11 +63,11 @@
 
 (def update-workflow-statuses!
   "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
+  (letfn [(cromwell-status [{:keys [executor]} {:keys [uuid]}]
             (if (util/uuid-nil? uuid)
               "skipped"
-              (cromwell-status executor uuid)))]
-    (make-update-workflows get-cromwell-status)))
+              (cromwell/status executor uuid)))]
+    (make-update-workflows cromwell-status)))
 
 (def update-terra-workflow-statuses!
   "Use `tx` to update `status` of Terra `workflows` in a `workload`."
@@ -86,17 +77,22 @@
 
 (defn batch-update-workflow-statuses!
   "Use `tx` to update the `status` of the workflows in `_workload`."
-  [{:keys [executor uuid items] :as _workload}]
-  (let [uuid->status (->> {:label (str "workload:" uuid)
-                           :includeSubworkflows "false"}
-                          (cromwell/query executor)
-                          (map (juxt :id :status)))
+  [{:keys [items] :as workload}]
+  (let [uuid->status (map (juxt :id :status) (cromwell/workflows workload))
         now          (OffsetDateTime/now)]
     (letfn [(update! [[uuid status]]
               (jdbc/update! items
                             {:status status :updated now}
                             ["uuid = ?" uuid]))]
       (run-m update! uuid->status))))
+
+(defn update-workflow-statuses [{:keys [items] :as _workload} workflows]
+  (letfn [(update! [now [uuid status]]
+            (jdbc/update! items
+                          {:status status :updated now}
+                          ["uuid = ?" uuid]))]
+    (let [now (OffsetDateTime/now)]
+      (run! (comp #(update! now %) (juxt :uuid :status)) workflows))))
 
 (def ^:private active-workflow-query
   (format "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
@@ -107,6 +103,11 @@
    is not in `finished?`"
   [{:keys [items] :as _workload}]
   (jdbc/query (format active-workflow-query items)))
+
+(defn finished
+  ""
+  [{:keys [id] :as _workload}]
+  (jdbc/update! :workload {:finished (OffsetDateTime/now)} ["id = ?" id]))
 
 (defn update-workload-status!
   "Return a `Reader` mark `workload` finished when all `workflows` are

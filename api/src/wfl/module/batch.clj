@@ -2,10 +2,12 @@
   "Some utilities shared between batch workloads in cromwell."
   (:require [wfl.api.workloads :as workloads]
             [wfl.jdbc :as jdbc]
+            [wfl.reader :refer :all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [clojure.set :as set])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -61,15 +63,21 @@
                    (merge cromwell-label {:workload uuid}))))]
      (mapcat submit-batch! (group-by :options workflows)))))
 
+(def ^:private finished? (set (conj cromwell/final-statuses "skipped")))
+
 (defn update-workload!
-  "Use transaction TX to batch-update WORKLOAD statuses."
+  "Batch-update WORKLOAD statuses."
   [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload} tx]
-            (postgres/batch-update-workflow-statuses! workload tx)
-            (postgres/update-workload-status! workload tx)
-            (workloads/load-workload-for-id id tx))]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (let [workflows (->> (cromwell/workflows workload)
+                                 (map #(set/rename-keys % {:id :uuid})))
+                  running   (filter #(-> :status finished?) workflows)]
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (postgres/update-workflow-statuses tx workload workflows)
+                (when (empty? running) (postgres/finished tx workload))
+                (workloads/load-workload-for-id tx id))))]
     (if (and started (not finished))
-      (postgres/run-tx! (partial update! workload))
+      (update! workload)
       workload)))
 
 (defn stop-workload!
@@ -80,5 +88,5 @@
             (let [now (OffsetDateTime/now)]
               (patch! {:stopped now})
               (when-not (:started workload) (patch! {:finished now}))
-              (workloads/load-workload-for-id id tx)))]
+              (workloads/load-workload-for-id id)))]
     (if-not (or stopped finished) (stop! workload) workload)))

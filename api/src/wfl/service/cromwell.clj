@@ -266,3 +266,10 @@
   (let [finished? (comp (set final-statuses) #(status url id))]
     (work-around-cromwell-fail-bug 9 url id)
     (util/poll finished? 15 (Integer/MAX_VALUE))))
+
+(defn workflows
+  "Fetch all the submitted workflows in `_workload` via their workload UUID
+   label."
+  [{:keys [uuid executor] :as _workload}]
+  (query executor {:label (str "workload:" uuid)
+                   :includeSubworkflows "false"}))

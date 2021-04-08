@@ -7,6 +7,9 @@
 
 (def ask (return identity))
 
+(defn >> [& mexprs]
+  (fn [x] (last (mapv #(-> % x) mexprs))))
+
 (defmacro let-m
   [steps & mexprs]
   (assert (vector? steps)       "a vector for its steps")

@@ -31,6 +31,10 @@
   "workload -> workload"
   (fn [body] (:pipeline body)))
 
+(defmulti workflows
+  "workload -> [workflows]"
+  (fn [body] (:pipeline body)))
+
 ;; loading utilities
 (defmulti load-workload-impl
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.

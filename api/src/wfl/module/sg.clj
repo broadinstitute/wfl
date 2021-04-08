@@ -198,12 +198,17 @@
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload} tx]
-            (postgres/batch-update-workflow-statuses! workload tx)
-            (postgres/update-workload-status! workload tx)
-            (workloads/load-workload-for-id id tx))]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (let [workflows    (cromwell/workflows workload)]
+                  all-finished? (keep )
+
+              )
+            (sequence-m
+             (postgres/batch-update-workflow-statuses! workload)
+             (postgres/update-workload-status! workload)
+             (workloads/load-workload-for-id id)))]
     (if (and started (not finished))
-      (let [workload' (postgres/run-tx! (partial update! workload))]
+      (let [workload' (postgres/run-tx! (update! workload))]
         (when (:finished workload') (register-workload-in-clio workload'))
         workload')
       workload)))
