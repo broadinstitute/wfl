@@ -5,6 +5,7 @@
             [wfl.environment :as env]
             [wfl.jdbc :as jdbc]
             [wfl.auth :as auth]
+            [wfl.reader :refer :all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.firecloud :as firecloud]
             [wfl.util :as util])
@@ -23,20 +24,24 @@
          :password (env/getenv "WFL_POSTGRES_PASSWORD")
          :user (or (env/getenv "WFL_POSTGRES_USERNAME") (env/getenv "USER") "postgres")))
 
+(def ^:private table-exists-query
+  "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")
+
 (defn table-exists?
-  "Check if TABLE exists using transaction TX."
-  [tx table]
-  (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
-       (jdbc/query tx)
-       (count)
-       (not= 0)))
+  "Return a Reader checking if `table` exists."
+  [table]
+  {:pre (some? table)}
+  (let-m [result (jdbc/query [table-exists-query (str/lower-case table)])]
+    (return (not= 0 (-> result first :count)))))
 
 (defn get-table
-  "Return TABLE using transaction TX."
-  [tx table]
-  (if (and table (table-exists? tx table))
-    (jdbc/query tx (format "SELECT * FROM %s" table))
-    (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
+  "Return a Reader for `table`."
+  [table]
+  (let-m [exists? (table-exists? table)]
+    (unless-m exists?
+      (throw (ex-info (format "Table %s does not exist" table)
+                      {:cause "no-such-table"})))
+    (jdbc/query (format "SELECT * FROM %s" table))))
 
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."
@@ -52,9 +57,9 @@
   (set (conj cromwell/final-statuses "skipped")))
 
 (defn ^:private make-update-workflows [get-status!]
-  (fn [tx {:keys [items workflows] :as workload}]
+  (fn [{:keys [items workflows] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
-              (jdbc/update! tx items
+              (jdbc/update! items
                             {:status status
                              :updated (OffsetDateTime/now)
                              :uuid uuid}
@@ -62,7 +67,8 @@
       (->> workflows
            (remove (comp nil? :uuid))
            (remove (comp finished? :status))
-           (run! #(update! % (get-status! workload %)))))))
+           (mapv #(get-status! workload %))
+           (map-m update!)))))
 
 (def update-workflow-statuses!
   "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
@@ -80,34 +86,34 @@
 
 (defn batch-update-workflow-statuses!
   "Use `tx` to update the `status` of the workflows in `_workload`."
-  [tx {:keys [executor uuid items] :as _workoad}]
-  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+  [{:keys [executor uuid items] :as _workload}]
+  (let [uuid->status (->> {:label (str "workload:" uuid)
+                           :includeSubworkflows "false"}
                           (cromwell/query executor)
-                          (map (juxt :id :status)))]
+                          (map (juxt :id :status)))
+        now          (OffsetDateTime/now)]
     (letfn [(update! [[uuid status]]
-              (jdbc/update! tx items
-                            {:status status :updated (OffsetDateTime/now)}
+              (jdbc/update! items
+                            {:status status :updated now}
                             ["uuid = ?" uuid]))]
-      (run! update! uuid->status))))
+      (run-m update! uuid->status))))
 
 (def ^:private active-workflow-query
   (format "SELECT id FROM %%s WHERE status IS NULL OR status NOT IN %s"
           (util/to-quoted-comma-separated-list finished?)))
 
 (defn active-workflows
-  "Use `tx` to query all the workflows in `_workload` whose :status is not in
-  `finished?`"
-  [tx {:keys [items] :as _workload}]
-  (jdbc/query tx (format active-workflow-query items)))
+  "Return a Reader that queries all the workflows in `_workload` whose :status
+   is not in `finished?`"
+  [{:keys [items] :as _workload}]
+  (jdbc/query (format active-workflow-query items)))
 
 (defn update-workload-status!
-  "Use `tx` to mark `workload` finished when all `workflows` are finished."
-  [tx {:keys [id] :as workload}]
-  (when (empty? (active-workflows tx workload))
-    (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))
-
-(defn run-tx!
-  "Execute `f` in the context of a database transaction."
-  [f]
-  (jdbc/with-db-transaction [tx (wfl-db-config)]
-    (f tx)))
+  "Return a `Reader` mark `workload` finished when all `workflows` are
+   finished."
+  [{:keys [id] :as workload}]
+  (let-m [workflows (active-workflows workload)]
+    (when-m (empty? workflows)
+      (jdbc/update! :workload
+                    {:finished (OffsetDateTime/now)}
+                    ["id = ?" id]))))

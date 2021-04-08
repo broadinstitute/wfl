@@ -271,8 +271,8 @@
   pipeline
   [request]
   (postgres/run-tx!
-    #(-> (add-aou-workload! request %)
-         (workloads/load-workload-for-id %))))
+   #(-> (add-aou-workload! request %)
+        (workloads/load-workload-for-id %))))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
 (defoverload workloads/stop-workload!  pipeline batch/stop-workload!)
@@ -280,8 +280,8 @@
 (defmethod workloads/update-workload!
   pipeline
   [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload} tx]
-            (postgres/update-workflow-statuses! workload tx)
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/update-workflow-statuses! workload)
             (when (:stopped workload)
               (postgres/update-workload-status! workload tx))
             (workloads/load-workload-for-id id tx))]
