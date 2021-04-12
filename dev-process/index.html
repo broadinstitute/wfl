@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.6">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.1">
     
     
       
@@ -18,10 +18,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.2c0c5eaf.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.9299cb39.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.7fa14f5b.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ef6f36e2.min.css">
         
       
     
@@ -51,8 +51,11 @@
     
     
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
-      
   
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+      <script>var palette=__get("__palette");if(null!==palette&&"object"==typeof palette.color)for(var key in palette.color)document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
@@ -96,9 +99,26 @@
         </div>
       </div>
     </div>
-    <div class="md-header__options">
-      
-    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_1">
+          <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
+          </label>
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_2">
+          <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2m10-3a5 5 0 0 1 5 5 5 5 0 0 1-5 5H7a5 5 0 0 1-5-5 5 5 0 0 1 5-5h10M7 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3h10a3 3 0 0 0 3-3 3 3 0 0 0-3-3H7z"/></svg>
+          </label>
+        
+      </form>
+    
+    
     
       <label class="md-header__button md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
@@ -114,7 +134,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
       </label>
       <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
       </button>
     </form>
     <div class="md-search__output">
@@ -136,7 +156,7 @@
 <a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -179,7 +199,7 @@
 <a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -325,13 +345,6 @@
           <li class="md-nav__item">
   <a href="#useful-hacks-for-debugging-postgresliquibase-locally" class="md-nav__link">
     Useful hacks for debugging Postgres/Liquibase locally
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#diagnosis" class="md-nav__link">
-    Diagnosis
   </a>
   
 </li>
@@ -494,6 +507,18 @@
     <li class="md-nav__item">
       <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
         External Exome
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-sg/" class="md-nav__link">
+        Somatic Genomes
       </a>
     </li>
   
@@ -713,13 +738,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#diagnosis" class="md-nav__link">
-    Diagnosis
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -743,22 +761,23 @@
                 
                 
                 <h1 id="development-process">Development Process<a class="headerlink" href="#development-process" title="Permanent link">⚓︎</a></h1>
-<p>This is a development process
-we are tying to standardize
-within the team,
-and encourage ourselves
-to follow in most cases.</p>
+<p>This is a development process we are tying to standardize within the team and
+encourage ourselves to follow in most cases.</p>
 <h2 id="the-swagger-page">The Swagger page<a class="headerlink" href="#the-swagger-page" title="Permanent link">⚓︎</a></h2>
-<p>WFL ships with a swaggger UI that documents all of the
-available endpoints. It's available at path <code>/swagger</code>, e.g.
+<p>WFL ships with a swagger UI that documents all available endpoints. It's
+available at path <code>/swagger</code>, e.g.
 https://dev-wfl.gotc-dev.broadinstitute.org/swagger</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+</div>
+<p>To access the swagger page locally, you'll need to start a development server
+and access via the UI. See the development tips below for more information.</p>
 <h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">⚓︎</a></h2>
-<p>Clojure development feels very different from Scala and Java
-development. It even differs markedly from development in other
-<em>dynamic languages</em> such as Python or Ruby.</p>
-<p>Get a demonstration from someone familiar with Clojure
-development before you spend too much time trying to figure
-things out on your own.</p>
+<p>Clojure development feels very different from Scala and Java development. It
+even differs markedly from development in other <em>dynamic languages</em> such as
+Python or Ruby.</p>
+<p>Get a demonstration from someone familiar with Clojure development before you
+spend too much time trying to figure things out on your own.</p>
 <p>Find a local Cursive user for guidance if you like IntelliJ.
 <a href="mailto:chengche@broadinstitute.org">Rex Wang</a> and
 <a href="mailto:sehsan@broadinstitute.org">Saman Ehsan</a> know how to use it.
@@ -766,15 +785,16 @@ Cursive licences are available
 <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
 The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:</p>
-<details class="tip" open="open"><summary>Tip</summary><p>It is recommended to run <code>prebuild</code> before launching IntelliJ
-as it sets up all libraries and derived resources and sources:
-<div class="highlight"><pre><span></span><code>make <span class="nv">TARGET</span><span class="o">=</span>prebuild - jN
+<details class="tip" open="open"><summary>Tip</summary><p>Run <code>make prebuild</code> before launching IntelliJ as it sets up all libraries
+and derived resources and sources:
+<div class="highlight"><pre><span></span><code>make <span class="nv">TARGET</span><span class="o">=</span>prebuild -jN
 </code></pre></div></p>
 </details>
 <ol>
 <li><em>Outside of IntelliJ</em>, <code>clone</code> the repo.</li>
 <li><em>Now inside of IntelliJ</em>, import the project.</li>
-<li>Use the Project Structure window (Help -&gt; Find Action -&gt; Project Structure) to set a JDK as the Project SDK</li>
+<li>Use the Project Structure window (Help -&gt; Find Action -&gt; Project Structure)
+   to set a JDK as the Project SDK</li>
 </ol>
 <p>There is also a
 <a href="https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva">Calva</a>
@@ -785,10 +805,8 @@ plugin for <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
 trivial to set up, but not <em>especially</em> difficult if you are
 used to Emacs. (I can help if CIDER gives you trouble.)</p>
 <h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">⚓︎</a></h2>
-<p>We always make feature branches from <code>main</code>,
-make pull requests,
-ask for reviews
-and merge back to <code>main</code> on Github.</p>
+<p>We base feature branches off <code>develop</code>, make pull requests, ask for reviews
+and merge back to <code>develop</code> on Github.</p>
 <p>For the release process, please refer to the <a href="../dev-release/">release guide</a></p>
 <ol>
 <li>
@@ -797,9 +815,9 @@ and merge back to <code>main</code> on Github.</p>
 </code></pre></div></p>
 </li>
 <li>
-<p>Start from the latest copy of the remote main
-    <div class="highlight"><pre><span></span><code>git checkout main
-git pull origin main
+<p>Start from the latest copy of the remote develop
+    <div class="highlight"><pre><span></span><code>git checkout develop
+git pull origin develop
 </code></pre></div></p>
 </li>
 <li>
@@ -817,16 +835,17 @@ git commit -m &quot;Update the readme file.&quot;
 </code></pre></div></p>
 </li>
 <li>
-<p>[Optional] Rebase onto lastest main: only if you want to get updates from the main
-    <div class="highlight"><pre><span></span><code>git checkout main
-git pull origin main
+<p>[Optional] Rebase onto lastest develop if you want to get updates
+    <div class="highlight"><pre><span></span><code>git checkout develop
+git pull origin develop --ff
 git checkout tbl/GH-666-feature-branch-something
-git rebase main
+git rebase develop
 </code></pre></div></p>
-<p>alternatively, you could use the following commands without switching branches:
+<p>alternatively, you could use the following commands without switching
+branches:
 <div class="highlight"><pre><span></span><code>git checkout tbl/GH-666-feature-branch-something
-git fetch origin main
-git merge main
+git fetch origin develop
+git merge develop
 </code></pre></div></p>
 </li>
 <li>
@@ -835,10 +854,12 @@ git merge main
 </code></pre></div></p>
 </li>
 <li>
-<p>Create the pull request on Github UI. Be sure to fill out the PR description following the PR template instructions.</p>
+<p>Create the pull request on Github UI. Be sure to fill out the PR description
+   following the PR template instructions.</p>
 <ul>
 <li>
-<p>If the PR is still in development, make sure use the dropdown menu and choose <code>Create draft pull request</code></p>
+<p>If the PR is still in development, make sure use the dropdown menu and
+  choose <code>Create draft pull request</code></p>
 </li>
 <li>
 <p>If the PR is ready for review, click <code>Create pull request</code>.</p>
@@ -846,7 +867,7 @@ git merge main
 </ul>
 </li>
 <li>
-<p>Look for a reviewer in the team.</p>
+<p>Look for reviewer(s) in the team.</p>
 </li>
 <li>
 <p>Address reviewer comments with more commits.</p>
@@ -860,115 +881,76 @@ git merge main
 </ol>
 <h2 id="development-tips">Development Tips<a class="headerlink" href="#development-tips" title="Permanent link">⚓︎</a></h2>
 <p>Here are some tips for WFL development.</p>
-<p>Some of this advice might help
-when testing Liquibase migration
-or other changes
-that affect WFL's Postgres database.</p>
+<p>Some of this advice might help when testing Liquibase migration or other
+changes that affect WFL's Postgres database.</p>
 <h3 id="migrating-a-database">migrating a database<a class="headerlink" href="#migrating-a-database" title="Permanent link">⚓︎</a></h3>
-<p>To change WFL's Postgres database schema,
-add a changeset XML file
-in the <code>database/changesets</code> directory.
-Name the file for a recent or the current date
-followed by something describing the change.
-That will ensure that the changesets
-list in the order in which they apply.
-Note that the <code>id</code> and <code>logicalFilePath</code> attributes
-are derived from the changeset's file name.
-Then add the changeset file
-to the <code>database/changlog.xml</code> file.</p>
-<p>Test the changes against a local <em>scratch database</em>.
-See the next section for suggestions.</p>
+<p>To change WFL's Postgres database schema, add a changeset XML file in the
+<code>database/changesets</code> directory. Name the file for a recent or the current date
+followed by something describing the change. That will ensure that the
+changesets list in the order in which they apply. Note that the <code>id</code> and
+<code>logicalFilePath</code> attributes are derived from the changeset's file name.
+Then add the changeset file to the <code>database/changlog.xml</code> file.</p>
+<p>Test the changes against a local <em>scratch database</em>. See the next section for
+suggestions.</p>
 <h3 id="debugging-jdbc-sql">debugging JDBC SQL<a class="headerlink" href="#debugging-jdbc-sql" title="Permanent link">⚓︎</a></h3>
-<p>Something seems to swallow SQL exceptions
-raised by Postgres and the JDBC library.
-Wrap suspect <code>clojure.java.jdbc</code> calls
-in <code>wfl.util/do-or-nil</code> to ensure
-that any exceptions show up
-in the server logs.</p>
+<p>Something seems to swallow SQL exceptions raised by Postgres and the JDBC
+library. Wrap suspect <code>clojure.java.jdbc</code> calls in <code>wfl.util/do-or-nil</code> to
+ensure that any exceptions show up in the server logs.</p>
 <h3 id="debugging-api-specs">debugging API specs<a class="headerlink" href="#debugging-api-specs" title="Permanent link">⚓︎</a></h3>
-<p>If an API references an undefined spec,
-HTTP requests and responses might silently fail
-or the Swagger page will fail to render.
-Check the <code>clojure.spec.alpha/def</code>s
-in <code>wfl.api.routes</code> for typos
-before tearing your hair out.</p>
+<p>If an API references an undefined spec, HTTP requests and responses might
+silently fail or the Swagger page will fail to render. Check the
+<code>clojure.spec.alpha/def</code>s in <code>wfl.api.routes</code> for typos before tearing your
+hair out.</p>
 <h3 id="hacking-a-scratch-database">hacking a scratch database<a class="headerlink" href="#hacking-a-scratch-database" title="Permanent link">⚓︎</a></h3>
-<p>You can test against a local Postgres
-before running Liquibase or SQL
-against a shared database
-in <code>gotc-dev</code> or <em>gasp</em> production.</p>
+<p>You can test against a local Postgres before running Liquibase or SQL against a
+shared database in <code>gotc-dev</code> or <em>gasp</em> production.</p>
 <p>First install Postgres locally.</p>
 <div class="highlight"><pre><span></span><code>brew install postgresql@11
 </code></pre></div>
-<p>You need version 11 because that
-is what Google's hosted service supports,
+<p>You need version 11 because that is what Google's hosted service supports,
 and there are differences in the SQL syntax.</p>
-<p>Modify the value of <code>WFL_POSTGRES_URL</code>
-in <code>(postgres/wfl-db-config)</code> to redirect
-the WFL server's database
-to a local Postgres server.
-With that hack in place,
-running <code>./ops/server.sh</code>
-(or however you launch a local WFL server)
-will connect the server to a local Postgres.</p>
-<p>Now any changes to WFL state
-will affect only your local database.
-That includes running Liquibase,
-so don't forget to reset <code>:debug</code> to <code>env</code>
-before deploying your changes
-after merging a PR.</p>
+<p>Modify the value of <code>WFL_POSTGRES_URL</code> in <code>(postgres/wfl-db-config)</code> to redirect
+the WFL server's database to a local Postgres server. With that hack in place,
+running <code>./ops/server.sh</code> (or however you launch a local WFL server) will
+connect the server to a local Postgres.</p>
+<p>Now any changes to WFL state will affect only your local database.
+That includes running Liquibase, so don't forget to reset <code>:debug</code> to <code>env</code>
+before deploying your changes after merging a PR.</p>
 <h3 id="useful-hacks-for-debugging-postgresliquibase-locally">Useful hacks for debugging Postgres/Liquibase locally<a class="headerlink" href="#useful-hacks-for-debugging-postgresliquibase-locally" title="Permanent link">⚓︎</a></h3>
 <p>Starting <code>postgres</code>:
 <div class="highlight"><pre><span></span><code>pg_ctl -D /usr/local/var/postgresql@11 start
 </code></pre></div></p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>It might be useful to set up some an alias for postgres if you are using zsh, for
-example:
+<p>It might be useful to set up some an alias for postgres if you are using
+zsh, for example:
 <div class="highlight"><pre><span></span><code>alias pq=&quot;pg_ctl -D /usr/local/var/postgresql@11&quot;
 </code></pre></div>
-thus you could use <code>pq start</code> or <code>pq stop</code> to easily spin up and turn down the db.</p>
+thus you could use <code>pq start</code> or <code>pq stop</code> to easily spin up and turn down
+the db.</p>
 </div>
 <p>Running <code>liquibase update</code>:
-<div class="highlight"><pre><span></span><code>liquibase --classpath<span class="o">=</span><span class="k">$(</span>clojure -Spath<span class="k">)</span> --url<span class="o">=</span>jdbc:postgresql:wfl --changeLogFile<span class="o">=</span>database/changelog.xml --username<span class="o">=</span><span class="nv">$USER</span> update
+<div class="highlight"><pre><span></span><code>liquibase --classpath<span class="o">=</span><span class="k">$(</span>clojure -Spath<span class="k">)</span>          <span class="se">\</span>
+          --url<span class="o">=</span>jdbc:postgresql:wfl               <span class="se">\</span>
+          --changeLogFile<span class="o">=</span>database/changelog.xml <span class="se">\</span>
+          --username<span class="o">=</span><span class="nv">$USER</span> update
 </code></pre></div>
-For the above, the username and password need to be correct for the target environment.</p>
-<p>If you're running a local server with the postgres command above, you don't need a
-password and can omit it.</p>
+For the above, the username and password need to be correct for the target
+environment.</p>
+<p>If you're running a local server with the postgres command above, you don't
+need a password and can omit it.</p>
 <p>Otherwise, you may be able to find this data in the Vault entry for the
 environment's server --
 <code>resources/wfl/environments.clj</code> has some environments if you've built locally.
 You can use <code>--password=$ENV_SOMETHING</code> to supply it.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>It is more convenient to use the following alias to migrate the database schema
-from within the <code>api</code> directory:
+<p>It is more convenient to use the following alias to migrate the database
+schema from within the <code>api</code> directory:
 <div class="highlight"><pre><span></span><code>clojure -M:liquibase
 </code></pre></div>
-if you are working aginst a local database. </p>
+if you are working with a local database. </p>
 </div>
-<h3 id="diagnosis">Diagnosis<a class="headerlink" href="#diagnosis" title="Permanent link">⚓︎</a></h3>
-<p>Workflow Launcher has a diagnostic command, <code>dx</code>,
-for debugging problems.</p>
-<p>Run <code>wfl dx</code> to get a list of the diagnostics available.</p>
-<div class="highlight"><pre><span></span><code>$ java -jar derived/api/target/wfl.jar dx
-
-wfl dx: tools to <span class="nb">help</span> debug workflow problems.
-
-Usage: wfl dx &lt;tool&gt; <span class="o">[</span>&lt;arg&gt; ...<span class="o">]</span>
-Where: &lt;tool&gt; is the name of some diagnostic tool.
-       &lt;arg&gt; ... are optional arguments to &lt;tool&gt;.
-
-The &lt;tool&gt;s and their &lt;arg&gt;s are named here.
-  all-metadata environment <span class="p">&amp;</span> ids
-    All workflow metadata <span class="k">for</span> IDS from Cromwell <span class="k">in</span> ENVIRONMENT.
-  event-timing environment id
-    Time per event <span class="nb">type</span> <span class="k">for</span> workflow with ID <span class="k">in</span> ENVIRONMENT.
-...
-Error: Must specify a dx &lt;tool&gt; to run.
-BTW: You ran: wfl dx
-wm28d-f87:wfl yanc$
-</code></pre></div>
                 
               
               
@@ -979,6 +961,7 @@ wm28d-f87:wfl yanc$
             </article>
           </div>
         </div>
+        
       </main>
       
         
@@ -1049,10 +1032,10 @@ wm28d-f87:wfl yanc$
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fb4a9340.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fe42c31b.min.js", "version": 2.0}</script>
     
     
-      <script src="../assets/javascripts/bundle.a1c7c35e.min.js"></script>
+      <script src="../assets/javascripts/bundle.7353b375.min.js"></script>
       
     
   </body>
