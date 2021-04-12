@@ -244,6 +244,8 @@ reprocessing *eXternal eXomes*.
 The `module/wgs.clj` file helps implements a command-line starter for
 reprocessing *Whole GenomeS*.
 
+The `module/sg.clj` file implements *Somatic Genomes* support.
+
 The `module/all.clj` file hosts some utilities shared across modules.
 
 The `metadata.clj` file implements a tool to extract metadata

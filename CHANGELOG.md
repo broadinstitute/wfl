@@ -1,3 +1,60 @@
+# Release 0.6.0
+- GH-1282: Document WFL's support for Somatic Genomes. ([#361](https://github.com/broadinstitute/wfl/pull/361))
+- GitHub `develop` infrastructure + release changes ([#356](https://github.com/broadinstitute/wfl/pull/356))
+- GH-1188: Bump GDCWholeGenomeSomaticSingleSample Version When Lantern Release ([#351](https://github.com/broadinstitute/wfl/pull/351))
+- [GH-1278] Fix SG update-workload! implementation from updating Clio multiple times ([#358](https://github.com/broadinstitute/wfl/pull/358))
+- [GH-1221] import snapshots into a workspace ([#347](https://github.com/broadinstitute/wfl/pull/347))
+- Bump pyyaml from 5.3.1 to 5.4 in /ops ([#350](https://github.com/broadinstitute/wfl/pull/350))
+- Fix CLIpy. ([#349](https://github.com/broadinstitute/wfl/pull/349))
+- Ra gh1254 cli changes ([#346](https://github.com/broadinstitute/wfl/pull/346))
+- [GH-1214] Create TDR Snapshots ([#338](https://github.com/broadinstitute/wfl/pull/338))
+- Ra gh1254 cli changes ([#345](https://github.com/broadinstitute/wfl/pull/345))
+- [GH-1244] Lightweight Testing Dataset(s) ([#342](https://github.com/broadinstitute/wfl/pull/342))
+- Changing cli.py to reflect deployment from helmfile rather than helm ([#344](https://github.com/broadinstitute/wfl/pull/344))
+- Bump elliptic from 6.5.3 to 6.5.4 in /ui ([#343](https://github.com/broadinstitute/wfl/pull/343))
+- [GH-1225] POST /api/v1/stop  ([#337](https://github.com/broadinstitute/wfl/pull/337))
+- [GH-1203]: fix reading from vault at load-time ([#336](https://github.com/broadinstitute/wfl/pull/336))
+- [GH-1172] Start System Test for `sarscov2_illumina_all` Automation ([#334](https://github.com/broadinstitute/wfl/pull/334))
+- GH-1191: Plumb WFL_CLIO_URL for production. ([#335](https://github.com/broadinstitute/wfl/pull/335))
+- [GH-1196] Try to run production data through Somatic Genomes pipeline. ([#327](https://github.com/broadinstitute/wfl/pull/327))
+- Add workaround for GH-1212. ([#333](https://github.com/broadinstitute/wfl/pull/333))
+- [GH-1172] Add `inputs.edn` for `sarscov2_illumina_full` ([#332](https://github.com/broadinstitute/wfl/pull/332))
+- [GH-1172] Bulk Ingest Workflow Outputs ([#331](https://github.com/broadinstitute/wfl/pull/331))
+- Use firecloud api defined by `WFL_FIRECLOUD_URL`  ([#329](https://github.com/broadinstitute/wfl/pull/329))
+- [GH-1200] Double submit hot-fix 0.5.2 changes. ([#330](https://github.com/broadinstitute/wfl/pull/330))
+- [GH-1205] TDR schemas for sarscov2_illumina_full pipeline ([#328](https://github.com/broadinstitute/wfl/pull/328))
+- GH-1163: Support Somatic Genomes in production. ([#324](https://github.com/broadinstitute/wfl/pull/324))
+- [GH-1181] Add Dispatch for "Object" Type ([#325](https://github.com/broadinstitute/wfl/pull/325))
+- [GH-1155] Add a BigQuery module for BQ and Terra interactions ([#320](https://github.com/broadinstitute/wfl/pull/320))
+- [GH-1181] Ingest Workflow Outputs into TDR ([#321](https://github.com/broadinstitute/wfl/pull/321))
+- [GH-1197] Fix default inputs and options and update documentation about configurations. ([#317](https://github.com/broadinstitute/wfl/pull/317))
+- Updating AppVersion to the latest tag (0.5.1) ([#323](https://github.com/broadinstitute/wfl/pull/323))
+- GH-1178: Improve SG tests. ([#318](https://github.com/broadinstitute/wfl/pull/318))
+- partition by `datarepo_ingest_data` in assemble_refbased schema ([#322](https://github.com/broadinstitute/wfl/pull/322))
+- [GH-1176] assemble_refbased workflow outputs schema ([#316](https://github.com/broadinstitute/wfl/pull/316))
+- fix [GH-1182] by reordering when the Pub/Sub subscription is ([#319](https://github.com/broadinstitute/wfl/pull/319))
+- [GH-1130] Miscellaneous WFL configuration and build clean up. Remove envs.  ([#310](https://github.com/broadinstitute/wfl/pull/310))
+- Update the environments commit. For the last time? ([#315](https://github.com/broadinstitute/wfl/pull/315))
+- [GH-1153] Google Cloud Pub/Sub Support for Cloud Storage Notifications ([#312](https://github.com/broadinstitute/wfl/pull/312))
+- GH-1091: Track Somatic Genomes output in Clio. ([#307](https://github.com/broadinstitute/wfl/pull/307))
+- [Snack] Fix some bugs and warnings on the frontend ([#311](https://github.com/broadinstitute/wfl/pull/311))
+- Add docs for GPArrays module ([#309](https://github.com/broadinstitute/wfl/pull/309))
+- [GH-1145] [AppSec] Add AppSec Github Trivy Action ([#308](https://github.com/broadinstitute/wfl/pull/308))
+- [Snack] Version the docs ([#301](https://github.com/broadinstitute/wfl/pull/301))
+- [GH-1144] Helper script for importing Data Repo data into Terra ([#306](https://github.com/broadinstitute/wfl/pull/306))
+- Move everything around, add abort.sh docs ([#302](https://github.com/broadinstitute/wfl/pull/302))
+- [GH-1142] Make aou cleanup script backwards compatible ([#303](https://github.com/broadinstitute/wfl/pull/303))
+- Bump version file to 0.6.0. ([#305](https://github.com/broadinstitute/wfl/pull/305))
+
+# Release 0.5.2
+- Pin to a commit hash.
+- Bump version string.
+- Use WGS wdl on develop branch.
+
+# Release 0.5.1
+- Bump version string
+- Use a hot-fix WDL to bypass OOM errors.
+
 # Release 0.5.0
 - [GH-1120] Document the usage of Env Vars and fixed an issue with GPArrays system test. ([#287](https://github.com/broadinstitute/wfl/pull/287))
 - GH-1104: Factor build code out of WFL. ([#297](https://github.com/broadinstitute/wfl/pull/297))

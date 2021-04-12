@@ -1,11 +1,10 @@
-# This workflow triggers tests on PRs that targets main branch
-name: Tests on Pull Requests and Main
+# This workflow triggers tests on PRs
+name: Tests on Pull Requests
 on:
-  push:
-    branches:
-      - main
-      - release/**
   pull_request:
+    paths:
+      - api/**
+      - ui/**
 
 jobs:
   build:

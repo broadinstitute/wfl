@@ -20,9 +20,8 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "4683be90f7c42b6e3a6438ae00d38dd88a655a9f"
-   :path    (str "beta-pipelines/broad/somatic/single_sample/wgs/"
-                 "gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl")})
+  {:release "GDCWholeGenomeSomaticSingleSample_v1.1.0"
+   :path    "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
 
 (defn ^:private cromwell->strings
   "Map Cromwell URL to its options or throw."
@@ -191,11 +190,9 @@
 
 ;; visible for testing
 (defn register-workload-in-clio
-  "Use `tx` to register `_workload` outputs with Clio."
-  [{:keys [executor items output] :as _workload} tx]
-  (run!
-   (partial register-workflow-in-clio executor output)
-   (postgres/get-table tx items)))
+  "Register `_workload` outputs with Clio."
+  [{:keys [executor output workflows] :as _workload}]
+  (run! (partial register-workflow-in-clio executor output) workflows))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
@@ -203,9 +200,12 @@
   (letfn [(update! [{:keys [id] :as workload}]
             (postgres/batch-update-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
-            (doto (workloads/load-workload-for-id tx id)
-              (register-workload-in-clio tx)))]
-    (if (and started (not finished)) (update! workload) workload)))
+            (workloads/load-workload-for-id tx id))]
+    (if (and started (not finished))
+      (let [workload' (update! workload)]
+        (when (:finished workload') (register-workload-in-clio workload'))
+        workload')
+      workload)))
 
 (defoverload workloads/create-workload!   pipeline create-sg-workload!)
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
