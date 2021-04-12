@@ -18,8 +18,7 @@
             [wfl.service.postgres :as postgres]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.util.concurrent Future TimeUnit)
-           (org.postgresql.util PSQLException)))
+  (:import (java.util.concurrent Future TimeUnit)))
 
 (def description
   "The purpose of this command."
@@ -88,9 +87,9 @@
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (->> (workloads/load-workload-for-id tx id)
                      (workloads/update-workload! tx)))
-              (catch PSQLException ex
+              (catch Throwable t
                 (log/warnf "Failed to update workload %s" uuid)
-                (log/warn ex))))
+                (log/warn t))))
           (update-workloads! []
             (log/info "updating workloads")
             (run! do-update!
