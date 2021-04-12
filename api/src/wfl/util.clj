@@ -435,29 +435,12 @@
   ([task]
    (poll task 1)))
 
-(defn columns-rows->tsv
-  "
-  Writes COLUMNS and ROWS to a .tsv named FILE, or to bytes if FILE not specified.
-
-  Examples
-  --------
-    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
-    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"destination.tsv\")
-  "
-  ([columns rows file]
-   (with-open [writer (io/writer file)]
-     (csv/write-csv writer columns :separator \tab)
-     (csv/write-csv writer rows :separator \tab)
-     file))
-  ([columns rows]
-   (str (columns-rows->tsv columns rows (StringWriter.)))))
-
 "A set of all mutually supported TSV file types (by FireCloud and WFL)"
 (s/def ::tsv-type #{:entity :membership})
 
 (defn terra-id
   "
-  Generates a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
 
   The first column of the table must be its primary key, and named accordingly:
     entity:[entity-type]_id
@@ -483,14 +466,29 @@
   "
   [tsv-type col]
   {:pre [(s/valid? ::tsv-type tsv-type)]}
-  (let [stripped-col (-> (unsuffix col "_id")
-                         (unsuffix "_set"))
-        maybe-set (if (= :membership tsv-type) "_set" "")]
-    (format "%s:%s%s_id" (name tsv-type) stripped-col maybe-set)))
+  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
+    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+
+(defn columns-rows->tsv
+  "
+  Write COLUMNS and ROWS to a .tsv named FILE, or to bytes if FILE not specified.
+
+  Examples
+  --------
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"destination.tsv\")
+  "
+  ([columns rows file]
+   (with-open [writer (io/writer file)]
+     (csv/write-csv writer columns :separator \tab)
+     (csv/write-csv writer rows :separator \tab)
+     file))
+  ([columns rows]
+   (str (columns-rows->tsv columns rows (StringWriter.)))))
 
 (defn columns-rows->terra-tsv
   "
-  Writes COLUMNS and ROWS to a .tsv named FILE in a Terra-compatible format
+  Write COLUMNS and ROWS to a .tsv named FILE in a Terra-compatible format
   as dictated by TSV-TYPE, or to bytes if FILE not specified.
 
   Parameters

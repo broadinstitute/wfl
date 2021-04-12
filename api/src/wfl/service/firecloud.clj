@@ -28,22 +28,26 @@
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [workspace methodconfig [entity-type entity-name :as _entity]]
-  (let [[mcns mcn] (str/split methodconfig #"/")]
-    (-> {:method       :post
-         :url          (workspace-api-url workspace "submissions")
-         :headers      (auth/get-auth-header)
-         :content-type :application/json
-         :body         (json/write-str
-                        {:methodConfigurationNamespace mcns
-                         :methodConfigurationName mcn
-                         :entityType entity-type
-                         :entityName entity-name
-                         :useCallCache true}
-                        :escape-slash false)}
-        http/request
-        util/response-body-json
-        :submissionId)))
+  ([workspace methodconfig [entity-type entity-name :as _entity] body-override]
+   {:pre [map? body-override]}
+   (let [[mcns mcn] (str/split methodconfig #"/")]
+     (-> {:method       :post
+          :url          (workspace-api-url workspace "submissions")
+          :headers      (auth/get-auth-header)
+          :content-type :application/json
+          :body         (json/write-str
+                         (util/deep-merge {:methodConfigurationNamespace mcns
+                                           :methodConfigurationName mcn
+                                           :entityType entity-type
+                                           :entityName entity-name
+                                           :useCallCache true}
+                                          body-override)
+                         :escape-slash false)}
+         http/request
+         util/response-body-json
+         :submissionId)))
+  ([workspace methodconfig entity]
+   (create-submission workspace methodconfig entity {})))
 
 (defn create-workspace
   "Create an empty Terra workspace with the fully-qualified `workspace` name,
@@ -129,18 +133,14 @@
 
 (defn import-entity-set
   "
-  Formats existing sample ENTITIES into a Terra-compatible tsv
-  and uploads to WORKSPACE as an entity set entry identified by SET-NAME.
-
-  All entity references should correspond to existing entities.
-  All entity references should be of the same type.
+  Format existing same-typed ENTITIES into a Terra-compatible tsv.
+  Upload to \"<Type>_set\" table in WORKSPACE under ENTITY-SET-NAME.
 
   Parameters
   ----------
-    workspace - Fully-qualified Terra Workspace in which the entity set
-                will be created
-    set-name  - Unique identifier for the entity set
-    entities  - List of entity [Type Name] pairs
+    workspace        - Terra Workspace \"namespace/name\"
+    entity-set-name  - Identifier for the entity set
+    entities         - List of same-typed entity [Type Name] pairs
 
   Example
   -------
@@ -148,59 +148,40 @@
                        \"c25ee04b-...\"
                        [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
   "
-  [workspace set-name [[entity-type _] & _ :as entities]]
-  ;; TODO: Should we enforce common entity-type for all entities?
-  (let [columns [entity-type entity-type]
-        rows (for [[_ entity-name] entities] [set-name entity-name])]
-    (->> (util/columns-rows->terra-tsv :membership columns rows)
-         .getBytes
-         (import-entities workspace))))
-
-(defn consolidate-entities-to-set
-  "
-  Optionally consolidates ENTITIES into an entity set.
-  Returns the [Type Name] pair for the resulting entity,
-  or the passed-in entity if it was the only one specified.
-
-  Parameters
-  ----------
-    workspace - Fully-qualified Terra Workspace in which the entity set
-                would be created
-    entities  - List of entity [Type Name] pairs
-
-  Example
-  -------
-    (consolidate-entities-to-set \"workspace-namespace/workspace-name\"
-                                 [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
-  "
-  [workspace [entity & maybe-entities :as entities]]
-  ;; TODO: Should we enforce common entity-type for all entities?
-  (if (seq maybe-entities)
-    (let [id (str (UUID/randomUUID)) ; TODO: do we have access to a workload-affiliated UUID?
-          response (import-entity-set workspace id entities)]
-      [(:body response) id])
-    entity))
+  [workspace entity-set-name [[entity-type _] & _ :as entities]]
+  (->> (for [[_ entity-name] entities] [entity-set-name entity-name])
+       (util/columns-rows->terra-tsv :membership [entity-type entity-type])
+       .getBytes
+       (import-entities workspace)))
 
 (defn create-submission-for-entity-set
   "
-  Optionally consolidates ENTITIES into an entity set and uses it to create a
+  Consolidate ENTITIES into an entity set and use it to create a
   submission in WORKSPACE with METHODCONFIG.
-
-  At least one entity should be specified.
 
   Parameters
   ----------
-    workspace    - Fully-qualified Terra Workspace in which the submission
-                   will be created.
-    methodconfig - Fully-qualified method configuration.
-    entities     - [Optional] Entity [Type Name] pairs
+    workspace       - Terra Workspace \"namespace/name\"
+    methodconfig    - Terra Method Configuration \"namespace/name\"
+    entities        - List of 1+ entity [Type Name] pairs
+    entity-set-name - [Optional] ID for entity set entry, or
+                      random UUID if unspecified.
+
+  Example
+  -------
+    (create-submission-for-entity-set \"w-namespace/w-name\"
+                                      \"mc-namespace/mc-name\"
+                                      [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
   "
-  [workspace methodconfig & entities]
-  ;; TODO: refactor create-submission to support entity set specification.
-  ;; TODO: instead of variadic approach, should we take in a list of entities?
-  {:pre [(seq entities)]}
-  (->> (consolidate-entities-to-set workspace entities)
-       (create-submission workspace methodconfig)))
+  ([workspace methodconfig entities entity-set-name]
+   ;; TODO: refactor create-submission to support entity set specification.
+   {:pre [(seq entities)]}
+   (let [entity-set-type ((import-entity-set workspace entity-set-name entities) :body)]
+     (->> (str "this." (util/unsuffix entity-set-type "_set") "s")
+          (array-map :expression)
+          (create-submission workspace methodconfig [entity-set-type entity-set-name]))))
+  ([workspace methodconfig entities]
+   (create-submission-for-entity-set workspace methodconfig entities (str (UUID/randomUUID)))))
 
 (defn list-entities
   "List all entities with `entity-type` in `workspace`."
