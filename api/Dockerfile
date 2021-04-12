@@ -3,7 +3,7 @@ WORKDIR /tmp
 
 # Note this step requires docker builds in the root repo context
 # e.g. `docker build -t wfl-api:test -f ./api/Dockerfile .`
-ADD .. .
+ADD . .
 RUN make api TARGET=build
 
 # Use a Broad AppSec blessed image for security compliance
