@@ -1,0 +1,1140 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.1">
+    
+    
+      
+        <title>GPArrays - Workflow Launcher</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.9299cb39.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ef6f36e2.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
+  
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+      <script>var palette=__get("__palette");if(null!==palette&&"object"==typeof palette.color)for(var key in palette.color)document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gparrays-workload" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Workflow Launcher" class="md-header__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Workflow Launcher
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GPArrays
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_1">
+          <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
+          </label>
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_2">
+          <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2m10-3a5 5 0 0 1 5 5 5 5 0 0 1-5 5H7a5 5 0 0 1-5-5 5 5 0 0 1 5-5h10M7 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3h10a3 3 0 0 0 3-3 3 3 0 0 0-3-3H7z"/></svg>
+          </label>
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Workflow Launcher" class="md-nav__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Workflow Launcher
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Get Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Development Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Development Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-process/" class="md-nav__link">
+        Development Process and Tips
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-release/" class="md-nav__link">
+        Release Process
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-sandbox.md" class="md-nav__link">
+        Local Development SandBox
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-deployment.md" class="md-nav__link">
+        Deployment
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-frontend/" class="md-nav__link">
+        Frontend
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      <label class="md-nav__link" for="__nav_3">
+        Module-Specific Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Module-Specific Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Module-Specific Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-general/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-arrays/" class="md-nav__link">
+        Arrays
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          GPArrays
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        GPArrays
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entity_name-required" class="md-nav__link">
+    entity_name (required)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entity_type-required" class="md-nav__link">
+    entity_type (required)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-apiv1create" class="md-nav__link">
+    Create Workload: /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-apiv1start" class="md-nav__link">
+    Start Workload: /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-apiv1exec" class="md-nav__link">
+    Exec Workload: /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: /api/v1/workload?project=&lt;project&gt;
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-wgs/" class="md-nav__link">
+        Whole Genome
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
+        External Exome
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-sg/" class="md-nav__link">
+        Somatic Genomes
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      <label class="md-nav__link" for="__nav_4">
+        General Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="General Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          General Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-workflow-options/" class="md-nav__link">
+        Workflow Options
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-across-directory/" class="md-nav__link">
+        Usage Across a Directory
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-retry/" class="md-nav__link">
+        Retrying Failures
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-abort/" class="md-nav__link">
+        Aborting a Workload
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      <label class="md-nav__link" for="__nav_5">
+        Readings
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Readings" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Readings
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terra/" class="md-nav__link">
+        WorkFlow Launcher's Role in Terra
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+    <nav class="md-nav" aria-label="Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entity_name-required" class="md-nav__link">
+    entity_name (required)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entity_type-required" class="md-nav__link">
+    entity_type (required)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-apiv1create" class="md-nav__link">
+    Create Workload: /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-apiv1start" class="md-nav__link">
+    Start Workload: /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-apiv1exec" class="md-nav__link">
+    Exec Workload: /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: /api/v1/workload?project=&lt;project&gt;
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-gp-arrays.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="gparrays-workload">GPArrays workload<a class="headerlink" href="#gparrays-workload" title="Permanent link">⚓︎</a></h1>
+<p>The "GPArrays" workload launches workflows in Terra. Because Terra submits workflows to Cromwell
+using the RAWLs API, both the input data and pipeline must be imported into a Terra workspace
+prior to analysis.</p>
+<p>In addition, the workload differs from the other WFL modules in several ways:
+- The <code>executor</code> field is the Terra API URL (instead of the Cromwell URL)
+- The <code>project</code> is the Terra workspace to use for processing, and must follow the format 
+"{workspaceNamespace}/{workspaceName}".</p>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">⚓︎</a></h2>
+<p>A <code>GPArrays</code> workload specifies the following inputs for each workflow:
+- <code>entity_name</code> 
+- <code>entity_type</code></p>
+<h4 id="entity_name-required"><code>entity_name</code> (required)<a class="headerlink" href="#entity_name-required" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>The unique id of the sample in the Terra data table. The id field follows
+the format "{table_name}_id".</li>
+</ul>
+<h4 id="entity_type-required"><code>entity_type</code> (required)<a class="headerlink" href="#entity_type-required" title="Permanent link">⚓︎</a></h4>
+<ul>
+<li>The name of the Terra workspace data table containing the sample 
+(e.g the <code>entity_type</code> of a row in the "sample" table is "sample")</li>
+</ul>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
+<p>A <code>GPArrays</code> workload supports the following API endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Verb</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload</code></td>
+<td>List all workloads</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload/{uuid}</code></td>
+<td>Query for a workload by its UUID</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload/{project}</code></td>
+<td>Query for a workload by its Project name</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/create</code></td>
+<td>Create a new workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/start</code></td>
+<td>Start a workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/exec</code></td>
+<td>Create and start (execute) a workload</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create-workload-apiv1create">Create Workload: <code>/api/v1/create</code><a class="headerlink" href="#create-workload-apiv1create" title="Permanent link">⚓︎</a></h3>
+<p>Creates a WFL workload. Before processing, confirm that the Terra proxy SA for the
+wfl-non-prod SA has at least read access to the input files, and 
+the vault token path used by the Arrays pipeline.</p>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
+--header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+--header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+--data-raw <span class="s1">&#39;{</span>
+<span class="s1">  &quot;executor&quot;: &quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;,</span>
+<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;,</span>
+<span class="s1">  &quot;pipeline&quot;: &quot;GPArrays&quot;,</span>
+<span class="s1">  &quot;project&quot;: &quot;general-dev-billing-account/arrays&quot;,</span>
+<span class="s1">  &quot;items&quot;: [</span>
+<span class="s1">    {</span>
+<span class="s1">      &quot;inputs&quot;: {</span>
+<span class="s1">        &quot;entity_name&quot;: &quot;200598830050_R07C01-1&quot;,</span>
+<span class="s1">        &quot;entity_type&quot;: &quot;sample&quot;</span>
+<span class="s1">      }</span>
+<span class="s1">    }</span>
+<span class="s1">  ]</span>
+<span class="s1">}&#39;</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<p>Note that the GPArrays module does NOT support specifying
+Cromwell "workflowOptions" via the <code>options</code> map, since this functionality
+is not exposed via the Terra API.</p>
+<h3 id="start-workload-apiv1start">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start" title="Permanent link">⚓︎</a></h3>
+<p>Creates a new "submission" in Terra, which starts a Cromwell workflow for each item in the workload. 
+Note that the workflow <code>uuid</code> in the response is the Terra submission uuid, not the Cromwell workflow uuid.</p>
+<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
+--header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+--header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+--data-raw <span class="s1">&#39;{&quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;}&#39;</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="exec-workload-apiv1exec">Exec Workload: <code>/api/v1/exec</code><a class="headerlink" href="#exec-workload-apiv1exec" title="Permanent link">⚓︎</a></h3>
+<p>Creates and then starts a WFL workload.</p>
+<div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl --location --request POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
+--header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+--header <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+--data-raw <span class="s1">&#39;{</span>
+<span class="s1">  &quot;executor&quot;: &quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;,</span>
+<span class="s1">  &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;,</span>
+<span class="s1">  &quot;pipeline&quot;: &quot;GPArrays&quot;,</span>
+<span class="s1">  &quot;project&quot;: &quot;general-dev-billing-account/arrays&quot;,</span>
+<span class="s1">  &quot;items&quot;: [</span>
+<span class="s1">    {</span>
+<span class="s1">      &quot;inputs&quot;: {</span>
+<span class="s1">        &quot;entity_name&quot;: &quot;200598830050_R07C01-1&quot;,</span>
+<span class="s1">        &quot;entity_type&quot;: &quot;sample&quot;</span>
+<span class="s1">      }</span>
+<span class="s1">    }</span>
+<span class="s1">  ]</span>
+<span class="s1">}&#39;</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="query-workload-apiv1workloaduuiduuid">Query Workload: <code>/api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
+<p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
+<div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=2c543b29-2db9-4643-b81b-b16a0654c5cc&#39;</span> <span class="se">\</span>
+--header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="p">[{</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+       <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+<span class="p">}]</span>
+</code></pre></div>
+</div>
+</div>
+<p>The "workflows" field lists out each Terra submission, and includes the status information
+of the workflow that was started for that sample. It is also possible to use the Terra UI 
+to check workflow progress and easily see information about any workflow failures.</p>
+<h3 id="query-workload-with-project-apiv1workloadprojectproject">Query Workload with project: <code>/api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
+<p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
+<div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl --location --request GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=general-dev-billing-account/arrays&#39;</span> <span class="se">\</span>
+--header <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><label for="__tabbed_5_2">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="p">[{</span>
+  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;user@domain&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GPArrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://firecloud-orchestration.dsde-dev.broadinstitute.org&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;Arrays_v2.3.0&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;workflows&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;entity_name&quot;</span><span class="p">:</span> <span class="s2">&quot;200598830050_R07C01-1&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;entity_type&quot;</span><span class="p">:</span> <span class="s2">&quot;sample&quot;</span>
+       <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;general-dev-billing-account/arrays&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/arrays/single_sample/Arrays.wdl&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;X.Y.Z&quot;</span>
+<span class="p">}]</span>
+</code></pre></div>
+</div>
+</div>
+<p>The "workflows" field lists out each Terra submission, and includes the status information
+of the workflow that was started for that sample. It is also possible to use the Terra UI 
+to check workflow progress and easily see information about any workflow failures.</p>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p><code>project</code> and <code>uuid</code> are optional path parameters to the <code>/api/v1/workload</code> endpoint,
+hitting this endpoint without them will return all workloads. However, they cannot be specified
+together.</p>
+</div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../modules-arrays/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Arrays
+            </div>
+          </div>
+        </a>
+      
+      
+        <a href="../modules-wgs/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Whole Genome
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/broadinstitute/wfl" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fe42c31b.min.js", "version": 2.0}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.7353b375.min.js"></script>
+      
+    
+  </body>
+</html>
