@@ -12,6 +12,13 @@
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
 
+(defmacro do-or-nil-silently
+  "Value of `body` or `nil` if it throws, without logging exceptions.
+  See also [[wfl.util/do-or-nil]]."
+  [& body]
+  `(try (do ~@body)
+        (catch Exception x#)))
+
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
@@ -25,7 +32,7 @@
           committed (->> commit
                          (util/shell! "git" "show" "-s" "--format=%cI")
                          OffsetDateTime/parse .toInstant .toString)
-          clean?    (util/do-or-nil-silently
+          clean?    (do-or-nil-silently
                      (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
       (into
        {:version          (or (System/getenv "WFL_VERSION") "devel")

@@ -23,13 +23,6 @@
         (catch Exception x#
           (log/warn x# "Swallowed exception and returned nil in wfl.util/do-or-nil"))))
 
-(defmacro do-or-nil-silently
-  "Value of `body` or `nil` if it throws, without logging exceptions.
-  See also [[do-or-nil]]."
-  [& body]
-  `(try (do ~@body)
-        (catch Exception x#)))
-
 ;; Parsers that will not throw.
 ;;
 (defn parse-int [s] (do-or-nil (Integer/parseInt s)))
