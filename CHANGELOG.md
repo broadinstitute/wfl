@@ -1,3 +1,7 @@
+# Release 0.6.1
+- [GH-1277] Prevent update loop from terminating ([#364](https://github.com/broadinstitute/wfl/pull/364))
+- [GH-1284] Fix docker image generation ([#363](https://github.com/broadinstitute/wfl/pull/363))
+
 # Release 0.6.0
 - GH-1282: Document WFL's support for Somatic Genomes. ([#361](https://github.com/broadinstitute/wfl/pull/361))
 - GitHub `develop` infrastructure + release changes ([#356](https://github.com/broadinstitute/wfl/pull/356))
