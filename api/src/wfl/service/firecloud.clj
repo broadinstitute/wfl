@@ -5,7 +5,8 @@
             [clojure.string :as str]
             [wfl.auth :as auth]
             [wfl.environment :as env]
-            [wfl.util :as util]))
+            [wfl.util :as util])
+  (:import [java.util UUID]))
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
@@ -27,22 +28,26 @@
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
-  [workspace methodconfig [entity-type entity-name :as _entity]]
-  (let [[mcns mcn] (str/split methodconfig #"/")]
-    (-> {:method       :post
-         :url          (workspace-api-url workspace "submissions")
-         :headers      (auth/get-auth-header)
-         :content-type :application/json
-         :body         (json/write-str
-                        {:methodConfigurationNamespace mcns
-                         :methodConfigurationName mcn
-                         :entityType entity-type
-                         :entityName entity-name
-                         :useCallCache true}
-                        :escape-slash false)}
-        http/request
-        util/response-body-json
-        :submissionId)))
+  ([workspace methodconfig [entity-type entity-name :as _entity] body-override]
+   {:pre [map? body-override]}
+   (let [[mcns mcn] (str/split methodconfig #"/")]
+     (-> {:method       :post
+          :url          (workspace-api-url workspace "submissions")
+          :headers      (auth/get-auth-header)
+          :content-type :application/json
+          :body         (json/write-str
+                         (util/deep-merge {:methodConfigurationNamespace mcns
+                                           :methodConfigurationName mcn
+                                           :entityType entity-type
+                                           :entityName entity-name
+                                           :useCallCache true}
+                                          body-override)
+                         :escape-slash false)}
+         http/request
+         util/response-body-json
+         :submissionId)))
+  ([workspace methodconfig entity]
+   (create-submission workspace methodconfig entity {})))
 
 (defn create-workspace
   "Create an empty Terra workspace with the fully-qualified `workspace` name,
@@ -125,6 +130,58 @@
                   :multipart (util/multipart-body
                               {:Content/type "text/tab-separated-values"
                                :entities     (slurp file)})})))
+
+(defn import-entity-set
+  "
+  Format existing same-typed ENTITIES into a Terra-compatible tsv.
+  Upload to \"<Type>_set\" table in WORKSPACE under ENTITY-SET-NAME.
+
+  Parameters
+  ----------
+    workspace        - Terra Workspace \"namespace/name\"
+    entity-set-name  - Identifier for the entity set
+    entities         - List of same-typed entity [Type Name] pairs
+
+  Example
+  -------
+    (import-entity-set \"workspace-namespace/workspace-name\"
+                       \"c25ee04b-...\"
+                       [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
+  "
+  [workspace entity-set-name [[entity-type _] & _ :as entities]]
+  (->> (for [[_ entity-name] entities] [entity-set-name entity-name])
+       (util/columns-rows->terra-tsv :membership [entity-type entity-type])
+       .getBytes
+       (import-entities workspace)))
+
+(defn create-submission-for-entity-set
+  "
+  Consolidate ENTITIES into an entity set and use it to create a
+  submission in WORKSPACE with METHODCONFIG.
+
+  Parameters
+  ----------
+    workspace       - Terra Workspace \"namespace/name\"
+    methodconfig    - Terra Method Configuration \"namespace/name\"
+    entities        - List of 1+ entity [Type Name] pairs
+    entity-set-name - [Optional] ID for entity set entry, or
+                      random UUID if unspecified.
+
+  Example
+  -------
+    (create-submission-for-entity-set \"w-namespace/w-name\"
+                                      \"mc-namespace/mc-name\"
+                                      [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
+  "
+  ([workspace methodconfig entities entity-set-name]
+   ;; TODO: refactor create-submission to support entity set specification.
+   {:pre [(seq entities)]}
+   (let [entity-set-type ((import-entity-set workspace entity-set-name entities) :body)]
+     (->> (str "this." (util/unsuffix entity-set-type "_set") "s")
+          (array-map :expression)
+          (create-submission workspace methodconfig [entity-set-type entity-set-name]))))
+  ([workspace methodconfig entities]
+   (create-submission-for-entity-set workspace methodconfig entities (str (UUID/randomUUID)))))
 
 (defn list-entities
   "List all entities with `entity-type` in `workspace`."

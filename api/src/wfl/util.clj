@@ -1,12 +1,14 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.json     :as json]
+  (:require [clojure.data.csv      :as csv]
+            [clojure.data.json     :as json]
             [clojure.java.io       :as io]
             [clojure.java.shell    :as shell]
+            [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [clojure.tools.logging :as log]
             [wfl.wfl               :as wfl])
-  (:import [java.io File Writer IOException]
+  (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
            [java.time OffsetDateTime Clock LocalDate]
@@ -425,3 +427,79 @@
    (poll task seconds 3))
   ([task]
    (poll task 1)))
+
+"A set of all mutually supported TSV file types (by FireCloud and WFL)"
+(s/def ::tsv-type #{:entity :membership})
+
+(defn terra-id
+  "
+  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+
+  The first column of the table must be its primary key, and named accordingly:
+    entity:[entity-type]_id
+    membership:[entity-type]_set_id
+
+  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data into a `sample` table
+  in the workspace (or create one if it does not exist).
+  If the table already contains a sample with that id, it will get overwritten.
+
+  For tsv-type :membership, 'membership:sample_set_id' will append sample names to a `sample_set` table
+  in the workspace (or create one if it does not exist).
+  If the table already contains a sample set with that id, it will be appended to and not overwritten.
+
+  Parameters
+  ----------
+    tsv-type - A member of ::tsv-type
+    col      - Entity name or primary key column base
+
+  Examples
+  --------
+    (terra_id :entity \"flowcell\")
+    (terra_id :membership \"flowcell\")
+  "
+  [tsv-type col]
+  {:pre [(s/valid? ::tsv-type tsv-type)]}
+  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
+    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+
+(defn columns-rows->tsv
+  "
+  Write COLUMNS and ROWS to a .tsv named FILE, or to bytes if FILE not specified.
+
+  Examples
+  --------
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"destination.tsv\")
+  "
+  ([columns rows file]
+   (with-open [writer (io/writer file)]
+     (csv/write-csv writer columns :separator \tab)
+     (csv/write-csv writer rows :separator \tab)
+     file))
+  ([columns rows]
+   (str (columns-rows->tsv columns rows (StringWriter.)))))
+
+(defn columns-rows->terra-tsv
+  "
+  Write COLUMNS and ROWS to a .tsv named FILE in a Terra-compatible format
+  as dictated by TSV-TYPE, or to bytes if FILE not specified.
+
+  Parameters
+  ----------
+    tsv-type - A member of ::tsv-type
+    columns  - Column names (first will be formatted as primary key identifier)
+    rows     - Rows with element counts matching the column count
+    file     - [optional] TSV file name to dump
+
+  Examples
+  --------
+    (columns-rows->terra-tsv :entity [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
+    (columns-rows->terra-tsv :membership [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"dest.tsv\")
+  "
+  ([tsv-type columns rows file]
+   {:pre [(s/valid? ::tsv-type tsv-type)]}
+   (letfn [(format-entity-type [[head & rest]]
+             (cons (terra-id tsv-type head) rest))]
+     (columns-rows->tsv [(format-entity-type columns)] rows file)))
+  ([tsv-type columns rows]
+   (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
