@@ -4,14 +4,8 @@
             [clojure.data.json :as json]
             [clojure.edn       :as edn]
             [clojure.java.io   :as io]
-            [clojure.string    :as str]
-            [wfl.debug         :as debug])
-  (:import [java.io File Reader StringReader StringWriter Writer]))
-
-
-"https://api.firecloud.org/api/workspaces/wfl-dev/SARSCoV2-Illumina-Full/exportAttributesTSV"
-"https://api.firecloud.org/"
-"/api/workspaces/{workspaceNamespace}/{workspaceName}/exportAttributesTSV"
+            [clojure.string    :as str])
+  (:import [java.io Reader StringReader StringWriter Writer]))
 
 (defprotocol TsvField
   "One field of a row or line in a .tsv file."
@@ -20,23 +14,7 @@
   (-read [^Reader in]
     "Read one field from java.io.Reader IN as a .tsv value."))
 
-(defprotocol TsvLine
-  "One row or line in a .tsv file."
-  (-write [line ^Writer out]
-    "Write LINE to java.io.Writer OUT as a .tsv line.")
-  (-read [^Reader in]
-    "Read one line from java.io.Reader IN as a .tsv line."))
-
-(defprotocol TsvFile
-  "A complete .tsv file."
-  (-write [file ^Writer out]
-    "Write FILE to java.io.Writer OUT as a .tsv file.")
-  (-read [^Reader in]
-    "Read a file from java.io.Reader IN as a .tsv file."))
-
 (extend-protocol TsvField
-  #_#_nil
-  (-write [field out] (.write out ""))
   clojure.lang.Named
   (-write [field out] (.write out (name field)))
   java.lang.Object
@@ -44,22 +22,68 @@
   java.lang.String
   (-write [field out] (.write out field)))
 
-(let [out (StringWriter.)]
-  (-write "fnord" out)
-  (.toString out))
+(defn write-fields
+  "Write the sequence of .tsv FIELDS to WRITER."
+  [fields ^Writer writer]
+  (letfn [(write [field] (-write field writer))]
+    (loop [fields fields separator ""]
+      (when-first [field fields]
+        (write separator)
+        (write field)
+        (recur (rest fields) "\t")))))
 
-(let [out (StringWriter.)]
-  (-write {:a 0} out)
-  (.toString out))
+(defn read-field
+  "Read a .tsv field from the string S."
+  [s]
+  (or (try (json/read-str s)
+           (catch Throwable _ignored))
+      s))
 
-#_(let [out (StringWriter.)]
-    (-write nil out)
-    (.toString out))
+(defn read-fields
+  "Return .tsv fields from a string S of tab-separated fields."
+  [s]
+  (map read-field (str/split s #"\t")))
+
+(defn read
+  "Read a .tsv table, a sequence of sequences, from READER."
+  [^Reader reader]
+  (-> reader io/reader line-seq
+      (->> (map read-fields))))
 
 (defn read-str
-  [tsv]
-  (doall (map (partial map json/read-str)
-              (csv/read-csv tsv :separator \tab))))
+  "Read a .tsv table, a sequence of sequences, from string S."
+  [s]
+  (read (StringReader. s)))
+
+(defn read-file
+  "Return a lazy .tsv table from FILE."
+  [file]
+  (letfn [(lines [reader] (lazy-seq
+                           (when-let [line (.readLine reader)]
+                             (cons line (read reader))
+                             (.close reader))))]
+    (lines (io/reader file))))
+
+(defn write
+  "Write TABLE, a sequence of .tsv field sequences, to WRITER."
+  [table ^Writer writer]
+  (when-first [line table]
+    (write-fields line writer)
+    (.write writer "\n")
+    (recur (rest table) writer)))
+
+(defn write-str
+  "Return TABLE, a sequence of .tsv field sequences, in a string."
+  [table]
+  (let [writer (StringWriter.)]
+    (write table writer)
+    (.toString writer)))
+
+(defn write-file
+  "Write TABLE, a sequence of .tsv field sequences, to FILE."
+  [table file]
+  (with-open [writer (io/writer file)]
+    (write table writer)))
 
 (def edn
   [{:integer 5
@@ -77,29 +101,20 @@
     :vector1 ["or another thing"]
     :vector2 ["and" 23 "skiddoo" :fnord]}])
 
-(def table
-  (let [columns (keys (first edn))
-        rows    (map (apply juxt columns) edn)]
-    (map (partial map json/write-str) (cons columns rows))))
-
-(defn write-str
+(defn mapulate
+  "Return a sequence of maps from TABLE, a sequence of sequences."
   [table]
-  (-> table
-      (->> (map (partial str/join \tab))
-           (str/join \newline))
-      (str \newline)))
+  (let [[header & rows] table]
+    (map (partial zipmap header) rows)))
 
-(defn write
-  [table writer]
-  (with-open []))
+(defn tabulate
+  "Return a table, sequence of sequences, from EDN, a sequence of maps."
+  [edn]
+  (let [header (keys (first edn))]
+    (letfn [(extract [row] (map row header))]
+      (cons header (map extract edn)))))
 
-(print (write-str table))
+(def table (tabulate edn))
+(mapulate table)
 
-(let [#_#_tsv     (write-str table)
-      #_#_tsv-in  (with-open [in (io/reader (char-array tsv-out))]
-                    (doall (map #(str/split % #"\t") (line-seq in))))
-      #_#_tsv-in  (with-open [in (io/reader (char-array tsv-out))]
-                    #_(debug/trace (csv/read-csv in)))]
-  #_(read-str tsv)
-  
-  )
+(mapulate (read-str (write-str table)))
