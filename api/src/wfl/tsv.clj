@@ -1,8 +1,7 @@
 (ns wfl.tsv
   "Read and write tab-separated value files for Terra."
-  (:require [clojure.data.csv  :as csv]
-            [clojure.data.json :as json]
-            [clojure.edn       :as edn]
+  (:refer-clojure :exclude [read])
+  (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
             [clojure.string    :as str])
   (:import [java.io Reader StringReader StringWriter Writer]))
@@ -58,11 +57,10 @@
 (defn read-file
   "Return a lazy .tsv table from FILE."
   [file]
-  (letfn [(lines [reader] (lazy-seq
-                           (when-let [line (.readLine reader)]
-                             (cons line (read reader))
-                             (.close reader))))]
-    (lines (io/reader file))))
+  (letfn [(lines [reader] (lazy-seq (if-let [line (.readLine reader)]
+                                      (cons line (lines reader))
+                                      (.close reader))))]
+    (map read-fields (lines (io/reader file)))))
 
 (defn write
   "Write TABLE, a sequence of .tsv field sequences, to WRITER."
@@ -118,3 +116,6 @@
 (mapulate table)
 
 (mapulate (read-str (write-str table)))
+
+(write-file (read-file "/Users/tbl/Broad/wfl/assemblies.tsv")
+            "/Users/tbl/Broad/wfl/assemblies-tbl.tsv")
