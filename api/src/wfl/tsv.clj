@@ -34,9 +34,9 @@
 (defn read-field
   "Read a .tsv field from the string S."
   [s]
-  (or (try (json/read-str s)
-           (catch Throwable _ignored))
-      s))
+  (case (first s)
+    (\[ \{) (json/read-str s)
+    s))
 
 (defn read-fields
   "Return .tsv fields from a string S of tab-separated fields."
