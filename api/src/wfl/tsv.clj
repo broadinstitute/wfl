@@ -1,5 +1,5 @@
 (ns wfl.tsv
-  "Read and write tab-separated value files for Terra."
+  "Read and write Terra's tab-separated value (.tsv) files."
   (:refer-clojure :exclude [read])
   (:require [clojure.data.json :as json]
             [clojure.java.io   :as io]
@@ -21,7 +21,7 @@
   java.lang.String
   (-write [field out] (.write out field)))
 
-(defn write-fields
+(defn ^:private write-fields
   "Write the sequence of .tsv FIELDS to WRITER."
   [fields ^Writer writer]
   (loop [fields fields separator ""]
@@ -30,14 +30,14 @@
       (-write field writer)
       (recur (rest fields) "\t"))))
 
-(defn read-field
+(defn ^:private read-field
   "Read a .tsv field from the string S."
   [s]
   (case (first s)
     (\[ \{) (json/read-str s)
     s))
 
-(defn read-fields
+(defn ^:private read-fields
   "Return .tsv fields from a string S of tab-separated fields."
   [s]
   (map read-field (str/split s #"\t")))
@@ -82,26 +82,6 @@
   (with-open [writer (io/writer file)]
     (write table writer)))
 
-(def edn
-  [{:boolean false
-    :integer 5
-    :keyword :keyword
-    :map     {:a "map"}
-    :nil     nil
-    :set     #{:a "set" 5}
-    :string  "a frayed knot"
-    :vector1 ["one thing"]
-    :vector2 ["and" 23 "skiddoo"]}
-   {:boolean true
-    :integer 23
-    :keyword :lockletter
-    :map     {:b "map"}
-    :nil     (not nil)
-    :set     #{:b "set" 23}
-    :string  "mutant text"
-    :vector1 ["or another thing"]
-    :vector2 ["and" 23 "skiddoo" :fnord]}])
-
 (defn mapulate
   "Return a sequence of maps from TABLE, a sequence of sequences."
   [table]
@@ -114,11 +94,3 @@
   (let [header (keys (first edn))]
     (letfn [(extract [row] (map row header))]
       (cons header (map extract edn)))))
-
-(def table (tabulate edn))
-(mapulate table)
-
-(mapulate (read-str (write-str table)))
-
-(write-file (read-file "/Users/tbl/Broad/wfl/assemblies.tsv")
-            "/Users/tbl/Broad/wfl/assemblies-tbl.tsv")
