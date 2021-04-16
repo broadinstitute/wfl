@@ -85,7 +85,7 @@
 (defn ^:private assert-mapulatable!
   "Throw when (mapulate TABLE) would lose information."
   [table]
-  (letfn [(repeated? [[n label]] (when-not (== 1 n) label))]
+  (letfn [(repeated? [[label n]] (when-not (== 1 n) label))]
     (let [repeats (keep repeated? (frequencies (first table)))]
       (when (seq repeats)
         (throw (ex-info "TABLE.tsv has repeated column labels."
