@@ -1,0 +1,32 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210414"
+               logicalFilePath="20210414_Sarscov2IlluminaFullTable.xml"
+               runInTransaction="false">
+        <comment>
+            the Sarscov2IlluminaFull table schema
+        </comment>
+        <sql>
+            CREATE TYPE Sarscov2IlluminaFull AS (
+            id                          bigint,      -- just an unique id
+            dataset_id                  text,        -- Terra DataRepo dataset id
+            snapshot_job_id             text,        -- Terra DataRepo snapshot creation job id
+            snapshot_id                 text,        -- Terra DataRepo snapshot id
+            datarepo_row_id             text,        -- Unique id to identify a row in snapshot
+            submission_id               text,        -- FireCloud submissionId
+            workflow_id                 text,        -- FireCloud workflow id
+            status                      text,        -- FireCloud workflow status
+            updated                     timestamptz  -- status update time
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>
