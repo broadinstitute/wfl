@@ -1,6 +1,7 @@
-(ns wfl.tsv-test
+(ns wfl.unit.tsv-test
   "Test the wfl.tsv utility namespace."
   (:require [clojure.test        :refer [deftest is testing]]
+            [clojure.java.io     :as io]
             [clojure.set         :as set]
             [clojure.walk        :as walk]
             [wfl.tools.resources :as resources]
