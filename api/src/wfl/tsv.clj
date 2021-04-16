@@ -9,11 +9,11 @@
 (defprotocol TsvField
   "One field of a row or line in a .tsv file."
   (-write [field ^Writer out]
-    "Write FIELD to java.io.Writer OUT as a .tsv value.")
-  (-read [^Reader in]
-    "Read one field from java.io.Reader IN as a .tsv value."))
+    "Write FIELD to java.io.Writer OUT as a .tsv value."))
 
 (extend-protocol TsvField
+  nil
+  (-write [field out] (.write out "NULL"))
   clojure.lang.Named
   (-write [field out] (.write out (name field)))
   java.lang.Object
@@ -24,12 +24,11 @@
 (defn write-fields
   "Write the sequence of .tsv FIELDS to WRITER."
   [fields ^Writer writer]
-  (letfn [(write [field] (-write field writer))]
-    (loop [fields fields separator ""]
-      (when-first [field fields]
-        (write separator)
-        (write field)
-        (recur (rest fields) "\t")))))
+  (loop [fields fields separator ""]
+    (when-first [field fields]
+      (-write separator writer)
+      (-write field writer)
+      (recur (rest fields) "\t"))))
 
 (defn read-field
   "Read a .tsv field from the string S."
@@ -84,16 +83,20 @@
     (write table writer)))
 
 (def edn
-  [{:integer 5
+  [{:boolean false
+    :integer 5
     :keyword :keyword
     :map     {:a "map"}
+    :nil     nil
     :set     #{:a "set" 5}
     :string  "a frayed knot"
     :vector1 ["one thing"]
     :vector2 ["and" 23 "skiddoo"]}
-   {:integer 23
+   {:boolean true
+    :integer 23
     :keyword :lockletter
     :map     {:b "map"}
+    :nil     (not nil)
     :set     #{:b "set" 23}
     :string  "mutant text"
     :vector1 ["or another thing"]
