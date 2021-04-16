@@ -102,9 +102,18 @@
   (let [[header & rows] table]
     (map (partial zipmap header) rows)))
 
+(defn ^:private assert-tabulatable!
+  "Throw when (tabulate EDN) would lose information."
+  [edn]
+  (let [counts (set (map count edn))]
+    (when-not (== 1 (count counts))
+      (throw (ex-info "TABLE.tsv has multiple column counts."
+                      {:counts counts})))))
+
 (defn tabulate
   "Return a table, sequence of sequences, from EDN, a sequence of maps."
   [edn]
+  (assert-tabulatable! edn)
   (let [header (keys (first edn))]
     (letfn [(extract [row] (map row header))]
       (cons header (map extract edn)))))
