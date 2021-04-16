@@ -1,15 +1,16 @@
 (ns wfl.tsv-test
   "Test the wfl.tsv utility namespace."
-  (:require [clojure.test   :refer [deftest is testing]]
-            [clojure.set    :as set]
-            [clojure.walk   :as walk]
-            [wfl.tsv        :as tsv])
+  (:require [clojure.test        :refer [deftest is testing]]
+            [clojure.set         :as set]
+            [clojure.walk        :as walk]
+            [wfl.tools.resources :as resources]
+            [wfl.tsv             :as tsv])
   (:import [java.util UUID]))
 
 (def ^:private the-edn
   "More EDN than can be represented in a Terra (.tsv) file."
   [{:boolean    false
-    :integer    5
+    :integer    23
     :keyword    :keyword
     :map        {:a "map"}
     :set        #{:a "set" 5}
@@ -17,11 +18,11 @@
     :vector     ["one thing"]
     :jason-rose [:made "a" :good "joke"]}
    {:boolean    true
-    :integer    23
+    :integer    5
     :keyword    :lockletter
     :map        {:b "map"}
     :set        #{:b "set" 23}
-    :string     "mutant text"
+    :string     "23 skiddoo"
     :vector     ["or another thing"]
     :jason-rose ["and" 23 "skiddoo" :fnord]}])
 
@@ -85,3 +86,14 @@
                   (do (-> the-edn tsv/tabulate (tsv/write-file file))
                       (-> file tsv/read-file tsv/mapulate hack-unterrafy))))
            (finally (io/delete-file file))))))
+
+(deftest round-trip-inputs
+  (testing "Round-trip inputs.edn to TSV string and back."
+    (let [file   "sarscov2_illumina_full/inputs.edn"
+          inputs [(resources/read-resource file)]]
+      (is (= (-> inputs hack-terrafy)
+             (-> inputs
+                 tsv/tabulate
+                 tsv/write-str
+                 tsv/read-str
+                 tsv/mapulate))))))

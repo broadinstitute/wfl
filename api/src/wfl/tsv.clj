@@ -40,7 +40,8 @@
   (case (first s)
     (\[ \{) (json/read-str s)
     (or (try (let [x (edn/read-string s)]
-               (when (number? x) x))
+               (when (and (number? x)
+                          (= s (str x))) x))
              (catch Throwable _ignored))
         s)))
 
