@@ -13,11 +13,14 @@
 
 (extend-protocol TsvField
   clojure.lang.Named
-  (^:private -write [field out] (.write out (name field)))
+  (^:private -write [field out]
+   (.write out (name field)))
   java.lang.Object
-  (^:private -write [field out] (.write out (json/write-str field)))
+  (^:private -write [field out]
+   (.write out (json/write-str field :escape-slash false)))
   java.lang.String
-  (^:private -write [field out] (.write out field)))
+  (^:private -write [field out]
+   (.write out field)))
 
 (defn ^:private write-fields
   "Write the sequence of .tsv FIELDS to WRITER."

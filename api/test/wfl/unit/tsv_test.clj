@@ -78,5 +78,11 @@
         (debug/trace (data/diff (map reset in) (map reset out)))
         (is (= in out))))))
 
-(tsv/write-file (tsv/read-file "/Users/tbl/Broad/wfl/assemblies.tsv")
-                "/Users/tbl/Broad/wfl/assemblies-tbl.tsv")
+(tsv/write-file
+ (tsv/read-file "/Users/tbl/Broad/wfl/assemblies.tsv")
+ "/Users/tbl/Broad/wfl/assemblies-tbl.tsv")
+
+(tsv/write-file
+ (tsv/read-file
+  "/Users/tbl/Broad/wfl/SARSCoV2-Illumina-Full-workspace-attributes.tsv")
+ "/Users/tbl/Broad/wfl/SARSCoV2-Illumina-Full-workspace-attributes-tbl.tsv")
