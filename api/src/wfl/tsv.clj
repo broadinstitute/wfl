@@ -82,9 +82,23 @@
   (with-open [writer (io/writer file)]
     (write table writer)))
 
+(defn ^:private assert-mapulatable!
+  "Throw when (mapulate TABLE) would lose information."
+  [table]
+  (letfn [(repeated? [[n label]] (when-not (== 1 n) label))]
+    (let [repeats (keep repeated? (frequencies (first table)))]
+      (when (seq repeats)
+        (throw (ex-info "TABLE.tsv has repeated column labels."
+                        {:repeats repeats})))))
+  (let [counts (set (map count table))]
+    (when-not (== 1 (count counts))
+      (throw (ex-info "TABLE.tsv has multiple column counts."
+                      {:counts counts})))))
+
 (defn mapulate
   "Return a sequence of maps from TABLE, a sequence of sequences."
   [table]
+  (assert-mapulatable! table)
   (let [[header & rows] table]
     (map (partial zipmap header) rows)))
 
