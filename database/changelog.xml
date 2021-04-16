@@ -25,4 +25,6 @@
     <include file="changesets/20201216_GDCWholeGenomeSomaticSingleSample.xml"    relativeToChangelogFile="true"/>
     <include file="changesets/20210107_CromwellToExecutor.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210303_StoppedWorkloadProperty.xml"              relativeToChangelogFile="true"/>
+    <include file="changesets/20210414_Sarscov2IlluminaFullEnum.xml"             relativeToChangelogFile="true"/>
+    <include file="changesets/20210414_Sarscov2IlluminaFullTable.xml"            relativeToChangelogFile="true"/>
 </databaseChangeLog>
