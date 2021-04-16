@@ -1,9 +1,10 @@
 (ns wfl.tsv
   "Read and write Terra's tab-separated value (.tsv) files."
   (:refer-clojure :exclude [read])
-  (:require [clojure.data.json :as json]
-            [clojure.java.io   :as io]
-            [clojure.string    :as str])
+  (:require [clojure.data.csv  :as csv]
+            [clojure.data.json :as json]
+            [clojure.edn       :as edn]
+            [clojure.java.io   :as io])
   (:import [java.io Reader StringReader StringWriter Writer]))
 
 (defprotocol TsvField
@@ -22,6 +23,8 @@
   (^:private -write [field out]
    (.write out field)))
 
+;; BUG: Do not quote or escape \tab or \newline.
+;;
 (defn ^:private write-fields
   "Write the sequence of .tsv FIELDS to WRITER."
   [fields ^Writer writer]
@@ -32,22 +35,23 @@
       (recur (rest fields) "\t"))))
 
 (defn ^:private read-field
-  "Read a .tsv field from the string S."
+  "Guess what S is to avoid writing a full-blown scanner."
   [s]
   (case (first s)
     (\[ \{) (json/read-str s)
-    s))
+    (or (try (let [x (edn/read-string s)]
+               (when (number? x) x))
+             (catch Throwable _ignored))
+        s)))
 
-(defn ^:private read-fields
-  "Return .tsv fields from a string S of tab-separated fields."
-  [s]
-  (map read-field (str/split s #"\t")))
-
+;; HACK: Post-process CSV to avoid writing a full-blown parser.
+;;
 (defn read
   "Read a .tsv table, a sequence of sequences, from READER."
   [^Reader reader]
-  (-> reader io/reader line-seq
-      (->> (map read-fields))))
+  (-> reader
+      (csv/read-csv :separator \tab)
+      (->> (map (partial map read-field)))))
 
 (defn read-str
   "Read a .tsv table, a sequence of sequences, from string S."
@@ -57,10 +61,7 @@
 (defn read-file
   "Return a lazy .tsv table from FILE."
   [file]
-  (letfn [(lines [reader] (lazy-seq (if-let [line (.readLine reader)]
-                                      (cons line (lines reader))
-                                      (.close reader))))]
-    (map read-fields (lines (io/reader file)))))
+  (read (io/reader file)))
 
 (defn write
   "Write TABLE, a sequence of .tsv field sequences, to WRITER."

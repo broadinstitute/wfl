@@ -1,15 +1,12 @@
 (ns wfl.tsv-test
   "Test the wfl.tsv utility namespace."
   (:require [clojure.test   :refer [deftest is testing]]
-            [clojure.data   :as data]
-            [clojure.pprint :refer [pprint]]
             [clojure.set    :as set]
             [clojure.walk   :as walk]
-            [wfl.debug      :as debug]
             [wfl.tsv        :as tsv])
   (:import [java.util UUID]))
 
-(def ^:private edn
+(def ^:private the-edn
   "More EDN than can be represented in a Terra (.tsv) file."
   [{:boolean    false
     :integer    5
@@ -18,7 +15,7 @@
     :set        #{:a "set" 5}
     :string     "a frayed knot"
     :vector     ["one thing"]
-    :jason-rose ["and" 23 "skiddoo"]}
+    :jason-rose [:made "a" :good "joke"]}
    {:boolean    true
     :integer    23
     :keyword    :lockletter
@@ -28,26 +25,16 @@
     :vector     ["or another thing"]
     :jason-rose ["and" 23 "skiddoo" :fnord]}])
 
-(defn ^:private tsvify
-  "Make TREE safe for Terra's TSV format."
-  [tree]
-  (letfn [(tsvify [x] (cond (boolean? x) (if   x "true" "false")
-                            (keyword? x) (name x)
-                            (number?  x) (str  x)
-                            (set?     x) (vec  x)
-                            :else              x))]
-    (walk/postwalk tsvify tree)))
-
 (deftest round-trip-table-map
-  (testing "Map to table transformation does not lose information."
-    (is (= edn (tsv/mapulate (tsv/tabulate edn))))
-    (let [keywords (keys (first edn))
+  (testing "Map to table does not lose information."
+    (is (= the-edn (tsv/mapulate (tsv/tabulate the-edn))))
+    (let [keywords (keys (first the-edn))
           renames  (zipmap keywords (map name keywords))]
       (letfn [(rename [m] (set/rename-keys m renames))]
-        (let [keywordless (map rename edn)]
+        (let [keywordless (map rename the-edn)]
           (is (= keywordless (tsv/mapulate (tsv/tabulate keywordless)))))))))
 
-(deftest manipulate-throws
+(deftest manipulators-throw
   (testing "TABLE.tsv has multiple column counts."
     (is (thrown-with-msg?
          Throwable #"TABLE.tsv has multiple column counts."
@@ -59,30 +46,42 @@
   (testing "TABLE.tsv has multiple column counts."
     (is (thrown-with-msg?
          Throwable #"TABLE.tsv has multiple column counts."
-         (tsv/mapulate (first [[:a :b] [:b]]))))))
+         (tsv/mapulate [[:a :b] [:b]])))))
 
-(deftest round-trip-file
-  (testing "Round-trip EDN to file.tsv and back."
-    (let [file  (str (UUID/randomUUID) ".tsv")
-          table (tsv/tabulate edn)]
-      (tsv/write-file table file)
-      (let [tsv (tsv/read-file file)]
-        (debug/trace (data/diff table tsv))))))
+(defn ^:private hack-terrafy
+  "Make TREE safe for Terra's TSV format."
+  [tree]
+  (letfn [(terrify [x] (cond (boolean? x) (if   x "true" "false")
+                             (keyword? x) (name x)
+                             (set?     x) (vec  x)
+                             :else              x))]
+    (walk/postwalk terrify tree)))
+
+(defn ^:private hack-unterrafy
+  "Recover sets in THE-EDN from the resulting Terra TSV map."
+  [tsv]
+  (letfn [(fix? [[k v]] (when (set? v) k))]
+    (let [set-keys (map name (keep fix? (first the-edn)))]
+      (letfn [(up-set [m k] (update m k set))
+              (re-set [m] (into {} (map (partial up-set m) set-keys)))]
+        (map re-set tsv)))))
 
 (deftest round-trip-string
-  (testing "Round-trip EDN to string and back."
-    (letfn [(reset [m] (update m "set" set))]
-      (let [in    (tsvify edn)
-            table (tsv/tabulate edn)
-            out   (tsv/mapulate (tsv/read-str (tsv/write-str table)))]
-        (debug/trace (data/diff (map reset in) (map reset out)))
-        (is (= in out))))))
+  (testing "Round-trip THE-EDN to string and back."
+    (is (= (-> the-edn
+               hack-terrafy
+               hack-unterrafy)
+           (-> the-edn
+               tsv/tabulate
+               tsv/write-str
+               tsv/read-str
+               tsv/mapulate
+               hack-unterrafy)))))
 
-(tsv/write-file
- (tsv/read-file "/Users/tbl/Broad/wfl/assemblies.tsv")
- "/Users/tbl/Broad/wfl/assemblies-tbl.tsv")
-
-(tsv/write-file
- (tsv/read-file
-  "/Users/tbl/Broad/wfl/SARSCoV2-Illumina-Full-workspace-attributes.tsv")
- "/Users/tbl/Broad/wfl/SARSCoV2-Illumina-Full-workspace-attributes-tbl.tsv")
+(deftest round-trip-file
+  (testing "Round-trip THE-EDN to file.tsv and back."
+    (let [file (io/file (str (UUID/randomUUID) ".tsv"))]
+      (try (is (= (-> the-edn hack-terrafy hack-unterrafy)
+                  (do (-> the-edn tsv/tabulate (tsv/write-file file))
+                      (-> file tsv/read-file tsv/mapulate hack-unterrafy))))
+           (finally (io/delete-file file))))))
