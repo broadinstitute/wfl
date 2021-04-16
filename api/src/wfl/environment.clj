@@ -48,6 +48,8 @@
    #(-> nil)
    "WFL_FIRECLOUD_URL"
    #(-> "https://api.firecloud.org")
+   "WFL_RAWLS_URL"
+   #(-> "https://rawls.dsde-dev.broadinstitute.org")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"
