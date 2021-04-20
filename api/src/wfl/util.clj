@@ -384,17 +384,6 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
-(defn today
-  "Return a ^LocalDate of today's date in UTC."
-  []
-  (LocalDate/now (Clock/systemUTC)))
-
-(defn days-from-today
-  "Return n-days from today's date in ^LocalDate, either
-   backward or forward depends on the sign of n."
-  [^Integer n]
-  (.plus (today) n ChronoUnit/DAYS))
-
 (defn randomize
   "Append a random suffix to `string`."
   [string]
