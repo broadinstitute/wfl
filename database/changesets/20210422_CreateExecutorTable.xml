@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_CreateExecutorTable.xml"
+               runInTransaction="false">
+        <comment>
+            the Executor table schema
+        </comment>
+        <createTable tableName="executor">
+            <column autoIncrement="true" name="id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="text" remarks="Describes what type of executor will be used."/>
+            <column name="workspace" type="text" remarks="The fully-qualified Namespace/Namename of the Terra workspace to execute workflows in."/>
+            <column name="methodConfiguration" type="text" remarks="The fully-qualified Namespace/Name of the method configuration used to create submissions."/>
+            <column name="version" type="text" remarks="The method configuration version."/>
+            <column name="entity" type="text" remarks="The entity type to import data from the source as."/>
+            <column name="fromSource" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the source into the data type understood by the executor."/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
