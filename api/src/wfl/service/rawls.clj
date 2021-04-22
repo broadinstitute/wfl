@@ -21,7 +21,7 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn create-snapshot
+(defn create-snapshot-reference
   "Link a Terra Data Repo snapshot with id SNAPSHOT-ID to a fully-qualified
   Terra WORKSPACE as NAME, optionally described by DESCRIPTION."
   ([workspace snapshot-id name description]
@@ -37,7 +37,7 @@
        util/response-body-json
        :referenceId))
   ([workspace snapshot-id name]
-   (create-snapshot workspace snapshot-id name "")))
+   (create-snapshot-reference workspace snapshot-id name "")))
 
 (defn get-snapshot
   "Return the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
