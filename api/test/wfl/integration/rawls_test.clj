@@ -20,15 +20,15 @@
     (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
     (is (= (:name known-snapshot-link) (:name snapshot)))))
 
-(deftest test-create-snapshot
-  (testing "Creating snapshot with same name of existing throws 409 error"
+(deftest test-create-snapshot-reference
+  (testing "Creating snapshot reference with same name of existing throws 409 error"
     (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
-                          (rawls/create-snapshot workspace
-                                                 snapshot-id
-                                                 (:name known-snapshot-link)))))
+                          (rawls/create-snapshot-reference workspace
+                                                           snapshot-id
+                                                           (:name known-snapshot-link)))))
   (let [name (str (UUID/randomUUID))]
     (util/bracket
-     #(rawls/create-snapshot workspace snapshot-id name "wfl.rawls-test/test-create-snapshot")
+     #(rawls/create-snapshot-reference workspace snapshot-id name "wfl.rawls-test/test-create-snapshot")
      #(rawls/delete-snapshot workspace %)
      #(let [snapshot (rawls/get-snapshot workspace %)]
         (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
