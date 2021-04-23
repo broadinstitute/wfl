@@ -16,8 +16,8 @@
             the Source table schema
         </comment>
         <createTable tableName="source">
-            <column autoIncrement="true" name="id" type="INT">
-                <constraints primaryKey="true"/>
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="name" type="text" remarks="Describes what type of source this is."/>
             <column name="dataset" type="text" remarks="The name of the TDR dataset workflow-launchershould monitor."/>

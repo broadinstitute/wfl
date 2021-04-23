@@ -16,8 +16,8 @@
             the Sink table schema
         </comment>
         <createTable tableName="sink">
-            <column autoIncrement="true" name="id" type="INT">
-                <constraints primaryKey="true"/>
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="name" type="text" remarks="Describes what type of sink workflow-launcher should write to."/>
             <column name="workspace" type="text" remarks="The fully-qualified Namespace/Namename of the Terra workspace to execute workflows in."/>
