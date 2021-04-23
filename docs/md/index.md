@@ -21,7 +21,7 @@ on Kubernetes clusters.
 
 !!! info ""
     For more on Workflow Launcher's role in the Terra infrastructure
-    see [Workflow Launcher's role in Terra](/docs/md/terra.md).
+    see [Workflow Launcher's role in Terra](./terra.md).
 
 
 ## Quickstart
@@ -29,18 +29,19 @@ on Kubernetes clusters.
 ???+ tip
     This is the Quickstart section, which should cover the most frequent
     uses cases that interact with WFL. For more detailed information, please
-    check other sections such as the [development guide](/docs/md/dev-process.md)
-    or [modules design principles](/docs/md/modules-general.md).
+    check other sections such as the [development guide](./dev-process.md)
+    or [modules design principles](./modules-general.md).
 
 ### Build
 
-The easiest way to build WFL is via `make` (or `gmake` on macOS), in addition, the
-following prerequisites are needed:
+The easiest way to build WFL is via `make`, in addition, the following
+prerequisites are needed:
 
 - [The Docker daemon](https://www.docker.com/products/docker-desktop)
 - Clojure (`brew install clojure` on macOS)
-- Python3 (`brew install python@3.8` on macOS)
+- Python3 (`brew install python@3.9` on macOS)
 - NodeJS (`brew install node` on macOS)
+- Google Cloud SDK (`brew install --cask google-cloud-sdk` on macOS)
 
 !!! tip "Arch Linux tips"
     - Install [clojure](https://www.archlinux.org/packages/?name=clojure)
@@ -176,18 +177,18 @@ clojure -M:parallel-test wfl.system.v1-endpoint-test
 
 Currently, we mainly deploy WFL to `broad-gotc-dev` and `broad-gotc-prod` projects.
 When it's time to deploy WFL, for most of the time developers need to
-release a new version following the steps in [Release Guide](/docs/md/dev-release.md)
+release a new version following the steps in [Release Guide](./dev-release.md)
 
 After which, the developers who have broad VPN connected can go to the
 [Jenkins Page](https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec)
 to deploy applicable versions of WFL to various available cloud projects.
 
 Learn more about the deployment details in
-[Deployment of WorkFlow Launcher](/docs/md/dev-deployment.md).
+[Deployment of WorkFlow Launcher](./dev-deployment.md).
 
 ## Implementation
 
-For frontend details, check [Frontend Section](/docs/md/dev-frontend.md)
+For frontend details, check [Frontend Section](./dev-frontend.md)
 
 ### Top-level files
 
