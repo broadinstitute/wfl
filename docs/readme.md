@@ -19,19 +19,15 @@ and point you to where documentation is served (e.g. http://127.0.0.1:8000).
 ```
 INFO    -  Building documentation... 
 INFO    -  Cleaning site directory 
-WARNING -  A relative path to 'dev-sandbox.md' is included in the 'nav' configuration, which is not found in the documentation files 
-WARNING -  A relative path to 'dev-deployment.md' is included in the 'nav' configuration, which is not found in the documentation files 
-INFO    -  Documentation built in 1.31 seconds 
-[I 210423 10:39:01 server:335] Serving on http://127.0.0.1:8000
+INFO    -  Documentation built in 1.46 seconds
+[I 210423 14:27:04 server:335] Serving on http://127.0.0.1:8000
 INFO    -  Serving on http://127.0.0.1:8000
-[I 210423 10:39:01 handlers:62] Start watching changes
+[I 210423 14:27:04 handlers:62] Start watching changes
 INFO    -  Start watching changes
-[I 210423 10:39:01 handlers:64] Start detecting changes
+[I 210423 14:27:04 handlers:64] Start detecting changes
 INFO    -  Start detecting changes
-[I 210423 10:39:09 handlers:135] Browser Connected: http://127.0.0.1:8000/
-INFO    -  Browser Connected: http://127.0.0.1:8000/
-[I 210423 10:39:17 handlers:135] Browser Connected: http://127.0.0.1:8000/dev-process/
-INFO    -  Browser Connected: http://127.0.0.1:8000/dev-process/
+[I 210423 14:27:05 handlers:135] Browser Connected: http://localhost:8000/dev-process/
+INFO    -  Browser Connected: http://localhost:8000/dev-process/
 ...
 ```
 

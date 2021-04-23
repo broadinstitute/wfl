@@ -183,9 +183,6 @@ After which, the developers who have broad VPN connected can go to the
 [Jenkins Page](https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec)
 to deploy applicable versions of WFL to various available cloud projects.
 
-Learn more about the deployment details in
-[Deployment of WorkFlow Launcher](./dev-deployment.md).
-
 ## Implementation
 
 For frontend details, check [Frontend Section](./dev-frontend.md)
