@@ -21,6 +21,7 @@
             dataset_id                  text,        -- Terra DataRepo dataset id
             snapshot_job_id             text,        -- Terra DataRepo snapshot creation job id
             snapshot_id                 text,        -- Terra DataRepo snapshot id
+            snapshot_reference_id       text,        -- Terra Workspace snapshot reference id
             datarepo_row_id             text,        -- Unique id to identify a row in snapshot
             submission_id               text,        -- FireCloud submissionId
             workflow_id                 text,        -- FireCloud workflow id
