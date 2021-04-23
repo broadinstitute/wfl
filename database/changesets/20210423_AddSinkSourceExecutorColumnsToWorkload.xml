@@ -1,0 +1,36 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="tbl@broadinstitute.org"
+               dbms="postgresql"
+               id="20210423"
+               logicalFilePath="20210423_AddSinkSourceCovidExecutorColumnToWorkload.xml">
+        <comment>
+            Add 'Sink', 'Source' and 'Executor' constraints as to the workload table.
+        </comment>
+        <addColumn tableName="workload">
+            <column name="source_id"
+                    type="integer">
+                <constraints foreignKeyName="fk_source_id" references="source(id)"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="workload">
+            <column name="sink_id"
+                    type="integer">
+                <constraints foreignKeyName="fk_sink_id" references="sink(id)"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="workload">
+            <column name="executor_id"
+                    type="integer">
+                <constraints foreignKeyName="fk_executor_id" references="executor(id)"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
