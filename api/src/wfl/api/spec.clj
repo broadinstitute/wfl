@@ -27,18 +27,18 @@
 (s/def ::executor (s/or :legacy_executor string?
                         :executor (s/keys :req-un [::name
                                                    ::workspace
-                                                   ::methodConfiguration
+                                                   ::method_configuration
                                                    ::version
                                                    ::entity
-                                                   ::fromSource])))
+                                                   ::from_source])))
 (s/def ::finished inst?)
-(s/def ::fromOutputs map?)
-(s/def ::fromSource string?)
+(s/def ::from_outputs map?)
+(s/def ::from_source string?)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
 (s/def ::input_cram #(str/ends-with? % ".cram"))
 (s/def ::labels (s/coll-of string?))
-(s/def ::methodConfiguration string?)
+(s/def ::method_configuration string?)
 (s/def ::name string?)
 (s/def ::options map?)
 (s/def ::output string?)
@@ -48,16 +48,16 @@
 (s/def ::sink (s/keys :req-un [::name
                                ::workspace
                                ::entity
-                               ::fromOutputs]))
+                               ::from_outputs]))
 (s/def ::snapshot string?)
 (s/def ::source (s/keys :req-un [::name
                                  ::dataset
-                                 ::table
+                                 ::dataset_table
                                  ::snapshot]))
 (s/def ::started inst?)
 (s/def ::status (set (conj cromwell/statuses "skipped")))
 (s/def ::stopped inst?)
-(s/def ::table string?)
+(s/def ::dataset_table string?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
