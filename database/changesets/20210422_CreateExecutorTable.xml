@@ -21,10 +21,10 @@
             </column>
             <column name="name" type="text" remarks="Describes what type of executor will be used."/>
             <column name="workspace" type="text" remarks="The fully-qualified Namespace/Namename of the Terra workspace to execute workflows in."/>
-            <column name="methodConfiguration" type="text" remarks="The fully-qualified Namespace/Name of the method configuration used to create submissions."/>
+            <column name="method_configuration" type="text" remarks="The fully-qualified Namespace/Name of the method configuration used to create submissions."/>
             <column name="version" type="text" remarks="The method configuration version."/>
             <column name="entity" type="text" remarks="The entity type to import data from the source as."/>
-            <column name="fromSource" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the source into the data type understood by the executor."/>
+            <column name="from_source" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the source into the data type understood by the executor."/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

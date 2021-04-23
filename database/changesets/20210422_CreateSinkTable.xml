@@ -22,7 +22,7 @@
             <column name="name" type="text" remarks="Describes what type of sink workflow-launcher should write to."/>
             <column name="workspace" type="text" remarks="The fully-qualified Namespace/Namename of the Terra workspace to execute workflows in."/>
             <column name="entity" type="text" remarks="The entity type to import data from the source as."/>
-            <column name="fromOutputs" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the executor (i.e. the outputs) into the data type understood by the sink."/>
+            <column name="from_outputs" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the executor (i.e. the outputs) into the data type understood by the sink."/>
         </createTable>
     </changeSet>
 </databaseChangeLog>
