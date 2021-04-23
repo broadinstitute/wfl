@@ -39,11 +39,11 @@
       [id table]))
 
 ;; TODO: implement COVID workload creation
-#_(defn create-covid-workload!
-    [tx {:keys [source sink executor] :as request}]
+(defn create-covid-workload!
+  [tx {:keys [source sink executor] :as request}]
   ;; TODO: validation
   ;; TODO: dispatch on source/sink/executor
-    (-> request
+  #_(-> request
         (add-workload-table! tx)
         (workloads/load-workload-for-id tx id)))
 
@@ -88,10 +88,8 @@
                     k
                     (->> (map frob)
                          (into {}))
-                    wfl.debug/trace
                     (jdbc/insert! tx k)))]
-
-        (run! go! [:source :executor :sink]))))
+        (run! go! [:source :executor :sink])))))
 
 (defn start-covid-workload!
   ""
