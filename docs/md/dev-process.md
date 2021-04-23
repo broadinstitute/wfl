@@ -181,6 +181,13 @@ shared database in `gotc-dev` or *gasp* production.
     createdb wfl
     ```
 
+    Or to recreate an existing wfl DB:
+
+    ```
+    dropdb wfl
+    createdb wfl
+    ```
+
 You are now free to launch a local WFL server pointing to your local DB.
 
 Assuming that `WFL_POSTGRES_URL` in `(wfl.environment/defaults)` is set to
