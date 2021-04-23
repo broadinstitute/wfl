@@ -21,7 +21,7 @@
             </column>
             <column name="name" type="text" remarks="Describes what type of source this is."/>
             <column name="dataset" type="text" remarks="The name of the TDR dataset workflow-launchershould monitor."/>
-            <column name="table" type="text" remarks="The name of the dataset table in dataset that workflow-launcher should monitor."/>
+            <column name="dataset_table" type="text" remarks="The name of the dataset table in dataset that workflow-launcher should monitor."/>
             <column name="snapshot" type="text" remarks="The name of a column in table containing orderable and strictly increasing data that workflow-launcher can use to poll for new inputs."/>
         </createTable>
     </changeSet>
