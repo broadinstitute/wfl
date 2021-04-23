@@ -10,6 +10,7 @@
 
 ;; shared
 (s/def ::base_file_name string?)
+(s/def ::common map?)
 (s/def ::commit (s/and string? (comp (partial == 40) count)))
 (s/def ::contamination_vcf string?)
 (s/def ::contamination_vcf_index string?)
@@ -18,19 +19,11 @@
 (s/def ::created inst?)
 (s/def ::creator string?)
 (s/def ::cromwell string?)
+(s/def ::dataset string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
-(s/def ::environment string?)
-(s/def ::name string?)
-(s/def ::dataset string?)
-(s/def ::table string?)
-(s/def ::snapshot string?)
-(s/def ::workspace string?)
-(s/def ::methodConfiguration string?)
-(s/def ::version string?)
 (s/def ::entity string?)
-(s/def ::fromSource string?)
-(s/def ::fromOutputs map?)
+(s/def ::environment string?)
 (s/def ::executor (s/or string?
                         (s/keys :req-un [::name
                                          ::workspace
@@ -38,34 +31,39 @@
                                          ::version
                                          ::entity
                                          ::fromSource])))
-(s/def ::source (s/keys :req-un [::name
-                                 ::dataset
-                                 ::table
-                                 ::snapshot]))
-(s/def ::sink (s/keys :req-un [::name
-                               ::workspace
-                               ::entity
-                               ::fromOutputs]))
-(s/def ::labels (s/coll-of string?))
-(s/def ::watchers (s/coll-of string?))
 (s/def ::finished inst?)
+(s/def ::fromOutputs map?)
+(s/def ::fromSource string?)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
 (s/def ::input_cram #(str/ends-with? % ".cram"))
+(s/def ::labels (s/coll-of string?))
+(s/def ::methodConfiguration string?)
+(s/def ::name string?)
+(s/def ::options map?)
 (s/def ::output string?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (set (conj cromwell/statuses "skipped")))
+(s/def ::sink (s/keys :req-un [::name
+                               ::workspace
+                               ::entity
+                               ::fromOutputs]))
+(s/def ::snapshot string?)
+(s/def ::source (s/keys :req-un [::name
+                                 ::dataset
+                                 ::table
+                                 ::snapshot]))
 (s/def ::started inst?)
+(s/def ::status (set (conj cromwell/statuses "skipped")))
 (s/def ::stopped inst?)
+(s/def ::table string?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
 (s/def ::version string?)
+(s/def ::watchers (s/coll-of string?))
 (s/def ::wdl string?)
-(s/def ::options map?)
-(s/def ::common map?)
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
 (s/def ::workload-request (s/or (s/keys :opt-un [::common
@@ -93,40 +91,39 @@
                                             ::uuid
                                             ::version]))
 (s/def ::workload-responses (s/* ::workload-response))
+(s/def ::workspace string?)
 
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
-(s/def ::workload-inputs (s/keys :req-un [::inputs]
-                                 :opt-un [::options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
                       :arrays   ::arrays-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
                       :sg       ::sg-workflow-inputs))
-
-(s/def ::workflows (s/* ::workflow))
 (s/def ::workflow
   (s/keys :req-un [::inputs]
           :opt-un [::status ::updated ::uuid ::options]))
+(s/def ::workflows (s/* ::workflow))
+(s/def ::workload-inputs (s/keys :req-un [::inputs]
+                                 :opt-un [::options]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
-(s/def ::chip_well_barcode string?)
-(s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
-(s/def ::append-to-aou-response (s/* ::aou-workflow-inputs))
 (s/def ::aou-workflow-inputs (s/keys :req-un [::analysis_version_number
                                               ::chip_well_barcode]))
-
-(s/def ::notifications (s/* ::aou-sample))
 (s/def ::aou-sample (s/keys :req-un [::analysis_version_number
                                      ::chip_well_barcode]))
+(s/def ::append-to-aou-request (s/keys :req-un [::notifications ::uuid]))
+(s/def ::append-to-aou-response (s/* ::aou-workflow-inputs))
+(s/def ::chip_well_barcode string?)
+(s/def ::notifications (s/* ::aou-sample))
 
 ;; arrays
-(s/def ::entity-name string?)
-(s/def ::entity-type string?)
 (s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
                                                  ::entity-type]))
+(s/def ::entity-name string?)
+(s/def ::entity-type string?)
 
 ;; copyfile
 (s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
