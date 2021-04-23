@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_CreateSinkTable.xml"
+               runInTransaction="false">
+        <comment>
+            the Sink table schema
+        </comment>
+        <createTable tableName="sink">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="text" remarks="Describes what type of sink workflow-launcher should write to."/>
+            <column name="workspace" type="text" remarks="The fully-qualified Namespace/Namename of the Terra workspace to execute workflows in."/>
+            <column name="entity" type="text" remarks="The entity type to import data from the source as."/>
+            <column name="fromOutputs" type="text" remarks="This attribute tells workflow-launcher how to coerce the output of the executor (i.e. the outputs) into the data type understood by the sink."/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_CreateSourceTable.xml"
+               runInTransaction="false">
+        <comment>
+            the Source table schema
+        </comment>
+        <createTable tableName="source">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="text" remarks="Describes what type of source this is."/>
+            <column name="dataset" type="text" remarks="The name of the TDR dataset workflow-launchershould monitor."/>
+            <column name="table" type="text" remarks="The name of the dataset table in dataset that workflow-launcher should monitor."/>
+            <column name="snapshot" type="text" remarks="The name of a column in table containing orderable and strictly increasing data that workflow-launcher can use to poll for new inputs."/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

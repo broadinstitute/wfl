@@ -16,19 +16,19 @@
         </comment>
         <addColumn tableName="workload">
             <column name="source_id"
-                    type="integer">
+                    type="bigint">
                 <constraints foreignKeyName="fk_source_id" references="source(id)"/>
             </column>
         </addColumn>
         <addColumn tableName="workload">
             <column name="sink_id"
-                    type="integer">
+                    type="bigint">
                 <constraints foreignKeyName="fk_sink_id" references="sink(id)"/>
             </column>
         </addColumn>
         <addColumn tableName="workload">
             <column name="executor_id"
-                    type="integer">
+                    type="bigint">
                 <constraints foreignKeyName="fk_executor_id" references="executor(id)"/>
             </column>
         </addColumn>
