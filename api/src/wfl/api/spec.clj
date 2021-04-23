@@ -24,13 +24,13 @@
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::entity string?)
 (s/def ::environment string?)
-(s/def ::executor (s/or string?
-                        (s/keys :req-un [::name
-                                         ::workspace
-                                         ::methodConfiguration
-                                         ::version
-                                         ::entity
-                                         ::fromSource])))
+(s/def ::executor (s/or :legacy_executor string?
+                        :executor (s/keys :req-un [::name
+                                                   ::workspace
+                                                   ::methodConfiguration
+                                                   ::version
+                                                   ::entity
+                                                   ::fromSource])))
 (s/def ::finished inst?)
 (s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
@@ -66,14 +66,19 @@
 (s/def ::wdl string?)
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
-(s/def ::workload-request (s/or (s/keys :opt-un [::common
-                                                 ::input
-                                                 ::items]
-                                        :req-un [(or ::executor ::cromwell)
-                                                 ::output
-                                                 ::pipeline
-                                                 ::project])
-                                ::covid-workload-request))
+
+(s/def ::workload-request (s/or :legacy-workload-request (s/keys :opt-un [::common
+                                                                          ::input
+                                                                          ::items]
+                                                                 :req-un [(or ::executor ::cromwell)
+                                                                          ::output
+                                                                          ::pipeline
+                                                                          ::project])
+                                :covid-workload-request (s/keys :opt-un [::labels
+                                                                         ::watchers]
+                                                                :req-un [::sink
+                                                                         ::executor
+                                                                         ::source])))
 (s/def ::workload-response (s/keys :opt-un [::finished
                                             ::input
                                             ::started
@@ -152,10 +157,3 @@
 (s/def ::workflow-request (s/keys :req-un [::end
                                            ::environment
                                            ::start]))
-
-;; covid
-(s/def ::covid-workload-request (s/keys :opt-un [::labels
-                                                 ::watchers]
-                                        :req-un [::sink
-                                                 ::executor
-                                                 ::source]))
