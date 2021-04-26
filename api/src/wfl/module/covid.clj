@@ -26,7 +26,8 @@
   [tx {:keys [source sink executor] :as request}])
 
 (defn start-covid-workload!
-  [])
+  "Start WORKLOAD."
+  [{:keys [submission-id workspace] :as workload}])
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."

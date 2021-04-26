@@ -88,3 +88,49 @@
                     :body         (json/write-str (map make-request entities)
                                                   :escape-slash false)})
         util/response-body-json)))
+
+;; https://cromwell.readthedocs.io/en/stable/execution/ExecutionTwists/
+;; :NoNewCalls is the default.
+;;
+(def a-rawls-submission
+  {:entityName                    "string"
+   :entityType                    "string"
+   :expression                    "string"
+   :methodConfigurationName       "string"
+   :methodConfigurationNamespace  "string"
+   :deleteIntermediateOutputFiles true
+   :useCallCache                  true
+   :useReferenceDisks             true
+   :workflowFailureMode           #{:ContinueWhilePossible :NoNewCalls}})
+
+(defn validate-submission
+  "Validate SUBMISSION in WORKSPACE namespace/name."
+  ([workspace submission]
+   (-> {:method       :post
+        :url          (workspace-api-url workspace "submissions" "validate")
+        :headers      (auth/get-auth-header)
+        :content-type :application/json
+        :body         (json/write-str submission :escape-slash false)}
+       http/request
+       util/response-body-json)))
+
+(defn create-submission
+  "Run SUBMISSION in WORKSPACE name/namespace."
+  ([workspace submission]
+   (-> {:method       :post
+        :url          (workspace-api-url workspace "submissions")
+        :headers      (auth/get-auth-header)
+        :content-type :application/json
+        :body         (json/write-str submission :escape-slash false)}
+       http/request
+       util/response-body-json)))
+
+(defn submission-status
+  "Status for SUBMISSION-ID in WORKSPACE name/namespace."
+  ([workspace submission-id]
+   (-> {:method       :get
+        :url          (workspace-api-url workspace "submissions" submission-id)
+        :headers      (auth/get-auth-header)
+        :content-type :application/json}
+       http/request
+       util/response-body-json)))
