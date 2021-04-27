@@ -105,32 +105,33 @@
 
 (defn validate-submission
   "Validate SUBMISSION in WORKSPACE namespace/name."
-  ([workspace submission]
-   (-> {:method       :post
-        :url          (workspace-api-url workspace "submissions" "validate")
-        :headers      (auth/get-auth-header)
-        :content-type :application/json
-        :body         (json/write-str submission :escape-slash false)}
-       http/request
-       util/response-body-json)))
+  [workspace submission]
+  (-> {:method       :post
+       :url          (workspace-api-url workspace "submissions" "validate")
+       :headers      (auth/get-auth-header)
+       :content-type :application/json
+       :body         (json/write-str submission :escape-slash false)}
+      http/request
+      util/response-body-json))
 
 (defn create-submission
   "Run SUBMISSION in WORKSPACE name/namespace."
-  ([workspace submission]
-   (-> {:method       :post
-        :url          (workspace-api-url workspace "submissions")
-        :headers      (auth/get-auth-header)
-        :content-type :application/json
-        :body         (json/write-str submission :escape-slash false)}
-       http/request
-       util/response-body-json)))
+  [workspace submission]
+  (-> {:method       :post
+       :url          (workspace-api-url workspace "submissions")
+       :headers      (auth/get-auth-header)
+       :content-type :application/json
+       :body         (json/write-str submission :escape-slash false)}
+      http/request
+      util/response-body-json))
 
 (defn submission-status
   "Status for SUBMISSION-ID in WORKSPACE name/namespace."
-  ([workspace submission-id]
-   (-> {:method       :get
-        :url          (workspace-api-url workspace "submissions" submission-id)
-        :headers      (auth/get-auth-header)
-        :content-type :application/json}
-       http/request
-       util/response-body-json)))
+  [workspace submission-id]
+  {:pre (spec/uuid-string? submission-id)}
+  (-> {:method       :get
+       :url          (workspace-api-url workspace "submissions" submission-id)
+       :headers      (auth/get-auth-header)
+       :content-type :application/json}
+      http/request
+      util/response-body-json))
