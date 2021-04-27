@@ -104,7 +104,11 @@
   (let [derived        (str/join "/" [".." "derived" "api"])
         resources      (io/file derived "resources")
         test-resources (io/file derived "test" "resources")]
-    (pprint the-version)
-    (write-the-version-file resources the-version)
-    (run! #(write-workflow-description test-resources %) (find-wdls))
-    (System/exit 0)))
+    (try
+      (pprint the-version)
+      (write-the-version-file resources the-version)
+      (run! #(write-workflow-description test-resources %) (find-wdls))
+      (System/exit 0)
+      (catch Throwable t
+        (pprint t)
+        (System/exit 1)))))
