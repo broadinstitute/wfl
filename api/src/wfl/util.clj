@@ -11,7 +11,8 @@
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime Clock LocalDate]
+           [java.time OffsetDateTime ZoneId]
+           [java.time.format DateTimeFormatter]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
@@ -492,3 +493,9 @@
      (columns-rows->tsv [(format-entity-type columns)] rows file)))
   ([tsv-type columns rows]
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
+
+(defn utc-now
+  []
+  (-> (ZoneId/of "UTC")
+      (OffsetDateTime/now)
+      (.format (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))))

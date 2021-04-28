@@ -25,52 +25,50 @@
   [tx {:keys [source sink executor] :as request}])
 
 (defn ^:private snapshot-created?
-  "Check TDR job to see if the snapshot is created successfully yet."
-  []
-  ;; TODO: Poll TDR for job status
-  )
+  "Check if snapshot has been created in TDR, return snapshot id if so."
+  [{:keys [snapshot_job_id] :as _record}]
+  (->> snapshot_job_id
+       (datarepo/job-done?)
+       :id))
 
-(defn ^:private check-for-new-data-in
-  [tx {:keys [dataset] :as workload}]
-  (let [dataset "ff6e2b40-6497-4340-8947-2f52a658f561"]
-    ))
-
-(comment
-  (defn go-create-snapshot!
-    [tx row-ids]
-    (let [columns     (-> (datarepo/all-columns dataset table)
+(defn ^:private go-create-snapshot!
+  "Create snapshot in TDR from `dataset`, `table`
+   and `row-ids` and write into `items` table of
+   WFL database."
+  [tx dataset table items row-ids]
+  (let [columns     (-> (datarepo/all-columns dataset table)
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
-          job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
+        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
                    (update :name util/randomize)
+                   ;; FIXME: this sometimes runs into: Cannot update iam permissions,
+                   ;;        need failure handling here!
                    (datarepo/create-snapshot))]
-      ;; TODO: Update database
-      ; (jdbc/insert! tx )
-      ;; TODO: Failure handling
-      ))
 
-  ;; Partition row IDs into batches of 500 to keep TDR happy.
-  ;; Ask Ruchi for the reference to the bug ticket if there's one.
-  (let [most-recent-record-date "2021-03-29 00:00:00"
-        ;; FIXME: ask TDR/GP if the `updated` is local or UTC timestamp
-        local-now (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss") (java.time.OffsetDateTime/now))
-        dataset (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")]
+    (jdbc/insert! tx items {:dataset_id (:id dataset)
+                            :snapshot_job_id job-id})))
+
+(defn ^:private check-for-new-data
+  [tx {:keys [source sink executor] :as workload}]
+  (let [tx ""
+        most-recent-record-date "2021-03-29 00:00:00"
+        now (util/utc-now)
+        dataset (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
         table "flowcell"
         col-name "updated"
         row-ids (-> (datarepo/query-table-between
-                      dataset
-                      table
-                      col-name
-                      [most-recent-record-date local-now]
-                      [:datarepo_row_id])
-                  :rows
-                  flatten)
+                     dataset
+                     table
+                     col-name
+                     [most-recent-record-date now]
+                     [:datarepo_row_id])
+                    :rows
+                    flatten)
+        items (:items workload)]
     (when row-ids
       (let [shards (partition-all 500 row-ids)]
-        (map go-create-snapshot! shards))))
-  )
+        (map #(go-create-snapshot! tx dataset table items %) shards)))))
 
-;; TODO: implement progressive (private) functions inside this update loop
 (defn update-covid-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [tx {:keys [started finished] :as workload}]

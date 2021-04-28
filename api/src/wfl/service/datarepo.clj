@@ -96,6 +96,15 @@
   ([job-id]
    (poll-job job-id 5)))
 
+(defn job-done?
+  "Check the job with `job-id` to see if it's done yet."
+  [job-id]
+  (let [result   #(get-repository-json "jobs" job-id "result")
+        running? #(-> (get-repository-json "jobs" job-id)
+                      :job_status
+                      #{"running"})]
+    (if (running?) false (result))))
+
 (defn create-dataset
   "Create a dataset with EDN `dataset-request` and return the id
    of the created dataset. See `DatasetRequestModel` in the
@@ -126,7 +135,7 @@
 ;; changed so the spec in this function is not consistent with the TDR Swagger
 ;; page in order to make the request work.
 ;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
-(defn create-snapshot
+(defn create-snapshot-sync
   "Return snapshot-id when the snapshot defined by `snapshot-request` is ready.
    See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
@@ -138,6 +147,18 @@
       util/response-body-json
       :id
       poll-job
+      :id))
+
+(defn create-snapshot
+  "Return snapshot creation job-id defined by `snapshot-request`.
+   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [snapshot-request]
+  (-> (repository "snapshots")
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
       :id))
 
 (defn list-snapshots
