@@ -27,10 +27,11 @@
                 (is (= snapshot-name (:name snapshot)))
                 (:referenceId snapshot)))]
         (testing "Get"
-          (let [snapshot (rawls/get-snapshot workspace reference-id)]
+          (let [snapshot (rawls/get-snapshot-reference workspace reference-id)]
             (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
             (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
             (is (= snapshot-name (:name snapshot)))))
         (testing "Create already exists"
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                 (make-reference))))))))
+

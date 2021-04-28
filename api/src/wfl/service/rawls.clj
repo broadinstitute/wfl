@@ -36,13 +36,13 @@
   ([workspace snapshot-id name]
    (create-snapshot-reference workspace snapshot-id name "")))
 
-(defn get-snapshot
-  "Return the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+(defn get-snapshot-reference
+  "Return the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
   [workspace reference-id]
   (get-workspace-json workspace "snapshots" reference-id))
 
-(defn delete-snapshot
-  "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+(defn delete-snapshot-reference
+  "Delete the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
   [workspace reference-id]
   (-> (workspace-api-url workspace "snapshots" reference-id)
       (http/delete {:headers (auth/get-auth-header)})

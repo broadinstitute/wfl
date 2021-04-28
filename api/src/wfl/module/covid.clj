@@ -27,41 +27,48 @@
 (defn start-covid-workload!
   [])
 
-(defn ^:private snapshot-imported?
-  "Check if TDR snapshot has been imported to Terra Workspace.
+(defn ^:private snapshot-error-map
+  "Return default ExceptionInfo map for snapshot-related exceptions."
+  [{:keys [items sink] :as _workload} {:keys [id snapshot_id] :as _record}]
+  {:workspace (:workspace sink)
+   :table items
+   :id id
+   :snapshot_id snapshot_id})
 
-  TODOs / QUESTIONS:
-  - Do we need additional / altered arguments?
-  - Should we have access to loaded workload from outer scope (I think so),
-    or should every check in the update loop load the workload anew?
-  - Do we check workload for presence of snapshot ID? How?
-    (I think it could be related to items per aou. items = table name?)
-  - Could one workload be associated with many snapshots?  Are we checking
-    for all if so, or only for a specified snapshot?
-  "
-  [tx {:keys [id] :as workload}]
-  (let [loaded (workloads/load-workload-for-id tx id)]
-    (:snapshot_reference_id loaded)))
+(defn ^:private try-get-snapshot-reference
+  "Attempt to fetch snapshot reference with id SNAPSHOT_REFERENCE_ID
+  from SINK-derived workspace."
+  [{:keys [sink] :as workload} {:keys [snapshot_reference_id] :as record}]
+  (let [workspace (:workspace sink)]
+    (try
+      (rawls/get-snapshot-reference workspace snapshot_reference_id)
+      (catch Throwable cause
+        (throw (ex-info "Rawls unable to fetch snapshot reference"
+                        (util/deep-merge
+                         (snapshot-error-map workload record)
+                         {:snapshot_reference_id snapshot_reference_id})
+                        cause))))))
+
+(defn ^:private snapshot-imported?
+  "Check if snapshot with id SNAPSHOT_ID in TDR has been imported to
+  SINK-derived workspace and can be successfully fetched."
+  [workload {:keys [snapshot_id snapshot_reference_id] :as record}]
+  {:pre [(some? snapshot_id)]}
+  (and (some? snapshot_reference_id)
+       (some? (try-get-snapshot-reference workload record))))
 
 (defn ^:private import-snapshot!
-  "Import TDR snapshot to Terra Workspace.
-
-  TODOs / QUESTIONS:
-  - Do we need additional / altered arguments?
-  - How should we name the snapshot reference?
-  - Where do we get workspace and snapshot ID? From workload?
-    From an element within the workload?
-  - How do we store new reference ID in our transaction recording?
-    Associated with the workload, or something else?
-  - Is this a JDBC update or insert?
-  - Error handling?
-  "
-  [tx {:keys [id] :as workload}]
-  (let [name (util/randomize "placeholder-snapshot-ref-name")
-        workspace "workspace from workload?"
-        snapshot-id (:snapshot_id workload) ;; Is this correct, or need to go deeper?
-        reference-id (rawls/create-snapshot-reference workspace snapshot-id name)]
-    (jdbc/update! tx :workload {:snapshot_reference_id reference-id} ["id = ?" id])))
+  "Import snapshot with id SNAPSHOT_ID from TDR to workspace.
+  Use transaction TX to update ITEMS table with resulting reference id."
+  [tx {:keys [items sink] :as workload} {:keys [id snapshot_id] :as record}]
+  (let [workspace (:workspace sink)
+        name (util/randomize "placeholder-snapshot-ref-name")
+        reference-id (rawls/create-snapshot-reference workspace snapshot_id name)]
+    (when (nil? reference-id)
+      (throw (ex-info "Rawls unable to create snapshot reference"
+                      (util/deep-merge (snapshot-error-map workload record)
+                                       {:name name}))))
+    (jdbc/update! tx items {:snapshot_reference_id reference-id} ["id = ?" id])))
 
 (comment "Proposed workload update loop as described in Spike doc for reference"
          (cond
@@ -79,11 +86,6 @@
   (letfn [(update! [{:keys [id] :as workload}]
             (postgres/batch-update-workflow-statuses! tx workload)
             (postgres/update-workload-status! tx workload)
-            ;; Do we wish to save this loaded workload for our
-            ;; to-be-defined workload update loop?
-            ;; All of the checkers want to look at a loaded
-            ;; workflow, and the update loop conditional makes it
-            ;; such that we only do one task per round.
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
