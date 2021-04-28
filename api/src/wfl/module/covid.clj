@@ -97,9 +97,16 @@
 ;  [])
 
 (defn verify-source!
-  [source]
+  [{:keys [name dataset] :as source}]
   (when-not (= (:name source) "Terra DataRepo")
-    (throw (ex-info "Unknown Source" {:source source}))))
+    (throw (ex-info "Unknown Source" {:source source})))
+  ;; TODO: verify workspace exists
+  (try
+    (datarepo/dataset (:dataset source))
+    (catch Throwable _
+      (throw (ex-info "Cannot access Dataset" {:dataset dataset})))
+    )
+  )
 
 (defn verify-executor!
   [executor]
