@@ -109,23 +109,30 @@
 
 (defn verify-executor!
   [{:keys [name method_configuration] :as executor}]
+  ;; Verify the name of the executor
   (when-not (= (:name executor) "Terra")
     (throw (ex-info "Unknown Executor" {:executor executor})))
+  ;; Verify the method-configuration
+  (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full")
+    (throw (ex-info "Unknown Method Configuration" {:executor executor})))
   ;;; TODO: Verify that WFL has the necessary permissions to rawls and the workspace
   ;(try
   ;  (wfl.service.rawls/get-workspace (:workspace workspace))
   ;  (catch Throwable _
   ;    (throw (ex-info "Cannot access Rawls" {:workspace workspace})))
   ;  )
-  ;; TODO: Verify the method configuration
-  (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full"))
-    (throw (ex-info "Unknown Method Configuration" {:method_configuration executor})))
+  )
 
 
 (defn verify-sink!
-  [sink]
+  [{:keys [name workspace] :as sink}]
+  ;; verify the name of the sink
   (when-not (= (:name sink) "Terra Workspace")
-    (throw (ex-info "Unknown Sink" {:sink sink}))))
+    (throw (ex-info "Unknown Sink" {:sink sink})))
+  ;; Verify the name of the workspace
+  (when-not (= (:workspace sink) "pathogen-genomic-surveillance/CDC_Viral_Sequencing")
+    (throw (ex-info "Unknown Workspace" {:executor sink})))
+  )
 
 (defn create-covid-workload!
   [tx {:keys [source executor sink] :as workload-request}]
@@ -215,7 +222,7 @@
 ;            (workloads/load-workload-for-id tx id))]
 ;    (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/create-workload!   pipeline create-covid-workload!)
+(defoverload workloads/create-workload! pipeline create-covid-workload!)
 ;(defoverload workloads/start-workload!    pipeline start-covid-workload!)
 ;(defoverload workloads/update-workload!   pipeline update-covid-workload!)
 ;(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
