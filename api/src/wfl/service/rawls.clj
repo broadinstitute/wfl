@@ -50,3 +50,10 @@
   (-> (workspace-api-url workspace "snapshots" reference-id)
       (http/delete {:headers (auth/get-auth-header)})
       util/response-body-json))
+
+
+(defn get-workspace
+  "Query Rawls for the workspace with the workspace name."
+  [workspace]
+  {:pre [(some? workspace)]}
+  (get-workspace-json "workspace" workspace))

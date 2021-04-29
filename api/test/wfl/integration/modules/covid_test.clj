@@ -10,9 +10,12 @@
 (deftest test-create-covid-workflow
   (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
                             (workloads/create-workload! tx {:pipeline "Sarscov2IlluminaFull"
-                                                            :source {:name "Terra DataRepo"}})
+                                                            :source {:name "Terra DataRepo"}
+                                                            :executor {:name "Terra"
+                                                                       :method_configuration "pathogen-genomic-surveillance/sarscov2_illumina_full"}})
                             )
   )
+
 
 (comment
   (wfl.tools.fixtures/create-local-database-for-testing (wfl.tools.fixtures/testing-db-config))

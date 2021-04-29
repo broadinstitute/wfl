@@ -98,20 +98,29 @@
 
 (defn verify-source!
   [{:keys [name dataset] :as source}]
+  ;; Verify that the source is named Terra DataRepo
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
-  ;; TODO: verify workspace exists
+  ;; Verify that WFL has the necessary permissions to read from the dataset and that it exists
   (try
     (datarepo/dataset (:dataset source))
     (catch Throwable _
-      (throw (ex-info "Cannot access Dataset" {:dataset dataset})))
-    )
-  )
+      (throw (ex-info "Cannot access Dataset" {:dataset dataset})))))
 
 (defn verify-executor!
-  [executor]
+  [{:keys [name method_configuration] :as executor}]
   (when-not (= (:name executor) "Terra")
-    (throw (ex-info "Unknown Executor" {:executor executor}))))
+    (throw (ex-info "Unknown Executor" {:executor executor})))
+  ;;; TODO: Verify that WFL has the necessary permissions to rawls and the workspace
+  ;(try
+  ;  (wfl.service.rawls/get-workspace (:workspace workspace))
+  ;  (catch Throwable _
+  ;    (throw (ex-info "Cannot access Rawls" {:workspace workspace})))
+  ;  )
+  ;; TODO: Verify the method configuration
+  (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full"))
+    (throw (ex-info "Unknown Method Configuration" {:method_configuration executor})))
+
 
 (defn verify-sink!
   [sink]
@@ -120,7 +129,7 @@
 
 (defn create-covid-workload!
   [tx {:keys [source executor sink] :as workload-request}]
-  (verify-source! source)
+  #_(verify-source! source)
   (verify-executor! executor)
   (verify-sink! sink)
   )
