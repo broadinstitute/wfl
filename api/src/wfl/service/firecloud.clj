@@ -44,10 +44,24 @@
                                           body-override)
                          :escape-slash false)}
          http/request
-         util/response-body-json
-         :submissionId)))
+         util/response-body-json)))
   ([workspace methodconfig entity]
    (create-submission workspace methodconfig entity {})))
+
+(defn submit-method
+  "Submit the`methodconfig` for processing in the Terra `workspace`."
+  [workspace methodconfig]
+  {:pre (every? string? [workspace methodconfig])}
+  (let [[mcns mcn] (str/split methodconfig #"/")]
+    (-> (workspace-api-url workspace "submissions")
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         (json/write-str
+                                   {:methodConfigurationNamespace mcns
+                                    :methodConfigurationName mcn
+                                    :useCallCache true}
+                                   :escape-slash false)})
+        util/response-body-json)))
 
 (defn create-workspace
   "Create an empty Terra workspace with the fully-qualified `workspace` name,
@@ -59,6 +73,22 @@
                  :attributes          {:description ""}
                  :authorizationDomain [{:membersGroupName firecloud-group}]}]
     (-> (workspace-api-url)
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         (json/write-str payload)})
+        util/response-body-json)))
+
+(defn clone-workspace
+  "Clone the Terra workspace `workspace-to-clone` as `workspace` and grant
+   access to the `firecloud-group`."
+  [workspace-to-clone workspace firecloud-group]
+  {:pre (every? string? [workspace-to-clone workspace firecloud-group])}
+  (let [[namespace name] (str/split workspace #"/")
+        payload {:namespace           namespace
+                 :name                name
+                 :attributes          {:description ""}
+                 :authorizationDomain [{:membersGroupName firecloud-group}]}]
+    (-> (workspace-api-url workspace-to-clone "clone")
         (http/post {:headers      (auth/get-auth-header)
                     :content-type :application/json
                     :body         (json/write-str payload)})
@@ -182,6 +212,26 @@
           (create-submission workspace methodconfig [entity-set-type entity-set-name]))))
   ([workspace methodconfig entities]
    (create-submission-for-entity-set workspace methodconfig entities (str (UUID/randomUUID)))))
+
+(defn list-method-configurations
+  "List all method configurations in the `workspace`."
+  [workspace]
+  (get-workspace-json workspace "methodconfigs?allRepos=true"))
+
+(defn get-method-configuration
+  "Return the `methodconfig` in the `workspace`."
+  [workspace methodconfig]
+  (get-workspace-json workspace "method_configs" methodconfig))
+
+(defn update-method-configuration
+  "Update the method-configuration `method-config-name` to be `methodconfig` in
+   the `workspace`."
+  [workspace method-config-name methodconfig]
+  (-> (workspace-api-url workspace "method_configs" method-config-name)
+      (http/put {:headers      (auth/get-auth-header)
+                 :content-type :application/json
+                 :body         (json/write-str methodconfig)})
+      (util/response-body-json)))
 
 (defn list-entities
   "List all entities with `entity-type` in `workspace`."
