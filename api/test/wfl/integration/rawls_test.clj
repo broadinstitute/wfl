@@ -34,4 +34,3 @@
         (testing "Create already exists"
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                 (make-reference))))))))
-

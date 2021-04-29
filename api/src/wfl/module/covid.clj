@@ -62,12 +62,10 @@
   Use transaction TX to update ITEMS table with resulting reference id."
   [tx {:keys [executor items] :as workload} {:keys [id snapshot_id] :as record}]
   (let [workspace (:workspace executor)
-        name (util/randomize "placeholder-snapshot-ref-name")
-        reference-id (rawls/create-snapshot-reference workspace snapshot_id name)]
+        reference-id (rawls/create-snapshot-reference workspace snapshot_id)]
     (when (nil? reference-id)
       (throw (ex-info "Rawls unable to create snapshot reference"
-                      (util/deep-merge (snapshot-error-map workload record)
-                                       {:name name}))))
+                      (snapshot-error-map workload record))))
     (jdbc/update! tx items {:snapshot_reference_id reference-id} ["id = ?" id])))
 
 (comment "Proposed workload update loop as described in Spike doc for reference"

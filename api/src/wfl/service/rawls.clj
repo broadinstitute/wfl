@@ -7,6 +7,7 @@
             [clojure.string :as str]
             [wfl.auth :as auth]
             [wfl.environment :as env]
+            [wfl.service.datarepo :as datarepo]
             [wfl.util :as util]))
 
 (defn ^:private rawls-url [& parts]
@@ -23,7 +24,8 @@
 
 (defn create-snapshot-reference
   "Link a Terra Data Repo snapshot with id SNAPSHOT-ID to a fully-qualified
-  Terra WORKSPACE as NAME, optionally described by DESCRIPTION."
+  Terra WORKSPACE as NAME (with the snapshot name as its base if unspecified),
+  optionally described by DESCRIPTION."
   ([workspace snapshot-id name description]
    (-> (workspace-api-url workspace "snapshots")
        (http/post {:headers      (auth/get-auth-header)
@@ -34,7 +36,10 @@
                                                  :escape-slash false)})
        util/response-body-json))
   ([workspace snapshot-id name]
-   (create-snapshot-reference workspace snapshot-id name "")))
+   (create-snapshot-reference workspace snapshot-id name ""))
+  ([workspace snapshot-id]
+   (let [name (util/randomize (:name (datarepo/snapshot snapshot-id)))]
+     (create-snapshot-reference workspace snapshot-id name))))
 
 (defn get-snapshot-reference
   "Return the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
