@@ -11,6 +11,7 @@
             [wfl.service.firecloud :as firecloud]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
+            [wfl.service.rawls :as rawls]
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
 
@@ -96,6 +97,7 @@
 ;  ""
 ;  [])
 
+
 (defn verify-source!
   [{:keys [name dataset] :as source}]
   ;; Verify that the source is named Terra DataRepo
@@ -114,32 +116,24 @@
     (throw (ex-info "Unknown Executor" {:executor executor})))
   ;; Verify the method-configuration
   (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full")
-    (throw (ex-info "Unknown Method Configuration" {:executor executor})))
-  ;;; TODO: Verify that WFL has the necessary permissions to rawls and the workspace
-  ;(try
-  ;  (wfl.service.rawls/get-workspace (:workspace workspace))
-  ;  (catch Throwable _
-  ;    (throw (ex-info "Cannot access Rawls" {:workspace workspace})))
-  ;  )
-  )
-
+    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
 (defn verify-sink!
   [{:keys [name workspace] :as sink}]
-  ;; verify the name of the sink
+  ;; Verify the name of the sink
   (when-not (= (:name sink) "Terra Workspace")
     (throw (ex-info "Unknown Sink" {:sink sink})))
-  ;; Verify the name of the workspace
-  (when-not (= (:workspace sink) "pathogen-genomic-surveillance/CDC_Viral_Sequencing")
-    (throw (ex-info "Unknown Workspace" {:executor sink})))
-  )
+  ;; Verify via a get that you have access to RAWLs and the workspace
+  (try
+    (rawls/get-workspace workspace)
+    (catch Throwable _
+      (throw (ex-info "Cannot access Rawls" {:workspace workspace})))))
 
 (defn create-covid-workload!
   [tx {:keys [source executor sink] :as workload-request}]
-  #_(verify-source! source)
+  (verify-source! source)
   (verify-executor! executor)
-  (verify-sink! sink)
-  )
+  (verify-sink! sink))
 
 
 ;(defn ^:private add-workload-table!
@@ -221,6 +215,7 @@
 ;            (postgres/update-workload-status! tx workload)
 ;            (workloads/load-workload-for-id tx id))]
 ;    (if (and started (not finished)) (update! workload) workload)))
+
 
 (defoverload workloads/create-workload! pipeline create-covid-workload!)
 ;(defoverload workloads/start-workload!    pipeline start-covid-workload!)
