@@ -29,17 +29,17 @@
 
 (defn ^:private snapshot-error-map
   "Return default ExceptionInfo map for snapshot-related exceptions."
-  [{:keys [items sink] :as _workload} {:keys [id snapshot_id] :as _record}]
-  {:workspace (:workspace sink)
+  [{:keys [executor items] :as _workload} {:keys [id snapshot_id] :as _record}]
+  {:workspace (:workspace executor)
    :table items
    :id id
    :snapshot_id snapshot_id})
 
 (defn ^:private try-get-snapshot-reference
   "Attempt to fetch snapshot reference with id SNAPSHOT_REFERENCE_ID
-  from SINK-derived workspace."
-  [{:keys [sink] :as workload} {:keys [snapshot_reference_id] :as record}]
-  (let [workspace (:workspace sink)]
+  from EXECUTOR-derived workspace."
+  [{:keys [executor] :as workload} {:keys [snapshot_reference_id] :as record}]
+  (let [workspace (:workspace executor)]
     (try
       (rawls/get-snapshot-reference workspace snapshot_reference_id)
       (catch Throwable cause
@@ -51,17 +51,17 @@
 
 (defn ^:private snapshot-imported?
   "Check if snapshot with id SNAPSHOT_ID in TDR has been imported to
-  SINK-derived workspace and can be successfully fetched."
+  workspace and can be successfully fetched."
   [workload {:keys [snapshot_id snapshot_reference_id] :as record}]
   {:pre [(some? snapshot_id)]}
   (and (some? snapshot_reference_id)
        (some? (try-get-snapshot-reference workload record))))
 
 (defn ^:private import-snapshot!
-  "Import snapshot with id SNAPSHOT_ID from TDR to workspace.
+  "Import snapshot with id SNAPSHOT_ID from TDR to EXECUTOR-derived workspace.
   Use transaction TX to update ITEMS table with resulting reference id."
-  [tx {:keys [items sink] :as workload} {:keys [id snapshot_id] :as record}]
-  (let [workspace (:workspace sink)
+  [tx {:keys [executor items] :as workload} {:keys [id snapshot_id] :as record}]
+  (let [workspace (:workspace executor)
         name (util/randomize "placeholder-snapshot-ref-name")
         reference-id (rawls/create-snapshot-reference workspace snapshot_id name)]
     (when (nil? reference-id)
