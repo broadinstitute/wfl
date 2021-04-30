@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_TerraDataRepoSourceTable.xml"
+               runInTransaction="false">
+        <comment>
+            the 'Terra DataRepo' source table schema
+        </comment>
+        <sql>
+            CREATE TYPE TerraDataRepo AS (
+                id              bigint,      -- unique to this table
+                dataset         text,        -- the id of the TDR dataset
+                dataset_table   text,        -- the name of the dataset table
+                snapshot        text,        -- name of a column in table containing orderable and strictly increasing data
+                details         text,        -- the identifier of the source details table
+                last_checked    timestamptz  -- a timestamp used for monitor
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>
