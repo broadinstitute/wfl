@@ -147,7 +147,7 @@
   (let [dataset-table "flowcell"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
-        columns       (-> (firecloud/list-entity-types "wfl-dev/SARSCoV2-Illumina-Full")
+        columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
                           :flowcell
                           entity-columns)]
     (fixtures/with-temporary-workspace
