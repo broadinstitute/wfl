@@ -23,89 +23,22 @@
 (defn create-covid-workload!
   [tx {:keys [source sink executor] :as request}])
 
-;(defn ^:private add-workload-table!
-;  "Use transaction `tx` to add a `CromwellWorkflow` table
-;  for a `workload-request` running `workflow-wdl`."
-;  [tx workload-request]
-;  )
-;
-;;; TODO: implement COVID workload creation
-;(defn create-covid-workload!
-;  [tx {:keys [source sink executor] :as request}]
-;  ;; TODO: validation
-;  (validate-workflow-permission workflow-launcher-sa-email)
-;  ;; TODO: dispatch on source/sink/executor
-;  (-> request
-;      (add-workload-table! tx)
-;      (workloads/load-workload-for-id tx id)))
-;
-;(comment
-;
-;
-;  (let [workload-request {:creator "ranthony@broadinstitute.org",
-;                          :source
-;                                     {:name "Terra DataRepo",
-;                                      :dataset "sarscov2_illumina_full",
-;                                      :table "inputs",
-;                                      :snapshot "run_date"},
-;                          :executor
-;                                    {:name "Terra",
-;                                     :workspace
-;                                     "pathogen-genomic-surveillance/CDC_Viral_Sequencing",
-;                                     :methodConfiguration
-;                                     "pathogen-genomic-surveillance/sarscov2_illumina_full",
-;                                     :version "3",
-;                                     :entity "snapshot",
-;                                     :fromSource "importSnapshot"},
-;                          :sink
-;                                    {:name "Terra Workspace",
-;                                     :workspace
-;                                     "pathogen-genomic-surveillance/CDC_Viral_Sequencing",
-;                                     :entity "flowcell",
-;                                     :fromOutputs {:column1 "output1"}},
-;                          :labels
-;                                    ["project:TestBoston"
-;                                     "project:COVID-19 Surveillance"
-;                                     "pipeline:sarscov2_illumina_full"],
-;                          :watchers ["cloreth@broadinstitute.org"]}]
-;
-;    )
-;
-;  (defn add-workload-table!
-;    "Use transaction `tx` to add a `CromwellWorkflow` table
-;    for a `workload-request` running `workflow-wdl`."
-;    [tx workflow-wdl workload-request]
-;    (let [{:keys [path release]} workflow-wdl
-;          {:keys [pipeline]} workload-request
-;          create "CREATE TABLE %s OF CromwellWorkflow (PRIMARY KEY (id))"
-;          setter "UPDATE workload SET pipeline = ?::pipeline WHERE id = ?"
-;          [{:keys [id]}]
-;          (-> workload-request
-;              (select-keys [:creator :executor :input :output :project])
-;              (update :executor util/de-slashify)
-;              (merge (select-keys (wfl/get-the-version) [:commit :version]))
-;              (assoc :release release :wdl path :uuid (UUID/randomUUID))
-;              (->> (jdbc/insert! tx :workload)))
-;          table (format "%s_%09d" pipeline id)]
-;      (jdbc/execute!       tx [setter pipeline id])
-;      (jdbc/db-do-commands tx [(format create table)])
-;      (jdbc/update!        tx :workload {:items table} ["id = ?" id])
-;      [id table]))
-;)
-;
-;;; TODO: implement progressive (private) functions inside this update loop
-;(defn update-covid-workload!
-;  "Use transaction `tx` to batch-update `workload` statuses."
-;  [tx {:keys [started finished] :as workload}]
-;  (letfn [(update! [{:keys [id] :as workload}]
-;            (postgres/batch-update-workflow-statuses! tx workload)
-;            (postgres/update-workload-status! tx workload)
-;            (workloads/load-workload-for-id tx id))]
-;    (if (and started (not finished)) (update! workload) workload)))
+(defn start-covid-workload!
+  [])
+
+;; TODO: implement progressive (private) functions inside this update loop
+(defn update-covid-workload!
+  "Use transaction `tx` to batch-update `workload` statuses."
+  [tx {:keys [started finished] :as workload}]
+  (letfn [(update! [{:keys [id] :as workload}]
+            (postgres/batch-update-workflow-statuses! tx workload)
+            (postgres/update-workload-status! tx workload)
+            (workloads/load-workload-for-id tx id))]
+    (if (and started (not finished)) (update! workload) workload)))
 
 (defoverload workloads/create-workload!   pipeline create-covid-workload!)
-;(defoverload workloads/start-workload!    pipeline start-covid-workload!)
-;(defoverload workloads/update-workload!   pipeline update-covid-workload!)
-;(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-;(defoverload workloads/load-workload-impl pipeline
-;  batch/load-batch-workload-impl)
+(defoverload workloads/start-workload!    pipeline start-covid-workload!)
+(defoverload workloads/update-workload!   pipeline update-covid-workload!)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline
+  batch/load-batch-workload-impl)
