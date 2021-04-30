@@ -17,9 +17,11 @@
     "general-dev-billing-account/test-workspace"
     "hornet-eng"
     (fn [workspace]
-      (let [reference-id
+      (let [make-reference
+            #(rawls/create-snapshot-reference workspace snapshot-id snapshot-name)
+            reference-id
             (testing "Create"
-              (let [snapshot (rawls/create-snapshot-reference workspace snapshot-id snapshot-name)]
+              (let [snapshot (make-reference)]
                 (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
                 (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
                 (is (= snapshot-name (:name snapshot)))
@@ -31,4 +33,4 @@
             (is (= snapshot-name (:name snapshot)))))
         (testing "Create already exists"
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
-                                (rawls/create-snapshot-reference workspace snapshot-id snapshot-name))))))))
+                                (make-reference))))))))
