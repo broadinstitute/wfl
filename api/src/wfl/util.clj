@@ -11,7 +11,7 @@
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime Clock LocalDate]
+           [java.time Instant OffsetDateTime Clock]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
@@ -23,7 +23,7 @@
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn x# "Swallowed exception and returned nil in wfl.util/do-or-nil"))))
+          (log/warn x# "from wfl.util/do-or-nil"))))
 
 ;; Parsers that will not throw.
 ;;
@@ -384,17 +384,6 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
-(defn today
-  "Return a ^LocalDate of today's date in UTC."
-  []
-  (LocalDate/now (Clock/systemUTC)))
-
-(defn days-from-today
-  "Return n-days from today's date in ^LocalDate, either
-   backward or forward depends on the sign of n."
-  [^Integer n]
-  (.plus (today) n ChronoUnit/DAYS))
-
 (defn randomize
   "Append a random suffix to `string`."
   [string]
@@ -503,3 +492,9 @@
      (columns-rows->tsv [(format-entity-type columns)] rows file)))
   ([tsv-type columns rows]
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
+
+(defn days
+  "Return an ordered interval of N days from now."
+  [^Integer n]
+  (let [now (Instant/now)]
+    (vec (sort [now (.minus now n (ChronoUnit/DAYS))]))))

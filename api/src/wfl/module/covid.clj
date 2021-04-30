@@ -1,5 +1,5 @@
 (ns wfl.module.covid
-  "Handle COVID processing."
+  "Manage the Sarscov2IlluminaFull pipeline."
   (:require [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -14,9 +14,22 @@
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import (java.time OffsetDateTime)))
+  (:import [java.time Instant OffsetDateTime]
+           [java.time.temporal ChronoUnit]))
 
 (def pipeline "Sarscov2IlluminaFull")
+
+(def table
+  "The Data Repo table."
+  "flowcells")
+
+(defn row-ids-yesterday
+  "Return the row IDs added to DATASET yesterday."
+  [dataset]
+  (let [yesterday (util/days -1)]
+    (-> dataset
+        (datarepo/query-table-between table yesterday [:datarepo_row_id])
+        :rows flatten)))
 
 ;; TODO: implement COVID workload creation
 ;;  - make sure permissions/inputs are right upfront
