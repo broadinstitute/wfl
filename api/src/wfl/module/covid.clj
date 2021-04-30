@@ -99,31 +99,32 @@
 
 
 (defn verify-source!
+  "Verify that the `source` is named Terra DataRepo.
+   Verify that WFL has the necessary permissions to
+   read from the `dataset` and that it exists."
   [{:keys [name dataset] :as source}]
-  ;; Verify that the source is named Terra DataRepo
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
-  ;; Verify that WFL has the necessary permissions to read from the dataset and that it exists
   (try
     (datarepo/dataset (:dataset source))
     (catch Throwable _
       (throw (ex-info "Cannot access Dataset" {:dataset dataset})))))
 
 (defn verify-executor!
+  "Verify the name of the executor.
+   Verify the method-configuration."
   [{:keys [name method_configuration] :as executor}]
-  ;; Verify the name of the executor
   (when-not (= (:name executor) "Terra")
     (throw (ex-info "Unknown Executor" {:executor executor})))
-  ;; Verify the method-configuration
   (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full")
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
 (defn verify-sink!
+  "Verify the name of the sink.
+   Verify via a get that you have access to RAWLs and the workspace."
   [{:keys [name workspace] :as sink}]
-  ;; Verify the name of the sink
   (when-not (= (:name sink) "Terra Workspace")
     (throw (ex-info "Unknown Sink" {:sink sink})))
-  ;; Verify via a get that you have access to RAWLs and the workspace
   (try
     (rawls/get-workspace workspace)
     (catch Throwable _

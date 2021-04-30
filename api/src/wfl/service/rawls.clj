@@ -10,9 +10,8 @@
             [wfl.util :as util]))
 
 (defn ^:private rawls-url [& parts]
-  (let [url (util/de-slashify (env/getenv "WFL_RAWLS_URL"))
-        rex (str/join "/" (cons url parts))]
-    (println rex) (str/join "/" (cons url parts))))
+  (let [url (util/de-slashify (env/getenv "WFL_RAWLS_URL"))]
+    (str/join "/" (cons url parts))))
 
 (def ^:private workspace-api-url
   (partial rawls-url "api/workspaces"))
