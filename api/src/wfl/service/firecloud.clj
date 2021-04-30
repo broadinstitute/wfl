@@ -29,7 +29,7 @@
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
   ([workspace methodconfig [entity-type entity-name :as _entity] body-override]
-   {:pre [map? body-override]}
+   {:pre [(map? body-override)]}
    (let [[mcns mcn] (str/split methodconfig #"/")]
      (-> {:method       :post
           :url          (workspace-api-url workspace "submissions")
@@ -51,7 +51,7 @@
 (defn submit-method
   "Submit the`methodconfig` for processing in the Terra `workspace`."
   [workspace methodconfig]
-  {:pre (every? string? [workspace methodconfig])}
+  {:pre [(every? string? [workspace methodconfig])]}
   (let [[mcns mcn] (str/split methodconfig #"/")]
     (-> (workspace-api-url workspace "submissions")
         (http/post {:headers      (auth/get-auth-header)
@@ -82,7 +82,7 @@
   "Clone the Terra workspace `workspace-to-clone` as `workspace` and grant
    access to the `firecloud-group`."
   [workspace-to-clone workspace firecloud-group]
-  {:pre (every? string? [workspace-to-clone workspace firecloud-group])}
+  {:pre [(every? string? [workspace-to-clone workspace firecloud-group])]}
   (let [[namespace name] (str/split workspace #"/")
         payload {:namespace           namespace
                  :name                name

@@ -95,7 +95,7 @@
 
 (defn demo []
   (println "CDC COVID-19 Surveillance Demo")
-  (println "Demonstrating sarscov2_illimina_full automation")
+  (println "Demonstrating sarscov2_illumina_full automation")
   (wait-for-user)
   (fixtures/with-fixtures
     [(util/bracket clone-workspace delete-workspace)
