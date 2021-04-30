@@ -1,13 +1,12 @@
 (ns wfl.system.cdc-covid19-surveillance-demo
-  (:require [clojure.test          :refer :all]
-            [wfl.service.datarepo  :as datarepo]
+  (:require [wfl.service.datarepo  :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.rawls     :as rawls]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.snapshots   :as snapshots]
             [wfl.util              :as util]))
 
-(def workspace-to-clone     "cdc-covid-surveillance/CDC_Viral_Sequencing_GP")
+(def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
 (def firecloud-group        "cdc-covid-surveillance")
 (def snapshot-readers       ["cdc-covid-surveillance@firecloud.org"])
 (def source-dataset         "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
@@ -32,7 +31,7 @@
   (let [row-ids (-> (datarepo/query-table-between
                      dataset source-table
                      snapshot-column
-                     ["2021-04-24 03:00:00" "2021-04-26 05:00:00"]
+                     ["2021-04-27T03:59:59" "2021-04-27T04:00:01"]
                      [:datarepo_row_id])
                     :rows
                     flatten)]
@@ -47,7 +46,7 @@
              dataset
              source-table
              row-ids)
-            (assoc :readers snapshot-readers-group)
+            (assoc :readers snapshot-readers)
             datarepo/create-snapshot
             datarepo/snapshot)]
     (println "Created snapshot" name)
