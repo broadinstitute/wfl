@@ -1,4 +1,5 @@
 (ns wfl.tools.snapshots
+  "Manage snapshots of Data Repo tables."
   (:require [clojure.test         :refer :all]
             [wfl.environment      :as environment]
             [wfl.service.datarepo :as datarepo]
