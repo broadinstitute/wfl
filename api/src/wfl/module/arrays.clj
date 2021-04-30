@@ -119,18 +119,16 @@
 (defn start-arrays-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [items project uuid] :as workload}]
-  (let [now (OffsetDateTime/now)
-        methodconfig-ns (first (str/split project #"/"))]
+  (let [now             (OffsetDateTime/now)
+        methodconfig-ns (first (str/split project #"/"))
+        methodconfig    (str/join "/" [methodconfig-ns methodconfig-name])]
     (letfn [(submit! [{:keys [id inputs] :as _workflow}]
-              [id (firecloud/create-submission
-                   project
-                   (str/join "/" [methodconfig-ns methodconfig-name])
-                   (mapv inputs [:entity-type :entity-name]))])
-            (update! [tx [id uuid]]
-              (when uuid
-                (jdbc/update! tx items
-                              {:updated now :uuid uuid :status "Submitted"}
-                              ["id = ?" id])))]
+              (let [entity (mapv inputs [:entity-type :entity-name])]
+                [id (firecloud/create-submission project methodconfig entity)]))
+            (update! [tx [id {:keys [submissionId]}]]
+              (jdbc/update! tx items
+                            {:updated now :uuid submissionId :status "Submitted"}
+                            ["id = ?" id]))]
       (let [ids-uuids (map submit! (:workflows workload))]
         (run! (partial update! tx) ids-uuids)
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
