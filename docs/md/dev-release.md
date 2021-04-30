@@ -11,7 +11,7 @@ in order to release a new version of WFL:
 3. Create a release candidate and deploy to a testing environment. See
    instructions bellow.
 4. [Bash](https://broadinstitute.atlassian.net/wiki/spaces/GHConfluence/pages/1731658083/Feature+Bashes)
-   the release candidate. Add/cherry-pick any bug fixes that result. 
+   the release candidate. Add/cherry-pick any bug fixes that result.
 5. Create a pull request into `main`. You will need to run
    `./ops/cli.py release` to generate the changelog for this release (the `-d`
    flag can be used to do a dry run without writing to the `CHANGELOG.md`file).
@@ -21,7 +21,7 @@ in order to release a new version of WFL:
    Please merge PRs that have passed all automated tests only.
 
 !!! tip
-    It can take up to 30 minutes for the Github Action to finish! Please be 
+    It can take up to 30 minutes for the Github Action to finish! Please be
     patient!
 
 !!! tip

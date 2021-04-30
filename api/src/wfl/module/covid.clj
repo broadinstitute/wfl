@@ -23,6 +23,9 @@
 (defn create-covid-workload!
   [tx {:keys [source sink executor] :as request}])
 
+(defn start-covid-workload!
+  [])
+
 ;; TODO: implement progressive (private) functions inside this update loop
 (defn update-covid-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
