@@ -16,7 +16,7 @@
             the 'Terra DataRepo' source table schema
         </comment>
         <sql>
-            CREATE TYPE TerraDataRepo AS (
+            CREATE TYPE TerraDataRepoSource AS (
                 id              bigint,      -- unique to this table
                 dataset         text,        -- the id of the TDR dataset
                 dataset_table   text,        -- the name of the dataset table

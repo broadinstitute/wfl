@@ -9,30 +9,22 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
-               id="20210414"
-               logicalFilePath="20210414_SourceExecutorSinkEnums.xml"
+               id="20210422"
+               logicalFilePath="20210422_ContinuousWorkloadInstanceTable.xml"
                runInTransaction="false">
         <sql>
-            CREATE TYPE source AS ENUM ()
+            CREATE TYPE ContinuousWorkloadInstance AS (
+                id             bigint,      -- unique to this table
+                source_type    source,      -- source type
+                source_item    text,        -- id of the source instance
+                executor_type  executor,    -- executor type
+                executor_item  text,        -- id of the executor instance
+                sink_type      sink,        -- sink type
+                sink_item      text,        -- id of the sink instance
+                updated        timestamptz  -- status update time
+            )
             <comment>
-                Add a new value for each new 'source' type.
-                The 'source_type' column for sources of this kind.
-            </comment>
-        </sql>
-
-        <sql>
-            CREATE TYPE executor AS ENUM ()
-            <comment>
-                Add a new value for each new 'executor' type.
-                The 'executor_type' column for executors of this kind.
-            </comment>
-        </sql>
-
-        <sql>
-            CREATE TYPE sink AS ENUM ()
-            <comment>
-                Add a new value for each new 'sink' type.
-                The 'sink_type' column for sinks of this kind.
+                the ContinuousWorkloadInstance table schema
             </comment>
         </sql>
     </changeSet>

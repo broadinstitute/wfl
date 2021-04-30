@@ -16,7 +16,7 @@
             the details table of 'Terra' executor
         </comment>
         <sql>
-            CREATE TYPE TerraDetails AS (
+            CREATE TYPE TerraExecutorDetails AS (
                 id                     bigint,      -- unique to this table
                 rawls_submission_id    text,        -- id of the Rawls submission
                 workflow_id            text,        -- id of the Terra workflow

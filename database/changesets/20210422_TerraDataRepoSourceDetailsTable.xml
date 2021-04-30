@@ -16,11 +16,11 @@
             the details table of 'Terra DataRepo' source
         </comment>
         <sql>
-            CREATE TYPE TerraDataRepoDetails AS (
+            CREATE TYPE TerraDataRepoSourceDetails AS (
                 id                          bigint,      -- unique to this table
                 snapshot_creation_job_id    text,        -- id of the TDR snapshot creation job
-                snapshot_id                 text,        -- id of the TDR snapshot
-                snapshot_reference_id       text,        -- id of the TDR snapshot reference
+                snapshot_id                 text,        -- id of the snapshot lives in TDR
+                snapshot_reference_id       text,        -- id of the snapshot reference lives in the workspace
                 datarepo_row_id             text         -- id of the TDR data row
             )
         </sql>

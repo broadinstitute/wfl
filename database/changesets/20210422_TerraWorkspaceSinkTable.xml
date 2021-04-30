@@ -16,7 +16,7 @@
             the 'Terra Workspace' sink table schema
         </comment>
         <sql>
-            CREATE TYPE TerraWorkspace AS (
+            CREATE TYPE TerraWorkspaceSink AS (
                 id              bigint,      -- unique to this table
                 workspace       text,        -- the fully-qualified 'Namespace/Name' of the Terra workspace to execute workflows in
                 entity          text,        -- the entity type to import data from the source as
