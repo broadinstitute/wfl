@@ -12,7 +12,8 @@
   (fixtures/temporary-environment
    {"WFL_FIRECLOUD_URL" "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}))
 
-(defn ^:private mock-terra-create-submission [& _] (UUID/randomUUID))
+(defn ^:private mock-terra-create-submission [& _]
+  {:submissionId (UUID/randomUUID)})
 
 (defn ^:private mock-get-workflow-status-by-entity [& _] "Succeeded")
 
