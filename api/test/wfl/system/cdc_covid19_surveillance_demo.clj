@@ -8,7 +8,8 @@
             [wfl.util              :as util]))
 
 (def workspace-to-clone     "cdc-covid-surveillance/CDC_Viral_Sequencing_GP")
-(def firecloud-group        "workflow-launcher-dev")
+(def firecloud-group        "cdc-covid-surveillance")
+(def snapshot-readers       ["cdc-covid-surveillance@firecloud.org"])
 (def source-dataset         "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def source-table           "flowcells")
 (def snapshot-column        "run_date")
@@ -46,7 +47,7 @@
              dataset
              source-table
              row-ids)
-            (assoc :readers ["workflow-launcher-dev@firecloud.org"])
+            (assoc :readers snapshot-readers-group)
             datarepo/create-snapshot
             datarepo/snapshot)]
     (println "Created snapshot" name)
