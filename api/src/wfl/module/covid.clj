@@ -134,7 +134,8 @@
   [tx {:keys [source executor sink] :as workload-request}]
   (verify-source! source)
   (verify-executor! executor)
-  (verify-sink! sink))
+  (verify-sink! sink)
+  nil)
 
 
 ;(defn ^:private add-workload-table!

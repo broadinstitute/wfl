@@ -12,10 +12,14 @@
 
 (defn ^:private make-covid-workload-request []
   (-> (workloads/covid-workload-request testing-dataset testing-method-configuration testing-workspace)
-    (assoc :creator @workloads/email)))
+      (assoc :creator @workloads/email)))
 
 (deftest test-create-covid-workload
   (testing "COVID workload-request can pass verification"
-    ;; NOTE: COVID workload creation returns nil until it's fully implemented
     (let [workload (workloads/create-workload! (make-covid-workload-request))]
-      (is (nil? workload)))))
+      ;; NOTE: COVID workload creation returns nil until it's fully implemented
+      (is (nil? workload))))
+  (testing "malformed COVID workload-request cannot pass verification"
+    (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                      (assoc-in [:executor :method_configuration] "bogus-method-configuration")
+                                      workloads/create-workload!)))))
