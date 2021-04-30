@@ -30,20 +30,18 @@
   "Submit samples in a workspace for analysis with a method configuration in Terra."
   ([workspace methodconfig [entity-type entity-name :as _entity] body-override]
    {:pre [(map? body-override)]}
-   (let [[mcns mcn] (str/split methodconfig #"/")]
-     (-> {:method       :post
-          :url          (workspace-api-url workspace "submissions")
-          :headers      (auth/get-auth-header)
-          :content-type :application/json
-          :body         (json/write-str
-                         (util/deep-merge {:methodConfigurationNamespace mcns
-                                           :methodConfigurationName mcn
-                                           :entityType entity-type
-                                           :entityName entity-name
-                                           :useCallCache true}
-                                          body-override)
-                         :escape-slash false)}
-         http/request
+   (let [[mcns mcn] (str/split methodconfig #"/")
+         payload    (util/deep-merge {:methodConfigurationNamespace mcns
+                                      :methodConfigurationName mcn
+                                      :entityType entity-type
+                                      :entityName entity-name
+                                      :useCallCache true}
+                                     body-override)]
+     (-> (workspace-api-url workspace "submissions")
+         (http/post {:headers      (auth/get-auth-header)
+                     :content-type :application/json
+                     :body         (json/write-str payload
+                                                   :escape-slash false)})
          util/response-body-json)))
   ([workspace methodconfig entity]
    (create-submission workspace methodconfig entity {})))
