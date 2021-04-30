@@ -251,4 +251,4 @@ You can use `--password=$ENV_SOMETHING` to supply it.
     ```
     clojure -M:liquibase
     ```
-    if you are working with a local database. 
+    if you are working with a local database.
