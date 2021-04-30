@@ -25,17 +25,14 @@
   "Link a Terra Data Repo snapshot with id SNAPSHOT-ID to a fully-qualified
   Terra WORKSPACE as NAME, optionally described by DESCRIPTION."
   ([workspace snapshot-id name description]
-   (-> {:method       :post
-        :url          (workspace-api-url workspace "snapshots")
-        :headers      (auth/get-auth-header)
-        :content-type :application/json
-        :body         (json/write-str {:snapshotId snapshot-id
-                                       :name name
-                                       :description description}
-                                      :escape-slash false)}
-       http/request
-       util/response-body-json
-       :referenceId))
+   (-> (workspace-api-url workspace "snapshots")
+       (http/post {:headers      (auth/get-auth-header)
+                   :content-type :application/json
+                   :body         (json/write-str {:snapshotId  snapshot-id
+                                                  :name        name
+                                                  :description description}
+                                                 :escape-slash false)})
+       util/response-body-json))
   ([workspace snapshot-id name]
    (create-snapshot-reference workspace snapshot-id name "")))
 

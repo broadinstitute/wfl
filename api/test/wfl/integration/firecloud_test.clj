@@ -29,7 +29,7 @@
 
 (deftest test-create-submission
   (util/bracket
-   #(firecloud/create-submission workspace method-configuration entity)
+   (comp :submissionId #(firecloud/create-submission workspace method-configuration entity))
    #(firecloud/abort-submission workspace %)
    #(let [get-workflows (fn [] (:workflows (firecloud/get-submission workspace %)))
           workflow      (first (get-workflows))]
@@ -50,8 +50,12 @@
     (testing (str "Submission with " entity-count " matching entit(ies) yields 1 workflow")
       (let [entity-set-name (str (UUID/randomUUID))]
         (util/bracket
-         #(firecloud/create-submission-for-entity-set
-           workspace method-configuration (repeat entity-count entity) entity-set-name)
+         (comp :submissionId
+               #(firecloud/create-submission-for-entity-set
+                 workspace
+                 method-configuration
+                 (repeat entity-count entity)
+                 entity-set-name))
          #((firecloud/abort-submission workspace %)
            (firecloud/delete-entities workspace [[entity-set-type entity-set-name]]))
          #(let [get-workflows     (fn [] (:workflows (firecloud/get-submission workspace %)))
