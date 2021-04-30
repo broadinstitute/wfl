@@ -8,7 +8,7 @@
 (defn unique-snapshot-request
   "Return a snapshot request of `table` from `dataset` for `tdr-profile`."
   [tdr-profile dataset table row-ids]
-  (let [columns (-> (datarepo/all-columns dataset table)
+  (let [columns (-> (datarepo/all-columns dataset (name table))
                     (->> (map :name) set)
                     (conj "datarepo_row_id"))]
     (-> (datarepo/make-snapshot-request dataset columns table row-ids)
@@ -30,9 +30,9 @@
 (comment
   (let [profile (environment/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
-        table   "flowcell"]
+        table   :flowcell]
     (-> (datarepo/query-table-between
-         dataset table "updated"
+         dataset table :updated
          ["2021-03-29 00:00:00" "2021-03-31 00:00:00"]
          #_(util/days 40)
          [:datarepo_row_id])

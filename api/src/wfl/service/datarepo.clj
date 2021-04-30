@@ -225,21 +225,25 @@
         (query-table-impl dataset table))))
 
 (defn ^:private query-table-between-impl
-  [{:keys [dataProject] :as dataset} table column-name [start end] col-spec]
-  (let [bq-name (bigquery-name dataset)
-        query   "SELECT %s
-                 FROM   `%s.%s.%s`
-                 WHERE %s BETWEEN '%s' AND '%s'"]
-    (->> (format query col-spec dataProject bq-name table column-name start end)
-         (bigquery/query-sync dataProject))))
+  [{:keys [dataProject] :as dataset} table between [start end] col-spec]
+  (let [[table between] (map name [table between])
+        bq-name (bigquery-name dataset)
+        query   (str/join \newline ["SELECT %s"
+                                    "FROM `%s.%s.%s`"
+                                    "WHERE %s BETWEEN '%s' AND '%s'"])]
+    (-> query
+        (format col-spec dataProject bq-name table between start end)
+        wfl.debug/trace
+        (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table-between
-  "Query everything or optionally the `columns` in `table` in the Terra DataRepo
-   `dataset` in the open-closed `interval` of `datarepo_ingest_date`, where
-   `dataset` is a DataRepo dataset or a snapshot of a dataset. If no rows match
-   the `interval`, TDR will respond with error 400."
-  ([dataset table column-name interval]
-   (query-table-between-impl dataset table column-name interval "*"))
-  ([dataset table column-name interval columns]
-   (->> (util/to-comma-separated-list (map name columns))
-        (query-table-between-impl dataset table column-name interval))))
+  "Return rows from `table` of `dataset`, where `dataset` can name a
+  snapshot and values in the `between` column fall within `interval`.
+  Select `columns` from matching rows when specified.  A 400 response
+  means no rows matched the query."
+  ([dataset table between interval]
+   (query-table-between-impl dataset table between interval "*"))
+  ([dataset table between interval columns]
+   (->> (map name columns)
+        util/to-comma-separated-list
+        (query-table-between-impl dataset table between interval))))
