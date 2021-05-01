@@ -106,9 +106,10 @@
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
   (try
-    (datarepo/dataset (:dataset source))
-    (catch Throwable _
-      (throw (ex-info "Cannot access Dataset" {:dataset dataset})))))
+    (#((datarepo/dataset (:dataset source)) nil))
+    (catch Throwable t
+      (throw (ex-info "Cannot access Dataset" {:dataset dataset
+                                               :cause (.getMessage t)})))))
 
 (defn verify-executor!
   "Verify the name of the executor.
@@ -116,7 +117,7 @@
   [{:keys [name method_configuration] :as executor}]
   (when-not (= (:name executor) "Terra")
     (throw (ex-info "Unknown Executor" {:executor executor})))
-  (when-not (= (:method_configuration executor) "pathogen-genomic-surveillance/sarscov2_illumina_full")
+  (when-not (:method_configuration executor)
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
 (defn verify-sink!
@@ -126,16 +127,17 @@
   (when-not (= (:name sink) "Terra Workspace")
     (throw (ex-info "Unknown Sink" {:sink sink})))
   (try
-    (rawls/get-workspace workspace)
-    (catch Throwable _
-      (throw (ex-info "Cannot access Rawls" {:workspace workspace})))))
+    (#((rawls/get-workspace workspace) nil))
+    (catch Throwable t
+      (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                     :cause (.getMessage t)})))))
 
 (defn create-covid-workload!
   [tx {:keys [source executor sink] :as workload-request}]
   (verify-source! source)
   (verify-executor! executor)
   (verify-sink! sink)
-  nil)
+  )
 
 
 ;(defn ^:private add-workload-table!
