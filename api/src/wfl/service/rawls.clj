@@ -48,7 +48,8 @@
 (defn snapshots
   "Return a lazy sequence of snapshots in WORKSPACE namespace/name."
   [workspace]
-  (let [url     (str/join "/" [(workspace-api-url) workspace "snapshots"])
+  (let [rawls   "https://rawls.dsde-prod.broadinstitute.org/api/workspaces"
+        url     (str/join "/" [rawls workspace "snapshots"])
         limit   23
         request {:method       :get     ; :debug true :debug-body true
                  :url          url
