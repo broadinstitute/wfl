@@ -53,6 +53,10 @@
   (fn [queue] (:type queue)))
 
 ;; source operations
+(defmulti create-source!
+  "Create and write the source to persisted storage"
+  (fn [source-request] (:name source-request)))
+
 (defmulti update-source!
   "Update the source."
   (fn [source] (:type source)))
@@ -62,6 +66,10 @@
   (fn [workload] (:source-type workload)))
 
 ;; executor operations
+(defmulti create-executor!
+  "Create and write the executor to persisted storage"
+  (fn [executor-request] (:name executor-request)))
+
 (defmulti update-executor!
   "Update the executor with the `source`"
   (fn [source executor] (:type executor)))
@@ -71,6 +79,10 @@
   (fn [workload] (:executor-type workload)))
 
 ;; sink operations
+(defmulti create-sink!
+  "Create and write the sink to persisted storage"
+  (fn [sink-request] (:name sink-request)))
+
 (defmulti update-sink!
   "Update the sink with the `executor`"
   (fn [executor sink] (:type sink)))
@@ -126,6 +138,16 @@
    :queue   nil
    :updated nil})
 
+;; maybe we want to split check-request and create to avoid writing
+;; records for bad workload requests?
+(defn ^:private create-tdr-source [source-request]
+  (letfn [(check-request! [request] (throw (Exception. "Not implemented")))
+          (make-record    [request] nil)]
+    (check-request! source-request)
+    (let [foreign-key (make-record source-request)]
+      (load-tdr-source {:source-ptr foreign-key}))))
+
+(defoverload create-source! tdr-source-type create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
