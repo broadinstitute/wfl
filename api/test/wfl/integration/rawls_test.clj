@@ -34,3 +34,11 @@
         (testing "Create already exists"
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                 (make-reference))))))))
+
+(deftest test-batch-insert-entities
+  (fixtures/with-temporary-workspace
+    "wfl-dev/test-workspace"
+    "workflow-launcher-dev"
+    (fn [workspace]
+      (let [res (rawls/batch-insert workspace [])]
+        (is res)))))

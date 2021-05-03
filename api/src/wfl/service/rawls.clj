@@ -50,6 +50,7 @@
 (defn batch-insert
   "Batch insert entities into a `workspace`."
   [workspace [[_name _type _entity] & _ :as entities]]
+  {:pre [(string? workspace) (not-empty entities)]}
   (letfn [(to-operations [entity] nil)]
     (let [upsert-request (map #(update % last to-operations) entities)]
       (-> (workspace-api-url workspace "entities/batchUpsert")
