@@ -44,16 +44,16 @@
 (defoverload workloads/load-workload-impl pipeline
   batch/load-batch-workload-impl)
 
-(defmulti peek-queue
+(defmulti peek-queue!
   "Peek the first object from the `queue`, if one exists."
   (fn [queue] (:type queue)))
 
-(defmulti pop-queue
+(defmulti pop-queue!
   "Pop the first object from the `queue`. Throws if none exists."
   (fn [queue] (:type queue)))
 
 ;; source operations
-(defmulti update-source
+(defmulti update-source!
   "Update the source."
   (fn [source] (:type source)))
 
@@ -84,7 +84,7 @@
   [tx {:keys [started finished] :as workload}]
   (letfn [(update-workload-status [])
           (update! [{:keys [id source executor sink] :as _workload}]
-            (-> (update-source source)
+            (-> (update-source! source)
                 (update-executor! executor)
                 (update-sink! sink))
             (update-workload-status)
@@ -103,7 +103,7 @@
       (first (jdbc/query tx (format query queue))))))
 
 (defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
-  (if-let [{:keys [id] :as _snapshot} (peek-queue source)]
+  (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
     (let [query "DELETE FROM %s WHERE id = ?"]
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/execute! tx [(format query queue) id])))
@@ -121,12 +121,12 @@
         (write-snapshots source (make-snapshots source row-ids)))
       (update-last-checked source now))))
 
-(defn ^:private load-tdr-source! [{:keys [source-ptr] :as workload}]
+(defn ^:private load-tdr-source [{:keys [source-ptr] :as workload}]
   {:type    tdr-source-type
    :queue   nil
    :updated nil})
 
-(defoverload peek-queue    tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue     tdr-source-type pop-tdr-source-queue)
-(defoverload update-source tdr-source-type update-tdr-source)
-(defoverload load-source!  tdr-source-type load-tdr-source!)
+(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
+(defoverload update-source! tdr-source-type update-tdr-source)
+(defoverload load-source!   tdr-source-type load-tdr-source)
