@@ -38,6 +38,10 @@
 (defn create-covid-workload!
   [tx {:keys [source sink executor] :as request}])
 
+(defn ^:private get-snapshots-from-workspace
+  [workspace]
+  )
+
 (defn start-covid-workload!
   "Start WORKLOAD."
   [{:keys [submission-id workspace] :as workload}])

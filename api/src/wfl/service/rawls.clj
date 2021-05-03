@@ -5,6 +5,7 @@
             [clojure.data.json    :as json]
             [clojure.string       :as str]
             [wfl.auth             :as auth]
+            [wfl.debug            :as debug]
             [wfl.environment      :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.util             :as util]))
@@ -44,8 +45,35 @@
   [workspace reference-id]
   (get-workspace-json workspace "snapshots" reference-id))
 
-(defn delete-snapshot-reference
-  "Delete the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+(defn snapshots
+  "Return a lazy sequence of snapshots in WORKSPACE namespace/name."
+  [workspace]
+  (let [url     (str/join "/" [(workspace-api-url) workspace "snapshots"])
+        limit   23
+        token   (util/shell! "gcloud" "auth" "print-access-token")
+        bearer  (str/join \space ["Bearer" token])
+        request {:method       :get     ; :debug true :debug-body true
+                 :url          url
+                 :headers      {"Authorization" bearer}
+                 :content-type :application/json}]
+    (letfn [(more [offset]
+              (let [head (-> request
+                             (assoc :query-params {:limit  limit
+                                                   :offset offset})
+                             debug/trace
+                             http/request
+                             util/response-body-json
+                             :resources)]
+                (lazy-cat head (when (pos? (count head))
+                                 (more (+ limit offset))))))]
+      (more 0))))
+
+(comment
+  (snapshots "wfl-dev/CDC_Viral_Sequencing")
+  )
+
+(defn delete-snapshot
+  "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
   [workspace reference-id]
   (-> (workspace-api-url workspace "snapshots" reference-id)
       (http/delete {:headers (auth/get-auth-header)})
