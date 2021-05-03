@@ -50,11 +50,9 @@
   [workspace]
   (let [url     (str/join "/" [(workspace-api-url) workspace "snapshots"])
         limit   23
-        token   (util/shell! "gcloud" "auth" "print-access-token")
-        bearer  (str/join \space ["Bearer" token])
         request {:method       :get     ; :debug true :debug-body true
                  :url          url
-                 :headers      {"Authorization" bearer}
+                 :headers      (auth/get-auth-header)
                  :content-type :application/json}]
     (letfn [(more [offset]
               (let [head (-> request
