@@ -1,13 +1,12 @@
 (ns wfl.service.rawls
-  "Analyze data in Terra using the Rawls API.
-  Note that Firecloud is built on top of Rawls:
-  Rawls may expose functionality that hasn't yet been promoted to Firecloud."
-  (:require [clj-http.client :as http]
+  "Analyze and manipulate Terra Workspaces using the Rawls API.
+   Note that firecloud exposes a subset of Rawls' API."
+  (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.auth :as auth]
-            [wfl.environment :as env]
-            [wfl.util :as util]))
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.environment   :as env]
+            [wfl.util          :as util]))
 
 (defn ^:private rawls-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_RAWLS_URL"))]
@@ -47,3 +46,15 @@
   (-> (workspace-api-url workspace "snapshots" reference-id)
       (http/delete {:headers (auth/get-auth-header)})
       util/response-body-json))
+
+(defn batch-insert
+  "Batch insert entities into a `workspace`."
+  [workspace [[_name _type _entity] & _ :as entities]]
+  (letfn [(to-operations [entity] nil)]
+    (let [upsert-request (map #(update % last to-operations) entities)]
+      (-> (workspace-api-url workspace "entities/batchUpsert")
+          (http/post {:headers      (auth/get-auth-header)
+                      :content-type :application/json
+                      :body         (json/write-str upsert-request
+                                                    :escape-slash false)})
+          util/response-body-json))))
