@@ -1,10 +1,12 @@
 (ns wfl.system.cdc-covid19-surveillance-demo
-  (:require [wfl.service.datarepo  :as datarepo]
+  (:require [wfl.service.datarepo :as datarepo]
             [wfl.service.firecloud :as firecloud]
-            [wfl.service.rawls     :as rawls]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.snapshots   :as snapshots]
-            [wfl.util              :as util]))
+            [wfl.service.rawls :as rawls]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.snapshots :as snapshots]
+            [wfl.util :as util]
+            [wfl.tools.resources :as resources]
+            [wfl.tools.datasets :as datasets]))
 
 (def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
 (def firecloud-group        "cdc-covid-surveillance")
@@ -82,7 +84,22 @@
   (firecloud/abort-submission workspace submissionId))
 
 (defn write-known-outputs-to-workspace [workspace]
-  (println "Writing outputs to flowcell table in" workspace))
+  (println "Writing outputs to flowcell table in" workspace)
+
+  (comment
+    "outputs.edn generated via"
+    (let [pipeline   "sarscov2_illumina_full"
+          submission "475d0a1d-20c0-42a1-968a-7540b79fcf0c"
+          workflow   "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"])
+    (-> (fircloud/get-workflow-outputs workspace submission workflow)
+        (get-in [:tasks (keyword pipeline) :outputs])
+        (util/unprefix-keys (keyword (str pipeline ".")))))
+
+  (let [entity-type   "flowcell"
+        entity-name   "test"
+        from-outputs  (resources/read-resource "sarscov2_illumina_full/entity-from-outputs.edn")
+        entity (datasets/rename-gather [] from-outputs)]
+    (rawls/batch-upsert workspace [[entity-name entity-type entity]])))
 
 (defn delete-snapshot [{:keys [name id] :as _snapshot}]
   (println "Deleting snapshot" name)

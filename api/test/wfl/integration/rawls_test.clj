@@ -1,11 +1,11 @@
 (ns wfl.integration.rawls-test
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [wfl.service.rawls :as rawls]
-            [wfl.tools.fixtures :as fixtures]
+  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
             [wfl.service.firecloud :as firecloud]
-            [wfl.tools.datasets :as datasets]
-            [wfl.util :as util :refer [>>>]]
-            [wfl.tools.resources :as resources])
+            [wfl.service.rawls     :as rawls]
+            [wfl.tools.datasets    :as datasets]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.resources :as resources]
+            [wfl.util              :as util])
   (:import [clojure.lang ExceptionInfo]))
 
 ;; A known Terra Data Repository snapshot's ID...
@@ -62,7 +62,7 @@
               _      (rawls/batch-upsert workspace [[entity-name entity-type entity]])
               [{:keys [name attributes]} & _]
               (util/poll
-                #(not-empty (firecloud/list-entities workspace entity-type)))]
+               #(not-empty (firecloud/list-entities workspace entity-type)))]
           (is (= name entity-name) "The test entity was not created")
           (is (= (util/map-vals #(if (map? %) (:items %) %) attributes)
                  (into {} (filter second entity)))))))))
