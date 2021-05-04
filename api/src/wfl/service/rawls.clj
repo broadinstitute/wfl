@@ -56,11 +56,12 @@
               :attributeName      (name k)
               :addUpdateAttribute v}])
           (add-list [k v]
-            (let [make-member (fn [x] {:op                "AddListMember"
-                                       :attributeListName (name k)
-                                       :newMember         x})
+            (let [list-name   (name k)
                   init        {:op            "CreateAttributeValueList"
-                               :attributeName (name k)}]
+                               :attributeName list-name}
+                  template    {:op                "AddListMember"
+                               :attributeListName list-name}
+                  make-member (partial assoc template :newMember)]
               (reduce #(conj %1 (make-member %2)) [init] v)))
           (no-op [] [])
           (on-unhandled-attribute [name value]
