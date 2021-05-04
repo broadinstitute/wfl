@@ -97,11 +97,8 @@
 ;  ""
 ;  [])
 
-
 (defn verify-source!
-  "Verify that the `source` is named Terra DataRepo.
-   Verify that WFL has the necessary permissions to
-   read from the `dataset` and that it exists."
+  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
   [{:keys [name dataset] :as source}]
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
@@ -112,8 +109,7 @@
                                                :cause (.getMessage t)})))))
 
 (defn verify-executor!
-  "Verify the name of the executor.
-   Verify the method-configuration."
+  "Verify the method-configuration exists."
   [{:keys [name method_configuration] :as executor}]
   (when-not (= (:name executor) "Terra")
     (throw (ex-info "Unknown Executor" {:executor executor})))
@@ -121,13 +117,12 @@
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
 (defn verify-sink!
-  "Verify the name of the sink.
-   Verify via a get that you have access to RAWLs and the workspace."
+  "Verify that the WFL has access to both firecloud and the `workspace`."
   [{:keys [name workspace] :as sink}]
   (when-not (= (:name sink) "Terra Workspace")
     (throw (ex-info "Unknown Sink" {:sink sink})))
   (try
-    (#((rawls/get-workspace workspace) nil))
+    (firecloud/get-workspace workspace)
     (catch Throwable t
       (throw (ex-info "Cannot access the workspace" {:workspace workspace
                                                      :cause (.getMessage t)})))))
@@ -138,7 +133,6 @@
   (verify-executor! executor)
   (verify-sink! sink)
   )
-
 
 ;(defn ^:private add-workload-table!
 ;  "Use transaction `tx` to add a `CromwellWorkflow` table
@@ -219,7 +213,6 @@
 ;            (postgres/update-workload-status! tx workload)
 ;            (workloads/load-workload-for-id tx id))]
 ;    (if (and started (not finished)) (update! workload) workload)))
-
 
 (defoverload workloads/create-workload! pipeline create-covid-workload!)
 ;(defoverload workloads/start-workload!    pipeline start-covid-workload!)

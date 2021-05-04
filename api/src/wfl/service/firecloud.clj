@@ -20,6 +20,12 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+(defn get-workspace
+  "Returns the given workspaceNamespace/workspaceName`"
+  [workspace]
+  {:pre [(some? workspace)]}
+  (get-workspace-json workspace))
+
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
   [workspace submission-id]
@@ -205,3 +211,11 @@
                                                        :workflowSource)
                                                      workflow})})
         util/response-body-json)))
+
+(defn ^:private get-groups
+  "Return the groups caller is in."
+  []
+  (-> (str/join "/" [(firecloud-url) "api" "groups"])
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
