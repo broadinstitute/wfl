@@ -39,16 +39,6 @@
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                 (make-reference))))))))
 
-(comment
-  "outputs.edn generated via"
-  (let [workspace  "cdc-covid-surveillance/CDC_Viral_Sequencing_GP"
-        pipeline   "sarscov2_illumina_full"
-        submission "475d0a1d-20c0-42a1-968a-7540b79fcf0c"
-        workflow   "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"])
-  (-> (fircloud/get-workflow-outputs workspace submission workflow)
-      (get-in [:tasks (keyword pipeline) :outputs])
-      (util/unprefix-keys (keyword (str pipeline ".")))))
-
 (deftest test-batch-insert-entities
   (let [entity-type   "flowcell"
         entity-name   "test"
