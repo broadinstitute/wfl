@@ -13,7 +13,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]))
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "Sarscov2IlluminaFull")
 
@@ -27,55 +28,36 @@
 (defn start-covid-workload!
   [])
 
-(defn ^:private snapshot-error-map
-  "Return default ExceptionInfo map for snapshot-related exceptions."
-  [{:keys [executor items] :as _workload} {:keys [id snapshot_id] :as _record}]
-  {:workspace (:workspace executor)
-   :table items
-   :id id
-   :snapshot_id snapshot_id})
-
-(defn ^:private try-get-snapshot-reference
-  "Attempt to fetch snapshot reference with id SNAPSHOT_REFERENCE_ID
-  from EXECUTOR-derived workspace."
-  [{:keys [executor] :as workload} {:keys [snapshot_reference_id] :as record}]
-  (let [workspace (:workspace executor)]
-    (try
-      (rawls/get-snapshot-reference workspace snapshot_reference_id)
-      (catch Throwable cause
-        (throw (ex-info "Rawls unable to fetch snapshot reference"
-                        (util/deep-merge
-                         (snapshot-error-map workload record)
-                         {:snapshot_reference_id snapshot_reference_id})
-                        cause))))))
-
 (defn ^:private snapshot-imported?
-  "Check if snapshot with id SNAPSHOT_ID in TDR has been imported to
-  workspace and can be successfully fetched."
-  [workload {:keys [snapshot_id snapshot_reference_id] :as record}]
-  {:pre [(some? snapshot_id)]}
-  (and (some? snapshot_reference_id)
-       (some? (try-get-snapshot-reference workload record))))
+  "Check if snapshot SNAPSHOT_ID in TDR has been imported to WORKSPACE
+  as SNAPSHOT_REFERENCE_ID and can be successfully fetched."
+  [{:keys [snapshot_id snapshot_reference_id] :as _source_details}
+   {:keys [workspace] :as _executor}]
+  (letfn [(fetch [] (rawls/get-snapshot-reference workspace
+                                                  snapshot_reference_id))]
+    (some? (and snapshot_id snapshot_reference_id (util/do-or-nil (fetch))))))
 
 (defn ^:private import-snapshot!
-  "Import snapshot with id SNAPSHOT_ID from TDR to EXECUTOR-derived workspace.
-  Use transaction TX to update ITEMS table with resulting reference id."
-  [tx {:keys [executor items] :as workload} {:keys [id snapshot_id] :as record}]
-  (let [workspace (:workspace executor)
-        reference-id (rawls/create-snapshot-reference workspace snapshot_id)]
-    (when (nil? reference-id)
+  "Import snapshot SNAPSHOT_ID from TDR to WORKSPACE.
+  Use transaction TX to update DETAILS table with resulting reference id.
+  Throw if import fails."
+  [tx
+   {:keys [workload_id] :as _workload}
+   {:keys [details] :as _source}
+   {:keys [details_id snapshot_id] :as source_details}
+   {:keys [workspace] :as _executor}]
+  (letfn [(create! [] (rawls/create-snapshot-reference workspace snapshot_id))]
+    (if-let [reference-id (util/do-or-nil (:referenceId (create!)))]
+      ((jdbc/update! tx
+                     details
+                     {:snapshot_reference_id reference-id}
+                     ["id = ?" details_id])
+       (jdbc/update! tx
+                     :workload
+                     {:updated (OffsetDateTime/now)}
+                     ["id = ?" workload_id]))
       (throw (ex-info "Rawls unable to create snapshot reference"
-                      (snapshot-error-map workload record))))
-    (jdbc/update! tx items {:snapshot_reference_id reference-id} ["id = ?" id])))
-
-(comment "Proposed workload update loop as described in Spike doc for reference"
-         (cond
-           (workflow-finished?) (mark-as-done!)
-           (submission-launched?) (monitor-workflow!)
-           (snapshot-imported?) (launch-submission!)
-           (snapshot-created?) (import-snapshot!)
-           (snapshot-creation-job-exist?) (monitor-snapshot-status!)
-           :else (check-for-new-data-in-TDR!)))
+                      (assoc source_details :workspace workspace))))))
 
 ;; TODO: implement progressive (private) functions inside this update loop
 (defn update-covid-workload!
