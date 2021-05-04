@@ -27,6 +27,7 @@
 (defn dataset
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
+  {:pre [(some? dataset-id)]}
   (get-repository-json "datasets" dataset-id))
 
 (defn ^:private ingest

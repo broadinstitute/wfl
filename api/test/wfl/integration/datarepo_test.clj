@@ -60,8 +60,7 @@
                          workflows/make-object-type)
         workflow-id  (UUID/randomUUID)]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder
-         "broad-gotc-dev-wfl-ptc-test-inputs")
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp dataset]]
@@ -148,7 +147,7 @@
   (let [dataset-table "flowcell"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
-        columns       (-> (firecloud/list-entity-types "wfl-dev/SARSCoV2-Illumina-Full")
+        columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
                           :flowcell
                           entity-columns)]
     (fixtures/with-temporary-workspace

@@ -5,13 +5,17 @@ encourage ourselves to follow in most cases.
 
 ## The Swagger page
 
-WFL ships with a swagger UI that documents all available endpoints. It's
-available at path `/swagger`, e.g.
-https://dev-wfl.gotc-dev.broadinstitute.org/swagger
+WFL ships with a Swagger UI that documents all available endpoints. It's
+available at path `/swagger`.  At present, we cannot hit it directly
+without logging in first because it is bundled with the UI and not the API.
+
+- Log into WFL UI, e.g. https://dev-wfl.gotc-dev.broadinstitute.org/login
+- Navigate to `/swagger` via Swagger API button in top right
 
 !!! tip
-To access the swagger page locally, you'll need to start a development server
-and access via the UI. See the development tips below for more information.
+    To access the swagger page locally, you'll need to start a development
+    server and access via the UI. See the development tips below for more
+    information.
 
 ## Development Setup
 
@@ -23,10 +27,14 @@ Get a demonstration from someone familiar with Clojure development before you
 spend too much time trying to figure things out on your own.
 
 Find a local Cursive user for guidance if you like IntelliJ.
-[Rex Wang](mailto:chengche@broadinstitute.org) and
-[Saman Ehsan](mailto:sehsan@broadinstitute.org) know how to use it.
+[Rex Wang](mailto:chengche@broadinstitute.org) knows how to use it.
+
 Cursive licences are available
 [here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
+If none are available, free
+[non-commercial licenses](https://cursive-ide.com/buy.html) are suitable for
+open-source development.
+
 The steps for getting this project set up with very recent versions of IntelliJ
 differ from Cursive's docs:
 
@@ -57,7 +65,7 @@ used to Emacs. (I can help if CIDER gives you trouble.)
 We base feature branches off `develop`, make pull requests, ask for reviews
 and merge back to `develop` on Github.
 
-For the release process, please refer to the [release guide](../dev-release/)
+For the release process, please refer to the [release guide](./dev-release.md).
 
 1. Clone the repo
     ```
@@ -72,7 +80,7 @@ For the release process, please refer to the [release guide](../dev-release/)
 
 3. Create a feature branch
 
-    _It is highly recommend that you follow the naming convention
+    _It is highly recommended that you follow the naming convention
     shown below so JIRA could pick up the branch and link it
     to our JIRA board._
     ```
@@ -85,7 +93,7 @@ For the release process, please refer to the [release guide](../dev-release/)
     git commit -m "Update the readme file."
     ```
 
-5. [Optional] Rebase onto lastest develop if you want to get updates
+5. [Optional] Rebase onto latest develop if you want to get updates
     ```
     git checkout develop
     git pull origin develop --ff
@@ -131,6 +139,66 @@ Here are some tips for WFL development.
 Some of this advice might help when testing Liquibase migration or other
 changes that affect WFL's Postgres database.
 
+### setting up a local Postgres
+
+You can test against a local Postgres before running Liquibase or SQL against a
+shared database in `gotc-dev` or *gasp* production.
+
+1. Install Postgres locally.
+    You need version 11 because that is what Google's hosted service supports,
+    and there are differences in the SQL syntax.
+
+    ```
+    brew install postgresql@11
+    ```
+
+2. Start Postgres.
+
+    ```
+    pg_ctl -D /usr/local/var/postgresql@11 start
+    ```
+    !!! tip
+        It might be useful to set up some an alias for postgres if you are using
+        zsh, for example:
+        ```
+        alias pq="pg_ctl -D /usr/local/var/postgresql@11"
+        ```
+        thus you could use `pq start` or `pq stop` to easily spin up and turn down
+        the db.
+
+3. [Optional] Create wfl DB.
+
+    If you see errors like this when launching a local WFL server
+    or applying liquibase updates:
+
+    ```
+    FATAL:  database "wfl" does not exist
+    ```
+
+    You should do as instructed within your terminal:
+
+    ```
+    createdb wfl
+    ```
+
+    Or to recreate an existing wfl DB:
+
+    ```
+    dropdb wfl
+    createdb wfl
+    ```
+
+You are now free to launch a local WFL server pointing to your local DB.
+
+Assuming that `WFL_POSTGRES_URL` in `(wfl.environment/defaults)` is set to
+point at a running local Postgres (e.g. `jdbc:postgresql:wfl`), running
+`./ops/server.sh` (or however you launch a local WFL server) will
+connect the server to that running local Postgres.
+
+Now any changes to WFL state will affect only your local database.
+That includes running Liquibase, so don't forget to reset `:debug` to `env`
+before deploying your changes after merging a PR.
+
 
 ### migrating a database
 
@@ -157,45 +225,7 @@ silently fail or the Swagger page will fail to render. Check the
 `clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
 hair out.
 
-### hacking a scratch database
-
-You can test against a local Postgres before running Liquibase or SQL against a
-shared database in `gotc-dev` or *gasp* production.
-
-First install Postgres locally.
-
-``` shell
-brew install postgresql@11
-```
-
-You need version 11 because that is what Google's hosted service supports,
-and there are differences in the SQL syntax.
-
-Modify the value of `WFL_POSTGRES_URL` in `(postgres/wfl-db-config)` to redirect
-the WFL server's database to a local Postgres server. With that hack in place,
-running `./ops/server.sh` (or however you launch a local WFL server) will
-connect the server to a local Postgres.
-
-Now any changes to WFL state will affect only your local database.
-That includes running Liquibase, so don't forget to reset `:debug` to `env`
-before deploying your changes after merging a PR.
-
-### Useful hacks for debugging Postgres/Liquibase locally
-
-Starting `postgres`:
-```bash
-pg_ctl -D /usr/local/var/postgresql@11 start
-```
-
-!!! tip
-    It might be useful to set up some an alias for postgres if you are using
-    zsh, for example:
-    ```
-    alias pq="pg_ctl -D /usr/local/var/postgresql@11"
-    ```
-    thus you could use `pq start` or `pq stop` to easily spin up and turn down
-    the db.
-
+### debugging Liquibase locally
 
 Running `liquibase update`:
 ```bash
@@ -221,7 +251,7 @@ You can use `--password=$ENV_SOMETHING` to supply it.
     ```
     clojure -M:liquibase
     ```
-    if you are working with a local database. 
+    if you are working with a local database.
 
 ### Override ENVIRONMENT variables for local development
 
