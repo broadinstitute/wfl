@@ -24,7 +24,7 @@
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
   (try
-    (#((datarepo/dataset (:dataset source)) nil))
+    (datarepo/dataset (:dataset source))
     (catch Throwable t
       (throw (ex-info "Cannot access Dataset" {:dataset dataset
                                                :cause (.getMessage t)})))))

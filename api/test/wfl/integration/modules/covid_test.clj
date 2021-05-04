@@ -58,5 +58,4 @@
   (testing "That a COVID workload-request without a workspace cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:sink :workspace] nil)
-                                      workloads/create-workload!))))
-  )
+                                      workloads/create-workload!)))))
