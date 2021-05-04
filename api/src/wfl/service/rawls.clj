@@ -47,15 +47,39 @@
       (http/delete {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn batch-insert
-  "Batch insert entities into a `workspace`."
-  [workspace [[_name _type _entity] & _ :as entities]]
+(defn batch-upsert
+  "Batch update and insert entities into a `workspace`."
+  [workspace [[_name _type _attributes] & _ :as entities]]
   {:pre [(string? workspace) (not-empty entities)]}
-  (letfn [(to-operations [entity] nil)]
-    (let [upsert-request (map #(update % last to-operations) entities)]
-      (-> (workspace-api-url workspace "entities/batchUpsert")
-          (http/post {:headers      (auth/get-auth-header)
-                      :content-type :application/json
-                      :body         (json/write-str upsert-request
-                                                    :escape-slash false)})
-          util/response-body-json))))
+  (letfn [(add-scalar [k v]
+            [{:op                 "AddUpdateAttribute"
+              :attributeName      (name k)
+              :addUpdateAttribute v}])
+          (add-list [k v]
+            (let [make-member (fn [x] {:op                "AddListMember"
+                                       :attributeListName (name k)
+                                       :newMember         x})
+                  init        {:op            "CreateAttributeValueList"
+                               :attributeName (name k)}]
+              (reduce #(conj %1 (make-member %2)) [init] v)))
+          (no-op [] [])
+          (on-unhandled-attribute [name value]
+            (throw (ex-info "No method to make upsert operation for attribute"
+                            {:name name :value value})))
+          (to-operations [attributes]
+            (flatten
+             (for [[k v] (seq attributes)]
+               (cond (number? v) (add-scalar k v)
+                     (string? v) (add-scalar k v)
+                     (map?    v) (add-scalar k v)
+                     (coll?   v) (add-list   k v)
+                     (nil?    v) (no-op)
+                     :else       (on-unhandled-attribute k v)))))
+          (make-request [[name type attributes]]
+            {:name name :entityType type :operations (to-operations attributes)})]
+    (-> (workspace-api-url workspace "entities/batchUpsert")
+        (http/post {:headers      (auth/get-auth-header)
+                    :content-type :application/json
+                    :body         (json/write-str (map make-request entities)
+                                                  :escape-slash false)})
+        util/response-body-json)))
