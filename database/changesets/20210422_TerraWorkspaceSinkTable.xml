@@ -9,14 +9,20 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
-               id="20210414"
-               logicalFilePath="20210414_Sarscov2IlluminaFullEnum.xml"
+               id="20210422"
+               logicalFilePath="20210422_TerraWorkspaceSinkTable.xml"
                runInTransaction="false">
         <comment>
-            the Sarscov2IlluminaFull pipeline ENUM
+            the 'Terra Workspace' sink table schema
         </comment>
         <sql>
-            ALTER TYPE pipeline ADD VALUE 'Sarscov2IlluminaFull'
+            CREATE TYPE TerraWorkspaceSink AS (
+                id              bigint,      -- unique to this table
+                workspace       text,        -- the fully-qualified 'Namespace/Name' of the Terra workspace to execute workflows in
+                entity          text,        -- the entity type to import data from the source as
+                fromOutputs     text         -- mapping of how to coerce the output of executor to sink
+            )
         </sql>
+
     </changeSet>
 </databaseChangeLog>

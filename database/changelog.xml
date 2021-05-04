@@ -25,10 +25,15 @@
     <include file="changesets/20201216_GDCWholeGenomeSomaticSingleSample.xml"         relativeToChangelogFile="true"/>
     <include file="changesets/20210107_CromwellToExecutor.xml"                        relativeToChangelogFile="true"/>
     <include file="changesets/20210303_StoppedWorkloadProperty.xml"                   relativeToChangelogFile="true"/>
-    <include file="changesets/20210414_Sarscov2IlluminaFullEnum.xml"                  relativeToChangelogFile="true"/>
-    <include file="changesets/20210414_Sarscov2IlluminaFullTable.xml"                 relativeToChangelogFile="true"/>
-    <include file="changesets/20210422_CreateExecutorTable.xml"                       relativeToChangelogFile="true"/>
-    <include file="changesets/20210422_CreateSinkTable.xml"                           relativeToChangelogFile="true"/>
-    <include file="changesets/20210422_CreateSourceTable.xml"                         relativeToChangelogFile="true"/>
-    <include file="changesets/20210423_AddSinkSourceExecutorColumnsToWorkload.xml"    relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_SourceExecutorSinkEnums.xml"                   relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_Sarscov2IlluminaFullEnum.xml"                  relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_ContinuousWorkloadInstanceTable.xml"           relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraDataRepoSourceDetailsTable.xml"           relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraDataRepoSourceEnum.xml"                   relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraDataRepoSourceTable.xml"                  relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraExecutorDetailsTable.xml"                 relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraExecutorEnum.xml"                         relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraExecutorTable.xml"                        relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraWorkspaceSinkEnum.xml"                    relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_TerraWorkspaceSinkTable.xml"                   relativeToChangelogFile="true"/>
 </databaseChangeLog>

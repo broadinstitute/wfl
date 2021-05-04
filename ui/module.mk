@@ -27,14 +27,21 @@ $(BUILD): $(DERIVED_SRC)
 	$(NPM) run build --prefix $(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
-DOCKER_UI_IMAGE := broadinstitute/workflow-launcher-$(MODULE):$(WFL_VERSION)
+DOCKER_IMAGE_NAME := broadinstitute/workflow-launcher-$(MODULE)
 $(IMAGES): $(MODULE_DIR)/Dockerfile $(MODULE_DIR)/.dockerignore
 	$(CP) $(MODULE_DIR)/.dockerignore $(DERIVED_MODULE_DIR)
-	$(DOCKER) build --file $< --tag $(DOCKER_UI_IMAGE) $(DERIVED_MODULE_DIR)
+	$(DOCKER) build \
+		--file $< \
+		--tag $(DOCKER_IMAGE_NAME):latest \
+		--tag $(DOCKER_IMAGE_NAME):$(WFL_VERSION) \
+		$(DERIVED_MODULE_DIR)
 	@$(TOUCH) $@
 
 $(CLEAN):
-	-$(DOCKER) image rm -f $(DOCKER_UI_IMAGE)
+	-$(DOCKER) image rm -f $(DOCKER_IMAGE_NAME):$(WFL_VERSION)
+
+$(DISTCLEAN):
+	-$(DOCKER) image rm -f $(DOCKER_IMAGE_NAME):latest
 
 $(DERIVED_NPM_CONFIG): $(DERIVED_MODULE_DIR)/%.json : $(MODULE_DIR)/%.json
 	$(JQ) '.version="$(WFL_VERSION)"' $< > $@

@@ -39,10 +39,13 @@ def exit_if_dry_run(config: WflInstanceConfig) -> None:
 
 
 def publish_docker_images(config: WflInstanceConfig) -> None:
-    """Publish existing docker images for the stored version."""
+    """Publish latest docker images for the stored version."""
     info(f"=>  Publishing Docker images for version {config.version}")
     for module in ["api", "ui"]:
-        shell(f"docker push broadinstitute/workflow-launcher-{module}:{config.version}")
+        image = f"broadinstitute/workflow-launcher-{module}"
+        # re-tag the image in case the version is being overwritten.
+        shell(f"docker tag {image}:latest {image}:{config.version}")
+        shell(f"docker push {image}:{config.version}")
     success("Published Docker images")
 
 
@@ -119,6 +122,8 @@ def cli() -> WflInstanceConfig:
 
     parser.add_argument("-d", "--dry-run", action="store_true",
                         help="exit before COMMAND makes any remote changes")
+    parser.add_argument("-v", "--version",
+                        help="specify the version to use instead of the 'version' file")
 
     return WflInstanceConfig(**vars(parser.parse_args()))
 

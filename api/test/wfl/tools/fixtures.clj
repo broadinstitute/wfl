@@ -200,12 +200,13 @@
 
 (defn with-temporary-workspace
   "Create and use a temporary Terra Workspace."
-  [f]
-  (util/bracket
-   #(doto (util/randomize "wfl-dev/test-workspace")
-      (firecloud/create-workspace "workflow-launcher-dev"))
-   firecloud/delete-workspace
-   f))
+  ([workspace-prefix group f]
+   (util/bracket
+    #(doto (util/randomize workspace-prefix) (firecloud/create-workspace group))
+    firecloud/delete-workspace
+    f))
+  ([f]
+   (with-temporary-workspace "wfl-dev/test-workspace" "workflow-launcher-dev" f)))
 
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.

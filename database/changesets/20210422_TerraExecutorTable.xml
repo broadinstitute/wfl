@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_TerraExecutorTable.xml"
+               runInTransaction="false">
+        <comment>
+            the 'Terra' executor table schema
+        </comment>
+        <sql>
+            CREATE TYPE TerraExecutor AS (
+            id                      bigint,      -- unique to this table
+            workspace               text,        -- the fully-qualified 'Namespace/Name' of the Terra workspace to execute workflows in
+            methodConfiguration     text,        -- the fully-qualified 'Namespace/Name' of the method configuration used to create submissions
+            version                 text,        -- the version of the method configuration
+            entity                  text,        -- the entity type to import data from the source as
+            details                 text,        -- the identifier of the executor details table
+            fromSource              text         -- mapping of how to coerce the output of source to executor
+            )
+        </sql>
+    </changeSet>
+</databaseChangeLog>
