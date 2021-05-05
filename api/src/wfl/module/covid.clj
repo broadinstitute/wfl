@@ -28,36 +28,32 @@
 (defn start-covid-workload!
   [])
 
-(defn ^:private snapshot-imported?
-  "Check if snapshot SNAPSHOT_ID in TDR has been imported to WORKSPACE
-  as SNAPSHOT_REFERENCE_ID and can be successfully fetched."
-  [{:keys [snapshot_id snapshot_reference_id] :as _source_details}
-   {:keys [workspace] :as _executor}]
-  (letfn [(fetch [] (rawls/get-snapshot-reference workspace
-                                                  snapshot_reference_id))]
-    (some? (and snapshot_id snapshot_reference_id (util/do-or-nil (fetch))))))
+(defn ^:private get-imported-snapshot-reference
+  "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
+  [{:keys [workspace] :as _executor}
+   {:keys [snapshot_reference_id] :as _executor_details}]
+  (when snapshot_reference_id
+    (util/do-or-nil (rawls/get-snapshot-reference workspace
+                                                  snapshot_reference_id))))
 
 (defn ^:private import-snapshot!
-  "Import snapshot SNAPSHOT_ID from TDR to WORKSPACE.
-  Use transaction TX to update DETAILS table with resulting reference id.
-  Throw if import fails."
+  "Import snapshot with SNAPSHOT_ID to WORKSPACE.
+  Use transaction TX to update DETAILS table with resulting reference id."
   [tx
-   {:keys [workload_id] :as _workload}
-   {:keys [details] :as _source}
-   {:keys [details_id snapshot_id] :as source_details}
-   {:keys [workspace] :as _executor}]
-  (letfn [(create! [] (rawls/create-snapshot-reference workspace snapshot_id))]
-    (if-let [reference-id (util/do-or-nil (:referenceId (create!)))]
-      ((jdbc/update! tx
-                     details
-                     {:snapshot_reference_id reference-id}
-                     ["id = ?" details_id])
-       (jdbc/update! tx
-                     :workload
-                     {:updated (OffsetDateTime/now)}
-                     ["id = ?" workload_id]))
-      (throw (ex-info "Rawls unable to create snapshot reference"
-                      (assoc source_details :workspace workspace))))))
+   workload
+   {:keys [snapshot_id] :as _source_details}
+   {:keys [workspace details] :as _executor}
+   executor_details]
+  (let [refid (-> (rawls/create-snapshot-reference workspace snapshot_id)
+                  :referenceId)]
+    (jdbc/update! tx
+                  details
+                  {:snapshot_reference_id refid}
+                  ["id = ?" (:id executor_details)])
+    (jdbc/update! tx
+                  :workload
+                  {:updated (OffsetDateTime/now)}
+                  ["id = ?" (:id workload)])))
 
 ;; TODO: implement progressive (private) functions inside this update loop
 (defn update-covid-workload!

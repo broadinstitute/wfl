@@ -20,7 +20,6 @@
                 id                          bigint,      -- unique to this table
                 snapshot_creation_job_id    text,        -- id of the TDR snapshot creation job
                 snapshot_id                 text,        -- id of the snapshot lives in TDR
-                snapshot_reference_id       text,        -- id of the snapshot reference lives in the workspace
                 datarepo_row_id             text         -- id of the TDR data row
             )
         </sql>

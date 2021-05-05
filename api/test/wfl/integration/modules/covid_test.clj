@@ -1,4 +1,5 @@
 (ns wfl.integration.modules.covid-test
+  "Test the Sarscov2IlluminaFull COVID pipeline."
   (:require [clojure.test :refer :all]
             [clojure.test :as clj-test]
             [wfl.tools.fixtures :as fixtures]
@@ -7,21 +8,27 @@
             [wfl.service.rawls :as rawls])
   (:import [clojure.lang ExceptionInfo]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(let [new-env {"WFL_FIRECLOUD_URL"
+               "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
+  (clj-test/use-fixtures :once (fixtures/temporary-environment new-env)
+    fixtures/temporary-postgresql-database))
 
 (def workload {:id 1})
 
-(def workspace "general-dev-billing-account/test-snapshots")
-(def executor {:workspace workspace})
+;; For temporary workspace creation
+(def workspace-prefix "general-dev-billing-account/test-workspace")
+(def group "hornet-eng")
 
 (def snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
 (def reference-id "2d15f9bd-ecb9-46b3-bb6c-f22e20235232")
 
-;; Source and source details
-(def source {:details (format "%s_%09d" "TerraDataRepoSourceDetails" 1)})
-(def sd-base {:id 1})
-(def sd-snapshot (assoc sd-base :snapshot_id snapshot-id))
-(def sd-reference (assoc sd-snapshot :snapshot_reference_id reference-id))
+;; Source details
+(def source-details {:id 1 :snapshot_id snapshot-id})
+
+;; Executor and its details
+(def executor-base {:details (format "%s_%09d" "TerraExecutorDetails" 1)})
+(def ed-base {:id 1})
+(def ed-reference (assoc ed-base :snapshot_reference_id reference-id))
 
 (defn ^:private mock-rawls-snapshot-reference [& _]
   {:cloningInstructions "COPY_NOTHING",
@@ -34,34 +41,29 @@
 
 (defn ^:private mock-throw [& _] (throw (ex-info "mocked throw" {})))
 
-(deftest test-snapshot-imported
-  (let [snapshot-imported? #'covid/snapshot-imported?]
-    (testing "Missing snapshot, missing reference, or failed fetch returns false"
-      (with-redefs-fn
-        {#'rawls/get-snapshot-reference mock-throw}
-        #(letfn [(go [sd] (is (false? (snapshot-imported? sd executor))))]
-           (let [source-details [sd-base sd-snapshot sd-reference]]
-             (run! go source-details)))))
-    (testing "Snapshot, reference, and successful fetch returns true"
-      (with-redefs-fn
-        {#'rawls/get-snapshot-reference mock-rawls-snapshot-reference}
-        #(is (true? (snapshot-imported? sd-reference executor)))))))
+(deftest test-get-imported-snapshot-reference
+  (fixtures/with-temporary-workspace workspace-prefix group
+    (fn [workspace]
+      (let [executor (assoc executor-base :workspace workspace)
+            fetch (fn [ed] (#'covid/get-imported-snapshot-reference executor ed))]
+        (with-redefs-fn {#'rawls/get-snapshot-reference mock-throw}
+          #(let [go (fn [ed] (is (not (fetch ed))))
+                 executor-details [ed-base ed-reference]]
+             (run! go executor-details)))
+        (with-redefs-fn {#'rawls/get-snapshot-reference mock-rawls-snapshot-reference}
+          #(is (fetch ed-reference)))))))
 
 (deftest test-import-snapshot
-  (let [import-snapshot! #'covid/import-snapshot!]
-    #_(testing "Successful create writes to db"
-        (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-          (with-redefs-fn
-            {#'rawls/create-snapshot-reference mock-rawls-snapshot-reference}
-            #(import-snapshot! tx workload source sd-snapshot executor))))
-    (testing "Failed create throws"
-      (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
-        (with-redefs-fn
-          {#'rawls/create-snapshot-reference mock-throw}
-          #(is (thrown-with-msg?
-                ExceptionInfo #"Rawls unable to create snapshot reference"
-                (import-snapshot! tx
-                                  workload
-                                  source
-                                  sd-snapshot
-                                  executor))))))))
+  (fixtures/with-temporary-workspace workspace-prefix group
+    (fn [workspace]
+      (let [executor (assoc executor-base :workspace workspace)]
+        #_(testing "Successful create writes to db"
+            (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+              (with-redefs-fn {#'rawls/create-snapshot-reference mock-rawls-snapshot-reference}
+                #(#'covid/import-snapshot! tx workload source-details executor ed-base))))
+        (testing "Failed create throws"
+          (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+            (with-redefs-fn {#'rawls/create-snapshot-reference mock-throw}
+              #(is (thrown-with-msg?
+                    ExceptionInfo #"mocked throw"
+                    (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
