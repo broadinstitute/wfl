@@ -36,5 +36,6 @@
     <include file="changesets/20210422_TerraExecutorTable.xml"                        relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraWorkspaceSinkEnum.xml"                    relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraWorkspaceSinkTable.xml"                   relativeToChangelogFile="true"/>
+    <include file="changesets/20210506_WatchersWorkloadProperty.xml"                  relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

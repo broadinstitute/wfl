@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="hornet@broadinstitute.org"
+               dbms="postgresql"
+               id="20210506"
+               logicalFilePath="20210506_WatchersWorkloadProperty.xml"
+               runInTransaction="false">
+        <comment>
+            Email addresses of persons whom should be notified when:
+                - workload changes state
+                - failures occur during processing
+        </comment>
+        <sql>
+            ALTER TABLE workload
+            ADD
+                watchers text[] DEFAULT '{}';
+        </sql>
+    </changeSet>
+</databaseChangeLog>

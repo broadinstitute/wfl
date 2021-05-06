@@ -1,7 +1,9 @@
 (ns wfl.jdbc
   "clojure.tools.logging wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.tools.logging.readable :as log]))
+            [clojure.tools.logging.readable :as log])
+  (:import (clojure.lang IPersistentVector)
+           (java.sql PreparedStatement Array)))
 
 (def ^:private remember-db
   "Memoized helper to only print the db out the first time"
@@ -135,3 +137,20 @@
    `(do
       (log/info "JBDC SQL connection made:" (format-db ~db-spec) ~opts)
       (jdbc/get-connection ~db-spec ~opts))))
+
+;; Expertly copied and pasted from Stack Overflow:
+;; https://stackoverflow.com/a/25786990
+(extend-protocol clojure.java.jdbc/ISQLParameter
+  IPersistentVector
+  (set-parameter [v ^PreparedStatement stmt ^long i]
+    (let [conn          (.getConnection stmt)
+          meta          (.getParameterMetaData stmt)
+          [head & rest] (.getParameterTypeName meta i)]
+       (if-let [elem-type (when (= head \_) (apply str rest))]
+          (.setObject stmt i (.createArrayOf conn elem-type (to-array v)))
+          (.setObject stmt i v)))))
+
+(extend-protocol clojure.java.jdbc/IResultSetReadColumn
+  Array
+  (result-set-read-column [val _ _]
+    (into [] (.getArray val))))
