@@ -279,9 +279,9 @@
 (defn ^:private import-snapshot-v2!
   "Import snapshot with SNAPSHOT_ID to WORKSPACE.
   Update EXECUTOR with resulting reference id."
-  [{:keys [workspace :as executor]}
+  [{:keys [workspace] :as executor}
    ;; snapshot_id is a property of source details, this destructuring may change.
-   {:keys [snapshot_id :as _source]}]
+   {:keys [snapshot_id] :as _source}]
   (let [reference (rawls/create-snapshot-reference workspace snapshot_id)]
     (assoc executor :snapshot_reference_id (:referenceId reference))
     reference))
