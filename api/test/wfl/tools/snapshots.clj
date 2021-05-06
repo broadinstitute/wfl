@@ -52,5 +52,4 @@
    "initial flowcell values for the sarscov2_illumina_full COVID-19 surveillance pipeline",
    :name
    "sarscov2_illumina_full_inputs3d9770605ebe403283a3b39447c0fd01",
-   :profileId "390e7a85-d47f-4531-b612-165fc977d3bd"}
-  )
+   :profileId "390e7a85-d47f-4531-b612-165fc977d3bd"})

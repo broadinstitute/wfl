@@ -39,8 +39,7 @@
   [tx {:keys [source sink executor] :as request}])
 
 (defn ^:private get-snapshots-from-workspace
-  [workspace]
-  )
+  [workspace])
 
 (defn start-covid-workload!
   "Mark WORKLOAD with a started timestamp."
