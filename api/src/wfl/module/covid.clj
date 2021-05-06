@@ -279,11 +279,12 @@
 (defn ^:private import-snapshot-v2!
   "Import snapshot with SNAPSHOT_ID to WORKSPACE.
   Update EXECUTOR with resulting reference id."
-  [{:keys [workspace :as executor]} snapshot-id]
-  (let [reference (rawls/create-snapshot-reference workspace snapshot-id)
-        reference-id (:referenceId reference)]
-    (assoc executor :snapshot_reference_id reference-id)
-    reference-id))
+  [{:keys [workspace :as executor]}
+   ;; snapshot_id is a property of source details, this destructuring may change.
+   {:keys [snapshot_id :as _source]}]
+  (let [reference (rawls/create-snapshot-reference workspace snapshot_id)]
+    (assoc executor :snapshot_reference_id (:referenceId reference))
+    reference))
 
 (defn ^:private update-terra-executor [source executor]
   "
@@ -298,24 +299,23 @@
   - Can we assume that source, executor, and sink are loaded with their
     details if applicable?  (Common method?)
   "
-  (letfn [(find-new-snapshot  [source now]
-            (:snapshotId (peek-queue! source)))
-          (import-snapshot [executor snapshot-id]
-            ;; Ultimately may not need this new fn defn:
-            (import-snapshot-v2! executor snapshot-id))
-          (create-submissions  [executor snapshot-reference-id]
-            ;; Tom to implement:
-            ;; Create submissions from a snapshot reference.
-            ;; Push each submission to executor queue --
+  (letfn [(find-new-snapshot [source now]
+            (peek-queue! source))
+          (import-snapshot   [executor snapshot]
+            (import-snapshot-v2! executor snapshot))
+          (create-submission  [executor snapshot-reference]
+            ;; Tom to implement?
+            ;; Create submission from a snapshot reference.
+            ;; Push submission to executor queue --
             ;; i.e. write to executor (and corresponding details) tables.
             )
           (update-last-checked [executor now]
             ;; Update in DB too?  Separate helper?
             (assoc executor :updated now))]
-    (let [now         (OffsetDateTime/now)
-          snapshot-id (find-new-snapshot source now)]
-      (when snapshot-id
-        (create-submissions executor (import-snapshot executor snapshot-id)))
+    (let [now      (OffsetDateTime/now)
+          snapshot (find-new-snapshot source now)]
+      (when snapshot
+        (create-submission executor (import-snapshot executor snapshot)))
       (update-last-checked executor now))))
 
 (defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
