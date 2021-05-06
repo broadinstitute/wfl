@@ -1,8 +1,7 @@
 (ns wfl.unit.utils-test
   (:require [clojure.test :refer [deftest is testing]]
             [wfl.util :as util]
-            [clojure.java.io :as io]
-            [clojure.spec.alpha :as s])
+            [clojure.java.io :as io])
   (:import [java.io IOException]
            [org.apache.commons.io FileUtils]))
 
