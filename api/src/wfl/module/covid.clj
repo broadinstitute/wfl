@@ -198,24 +198,12 @@
    :table   :dataset_table
    :column  :table_column_name})
 
-(defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
-  (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (first (jdbc/query tx (format query queue))))))
-
-(defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
-  (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
-    (let [query "DELETE FROM %s WHERE id = ?"]
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (jdbc/execute! tx [(format query queue) id])))
-    (throw (ex-info "No snapshots in queue" {:source source}))))
-
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
   (letfn [(find-new-rows       [source now] [])
           (make-snapshots      [source row-ids])
           (write-snapshots     [source snapshots])
-          (update-last-checked [now])]
+          (update-last-checked [source now])]
     (let [now     (OffsetDateTime/now)
           row-ids (find-new-rows source now)]
       (when-not (empty? row-ids)
@@ -238,6 +226,20 @@
                     (assoc :details details)
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
+
+;; TODO: fix to use considered
+(defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
+  (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (first (jdbc/query tx (format query queue))))))
+
+;; TODO: fix to use considered
+(defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
+  (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
+    (let [query "DELETE FROM %s WHERE id = ?"]
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (jdbc/execute! tx [(format query queue) id])))
+    (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
@@ -274,8 +276,58 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
+(defn ^:private update-terra-executor [source executor]
+  "
+  IN PROGRESS
+  Create and add new submissions to the executor queue.
+
+  Qs
+  - How do we want to use `now` when finding new snapshots?
+  - Where do we coerce source to executor using executor.fromSource?
+  - Do we wish to hold off on popping a source until we've successfully
+    imported the snapshot, or until we've successfully created submissions?
+  - Can we assume that source, executor, and sink are loaded with their
+    details if applicable?  (Common method?)
+  "
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (letfn [(find-new-snapshot  [source now]
+              (:snapshotId (peek-queue! source)))
+            (import-snapshot [executor snapshot-id]
+              (-> (rawls/create-snapshot-reference (:workspace executor) snapshot-id)
+                  :referenceId)
+                                      ;; Also update the executor with reference ID, or handle in helper?
+              )
+            (create-submissions  [executor snapshot-reference]
+                                      ;; Tom to implement:
+                                      ;; Create submissions from a snapshot reference.
+                                      ;; Push each submission to executor queue --
+                                      ;; i.e. write to executor (and corresponding details) tables.
+              )
+            (update-last-checked [executor now]
+                                      ;; Update in DB too?  Separate helper?
+              (assoc executor :updated now))]
+      (let [now         (OffsetDateTime/now)
+            snapshot-id (find-new-snapshot source now)]
+        (when snapshot-id
+          (create-submissions executor (import-snapshot executor snapshot-id)))
+        (update-last-checked executor now)))))
+
+(defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
+  (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (first (jdbc/query tx (format query queue))))))
+
+(defn ^:private pop-terra-executor-queue [{:keys [queue] :as executor}]
+  (if-let [{:keys [id] :as _submission} (peek-queue! executor)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/update! tx queue {:visited true} ["id = ?" id]))
+    (throw (ex-info "No submissions in queue" {:executor executor}))))
+
 (defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
+(defoverload load-executor! terra-executor-type load-terra-executor)
+(defoverload update-executor! terra-executor-type update-terra-executor)
+(defoverload peek-queue! terra-executor-type peek-terra-executor-queue)
+(defoverload pop-queue! terra-executor-type pop-terra-executor-queue)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
