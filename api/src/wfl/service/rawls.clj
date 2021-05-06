@@ -66,8 +66,7 @@
                                  (more (+ limit offset))))))]
       (more 0))))
 
-(comment
-  (snapshots "wfl-dev/CDC_Viral_Sequencing"))
+(comment (snapshots "wfl-dev/CDC_Viral_Sequencing"))
 
 (defn delete-snapshot
   "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."

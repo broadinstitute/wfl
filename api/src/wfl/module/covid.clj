@@ -14,22 +14,16 @@
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import [java.time Instant OffsetDateTime]
-           [java.time.temporal ChronoUnit]))
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "Sarscov2IlluminaFull")
 
-(def table
-  "The Data Repo table."
-  "flowcells")
-
 (defn row-ids-yesterday
-  "Return the row IDs added to DATASET yesterday."
-  [dataset]
-  (let [yesterday (util/days -1)]
-    (-> dataset
-        (datarepo/query-table-between table yesterday [:datarepo_row_id])
-        :rows flatten)))
+  "Return the row IDs added to TABLE in DATASET yesterday."
+  [dataset table]
+  (-> dataset
+      (datarepo/query-table-between table (util/days -1) [:datarepo_row_id])
+      :rows flatten))
 
 ;; TODO: implement COVID workload creation
 ;;  - make sure permissions/inputs are right upfront
