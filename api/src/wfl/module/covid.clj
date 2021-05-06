@@ -308,7 +308,7 @@
             )]
     (let [now      (OffsetDateTime/now) ; Use to update... something?
           snapshots (find-new-snapshots source)]
-      (when (seq? snapshots)
+      (when (seq snapshots)
         (create-submissions executor (import-snapshots! executor snapshots))))))
 
 (defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
