@@ -1,20 +1,12 @@
 (ns wfl.module.covid
   "Handle COVID processing."
-  (:require [clojure.data.json :as json]
-            [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.tools.logging.readable :as log]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
+  (:require [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
-            [wfl.service.google.bigquery :as bigquery]
             [wfl.service.datarepo :as datarepo]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util :as util])
   (:import (java.time OffsetDateTime)))
 
 (def pipeline "Sarscov2IlluminaFull")
@@ -26,7 +18,7 @@
 (defn create-covid-workload!
   [tx {:keys [source sink executor] :as request}])
 
-;; FIXME: move this to the queue-based skeleton
+;; TODO: move this to the queue-based skeleton later
 (defn ^:private snapshot-created?
   "Check if `snapshot-job-id` has done in TDR,
    return the resulting snapshot id if so."
@@ -37,9 +29,9 @@
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset`, `table`
-   and `row-ids` and write into `items` table of
-   WFL database."
-  [tx dataset table source-details-name row-ids]
+   and `row-ids` and write job info as well as rows
+   into `source-details-name` table."
+  [tx dataset table source-details-name [start end] row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
@@ -49,7 +41,10 @@
                    (datarepo/create-snapshot))]
     (jdbc/insert! tx
                   source-details-name
-                  {:snapshot_creation_job_id job-id})))
+                  {:snapshot_creation_job_id job-id
+                   :datarepo_row_ids row-ids
+                   :start_time start
+                   :end_time end})))
 
 (defn ^:private check-for-new-data!
   "Check for new data in TDR, create new snapshots, insert
@@ -72,7 +67,7 @@
                     flatten)]
     (when row-ids
       (let [shards (partition-all 500 row-ids)]
-        (map #(go-create-snapshot! tx dataset table details %) shards)))
+        (map #(go-create-snapshot! tx dataset table details [last_checked now] %) shards)))
     (do
       (jdbc/update! tx
                     source_item
@@ -82,15 +77,6 @@
                     :workload
                     {:updated (OffsetDateTime/now)}
                     ["id = ?" (:id workload)]))))
-
-(comment
-  (let [tx ""
-        workload {}
-        source {:dataset "ff6e2b40-6497-4340-8947-2f52a658f561"
-                :table "flowcell"
-                :snapshot "updated"}
-        source-details {}]
-    (check-for-new-data! tx workload source source-details)))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
