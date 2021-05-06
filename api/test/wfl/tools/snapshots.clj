@@ -1,7 +1,5 @@
 (ns wfl.tools.snapshots
-  "Manage snapshots of Data Repo tables."
   (:require [clojure.test         :refer :all]
-            [wfl.environment      :as environment]
             [wfl.service.datarepo :as datarepo]
             [wfl.util             :as util]))
 
@@ -28,7 +26,7 @@
        (map (partial unique-snapshot-request tdr-profile dataset table))))
 
 (comment
-  (let [profile (environment/getenv "WFL_TDR_DEFAULT_PROFILE")
+  (let [profile (wfl.environment/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
         table   :flowcell]
     (-> (datarepo/query-table-between

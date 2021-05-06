@@ -233,7 +233,6 @@
                                     "WHERE %s BETWEEN '%s' AND '%s'"])]
     (-> query
         (format col-spec dataProject bq-name table between start end)
-        wfl.debug/trace
         (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table-between
