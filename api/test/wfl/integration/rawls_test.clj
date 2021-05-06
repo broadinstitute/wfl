@@ -1,7 +1,10 @@
 (ns wfl.integration.rawls-test
-  (:require [clojure.test       :refer [deftest is testing use-fixtures]]
-            [wfl.service.rawls  :as rawls]
-            [wfl.tools.fixtures :as fixtures])
+  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.rawls     :as rawls]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.resources   :as resources]
+            [wfl.util              :as util])
   (:import [clojure.lang ExceptionInfo]))
 
 ;; A known Terra Data Repository snapshot's ID...
@@ -34,3 +37,19 @@
         (testing "Create already exists"
           (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                 (make-reference))))))))
+
+(deftest test-batch-upsert-entities
+  (let [entity-type   "outputs"
+        entity-name   "test"
+        outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
+    (fixtures/with-temporary-workspace
+      "general-dev-billing-account/test-workspace"
+      "hornet-eng"
+      (fn [workspace]
+        (rawls/batch-upsert workspace [[entity-name entity-type outputs]])
+        (let [[{:keys [name attributes]} & _]
+              (util/poll
+               #(not-empty (firecloud/list-entities workspace entity-type)))]
+          (is (= name entity-name) "The test entity was not created")
+          (is (= (util/map-vals #(if (map? %) (:items %) %) attributes)
+                 (into {} (filter second outputs)))))))))

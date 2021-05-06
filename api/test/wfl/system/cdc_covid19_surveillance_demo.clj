@@ -2,18 +2,25 @@
   (:require [wfl.service.datarepo  :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.rawls     :as rawls]
+            [wfl.tools.datasets    :as datasets]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.snapshots   :as snapshots]
+            [wfl.tools.resources   :as resources]
             [wfl.util              :as util]))
 
 (def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
-(def firecloud-group        "cdc-covid-surveillance")
+(def firecloud-group        "workflow-launcher-dev")
 (def snapshot-readers       ["cdc-covid-surveillance@firecloud.org"])
 (def source-dataset         "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def source-table           "flowcells")
 (def snapshot-column        "run_date")
 (def source-dataset-profile "395f5921-d2d9-480d-b302-f856d787c9d9")
 (def method-configuration   "cdc-covid-surveillance/sarscov2_illumina_full")
+
+;; for demonstrating writing outputs back to the workspace
+(def well-known-submission "475d0a1d-20c0-42a1-968a-7540b79fcf0c")
+(def well-known-workflow   "2768b29e-c808-4bd6-a46b-6c94fd2a67aa")
+(def workspace-table       "flowcell")
 
 (defn wait-for-user []
   (println "Press Enter to continue...")
@@ -81,8 +88,19 @@
   (println "Aborting" submissionId "in" workspace)
   (firecloud/abort-submission workspace submissionId))
 
+;; TODO demonstrate copying form one workspace to another
+;; Need to get the WDL description to extract file from the outputs, however.
 (defn write-known-outputs-to-workspace [workspace]
-  (println "Writing outputs to flowcell table in" workspace))
+  (println "Writing outputs to flowcell table in" workspace)
+  (let [from-outputs (resources/read-resource "sarscov2_illumina_full/entity-from-outputs.edn")
+        pipeline     (:name (firecloud/get-method-configuration workspace method-configuration))
+        outputs      (-> workspace-to-clone
+                         (firecloud/get-workflow-outputs well-known-submission well-known-workflow)
+                         (get-in [:tasks (keyword pipeline) :outputs])
+                         (util/unprefix-keys (keyword (str pipeline "."))))
+        attributes   (datasets/rename-gather outputs from-outputs)
+        entity-name  "test"]
+    (rawls/batch-upsert workspace [[entity-name workspace-table attributes]])))
 
 (defn delete-snapshot [{:keys [name id] :as _snapshot}]
   (println "Deleting snapshot" name)
@@ -108,6 +126,7 @@
             submission (submit-snapshot-reference workspace reference)]
         (wait-for-user)
         (abort-submission workspace submission))
+      (wait-for-user)
       (write-known-outputs-to-workspace workspace)
       (wait-for-user)
       (println "Cleaning up"))))
