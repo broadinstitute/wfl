@@ -276,6 +276,15 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
+(defn ^:private import-snapshot-v2!
+  "Import snapshot with SNAPSHOT_ID to WORKSPACE.
+  Update EXECUTOR with resulting reference id."
+  [{:keys [workspace :as executor]} snapshot-id]
+  (let [reference (rawls/create-snapshot-reference workspace snapshot-id)
+        reference-id (:referenceId reference)]
+    (assoc executor :snapshot_reference_id reference-id)
+    reference-id))
+
 (defn ^:private update-terra-executor [source executor]
   "
   IN PROGRESS
@@ -289,28 +298,25 @@
   - Can we assume that source, executor, and sink are loaded with their
     details if applicable?  (Common method?)
   "
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (letfn [(find-new-snapshot  [source now]
-              (:snapshotId (peek-queue! source)))
-            (import-snapshot [executor snapshot-id]
-              (-> (rawls/create-snapshot-reference (:workspace executor) snapshot-id)
-                  :referenceId)
-                                      ;; Also update the executor with reference ID, or handle in helper?
-              )
-            (create-submissions  [executor snapshot-reference]
-                                      ;; Tom to implement:
-                                      ;; Create submissions from a snapshot reference.
-                                      ;; Push each submission to executor queue --
-                                      ;; i.e. write to executor (and corresponding details) tables.
-              )
-            (update-last-checked [executor now]
-                                      ;; Update in DB too?  Separate helper?
-              (assoc executor :updated now))]
-      (let [now         (OffsetDateTime/now)
-            snapshot-id (find-new-snapshot source now)]
-        (when snapshot-id
-          (create-submissions executor (import-snapshot executor snapshot-id)))
-        (update-last-checked executor now)))))
+  (letfn [(find-new-snapshot  [source now]
+            (:snapshotId (peek-queue! source)))
+          (import-snapshot [executor snapshot-id]
+            ;; Ultimately may not need this new fn defn:
+            (import-snapshot-v2! executor snapshot-id))
+          (create-submissions  [executor snapshot-reference-id]
+            ;; Tom to implement:
+            ;; Create submissions from a snapshot reference.
+            ;; Push each submission to executor queue --
+            ;; i.e. write to executor (and corresponding details) tables.
+            )
+          (update-last-checked [executor now]
+            ;; Update in DB too?  Separate helper?
+            (assoc executor :updated now))]
+    (let [now         (OffsetDateTime/now)
+          snapshot-id (find-new-snapshot source now)]
+      (when snapshot-id
+        (create-submissions executor (import-snapshot executor snapshot-id)))
+      (update-last-checked executor now))))
 
 (defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
   (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
