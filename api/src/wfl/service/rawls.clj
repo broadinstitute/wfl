@@ -4,8 +4,8 @@
   (:require [clj-http.client      :as http]
             [clojure.data.json    :as json]
             [clojure.string       :as str]
+            [wfl.api.spec         :as spec]
             [wfl.auth             :as auth]
-            [wfl.debug            :as debug]
             [wfl.environment      :as env]
             [wfl.service.datarepo :as datarepo]
             [wfl.util             :as util]))
@@ -59,7 +59,6 @@
               (let [head (-> request
                              (assoc :query-params {:limit  limit
                                                    :offset offset})
-                             debug/trace
                              http/request
                              util/response-body-json
                              :resources)]
