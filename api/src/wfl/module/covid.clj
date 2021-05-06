@@ -227,18 +227,17 @@
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-;; TODO: fix to use considered
 (defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
-  (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
+  "Get first unvisited source in QUEUE."
+  (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (first (jdbc/query tx (format query queue))))))
 
-;; TODO: fix to use considered
 (defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
+  "Mark first unvisited source in QUEUE as visited, or throw if empty."
   (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
-    (let [query "DELETE FROM %s WHERE id = ?"]
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (jdbc/execute! tx [(format query queue) id])))
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/update! tx queue {:visited true} ["id = ?" id]))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
@@ -276,54 +275,50 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
-(defn ^:private import-snapshot-v2!
-  "Import snapshot with SNAPSHOT_ID to WORKSPACE.
-  Update EXECUTOR with resulting reference id."
-  [{:keys [workspace] :as executor}
-   ;; snapshot_id is a property of source details, this destructuring may change.
-   {:keys [snapshot_id] :as _source}]
-  (let [reference (rawls/create-snapshot-reference workspace snapshot_id)]
-    (assoc executor :snapshot_reference_id (:referenceId reference))
-    reference))
+(defn ^:private find-new-snapshots
+  "Return source details records for first member of SOURCE queue."
+  [source]
+  (if-let [source-entry (peek-queue! source)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (:details source-entry)
+           (format "SELECT * FROM %s")
+           (jdbc/query tx)))))
+
+(defn ^:private import-snapshots!
+  "Create and return snapshot references for all SNAPSHOTS in WORKSPACE."
+  [{:keys [workspace] :as _executor}
+   snapshots]
+  {:pre [(seq snapshots)]}
+  (letfn [(import [snapshot]
+            (->> (:snapshot_id snapshot)
+                 (rawls/create-snapshot-reference workspace)))]
+    (map import snapshots)))
 
 (defn ^:private update-terra-executor [source executor]
-  "
-  IN PROGRESS
-  Create and add new submissions to the executor queue.
-
-  Qs
-  - How do we want to use `now` when finding new snapshots?
-  - Where do we coerce source to executor using executor.fromSource?
-  - Do we wish to hold off on popping a source until we've successfully
-    imported the snapshot, or until we've successfully created submissions?
-  - Can we assume that source, executor, and sink are loaded with their
-    details if applicable?  (Common method?)
-  "
-  (letfn [(find-new-snapshot [source now]
-            (peek-queue! source))
-          (import-snapshot   [executor snapshot]
-            (import-snapshot-v2! executor snapshot))
-          (create-submission  [executor snapshot-reference]
+  "IN PROGRESS:
+  Create and add new submissions to the submission queue from new SOURCE snapshots.
+  (Should) return updated EXECUTOR."
+  (letfn [(create-submissions  [executor snapshot-references]
             ;; Tom to implement?
-            ;; Create submission from a snapshot reference.
-            ;; Push submission to executor queue --
-            ;; i.e. write to executor (and corresponding details) tables.
-            )
-          (update-last-checked [executor now]
-            ;; Update in DB too?  Separate helper?
-            (assoc executor :updated now))]
-    (let [now      (OffsetDateTime/now)
-          snapshot (find-new-snapshot source now)]
-      (when snapshot
-        (create-submission executor (import-snapshot executor snapshot)))
-      (update-last-checked executor now))))
+            ;; Create submissions from snapshot references.
+            ;; Pop source, coerce to executor with executor.fromSource,
+            ;; and push to executor queue --
+            ;; i.e. write to executor (and corresponding details) tables
+            ;; Return updated executor.
+            )]
+    (let [now      (OffsetDateTime/now) ; Use to update... something?
+          snapshots (find-new-snapshots source)]
+      (when (seq? snapshots)
+        (create-submissions executor (import-snapshots! executor snapshots))))))
 
 (defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
+  "Get first unvisited executor in QUEUE."
   (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (first (jdbc/query tx (format query queue))))))
 
 (defn ^:private pop-terra-executor-queue [{:keys [queue] :as executor}]
+  "Mark first unvisited executor in QUEUE as visited, or throw if empty."
   (if-let [{:keys [id] :as _submission} (peek-queue! executor)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx queue {:visited true} ["id = ?" id]))

@@ -63,32 +63,32 @@
 
 (defn ^:private mock-throw [& _] (throw (ex-info "mocked throw" {})))
 
-(deftest test-get-imported-snapshot-reference
-  (fixtures/with-temporary-workspace workspace-prefix group
-    (fn [workspace]
-      (let [executor (assoc executor-base :workspace workspace)
-            fetch (fn [ed] (#'covid/get-imported-snapshot-reference executor ed))]
-        (with-redefs-fn {#'rawls/get-snapshot-reference mock-throw}
-          #(let [go (fn [ed] (is (not (fetch ed))))
-                 executor-details [ed-base ed-reference]]
-             (run! go executor-details)))
-        (with-redefs-fn {#'rawls/get-snapshot-reference mock-rawls-snapshot-reference}
-          #(is (fetch ed-reference)))))))
+#_(deftest test-get-imported-snapshot-reference
+    (fixtures/with-temporary-workspace workspace-prefix group
+      (fn [workspace]
+        (let [executor (assoc executor-base :workspace workspace)
+              fetch (fn [ed] (#'covid/get-imported-snapshot-reference executor ed))]
+          (with-redefs-fn {#'rawls/get-snapshot-reference mock-throw}
+            #(let [go (fn [ed] (is (not (fetch ed))))
+                   executor-details [ed-base ed-reference]]
+               (run! go executor-details)))
+          (with-redefs-fn {#'rawls/get-snapshot-reference mock-rawls-snapshot-reference}
+            #(is (fetch ed-reference)))))))
 
-(deftest test-import-snapshot
-  (fixtures/with-temporary-workspace workspace-prefix group
-    (fn [workspace]
-      (let [executor (assoc executor-base :workspace workspace)]
-        #_(testing "Successful create writes to db"
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (with-redefs-fn {#'rawls/create-snapshot-reference mock-rawls-snapshot-reference}
-                #(#'covid/import-snapshot! tx workload source-details executor ed-base))))
-        (testing "Failed create throws"
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (with-redefs-fn {#'rawls/create-snapshot-reference mock-throw}
-              #(is (thrown-with-msg?
-                    ExceptionInfo #"mocked throw"
-                    (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
+#_(deftest test-import-snapshot
+    (fixtures/with-temporary-workspace workspace-prefix group
+      (fn [workspace]
+        (let [executor (assoc executor-base :workspace workspace)]
+          #_(testing "Successful create writes to db"
+              (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+                (with-redefs-fn {#'rawls/create-snapshot-reference mock-rawls-snapshot-reference}
+                  #(#'covid/import-snapshot! tx workload source-details executor ed-base))))
+          (testing "Failed create throws"
+            (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+              (with-redefs-fn {#'rawls/create-snapshot-reference mock-throw}
+                #(is (thrown-with-msg?
+                      ExceptionInfo #"mocked throw"
+                      (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
