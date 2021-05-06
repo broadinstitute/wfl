@@ -18,16 +18,38 @@
 
 (def pipeline "Sarscov2IlluminaFull")
 
+(defn throw-unless-column-exists [dataset table column-name]
+  "Throw or return the column from `table` with `column-name`"
+  (let [[result & more :as all] (-> table
+                                    (get-in [:columns])
+                                    (->> (filter (comp #{column-name} :name))))]
+    (when-not result
+      (throw (ex-info "No column with name" {:name column-name :dataset dataset})))
+    result))
+
+(defn throw-unless-table-exists [dataset table-name column-name]
+  "Throw or return the table from `dataset` with `table-name`"
+  (let [[result & more :as all] (-> dataset
+                                    (get-in [:schema :tables])
+                                    (->> (filter (comp #{table-name} :name))))]
+    (when-not result
+      (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
+    (when result
+      (throw-unless-column-exists dataset result column-name)
+      )
+    result))
+
 (defn verify-source!
   "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
   [{:keys [name dataset] :as source}]
   (when-not (= (:name source) "Terra DataRepo")
     (throw (ex-info "Unknown Source" {:source source})))
   (try
-    (datarepo/dataset (:dataset source))
+    (-> (datarepo/dataset (:dataset source))
+        (throw-unless-table-exists "flowcell" "updated"))
     (catch Throwable t
       (throw (ex-info "Cannot access Dataset" {:dataset dataset
-                                               :cause (.getMessage t)})))))
+                                               :cause   (.getMessage t)})))))
 
 (defn verify-executor!
   "Verify the method-configuration exists."
@@ -46,13 +68,14 @@
     (firecloud/get-workspace workspace)
     (catch Throwable t
       (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                     :cause (.getMessage t)})))))
+                                                     :cause     (.getMessage t)})))))
 
 (defn create-covid-workload!
   [tx {:keys [source executor sink] :as workload-request}]
   (verify-source! source)
   (verify-executor! executor)
-  (verify-sink! sink))
+  (verify-sink! sink)
+  )
 
 (defn start-covid-workload!
   [])
@@ -67,58 +90,58 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/create-workload!   pipeline create-covid-workload!)
-(defoverload workloads/start-workload!    pipeline start-covid-workload!)
-(defoverload workloads/update-workload!   pipeline update-covid-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/create-workload! pipeline create-covid-workload!)
+(defoverload workloads/start-workload! pipeline start-covid-workload!)
+(defoverload workloads/update-workload! pipeline update-covid-workload!)
+(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
 
 (defmulti peek-queue!
-  "Peek the first object from the `queue`, if one exists."
-  (fn [queue] (:type queue)))
+          "Peek the first object from the `queue`, if one exists."
+          (fn [queue] (:type queue)))
 
 (defmulti pop-queue!
-  "Pop the first object from the `queue`. Throws if none exists."
-  (fn [queue] (:type queue)))
+          "Pop the first object from the `queue`. Throws if none exists."
+          (fn [queue] (:type queue)))
 
 ;; source operations
 (defmulti create-source!
-  "Create and write the source to persisted storage"
-  (fn [source-request] (:name source-request)))
+          "Create and write the source to persisted storage"
+          (fn [source-request] (:name source-request)))
 
 (defmulti update-source!
-  "Update the source."
-  (fn [source] (:type source)))
+          "Update the source."
+          (fn [source] (:type source)))
 
 (defmulti load-source!
-  "Load the workload `source`."
-  (fn [workload] (:source-type workload)))
+          "Load the workload `source`."
+          (fn [workload] (:source-type workload)))
 
 ;; executor operations
 (defmulti create-executor!
-  "Create and write the executor to persisted storage"
-  (fn [executor-request] (:name executor-request)))
+          "Create and write the executor to persisted storage"
+          (fn [executor-request] (:name executor-request)))
 
 (defmulti update-executor!
-  "Update the executor with the `source`"
-  (fn [source executor] (:type executor)))
+          "Update the executor with the `source`"
+          (fn [source executor] (:type executor)))
 
 (defmulti load-executor!
-  "Load the workload `executor`."
-  (fn [workload] (:executor-type workload)))
+          "Load the workload `executor`."
+          (fn [workload] (:executor-type workload)))
 
 ;; sink operations
 (defmulti create-sink!
-  "Create and write the sink to persisted storage"
-  (fn [sink-request] (:name sink-request)))
+          "Create and write the sink to persisted storage"
+          (fn [sink-request] (:name sink-request)))
 
 (defmulti update-sink!
-  "Update the sink with the `executor`"
-  (fn [executor sink] (:type sink)))
+          "Update the sink with the `executor`"
+          (fn [executor sink] (:type sink)))
 
 (defmulti load-sink!
-  "Load the workload `sink`."
-  (fn [workload] (:sink-type workload)))
+          "Load the workload `sink`."
+          (fn [workload] (:sink-type workload)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
@@ -141,22 +164,22 @@
 (defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
   (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (first (jdbc/query tx (format query queue))))))
+                              (first (jdbc/query tx (format query queue))))))
 
 (defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
   (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
     (let [query "DELETE FROM %s WHERE id = ?"]
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (jdbc/execute! tx [(format query queue) id])))
+                                (jdbc/execute! tx [(format query queue) id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
-  (letfn [(find-new-rows       [source now]      [])
-          (make-snapshots      [source row-ids])
-          (write-snapshots     [source snapshots])
+  (letfn [(find-new-rows [source now] [])
+          (make-snapshots [source row-ids])
+          (write-snapshots [source snapshots])
           (update-last-checked [now])]
-    (let [now     (OffsetDateTime/now)
+    (let [now (OffsetDateTime/now)
           row-ids (find-new-rows source now)]
       (when-not (empty? row-ids)
         (write-snapshots source (make-snapshots source row-ids)))
@@ -171,13 +194,13 @@
 ;; records for bad workload requests?
 (defn ^:private create-tdr-source [source-request]
   (letfn [(check-request! [request] (throw (Exception. "Not implemented")))
-          (make-record    [request] nil)]
+          (make-record [request] nil)]
     (check-request! source-request)
     (let [foreign-key (make-record source-request)]
       (load-tdr-source {:source-ptr foreign-key}))))
 
 (defoverload create-source! tdr-source-type create-tdr-source)
-(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
+(defoverload peek-queue! tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue! tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
-(defoverload load-source!   tdr-source-type load-tdr-source)
+(defoverload load-source! tdr-source-type load-tdr-source)

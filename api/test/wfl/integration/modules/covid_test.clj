@@ -19,42 +19,57 @@
 (deftest test-create-covid-workload
   (testing "That COVID workload-request can pass verification"
     (let [workload (workloads/create-workload! (make-covid-workload-request))]
-      ;; NOTE: COVID workload creation returns nil until it's fully implemented
-      (is workload)))
+      (is workload))))
+
+(deftest test-create-covid-workload-with-misnamed-source
   (testing "That a COVID workload-request with a misnamed source cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:source :name] "Bad_Name")
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-source-name
   (testing "That a COVID workload-request without a named source cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:source :name] nil)
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-dataset
   (testing "That a COVID workload-request without a dataset cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:source :dataset] nil)
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
 
+(deftest test-create-covid-workload-with-misnamed-executor
   (testing "That a COVID workload-request with a misnamed executor cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:executor :name] "Bad_Name")
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-named-executor
   (testing "That a COVID workload-request without a named executor cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:executor :name] nil)
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-method-configuration
   (testing "That a COVID workload-request without a method_configuration cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:executor :method_configuration] nil)
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
 
+(deftest test-create-covid-workload-with-misnamed-sink
   (testing "That a COVID workload-request with a misnamed sink cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:sink :name] "Bad_Name")
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-named-sink
   (testing "That a COVID workload-request without a named sink cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:sink :name] nil)
-                                      workloads/create-workload!))))
+                                      workloads/create-workload!)))))
+
+(deftest test-create-covid-workload-without-workspace
   (testing "That a COVID workload-request without a workspace cannot pass verification"
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:sink :workspace] nil)
