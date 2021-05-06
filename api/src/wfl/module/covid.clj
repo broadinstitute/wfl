@@ -26,50 +26,71 @@
 (defn create-covid-workload!
   [tx {:keys [source sink executor] :as request}])
 
+;; FIXME: move this to the queue-based skeleton
 (defn ^:private snapshot-created?
-  "Check if snapshot has been created in TDR, return snapshot id if so."
-  [{:keys [snapshot_job_id] :as _record}]
-  (->> snapshot_job_id
-       (datarepo/job-done?)
-       :id))
+  "Check if `snapshot-job-id` has done in TDR,
+   return the resulting snapshot id if so."
+  [snapshot-job-id]
+  (some->> snapshot-job-id
+           (datarepo/job-done?)
+           :id))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset`, `table`
    and `row-ids` and write into `items` table of
    WFL database."
-  [tx dataset table items row-ids]
+  [tx dataset table source-details-name row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
                    (update :name util/randomize)
-                   ;; FIXME: this sometimes runs into: Cannot update iam permissions,
-                   ;;        need failure handling here!
+                   ;; FIXME: this sometimes runs into: Cannot update iam permissions, need failure handling here!
                    (datarepo/create-snapshot))]
+    (jdbc/insert! tx
+                  source-details-name
+                  {:snapshot_creation_job_id job-id})))
 
-    (jdbc/insert! tx items {:dataset_id (:id dataset)
-                            :snapshot_job_id job-id})))
-
-(defn ^:private check-for-new-data
-  [tx {:keys [source sink executor] :as workload}]
-  (let [tx ""
-        most-recent-record-date "2021-03-29 00:00:00"
-        now (util/utc-now)
-        dataset (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
-        table "flowcell"
-        col-name "updated"
+(defn ^:private check-for-new-data!
+  "Check for new data in TDR, create new snapshots, insert
+   resulting job creation ids into database and update the
+   timestamp for next time using transaction TX."
+  [tx
+   {:keys [source_item] :as workload}
+   {:keys [dataset table last_checked snapshot details] :as _source}]
+  (let [now (util/utc-now)
+        dataset (datarepo/dataset dataset)
+        table table
+        col-name snapshot
         row-ids (-> (datarepo/query-table-between
                      dataset
                      table
                      col-name
-                     [most-recent-record-date now]
+                     [last_checked now]
                      [:datarepo_row_id])
                     :rows
-                    flatten)
-        items (:items workload)]
+                    flatten)]
     (when row-ids
       (let [shards (partition-all 500 row-ids)]
-        (map #(go-create-snapshot! tx dataset table items %) shards)))))
+        (map #(go-create-snapshot! tx dataset table details %) shards)))
+    (do
+      (jdbc/update! tx
+                    source_item
+                    {:last_checked now}
+                    ["id = ?" (:id workload)])
+      (jdbc/update! tx
+                    :workload
+                    {:updated (OffsetDateTime/now)}
+                    ["id = ?" (:id workload)]))))
+
+(comment
+  (let [tx ""
+        workload {}
+        source {:dataset "ff6e2b40-6497-4340-8947-2f52a658f561"
+                :table "flowcell"
+                :snapshot "updated"}
+        source-details {}]
+    (check-for-new-data! tx workload source source-details)))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
