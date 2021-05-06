@@ -43,8 +43,10 @@
   )
 
 (defn start-covid-workload!
-  "Start WORKLOAD."
-  [{:keys [submission-id workspace] :as workload}])
+  "Mark WORKLOAD with a started timestamp."
+  [tx {:keys [id started] :as workload}]
+  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
+  (workloads/load-workload-for-id tx id))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
@@ -192,6 +194,8 @@
     (check-request! source-request)
     (let [foreign-key (make-record source-request)]
       (load-tdr-source {:source-ptr foreign-key}))))
+
+(defoverload workloads/start-workload! pipeline start-covid-workload!)
 
 (defoverload create-source! tdr-source-type create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
