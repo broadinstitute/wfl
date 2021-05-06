@@ -48,3 +48,5 @@
                        "dataset" "method-configuration" "namespace/name"))]
         (is (not (:started workload)))
         (is (:started (workloads/start-workload! workload)))))))
+
+(comment (test-vars [#'start-workload]))
