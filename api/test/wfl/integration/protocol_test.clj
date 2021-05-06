@@ -1,4 +1,4 @@
-(ns wfl.unit.protocol-test
+(ns wfl.integration.protocol-test
   (:require [clojure.test :refer :all :as clj-test]
             [clojure.test]
             [wfl.jdbc :as jdbc]
