@@ -35,8 +35,7 @@
     (when-not result
       (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
     (when result
-      (throw-unless-column-exists dataset result column-name)
-      )
+      (throw-unless-column-exists dataset result column-name))
     result))
 
 (defn verify-source!
@@ -74,8 +73,7 @@
   [tx {:keys [source executor sink] :as workload-request}]
   (verify-source! source)
   (verify-executor! executor)
-  (verify-sink! sink)
-  )
+  (verify-sink! sink))
 
 (defn start-covid-workload!
   [])
@@ -97,51 +95,51 @@
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
 
 (defmulti peek-queue!
-          "Peek the first object from the `queue`, if one exists."
-          (fn [queue] (:type queue)))
+  "Peek the first object from the `queue`, if one exists."
+  (fn [queue] (:type queue)))
 
 (defmulti pop-queue!
-          "Pop the first object from the `queue`. Throws if none exists."
-          (fn [queue] (:type queue)))
+  "Pop the first object from the `queue`. Throws if none exists."
+  (fn [queue] (:type queue)))
 
 ;; source operations
 (defmulti create-source!
-          "Create and write the source to persisted storage"
-          (fn [source-request] (:name source-request)))
+  "Create and write the source to persisted storage"
+  (fn [source-request] (:name source-request)))
 
 (defmulti update-source!
-          "Update the source."
-          (fn [source] (:type source)))
+  "Update the source."
+  (fn [source] (:type source)))
 
 (defmulti load-source!
-          "Load the workload `source`."
-          (fn [workload] (:source-type workload)))
+  "Load the workload `source`."
+  (fn [workload] (:source-type workload)))
 
 ;; executor operations
 (defmulti create-executor!
-          "Create and write the executor to persisted storage"
-          (fn [executor-request] (:name executor-request)))
+  "Create and write the executor to persisted storage"
+  (fn [executor-request] (:name executor-request)))
 
 (defmulti update-executor!
-          "Update the executor with the `source`"
-          (fn [source executor] (:type executor)))
+  "Update the executor with the `source`"
+  (fn [source executor] (:type executor)))
 
 (defmulti load-executor!
-          "Load the workload `executor`."
-          (fn [workload] (:executor-type workload)))
+  "Load the workload `executor`."
+  (fn [workload] (:executor-type workload)))
 
 ;; sink operations
 (defmulti create-sink!
-          "Create and write the sink to persisted storage"
-          (fn [sink-request] (:name sink-request)))
+  "Create and write the sink to persisted storage"
+  (fn [sink-request] (:name sink-request)))
 
 (defmulti update-sink!
-          "Update the sink with the `executor`"
-          (fn [executor sink] (:type sink)))
+  "Update the sink with the `executor`"
+  (fn [executor sink] (:type sink)))
 
 (defmulti load-sink!
-          "Load the workload `sink`."
-          (fn [workload] (:sink-type workload)))
+  "Load the workload `sink`."
+  (fn [workload] (:sink-type workload)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
@@ -164,13 +162,13 @@
 (defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
   (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                              (first (jdbc/query tx (format query queue))))))
+      (first (jdbc/query tx (format query queue))))))
 
 (defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
   (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
     (let [query "DELETE FROM %s WHERE id = ?"]
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                (jdbc/execute! tx [(format query queue) id])))
+        (jdbc/execute! tx [(format query queue) id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 ;; Create and add new snapshots to the snapshot queue
