@@ -1,6 +1,6 @@
 (ns wfl.jdbc
   "clojure.tools.logging wrapping for clojure.java.jdbc"
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc              :as jdbc]
             [clojure.tools.logging.readable :as log])
   (:import (clojure.lang IPersistentVector)
            (java.sql PreparedStatement Array)))
@@ -146,9 +146,9 @@
     (let [conn          (.getConnection stmt)
           meta          (.getParameterMetaData stmt)
           [head & rest] (.getParameterTypeName meta i)]
-       (if-let [elem-type (when (= head \_) (apply str rest))]
-          (.setObject stmt i (.createArrayOf conn elem-type (to-array v)))
-          (.setObject stmt i v)))))
+      (if-let [elem-type (when (= head \_) (apply str rest))]
+        (.setObject stmt i (.createArrayOf conn elem-type (to-array v)))
+        (.setObject stmt i v)))))
 
 (extend-protocol clojure.java.jdbc/IResultSetReadColumn
   Array
