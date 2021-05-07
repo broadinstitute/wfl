@@ -2,17 +2,18 @@
   "Test the Sarscov2IlluminaFull COVID pipeline."
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
-            [wfl.tools.fixtures :as fixtures]
+            [wfl.debug :as debug]
             [wfl.jdbc :as jdbc]
             [wfl.module.covid :as covid]
             [wfl.service.rawls :as rawls]
+            [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
-  (clj-test/use-fixtures :once (fixtures/temporary-environment new-env)
+  (use-fixtures :once (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database))
 
 (def workload {:id 1})
@@ -94,7 +95,7 @@
                            (->> (jdbc/insert! tx :workload)))
         table          (format "%s_%09d" pipeline id)]
     (jdbc/execute!       tx [update pipeline id])
-    (jdbc/db-do-commands tx [(format create table)])
+    (jdbc/db-do-commands tx [(debug/trace (format create table))])
     (jdbc/update!        tx :workload {:items table} ["id = ?" id])
     (wfl.api.workloads/load-workload-for-id tx id)))
 
