@@ -45,29 +45,6 @@
   [workspace reference-id]
   (get-workspace-json workspace "snapshots" reference-id))
 
-(defn snapshots
-  "Return a lazy sequence of snapshots in WORKSPACE namespace/name."
-  [workspace]
-  (let [rawls   "https://rawls.dsde-prod.broadinstitute.org/api/workspaces"
-        url     (str/join "/" [rawls workspace "snapshots"])
-        limit   23
-        request {:method       :get     ; :debug true :debug-body true
-                 :url          url
-                 :headers      (auth/get-auth-header)
-                 :content-type :application/json}]
-    (letfn [(more [offset]
-              (let [head (-> request
-                             (assoc :query-params {:limit  limit
-                                                   :offset offset})
-                             http/request
-                             util/response-body-json
-                             :resources)]
-                (lazy-cat head (when (pos? (count head))
-                                 (more (+ limit offset))))))]
-      (more 0))))
-
-(comment (snapshots "wfl-dev/CDC_Viral_Sequencing"))
-
 (defn delete-snapshot
   "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
   [workspace reference-id]
@@ -112,50 +89,3 @@
                     :body         (json/write-str (map make-request entities)
                                                   :escape-slash false)})
         util/response-body-json)))
-
-;; https://cromwell.readthedocs.io/en/stable/execution/ExecutionTwists/
-;; :NoNewCalls is the default.
-;;
-(def a-rawls-submission
-  {:entityName                    "string"
-   :entityType                    "string"
-   :expression                    "string"
-   :methodConfigurationName       "string"
-   :methodConfigurationNamespace  "string"
-   :deleteIntermediateOutputFiles true
-   :useCallCache                  true
-   :useReferenceDisks             true
-   :workflowFailureMode           #{:ContinueWhilePossible :NoNewCalls}})
-
-(defn validate-submission
-  "Validate SUBMISSION in WORKSPACE namespace/name."
-  [workspace submission]
-  (-> {:method       :post
-       :url          (workspace-api-url workspace "submissions" "validate")
-       :headers      (auth/get-auth-header)
-       :content-type :application/json
-       :body         (json/write-str submission :escape-slash false)}
-      http/request
-      util/response-body-json))
-
-(defn create-submission
-  "Run SUBMISSION in WORKSPACE name/namespace."
-  [workspace submission]
-  (-> {:method       :post
-       :url          (workspace-api-url workspace "submissions")
-       :headers      (auth/get-auth-header)
-       :content-type :application/json
-       :body         (json/write-str submission :escape-slash false)}
-      http/request
-      util/response-body-json))
-
-(defn submission-status
-  "Status for SUBMISSION-ID in WORKSPACE name/namespace."
-  [workspace submission-id]
-  {:pre (spec/uuid-string? submission-id)}
-  (-> {:method       :get
-       :url          (workspace-api-url workspace "submissions" submission-id)
-       :headers      (auth/get-auth-header)
-       :content-type :application/json}
-      http/request
-      util/response-body-json))

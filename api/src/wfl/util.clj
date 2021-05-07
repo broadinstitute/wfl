@@ -492,9 +492,3 @@
      (columns-rows->tsv [(format-entity-type columns)] rows file)))
   ([tsv-type columns rows]
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
-
-(defn days
-  "Return an ordered interval of N days from now."
-  [^Integer n]
-  (let [now (Instant/now)]
-    (vec (sort [now (.minus now n (ChronoUnit/DAYS))]))))

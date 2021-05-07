@@ -18,13 +18,6 @@
 
 (def pipeline "Sarscov2IlluminaFull")
 
-(defn row-ids-yesterday
-  "Return the row IDs added to TABLE in DATASET yesterday."
-  [dataset table]
-  (-> dataset
-      (datarepo/query-table-between table (util/days -1) [:datarepo_row_id])
-      :rows flatten))
-
 ;; TODO: implement COVID workload creation
 ;;  - make sure permissions/inputs are right upfront
 ;;  - dispatch on source/sink/executor
