@@ -8,7 +8,8 @@
             [wfl.service.rawls :as rawls]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
-  (:import [java.time OffsetDateTime]
+  (:import [clojure.lang ExceptionInfo]
+           [java.time OffsetDateTime]
            [java.util UUID]))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
