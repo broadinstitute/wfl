@@ -1,1 +1,1 @@
-https://cdn.jsdelivr.net/gh/broadinstitute/viral-pipelines@07868f432c421a66ce1c5affdf5fa4d7cc5504a3/pipes/WDL/workflows/sarscov2_illumina_full.wdl
+https://cdn.jsdelivr.net/gh/broadinstitute/viral-pipelines@f288aaf8c135a63ff7caa2b286a45bc6327ea609/pipes/WDL/workflows/sarscov2_illumina_full.wdl

@@ -78,6 +78,33 @@
 (defn start-covid-workload!
   [])
 
+(defn ^:private get-imported-snapshot-reference
+  "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
+  [{:keys [workspace] :as _executor}
+   {:keys [snapshot_reference_id] :as _executor_details}]
+  (when snapshot_reference_id
+    (util/do-or-nil (rawls/get-snapshot-reference workspace
+                                                  snapshot_reference_id))))
+
+(defn ^:private import-snapshot!
+  "Import snapshot with SNAPSHOT_ID to WORKSPACE.
+  Use transaction TX to update DETAILS table with resulting reference id."
+  [tx
+   workload
+   {:keys [snapshot_id] :as _source_details}
+   {:keys [workspace details] :as _executor}
+   executor_details]
+  (let [refid (-> (rawls/create-snapshot-reference workspace snapshot_id)
+                  :referenceId)]
+    (jdbc/update! tx
+                  details
+                  {:snapshot_reference_id refid}
+                  ["id = ?" (:id executor_details)])
+    (jdbc/update! tx
+                  :workload
+                  {:updated (OffsetDateTime/now)}
+                  ["id = ?" (:id workload)])))
+
 ;; TODO: implement progressive (private) functions inside this update loop
 (defn update-covid-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
