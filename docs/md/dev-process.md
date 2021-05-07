@@ -252,3 +252,23 @@ You can use `--password=$ENV_SOMETHING` to supply it.
     clojure -M:liquibase
     ```
     if you are working with a local database.
+
+### REPL testing with fixtures.
+
+Now that we're using fixtures,
+and so on,
+in our tests,
+it is no longer good enough
+to run `deftest` vars as functions.
+Running a test like this `(test-something)`
+does not set up the necessary fixtures.
+
+However,
+`clojure.test/test-vars` can run a test
+with all the surrounding `clojure.test`
+mechanism in place.
+It takes a vector of `var`s like this.
+
+``` clojure
+(comment (test-vars [#'test-something]))
+```
