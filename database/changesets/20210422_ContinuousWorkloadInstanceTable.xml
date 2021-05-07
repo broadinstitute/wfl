@@ -12,20 +12,33 @@
                id="20210422"
                logicalFilePath="20210422_ContinuousWorkloadInstanceTable.xml"
                runInTransaction="false">
-        <sql>
-            CREATE TYPE ContinuousWorkloadInstance AS (
-                id             bigint,      -- unique to this table
-                source_type    source,      -- source type
-                source_item    text,        -- id of the source instance
-                executor_type  executor,    -- executor type
-                executor_item  text,        -- id of the executor instance
-                sink_type      sink,        -- sink type
-                sink_item      text,        -- id of the sink instance
-                updated        timestamptz  -- status update time
-            )
-            <comment>
-                the ContinuousWorkloadInstance table schema
-            </comment>
-        </sql>
+        <createTable tableName="ContinuousWorkloadInstance">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="source_type" type="source">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_item" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="executor_type" type="executor">
+                <constraints nullable="false"/>
+            </column>
+            <column name="executor_item" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sink_type" type="sink">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sink_item" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="timestamptz"
+                    defaultValueComputed="now()"
+                    remarks="When was this workload updated?">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
     </changeSet>
 </databaseChangeLog>

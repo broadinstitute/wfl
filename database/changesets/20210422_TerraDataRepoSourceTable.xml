@@ -15,15 +15,27 @@
         <comment>
             the 'Terra DataRepo' source table schema
         </comment>
-        <sql>
-            CREATE TYPE TerraDataRepoSource AS (
-                id              bigint,      -- unique to this table
-                dataset         text,        -- the id of the TDR dataset
-                dataset_table   text,        -- the name of the dataset table
-                snapshot        text,        -- name of a column in table containing orderable and strictly increasing data
-                details         text,        -- the identifier of the source details table
-                last_checked    timestamptz  -- a timestamp used for monitor
-            )
-        </sql>
+        <createTable tableName="TerraDataRepoSource">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="dataset" type="text"
+                    remarks="the serialized EDN of the TDR dataset schema">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dataset_table" type="text"
+                    remarks="the name of the dataset table">
+                <constraints nullable="false"/>
+            </column>
+            <column name="table_column_name" type="text"
+                    remarks="name of a column in table containing orderable and strictly increasing data">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_checked" type="timestamptz"
+                    defaultValueComputed="now()"
+                    remarks="a timestamp used for WFL to monitor new data on a rolling basis">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
     </changeSet>
 </databaseChangeLog>

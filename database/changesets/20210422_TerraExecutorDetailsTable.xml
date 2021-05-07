@@ -21,7 +21,9 @@
                 snapshot_reference_id  text,        -- id of the snapshot reference lives in the workspace
                 rawls_submission_id    text,        -- id of the Rawls submission
                 workflow_id            text,        -- id of the Terra workflow
-                workflow_status        text         -- status of the Terra workflow
+                workflow_status        text,        -- status of the Terra workflow
+                updated                timestamptz, -- status update time
+                consumed               boolean      -- whether or not this is consumed yet
             )
         </sql>
     </changeSet>
