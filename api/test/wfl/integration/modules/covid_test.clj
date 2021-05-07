@@ -1,8 +1,14 @@
+"Test the Sarscov2IlluminaFull COVID pipeline."
 (ns wfl.integration.modules.covid-test
   (:require [clojure.test :refer :all]
             [clojure.test :as clj-test]
+            [wfl.jdbc :as jdbc]
+            [wfl.module.covid :as covid]
+            [wfl.service.rawls :as rawls]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]))
+
+(:import [clojure.lang ExceptionInfo])
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -74,15 +80,6 @@
     (is (thrown? RuntimeException (-> (make-covid-workload-request)
                                       (assoc-in [:sink :workspace] nil)
                                       workloads/create-workload!)))))
-
-  "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test :refer :all]
-            [clojure.test :as clj-test]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.covid :as covid]
-            [wfl.service.rawls :as rawls])
-  (:import [clojure.lang ExceptionInfo]))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
