@@ -16,8 +16,9 @@
             Add a few new columns to the `workload` table
         </comment>
         <sql>
-            ALTER TABLE workload ADD labels TEXT[] DEFAULT '{}';
-            ALTER TABLE workload ADD watchers TEXT[] DEFAULT '{}';
+            ALTER TABLE workload
+            ADD labels   TEXT[] DEFAULT '{}',
+            ADD watchers TEXT[] DEFAULT '{}';
         </sql>
     </changeSet>
 </databaseChangeLog>

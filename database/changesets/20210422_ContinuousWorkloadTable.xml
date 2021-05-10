@@ -19,8 +19,8 @@
                 source_item     TEXT NOT NULL,                                             -- the identifier of the source table
                 executor_type   EXECUTOR NOT NULL,                                         -- type of this executor
                 executor_item   TEXT NOT NULL,                                             -- the identifier of the executor table
-                sink_type SINK  NOT NULL,                                                  -- type of this sink
-                sink_item TEXT  NOT NULL,                                                  -- the identifier of the sink table
+                sink_type       SINK  NOT NULL,                                            -- type of this sink
+                sink_item       TEXT  NOT NULL,                                            -- the identifier of the sink table
                 updated         TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,   -- when was this workload updated
                 CONSTRAINT CONTINUOUSWORKLOAD_PKEY PRIMARY KEY (id)
             )
