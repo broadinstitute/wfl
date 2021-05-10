@@ -9,22 +9,16 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
-               id="20210422"
-               logicalFilePath="20210422_TerraExecutorDetailsTable.xml"
+               id="20210507"
+               logicalFilePath="20210507_AddColumnsToWorkload.xml"
                runInTransaction="false">
         <comment>
-            the details table of 'Terra' executor
+            Add a few new columns to the `workload` table
         </comment>
         <sql>
-            CREATE TYPE TerraExecutorDetails AS (
-                id                     BIGINT,      -- unique to this table
-                snapshot_reference_id  TEXT,        -- id of the snapshot reference lives in the workspace
-                rawls_submission_id    TEXT,        -- id of the Rawls submission
-                workflow_id            TEXT,        -- id of the Terra workflow
-                workflow_status        TEXT,        -- status of the Terra workflow
-                updated                TIMESTAMPTZ, -- status update time
-                consumed               TIMESTAMPTZ  -- time when consumed, null otherwise
-            )
+            ALTER TABLE workload
+            ADD labels   TEXT[] DEFAULT '{}',
+            ADD watchers TEXT[] DEFAULT '{}';
         </sql>
     </changeSet>
 </databaseChangeLog>
