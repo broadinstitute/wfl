@@ -15,13 +15,9 @@
         <comment>
             Add a few new columns to the `workload` table
         </comment>
-        <addColumn tableName="workload" >
-            <column name="labels"
-                    type="text[]"
-                    defaultValue="{}"/>
-            <column name="watchers"
-                    type="text[]"
-                    defaultValue="{}"/>
-        </addColumn>
+        <sql>
+            ALTER TABLE workload ADD labels TEXT[] DEFAULT '{}';
+            ALTER TABLE workload ADD watchers TEXT[] DEFAULT '{}';
+        </sql>
     </changeSet>
 </databaseChangeLog>
