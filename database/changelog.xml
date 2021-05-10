@@ -27,7 +27,7 @@
     <include file="changesets/20210303_StoppedWorkloadProperty.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210422_SourceExecutorSinkEnums.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210422_Sarscov2IlluminaFullEnum.xml"                  relativeToChangelogFile="true"/>
-    <include file="changesets/20210422_ContinuousWorkloadInstanceTable.xml"           relativeToChangelogFile="true"/>
+    <include file="changesets/20210422_ContinuousWorkloadTable.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraDataRepoSourceDetailsTable.xml"           relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraDataRepoSourceEnum.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraDataRepoSourceTable.xml"                  relativeToChangelogFile="true"/>
@@ -37,4 +37,5 @@
     <include file="changesets/20210422_TerraWorkspaceSinkEnum.xml"                    relativeToChangelogFile="true"/>
     <include file="changesets/20210422_TerraWorkspaceSinkTable.xml"                   relativeToChangelogFile="true"/>
     <include file="changesets/20210507_AddWatchersAndLabelsToWorkload.xml"            relativeToChangelogFile="true"/>
+    <include file="changesets/20210510_TerraSinkDetailsTable.xml"                     relativeToChangelogFile="true"/>
 </databaseChangeLog>

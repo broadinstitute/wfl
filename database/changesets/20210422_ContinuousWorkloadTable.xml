@@ -10,28 +10,34 @@
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
                id="20210422"
-               logicalFilePath="20210422_ContinuousWorkloadInstanceTable.xml"
+               logicalFilePath="20210422_ContinuousWorkloadTable.xml"
                runInTransaction="false">
-        <createTable tableName="ContinuousWorkloadInstance">
+        <createTable tableName="ContinuousWorkload">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="source_type" type="source">
+            <column name="source_type" type="source"
+                    remarks="Type of this source.">
                 <constraints nullable="false"/>
             </column>
-            <column name="source_item" type="text">
+            <column name="source_item" type="text"
+                    remarks="Link to the concrete source record.">
                 <constraints nullable="false"/>
             </column>
-            <column name="executor_type" type="executor">
+            <column name="executor_type" type="executor"
+                    remarks="Type of this executor.">
                 <constraints nullable="false"/>
             </column>
-            <column name="executor_item" type="text">
+            <column name="executor_item" type="text"
+                    remarks="Link to the concrete executor record.">
                 <constraints nullable="false"/>
             </column>
-            <column name="sink_type" type="sink">
+            <column name="sink_type" type="sink"
+                    remarks="Type of this sink.">
                 <constraints nullable="false"/>
             </column>
-            <column name="sink_item" type="text">
+            <column name="sink_item" type="text"
+                    remarks="Link to the concrete sink record.">
                 <constraints nullable="false"/>
             </column>
             <column name="updated" type="timestamptz"

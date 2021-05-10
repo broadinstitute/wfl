@@ -9,19 +9,19 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
-               id="20210507"
-               logicalFilePath="20210507_AddColumnsToWorkload.xml"
+               id="20210510"
+               logicalFilePath="20210510_TerraSinkDetailsTable.xml"
                runInTransaction="false">
         <comment>
-            Add a few new columns to the `workload` table
+            the details table of 'Terra' executor
         </comment>
-        <addColumn tableName="workload" >
-            <column name="labels"
-                    type="text[]"
-                    defaultValue="{}"/>
-            <column name="watchers"
-                    type="text[]"
-                    defaultValue="{}"/>
-        </addColumn>
+        <sql>
+            CREATE TYPE TerraSinkDetails AS (
+                id                     bigint,      -- unique to this table
+                workflow_id            text,        -- id of the Terra workflow
+                entity_name            text,        -- name of the entity
+                updated                timestamptz  -- status update time
+            )
+        </sql>
     </changeSet>
 </databaseChangeLog>

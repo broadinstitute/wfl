@@ -28,11 +28,11 @@
                 <constraints nullable="false"/>
             </column>
             <column name="from_outputs" type="text"
-                    remarks="mapping of how to coerce the output of source to executor in serialized EDN">
+                    remarks="mapping of how to coerce the output of executor to whatever the sink understands in serialized EDN">
                 <constraints nullable="false"/>
             </column>
             <column name="details" type="text"
-                    remarks="the identifier of the executor details table">
+                    remarks="the identifier of the sink details table">
                 <constraints nullable="false"/>
             </column>
         </createTable>
