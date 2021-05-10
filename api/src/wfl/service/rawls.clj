@@ -4,6 +4,7 @@
   (:require [clj-http.client      :as http]
             [clojure.data.json    :as json]
             [clojure.string       :as str]
+            [wfl.api.spec         :as spec]
             [wfl.auth             :as auth]
             [wfl.environment      :as env]
             [wfl.service.datarepo :as datarepo]
@@ -44,8 +45,8 @@
   [workspace reference-id]
   (get-workspace-json workspace "snapshots" reference-id))
 
-(defn delete-snapshot-reference
-  "Delete the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+(defn delete-snapshot
+  "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
   [workspace reference-id]
   (-> (workspace-api-url workspace "snapshots" reference-id)
       (http/delete {:headers (auth/get-auth-header)})
