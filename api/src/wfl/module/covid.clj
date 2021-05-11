@@ -113,16 +113,16 @@
   return the ID of the ContinuousWorkload."
   [tx id {:keys [source sink executor] :as _request}]
   (let [set-details "UPDATE
-                          ContinuousWorkload
-                      SET
-                          source_type   = ?::source,
-                          executor_type = ?::executor,
-                          sink_type     = ?::sink
-                      where
-                          id = ? "
-        src-exc-snk   [(create-source! tx id source)
-                       (create-executor! tx id executor)
-                       (create-sink! tx id sink)]
+                         ContinuousWorkload
+                     SET
+                         source_type   = ?::source,
+                         executor_type = ?::executor,
+                         sink_type     = ?::sink
+                     WHERE
+                         id = ? "
+        src-exc-snk [(create-source! tx id source)
+                     (create-executor! tx id executor)
+                     (create-sink! tx id sink)]
         items       (->> (map second src-exc-snk)
                          (zipmap [:source_items :executor_items :sink_items])
                          (jdbc/insert! tx :ContinuousWorkload)
