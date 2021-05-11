@@ -77,23 +77,23 @@
             (is (= type "TerraDataRepoSource"))
             (is (not last_checked) "The TDR should not have been checked yet"))
           (verify-executor [{:keys [type]}]
-            (is (= type "TerraExecutor")) )
+            (is (= type "TerraExecutor")))
           (verify-sink [{:keys [type]}]
             (is (= type "TerraWorkspaceSink")))]
-  (let [{:keys [created creator source executor sink labels watchers]}
-        (workloads/create-workload!
-          (workloads/covid-workload-request {} {} {}))]
-    (is created "workload is missing :created timestamp")
-    (is creator "workload is missing :creator field")
-    (is (and source (verify-source source)))
-    (is (and executor (verify-executor executor)))
-    (is (and sink (verify-sink sink)))
-    (is (seq labels) "workload did not contain any labels")
-    (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
-    (is (vector? watchers)))))
+    (let [{:keys [created creator source executor sink labels watchers]}
+          (workloads/create-workload!
+           (workloads/covid-workload-request {} {} {}))]
+      (is created "workload is missing :created timestamp")
+      (is creator "workload is missing :creator field")
+      (is (and source (verify-source source)))
+      (is (and executor (verify-executor executor)))
+      (is (and sink (verify-sink sink)))
+      (is (seq labels) "workload did not contain any labels")
+      (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
+      (is (vector? watchers)))))
 
 (deftest test-start-workload
-    (let [workload (workloads/create-workload!
-                    (workloads/covid-workload-request {} {} {}))]
-      (is (not (:started workload)))
-      (is (:started (workloads/start-workload! workload)))))
+  (let [workload (workloads/create-workload!
+                  (workloads/covid-workload-request {} {} {}))]
+    (is (not (:started workload)))
+    (is (:started (workloads/start-workload! workload)))))
