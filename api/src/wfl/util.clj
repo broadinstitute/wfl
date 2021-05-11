@@ -495,7 +495,9 @@
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
 
 (defn utc-now
-  []
-  (-> (ZoneId/of "UTC")
-      (OffsetDateTime/now)
-      (.format (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))))
+  ([format]
+   (-> (ZoneId/of "UTC")
+     (OffsetDateTime/now)
+     (.format (DateTimeFormatter/ofPattern format))))
+  ([]
+   (utc-now "yyyy-MM-dd HH:mm:ss")))

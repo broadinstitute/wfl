@@ -36,7 +36,7 @@
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                   (update :name util/randomize)
+                   (update :name util/utc-now "YYYYMMDD'T'HHMMSS")
                    ;; FIXME: this sometimes runs into: Cannot update iam permissions, need failure handling here!
                    (datarepo/create-snapshot))]
     (jdbc/insert! tx
