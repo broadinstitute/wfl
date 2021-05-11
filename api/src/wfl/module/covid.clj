@@ -1,22 +1,13 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [clojure.data.json :as json]
-            [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.tools.logging.readable :as log]
+  (:require [clojure.set :as set]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
-            [wfl.service.datarepo :as datarepo]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.google.storage :as gcs]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.debug :as debug]
-            [clojure.pprint :as pprint]
-            [fipp.edn :as edn])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -156,7 +147,7 @@
         id           (add-workload-record tx request)
         items        (create-continuous-workload-record tx id request)]
     (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update!  tx :workload {:items items} ["id = ?" id])
+    (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
 
 (defn update-covid-workload
@@ -204,9 +195,9 @@
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
-  (letfn [(find-new-rows       [source now]      [])
-          (make-snapshots      [source row-ids])
-          (write-snapshots     [source snapshots])
+  (letfn [(find-new-rows [source now] [])
+          (make-snapshots [source row-ids])
+          (write-snapshots [source snapshots])
           (update-last-checked [now])]
     (let [now     (OffsetDateTime/now)
           row-ids (find-new-rows source now)]
@@ -238,22 +229,22 @@
     [tdr-source-type (-> items first :id)]))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
-(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
+(defoverload peek-queue! tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue! tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
-(defoverload load-source!   tdr-source-type load-tdr-source)
+(defoverload load-source! tdr-source-type load-tdr-source)
 
 (def ^:private terra-executor-name "Terra")
 (def ^:private terra-executor-type "TerraExecutor")
 
 (defn ^:private create-terra-executor [tx id request]
-  (let [create   "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
-        details  (format "%sDetails_%09d" terra-executor-type id)
-        _        (jdbc/execute! tx [(format create details)])
-        req->cols {:workspace                   :workspace
-                   :methodConfiguration         :method_configuration
-                   :methodConfigurationVersion  :method_configuration_version
-                   :fromSource                  :from_source}
+  (let [create    "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
+        details   (format "%sDetails_%09d" terra-executor-type id)
+        _         (jdbc/execute! tx [(format create details)])
+        req->cols {:workspace                  :workspace
+                   :methodConfiguration        :method_configuration
+                   :methodConfigurationVersion :method_configuration_version
+                   :fromSource                 :from_source}
         items     (-> (select-keys request (keys req->cols))
                       (set/rename-keys req->cols)
                       (assoc :details details)
@@ -270,18 +261,18 @@
     (throw (ex-info (str "No executor matching id " executor_items) details))))
 
 (defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
+(defoverload load-executor! terra-executor-type load-terra-executor)
 
 (def ^:private terra-workspace-sink-name "Terra Workspace")
 (def ^:private terra-workspace-sink-type "TerraWorkspaceSink")
 
 (defn ^:private create-terra-workspace-sink [tx id request]
-  (let [create   "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
-        details  (format "%sDetails_%09d" terra-workspace-sink-type id)
-        _        (jdbc/execute! tx [(format create details)])
-        req->cols {:workspace                   :workspace
-                   :entity                      :entity
-                   :fromOutputs                 :from_outputs}
+  (let [create    "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        details   (format "%sDetails_%09d" terra-workspace-sink-type id)
+        _         (jdbc/execute! tx [(format create details)])
+        req->cols {:workspace   :workspace
+                   :entity      :entity
+                   :fromOutputs :from_outputs}
         items     (-> (select-keys request (keys req->cols))
                       (set/rename-keys req->cols)
                       (assoc :details details)
@@ -299,10 +290,10 @@
     (throw (ex-info (str "No sink matching id " sink_items) details))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
 
-(defoverload workloads/create-workload!   pipeline create-covid-workload)
-(defoverload workloads/start-workload!    pipeline start-covid-workload)
-(defoverload workloads/update-workload!   pipeline update-covid-workload)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/create-workload! pipeline create-covid-workload)
+(defoverload workloads/start-workload! pipeline start-covid-workload)
+(defoverload workloads/update-workload! pipeline update-covid-workload)
+(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
