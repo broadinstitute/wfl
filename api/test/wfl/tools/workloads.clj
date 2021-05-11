@@ -122,6 +122,7 @@
   {:executor @cromwell-url
    :output   ""
    :pipeline cp/pipeline
+   :project  @project
    :items    [{:inputs {:src src :dst dst}}]})
 
 (defn covid-workload-request
