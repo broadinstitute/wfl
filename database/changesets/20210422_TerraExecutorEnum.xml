@@ -13,7 +13,7 @@
                logicalFilePath="20210422_TerraExecutorEnum.xml"
                runInTransaction="false">
         <sql>
-            ALTER TYPE executor ADD VALUE 'Terra'
+            ALTER TYPE executor ADD VALUE 'TerraExecutor'
         </sql>
     </changeSet>
 </databaseChangeLog>

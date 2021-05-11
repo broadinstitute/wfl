@@ -16,7 +16,7 @@
             the details table of 'Terra' executor
         </comment>
         <sql>
-            CREATE TYPE TerraSinkDetails AS (
+            CREATE TYPE TerraWorkspaceSinkDetails AS (
                 id                     BIGINT,      -- unique to this table
                 workflow_id            TEXT,        -- id of the Terra workflow
                 entity_name            TEXT,        -- name of the entity

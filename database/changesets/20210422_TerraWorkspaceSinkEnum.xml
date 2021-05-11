@@ -13,7 +13,7 @@
                logicalFilePath="20210422_TerraWorkspaceSinkEnum.xml"
                runInTransaction="false">
         <sql>
-            ALTER TYPE sink ADD VALUE 'Terra Workspace'
+            ALTER TYPE sink ADD VALUE 'TerraWorkspaceSink'
         </sql>
 
     </changeSet>

@@ -127,14 +127,30 @@
 
 (defn covid-workload-request
   "Make a COVID Sarscov2IlluminaFull workload creation request."
-  [dataset method-configuration workspace]
-  {:pipeline covid/pipeline
-   :source {:name "Terra DataRepo",
-            :dataset dataset}
-   :executor {:name "Terra",
-              :method_configuration method-configuration}
-   :sink {:name "Terra Workspace",
-          :workspace workspace}})
+  [source executor sink]
+  {:source   (merge
+              {:name    "Terra DataRepo",
+               :dataset ""
+               :table   ""
+               :column  ""}
+              source)
+   :executor (merge
+              {:name                       "Terra"
+               :workspace                  "namespace/name"
+               :methodConfiguration        ""
+               :methodConfigurationVersion 0
+               :fromSource                 ""}
+              executor)
+   :sink     (merge
+              {:name        "Terra Workspace"
+               :workspace   "namespace/name"
+               :entity      ""
+               :fromOutputs {}}
+              sink)
+   :pipeline covid/pipeline
+   :project  @project
+   :creator  @email
+   :labels   ["hornet:test"]})
 
 (defn xx-workload-request
   [identifier]
