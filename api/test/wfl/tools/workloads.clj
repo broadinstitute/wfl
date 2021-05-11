@@ -127,7 +127,6 @@
 
 (defn covid-workload-request
   "Make a COVID Sarscov2IlluminaFull workload creation request."
-<<<<<<< HEAD
   [source executor sink]
   {:source   (merge
               {:name    "Terra DataRepo",
@@ -152,18 +151,6 @@
    :project  @project
    :creator  @email
    :labels   ["hornet:test"]})
-=======
-  [_identifier]
-  (let [method_configuration (str/join "/" ["cdc-covid-surveillance"
-                                            "sarscov2_illumina_full"])]
-    {:pipeline covid/pipeline
-     :source   {:name                 "Terra DataRepo"
-                :dataset              "cd25d59e-1451-44d0-8a24-7669edb9a8f8"}
-     :executor {:name                 "Terra"
-                :method_configuration method_configuration}
-     :sink     {:name                 "Terra Workspace"
-                :workspace            "wfl-dev/CDC_Viral_Sequencing"}}))
->>>>>>> 964a647 (Checkpoint.)
 
 (defn xx-workload-request
   [identifier]
