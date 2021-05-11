@@ -15,12 +15,14 @@
 
 (def pipeline "Sarscov2IlluminaFull")
 
-;; TODO: implement COVID workload creation
-;;  - make sure permissions/inputs are right upfront
-;;  - dispatch on source/sink/executor
-;;  - store information into database
-(defn create-covid-workload!
-  [tx {:keys [source sink executor] :as request}])
+(defn ^:private get-snapshots-from-workspace
+  [workspace])
+
+(defn start-covid-workload
+  "Mark WORKLOAD with a started timestamp."
+  [tx {:keys [id started] :as workload}]
+  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
+  (workloads/load-workload-for-id tx id))
 
 ;; TODO: move this to the queue-based skeleton later
 (defn ^:private snapshot-created?
@@ -100,23 +102,6 @@
                   :workload
                   {:updated (OffsetDateTime/now)}
                   ["id = ?" (:id workload)])))
-
-;; TODO: implement progressive (private) functions inside this update loop
-(defn update-covid-workload!
-  "Use transaction `tx` to batch-update `workload` statuses."
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload) workload)))
-
-(defoverload workloads/create-workload!   pipeline create-covid-workload!)
-(defoverload workloads/start-workload!    pipeline batch/stop-workload!)
-(defoverload workloads/update-workload!   pipeline update-covid-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline
-  batch/load-batch-workload-impl)
 
 ;; Generic helpers
 (defn ^:private load-record-by-id! [tx table id]
