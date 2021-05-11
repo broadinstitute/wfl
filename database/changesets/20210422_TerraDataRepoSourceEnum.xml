@@ -13,7 +13,7 @@
                logicalFilePath="20210422_TerraDataRepoSourceEnum.xml"
                runInTransaction="false">
         <sql>
-            ALTER TYPE source ADD VALUE 'Terra DataRepo'
+            ALTER TYPE source ADD VALUE 'TerraDataRepoSource'
         </sql>
     </changeSet>
 </databaseChangeLog>

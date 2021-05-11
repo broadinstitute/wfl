@@ -13,22 +13,19 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
-  (:import [java.time OffsetDateTime]))
+            [wfl.wfl :as wfl]
+            [wfl.debug :as debug]
+            [clojure.pprint :as pprint]
+            [fipp.edn :as edn])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (def pipeline "Sarscov2IlluminaFull")
-
-;; TODO: implement COVID workload creation
-;;  - make sure permissions/inputs are right upfront
-;;  - dispatch on source/sink/executor
-;;  - store information into database
-(defn create-covid-workload!
-  [tx {:keys [source sink executor] :as request}])
 
 (defn ^:private get-snapshots-from-workspace
   [workspace])
 
-(defn start-covid-workload!
+(defn start-covid-workload
   "Mark WORKLOAD with a started timestamp."
   [tx {:keys [id started] :as workload}]
   (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
@@ -61,23 +58,6 @@
                   {:updated (OffsetDateTime/now)}
                   ["id = ?" (:id workload)])))
 
-;; TODO: implement progressive (private) functions inside this update loop
-(defn update-covid-workload!
-  "Use transaction `tx` to batch-update `workload` statuses."
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload) workload)))
-
-(defoverload workloads/create-workload!   pipeline create-covid-workload!)
-(defoverload workloads/start-workload!    pipeline start-covid-workload!)
-(defoverload workloads/update-workload!   pipeline update-covid-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline
-  batch/load-batch-workload-impl)
-
 (defmulti peek-queue!
   "Peek the first object from the `queue`, if one exists."
   (fn [queue] (:type queue)))
@@ -88,42 +68,85 @@
 
 ;; source operations
 (defmulti create-source!
-  "Create and write the source to persisted storage"
-  (fn [source-request] (:name source-request)))
+  "Use `tx` and workload `id` to write the source to persisted storage and
+   return a [type item] pair to be written into the parent table."
+  (fn [tx id source-request] (:name source-request)))
 
 (defmulti update-source!
   "Update the source."
   (fn [source] (:type source)))
 
 (defmulti load-source!
-  "Load the workload `source`."
-  (fn [workload] (:source-type workload)))
+  "Use `tx` to load the workload source with `source_type`."
+  (fn [tx workload] (:source_type workload)))
 
 ;; executor operations
 (defmulti create-executor!
-  "Create and write the executor to persisted storage"
-  (fn [executor-request] (:name executor-request)))
+  "Use `tx` and workload `id` to write the executor to persisted storage and
+   return a [type item] pair to be written into the parent table."
+  (fn [tx id executor-request] (:name executor-request)))
 
 (defmulti update-executor!
   "Update the executor with the `source`"
   (fn [source executor] (:type executor)))
 
 (defmulti load-executor!
-  "Load the workload `executor`."
-  (fn [workload] (:executor-type workload)))
+  "Use `tx` to load the workload executor with `executor_type`."
+  (fn [tx workload] (:executor_type workload)))
 
 ;; sink operations
 (defmulti create-sink!
-  "Create and write the sink to persisted storage"
-  (fn [sink-request] (:name sink-request)))
+  "Use `tx` and workload `id` to write the sink to persisted storage and
+   return a [type item] pair to be written into the parent table."
+  (fn [tx id sink-request] (:name sink-request)))
 
 (defmulti update-sink!
   "Update the sink with the `executor`"
   (fn [executor sink] (:type sink)))
 
 (defmulti load-sink!
-  "Load the workload `sink`."
-  (fn [workload] (:sink-type workload)))
+  "Use `tx` to load the workload sink with `sink_type`."
+  (fn [tx workload] (:sink_type workload)))
+
+;; TODO: implement COVID workload creation
+;;  - make sure permissions/inputs are right upfront
+(defn create-covid-workload
+  [tx {:keys [source sink executor] :as request}]
+  (let [set-pipeline "UPDATE workload
+                      SET pipeline = ?::pipeline
+                      WHERE id = ?"
+        set-details  "UPDATE
+                          ContinuousWorkload
+                      SET
+                          source_type   = ?::source,
+                          executor_type = ?::executor,
+                          sink_type     = ?::sink
+                      where
+                          id = ? "
+        add-labels (fn [labels] (->> (mapv request [:pipeline :project])
+                                     (map str ["pipeline:" "project:"])
+                                     (concat labels)
+                                     set
+                                     vec))
+        id     (-> request
+                   (update :labels add-labels)
+                   (select-keys [:creator :watchers :labels :project])
+                   (merge (select-keys (wfl/get-the-version) [:commit :version]))
+                   (assoc :executor "" :output "" :release "" :wdl "")
+                   (assoc :uuid (UUID/randomUUID))
+                   (->> (jdbc/insert! tx :workload) first :id))
+        source   (create-source! tx id source)
+        executor (create-executor! tx id executor)
+        sink     (create-sink! tx id sink)
+        items    (->> (map second [source executor sink])
+                      (zipmap [:source_items :executor_items :sink_items])
+                      (jdbc/insert! tx :ContinuousWorkload)
+                      first
+                      :id)]
+    (jdbc/execute! tx [set-pipeline pipeline id])
+    (jdbc/execute! tx (concat [set-details] (map first [source executor sink]) [items]))
+    (jdbc/update!  tx :workload {:items items} ["id = ?" id])
+    (workloads/load-workload-for-id tx id)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
@@ -137,7 +160,20 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(def tdr-source-type "TerraDataRepoSink")
+(defn load-covid-workload-impl [tx {:keys [items] :as workload}]
+  (let [details (->> (util/parse-int items)
+                     (conj ["SELECT * FROM ContinuousWorkload WHERE id = ?"])
+                     (jdbc/query tx)
+                     first)]
+    (->> {:source   (load-source! tx details)
+          :executor (load-executor! tx details)
+          :sink     (load-sink! tx details)}
+         (merge workload)
+         (filter second)
+         (into {}))))
+
+(def tdr-source-name "Terra DataRepo")
+(def tdr-source-type "TerraDataRepoSource")
 
 ;; Note I've used a table to implement the queue and I'm deleting the row
 ;; when it's popped.
@@ -167,24 +203,95 @@
         (write-snapshots source (make-snapshots source row-ids)))
       (update-last-checked source now))))
 
-(defn ^:private load-tdr-source [{:keys [source-ptr] :as workload}]
-  {:type    tdr-source-type
-   :queue   nil
-   :updated nil})
+(defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
+  (if-let [source (->> (util/parse-int source_items)
+                       (conj ["SELECT * FROM TerraDataRepoSource WHERE id = ? LIMIT 1"])
+                       (jdbc/query tx)
+                       first)]
+    (assoc source :type tdr-source-type)
+    (throw (ex-info (str "No source matching id " source_items) details))))
 
 ;; maybe we want to split check-request and create to avoid writing
 ;; records for bad workload requests?
-(defn ^:private create-tdr-source [source-request]
-  (letfn [(check-request! [request] (throw (Exception. "Not implemented")))
-          (make-record    [request] nil)]
-    (check-request! source-request)
-    (let [foreign-key (make-record source-request)]
-      (load-tdr-source {:source-ptr foreign-key}))))
+(defn ^:private create-tdr-source [tx id request]
+  (let [create    "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        details   (format "%sDetails_%09d" tdr-source-type id)
+        _         (jdbc/execute! tx [(format create details)])
+        req->cols {:dataset :dataset
+                   :table   :dataset_table
+                   :column  :table_column_name}
+        items     (-> (select-keys request (keys req->cols))
+                      (set/rename-keys req->cols)
+                      (assoc :details details)
+                      (->> (jdbc/insert! tx tdr-source-type)))]
+    [tdr-source-type (-> items first :id)]))
 
-(defoverload workloads/start-workload! pipeline start-covid-workload!)
-
-(defoverload create-source! tdr-source-type create-tdr-source)
+(defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
 (defoverload load-source!   tdr-source-type load-tdr-source)
+
+(def ^:private terra-executor-name "Terra")
+(def ^:private terra-executor-type "TerraExecutor")
+
+(defn ^:private create-terra-executor [tx id request]
+  (let [create   "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
+        details  (format "%sDetails_%09d" terra-executor-type id)
+        _        (jdbc/execute! tx [(format create details)])
+        req->cols {:workspace                   :workspace
+                   :methodConfiguration         :method_configuration
+                   :methodConfigurationVersion  :method_configuration_version
+                   :fromSource                  :from_source}
+        items     (-> (select-keys request (keys req->cols))
+                      (set/rename-keys req->cols)
+                      (assoc :details details)
+                      (update :from_source pr-str)
+                      (->> (jdbc/insert! tx terra-executor-type)))]
+    [terra-executor-type (-> items first :id)]))
+
+(defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
+  (if-let [executor (->> (util/parse-int executor_items)
+                         (conj ["SELECT * FROM TerraExecutor WHERE id = ? LIMIT 1"])
+                         (jdbc/query tx)
+                         first)]
+    (assoc executor :type terra-executor-type)
+    (throw (ex-info (str "No executor matching id " executor_items) details))))
+
+(defoverload create-executor! terra-executor-name create-terra-executor)
+(defoverload load-executor!   terra-executor-type load-terra-executor)
+
+(def ^:private terra-workspace-sink-name "Terra Workspace")
+(def ^:private terra-workspace-sink-type "TerraWorkspaceSink")
+
+(defn ^:private create-terra-workspace-sink [tx id request]
+  (let [create   "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        details  (format "%sDetails_%09d" terra-workspace-sink-type id)
+        _        (jdbc/execute! tx [(format create details)])
+        req->cols {:workspace                   :workspace
+                   :entity                      :entity
+                   :fromOutputs                 :from_outputs}
+        items     (-> (select-keys request (keys req->cols))
+                      (set/rename-keys req->cols)
+                      (assoc :details details)
+                      (update :from_outputs pr-str)
+                      (->> (jdbc/insert! tx terra-workspace-sink-type)))]
+    [terra-workspace-sink-type (-> items first :id)]))
+
+(defn ^:private load-terra-workspace-sink
+  [tx {:keys [sink_items] :as details}]
+  (if-let [sink (->> (util/parse-int sink_items)
+                     (conj ["SELECT * FROM TerraWorkspaceSink WHERE id = ? LIMIT 1"])
+                     (jdbc/query tx)
+                     first)]
+    (assoc sink :type terra-executor-type)
+    (throw (ex-info (str "No sink matching id " sink_items) details))))
+
+(defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
+(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
+
+(defoverload workloads/create-workload!   pipeline create-covid-workload)
+(defoverload workloads/start-workload!    pipeline start-covid-workload)
+(defoverload workloads/update-workload!   pipeline update-covid-workload)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
