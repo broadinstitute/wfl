@@ -108,14 +108,11 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
-;; TODO: implement COVID workload creation
-;;  - make sure permissions/inputs are right upfront
-(defn create-covid-workload
-  [tx {:keys [source sink executor] :as request}]
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        set-details  "UPDATE
+(defn ^:private create-continuous-workload-record
+  "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
+  return the ID of the ContinuousWorkload."
+  [tx id {:keys [source sink executor] :as _request}]
+  (let [set-details "UPDATE
                           ContinuousWorkload
                       SET
                           source_type   = ?::source,
@@ -123,28 +120,42 @@
                           sink_type     = ?::sink
                       where
                           id = ? "
-        add-labels (fn [labels] (->> (mapv request [:pipeline :project])
-                                     (map str ["pipeline:" "project:"])
-                                     (concat labels)
-                                     set
-                                     vec))
-        id     (-> request
-                   (update :labels add-labels)
-                   (select-keys [:creator :watchers :labels :project])
-                   (merge (select-keys (wfl/get-the-version) [:commit :version]))
-                   (assoc :executor "" :output "" :release "" :wdl "")
-                   (assoc :uuid (UUID/randomUUID))
-                   (->> (jdbc/insert! tx :workload) first :id))
-        source   (create-source! tx id source)
-        executor (create-executor! tx id executor)
-        sink     (create-sink! tx id sink)
-        items    (->> (map second [source executor sink])
-                      (zipmap [:source_items :executor_items :sink_items])
-                      (jdbc/insert! tx :ContinuousWorkload)
-                      first
-                      :id)]
+        src-exc-snk   [(create-source! tx id source)
+                       (create-executor! tx id executor)
+                       (create-sink! tx id sink)]
+        items       (->> (map second src-exc-snk)
+                         (zipmap [:source_items :executor_items :sink_items])
+                         (jdbc/insert! tx :ContinuousWorkload)
+                         first
+                         :id)]
+    (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
+    items))
+
+(defn ^:private add-workload-record [tx request]
+  "Use `tx` to create a workload `record` for `request` and return the id of the
+   new workload."
+  (letfn [(combine-labels [labels]
+            (->> (mapv request [:pipeline :project])
+                 (map str ["pipeline:" "project:"])
+                 (concat labels)
+                 set
+                 sort
+                 vec))]
+    (-> (update request :labels combine-labels)
+        (select-keys [:creator :watchers :labels :project])
+        (merge (select-keys (wfl/get-the-version) [:commit :version]))
+        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (->> (jdbc/insert! tx :workload) first :id))))
+
+;; TODO: implement COVID workload creation
+;;  - make sure permissions/inputs are right upfront
+(defn create-covid-workload [tx request]
+  (let [set-pipeline "UPDATE workload
+                      SET pipeline = ?::pipeline
+                      WHERE id = ?"
+        id           (add-workload-record tx request)
+        items        (create-continuous-workload-record tx id request)]
     (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/execute! tx (concat [set-details] (map first [source executor sink]) [items]))
     (jdbc/update!  tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
 

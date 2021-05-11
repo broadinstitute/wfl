@@ -72,7 +72,7 @@
                     ExceptionInfo #"mocked throw"
                     (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
 
-(deftest start-workload
+(deftest test-start-workload
   (testing "wfl.module.covid/start-covid-workload!"
     (let [workload (workloads/create-workload!
                     (workloads/covid-workload-request {} {} {}))]
