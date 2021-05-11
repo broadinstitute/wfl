@@ -194,7 +194,7 @@
   "Create a temporary Terra Data Repository Snapshot with `snapshot-request`"
   [snapshot-request f]
   (util/bracket
-   #(datarepo/create-snapshot-sync snapshot-request)
+   #(datarepo/create-snapshot snapshot-request)
    datarepo/delete-snapshot
    f))
 

@@ -132,34 +132,30 @@
       :id
       poll-job))
 
-;; Note the TDR is under active development, the endpoint spec is getting
-;; changed so the spec in this function is not consistent with the TDR Swagger
-;; page in order to make the request work.
-;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
-(defn create-snapshot-sync
-  "Return snapshot-id when the snapshot defined by `snapshot-request` is ready.
-   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
-   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
-  [snapshot-request]
-  (-> (repository "snapshots")
-      (http/post {:headers      (auth/get-service-account-header)
-                  :content-type :application/json
-                  :form-params  snapshot-request})
-      util/response-body-json
-      :id
-      poll-job
-      :id))
-
-(defn create-snapshot
+(defn create-snapshot-job
   "Return snapshot creation job-id defined by `snapshot-request`.
    See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
   (-> (repository "snapshots")
-      (http/post {:headers      (auth/get-service-account-header)
-                  :content-type :application/json
-                  :form-params  snapshot-request})
-      util/response-body-json
+    (http/post {:headers      (auth/get-service-account-header)
+                :content-type :application/json
+                :form-params  snapshot-request})
+    util/response-body-json
+    :id))
+
+;; Note the TDR is under active development, the endpoint spec is getting
+;; changed so the spec in this function is not consistent with the TDR Swagger
+;; page in order to make the request work.
+;; See also https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql
+(defn create-snapshot
+  "Return snapshot-id when the snapshot defined by `snapshot-request` is ready.
+   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [snapshot-request]
+  (-> snapshot-request
+      create-snapshot-job
+      poll-job
       :id))
 
 (defn list-snapshots
@@ -198,7 +194,8 @@
   (get-repository-json "snapshots" snapshot-id))
 
 (defn all-columns
-  "Return all of the columns of `table` in `dataset` content."
+  "Helper function to parse all of the columns
+   of `table` in `dataset` body."
   [dataset table]
   (->> (get-in dataset [:schema :tables])
        (filter #(= (:name %) table))

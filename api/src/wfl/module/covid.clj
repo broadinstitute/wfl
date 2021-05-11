@@ -28,14 +28,13 @@
    return the resulting snapshot id if so."
   [snapshot-job-id]
   (some->> snapshot-job-id
-           (datarepo/job-done?)
-           :id))
+           (datarepo/job-done?)))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset`, `table`
    and `row-ids` and write job info as well as rows
    into `source-details-name` table."
-  [tx dataset table source-details-name [start end] row-ids]
+  [dataset table row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
@@ -43,12 +42,7 @@
                    (update :name util/utc-now "YYYYMMDD'T'HHMMSS")
                    ;; FIXME: this sometimes runs into: Cannot update iam permissions, need failure handling here!
                    (datarepo/create-snapshot))]
-    (jdbc/insert! tx
-                  source-details-name
-                  {:snapshot_creation_job_id job-id
-                   :datarepo_row_ids row-ids
-                   :start_time start
-                   :end_time end})))
+    job-id))
 
 (defn ^:private check-for-new-data!
   "Check for new data in TDR, create new snapshots, insert
@@ -56,39 +50,29 @@
    timestamp for next time using transaction TX."
   [tx
    {:keys [source_item] :as workload}
-   {:keys [dataset table last_checked snapshot details] :as _source}]
+   {:keys [dataset table last_checked table_column_name details] :as _source}]
   (let [now (util/utc-now)
-        dataset (datarepo/dataset dataset)
-        table table
-        col-name snapshot
         row-ids (-> (datarepo/query-table-between
                      dataset
                      table
-                     col-name
+                     table_column_name
                      [last_checked now]
                      [:datarepo_row_id])
                     :rows
                     flatten)]
-    (when row-ids
-      (let [shards (partition-all 500 row-ids)]
-        (map #(go-create-snapshot! tx dataset table details [last_checked now] %) shards)))
-    (do
-      (jdbc/update! tx
-                    source_item
-                    {:last_checked now}
-                    ["id = ?" (:id workload)])
-      (jdbc/update! tx
-                    :workload
-                    {:updated (OffsetDateTime/now)}
-                    ["id = ?" (:id workload)]))))
-(defn ^:private get-snapshots-from-workspace
-  [workspace])
-
-(defn start-covid-workload
-  "Mark WORKLOAD with a started timestamp."
-  [tx {:keys [id started] :as workload}]
-  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
-  (workloads/load-workload-for-id tx id))
+    (let [shards (partition-all 500 row-ids)
+          job-ids (map #(go-create-snapshot! dataset table %) shards)]
+      (jdbc/insert-multi! tx
+        details
+        (map (fn [x] {:snapshot_creation_job_id x
+                      :datarepo_row_ids row-ids
+                      :start_time last_checked
+                      :end_time now}) job-ids))
+      )
+    (jdbc/update! tx
+      source_item
+      {:last_checked now}
+      ["id = ?" (:id workload)])))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."

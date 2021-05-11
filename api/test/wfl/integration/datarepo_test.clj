@@ -79,6 +79,10 @@
 
 (def ^:private testing-dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
 
+(comment
+  (datarepo/dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
+  )
+
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
