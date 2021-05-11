@@ -16,6 +16,7 @@
 
 (def create-aou-workload    (make-create-workload workloads/aou-workload-request))
 (def create-arrays-workload (make-create-workload workloads/arrays-workload-request))
+(def create-covid-workload  (make-create-workload workloads/covid-workload-request))
 (def create-sg-workload     (make-create-workload workloads/sg-workload-request))
 (def create-wgs-workload    (make-create-workload workloads/wgs-workload-request))
 (def create-xx-workload     (make-create-workload workloads/xx-workload-request))
