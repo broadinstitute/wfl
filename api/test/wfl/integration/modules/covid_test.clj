@@ -102,5 +102,5 @@
     (is (:started (workloads/start-workload! workload)))))
 
 (comment
-  (test-vars [#'start-workload])
+  (test-vars [#'test-start-workload])
   )
