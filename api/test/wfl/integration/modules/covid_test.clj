@@ -73,13 +73,16 @@
                     (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
 
 (deftest test-create-workload
-  (letfn [(verify-source [{:keys [type last_checked]}]
+  (letfn [(verify-source [{:keys [type last_checked details]}]
             (is (= type "TerraDataRepoSource"))
-            (is (not last_checked) "The TDR should not have been checked yet"))
-          (verify-executor [{:keys [type]}]
-            (is (= type "TerraExecutor")))
-          (verify-sink [{:keys [type]}]
-            (is (= type "TerraWorkspaceSink")))]
+            (is (not last_checked) "The TDR should not have been checked yet")
+            (is (str/starts-with? details "TerraDataRepoSourceDetails_")))
+          (verify-executor [{:keys [type details]}]
+            (is (= type "TerraExecutor"))
+            (is (str/starts-with? details "TerraExecutorDetails_")))
+          (verify-sink [{:keys [type details]}]
+            (is (= type "TerraWorkspaceSink"))
+            (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
            (workloads/covid-workload-request {} {} {}))]

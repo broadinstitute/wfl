@@ -133,9 +133,10 @@
     (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
     items))
 
-(defn ^:private add-workload-record [tx request]
+(defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
+  [tx request]
   (letfn [(combine-labels [labels]
             (->> (mapv request [:pipeline :project])
                  (map str ["pipeline:" "project:"])
@@ -149,8 +150,7 @@
         (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
-;; TODO: implement COVID workload creation
-;;  - make sure permissions/inputs are right upfront
+;; TODO: validate the request before creating the workload
 (defn create-covid-workload [tx request]
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
@@ -187,8 +187,13 @@
                      :workload workload}))))
 
 ;; Terra Data Repository Source
-(def tdr-source-name "Terra DataRepo")
-(def tdr-source-type "TerraDataRepoSource")
+(def ^:private tdr-source-name  "Terra DataRepo")
+(def ^:private tdr-source-type  "TerraDataRepoSource")
+(def ^:private tdr-source-table "TerraDataRepoSource")
+(def ^:private tdr-source-serialized-fields
+  {:dataset :dataset
+   :table   :dataset_table
+   :column  :table_column_name})
 
 (defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
   (let [query "SELECT * FROM %s ORDER BY id ASC LIMIT 1"]
@@ -204,9 +209,9 @@
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
-  (letfn [(find-new-rows [source now] [])
-          (make-snapshots [source row-ids])
-          (write-snapshots [source snapshots])
+  (letfn [(find-new-rows       [source now] [])
+          (make-snapshots      [source row-ids])
+          (write-snapshots     [source snapshots])
           (update-last-checked [now])]
     (let [now     (OffsetDateTime/now)
           row-ids (find-new-rows source now)]
@@ -214,38 +219,33 @@
         (write-snapshots source (make-snapshots source row-ids)))
       (update-last-checked source now))))
 
-(def ^:private tdr-source-serialized-fields
-  {:dataset :dataset
-   :table   :dataset_table
-   :column  :table_column_name})
-
 (defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
   (if-let [id (util/parse-int source_items)]
-    (-> (load-record-by-id! tx "TerraDataRepoSource" id)
+    (-> (load-record-by-id! tx tdr-source-table id)
         (assoc :type tdr-source-type)
         (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
     (throw (ex-info "source_items is not an integer" details))))
 
 (defn ^:private create-tdr-source [tx id request]
-  (let [create    "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
-        details   (format "%sDetails_%09d" tdr-source-type id)
-        _         (jdbc/execute! tx [(format create details)])
-        items     (-> (select-keys request (keys tdr-source-serialized-fields))
-                      (set/rename-keys tdr-source-serialized-fields)
-                      (assoc :details details)
-                      (->> (jdbc/insert! tx tdr-source-type)))]
+  (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        details (format "TerraDataRepoSourceDetails_%09d" id)
+        _       (jdbc/execute! tx [(format create details)])
+        items   (-> (select-keys request (keys tdr-source-serialized-fields))
+                    (set/rename-keys tdr-source-serialized-fields)
+                    (assoc :details details)
+                    (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id)]))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
-(defoverload peek-queue! tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue! tdr-source-type pop-tdr-source-queue)
+(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
-(defoverload load-source! tdr-source-type load-tdr-source)
+(defoverload load-source!   tdr-source-type load-tdr-source)
 
 ;; Terra Executor
-(def ^:private terra-executor-name "Terra")
-(def ^:private terra-executor-type "TerraExecutor")
-
+(def ^:private terra-executor-name  "Terra")
+(def ^:private terra-executor-type  "TerraExecutor")
+(def ^:private terra-executor-table "TerraExecutor")
 (def ^:private terra-executor-serialized-fields
   {:workspace                  :workspace
    :methodConfiguration        :method_configuration
@@ -253,55 +253,55 @@
    :fromSource                 :from_source})
 
 (defn ^:private create-terra-executor [tx id request]
-  (let [create    "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
-        details   (format "%sDetails_%09d" terra-executor-type id)
-        _         (jdbc/execute! tx [(format create details)])
-        items     (-> (select-keys request (keys terra-executor-serialized-fields))
-                      (update :fromSource pr-str)
-                      (set/rename-keys terra-executor-serialized-fields)
-                      (assoc :details details)
-                      (->> (jdbc/insert! tx terra-executor-type)))]
+  (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
+        details (format "TerraExecutorDetails_%09d" id)
+        _       (jdbc/execute! tx [(format create details)])
+        items   (-> (select-keys request (keys terra-executor-serialized-fields))
+                    (update :fromSource pr-str)
+                    (set/rename-keys terra-executor-serialized-fields)
+                    (assoc :details details)
+                    (->> (jdbc/insert! tx terra-executor-table)))]
     [terra-executor-type (-> items first :id)]))
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
   (if-let [id (util/parse-int executor_items)]
-    (-> (load-record-by-id! tx "TerraExecutor" id)
+    (-> (load-record-by-id! tx terra-executor-table id)
         (assoc :type terra-executor-type)
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
 (defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor! terra-executor-type load-terra-executor)
+(defoverload load-executor!   terra-executor-type load-terra-executor)
 
 ;; Terra Workspace Sink
-(def ^:private terra-workspace-sink-name "Terra Workspace")
-(def ^:private terra-workspace-sink-type "TerraWorkspaceSink")
-
+(def ^:private terra-workspace-sink-name  "Terra Workspace")
+(def ^:private terra-workspace-sink-type  "TerraWorkspaceSink")
+(def ^:private terra-workspace-sink-table "TerraWorkspaceSink")
 (def ^:private terra-workspace-sink-serialized-fields
   {:workspace   :workspace
    :entity      :entity
    :fromOutputs :from_outputs})
 
 (defn ^:private create-terra-workspace-sink [tx id request]
-  (let [create    "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
-        details   (format "%sDetails_%09d" terra-workspace-sink-type id)
-        _         (jdbc/execute! tx [(format create details)])
-        items     (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
-                      (update :fromOutputs pr-str)
-                      (set/rename-keys terra-workspace-sink-serialized-fields)
-                      (assoc :details details)
-                      (->> (jdbc/insert! tx terra-workspace-sink-type)))]
+  (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
+        details (format "TerraWorkspaceSinkDetails_%09d" id)
+        _       (jdbc/execute! tx [(format create details)])
+        items   (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
+                    (update :fromOutputs pr-str)
+                    (set/rename-keys terra-workspace-sink-serialized-fields)
+                    (assoc :details details)
+                    (->> (jdbc/insert! tx terra-workspace-sink-table)))]
     [terra-workspace-sink-type (-> items first :id)]))
 
 (defn ^:private load-terra-workspace-sink
   [tx {:keys [sink_items] :as details}]
   (if-let [id (util/parse-int sink_items)]
-    (-> (load-record-by-id! tx "TerraWorkspaceSink" id)
+    (-> (load-record-by-id! tx terra-workspace-sink-table id)
         (set/rename-keys (set/map-invert terra-workspace-sink-serialized-fields))
         (update :fromOutputs edn/read-string)
         (assoc :type terra-workspace-sink-type))
-    (throw (ex-info "Invalid source_items" details))))
+    (throw (ex-info "Invalid sink_items" details))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
