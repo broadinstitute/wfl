@@ -99,7 +99,7 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
-(defn ^:private create-continuous-workload-record
+(defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
   return the ID of the ContinuousWorkload."
   [tx id {:keys [source sink executor] :as _request}]
@@ -145,7 +145,7 @@
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
         id           (add-workload-record tx request)
-        items        (create-continuous-workload-record tx id request)]
+        items        (add-continuous-workload-record tx id request)]
     (jdbc/execute! tx [set-pipeline pipeline id])
     (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
