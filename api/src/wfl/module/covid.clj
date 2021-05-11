@@ -1,13 +1,18 @@
 (ns wfl.module.covid
-  "Handle COVID processing."
-  (:require [wfl.api.workloads :as workloads :refer [defoverload]]
+  "Manage the Sarscov2IlluminaFull pipeline."
+  (:require [clojure.data.json :as json]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.tools.logging.readable :as log]
+            [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
-            [wfl.util :as util])
-  (:import (java.time OffsetDateTime)))
+            [wfl.util :as util]
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime]))
 
 (def pipeline "Sarscov2IlluminaFull")
 
@@ -77,6 +82,14 @@
                     :workload
                     {:updated (OffsetDateTime/now)}
                     ["id = ?" (:id workload)]))))
+(defn ^:private get-snapshots-from-workspace
+  [workspace])
+
+(defn start-covid-workload!
+  "Mark WORKLOAD with a started timestamp."
+  [tx {:keys [id started] :as workload}]
+  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
+  (workloads/load-workload-for-id tx id))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
@@ -224,6 +237,8 @@
     (check-request! source-request)
     (let [foreign-key (make-record source-request)]
       (load-tdr-source {:source-ptr foreign-key}))))
+
+(defoverload workloads/start-workload! pipeline start-covid-workload!)
 
 (defoverload create-source! tdr-source-type create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)

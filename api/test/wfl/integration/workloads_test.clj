@@ -1,6 +1,5 @@
 (ns wfl.integration.workloads-test
   (:require [clojure.test :refer [deftest testing is] :as clj-test]
-            [clojure.test :refer :all]
             [wfl.module.copyfile :as copyfile]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads]))

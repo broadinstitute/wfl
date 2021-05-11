@@ -17,12 +17,13 @@
         </comment>
         <sql>
             CREATE TYPE TerraDataRepoSourceDetails AS (
-                id                          bigint,      -- unique to this table
-                start_time                  timestamptz, -- start timestamp of the TDR data query interval
-                end_time                    timestamptz, -- end timestamp of the TDR data query interval
-                datarepo_row_ids            text[],      -- array of datarepo row ids for snapshot creation
-                snapshot_creation_job_id    text,        -- id of the TDR snapshot creation job
-                snapshot_id                 text         -- id of the snapshot lives in TDR
+                id                          BIGINT,      -- unique to this table
+                start_time                  TIMESTAMPTZ, -- start timestamp of the TDR data query interval
+                end_time                    TIMESTAMPTZ, -- end timestamp of the TDR data query interval
+                datarepo_row_ids            TEXT[],      -- array of datarepo row ids for snapshot creation
+                snapshot_creation_job_id    TEXT,        -- id of the TDR snapshot creation job
+                updated                     TIMESTAMPTZ, -- status update time
+                consumed                    TIMESTAMPTZ  -- time when consumed, null otherwise
             )
         </sql>
     </changeSet>

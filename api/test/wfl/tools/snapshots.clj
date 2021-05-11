@@ -4,11 +4,11 @@
             [wfl.util             :as util]))
 
 (defn unique-snapshot-request
-  "Wrap `table` from `dataset` in a snapshot with a unique name for `tdr-profile`."
+  "Return a snapshot request of `table` from `dataset` for `tdr-profile`."
   [tdr-profile dataset table row-ids]
-  (let [columns     (-> (datarepo/all-columns dataset table)
-                        (->> (map :name) set)
-                        (conj "datarepo_row_id"))]
+  (let [columns (-> (datarepo/all-columns dataset (name table))
+                    (->> (map :name) set)
+                    (conj "datarepo_row_id"))]
     (-> (datarepo/make-snapshot-request dataset columns table row-ids)
         (update :name util/randomize)
-        (update :profileId (constantly tdr-profile)))))
+        (assoc :profileId tdr-profile))))

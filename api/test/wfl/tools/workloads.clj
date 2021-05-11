@@ -7,6 +7,7 @@
             [wfl.module.aou :as aou]
             [wfl.module.arrays :as arrays]
             [wfl.module.copyfile :as cp]
+            [wfl.module.covid :as covid]
             [wfl.module.sg :as sg]
             [wfl.module.wgs :as wgs]
             [wfl.module.xx :as xx]
@@ -123,6 +124,17 @@
    :pipeline cp/pipeline
    :project  @project
    :items    [{:inputs {:src src :dst dst}}]})
+
+(defn covid-workload-request
+  "Make a COVID Sarscov2IlluminaFull workload creation request."
+  [dataset method-configuration workspace]
+  {:pipeline covid/pipeline
+   :source {:name "Terra DataRepo",
+            :dataset dataset}
+   :executor {:name "Terra",
+              :method_configuration method-configuration}
+   :sink {:name "Terra Workspace",
+          :workspace workspace}})
 
 (defn xx-workload-request
   [identifier]
