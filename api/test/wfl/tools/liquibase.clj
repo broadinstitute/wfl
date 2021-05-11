@@ -25,3 +25,5 @@
   []
   (let [user (env/getenv "USER")]
     (run-liquibase "jdbc:postgresql:wfl" "../database/changelog.xml" user)))
+
+(comment (-main))                       ; Aid testing in REPL.
