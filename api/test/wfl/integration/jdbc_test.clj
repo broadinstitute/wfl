@@ -1,10 +1,8 @@
-(ns wfl.integration.protocol-test
+(ns wfl.integration.jdbc-test
   (:require [clojure.test :refer :all :as clj-test]
             [clojure.test]
             [wfl.jdbc :as jdbc]
-            [wfl.tools.fixtures :as fixtures]
-            ; require protocols namespace is important
-            [wfl.protocols]))
+            [wfl.tools.fixtures :as fixtures]))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 

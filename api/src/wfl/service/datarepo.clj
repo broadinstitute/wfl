@@ -133,16 +133,16 @@
       poll-job))
 
 (defn create-snapshot-job
-  "Return snapshot creation job-id defined by `snapshot-request`.
+  "Return snapshot creation job-id defined by `snapshot-request` right away.
    See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
   (-> (repository "snapshots")
-    (http/post {:headers      (auth/get-service-account-header)
-                :content-type :application/json
-                :form-params  snapshot-request})
-    util/response-body-json
-    :id))
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
+      :id))
 
 ;; Note the TDR is under active development, the endpoint spec is getting
 ;; changed so the spec in this function is not consistent with the TDR Swagger
