@@ -6,7 +6,6 @@
             [clojure.data.json              :as json]
             [clojure.java.io                :as io]
             [clojure.pprint                 :refer [pprint]]
-            [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as logr]
@@ -117,13 +116,12 @@
   ([url]
    (apply list-objects (parse-gs-url url))))
 
-(def _-? (set "_-"))
-(def digit? (set "0123456789"))
-(def lowercase? (set "abcdefghijklmnopqrstuvwxyz"))
+(def ^:private _-? (set "_-"))
+(def ^:private bucket-allowed? (into _-? (concat util/digit? util/lowercase?)))
 
 (s/def ::bucket-name
   (s/and string?
-         (partial every? (set/union _-? digit? lowercase?))
+         (partial every? bucket-allowed?)
          (complement (comp _-? first))
          (complement (comp _-? last))
          (comp (partial > 64) count)
