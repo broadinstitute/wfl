@@ -26,33 +26,6 @@
   (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
   (workloads/load-workload-for-id tx id))
 
-(defn ^:private get-imported-snapshot-reference
-  "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
-  [{:keys [workspace] :as _executor}
-   {:keys [snapshot_reference_id] :as _executor_details}]
-  (when snapshot_reference_id
-    (util/do-or-nil (rawls/get-snapshot-reference workspace
-                                                  snapshot_reference_id))))
-
-(defn ^:private import-snapshot!
-  "Import snapshot with SNAPSHOT_ID to WORKSPACE.
-  Use transaction TX to update DETAILS table with resulting reference id."
-  [tx
-   workload
-   {:keys [snapshot_id] :as _source_details}
-   {:keys [workspace details] :as _executor}
-   executor_details]
-  (let [refid (-> (rawls/create-snapshot-reference workspace snapshot_id)
-                  :referenceId)]
-    (jdbc/update! tx
-                  details
-                  {:snapshot_reference_id refid}
-                  ["id = ?" (:id executor_details)])
-    (jdbc/update! tx
-                  :workload
-                  {:updated (OffsetDateTime/now)}
-                  ["id = ?" (:id workload)])))
-
 ;; Generic helpers
 (defn ^:private load-record-by-id! [tx table id]
   (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
@@ -61,16 +34,24 @@
       (throw (ex-info (str "No such record") {:id id :table table})))
     record))
 
+(defn peek-queue!
+  "Get first unconsidered item in DETAILS table."
+  [{:keys [details] :as _queue}]
+  (let [query "SELECT * FROM %s WHERE NOT considered ORDER BY id ASC LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (format query details)
+           (jdbc/query tx)
+           (first)))))
+
+(defn pop-queue!
+  "Consider first unconsidered item in DETAILS table, or throw if empty."
+  [{:keys [details] :as queue}]
+  (if-let [{:keys [id] :as _item} (peek-queue! queue)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/update! tx details {:considered true} ["id = ?" id]))
+    (throw (ex-info "No items in queue" {:queue queue}))))
+
 ;; interfaces
-;; queue operations
-(defmulti peek-queue!
-  "Peek the first object from the `queue`, if one exists."
-  (fn [queue] (:type queue)))
-
-(defmulti pop-queue!
-  "Pop the first object from the `queue`. Throws if none exists."
-  (fn [queue] (:type queue)))
-
 ;; source operations
 (defmulti create-source!
   "Use `tx` and workload `id` to write the source to persisted storage and
@@ -90,6 +71,10 @@
   "Use `tx` and workload `id` to write the executor to persisted storage and
    return a [type item] pair to be written into the parent table."
   (fn [tx id executor-request] (:name executor-request)))
+
+(defmulti from-source!
+  "Return `source-item` coerced to form understood by `executor`."
+  (fn [executor source-item] (:from_source executor)))
 
 (defmulti update-executor!
   "Update the executor with the `source`"
@@ -198,6 +183,16 @@
    :table   :dataset_table
    :column  :table_column_name})
 
+(defn ^:private create-tdr-source [tx id request]
+  (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        details (format "TerraDataRepoSourceDetails_%09d" id)
+        _       (jdbc/execute! tx [(format create details)])
+        items   (-> (select-keys request (keys tdr-source-serialized-fields))
+                    (set/rename-keys tdr-source-serialized-fields)
+                    (assoc :details details)
+                    (->> (jdbc/insert! tx tdr-source-table)))]
+    [tdr-source-type (-> items first :id)]))
+
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
   (letfn [(find-new-rows       [source now] [])
@@ -227,22 +222,7 @@
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-(defn ^:private peek-tdr-source-queue [{:keys [queue] :as _source}]
-  "Get first unvisited source in QUEUE."
-  (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (first (jdbc/query tx (format query queue))))))
-
-(defn ^:private pop-tdr-source-queue [{:keys [queue] :as source}]
-  "Mark first unvisited source in QUEUE as visited, or throw if empty."
-  (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/update! tx queue {:visited true} ["id = ?" id]))
-    (throw (ex-info "No snapshots in queue" {:source source}))))
-
 (defoverload create-source! tdr-source-name create-tdr-source)
-(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 (defoverload update-source! tdr-source-type update-tdr-source)
 (defoverload load-source!   tdr-source-type load-tdr-source)
 
@@ -256,6 +236,8 @@
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
 
+(def ^:private from-source-import-snapshot "importSnapshot")
+
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
         details (format "TerraExecutorDetails_%09d" id)
@@ -267,6 +249,35 @@
                     (->> (jdbc/insert! tx terra-executor-table)))]
     [terra-executor-type (-> items first :id str)]))
 
+(defn import-snapshot!
+  "Return snapshot reference for SNAPSHOT_ID imported to WORKSPACE."
+  [{:keys [workspace] :as _executor}
+   {:keys [snapshot_id] :as _snapshot}]
+  (rawls/create-snapshot-reference workspace snapshot_id))
+
+(defn ^:private update-terra-executor
+  "IN PROGRESS:
+  Create new submission from new SOURCE snapshot.
+  Add its workflows to the workflow queue.
+  Return updated EXECUTOR."
+  [source executor]
+  (letfn [(create-submission! [executor reference]
+            ;; Tom to implement?
+            ;; Create submission from snapshot reference.
+            )
+          (push-to-executor! [source executor submission]
+            (pop-queue! source)
+            ;; Write new records to executor queue (:details executor)
+            ;; for each workflow in submission.
+            )
+          (update-executor! [executor]
+            (assoc executor :updated (OffsetDateTime/now)))]
+    (if-let [snapshot (peek-queue! source)]
+      (->> (from-source! executor snapshot)
+           (create-submission! executor)
+           (push-to-executor! source executor)))
+    (update-executor! executor)))
+
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
   (if-let [id (util/parse-int executor_items)]
     (-> (load-record-by-id! tx terra-executor-table id)
@@ -275,60 +286,10 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
-(defn ^:private find-new-snapshots
-  "Return source details records for first member of SOURCE queue."
-  [source]
-  (if-let [source-entry (peek-queue! source)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (:details source-entry)
-           (format "SELECT * FROM %s")
-           (jdbc/query tx)))))
-
-(defn ^:private import-snapshots!
-  "Create and return snapshot references for all SNAPSHOTS in WORKSPACE."
-  [{:keys [workspace] :as _executor}
-   snapshots]
-  {:pre [(seq snapshots)]}
-  (letfn [(import [snapshot]
-            (->> (:snapshot_id snapshot)
-                 (rawls/create-snapshot-reference workspace)))]
-    (map import snapshots)))
-
-(defn ^:private update-terra-executor [source executor]
-  "IN PROGRESS:
-  Create and add new submissions to the submission queue from new SOURCE snapshots.
-  (Should) return updated EXECUTOR."
-  (letfn [(create-submissions  [executor snapshot-references]
-            ;; Tom to implement?
-            ;; Create submissions from snapshot references.
-            ;; Pop source, coerce to executor with executor.fromSource,
-            ;; and push to executor queue --
-            ;; i.e. write to executor (and corresponding details) tables
-            ;; Return updated executor.
-            )]
-    (let [now      (OffsetDateTime/now) ; Use to update... something?
-          snapshots (find-new-snapshots source)]
-      (when (seq snapshots)
-        (create-submissions executor (import-snapshots! executor snapshots))))))
-
-(defn ^:private peek-terra-executor-queue [{:keys [queue] :as _executor}]
-  "Get first unvisited executor in QUEUE."
-  (let [query "SELECT * FROM %s WHERE NOT visited ORDER BY id ASC LIMIT 1"]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (first (jdbc/query tx (format query queue))))))
-
-(defn ^:private pop-terra-executor-queue [{:keys [queue] :as executor}]
-  "Mark first unvisited executor in QUEUE as visited, or throw if empty."
-  (if-let [{:keys [id] :as _submission} (peek-queue! executor)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/update! tx queue {:visited true} ["id = ?" id]))
-    (throw (ex-info "No submissions in queue" {:executor executor}))))
-
 (defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor! terra-executor-type load-terra-executor)
+(defoverload from-source! from-source-import-snapshot import-snapshot!)
 (defoverload update-executor! terra-executor-type update-terra-executor)
-(defoverload peek-queue! terra-executor-type peek-terra-executor-queue)
-(defoverload pop-queue! terra-executor-type pop-terra-executor-queue)
+(defoverload load-executor! terra-executor-type load-terra-executor)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
