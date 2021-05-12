@@ -6,9 +6,8 @@
             [wfl.module.covid :as covid]
             [wfl.service.rawls :as rawls]
             [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]))
-
-(:import [clojure.lang ExceptionInfo])
+            [wfl.tools.workloads :as workloads])
+  (:import [clojure.lang ExceptionInfo]))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
