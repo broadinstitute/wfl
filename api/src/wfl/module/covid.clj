@@ -70,23 +70,6 @@
       (throw (ex-info "Cannot access the workspace" {:workspace workspace
                                                      :cause     (.getMessage t)})))))
 
-(defn create-covid-workload!
-  [tx {:keys [source executor sink] :as workload-request}]
-  (verify-source! source)
-  (verify-executor! executor)
-  (verify-sink! sink))
-
-;; TODO: validate the request before creating the workload
-(defn create-covid-workload [tx request]
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        id           (add-workload-record tx request)
-        items        (add-continuous-workload-record tx id request)]
-    (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
-    (workloads/load-workload-for-id tx id)))
-
 (defn start-covid-workload
   "Mark WORKLOAD with a started timestamp."
   [tx {:keys [id started] :as workload}]
@@ -180,6 +163,23 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+(defn ^:private add-workload-record
+  "Use `tx` to create a workload `record` for `request` and return the id of the
+   new workload."
+  [tx request]
+  (letfn [(combine-labels [labels]
+            (->> (mapv request [:pipeline :project])
+                 (map str ["pipeline:" "project:"])
+                 (concat labels)
+                 set
+                 sort
+                 vec))]
+    (-> (update request :labels combine-labels)
+        (select-keys [:creator :watchers :labels :project])
+        (merge (select-keys (wfl/get-the-version) [:commit :version]))
+        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (->> (jdbc/insert! tx :workload) first :id))))
+
 (defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
   return the ID of the ContinuousWorkload."
@@ -203,22 +203,18 @@
     (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
     items))
 
-(defn ^:private add-workload-record
-  "Use `tx` to create a workload `record` for `request` and return the id of the
-   new workload."
-  [tx request]
-  (letfn [(combine-labels [labels]
-            (->> (mapv request [:pipeline :project])
-                 (map str ["pipeline:" "project:"])
-                 (concat labels)
-                 set
-                 sort
-                 vec))]
-    (-> (update request :labels combine-labels)
-        (select-keys [:creator :watchers :labels :project])
-        (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
-        (->> (jdbc/insert! tx :workload) first :id))))
+(defn create-covid-workload [tx request]
+  (let [set-pipeline "UPDATE workload
+                      SET pipeline = ?::pipeline
+                      WHERE id = ?"
+        id           (add-workload-record tx request)
+        items        (add-continuous-workload-record tx id request)]
+    (verify-source! (:source request))
+    (verify-executor! (:executor request))
+    (verify-sink! (:sink request))
+    (jdbc/execute! tx [set-pipeline pipeline id])
+    (jdbc/update! tx :workload {:items items} ["id = ?" id])
+    (workloads/load-workload-for-id tx id)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
