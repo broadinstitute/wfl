@@ -501,7 +501,7 @@
                 [String clojure.lang.IPersistentMap]           [String]
                 [String clojure.lang.IPersistentMap Throwable] [String Throwable]}
  :state        data
- :prefix        user-visible-exception-
+ :prefix       user-visible-exception-
  :init         init)
 
 (defn ^:private user-visible-exception-init
