@@ -48,10 +48,10 @@
   [{:keys [details] :as queue}]
   (if-let [{:keys [id] :as _item} (peek-queue! queue)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (let [now (OffsetDateTime/now)]
-          (jdbc/update! tx details {:consumed now
-                                    :updated  now}
-                        ["id = ?" id])))
+      (let [now (OffsetDateTime/now)]
+        (jdbc/update! tx details {:consumed now
+                                  :updated  now}
+                      ["id = ?" id])))
     (throw (ex-info "No items in queue" {:queue queue}))))
 
 ;; interfaces
