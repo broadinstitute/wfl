@@ -77,7 +77,7 @@
 
 (defmulti from-source!
   "Return `source-item` coerced to form understood by `executor`."
-  (fn [executor source-item] (:from_source executor)))
+  (fn [executor source-item] (:fromSource executor)))
 
 (defmulti update-executor!
   "Update the executor with the `source`"
