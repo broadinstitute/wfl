@@ -35,20 +35,23 @@
     record))
 
 (defn peek-queue!
-  "Get first unconsidered item in DETAILS table."
+  "Get first unconsumed item in DETAILS table."
   [{:keys [details] :as _queue}]
-  (let [query "SELECT * FROM %s WHERE NOT considered ORDER BY id ASC LIMIT 1"]
+  (let [query "SELECT * FROM %s WHERE NOT consumed ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
            (first)))))
 
 (defn pop-queue!
-  "Consider first unconsidered item in DETAILS table, or throw if empty."
+  "Consume first unconsumed item in DETAILS table, or throw if empty."
   [{:keys [details] :as queue}]
   (if-let [{:keys [id] :as _item} (peek-queue! queue)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/update! tx details {:considered true} ["id = ?" id]))
+        (let [now (OffsetDateTime/now)]
+          (jdbc/update! tx details {:consumed now
+                                    :updated  now}
+                        ["id = ?" id])))
     (throw (ex-info "No items in queue" {:queue queue}))))
 
 ;; interfaces
