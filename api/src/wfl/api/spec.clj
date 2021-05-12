@@ -42,13 +42,13 @@
 (s/def ::common map?)
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
-(s/def ::workload-request (s/keys :opt-un [::common
-                                           ::input
-                                           ::items]
-                                  :req-un [(or ::executor ::cromwell)
-                                           ::output
-                                           ::pipeline
-                                           ::project]))
+(s/def ::batch-workload-request (s/keys :opt-un [::common
+                                                 ::input
+                                                 ::items]
+                                        :req-un [(or ::executor ::cromwell)
+                                                 ::output
+                                                 ::pipeline
+                                                 ::project]))
 (s/def ::workload-response (s/keys :opt-un [::finished
                                             ::input
                                             ::started
@@ -128,3 +128,39 @@
 (s/def ::workflow-request (s/keys :req-un [::end
                                            ::environment
                                            ::start]))
+
+(s/def ::column string?)
+(s/def ::dataset string?)
+(s/def ::entity string?)
+(s/def ::fromOutputs string?)
+(s/def ::fromSource string?)
+(s/def ::name string?)
+(s/def ::methodConfiguration string?)
+(s/def ::methodConfigurationVersion integer?)
+(s/def ::table string?)
+(s/def ::workspace (s/and string? util/namespaced-workspace-name?))
+
+(s/def ::covid-executor (s/keys :req-un [::fromSource
+                                         ::methodConfiguration
+                                         ::methodConfigurationVersion
+                                         ::name
+                                         ::workspace]))
+
+(s/def ::sink (s/keys :req-un [::entity
+                               ::fromOutputs
+                               ::name
+                               ::workspace]))
+
+(s/def ::source (s/keys :req-un [::column
+                                 ::dataset
+                                 ::name
+                                 ::table]))
+
+(s/def ::covid-workload-request (s/keys :req-un [::covid-executor
+                                                 ::pipeline
+                                                 ::project
+                                                 ::sink
+                                                 ::source]))
+
+(s/def ::workload-request (s/or :batch ::batch-workload-request
+                                :covid ::covid-workload-request))

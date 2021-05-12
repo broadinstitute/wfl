@@ -518,3 +518,19 @@
     (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
+
+(def digit?          (set "0123456789"))
+(def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
+(def uppercase?      (set (map str/upper-case lowercase?)))
+(def letter?         (into lowercase? uppercase?))
+(def alphanumeric?   (into letter? digit?))
+(def spaceunderdash? (set " _-"))
+(def workspace-name? (into alphanumeric? spaceunderdash?))
+
+(defn namespaced-workspace-name?
+  "Return nil or the workspace [namespace name] pair in workspace-name."
+  [workspace-name]
+  (let [[namespace workspace & more] (str/split workspace-name #"/" 3)]
+    (when (and (nil? more) (seq namespace) (seq workspace)
+               (workspace-name? namespace) (workspace-name? workspace))
+      [namespace workspace])))
