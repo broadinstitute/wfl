@@ -1,6 +1,7 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [clojure.set :as set]
+  (:require [clojure.edn :as edn]
+            [clojure.set :as set]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -74,6 +75,17 @@
   (verify-source! source)
   (verify-executor! executor)
   (verify-sink! sink))
+
+;; TODO: validate the request before creating the workload
+(defn create-covid-workload [tx request]
+  (let [set-pipeline "UPDATE workload
+                      SET pipeline = ?::pipeline
+                      WHERE id = ?"
+        id           (add-workload-record tx request)
+        items        (add-continuous-workload-record tx id request)]
+    (jdbc/execute! tx [set-pipeline pipeline id])
+    (jdbc/update! tx :workload {:items items} ["id = ?" id])
+    (workloads/load-workload-for-id tx id)))
 
 (defn start-covid-workload
   "Mark WORKLOAD with a started timestamp."
@@ -207,17 +219,6 @@
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
-
-;; TODO: validate the request before creating the workload
-(defn create-covid-workload [tx request]
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        id           (add-workload-record tx request)
-        items        (add-continuous-workload-record tx id request)]
-    (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
-    (workloads/load-workload-for-id tx id)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."

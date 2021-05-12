@@ -267,3 +267,9 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+(defn ^:private get-group-members
+  "Return the members of group."
+  [group]
+  (-> (str/join "/" [(firecloud-url) "api" "groups" group])
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))

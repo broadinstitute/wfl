@@ -77,18 +77,18 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "ff6e2b40-6497-4340-8947-2f52a658f561")
+(def ^:private testing-dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
 
 ;; Get row-ids from BigQuery and use them to create a snapshot.
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset     (datarepo/dataset testing-dataset)
-        table       "flowcell"
+        table       "sample"
         row-ids     (-> (datarepo/query-table-between
                          dataset
                          table
-                         "updated"
-                         ["2021-03-29 00:00:00" "2021-03-31 00:00:00"]
+                         "datarepo_ingest_date"
+                         ["2021-01-05" "2021-01-07"]
                          [:datarepo_row_id])
                         :rows
                         flatten)]
@@ -97,8 +97,10 @@
       #(let [snapshot (datarepo/snapshot %)]
          (is (= % (:id snapshot)))))))
 
+(def ^:private testing-snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
+
 (deftest test-flattened-query-result
-  (let [samplesheets (-> (datarepo/dataset testing-dataset)
+  (let [samplesheets (-> (datarepo/snapshot testing-snapshot-id)
                          (datarepo/query-table "flowcell" [:samplesheets])
                          :rows
                          (->> (mapcat first)))]
@@ -135,8 +137,6 @@
          (firecloud/import-entities workspace))
     (map #(% primary-key) maps)))
 
-(def ^:private snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
-
 (def ^:private entity-columns
   "Return the columns in the `entity-type`."
   (>>> (juxt :idName :attributeNames)
@@ -152,7 +152,7 @@
                           entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
-        (let [entities (-> (datarepo/snapshot snapshot-id)
+        (let [entities (-> (datarepo/snapshot testing-snapshot-id)
                            (datarepo/query-table dataset-table)
                            (import-table workspace columns from-dataset))
               names    (->> #(firecloud/list-entities workspace entity)

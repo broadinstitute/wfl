@@ -1,24 +1,25 @@
 (ns wfl.server
   "An HTTP API server."
-  (:require [clojure.pprint :refer [pprint]]
-            [clojure.stacktrace :refer [print-throwable]]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clj-time.coerce :as tc]
-            [ring.adapter.jetty :as jetty]
-            [ring.middleware.defaults :as defaults]
-            [ring.middleware.json :refer [wrap-json-response]]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.reload :as reload]
+  (:require [clojure.pprint                 :refer [pprint]]
+            [clojure.stacktrace             :refer [print-throwable]]
+            [clojure.string                 :as str]
+            [clojure.tools.logging          :as log]
+            [clj-time.coerce                :as tc]
+            [ring.adapter.jetty             :as jetty]
+            [ring.middleware.defaults       :as defaults]
+            [ring.middleware.json           :refer [wrap-json-response]]
+            [ring.middleware.params         :refer [wrap-params]]
+            [ring.middleware.reload         :as reload]
             [ring.middleware.session.cookie :as cookie]
-            [wfl.api.routes :as routes]
-            [wfl.api.workloads :as workloads]
-            [wfl.environment :as env]
-            [wfl.jdbc :as jdbc]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
-  (:import (java.util.concurrent Future TimeUnit)))
+            [wfl.api.routes                 :as routes]
+            [wfl.api.workloads              :as workloads]
+            [wfl.environment                :as env]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.service.postgres           :as postgres]
+            [wfl.util                       :as util]
+            [wfl.wfl                        :as wfl])
+  (:import (java.util.concurrent Future TimeUnit)
+           (wfl.util UserVisibleException)))
 
 (def description
   "The purpose of this command."
@@ -77,31 +78,47 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
+(defn notify-watchers [watchers uuid exception]
+  {:pre [(some? watchers)]}
+  (log/info "notifying: " watchers))
+
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
   (letfn [(do-update! [{:keys [id uuid]}]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (let [{:keys [watchers] :as workload}
+                    (workloads/load-workload-for-id tx id)]
+                (try
+                  (workloads/update-workload! tx workload)
+                  (catch UserVisibleException e
+                    (log/warnf "Error updating workload %s" uuid)
+                    (log/warn e)
+                    (notify-watchers watchers uuid e))))))
+          (try-update [{:keys [uuid] :as workload}]
             (try
-              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (->> (workloads/load-workload-for-id tx id)
-                     (workloads/update-workload! tx)))
+              (do-update! workload)
               (catch Throwable t
-                (log/warnf "Failed to update workload %s" uuid)
-                (log/warn t))))
-          (update-workloads! []
-            (log/info "updating workloads")
-            (run! do-update!
-                  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (jdbc/query tx [(str/join " " ["SELECT id,uuid FROM workload"
-                                                   "WHERE started IS NOT NULL"
-                                                   "AND finished IS NULL"])]))))]
+                (log/error "Failed to update workload %s" uuid)
+                (log/error t))))
+          (update-workloads []
+            (try
+              (log/info "updating workloads")
+              (run! try-update
+                    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                      (jdbc/query tx "SELECT id,uuid FROM workload
+                                      WHERE started IS NOT NULL
+                                      AND finished IS NULL")))
+              (catch Throwable t
+                (log/error "Failed to update workloads")
+                (log/error t))))]
     (log/info "starting workload update loop")
-    (update-workloads!)
+    (update-workloads)
     (future
       (while true
-        (update-workloads!)
+        (update-workloads)
         (.sleep TimeUnit/SECONDS 20)))))
 
 (defn ^:private start-webserver

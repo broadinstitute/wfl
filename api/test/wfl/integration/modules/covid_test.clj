@@ -2,12 +2,16 @@
 (ns wfl.integration.modules.covid-test
   (:require [clojure.test :refer :all]
             [clojure.test :as clj-test]
+            [clojure.string :as str]
+            [wfl.debug :as debug]
             [wfl.jdbc :as jdbc]
             [wfl.module.covid :as covid]
             [wfl.service.rawls :as rawls]
             [wfl.tools.fixtures :as fixtures]
             [wfl.tools.workloads :as workloads])
-  (:import [clojure.lang ExceptionInfo]))
+  (:import [clojure.lang ExceptionInfo]
+           [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -82,7 +86,7 @@
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
-  (clj-test/use-fixtures :once (fixtures/temporary-environment new-env)
+  (use-fixtures :once (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database))
 
 (def workload {:id 1})
@@ -139,3 +143,32 @@
               #(is (thrown-with-msg?
                     ExceptionInfo #"mocked throw"
                     (#'covid/import-snapshot! tx workload source-details executor ed-base))))))))))
+
+(deftest test-create-workload
+  (letfn [(verify-source [{:keys [type last_checked details]}]
+            (is (= type "TerraDataRepoSource"))
+            (is (not last_checked) "The TDR should not have been checked yet")
+            (is (str/starts-with? details "TerraDataRepoSourceDetails_")))
+          (verify-executor [{:keys [type details]}]
+            (is (= type "TerraExecutor"))
+            (is (str/starts-with? details "TerraExecutorDetails_")))
+          (verify-sink [{:keys [type details]}]
+            (is (= type "TerraWorkspaceSink"))
+            (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
+    (let [{:keys [created creator source executor sink labels watchers]}
+          (workloads/create-workload!
+           (workloads/covid-workload-request {} {} {}))]
+      (is created "workload is missing :created timestamp")
+      (is creator "workload is missing :creator field")
+      (is (and source (verify-source source)))
+      (is (and executor (verify-executor executor)))
+      (is (and sink (verify-sink sink)))
+      (is (seq labels) "workload did not contain any labels")
+      (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
+      (is (vector? watchers)))))
+
+(deftest test-start-workload
+  (let [workload (workloads/create-workload!
+                  (workloads/covid-workload-request {} {} {}))]
+    (is (not (:started workload)))
+    (is (:started (workloads/start-workload! workload)))))
