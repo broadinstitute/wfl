@@ -266,6 +266,8 @@ WFL instance, use below under `api/` directory:
 
 ```shell
 WFL_WFL_URL=http://localhost:3000 clojure -M:parallel-test wfl.system.v1-endpoint-test
+```
+
 ### REPL testing with fixtures.
 
 Now that we're using fixtures,
