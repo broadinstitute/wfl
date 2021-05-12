@@ -39,9 +39,7 @@
   [{:keys [details] :as _queue}]
   (let [query "SELECT * FROM %s WHERE NOT consumed ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (format query details)
-           (jdbc/query tx)
-           (first)))))
+      (first (jdbc/query tx (format query details))))))
 
 (defn pop-queue!
   "Consume first unconsumed item in DETAILS table, or throw if empty."
