@@ -10,7 +10,8 @@
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
             [wfl.wfl :as wfl])
-  (:import [java.time OffsetDateTime]
+  (:import [java.time OffsetDateTime ZoneId]
+           [java.time.format DateTimeFormatter]
            [java.util UUID]))
 
 (def pipeline "Sarscov2IlluminaFull")
@@ -23,58 +24,6 @@
   [tx {:keys [id started] :as workload}]
   (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
   (workloads/load-workload-for-id tx id))
-
-;; TODO: move this to the queue-based skeleton later
-(defn ^:private snapshot-created?
-  "Check if `snapshot-job-id` has done in TDR,
-   return the resulting snapshot id if so."
-  [snapshot-job-id]
-  (some->> snapshot-job-id
-           (datarepo/job-done?)))
-
-(defn ^:private go-create-snapshot!
-  "Create snapshot in TDR from `dataset`, `table`
-   and `row-ids` and write job info as well as rows
-   into `source-details-name` table."
-  [dataset table row-ids]
-  (let [columns     (-> (datarepo/all-columns dataset table)
-                        (->> (map :name) set)
-                        (conj "datarepo_row_id"))
-        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                   (update :name util/utc-now "YYYYMMDD'T'HHMMSS")
-                   ;; FIXME: this sometimes runs into: Cannot update iam permissions, need failure handling here!
-                   (datarepo/create-snapshot))]
-    job-id))
-
-(defn ^:private check-for-new-data!
-  "Check for new data in TDR, create new snapshots, insert
-   resulting job creation ids into database and update the
-   timestamp for next time using transaction TX."
-  [tx
-   {:keys [source_item] :as workload}
-   {:keys [dataset table last_checked table_column_name details] :as _source}]
-  (let [now (util/utc-now)
-        row-ids (-> (datarepo/query-table-between
-                     dataset
-                     table
-                     table_column_name
-                     [last_checked now]
-                     [:datarepo_row_id])
-                    :rows
-                    flatten)]
-    (let [shards (partition-all 500 row-ids)
-          job-ids (map #(go-create-snapshot! dataset table %) shards)]
-      (jdbc/insert-multi! tx
-        details
-        (map (fn [x] {:snapshot_creation_job_id x
-                      :datarepo_row_ids row-ids
-                      :start_time last_checked
-                      :end_time now}) job-ids))
-      )
-    (jdbc/update! tx
-      source_item
-      {:last_checked now}
-      ["id = ?" (:id workload)])))
 
 (defn ^:private get-imported-snapshot-reference
   "Nil or the snapshot reference for SNAPSHOT_REFERENCE_ID in WORKSPACE."
@@ -260,17 +209,55 @@
         (jdbc/execute! tx [(format query queue) id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
+(defn ^:private go-create-snapshot!
+  "Create snapshot in TDR from `dataset` body, `table`
+   `now` string and `row-ids` then write job info as well
+   as rows into `source-details-name` table."
+  [now dataset table row-ids]
+  (let [columns     (-> (datarepo/all-columns dataset table)
+                        (->> (map :name) set)
+                        (conj "datarepo_row_id"))
+        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
+                   (assoc :name now)
+                   (datarepo/create-snapshot-job))]
+    job-id))
+
 ;; Create and add new snapshots to the snapshot queue
-(defn ^:private update-tdr-source [source]
-  (letfn [(find-new-rows       [source now] [])
-          (make-snapshots      [source row-ids])
-          (write-snapshots     [source snapshots])
-          (update-last-checked [now])]
-    (let [now     (OffsetDateTime/now)
-          row-ids (find-new-rows source now)]
-      (when-not (empty? row-ids)
-        (write-snapshots source (make-snapshots source row-ids)))
-      (update-last-checked source now))))
+(defn ^:private update-tdr-source
+  "Check for new data in TDR, create new snapshots, insert
+   resulting job creation ids into database and update the
+   timestamp for next time using transaction TX."
+  [{:keys [id dataset dataset_table table_column_name last_checked details] :as _source}]
+  (letfn [(find-new-rows [now]
+            (-> (datarepo/query-table-between
+                 dataset
+                 dataset_table
+                 table_column_name
+                 [last_checked now]
+                 [:datarepo_row_id])
+                :rows
+                flatten))
+          (make-snapshots [now-obj row-ids]
+            (let [shards (partition-all 500 row-ids)
+                  compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMDD'T'HHMMSS"))]
+              (doall (map #(go-create-snapshot! compact-now dataset dataset_table %) shards))))
+          (write-snapshots-creation-jobs [tx now row-ids snapshots-creation-jobs]
+            (jdbc/insert-multi! tx
+                                details
+                                (map (fn [id] {:snapshot_creation_job_id id
+                                               :datarepo_row_ids         row-ids
+                                               :start_time               last_checked
+                                               :end_time                 now})
+                                     snapshots-creation-jobs)))
+          (update-last-checked [tx now]
+            (jdbc/update! tx (keyword tdr-source-table) {:last_checked now} ["id = ?" id]))]
+    (let [now-obj     (OffsetDateTime/now (ZoneId/of "UTC"))
+          now         (.format now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
+          row-ids     (find-new-rows now)
+          tdr-job-ids (make-snapshots now-obj row-ids)]
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (write-snapshots-creation-jobs tx details now row-ids tdr-job-ids)
+        (update-last-checked tx now)))))
 
 (defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
   (if-let [id (util/parse-int source_items)]
