@@ -14,8 +14,8 @@
             [wfl.service.clio :as clio]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres :as postgres]
             [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :as fixtures]
             [wfl.util :as util :refer [shell!]])
   (:import (java.time OffsetDateTime)
            (java.util.concurrent TimeoutException)
@@ -266,42 +266,42 @@
                    (endpoints/get-workload-status uuid))))))))
 
 (defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/create-workload! tx workload-request)))
 
 (defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/start-workload! tx workload)))
 
 (defn stop-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/stop-workload! tx workload)))
 
 (defn execute-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/execute-workload! tx workload-request)))
 
 (defn update-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/update-workload! tx workload)))
 
 (defn load-workload-for-uuid [uuid]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workload-for-uuid tx uuid)))
 
 (defn load-workload-for-id [id]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workload-for-id tx id)))
 
 (defn load-workloads-with-project [project]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workloads-with-project tx project)))
 
 (defn append-to-workload! [samples workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (aou/append-to-workload! tx samples workload)))
 
-(defmulti  postcheck
+(defmulti postcheck
   "Implement this to validate `workload` after all workflows complete."
   (fn [workload] (:pipeline workload)))
 

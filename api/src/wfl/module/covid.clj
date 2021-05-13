@@ -8,7 +8,10 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [clojure.data.json :as json]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -303,8 +306,47 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" details))))
 
+(defn ^:visible-for-testing rename-gather
+  "Transform the `values` using the transformation defined in `mapping`."
+  [values mapping]
+  (letfn [(literal? [x] (str/starts-with? x "$"))
+          (go! [v]
+            (cond (literal? v) (subs v 1 (count v))
+                  (string?  v) (values (keyword v))
+                  (map?     v) (rename-gather values v)
+                  (coll?    v) (keep go! v)
+                  :else        (throw (ex-info "Unknown operation"
+                                               {:operation v}))))]
+    (into {} (for [[k v] mapping] [k (go! v)]))))
+
+(defn ^:private terra-workspace-sink-to-attributes
+  [{:keys [outputs] :as workflow} fromOutputs]
+  (when-not (map? fromOutputs)
+    (throw (IllegalStateException. "fromOutputs is malformed")))
+  (try
+    (rename-gather outputs fromOutputs)
+    (catch Exception cause
+      (throw (ex-info "Failed to coerce workflow outputs to attribute values"
+                      {:fromOutputs fromOutputs :workflow workflow}
+                      cause)))))
+
+(defn ^:private update-terra-workspace-sink
+  [executor {:keys [fromOutputs workspace entity identifier details]}]
+  (when-let [{:keys [uuid] :as workflow} (peek-queue! executor)]
+    (log/debug "Coercing workflow %s outputs to %s" uuid entity)
+    (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
+          name       ""]
+      (log/debugf "Upserting workflow %s outputs as %s" uuid name)
+      (rawls/batch-upsert workspace [entity name attributes])
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (jdbc/insert! tx details {:workflow    uuid
+                                  :entity_name name
+                                  :updated     (OffsetDateTime/now)}))
+      (log/debug "Successfully sank workflow" uuid))))
+
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
 
 (defoverload workloads/create-workload! pipeline create-covid-workload)
 (defoverload workloads/start-workload! pipeline start-covid-workload)

@@ -1,19 +1,19 @@
 (ns wfl.integration.modules.copyfile-test
-  (:require [clojure.test :refer [deftest testing is] :as clj-test]
-            [clojure.string :as str]
+  (:require [clojure.test                   :refer [deftest testing is use-fixtures]]
+            [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.module.copyfile :as copyfile]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util])
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.all                 :as all]
+            [wfl.module.copyfile            :as copyfile]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.postgres           :as postgres]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-copyfile-workload-request
   [src dst]
@@ -22,7 +22,7 @@
 
 (defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
-    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [[id table] (all/add-workload-table! tx copyfile/workflow-wdl request)
             add-id (fn [m id] (assoc (:inputs m) :id id))]
         (jdbc/insert-multi! tx table (map add-id (:items request) (range)))

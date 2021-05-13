@@ -1,16 +1,14 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test :refer :all]
-            [clojure.string :as str]
-            [wfl.debug :as debug]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.covid :as covid]
-            [wfl.service.rawls :as rawls]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads])
-  (:import [clojure.lang ExceptionInfo]
-           [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:require [clojure.test         :refer :all]
+            [clojure.string       :as str]
+            [wfl.jdbc             :as jdbc]
+            [wfl.module.covid     :as covid]
+            [wfl.service.postgres :as postgres]
+            [wfl.service.rawls    :as rawls]
+            [wfl.tools.fixtures   :as fixtures]
+            [wfl.tools.workloads  :as workloads])
+  (:import [clojure.lang ExceptionInfo]))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
@@ -62,11 +60,11 @@
     (fn [workspace]
       (let [executor (assoc executor-base :workspace workspace)]
         #_(testing "Successful create writes to db"
-            (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (with-redefs-fn {#'rawls/create-snapshot-reference mock-rawls-snapshot-reference}
                 #(#'covid/import-snapshot! tx workload source-details executor ed-base))))
         (testing "Failed create throws"
-          (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
             (with-redefs-fn {#'rawls/create-snapshot-reference mock-throw}
               #(is (thrown-with-msg?
                     ExceptionInfo #"mocked throw"

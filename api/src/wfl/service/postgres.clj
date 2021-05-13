@@ -1,27 +1,34 @@
 (ns wfl.service.postgres
   "Talk to the Postgres database."
-  (:require [clojure.string :as str]
-            [clj-http.client :as http]
-            [wfl.environment :as env]
-            [wfl.jdbc :as jdbc]
-            [wfl.auth :as auth]
-            [wfl.service.cromwell :as cromwell]
+  (:require [clojure.string        :as str]
+            [clj-http.client       :as http]
+            [wfl.environment       :as env]
+            [wfl.jdbc              :as jdbc]
+            [wfl.auth              :as auth]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util :as util])
+            [wfl.util              :as util])
   (:import [java.time OffsetDateTime]))
+
+;; visible for testing
+(def ^:private testing-db-overrides
+  "Override the configuration used by `wfl-db-config` for testing. Use
+  `wfl.tools.fixtures/temporary-postgresql-database` instead of this."
+  (atom {}))
 
 (defn wfl-db-config
   "Get the database configuration."
   []
-  (assoc {:classname       "org.postgresql.Driver"
-          :db-name         "wfl"
-          :instance-name   "zero-postgresql"
-          ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
-          :isolation-level :serializable
-          :subprotocol     "postgresql"}
-         :connection-uri (env/getenv "WFL_POSTGRES_URL")
-         :password (env/getenv "WFL_POSTGRES_PASSWORD")
-         :user (or (env/getenv "WFL_POSTGRES_USERNAME") (env/getenv "USER") "postgres")))
+  (-> {:classname       "org.postgresql.Driver"
+       :db-name         "wfl"
+       :instance-name   "zero-postgresql"
+       ;; https://www.postgresql.org/docs/9.1/transaction-iso.html
+       :isolation-level :serializable
+       :subprotocol     "postgresql"}
+      (assoc :connection-uri (env/getenv "WFL_POSTGRES_URL")
+             :password (env/getenv "WFL_POSTGRES_PASSWORD")
+             :user (or (env/getenv "WFL_POSTGRES_USERNAME") (env/getenv "USER") "postgres"))
+      (merge @testing-db-overrides)))
 
 (defn table-exists?
   "Check if TABLE exists using transaction TX."

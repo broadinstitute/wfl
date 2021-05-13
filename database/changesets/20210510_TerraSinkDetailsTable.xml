@@ -18,7 +18,7 @@
         <sql>
             CREATE TYPE TerraWorkspaceSinkDetails AS (
                 id                     BIGINT,      -- unique to this table
-                workflow_id            TEXT,        -- id of the Terra workflow
+                workflow               TEXT,        -- workflow id
                 entity_name            TEXT,        -- name of the entity
                 updated                TIMESTAMPTZ  -- status update time
             )

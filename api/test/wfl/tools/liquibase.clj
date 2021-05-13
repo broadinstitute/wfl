@@ -1,27 +1,29 @@
 (ns wfl.tools.liquibase
-  (:require [wfl.environment :as env])
-  (:import [liquibase.integration.commandline Main]))
+  (:require [wfl.service.postgres :as postgres])
+  (:import [liquibase.integration.commandline Main]
+           [clojure.lang ExceptionInfo]))
 
 (defn run-liquibase
   "Migrate the database schema using Liquibase."
-  ([url changelog username password]
-   (let [status (Main/run
-                 (into-array
-                  String
-                  [(str "--url=" url)
-                   (str "--changeLogFile=" changelog)
-                   (str "--username=" username)
-                   (str "--password=" password)
-                   "update"]))]
-     (when-not (zero? status)
-       (throw
-        (Exception.
-         (format "Liquibase failed with: %s" status))))))
-  ([url changelog username]
-   (run-liquibase url changelog username nil)))
+  [changelog {:keys [user password connection-uri]}]
+  (let [status (Main/run
+                (into-array
+                 String
+                 [(str "--url=" connection-uri)
+                  (str "--changeLogFile=" changelog)
+                  (str "--username=" user)
+                  (str "--password=" password)
+                  "update"]))]
+    (when-not (zero? status)
+      (throw (ex-info "Liquibase migration failed" {:status status})))))
 
 (defn -main
   "Migrate the local database schema using Liquibase."
   []
-  (let [user (env/getenv "USER")]
-    (run-liquibase "jdbc:postgresql:wfl" "../database/changelog.xml" user)))
+  (try
+    (run-liquibase "../database/changelog.xml" (postgres/wfl-db-config))
+    (System/exit 0)
+    (catch ExceptionInfo e
+      (binding [*out* *err*]
+        (-> e .getMessage println)
+        (-> e .getData :status System/exit)))))
