@@ -274,12 +274,8 @@
   [{:keys [name dataset] :as source}]
   (when-not (= (:name source) tdr-source-name)
     (throw (ex-info "Unknown Source" {:source source})))
-  (try
-    (-> (datarepo/dataset (:dataset source))
-        (throw-unless-table-exists))
-    (catch Throwable t
-      (throw (ex-info "Cannot access Dataset" {:dataset dataset
-                                               :cause   (.getMessage t)})))))
+  (-> (datarepo/dataset (:dataset source))
+      (throw-unless-table-exists)))
 
 (defn verify-executor!
   "Verify the method-configuration exists."
