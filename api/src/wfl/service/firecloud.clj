@@ -23,7 +23,7 @@
 (defn get-workspace
   "Returns the given workspaceNamespace/workspaceName`"
   [workspace]
-  {:pre [(some? workspace)]}
+  {:pre [(string? workspace)]}
   (get-workspace-json workspace))
 
 (defn abort-submission

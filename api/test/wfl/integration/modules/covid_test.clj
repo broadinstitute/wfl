@@ -1,7 +1,6 @@
-"Test the Sarscov2IlluminaFull COVID pipeline."
 (ns wfl.integration.modules.covid-test
+  "Test the Sarscov2IlluminaFull COVID pipeline."
   (:require [clojure.test :refer :all]
-            [clojure.test :as clj-test]
             [clojure.string :as str]
             [wfl.debug :as debug]
             [wfl.jdbc :as jdbc]
@@ -13,7 +12,7 @@
            [java.time OffsetDateTime]
            [java.util UUID]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583")
