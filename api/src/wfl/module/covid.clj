@@ -320,14 +320,14 @@
     items))
 
 (defn create-covid-workload [tx request]
+  (verify-source! (get-in request [:source]))
+  (verify-executor! (get-in request [:executor]))
+  (verify-sink! (get-in request [:sink]))
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
         id           (add-workload-record tx request)
         items        (add-continuous-workload-record tx id request)]
-    (verify-source! (get-in request [:source]))
-    (verify-executor! (get-in request [:executor]))
-    (verify-sink! (get-in request [:sink]))
     (jdbc/execute! tx [set-pipeline pipeline id])
     (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
