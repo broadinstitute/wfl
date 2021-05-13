@@ -45,6 +45,14 @@
     (jdbc/query tx (format "SELECT * FROM %s" table))
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
+(defn table-length [tx table-name]
+  (when-not (table-exists? tx table-name)
+    (throw (ex-info "No such table" {:table table-name})))
+  (->> (format "SELECT COUNT(*) FROM %s" table-name)
+       (jdbc/query tx)
+       first
+       :count))
+
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."
   [cromwell uuid]

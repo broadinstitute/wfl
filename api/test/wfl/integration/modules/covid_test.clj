@@ -1,19 +1,39 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test         :refer :all]
-            [clojure.string       :as str]
-            [wfl.jdbc             :as jdbc]
-            [wfl.module.covid     :as covid]
-            [wfl.service.postgres :as postgres]
-            [wfl.service.rawls    :as rawls]
-            [wfl.tools.fixtures   :as fixtures]
-            [wfl.tools.workloads  :as workloads])
+  (:require [clojure.test          :refer :all]
+            [clojure.string        :as str]
+            [wfl.jdbc              :as jdbc]
+            [wfl.module.covid      :as covid]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.postgres  :as postgres]
+            [wfl.service.rawls     :as rawls]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.workloads   :as workloads]
+            [wfl.tools.resources   :as resources]
+            [wfl.util              :as util])
   (:import [clojure.lang ExceptionInfo]))
+
+;; queue mocks
+(def ^:private test-queue-type "TestQueue")
+
+(defn ^:private test-queue-peek [this]
+  (-> this :queue deref first))
+
+(defn ^:private test-queue-pop [{:keys [queue]}]
+  (let [[head & _] @queue]
+    (when-not head
+      (throw (IllegalStateException. "Popped past head of queue"))))
+  (swap! queue rest))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
-  (use-fixtures :once (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+  (use-fixtures :once
+    (fixtures/temporary-environment new-env)
+    fixtures/temporary-postgresql-database
+    (fixtures/method-overload-fixture
+     covid/peek-queue! test-queue-type test-queue-peek)
+    (fixtures/method-overload-fixture
+     covid/pop-queue! test-queue-type test-queue-pop)))
 
 (def workload {:id 1})
 
@@ -98,3 +118,41 @@
                   (workloads/covid-workload-request {} {} {}))]
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
+
+(deftest test-update-terra-workspace-sink
+  (fixtures/with-temporary-workspace
+    workspace-prefix group
+    (fn [workspace]
+      (let [flowcell-id
+            "test"
+            workflow
+            {:uuid "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+             :status "Succeeded"
+             :outputs (-> "sarscov2_illumina_full/outputs.edn"
+                          resources/read-resource
+                          (assoc :flowcell_id flowcell-id))}
+            fromOutputs
+            (resources/read-resource
+             "sarscov2_illumina_full/entity-from-outputs.edn")
+            executor
+            {:type test-queue-type :queue (atom [workflow])}
+            sink
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (->> {:name           "Terra Workspace"
+                    :workspace      workspace
+                    :entity         "flowcell"
+                    :fromOutputs    fromOutputs
+                    :identifier     "flowcell_id"
+                    :skipValidation true}
+                   (covid/create-sink! tx 0)
+                   (zipmap [:sink_type :sink_items])
+                   (covid/load-sink! tx)))]
+        (covid/update-sink! executor sink)
+        (is (-> executor :queue deref empty?) "The workflow was not consumed")
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (is (== 1 (->> sink :details (postgres/table-length tx)))
+              "The consumed workflow was not recorded in the database"))
+        (let [[{:keys [name]} & _]
+              (util/poll
+               (fn [] (seq (firecloud/list-entities workspace "flowcell"))))]
+          (is (= name flowcell-id) "The test entity was not created"))))))

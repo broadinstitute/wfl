@@ -237,7 +237,7 @@
                     (set/rename-keys tdr-source-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx tdr-source-table)))]
-    [tdr-source-type (-> items first :id)]))
+    [tdr-source-type (-> items first :id str)]))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
@@ -264,7 +264,7 @@
                     (set/rename-keys terra-executor-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx terra-executor-table)))]
-    [terra-executor-type (-> items first :id)]))
+    [terra-executor-type (-> items first :id str)]))
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
   (if-let [id (util/parse-int executor_items)]
@@ -284,7 +284,8 @@
 (def ^:private terra-workspace-sink-serialized-fields
   {:workspace   :workspace
    :entity      :entity
-   :fromOutputs :from_outputs})
+   :fromOutputs :from_outputs
+   :identifier  :identifier})
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
@@ -295,7 +296,7 @@
                     (set/rename-keys terra-workspace-sink-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx terra-workspace-sink-table)))]
-    [terra-workspace-sink-type (-> items first :id)]))
+    [terra-workspace-sink-type (-> items first :id str)]))
 
 (defn ^:private load-terra-workspace-sink
   [tx {:keys [sink_items] :as details}]
@@ -332,17 +333,20 @@
 
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entity identifier details]}]
-  (when-let [{:keys [uuid] :as workflow} (peek-queue! executor)]
-    (log/debug "Coercing workflow %s outputs to %s" uuid entity)
+  (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
+    (log/debug "Coercing workflow" uuid "outputs to" entity)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
-          name       ""]
-      (log/debugf "Upserting workflow %s outputs as %s" uuid name)
-      (rawls/batch-upsert workspace [entity name attributes])
+          name       (outputs (keyword identifier))]
+      (log/debug "Upserting workflow" uuid "outputs as" name)
+      (rawls/batch-upsert workspace [[name entity attributes]])
+      (pop-queue! executor)
+      (log/info "Sank workflow" uuid "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (jdbc/insert! tx details {:workflow    uuid
-                                  :entity_name name
-                                  :updated     (OffsetDateTime/now)}))
-      (log/debug "Successfully sank workflow" uuid))))
+        (->> {:entity_name name
+              :workflow    uuid
+              :updated     (OffsetDateTime/now)
+              :id          (inc (postgres/table-length tx details))}
+             (jdbc/insert! tx details))))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)

@@ -145,7 +145,8 @@
               {:name        "Terra Workspace"
                :workspace   "namespace/name"
                :entity      ""
-               :fromOutputs {}}
+               :fromOutputs {}
+               :identifier  ""}
               sink)
    :pipeline covid/pipeline
    :project  @project

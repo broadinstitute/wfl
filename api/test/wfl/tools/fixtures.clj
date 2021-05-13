@@ -13,13 +13,19 @@
            [java.util UUID]
            [org.apache.commons.io FileUtils]))
 
+(defn with-temporary-overload
+  "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
+  [multifn dispatch-val overload f]
+  (defmethod multifn dispatch-val [& xs] (apply overload xs))
+  (try
+    (f)
+    (finally
+      (remove-method multifn dispatch-val))))
+
 (defn method-overload-fixture
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
   [multifn dispatch-val overload]
-  (fn [run-test]
-    (defmethod multifn dispatch-val [& xs] (apply overload xs))
-    (run-test)
-    (remove-method multifn dispatch-val)))
+  (partial with-temporary-overload multifn dispatch-val overload))
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
@@ -30,7 +36,8 @@
               :db-name        "postgres"
               :instance-name  nil})))
 
-(def ^:private testing-db-name
+(def testing-db-name
+  "The name of the test database"
   (util/randomize "wfltest"))
 
 (defn ^:private create-local-database
@@ -77,7 +84,8 @@
        (swap! @#'postgres/testing-db-overrides merge config)
        (try
          (f)
-         (finally (reset! @#'postgres/testing-db-overrides prev)))))))
+         (finally
+           (reset! @#'postgres/testing-db-overrides prev)))))))
 
 (defn create-local-database-for-testing
   "Create and run liquibase on a PostgreSQL database named `dbname`. Assumes
