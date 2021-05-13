@@ -18,11 +18,12 @@
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583")
 (def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
-(def ^:private testing-table-name "TerraDataRepoSource")
+(def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
-(let [new-env {"WFL_FIRECLOUD_URL"
-               "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
+(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+               "WFL_TDR_URL"       "https://data.terra.bio"
+               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
   (use-fixtures :once (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database))
 

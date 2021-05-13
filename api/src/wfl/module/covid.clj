@@ -116,7 +116,8 @@
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
 (def ^:private tdr-source-table "TerraDataRepoSource")
-(def ^:private tdr-source-column "run_date")
+(def ^:private dataset-table-name "flowcells")
+(def ^:private dataset-column-name "run_date")
 (def ^:private tdr-source-serialized-fields
   {:dataset :dataset
    :table   :dataset_table
@@ -253,18 +254,18 @@
   "Throw or return the column from `table`"
   (let [[result & more :as all] (-> table
                                     (get-in [:columns])
-                                    (->> (filter (comp #{tdr-source-column} :name))))]
+                                    (->> (filter (comp #{dataset-column-name} :name))))]
     (when-not result
-      (throw (ex-info "No column with name" {:name tdr-source-column :dataset dataset})))
+      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
     result))
 
 (defn throw-unless-table-exists [dataset]
   "Throw or return the table from `dataset`"
   (let [[result & more :as all] (-> dataset
                                     (get-in [:schema :tables])
-                                    (->> (filter (comp #{tdr-source-table} :name))))]
+                                    (->> (filter (comp #{dataset-table-name} :name))))]
     (when-not result
-      (throw (ex-info "No table with name" {:name tdr-source-table :dataset dataset})))
+      (throw (ex-info "No table with name" {:name dataset-table-name :dataset dataset})))
     (when result
       (throw-unless-column-exists dataset result))
     result))
@@ -292,7 +293,7 @@
 (defn verify-sink!
   "Verify that the WFL has access to both firecloud and the `workspace`."
   [{:keys [name workspace] :as sink}]
-  (when-not (= (:name sink) "Terra Workspace")
+  (when-not (= (:name sink) terra-workspace-sink-name)
     (throw (ex-info "Unknown Sink" {:sink sink})))
   (try
     (firecloud/get-workspace workspace)
