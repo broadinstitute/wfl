@@ -534,3 +534,8 @@
     (when (and (nil? more) (seq namespace) (seq workspace)
                (workspace-name? namespace) (workspace-name? workspace))
       [namespace workspace])))
+
+(defmacro make-map
+  "Map SYMBOLS as keywords to their values in the environment."
+  [& symbols]
+  (zipmap (map keyword symbols) symbols))
