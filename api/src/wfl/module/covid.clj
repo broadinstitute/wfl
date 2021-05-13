@@ -218,7 +218,7 @@
                         (->> (map :name) set)
                         (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                   (assoc :name now)
+                   (update :name #(str % now))
                    (datarepo/create-snapshot-job))]
     job-id))
 
