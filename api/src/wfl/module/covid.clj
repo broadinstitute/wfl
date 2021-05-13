@@ -274,6 +274,8 @@
 (defn verify-source!
   "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
   [{:keys [name dataset] :as source}]
+  (when-not (some? dataset)
+    (throw (ex-info "Source is nil" {:source source})))
   (when-not (= (:name source) tdr-source-name)
     (throw (ex-info "Unknown Source" {:source source})))
   (-> (datarepo/dataset (:dataset source))

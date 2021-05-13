@@ -168,6 +168,11 @@
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request {} {} {}))]
+                  (workloads/covid-workload-request {:dataset testing-dataset
+                                                     :table testing-table-name
+                                                     :column testing-column-name}
+                                                    {:workspace testing-workspace
+                                                     :method_configuration testing-method-configuration}
+                                                    {:workspace testing-workspace}))]
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
