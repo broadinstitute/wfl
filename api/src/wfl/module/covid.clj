@@ -116,8 +116,6 @@
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
 (def ^:private tdr-source-table "TerraDataRepoSource")
-(def ^:private dataset-table-name "flowcells")
-(def ^:private dataset-column-name "run_date")
 (def ^:private tdr-source-serialized-fields
   {:dataset :dataset
    :table   :dataset_table
@@ -249,6 +247,9 @@
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; Workload Functions
+(def ^:private dataset-table-name "flowcells")
+(def ^:private dataset-column-name "run_date")
+
 (defn throw-unless-column-exists
   "Throw or return the column from `table`"
   [dataset table]
@@ -284,7 +285,7 @@
 (defn verify-executor!
   "Verify the method-configuration exists."
   [{:keys [name method_configuration] :as executor}]
-  (when-not (= (:name executor) "Terra")
+  (when-not (= (:name executor) terra-executor-name)
     (throw (ex-info "Unknown Executor" {:executor executor})))
   (when-not (:method_configuration executor)
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
