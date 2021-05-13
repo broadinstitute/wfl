@@ -4,27 +4,22 @@
             [clojure.string :as str]
             [clojure.walk :as walk]
             [clj-http.client :as http]
-            [wfl.debug :as debug]
             [wfl.auth :as auth]
+            [wfl.debug :as debug]
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
 
-(def final-statuses
+(def final?
   "The final statuses a Cromwell workflow can have."
-  ["Aborted"
-   "Failed"
-   "Succeeded"])
+  #{"Aborted" "Failed" "Succeeded"})
 
-(def active-statuses
+(def active?
   "The statuses an active Cromwell workflow can have."
-  ["Aborting"
-   "On Hold"
-   "Running"
-   "Submitted"])
+  #{"Aborting" "On Hold" "Running" "Submitted"})
 
-(def statuses
+(def status?
   "All the statuses a Cromwell workflow can have."
-  (into active-statuses final-statuses))
+  (into active? final?))
 
 (defn ^:private api
   "Get the api url given Cromwell URL."
@@ -220,8 +215,8 @@
                            :content-type :application/json
                            :headers      (auth/get-auth-header)}
                           request-json :body :totalResultsCount)]))]
-    (let [counts (into (array-map) (map each statuses))
-          total  (apply + (map counts statuses))]
+    (let [counts (into (array-map) (map each status?))
+          total  (apply + (map counts status?))]
       (into counts [[:total total]]))))
 
 (defn submit-workflow
@@ -259,8 +254,8 @@
        (mapv :id)))
 
 (defn wait-for-workflow-complete
-  "Return status of workflow named by ID when it completes, given Cromwell URL."
+  "Return status of workflow ID from URL when it completes."
   [url id]
-  (let [finished? (comp (set final-statuses) #(status url id))]
+  (let [finished? (comp final? #(status url id))]
     (work-around-cromwell-fail-bug 9 url id)
     (util/poll finished? 15 (Integer/MAX_VALUE))))
