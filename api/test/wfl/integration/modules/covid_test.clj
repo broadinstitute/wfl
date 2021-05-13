@@ -25,6 +25,9 @@
       (throw (IllegalStateException. "Popped past head of queue"))))
   (swap! queue rest))
 
+(defn ^:private make-queue-from-list [items]
+  {:type test-queue-type :queue (vec items)})
+
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
   (use-fixtures :once
@@ -126,22 +129,20 @@
       (let [flowcell-id
             "test"
             workflow
-            {:uuid "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
-             :status "Succeeded"
+            {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+             :status  "Succeeded"
              :outputs (-> "sarscov2_illumina_full/outputs.edn"
                           resources/read-resource
                           (assoc :flowcell_id flowcell-id))}
-            fromOutputs
-            (resources/read-resource
-             "sarscov2_illumina_full/entity-from-outputs.edn")
             executor
-            {:type test-queue-type :queue (atom [workflow])}
+            (make-queue-from-list [workflow])
             sink
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> {:name           "Terra Workspace"
                     :workspace      workspace
                     :entity         "flowcell"
-                    :fromOutputs    fromOutputs
+                    :fromOutputs    (resources/read-resource
+                                     "sarscov2_illumina_full/entity-from-outputs.edn")
                     :identifier     "flowcell_id"
                     :skipValidation true}
                    (covid/create-sink! tx 0)
