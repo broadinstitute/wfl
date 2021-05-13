@@ -22,6 +22,7 @@
                 end_time                    TIMESTAMPTZ, -- end timestamp of the TDR data query interval
                 datarepo_row_ids            TEXT[],      -- array of datarepo row ids for snapshot creation
                 snapshot_creation_job_id    TEXT,        -- id of the TDR snapshot creation job
+                snapshot_id                 TEXT,        -- id of the TDR snapshot
                 updated                     TIMESTAMPTZ, -- status update time
                 consumed                    TIMESTAMPTZ  -- time when consumed, null otherwise
             )
