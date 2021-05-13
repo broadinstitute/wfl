@@ -249,8 +249,9 @@
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; Workload Functions
-(defn throw-unless-column-exists [dataset table]
+(defn throw-unless-column-exists
   "Throw or return the column from `table`"
+  [dataset table]
   (let [[result & more :as all] (-> table
                                     (get-in [:columns])
                                     (->> (filter (comp #{dataset-column-name} :name))))]
@@ -258,8 +259,9 @@
       (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
     result))
 
-(defn throw-unless-table-exists [dataset]
+(defn throw-unless-table-exists
   "Throw or return the table from `dataset`"
+  [dataset]
   (let [[result & more :as all] (-> dataset
                                     (get-in [:schema :tables])
                                     (->> (filter (comp #{dataset-table-name} :name))))]
