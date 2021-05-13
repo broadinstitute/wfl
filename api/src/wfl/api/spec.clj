@@ -24,13 +24,6 @@
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::entity string?)
 (s/def ::environment string?)
-(s/def ::executor (s/or :legacy_executor string?
-                        :executor (s/keys :req-un [::name
-                                                   ::workspace
-                                                   ::method_configuration
-                                                   ::version
-                                                   ::entity
-                                                   ::from_source])))
 (s/def ::finished inst?)
 (s/def ::from_outputs map?)
 (s/def ::from_source string?)
@@ -38,32 +31,45 @@
 (s/def ::input_bam #(str/ends-with? % ".bam"))
 (s/def ::input_cram #(str/ends-with? % ".cram"))
 (s/def ::labels (s/coll-of string?))
-(s/def ::method_configuration string?)
 (s/def ::name string?)
+(s/def ::method_configuration string?)
 (s/def ::options map?)
 (s/def ::output string?)
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::sink (s/keys :req-un [::name
-                               ::workspace
-                               ::entity
-                               ::from_outputs]))
 (s/def ::snapshot string?)
-(s/def ::source (s/keys :req-un [::name
-                                 ::dataset
-                                 ::dataset_table
-                                 ::snapshot]))
 (s/def ::started inst?)
 (s/def ::status (set (conj cromwell/statuses "skipped")))
 (s/def ::stopped inst?)
 (s/def ::dataset_table string?)
 (s/def ::updated inst?)
 (s/def ::uuid (s/and string? uuid-string?))
-(s/def ::uuid-kv (s/keys :req-un [::uuid]))
 (s/def ::version string?)
 (s/def ::watchers (s/coll-of string?))
 (s/def ::wdl string?)
+(s/def ::workspace string?)
+
+(s/def ::executor (s/or :legacy_executor string?
+                        :executor (s/keys :req-un [::name
+                                                   ::workspace
+                                                   ::method_configuration
+                                                   ::version
+                                                   ::entity
+                                                   ::from_source])))
+
+(s/def ::sink (s/keys :req-un [::name
+                               ::workspace
+                               ::entity
+                               ::from_outputs]))
+
+(s/def ::source (s/keys :req-un [::name
+                                 ::dataset
+                                 ::dataset_table
+                                 ::snapshot]))
+
+(s/def ::uuid-kv (s/keys :req-un [::uuid]))
+
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
 
@@ -96,7 +102,7 @@
                                             ::uuid
                                             ::version]))
 (s/def ::workload-responses (s/* ::workload-response))
-(s/def ::workspace string?)
+
 
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
@@ -125,15 +131,15 @@
 (s/def ::notifications (s/* ::aou-sample))
 
 ;; arrays
-(s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
-                                                 ::entity-type]))
 (s/def ::entity-name string?)
 (s/def ::entity-type string?)
+(s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
+                                                 ::entity-type]))
 
 ;; copyfile
-(s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
 (s/def ::dst string?)
 (s/def ::src string?)
+(s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
 
 ;; wgs (External Whole Genome Reprocessing)
 (s/def ::wgs-workflow-inputs (s/keys :req-un [(or ::input_bam ::input_cram)]))
