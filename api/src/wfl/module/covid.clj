@@ -285,22 +285,21 @@
             ;; Create submission from snapshot reference.
             )
           (write-workflows!
-            [tx
-             {:keys [referenceId]            :as _reference}
+            [{:keys [referenceId]            :as _reference}
              {:keys [submissionId workflows] :as _submission}]
-            (->> workflows
-                 (map (fn [{:keys [status workflowId] :as _workflow}]
-                        {:snapshot_reference_id referenceId
-                         :rawls_submission_id   submissionId
-                         :workflow_id           workflowId
-                         :workflow_status       status
-                         :updated               (OffsetDateTime/now)}))
-                 (jdbc/insert-multi! tx details)))]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (->> workflows
+                   (map (fn [{:keys [status workflowId] :as _workflow}]
+                          {:snapshot_reference_id referenceId
+                           :rawls_submission_id   submissionId
+                           :workflow_id           workflowId
+                           :workflow_status       status
+                           :updated               (OffsetDateTime/now)}))
+                   (jdbc/insert-multi! tx details))))]
     (if-let [snapshot (peek-queue! source)]
       (let [reference  (from-source executor snapshot)
             submission (create-submission! executor reference)]
-        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (write-workflows! tx executor reference submission))
+        (write-workflows! reference submission)
         (pop-queue! source)))
     executor))
 
