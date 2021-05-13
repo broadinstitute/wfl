@@ -105,6 +105,8 @@
 
 
 ;; compound
+
+
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
                       :arrays   ::arrays-workflow-inputs

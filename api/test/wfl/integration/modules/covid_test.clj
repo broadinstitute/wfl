@@ -167,7 +167,6 @@
                                       (assoc-in [:sink :name] nil)
                                       workloads/create-workload!)))))
 
-
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
                   (workloads/covid-workload-request {} {} {}))]

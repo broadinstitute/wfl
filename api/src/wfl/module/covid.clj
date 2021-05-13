@@ -231,7 +231,6 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" details))))
 
-
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
@@ -273,7 +272,7 @@
 (defn verify-source!
   "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
   [{:keys [name dataset] :as source}]
-  (when-not (= (:name source) tdr-source-name )
+  (when-not (= (:name source) tdr-source-name)
     (throw (ex-info "Unknown Source" {:source source})))
   (try
     (-> (datarepo/dataset (:dataset source))
