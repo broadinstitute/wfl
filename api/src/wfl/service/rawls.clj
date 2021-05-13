@@ -24,7 +24,7 @@
 
 (defn create-snapshot-reference
   "Link SNAPSHOT-ID to WORKSPACE as NAME with DESCRIPTION.
-  If NAME unspecified, generate a unique reference name from the snapshot name."
+  If NAME unspecified, use the snapshot name."
   ([workspace snapshot-id name description]
    (-> (workspace-api-url workspace "snapshots")
        (http/post {:headers      (auth/get-auth-header)
@@ -37,7 +37,7 @@
   ([workspace snapshot-id name]
    (create-snapshot-reference workspace snapshot-id name ""))
   ([workspace snapshot-id]
-   (let [name (util/randomize (:name (datarepo/snapshot snapshot-id)))]
+   (let [name (:name (datarepo/snapshot snapshot-id))]
      (create-snapshot-reference workspace snapshot-id name))))
 
 (defn get-snapshot-reference
