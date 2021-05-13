@@ -1,7 +1,8 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set                :as set]
+  (:require [clojure.test               :as clj-test :refer [deftest testing is]]
+            [clojure.set                :as set]
             [clojure.string             :as str]
-            [clojure.test               :refer [deftest testing is]]
+            [wfl.debug]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
@@ -216,6 +217,25 @@
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
 
-(def create-covid-workload
-  (make-create-workload workloads/covid-workload-request))
+(deftest test-create-covid-workload
+  (let [dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8"
+        column "run_date"
+        table "flowcells"
+        workspace-template "CDC_Viral_Sequencing"
+        workspace-randomizer "GPc586b76e8ef24a97b354cf0226dfe583"
+        workspace-namespace "wfl-dev"
+        workspace-name (str/join "_" [workspace-template workspace-randomizer])
+        workspace (str/join "/" [workspace-namespace workspace-name])
+        mc-namespace "cdc-covid-surveillance"
+        mc-name  "sarscov2_illumina_full"
+        method_configuration (str/join "/" [mc-namespace mc-name])
+        request (workloads/covid-workload-request
+                 (util/make-map column dataset table)
+                 (util/make-map method_configuration workspace)
+                 (util/make-map workspace))]
+    (wfl.debug/trace request)
+    (wfl.debug/trace (workloads/create-workload! request))))
 
+(comment
+  (clj-test/test-vars [#'test-create-covid-workload])
+  )
