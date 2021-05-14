@@ -373,8 +373,9 @@
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
 
-(defoverload workloads/create-workload! pipeline create-covid-workload)
-(defoverload workloads/start-workload! pipeline start-covid-workload)
-(defoverload workloads/update-workload! pipeline update-covid-workload)
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
+(defoverload workloads/create-workload!   pipeline create-covid-workload)
+(defoverload workloads/start-workload!    pipeline start-covid-workload)
+(defoverload workloads/update-workload!   pipeline update-covid-workload)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
+(defoverload workloads/workflows          pipeline workflows)
