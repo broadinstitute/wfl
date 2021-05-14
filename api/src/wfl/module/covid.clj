@@ -259,50 +259,53 @@
                     (->> (jdbc/insert! tx terra-executor-table)))]
     [terra-executor-type (-> items first :id str)]))
 
-(defn import-snapshot!
+(defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
   [{:keys [workspace] :as _executor}
    {:keys [name id]   :as _snapshot}]
   (rawls/create-snapshot-reference workspace id name))
 
-(defn from-source
+(defn ^:private from-source
   "Coerce SOURCE-ITEM to form understood by EXECUTOR via FROMSOURCE."
   [{:keys [fromSource] :as executor}
    source-item]
   (cond (= "importSnapshot" fromSource) (import-snapshot! executor source-item)
         :else (throw (ex-info "Unknown fromSource" {:executor executor}))))
 
+(defn ^:private create-submission!
+  "TO IMPLEMENT:
+  Create submission from REFERENCE."
+  [executor reference]
+)
+
+(defn ^:private write-workflows!
+  "Write WORKFLOWS to DETAILS table."
+  [{:keys [details]                :as _executor}
+   {:keys [referenceId]            :as _reference}
+   {:keys [submissionId workflows] :as _submission}]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (let [now      (OffsetDateTime/now)
+          id-start (inc (postgres/table-max tx details :id))
+          to-rows  (fn [idx {:keys [status workflowId] :as _workflow}]
+                     {:id                    (+ id-start idx)
+                      :snapshot_reference_id referenceId
+                      :rawls_submission_id   submissionId
+                      :workflow_id           workflowId
+                      :workflow_status       status
+                      :updated               now})]
+      (jdbc/insert-multi! tx details (map-indexed to-rows workflows)))))
+
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
   writing its workflows to DETAILS.
   Return EXECUTOR."
-  [source
-   {:keys [details] :as executor}]
-  (letfn [(create-submission! [executor reference]
-            ;; Tom to implement:
-            ;; Create submission from snapshot reference.
-            )
-          (write-workflows!
-            [{:keys [referenceId]            :as _reference}
-             {:keys [submissionId workflows] :as _submission}
-             now]
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (->> workflows
-                   (map (fn [{:keys [status workflowId] :as _workflow}]
-                          ;; FIXME: must also specify id:
-                          ;; no autoincrement for TABLEs created from TYPEs.
-                          {:snapshot_reference_id referenceId
-                           :rawls_submission_id   submissionId
-                           :workflow_id           workflowId
-                           :workflow_status       status
-                           :updated               now}))
-                   (jdbc/insert-multi! tx details))))]
-    (if-let [snapshot (peek-queue! source)]
-      (let [reference  (from-source executor snapshot)
-            submission (create-submission! executor reference)]
-        (write-workflows! reference submission (OffsetDateTime/now))
-        (pop-queue! source)))
-    executor))
+  [source executor]
+  (if-let [snapshot (peek-queue! source)]
+    (let [reference  (from-source executor snapshot)
+          submission (create-submission! executor reference)]
+      (write-workflows! executor reference submission)
+      (pop-queue! source)))
+  executor)
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
   (if-let [id (util/parse-int executor_items)]
