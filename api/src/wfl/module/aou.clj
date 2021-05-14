@@ -285,4 +285,5 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/workflows pipeline batch/workflows)
+(defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/load-workload-impl pipeline batch/pre-v0.4.0-load-workload-impl)

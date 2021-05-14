@@ -290,8 +290,8 @@
          (when-not (postgres/table-exists? tx details)
            (throw (ex-info "Missing executor details table" {:table details})))
          (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
-              (jdbc/query tx))
-         (mapcat (comp :workflows #(firecloud/get-submission workspace %))))))
+              (jdbc/query tx)))
+       (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
 (defoverload create-executor!   terra-executor-name create-terra-executor)
 (defoverload load-executor!     terra-executor-type load-terra-executor)

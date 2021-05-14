@@ -60,7 +60,7 @@
        (is (:started workload))
        (let [workflows (workloads/workflows workload)]
          (run! check-inputs workflows)
-         (run! check-workflow (workflows))))))
+         (run! check-workflow workflows)))))
 
 (deftest test-exec-arrays-workload!
   (with-redefs-fn {#'terra/create-submission mock-terra-create-submission}
@@ -69,7 +69,7 @@
        (is (:started workload))
        (let [workflows (workloads/workflows workload)]
          (run! check-inputs workflows)
-         (run! check-workflow (workflows))))))
+         (run! check-workflow workflows)))))
 
 (deftest test-update-arrays-workload!
   (letfn [(check-status [status workflow]

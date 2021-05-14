@@ -112,12 +112,12 @@
              inputs))]
     (with-redefs-fn
       {#'cromwell/submit-workflows verify-inputs}
-      #(-> (make-wgs-workload-request)
-           (update :items use-input_bam)
-           (workloads/execute-workload!)
-           (as-> workload
-                 (is (:started workload))
-             (run! go! (workloads/workflows workload)))))))
+      #(let [workload (-> (make-wgs-workload-request)
+                          (update :items use-input_bam)
+                          workloads/execute-workload!)]
+
+         (is (:started workload))
+         (run! go! (workloads/workflows workload))))))
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))

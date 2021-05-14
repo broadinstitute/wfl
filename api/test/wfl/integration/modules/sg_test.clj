@@ -84,12 +84,11 @@
             (is (:status workflow))
             (is (:updated workflow)))]
     (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(-> (the-sg-workload-request)
-           workloads/create-workload!
-           workloads/start-workload!
-           (as-> workload
-                 (is (:started workload))
-             (run! go! (workloads/workflows workload)))))))
+      #(let [workload (-> (the-sg-workload-request)
+                          workloads/create-workload!
+                          workloads/start-workload!)]
+         (is (:started workload))
+         (run! go! (workloads/workflows workload))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"

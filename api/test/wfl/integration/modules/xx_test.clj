@@ -54,12 +54,11 @@
             (is (:status workflow))
             (is (:updated workflow)))]
     (with-redefs-fn {#'cromwell/submit-workflows mock-submit-workflows}
-      #(-> (make-xx-workload-request)
-           workloads/create-workload!
-           workloads/start-workload!
-           (as-> workload
-                 (is (:started workload))
-             (run! go! (workloads/workflows workload)))))))
+      #(let [workload (-> (make-xx-workload-request)
+                          workloads/create-workload!
+                          workloads/start-workload!)]
+         (is (:started workload))
+         (run! go! (workloads/workflows workload))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"

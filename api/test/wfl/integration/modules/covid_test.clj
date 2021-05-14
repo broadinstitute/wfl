@@ -23,7 +23,7 @@
   (-> this :queue .getFirst))
 
 (defn ^:private test-queue-pop [this]
-  (-> this :queue .removeLast))
+  (-> this :queue .removeFirst))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
@@ -157,3 +157,8 @@
               (util/poll
                (fn [] (seq (firecloud/list-entities workspace "flowcell"))))]
           (is (= name flowcell-id) "The test entity was not created"))))))
+
+(deftest test-get-workflows-empty
+  (let [workload (workloads/create-workload!
+                  (workloads/covid-workload-request {} {} {}))]
+    (is (empty? (workloads/workflows workload)))))
