@@ -234,8 +234,47 @@
                  (util/make-map method_configuration workspace)
                  (util/make-map workspace))]
     (wfl.debug/trace request)
-    (wfl.debug/trace (workloads/create-workload! request))))
+    (wfl.debug/trace (endpoints/create-workload request))))
 
 (comment
   (clj-test/test-vars [#'test-create-covid-workload])
+  (def request {:source
+                {:name "Terra DataRepo",
+                 :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+                 :table "flowcells",
+                 :column "run_date"},
+                :executor
+                {:name "Terra",
+                 :workspace
+                 "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                 :methodConfiguration "",
+                 :methodConfigurationVersion 0,
+                 :fromSource "",
+                 :method_configuration
+                 "cdc-covid-surveillance/sarscov2_illumina_full"},
+                :sink
+                {:name "Terra Workspace",
+                 :workspace
+                 "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                 :entity "",
+                 :fromOutputs {},
+                 :identifier ""},
+                :pipeline "Sarscov2IlluminaFull",
+                :project "(Test) tbl/GH-1216-covid-tests",
+                :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+                :labels ["hornet:test"]})
+  (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
+  (clojure.spec.alpha/explain :wfl.api.spec/workload-request request)
+  (clojure.data.json/read-str "")
+  (spec-tools.core/spec
+   {:spec
+    (clojure.spec.alpha/keys
+     :req-un [(or :wfl.api.spec/executor :wfl.api.spec/cromwell)
+              :wfl.api.spec/output
+              :wfl.api.spec/pipeline
+              :wfl.api.spec/project]
+     :opt-un [:wfl.api.spec/common :wfl.api.spec/input :wfl.api.spec/items])
+    :type :map
+    :leaf? false})
+  (clojure.edn/read-string "")
   )

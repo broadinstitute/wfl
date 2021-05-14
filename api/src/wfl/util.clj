@@ -7,6 +7,7 @@
             [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [clojure.tools.logging :as log]
+            [wfl.debug]
             [wfl.wfl               :as wfl])
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
@@ -519,19 +520,21 @@
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
 
-(def digit?          (set "0123456789"))
-(def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
-(def uppercase?      (set (map str/upper-case lowercase?)))
-(def letter?         (into lowercase? uppercase?))
-(def alphanumeric?   (into letter? digit?))
-(def spaceunderdash? (set " _-"))
-(def workspace-name? (into alphanumeric? spaceunderdash?))
+(def digit?             (set "0123456789"))                          
+(def lowercase?         (set "abcdefghijklmnopqrstuvwxyz"))          
+(def uppercase?         (set (map #(Character/toUpperCase %) lowercase?)))       
+(def letter?            (into lowercase? uppercase?))                
+(def alphanumeric?      (into letter? digit?))                       
+(def spaceunderdash?    (set " _-"))                                 
+(def workspace-allowed? (into alphanumeric? spaceunderdash?))
+(def workspace-name?    (partial every? workspace-allowed?))
 
 (defn namespaced-workspace-name?
   "Return nil or the workspace [namespace name] pair in workspace-name."
   [workspace-name]
   (let [[namespace workspace & more] (str/split workspace-name #"/" 3)]
-    (when (and (nil? more) (seq namespace) (seq workspace)
+    (when (and (nil? more)
+               (seq namespace) (seq workspace)
                (workspace-name? namespace) (workspace-name? workspace))
       [namespace workspace])))
 

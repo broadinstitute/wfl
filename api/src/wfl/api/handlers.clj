@@ -6,12 +6,17 @@
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.module.aou                 :as aou]
+            [ring.util.http-response        :as response]
+            [wfl.api.workloads              :as workloads]
+            [wfl.debug]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.aou :as aou]
             [wfl.module.arrays]
             [wfl.module.copyfile]
+            [wfl.module.covid]
             [wfl.module.wgs]
             [wfl.module.xx]
             [wfl.module.sg]
-            [wfl.jdbc                       :as jdbc]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]))
 
@@ -56,11 +61,13 @@
   (let [workload-request (-> (:body-params request)
                              (rename-keys {:cromwell :executor}))
         {:keys [email]}  (gcs/userinfo request)]
+    (wfl.debug/trace workload-request)
     (logr/info "POST /api/v1/create with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (assoc workload-request :creator email)
            (workloads/create-workload! tx)
            strip-internals
+           wfl.debug/trace
            succeed))))
 
 (defn get-workload

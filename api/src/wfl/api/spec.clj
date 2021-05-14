@@ -21,7 +21,6 @@
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::environment string?)
-(s/def ::executor string?)
 (s/def ::finished inst?)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
@@ -42,29 +41,40 @@
 (s/def ::common map?)
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
+
+(s/def ::batch-executor string?)
+(s/def ::covid-executor (s/keys :req-un [::fromSource
+                                         ::methodConfiguration
+                                         ::methodConfigurationVersion
+                                         ::name
+                                         ::workspace]))
+
+(s/def ::executor (s/or :batch ::batch-executor
+                        :covid ::covid-executor))
+
 (s/def ::batch-workload-request (s/keys :opt-un [::common
                                                  ::input
                                                  ::items]
-                                        :req-un [(or ::executor ::cromwell)
+                                        :req-un [(or ::cromwell ::executor)
                                                  ::output
                                                  ::pipeline
                                                  ::project]))
-(s/def ::workload-response (s/keys :opt-un [::finished
-                                            ::input
-                                            ::started
-                                            ::stopped
-                                            ::wdl
-                                            ::workflows]
-                                   :req-un [::commit
-                                            ::created
-                                            ::creator
-                                            ::executor
-                                            ::output
-                                            ::pipeline
-                                            ::project
-                                            ::release
-                                            ::uuid
-                                            ::version]))
+(s/def ::batch-workload-response (s/keys :opt-un [::finished
+                                                  ::input
+                                                  ::started
+                                                  ::stopped
+                                                  ::wdl
+                                                  ::workflows]
+                                         :req-un [::commit
+                                                  ::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::output
+                                                  ::pipeline
+                                                  ::project
+                                                  ::release
+                                                  ::uuid
+                                                  ::version]))
 (s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
@@ -132,19 +142,15 @@
 (s/def ::column string?)
 (s/def ::dataset string?)
 (s/def ::entity string?)
-(s/def ::fromOutputs string?)
+(s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
+(s/def ::labels (s/* string?))
 (s/def ::name string?)
 (s/def ::methodConfiguration string?)
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::table string?)
+(s/def ::watchers (s/* string?))
 (s/def ::workspace (s/and string? util/namespaced-workspace-name?))
-
-(s/def ::covid-executor (s/keys :req-un [::fromSource
-                                         ::methodConfiguration
-                                         ::methodConfigurationVersion
-                                         ::name
-                                         ::workspace]))
 
 (s/def ::sink (s/keys :req-un [::entity
                                ::fromOutputs
@@ -156,11 +162,35 @@
                                  ::name
                                  ::table]))
 
-(s/def ::covid-workload-request (s/keys :req-un [::covid-executor
+(s/def ::covid-workload-request (s/keys :req-un [::executor
                                                  ::pipeline
                                                  ::project
                                                  ::sink
-                                                 ::source]))
+                                                 ::source]
+                                        :opt-un [::labels
+                                                 ::watchers]))
 
-(s/def ::workload-request (s/or :batch ::batch-workload-request
-                                :covid ::covid-workload-request))
+(s/def ::covid-workload-response (s/keys :opt-un [::finished
+                                                  ::release
+                                                  ::started
+                                                  ::stopped]
+                                         :req-un [::commit
+                                                  ::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::labels
+                                                  ::pipeline
+                                                  ::project
+                                                  ::uuid
+                                                  ::version
+                                                  ::watchers]))
+
+(s/def ::workload-request
+  (s/or :covid ::covid-workload-request
+        :batch ::batch-workload-request))
+
+(s/def ::workload-response
+  (s/or :batch ::batch-workload-response
+        :covid ::covid-workload-response))
+
+(s/def ::whatever (constantly true))
