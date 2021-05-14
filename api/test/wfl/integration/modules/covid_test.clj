@@ -157,3 +157,5 @@
               (util/poll
                (fn [] (seq (firecloud/list-entities workspace "flowcell"))))]
           (is (= name flowcell-id) "The test entity was not created"))))))
+
+(test-vars [#'test-update-terra-workspace-sink])

@@ -32,7 +32,9 @@
 (defn table-exists?
   "Check if TABLE exists using transaction TX."
   [tx table]
-  (->> ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?" (str/lower-case table)]
+  (->> (name table)
+       str/lower-case
+       (conj ["SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?"])
        (jdbc/query tx)
        (count)
        (not= 0)))
@@ -44,13 +46,26 @@
     (jdbc/query tx (format "SELECT * FROM %s" table))
     (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
 
-(defn table-length [tx table-name]
+(defn table-length
+  "Use `tx` to return the number of records in `table-name`."
+  [tx table-name]
   (when-not (table-exists? tx table-name)
     (throw (ex-info "No such table" {:table table-name})))
   (->> (format "SELECT COUNT(*) FROM %s" table-name)
        (jdbc/query tx)
        first
        :count))
+
+(defn table-max
+  "Use `tx` to return the maximum value of `column` in `table-name`."
+  [tx table-name column]
+  (when-not (table-exists? tx table-name)
+    (throw (ex-info "No such table" {:table table-name})))
+  (-> (format "SELECT MAX(%s) FROM %s" (name column) (name table-name))
+      (->> (jdbc/query tx))
+      first
+      :max
+      (or 0)))
 
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."

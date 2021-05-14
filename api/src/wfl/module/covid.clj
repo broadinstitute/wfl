@@ -307,7 +307,8 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" details))))
 
-(defn ^:visible-for-testing rename-gather
+;; visible for testing
+(defn rename-gather
   "Transform the `values` using the transformation defined in `mapping`."
   [values mapping]
   (letfn [(literal? [x] (str/starts-with? x "$"))
@@ -332,7 +333,7 @@
                       cause)))))
 
 (defn ^:private update-terra-workspace-sink
-  [executor {:keys [fromOutputs workspace entity identifier details]}]
+  [executor {:keys [fromOutputs workspace entity identifier details] :as _sink}]
   (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
     (log/debug "Coercing workflow" uuid "outputs to" entity)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
@@ -345,7 +346,7 @@
         (->> {:entity_name name
               :workflow    uuid
               :updated     (OffsetDateTime/now)
-              :id          (inc (postgres/table-length tx details))}
+              :id          (inc (postgres/table-max tx details :id))}
              (jdbc/insert! tx details))))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
