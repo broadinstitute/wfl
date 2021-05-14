@@ -97,14 +97,17 @@
   ([job-id]
    (poll-job job-id 5)))
 
-(defn job-done?
-  "Check the job with `job-id` to see if it's done yet."
+(defn get-job-metadata-when-done
+  "Nil or the metadata of job with `job-id` when done."
   [job-id]
-  (let [result   #(get-repository-json "jobs" job-id "result")
-        running? #(-> (get-repository-json "jobs" job-id)
-                      :job_status
-                      #{"running"})]
-    (if (running?) false (result))))
+  (let [metadata (get-repository-json "jobs" job-id)]
+    (when-not (-> metadata :job_status #{"running"})
+      metadata)))
+
+(defn get-job-result
+  "Get the result of job with `job-id`."
+  [job-id]
+  (get-repository-json "jobs" job-id "result"))
 
 (defn create-dataset
   "Create a dataset with EDN `dataset-request` and return the id
