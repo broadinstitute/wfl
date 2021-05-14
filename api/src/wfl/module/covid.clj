@@ -5,6 +5,7 @@
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
+            [wfl.service.datarepo :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
@@ -211,8 +212,8 @@
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-(defn ^:private peek-tdr-source-queue
-  "Get first unconsumed snapshot record in DETAILS table."
+(defn ^:private peek-tdr-source-details
+  "Get first unconsumed snapshot record from DETAILS table."
   [{:keys [details] :as _source}]
   (let [query "SELECT *
                FROM %s
@@ -224,10 +225,16 @@
            (jdbc/query tx)
            first))))
 
+(defn ^:private peek-tdr-source-queue
+  "Get first unconsumed snapshot from SOURCE queue."
+  [source]
+  (if-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
+    (datarepo/snapshot snapshot_id)))
+
 (defn ^:private pop-tdr-source-queue
   "Consume first unconsumed snapshot record in DETAILS table, or throw if none."
   [{:keys [details] :as source}]
-  (if-let [{:keys [id] :as _snapshot} (peek-queue! source)]
+  (if-let [{:keys [id] :as _record} (peek-tdr-source-details source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [now (OffsetDateTime/now)]
         (jdbc/update! tx details {:consumed now
@@ -263,10 +270,10 @@
     [terra-executor-type (-> items first :id str)]))
 
 (defn import-snapshot!
-  "Return snapshot reference for SNAPSHOT_ID imported to WORKSPACE."
-  [{:keys [workspace]   :as _executor}
-   {:keys [snapshot_id] :as _snapshot}]
-  (rawls/create-snapshot-reference workspace snapshot_id))
+  "Return snapshot reference for ID imported to WORKSPACE as NAME."
+  [{:keys [workspace] :as _executor}
+   {:keys [name id]   :as _snapshot}]
+  (rawls/create-snapshot-reference workspace id name))
 
 (defn from-source
   "Coerce SOURCE-ITEM to form understood by EXECUTOR via FROMSOURCE."
@@ -287,20 +294,23 @@
             )
           (write-workflows!
             [{:keys [referenceId]            :as _reference}
-             {:keys [submissionId workflows] :as _submission}]
+             {:keys [submissionId workflows] :as _submission}
+             now]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> workflows
                    (map (fn [{:keys [status workflowId] :as _workflow}]
+                          ;; FIXME: must also specify id:
+                          ;; no autoincrement for TABLEs created from TYPEs.
                           {:snapshot_reference_id referenceId
                            :rawls_submission_id   submissionId
                            :workflow_id           workflowId
                            :workflow_status       status
-                           :updated               (OffsetDateTime/now)}))
+                           :updated               now}))
                    (jdbc/insert-multi! tx details))))]
     (if-let [snapshot (peek-queue! source)]
       (let [reference  (from-source executor snapshot)
             submission (create-submission! executor reference)]
-        (write-workflows! reference submission)
+        (write-workflows! reference submission (OffsetDateTime/now))
         (pop-queue! source)))
     executor))
 
@@ -313,7 +323,7 @@
     (throw (ex-info "Invalid executor_items" details))))
 
 (defn ^:private peek-terra-executor-details
-  "Get first unconsumed successful workflow record in DETAILS table."
+  "Get first unconsumed successful workflow record from DETAILS table."
   [{:keys [details] :as _executor}]
   (let [query "SELECT *
                FROM %s
@@ -326,20 +336,17 @@
            first))))
 
 (defn ^:private peek-terra-executor-queue
-  "Get first unconsumed successful workflow and its record in DETAILS table."
+  "Get first unconsumed successful workflow from EXECUTOR queue."
   [{:keys [workspace] :as executor}]
-  (if-let [{:keys [rawls_submission_id workflow_id] :as record}
+  (if-let [{:keys [rawls_submission_id workflow_id] :as _record}
            (peek-terra-executor-details executor)]
-    (let [workflow (firecloud/get-workflow workspace
-                                           rawls_submission_id
-                                           workflow_id)]
-      (assoc record :workflow workflow))))
+    (firecloud/get-workflow workspace rawls_submission_id workflow_id)))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in DETAILS table,
   or throw if none."
   [{:keys [details] :as executor}]
-  (if-let [{:keys [id] :as _executor} (peek-terra-executor-details executor)]
+  (if-let [{:keys [id] :as _record} (peek-terra-executor-details executor)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [now (OffsetDateTime/now)]
         (jdbc/update! tx details {:consumed now

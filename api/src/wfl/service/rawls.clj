@@ -23,8 +23,7 @@
       util/response-body-json))
 
 (defn create-snapshot-reference
-  "Link SNAPSHOT-ID to WORKSPACE as NAME with DESCRIPTION.
-  If NAME unspecified, use the snapshot name."
+  "Link SNAPSHOT-ID to WORKSPACE as NAME with DESCRIPTION."
   ([workspace snapshot-id name description]
    (-> (workspace-api-url workspace "snapshots")
        (http/post {:headers      (auth/get-auth-header)
@@ -35,10 +34,7 @@
                                                  :escape-slash false)})
        util/response-body-json))
   ([workspace snapshot-id name]
-   (create-snapshot-reference workspace snapshot-id name ""))
-  ([workspace snapshot-id]
-   (let [name (:name (datarepo/snapshot snapshot-id))]
-     (create-snapshot-reference workspace snapshot-id name))))
+   (create-snapshot-reference workspace snapshot-id name "")))
 
 (defn get-snapshot-reference
   "Return the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
