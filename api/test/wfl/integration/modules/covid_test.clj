@@ -96,7 +96,6 @@
                              :workspace                  workspace
                              :methodConfiguration        "mc-namespace/mc-name"
                              :methodConfigurationVersion 1
-                             :entity                     "snapshot"
                              :fromSource                 "importSnapshot"
                              :skipValidation             true}
                             (covid/create-executor! tx 0)
@@ -161,6 +160,3 @@
               (util/poll
                (fn [] (seq (firecloud/list-entities workspace "flowcell"))))]
           (is (= name flowcell-id) "The test entity was not created"))))))
-
-(test-vars [#'test-update-terra-executor
-            #'test-update-terra-workspace-sink])
