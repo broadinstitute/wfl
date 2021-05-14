@@ -229,6 +229,10 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" details))))
 
+(defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
+(defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
+
+;; Workload Functions
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
@@ -246,7 +250,6 @@
         (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
-;; Workload Functions
 (def ^:private dataset-table-name "flowcells")
 (def ^:private dataset-column-name "run_date")
 
@@ -361,9 +364,6 @@
     (throw (ex-info "Invalid ContinuousWorkload identifier"
                     {:id       items
                      :workload workload}))))
-
-(defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
 
 (defoverload workloads/create-workload! pipeline create-covid-workload)
 (defoverload workloads/start-workload! pipeline start-covid-workload)
