@@ -221,7 +221,7 @@
                         (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
                    (update :name #(str % suffix))
-                   #_(datarepo/create-snapshot-job))]
+                   (datarepo/create-snapshot-job))]
     job-id))
 
 (defn ^:private find-new-rows [{:keys [dataset dataset_table table_column_name last_checked] :as _source}
@@ -242,7 +242,7 @@
   "Create unique-named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj` from `row-ids`."
   (let [shards (partition-all 500 row-ids)
-        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHMMSS"))]
+        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))]
     (doall (map-indexed (fn [idx shard]
                           (go-create-snapshot!
                            (format "_%s_%s" compact-now idx)
