@@ -1,16 +1,16 @@
 (ns wfl.integration.modules.xx-test
   (:require [clojure.test :refer [deftest testing is use-fixtures]]
-            [clojure.string :as str]
+            [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
-            [wfl.module.xx :as xx]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]]
-            [wfl.jdbc :as jdbc])
-  (:import (java.time OffsetDateTime)
-           (java.util UUID)))
+            [wfl.module.batch               :as batch]
+            [wfl.module.xx                  :as xx]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util :refer [absent?]]
+            [wfl.jdbc                       :as jdbc])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -32,7 +32,7 @@
               (is (:created workload))
               (is (absent? workload :started))
               (is (absent? workload :finished))
-              (run! verify-workflow (:workflows workload))))]
+              (run! verify-workflow (workloads/workflows workload))))]
     (testing "single-sample workload-request"
       (go! (make-xx-workload-request)))))
 
@@ -46,7 +46,7 @@
       (run! (comp go! :inputs) (-> (make-xx-workload-request)
                                    (assoc-in [:common :inputs] common-inputs)
                                    workloads/create-workload!
-                                   :workflows)))))
+                                   workloads/workflows)))))
 
 (deftest test-start-workload!
   (letfn [(go! [workflow]
@@ -59,7 +59,7 @@
            workloads/start-workload!
            (as-> workload
                  (is (:started workload))
-             (run! go! (:workflows workload)))))))
+             (run! go! (workloads/workflows workload)))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -68,7 +68,7 @@
               (is (absent? inputs :google_account_vault_path)))]
       (->> (make-xx-workload-request)
            workloads/create-workload!
-           :workflows
+           workloads/workflows
            (run! (comp go! :inputs))))))
 
 (deftest test-create-empty-workload
@@ -136,7 +136,7 @@
                  (partial map
                           #(assoc % :options {:supports_options true :overwritten true})))
          workloads/execute-workload!
-         :workflows
+         workloads/workflows
          (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
@@ -145,20 +145,20 @@
                   (assoc-in [:common :options] {})
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
-                  :workflows))))
+                  workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [workflows items] :as _workload}]
+  [tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! workflows)))
+    (run! update! (workloads/workflows workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflows                mock-submit-workflows
-     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    {#'cromwell/submit-workflows             mock-submit-workflows
+     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
     #(shared/run-workload-state-transition-test! (make-xx-workload-request))))
 
 (deftest test-stop-workload-state-transition

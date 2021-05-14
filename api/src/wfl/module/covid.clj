@@ -11,7 +11,8 @@
             [wfl.wfl :as wfl]
             [clojure.data.json :as json]
             [clojure.string :as str]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [wfl.service.firecloud :as firecloud])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -94,6 +95,10 @@
 (defmulti update-executor!
   "Update the executor with the `source`"
   (fn [source executor] (:type executor)))
+
+(defmulti executor-workflows
+  "Return the workflows created by the `executor"
+  (fn [executor] (:type executor)))
 
 (defmulti load-executor!
   "Use `tx` to load the workload executor with `executor_type`."
@@ -189,6 +194,11 @@
                     {:id       items
                      :workload workload}))))
 
+(defn ^:private workflows
+  "Return all the workflows managed by the `_workload`."
+  [{:keys [executor] :as _workload}]
+  (executor-workflows executor))
+
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
@@ -274,8 +284,18 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" details))))
 
-(defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
+(defn ^:private terra-executor-workflows
+  [{:keys [workspace details] :as _executor}]
+  (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+         (when-not (postgres/table-exists? tx details)
+           (throw (ex-info "Missing executor details table" {:table details})))
+         (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
+              (jdbc/query tx))
+         (mapcat (comp :workflows #(firecloud/get-submission workspace %))))))
+
+(defoverload create-executor!   terra-executor-name create-terra-executor)
+(defoverload load-executor!     terra-executor-type load-terra-executor)
+(defoverload executor-workflows terra-executor-type terra-executor-workflows)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")

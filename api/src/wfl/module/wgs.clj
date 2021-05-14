@@ -1,15 +1,14 @@
 (ns wfl.module.wgs
   "Reprocess (External) Whole Genomes."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.references :as references]
+  (:require [clojure.data.json          :as json]
+            [clojure.string             :as str]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.module.batch           :as batch]
+            [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.module.batch :as batch])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -199,5 +198,7 @@
   pipeline
   [tx workload]
   (if (workloads/saved-before? "0.4.0" workload)
-    (workloads/default-load-workload-impl tx workload)
+    (batch/pre-v0.4.0-load-workload-impl tx workload)
     (batch/load-batch-workload-impl tx workload)))
+
+(defoverload workloads/workflows pipeline batch/workflows)

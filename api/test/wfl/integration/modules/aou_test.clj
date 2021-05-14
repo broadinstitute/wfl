@@ -1,21 +1,23 @@
 (ns wfl.integration.modules.aou-test
-  (:require [clojure.spec.alpha :as s]
-            [clojure.test :refer [testing is deftest use-fixtures]]
+  (:require [clojure.spec.alpha             :as s]
+            [clojure.test                   :refer [testing is deftest use-fixtures]]
             [wfl.api.spec]
             [wfl.integration.modules.shared :as shared]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.aou :as aou]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util])
-  (:import (java.util UUID)))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.aou                 :as aou]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util]
+            [wfl.module.batch               :as batch])
+  (:import [java.util UUID]))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn mock-submit-workload [& _] (UUID/randomUUID))
-(defn mock-update-statuses! [tx {:keys [items workflows]}]
-  (run! (fn [{:keys [id]}] (jdbc/update! tx items {:status "Succeeded"} ["id = ?" id])) workflows))
+(defn mock-update-statuses! [tx {:keys [items] :as workload}]
+  (letfn [(f [{:keys [id]}]
+            (jdbc/update! tx items {:status "Succeeded"} ["id = ?" id]))]
+    (run! f (workloads/workflows workload))))
 
 (defn ^:private make-aou-workload-request []
   (-> (workloads/aou-workload-request (UUID/randomUUID))
@@ -70,17 +72,17 @@
   (shared/run-stop-workload-state-transition-test! (make-aou-workload-request)))
 
 (deftest test-aou-workload-not-finished-until-stopped
-  (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload
-                   #'postgres/update-workflow-statuses! mock-update-statuses!}
+  (with-redefs-fn {#'aou/submit-aou-workflow         mock-submit-workload
+                   #'batch/update-workflow-statuses! mock-update-statuses!}
     #(let [workload (-> (make-aou-workload-request)
                         (workloads/execute-workload!)
                         (workloads/update-workload!))]
        (is (not (:finished workload)))
        (workloads/append-to-workload! [workloads/aou-sample] workload)
        (let [workload (workloads/load-workload-for-uuid (:uuid workload))]
-         (is (every? (comp #{"Submitted"} :status) (:workflows workload)))
+         (is (every? (comp #{"Submitted"} :status) (workloads/workflows workload)))
          (let [workload (workloads/update-workload! workload)]
-           (is (every? (comp #{"Succeeded"} :status) (:workflows workload)))
+           (is (every? (comp #{"Succeeded"} :status) (workloads/workflows workload)))
            (is (not (:finished workload))))))))
 
 ;; rr: GH-1071
