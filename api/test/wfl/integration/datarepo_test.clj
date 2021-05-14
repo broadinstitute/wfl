@@ -2,6 +2,7 @@
   (:require [clojure.data.json           :as json]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
+            [wfl.module.covid            :as covid]
             [wfl.service.datarepo        :as datarepo]
             [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]
@@ -68,7 +69,7 @@
           (-> (->> (workflows/get-files outputs-type outputs)
                    (datasets/ingest-files tdr-profile dataset workflow-id))
               (replace-urls-with-file-ids outputs-type outputs)
-              (datasets/rename-gather from-outputs)
+              (covid/rename-gather from-outputs)
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
@@ -122,7 +123,7 @@
 
 (defn ^:private make-entity-import-request-tsv
   [from-dataset columns maps]
-  (-> (map #(datasets/rename-gather % from-dataset) maps)
+  (-> (map #(covid/rename-gather % from-dataset) maps)
       (maps->table columns)
       bigquery/dump-table->tsv))
 

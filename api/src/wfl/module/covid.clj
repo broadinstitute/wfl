@@ -8,7 +8,10 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [clojure.data.json :as json]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
@@ -234,7 +237,7 @@
                     (set/rename-keys tdr-source-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx tdr-source-table)))]
-    [tdr-source-type (-> items first :id)]))
+    [tdr-source-type (-> items first :id str)]))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
@@ -261,7 +264,7 @@
                     (set/rename-keys terra-executor-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx terra-executor-table)))]
-    [terra-executor-type (-> items first :id)]))
+    [terra-executor-type (-> items first :id str)]))
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
   (if-let [id (util/parse-int executor_items)]
@@ -281,7 +284,8 @@
 (def ^:private terra-workspace-sink-serialized-fields
   {:workspace   :workspace
    :entity      :entity
-   :fromOutputs :from_outputs})
+   :fromOutputs :from_outputs
+   :identifier  :identifier})
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
@@ -292,7 +296,7 @@
                     (set/rename-keys terra-workspace-sink-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx terra-workspace-sink-table)))]
-    [terra-workspace-sink-type (-> items first :id)]))
+    [terra-workspace-sink-type (-> items first :id str)]))
 
 (defn ^:private load-terra-workspace-sink
   [tx {:keys [sink_items] :as details}]
@@ -303,8 +307,51 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" details))))
 
+;; visible for testing
+(defn rename-gather
+  "Transform the `values` using the transformation defined in `mapping`."
+  [values mapping]
+  (letfn [(literal? [x] (str/starts-with? x "$"))
+          (go! [v]
+            (cond (literal? v) (subs v 1 (count v))
+                  (string?  v) (values (keyword v))
+                  (map?     v) (rename-gather values v)
+                  (coll?    v) (keep go! v)
+                  :else        (throw (ex-info "Unknown operation"
+                                               {:operation v}))))]
+    (into {} (for [[k v] mapping] [k (go! v)]))))
+
+(defn ^:private terra-workspace-sink-to-attributes
+  [{:keys [outputs] :as workflow} fromOutputs]
+  (when-not (map? fromOutputs)
+    (throw (IllegalStateException. "fromOutputs is malformed")))
+  (try
+    (rename-gather outputs fromOutputs)
+    (catch Exception cause
+      (throw (ex-info "Failed to coerce workflow outputs to attribute values"
+                      {:fromOutputs fromOutputs :workflow workflow}
+                      cause)))))
+
+(defn ^:private update-terra-workspace-sink
+  [executor {:keys [fromOutputs workspace entity identifier details] :as _sink}]
+  (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
+    (log/debug "Coercing workflow" uuid "outputs to" entity)
+    (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
+          name       (outputs (keyword identifier))]
+      (log/debug "Upserting workflow" uuid "outputs as" name)
+      (rawls/batch-upsert workspace [[name entity attributes]])
+      (pop-queue! executor)
+      (log/info "Sank workflow" uuid "as" name)
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (->> {:entity_name name
+              :workflow    uuid
+              :updated     (OffsetDateTime/now)
+              :id          (inc (postgres/table-max tx details :id))}
+             (jdbc/insert! tx details))))))
+
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink! terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
 
 (defoverload workloads/create-workload! pipeline create-covid-workload)
 (defoverload workloads/start-workload! pipeline start-covid-workload)
