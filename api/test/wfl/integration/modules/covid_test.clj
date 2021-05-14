@@ -11,22 +11,19 @@
             [wfl.tools.workloads   :as workloads]
             [wfl.tools.resources   :as resources]
             [wfl.util              :as util])
-  (:import [clojure.lang ExceptionInfo]))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util ArrayDeque]))
 
 ;; queue mocks
 (def ^:private test-queue-type "TestQueue")
+(defn ^:private make-queue-from-list [items]
+  {:type test-queue-type :queue (ArrayDeque. items)})
 
 (defn ^:private test-queue-peek [this]
-  (-> this :queue deref first))
+  (-> this :queue .getFirst))
 
-(defn ^:private test-queue-pop [{:keys [queue]}]
-  (let [[head & _] @queue]
-    (when-not head
-      (throw (IllegalStateException. "Popped past head of queue"))))
-  (swap! queue rest))
-
-(defn ^:private make-queue-from-list [items]
-  {:type test-queue-type :queue (vec items)})
+(defn ^:private test-queue-pop [this]
+  (-> this :queue .removeLast))
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
@@ -149,10 +146,13 @@
                    (zipmap [:sink_type :sink_items])
                    (covid/load-sink! tx)))]
         (covid/update-sink! executor sink)
-        (is (-> executor :queue deref empty?) "The workflow was not consumed")
+        (is (-> executor :queue empty?) "The workflow was not consumed")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (is (== 1 (->> sink :details (postgres/table-length tx)))
-              "The consumed workflow was not recorded in the database"))
+          (let [records (->> sink :details (postgres/get-table tx))]
+            (is (== 1 (count records))
+                "The record was not written to the database")
+            (is (= (:uuid workflow) (-> records first :workflow))
+                "The workflow UUID was not written")))
         (let [[{:keys [name]} & _]
               (util/poll
                (fn [] (seq (firecloud/list-entities workspace "flowcell"))))]

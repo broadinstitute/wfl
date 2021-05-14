@@ -10,7 +10,6 @@
             [wfl.util              :as util])
   (:import [java.time OffsetDateTime]))
 
-;; visible for testing
 (def ^:private testing-db-overrides
   "Override the configuration used by `wfl-db-config` for testing. Use
   `wfl.tools.fixtures/temporary-postgresql-database` instead of this."
