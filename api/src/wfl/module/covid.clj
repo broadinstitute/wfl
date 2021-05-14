@@ -181,7 +181,7 @@
                     (set/rename-keys tdr-source-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx tdr-source-table)))]
-    [tdr-source-type (-> items first :id)]))
+    [tdr-source-type (-> items first :id str)]))
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source [source]
@@ -201,16 +201,6 @@
         (assoc :type tdr-source-type)
         (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
     (throw (ex-info "source_items is not an integer" details))))
-
-(defn ^:private create-tdr-source [tx id request]
-  (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
-        details (format "TerraDataRepoSourceDetails_%09d" id)
-        _       (jdbc/execute! tx [(format create details)])
-        items   (-> (select-keys request (keys tdr-source-serialized-fields))
-                    (set/rename-keys tdr-source-serialized-fields)
-                    (assoc :details details)
-                    (->> (jdbc/insert! tx tdr-source-table)))]
-    [tdr-source-type (-> items first :id str)]))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
