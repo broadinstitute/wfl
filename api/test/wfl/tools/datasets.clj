@@ -35,17 +35,3 @@
          (mapcat #(-> % datarepo/poll-job :loadFileResults))
          (map (juxt :sourcePath :fileId))
          (into {}))))
-
-(defn rename-gather
-  "Transform the `values` using the transformation defined in `mapping`."
-  [values mapping]
-  (letfn [(literal? [x] (str/starts-with? x "$"))
-          (go! [v]
-            (cond (literal? v) (subs v 1 (count v))
-                  (string?  v) (values (keyword v))
-                  (map?     v) (json/write-str (rename-gather values v)
-                                               :escape-slash false)
-                  (coll?    v) (keep go! v)
-                  :else        (throw (ex-info "Unknown operation"
-                                               {:operation v}))))]
-    (into {} (for [[k v] mapping] [k (go! v)]))))

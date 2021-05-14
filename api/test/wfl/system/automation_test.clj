@@ -2,6 +2,7 @@
   (:require [clojure.data.json          :as json]
             [clojure.test               :refer [deftest is]]
             [wfl.environment            :as env]
+            [wfl.module.covid           :as covid]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as storage]
             [wfl.tools.datasets         :as datasets]
@@ -52,7 +53,7 @@
           (-> (->> (workflows/get-files inputs-type inputs)
                    (datasets/ingest-files tdr-profile source unique-prefix))
               (replace-urls-with-file-ids inputs-type inputs)
-              (datasets/rename-gather from-inputs)
+              (covid/rename-gather from-inputs)
               (json/write-str :escape-slash false)
               (storage/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
