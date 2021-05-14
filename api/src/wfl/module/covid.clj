@@ -275,8 +275,7 @@
 (defn ^:private create-submission!
   "TO IMPLEMENT:
   Create submission from REFERENCE."
-  [executor reference]
-)
+  [executor reference])
 
 (defn ^:private write-workflows!
   "Write WORKFLOWS to DETAILS table."
