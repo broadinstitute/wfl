@@ -75,7 +75,6 @@
                                                   ::release
                                                   ::uuid
                                                   ::version]))
-(s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
@@ -154,43 +153,31 @@
 
 (s/def ::sink (s/keys :req-un [::entity
                                ::fromOutputs
-                               ::name
                                ::workspace]))
 
 (s/def ::source (s/keys :req-un [::column
                                  ::dataset
-                                 ::name
                                  ::table]))
 
 (s/def ::covid-workload-request (s/keys :req-un [::executor
                                                  ::pipeline
-                                                 ::project
                                                  ::sink
                                                  ::source]
                                         :opt-un [::labels
+                                                 ::project
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :opt-un [::finished
                                                   ::release
                                                   ::started
-                                                  ::stopped]
-                                         :req-un [::commit
-                                                  ::created
-                                                  ::creator
-                                                  ::executor
-                                                  ::labels
-                                                  ::pipeline
-                                                  ::project
-                                                  ::uuid
-                                                  ::version
-                                                  ::watchers]))
+                                                  ::stopped]))
 
-(s/def ::workload-request
-  (s/or :covid ::covid-workload-request
-        :batch ::batch-workload-request))
+(s/def ::workload-request (s/or :batch ::batch-workload-request
+                                :covid ::covid-workload-request))
 
-(s/def ::workload-response
-  (s/or :batch ::batch-workload-response
-        :covid ::covid-workload-response))
+(s/def ::workload-response (s/or :batch ::batch-workload-response
+                                 :covid ::covid-workload-response))
+
+(s/def ::workload-responses (s/* ::workload-response))
 
 (s/def ::whatever (constantly true))

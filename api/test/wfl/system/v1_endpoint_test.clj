@@ -237,7 +237,15 @@
     (wfl.debug/trace (endpoints/create-workload request))))
 
 (comment
+  "Remember to: export WFL_WFL_URL=http://localhost:3000"
   (clj-test/test-vars [#'test-create-covid-workload])
+  (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
+  (clojure.spec.alpha/valid? :wfl.api.spec/workload-response response)
+  (clojure.spec.alpha/explain :wfl.api.spec/workload-request request)
+  (clojure.data.json/read-str
+   :key-fn keyword)
+  (clojure.edn/read-string)
+  (endpoints/create-workload request)
   (def request {:source
                 {:name "Terra DataRepo",
                  :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
@@ -262,19 +270,44 @@
                 :pipeline "Sarscov2IlluminaFull",
                 :project "(Test) tbl/GH-1216-covid-tests",
                 :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-                :labels ["hornet:test"]})
-  (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
-  (clojure.spec.alpha/explain :wfl.api.spec/workload-request request)
-  (clojure.data.json/read-str "")
-  (spec-tools.core/spec
-   {:spec
-    (clojure.spec.alpha/keys
-     :req-un [(or :wfl.api.spec/executor :wfl.api.spec/cromwell)
-              :wfl.api.spec/output
-              :wfl.api.spec/pipeline
-              :wfl.api.spec/project]
-     :opt-un [:wfl.api.spec/common :wfl.api.spec/input :wfl.api.spec/items])
-    :type :map
-    :leaf? false})
-  (clojure.edn/read-string "")
+                :labels ["hornet:test"]}) ;
+  (def response {:watchers [],
+                 :labels ["hornet:test"
+                          "pipeline:Sarscov2IlluminaFull"
+                          "project:(Test) tbl/GH-1216-covid-tests"],
+                 :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+                 :pipeline "Sarscov2IlluminaFull",
+                 :release "",
+                 :created "2021-05-14T23:40:46Z",
+                 :source {:id 2,
+                          :details "TerraDataRepoSourceDetails_000000002",
+                          :last_checked nil,
+                          :type "TerraDataRepoSource",
+                          :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+                          :table "flowcells",
+                          :column "run_date"},
+                 :output "",
+                 :workflows [],
+                 :project "(Test) tbl/GH-1216-covid-tests",
+                 :commit "626d7d078456e5dd56206755a02892f509ae1b9a",
+                 :wdl "",
+                 :uuid "91dd6874-ec14-4f2e-921d-591b44fc91de",
+                 :executor {:id 2,
+                            :details "TerraExecutorDetails_000000002",
+                            :type "TerraExecutor",
+                            :workspace
+                            "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                            :methodConfiguration "",
+                            :methodConfigurationVersion 0,
+                            :fromSource ""},
+                 :version "0.7.0",
+                 :sink {:id 2,
+                        :details "TerraWorkspaceSinkDetails_000000002",
+                        :workspace
+                        "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                        :entity "",
+                        :fromOutputs {},
+                        :identifier "",
+                        :type "TerraWorkspaceSink"}})
   )
+
