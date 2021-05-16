@@ -183,24 +183,14 @@
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-(defn ^:private go-create-snapshot!
-  "Create snapshot in TDR from `dataset` body, `table`
-   and `row-ids` then write job info as well as rows
-   into `source-details-name` table, `suffix` will be
-   appended to the snapshot names."
-  [suffix dataset table row-ids]
-  (let [columns     (-> (datarepo/all-columns dataset table)
-                        (->> (map :name) set)
-                        (conj "datarepo_row_id"))
-        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                   (update :name #(str % suffix))
-                   (datarepo/create-snapshot-job))]
-    job-id))
-
-(defn ^:private find-new-rows [{:keys [dataset dataset_table table_column_name last_checked] :as _source}
-                               now]
+(defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
    frozen `now`."
+  [{:keys [dataset
+           dataset_table
+           table_column_name
+           last_checked] :as _source}
+   now]
   (-> (datarepo/query-table-between
        dataset
        dataset_table
@@ -210,10 +200,24 @@
       :rows
       flatten))
 
-(defn ^:private make-snapshots [{:keys [dataset dataset_table] :as _source}
-                                now-obj row-ids]
+(defn ^:private go-create-snapshot!
+  "Create snapshot in TDR from `dataset` body, `table`
+   and `row-ids` then write job info as well as rows
+   into `source-details-name` table, `suffix` will be
+   appended to the snapshot names."
+  [suffix dataset table row-ids]
+  (let [columns     (-> (datarepo/all-columns dataset table)
+                      (->> (map :name) set)
+                      (conj "datarepo_row_id"))
+        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
+                 (update :name #(str % suffix))
+                 (datarepo/create-snapshot-job))]
+    job-id))
+
+(defn ^:private create-snapshots
   "Create unique-named snapshots in TDR with max partition size of 500,
-   using the frozen `now-obj` from `row-ids`."
+   using the frozen `now-obj`, from `row-ids`."
+  [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
   (let [shards (partition-all 500 row-ids)
         compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))]
     (doall (map-indexed (fn [idx shard]
@@ -226,8 +230,7 @@
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
   (let [query "SELECT snapshot_creation_job_id
                FROM %s
-               WHERE snapshot_creation_job_status = 'running'
-               AND snapshot_id IS NULL"]
+               WHERE snapshot_creation_job_status = 'running'"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)))))
@@ -240,7 +243,7 @@
     (let [{:keys [id job-status] :as result} job-metadata]
       ;; TODO: catch but not throw at (= job-status "succeeded")
       (if (= job-status "succeeded")
-        (assoc result :snapshot_id (datarepo/get-job-result id))
+        (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
         (assoc result :snapshot_id nil)))))
 
 (defn ^:private write-snapshot-id
@@ -278,7 +281,6 @@
     (jdbc/update! tx (keyword tdr-source-table) {:last_checked now} ["id = ?" id])))
 
 ;; Create and add new snapshots to the snapshot queue
-<<<<<<< HEAD
 (defn ^:private update-tdr-source
   "Check for new data in TDR, create new snapshots, insert
    resulting job creation ids into database and update the
@@ -288,7 +290,7 @@
   (let [now-obj     (OffsetDateTime/now (ZoneId/of "UTC"))
         now         (.format now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
         row-ids     (find-new-rows source now)
-        tdr-job-ids (make-snapshots source now-obj row-ids)]
+        tdr-job-ids (create-snapshots source now-obj row-ids)]
     (write-snapshots-creation-jobs source now row-ids tdr-job-ids)
     (update-last-checked source now))
   ;; update TDR jobs that are still "running"
