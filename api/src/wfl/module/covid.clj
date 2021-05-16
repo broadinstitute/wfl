@@ -2,6 +2,8 @@
   "Manage the Sarscov2IlluminaFull pipeline."
   (:require [clojure.edn :as edn]
             [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -10,11 +12,7 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.auth :as auth])
-            [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log])
+            [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [java.util UUID]))
