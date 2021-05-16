@@ -22,6 +22,7 @@
                 entity        TEXT NOT NULL,                                     -- the entity type to import data from the source as
                 from_outputs  TEXT NOT NULL,                                     -- mapping of how to coerce the output of executor to whatever the sink understands in serialized EDN
                 details       TEXT NOT NULL,                                     -- the identifier of the sink details table
+                identifier    TEXT NOT NULL,                                     -- the name of the output uniquely identifying the entity
                 CONSTRAINT TERRAWORKSPACESINK_PKEY PRIMARY KEY (id)
             )
         </sql>

@@ -73,7 +73,7 @@
 
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
-    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [[id table] (all/add-workload-table! tx wgs/workflow-wdl request)
             add-id (fn [m id] (assoc (:inputs m) :id id))]
         (jdbc/insert-multi! tx table (map add-id (:items request) (range)))

@@ -1,8 +1,8 @@
 (ns wfl.system.cdc-covid19-surveillance-demo
-  (:require [wfl.service.datarepo  :as datarepo]
+  (:require [wfl.module.covid      :as covid]
+            [wfl.service.datarepo  :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.rawls     :as rawls]
-            [wfl.tools.datasets    :as datasets]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.snapshots   :as snapshots]
             [wfl.tools.resources   :as resources]
@@ -98,7 +98,7 @@
                          (firecloud/get-workflow-outputs well-known-submission well-known-workflow)
                          (get-in [:tasks (keyword pipeline) :outputs])
                          (util/unprefix-keys (keyword (str pipeline "."))))
-        attributes   (datasets/rename-gather outputs from-outputs)
+        attributes   (covid/rename-gather outputs from-outputs)
         entity-name  "test"]
     (rawls/batch-upsert workspace [[entity-name workspace-table attributes]])))
 
