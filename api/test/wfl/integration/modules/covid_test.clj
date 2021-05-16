@@ -11,7 +11,21 @@
             [wfl.tools.workloads   :as workloads]
             [wfl.tools.resources   :as resources]
             [wfl.util              :as util])
-  (:import [java.util ArrayDeque UUID]))
+  (:import [java.util ArrayDeque UUID]
+           [java.lang Math]))
+
+;; Snapshot creation mock
+(def ^:private mock-new-rows-size 2021)
+(defn ^:private mock-find-new-rows [_ _] (take mock-new-rows-size (range)))
+(defn ^:private mock-create-snapshots [_ _ row-ids]
+  (let [shards (partition-all 500 row-ids)]
+    (doall (map-indexed (fn [idx _shard]
+                          (format "mock_job_id_%s" idx)) shards))))
+;; Note this mock only covers happy paths of TDR jobs
+(defn ^:private mock-check-tdr-job [job-id]
+  {:snapshot_id (str (UUID/randomUUID))
+   :job_status "succeeded"
+   :id job-id})
 
 ;; Queue mocks
 (def ^:private test-queue-type "TestQueue")
@@ -83,6 +97,29 @@
                   (workloads/covid-workload-request {} {} {}))]
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
+
+;; Flag for team discussion
+;; org.postgresql.util.PSQLException: ERROR:
+;; null value in column "id" of relation "terradatareposourcedetails_000000001" violates not-null constraint
+(deftest test-update-tdr-source
+  (let [{:keys [source]}
+        (workloads/create-workload!
+          (workloads/covid-workload-request {} {} {}))]
+    (with-redefs-fn
+      {#'covid/create-snapshots mock-create-snapshots
+       #'covid/find-new-rows mock-find-new-rows
+       #'covid/check-tdr-job mock-check-tdr-job}
+      #(#'covid/update-tdr-source source))
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (let [records (->> source :details (postgres/get-table tx))
+            expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
+            record-updated? (fn [record] (and (= "succeeded" (:snapshot_creation_job_status record))
+                                              (not (nil? (:snapshot_creation_job_id record)))
+                                              (not (nil? (:snapshot_id record)))))]
+        (testing "source details got updated with correct number of snapshot jobs"
+          (is (= expected-num-records (count records))))
+        (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
+          (is (every? record-updated? records)))))))
 
 (deftest test-update-terra-executor
   (fixtures/with-temporary-workspace
