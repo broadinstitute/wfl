@@ -210,13 +210,13 @@
                       (->> (map :name) set)
                       (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                 (update :name #(str % suffix))
-                 (datarepo/create-snapshot-job))]
+                   (update :name #(str % suffix))
+                   (datarepo/create-snapshot-job))]
     job-id))
 
 (defn ^:private create-snapshots
-  "Create unique-named snapshots in TDR with max partition size of 500,
-   using the frozen `now-obj`, from `row-ids`."
+  "Create uniquely named snapshots in TDR with max partition size of 500,
+   using the frozen `now-obj`, from `row-ids`, return TDR job-ids."
   [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
   (let [shards (partition-all 500 row-ids)
         compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))]
@@ -267,18 +267,18 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/insert-multi! tx
                         details
-                        (map (fn [id] {:snapshot_creation_job_id id
+                        (mapv (fn [id] {:snapshot_creation_job_id id
                                        :datarepo_row_ids         row-ids
                                        :start_time               last_checked
                                        :end_time                 now})
-                             snapshots-creation-jobs))))
+                              snapshots-creation-jobs))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
    the frozen `now`."
   [{:keys [id] :as _source} now]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (jdbc/update! tx (keyword tdr-source-table) {:last_checked now} ["id = ?" id])))
+    (jdbc/update! tx tdr-source-table {:last_checked now} ["id = ?" id])))
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source
@@ -287,12 +287,12 @@
    timestamp for next time using transaction TX."
   [source]
   ;; attempt to snapshot new rows in TDR
-  (let [now-obj     (OffsetDateTime/now (ZoneId/of "UTC"))
-        now         (.format now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
-        row-ids     (find-new-rows source now)
-        tdr-job-ids (create-snapshots source now-obj row-ids)]
-    (write-snapshots-creation-jobs source now row-ids tdr-job-ids)
-    (update-last-checked source now))
+  (let [utc-now-obj     (OffsetDateTime/now (ZoneId/of "UTC"))
+        utc-now         (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
+        row-ids         (vec (find-new-rows source utc-now))
+        tdr-job-ids     (create-snapshots source utc-now-obj row-ids)]
+    (write-snapshots-creation-jobs source utc-now-obj row-ids tdr-job-ids)
+    (update-last-checked source utc-now-obj))
   ;; update TDR jobs that are still "running"
   (let [pending-tdr-job-ids (get-pending-tdr-jobs source)
         job-metadatas (map check-tdr-job pending-tdr-job-ids)]
