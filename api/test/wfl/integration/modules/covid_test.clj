@@ -104,7 +104,7 @@
 (deftest test-update-tdr-source
   (let [{:keys [source]}
         (workloads/create-workload!
-          (workloads/covid-workload-request {} {} {}))]
+         (workloads/covid-workload-request {} {} {}))]
     (with-redefs-fn
       {#'covid/create-snapshots mock-create-snapshots
        #'covid/find-new-rows mock-find-new-rows

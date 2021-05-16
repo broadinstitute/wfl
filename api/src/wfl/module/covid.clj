@@ -207,8 +207,8 @@
    appended to the snapshot names."
   [suffix dataset table row-ids]
   (let [columns     (-> (datarepo/all-columns dataset table)
-                      (->> (map :name) set)
-                      (conj "datarepo_row_id"))
+                        (->> (map :name) set)
+                        (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
                    (update :name #(str % suffix))
                    (datarepo/create-snapshot-job))]
@@ -268,9 +268,9 @@
     (jdbc/insert-multi! tx
                         details
                         (mapv (fn [id] {:snapshot_creation_job_id id
-                                       :datarepo_row_ids         row-ids
-                                       :start_time               last_checked
-                                       :end_time                 now})
+                                        :datarepo_row_ids         row-ids
+                                        :start_time               last_checked
+                                        :end_time                 now})
                               snapshots-creation-jobs))))
 
 (defn ^:private update-last-checked
