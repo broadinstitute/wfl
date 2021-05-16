@@ -169,11 +169,6 @@
                     {:id       items
                      :workload workload}))))
 
-(defn ^:private workflows
-  "Return all the workflows managed by the `_workload`."
-  [{:keys [executor] :as _workload}]
-  (executor-workflows executor))
-
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
@@ -453,4 +448,4 @@
 (defoverload workloads/update-workload!   pipeline update-covid-workload)
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-(defoverload workloads/workflows          pipeline workflows)
+(defoverload workloads/workflows          pipeline (comp executor-workflows :executor))
