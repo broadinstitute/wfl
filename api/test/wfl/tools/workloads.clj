@@ -252,7 +252,7 @@
   (letfn [(finished? [{:keys [status] :as workflow}]
             (let [skipped? #(-> % :uuid util/uuid-nil?)]
               (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
-    (let [interval 10
+    (let [interval 60
           timeout  4800]                ; 80 minutes
       (loop [elapsed 0 wl workload]
         (when (> elapsed timeout)
