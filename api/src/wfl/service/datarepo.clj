@@ -97,6 +97,18 @@
   ([job-id]
    (poll-job job-id 5)))
 
+(defn get-job-metadata-when-done
+  "Nil or the metadata of job with `job-id` when done."
+  [job-id]
+  (let [metadata (get-repository-json "jobs" job-id)]
+    (when-not (-> metadata :job_status #{"running"})
+      metadata)))
+
+(defn get-job-result
+  "Get the result of job with `job-id`."
+  [job-id]
+  (get-repository-json "jobs" job-id "result"))
+
 (defn create-dataset
   "Create a dataset with EDN `dataset-request` and return the id
    of the created dataset. See `DatasetRequestModel` in the
@@ -123,6 +135,18 @@
       :id
       poll-job))
 
+(defn create-snapshot-job
+  "Return snapshot creation job-id defined by `snapshot-request` right away.
+   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [snapshot-request]
+  (-> (repository "snapshots")
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
+      :id))
+
 ;; Note the TDR is under active development, the endpoint spec is getting
 ;; changed so the spec in this function is not consistent with the TDR Swagger
 ;; page in order to make the request work.
@@ -132,12 +156,8 @@
    See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
-  (-> (repository "snapshots")
-      (http/post {:headers      (auth/get-service-account-header)
-                  :content-type :application/json
-                  :form-params  snapshot-request})
-      util/response-body-json
-      :id
+  (-> snapshot-request
+      create-snapshot-job
       poll-job
       :id))
 
@@ -177,7 +197,8 @@
   (get-repository-json "snapshots" snapshot-id))
 
 (defn all-columns
-  "Return all of the columns of `table` in `dataset` content."
+  "Helper function to parse all of the columns
+   of `table` in `dataset` body."
   [dataset table]
   (->> (get-in dataset [:schema :tables])
        (filter #(= (:name %) table))

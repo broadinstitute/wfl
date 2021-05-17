@@ -11,7 +11,7 @@
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time Instant OffsetDateTime]
+           [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
