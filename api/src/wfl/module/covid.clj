@@ -409,9 +409,32 @@
                      :updated               now})]
       (jdbc/insert-multi! tx details (map to-rows workflows)))))
 
+(defn ^:private update-terra-workflow-statuses!
+  "Update statuses in DETAILS table for active or failed WORKSPACE workflows."
+  [{:keys [workspace details] :as _executor}]
+  (let [query  "SELECT *
+                FROM %s
+                WHERE rawls_submission_id IS NOT NULL
+                AND workflow_id IS NOT NULL
+                AND workflow_status NOT IN ('Succeeded', 'Aborted')"
+        records (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (jdbc/query tx (format query details)))]
+    (letfn [(get-status! [{:keys [rawls_submission_id workflow_id] :as _record}]
+              (:status (firecloud/get-workflow workspace
+                                               rawls_submission_id
+                                               workflow_id)))
+            (update!     [{:keys [id] :as _record} status]
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (jdbc/update! tx details
+                              {:workflow_status status
+                               :updated (OffsetDateTime/now)}
+                              ["id = ?" id])))]
+      (run! #(update! % (get-status! %)) records))))
+
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
-  writing its workflows to DETAILS.
+  writing its workflows to DETAILS table.
+  Update statuses for active or failed workflows in DETAILS table.
   Return EXECUTOR."
   [source executor]
   (if-let [snapshot (peek-queue! source)]
@@ -419,6 +442,7 @@
           submission (create-submission! executor reference)]
       (write-workflows! executor reference submission)
       (pop-queue! source)))
+  (update-terra-workflow-statuses! executor)
   executor)
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
