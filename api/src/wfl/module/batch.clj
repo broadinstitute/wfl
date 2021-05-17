@@ -99,7 +99,7 @@
   [_ workload]
   (into {} (filter second workload)))
 
-(defn ^:private pre-v0_4_0-load-workflows
+(defn pre-v0_4_0-load-workflows
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
@@ -107,8 +107,7 @@
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx (:items workload))
-         (mapv (comp unnilify split-inputs load-options))
-         (assoc workload :workflows))))
+         (mapv (comp unnilify split-inputs load-options)))))
 
 (defn ^:private load-batch-workflows
   "Use transaction `tx` to load the workflows in the `_workload` stored in a
