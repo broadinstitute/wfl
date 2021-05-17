@@ -218,31 +218,31 @@
                         (conj "datarepo_row_id"))
         job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
                    (update :name #(str % suffix))
-                   (datarepo/create-snapshot-job))]
+                   datarepo/create-snapshot-job)]
     job-id))
 
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
   [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
-  (let [shards (partition-all 500 row-ids)
+  (let [shards (mapv vec (partition-all 500 row-ids))
         compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))
-        job-ids (doall (map-indexed (fn [idx shard]
-                                      (go-create-snapshot!
-                                       (format "_%s_%s" compact-now idx)
-                                       dataset
-                                       dataset_table
-                                       shard)) shards))]
+        job-ids (vec (map-indexed (fn [idx shard]
+                                    (go-create-snapshot!
+                                     (format "_%s_%s" compact-now idx)
+                                     dataset
+                                     dataset_table
+                                     shard)) shards))]
     [shards job-ids]))
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
-  (let [query "SELECT snapshot_creation_job_id
+  (let [query "SELECT id, snapshot_creation_job_id
                FROM %s
-               WHERE snapshot_creation_job_status = 'running'"
-        result (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (->> (format query details)
-                      (jdbc/query tx)))]
-    (map :snapshot_creation_job_id result)))
+               WHERE snapshot_creation_job_status = 'running'"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (format query details)
+           (jdbc/query tx)
+           (map (juxt :id :snapshot_creation_job_id))))))
 
 (defn ^:private check-tdr-job
   "Check TDR job status for `job-id`, return a map with job-id,
@@ -260,15 +260,12 @@
   "Write `snapshot_id` and `job_status` into source `details` table
    from the `_tdr-job-metadata` map, update timestamp with real now."
   [{:keys [details] :as _source}
-   {:keys [id job_status snapshot_id] :as _tdr-job-metadata}]
+   [id {:keys [job_status snapshot_id] :as _tdr-job-metadata}]]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/update! tx details {:snapshot_creation_job_status job_status
                               :snapshot_id snapshot_id
                               :updated  (OffsetDateTime/now)}
-      ;; we don't have the primary key reference of details table here,
-      ;; so use job-id for where clause, since job-id is unique in TDR,
-      ;; this shall be fine
-                  ["snapshot_creation_job_id = ?" id])))
+                  ["id = ?" id])))
 
 (defn ^:private write-snapshots-creation-jobs
   "Write all `snapshots-creation-jobs` along with the `shards` they
@@ -280,7 +277,7 @@
                         details
                         (mapv (fn [shard id] {:snapshot_creation_job_id id
                                               :snapshot_creation_job_status "running"
-                                              :datarepo_row_ids         (vec shard)
+                                              :datarepo_row_ids         shard
                                               :start_time               last_checked
                                               :end_time                 now})
                               shards snapshots-creation-jobs))))
@@ -292,6 +289,13 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/update! tx tdr-source-table {:last_checked now} ["id = ?" id])))
 
+(defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
+  (if-let [id (util/parse-int source_items)]
+    (-> (load-record-by-id! tx tdr-source-table id)
+        (assoc :type tdr-source-type)
+        (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
+    (throw (ex-info "source_items is not an integer" details))))
+
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source
   "Check for new data in TDR, create new snapshots, insert
@@ -300,22 +304,18 @@
   [source]
   ;; attempt to snapshot new rows in TDR
   (let [utc-now-obj           (OffsetDateTime/now (ZoneId/of "UTC"))
-        utc-now               (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
+        utc-now               (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
         row-ids               (find-new-rows source utc-now)
         [shards tdr-job-ids]  (create-snapshots source utc-now-obj row-ids)]
     (write-snapshots-creation-jobs source utc-now-obj shards tdr-job-ids)
     (update-last-checked source utc-now-obj))
   ;; update TDR jobs that are still "running"
-  (let [pending-tdr-job-ids (get-pending-tdr-jobs source)
-        job-metadatas (map check-tdr-job pending-tdr-job-ids)]
-    (doall (map (partial write-snapshot-id source) job-metadatas))))
-
-(defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
-  (if-let [id (util/parse-int source_items)]
-    (-> (load-record-by-id! tx tdr-source-table id)
-        (assoc :type tdr-source-type)
-        (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
-    (throw (ex-info "source_items is not an integer" details))))
+  (let [id+pending-tdr-job-ids (get-pending-tdr-jobs source)
+        id+job-metadatas (map #(update % 1 check-tdr-job) id+pending-tdr-job-ids)]
+    (run! (partial write-snapshot-id source) id+job-metadatas))
+  ;; load and return the source table
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (load-tdr-source tx {:source_items (str (:id source))})))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
