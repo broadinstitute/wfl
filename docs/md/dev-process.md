@@ -17,6 +17,10 @@ without logging in first because it is bundled with the UI and not the API.
     server and access via the UI. See the development tips below for more
     information.
 
+!!! tip
+To access the swagger page locally, you'll need to start a development server
+and access via the UI. See the development tips below for more information.
+
 ## Development Setup
 
 Clojure development feels very different from Scala and Java development. It
@@ -252,6 +256,17 @@ You can use `--password=$ENV_SOMETHING` to supply it.
     clojure -M:liquibase
     ```
     if you are working with a local database.
+
+### Override ENVIRONMENT variables for local development
+
+WFL uses `src/wfl/api/environment.clj` to read and process environment variables.
+Most of the variables have their default values, which can be overwritten for development
+purposes. For example, if we want to run system tests in parallel against a local
+WFL instance, use below under `api/` directory:
+
+```shell
+WFL_WFL_URL=http://localhost:3000 clojure -M:parallel-test wfl.system.v1-endpoint-test
+```
 
 ### REPL testing with fixtures.
 
