@@ -4,13 +4,11 @@
             [clojure.string        :as str]
             [wfl.jdbc              :as jdbc]
             [wfl.module.covid      :as covid]
-            [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.workloads   :as workloads]
-            [wfl.tools.resources   :as resources]
-            [wfl.util              :as util])
+            [wfl.tools.resources   :as resources])
   (:import [java.util ArrayDeque UUID]))
 
 ;; Queue mocks
