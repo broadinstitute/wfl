@@ -45,13 +45,13 @@
    :creator @workloads/email})
 
 (defn mock-submit-workload
-  [workload _ _ _ _ _]
+  [_ workflows _ _ _ _ _]
   (let [now (OffsetDateTime/now)]
     (letfn [(submit [workflow uuid] (assoc workflow
                                            :status "Submitted"
                                            :updated now
                                            :uuid    uuid))]
-      (map submit (workloads/workflows workload) the-uuids))))
+      (map submit workflows the-uuids))))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -375,11 +375,11 @@
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! (workloads/workflows workload))))
+    (run! update! (wfl.api.workloads/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (let [count           (atom 0)
-        increment-count (fn [_] (swap! count inc))]
+        increment-count (fn [& _] (swap! count inc))]
     (with-redefs-fn
       {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
        #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!

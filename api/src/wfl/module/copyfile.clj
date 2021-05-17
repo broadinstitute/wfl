@@ -118,7 +118,7 @@
 (defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
   [tx {:keys [items uuid executor] :as workload}]
-  (let [executor (is-known-cromwell-url? executor)
+  (let [executor        (is-known-cromwell-url? executor)
         default-options (make-workflow-options executor)]
     (letfn [(submit! [{:keys [id inputs options]}]
               [id (submit-workflow executor inputs
@@ -128,7 +128,7 @@
               (jdbc/update! tx items
                             {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
                             ["id = ?" id]))]
-      (run! (comp (partial update! tx) submit!) (workloads/workflows workload))
+      (run! (comp (partial update! tx) submit!) (workloads/workflows tx workload))
       (jdbc/update! tx :workload
                     {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 

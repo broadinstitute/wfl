@@ -200,16 +200,16 @@
                   workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [workflows items] :as _workload}]
+  [tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! workflows)))
+    (run! update! (wfl.api.workloads/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflows                mock-submit-workflows
+    {#'cromwell/submit-workflows             mock-submit-workflows
      #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
     #(shared/run-workload-state-transition-test! (make-wgs-workload-request))))
 

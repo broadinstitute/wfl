@@ -83,7 +83,6 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/workflows tx)
-           workloads/workflows
            (mapv strip-workflow-internals)
            succeed))))
 

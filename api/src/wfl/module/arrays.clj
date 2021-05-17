@@ -129,7 +129,7 @@
               (jdbc/update! tx items
                             {:updated now :uuid submissionId :status "Submitted"}
                             ["id = ?" id]))]
-      (let [ids-uuids (map submit! (workloads/workflows workload))]
+      (let [ids-uuids (map submit! (workloads/workflows tx workload))]
         (run! (partial update! tx) ids-uuids)
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
 

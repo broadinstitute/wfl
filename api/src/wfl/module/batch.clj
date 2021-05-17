@@ -33,7 +33,7 @@
                              :updated (OffsetDateTime/now)
                              :uuid uuid}
                             ["id = ?" id]))]
-      (->> (workloads/workflows workload)
+      (->> (workloads/workflows tx workload)
            (remove (comp nil? :uuid))
            (remove (comp finished? :status))
            (run! #(update! % (get-status! workload %)))))))
@@ -95,12 +95,11 @@
     [id table]))
 
 (defn load-batch-workload-impl
-  "Use transaction `tx` to load and associate the workflows in the `workload`
-  stored in a CromwellWorkflow table."
+  "Load workload metadata + trim any unused vars."
   [_ workload]
   (into {} (filter second workload)))
 
-(defn ^:private pre-v0.4.0-load-workflows
+(defn ^:private pre-v0_4_0-load-workflows
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
@@ -122,22 +121,33 @@
          (mapv (comp unnilify load-options load-inputs)))))
 
 (defn submit-workload!
-  "Use transaction TX to start the WORKLOAD."
-  ([{:keys [uuid workflows]} url workflow-wdl make-cromwell-inputs! cromwell-label default-options]
-   (letfn [(update-workflow [workflow cromwell-uuid]
-             (assoc workflow :uuid cromwell-uuid
-                    :status "Submitted"
-                    :updated (OffsetDateTime/now)))
-           (submit-batch! [[options workflows]]
-             (map update-workflow
-                  workflows
-                  (cromwell/submit-workflows
-                   url
-                   workflow-wdl
-                   (map (partial make-cromwell-inputs! url) workflows)
-                   (util/deep-merge default-options options)
-                   (merge cromwell-label {:workload uuid}))))]
-     (mapcat submit-batch! (group-by :options workflows)))))
+  "Submit the `workflows` to Cromwell with `url`."
+  [{:keys [uuid labels] :as _workload}
+   workflows
+   url
+   workflow-wdl
+   make-cromwell-inputs!
+   cromwell-label
+   default-options]
+  (letfn [(update-workflow [workflow cromwell-uuid]
+            (merge workflow {:uuid cromwell-uuid
+                             :status "Submitted"
+                             :updated (OffsetDateTime/now)}))
+          (submit-batch! [[options workflows]]
+            (map update-workflow
+                 workflows
+                 (cromwell/submit-workflows
+                  url
+                  workflow-wdl
+                  (map (partial make-cromwell-inputs! url) workflows)
+                  (util/deep-merge default-options options)
+                  (merge
+                   cromwell-label
+                   {:workload uuid}
+                   (into {} (map #(-> (str/split % #":" 2) (update 0 keyword)) labels))))))]
+    (->> workflows
+         (group-by :options)
+         (mapcat submit-batch!))))
 
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
@@ -163,5 +173,5 @@
   "Return the workflows managed by the `workload`."
   [tx workload]
   (if (workloads/saved-before? "0.4.0" workload)
-    (pre-v0.4.0-load-workflows tx workload)
+    (pre-v0_4_0-load-workflows tx workload)
     (load-batch-workflows tx workload)))
