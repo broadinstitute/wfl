@@ -1,19 +1,19 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
-  (:require [clojure.set :refer [rename-keys]]
+  (:require [clojure.set                    :refer [rename-keys]]
             [clojure.tools.logging.readable :as logr]
-            [ring.util.http-response :as response]
-            [wfl.api.workloads :as workloads]
-            [wfl.module.aou :as aou]
+            [ring.util.http-response        :as response]
+            [wfl.api.workloads              :as workloads]
+            [wfl.module.aou                 :as aou]
             [wfl.module.arrays]
             [wfl.module.copyfile]
             [wfl.module.wgs]
             [wfl.module.xx]
             [wfl.module.sg]
-            [wfl.jdbc :as jdbc]
-            [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]
-            [clojure.tools.logging :as log]))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.service.google.storage     :as gcs]
+            [wfl.service.postgres           :as postgres]
+            [clojure.tools.logging          :as log]))
 
 (defn succeed
   "A successful response with BODY."
