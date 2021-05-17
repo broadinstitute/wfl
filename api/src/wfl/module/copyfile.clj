@@ -1,12 +1,12 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
+  (:require [clojure.data.json    :as json]
+            [clojure.string       :as str]
+            [wfl.api.workloads    :as workloads :refer [defoverload]]
+            [wfl.jdbc             :as jdbc]
+            [wfl.module.batch     :as batch]
             [wfl.service.cromwell :as cromwell]
-            [wfl.util :as util])
+            [wfl.util             :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
@@ -128,7 +128,7 @@
               (jdbc/update! tx items
                             {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
                             ["id = ?" id]))]
-      (run! (comp (partial update! tx) submit!) (:workflows workload))
+      (run! (comp (partial update! tx) submit!) (workloads/workflows workload))
       (jdbc/update! tx :workload
                     {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
@@ -148,5 +148,7 @@
   pipeline
   [tx workload]
   (if (workloads/saved-before? "0.4.0" workload)
-    (workloads/default-load-workload-impl tx workload)
+    (batch/pre-v0.4.0-load-workload-impl tx workload)
     (batch/load-batch-workload-impl tx workload)))
+
+(defoverload workloads/workflows pipeline batch/workflows)

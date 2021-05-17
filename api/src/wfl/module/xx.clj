@@ -1,16 +1,15 @@
 (ns wfl.module.xx
   "Reprocess External Exomes, whatever they are."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :refer [defoverload]]
-            [wfl.api.workloads :as workloads]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.module.batch :as batch]
-            [wfl.references :as references]
+  (:require [clojure.data.json          :as json]
+            [clojure.string             :as str]
+            [wfl.api.workloads          :refer [defoverload]]
+            [wfl.api.workloads          :as workloads]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.module.batch           :as batch]
+            [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalExomeReprocessing")
@@ -168,8 +167,9 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/create-workload! pipeline create-xx-workload!)
-(defoverload workloads/start-workload! pipeline start-xx-workload!)
-(defoverload workloads/update-workload! pipeline batch/update-workload!)
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
+(defoverload workloads/create-workload!   pipeline create-xx-workload!)
+(defoverload workloads/start-workload!    pipeline start-xx-workload!)
+(defoverload workloads/update-workload!   pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows          pipeline batch/workflows)

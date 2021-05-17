@@ -1,14 +1,14 @@
 (ns wfl.module.arrays
   "Process Arrays for the Broad Genomics Platform."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
-            [wfl.references :as references]
+  (:require [clojure.data.json     :as json]
+            [clojure.string        :as str]
+            [wfl.api.workloads     :as workloads :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.module.batch      :as batch]
+            [wfl.references        :as references]
             [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util])
+            [wfl.service.postgres  :as postgres]
+            [wfl.util              :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GPArrays")
@@ -129,9 +129,15 @@
               (jdbc/update! tx items
                             {:updated now :uuid submissionId :status "Submitted"}
                             ["id = ?" id]))]
-      (let [ids-uuids (map submit! (:workflows workload))]
+      (let [ids-uuids (map submit! (workloads/workflows workload))]
         (run! (partial update! tx) ids-uuids)
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
+
+(def update-terra-workflow-statuses!
+  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
+  (letfn [(get-terra-status [{:keys [project]} workflow]
+            (firecloud/get-workflow-status-by-entity project workflow))]
+    (batch/make-update-workflows get-terra-status)))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -149,8 +155,8 @@
   pipeline
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/update-terra-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
+            (update-terra-workflow-statuses! tx workload)
+            (batch/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
@@ -164,3 +170,4 @@
          unnilify)))
 
 (defoverload workloads/stop-workload! pipeline batch/stop-workload!)
+(defoverload workloads/workflows      pipeline batch/workflows)

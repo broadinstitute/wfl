@@ -1,16 +1,15 @@
 (ns wfl.module.aou
   "Process Arrays for the All Of Us project."
-  (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
-            [wfl.references :as references]
-            [wfl.service.cromwell :as cromwell]
+  (:require [clojure.string             :as str]
+            [clojure.tools.logging      :as log]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.module.batch           :as batch]
+            [wfl.references             :as references]
+            [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]
            [java.util UUID]))
@@ -280,8 +279,11 @@
   pipeline
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/update-workflow-statuses! tx workload)
+            (batch/update-workflow-statuses! tx workload)
             (when (:stopped workload)
-              (postgres/update-workload-status! tx workload))
+              (batch/update-workload-status! tx workload))
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
+
+(defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/load-workload-impl pipeline batch/pre-v0.4.0-load-workload-impl)
