@@ -1,10 +1,12 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.test               :as clj-test :refer [deftest testing is]]
+  (:require [clojure.test               :refer :all]
             [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.debug]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.api.spec               :as spec]
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
@@ -219,125 +221,79 @@
 
 (deftest test-create-covid-workload
   (let [dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8"
-        column "run_date"
-        table "flowcells"
-        workspace-template "CDC_Viral_Sequencing"
+        column  "run_date"
+        table   "flowcells"
+        workspace-template   "CDC_Viral_Sequencing"
         workspace-randomizer "GPc586b76e8ef24a97b354cf0226dfe583"
-        workspace-namespace "wfl-dev"
+        workspace-namespace  "wfl-dev"
         workspace-name (str/join "_" [workspace-template workspace-randomizer])
-        workspace (str/join "/" [workspace-namespace workspace-name])
+        workspace      (str/join "/" [workspace-namespace workspace-name])
         mc-namespace "cdc-covid-surveillance"
-        mc-name  "sarscov2_illumina_full"
+        mc-name      "sarscov2_illumina_full"
         method_configuration (str/join "/" [mc-namespace mc-name])
-        request (workloads/covid-workload-request
-                 (util/make-map column dataset table)
-                 (util/make-map method_configuration workspace)
-                 (util/make-map workspace))]
-    (wfl.debug/trace request)
-    (wfl.debug/trace (endpoints/create-workload request))))
-
-(deftest tbl
-  (let [request
-        {:source
-         {:name "Terra DataRepo",
-          :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
-          :table "flowcells",
-          :column "run_date"},
-         :executor
-         {:name "Terra",
-          :workspace
-          "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-          :methodConfiguration "",
-          :methodConfigurationVersion 0,
-          :fromSource "",
-          :method_configuration
-          "cdc-covid-surveillance/sarscov2_illumina_full"},
-         :sink
-         {:name "Terra Workspace",
-          :workspace
-          "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-          :entity "",
-          :fromOutputs {},
-          :identifier ""},
-         :pipeline "Sarscov2IlluminaFull",
-         :project "(Test) tbl/GH-1216-covid-tests",
-         :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-         :labels ["hornet:test"]}]
-    (endpoints/create-workload request)))
+        source   (util/make-map column dataset table)
+        executor (util/make-map method_configuration workspace)
+        sink     (util/make-map workspace)
+        request  (workloads/covid-workload-request source executor sink)
+        response (endpoints/create-workload request)]
+    (wfl.debug/trace response)
+    (is (s/valid? ::spec/covid-workload-request  request))
+    (wfl.debug/trace (s/valid? ::spec/covid-workload-response response))
+    (wfl.debug/trace (s/explain ::spec/covid-workload-response response))))
 
 (comment
-  (clj-test/test-vars [#'tbl])
+  (test-vars [#'test-create-covid-workload])
   "Remember to: export WFL_WFL_URL=http://localhost:3000"
+  (System/getenv "WFL_WFL_URL")
   (clj-test/test-vars [#'test-create-covid-workload])
   (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
   (clojure.spec.alpha/valid? :wfl.api.spec/workload-response response)
-  (clojure.spec.alpha/explain :wfl.api.spec/workload-request request)
+  (clojure.spec.alpha/explain :wfl.api.spec/workload-response response)
   (clojure.data.json/read-str
    :key-fn keyword)
   (clojure.edn/read-string)
   (endpoints/create-workload request)
-  (def request {:source
-                {:name "Terra DataRepo",
-                 :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
-                 :table "flowcells",
-                 :column "run_date"},
-                :executor
-                {:name "Terra",
-                 :workspace
-                 "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-                 :methodConfiguration "",
-                 :methodConfigurationVersion 0,
-                 :fromSource "",
-                 :method_configuration
-                 "cdc-covid-surveillance/sarscov2_illumina_full"},
-                :sink
-                {:name "Terra Workspace",
-                 :workspace
-                 "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-                 :entity "",
-                 :fromOutputs {},
-                 :identifier ""},
-                :pipeline "Sarscov2IlluminaFull",
-                :project "(Test) tbl/GH-1216-covid-tests",
-                :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-                :labels ["hornet:test"]})
-  (def response {:watchers [],
-                 :labels ["hornet:test"
-                          "pipeline:Sarscov2IlluminaFull"
-                          "project:(Test) tbl/GH-1216-covid-tests"],
-                 :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-                 :pipeline "Sarscov2IlluminaFull",
-                 :release "",
-                 :created "2021-05-14T23:40:46Z",
-                 :source {:id 2,
-                          :details "TerraDataRepoSourceDetails_000000002",
-                          :last_checked nil,
-                          :type "TerraDataRepoSource",
-                          :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
-                          :table "flowcells",
-                          :column "run_date"},
-                 :output "",
-                 :workflows [],
-                 :project "(Test) tbl/GH-1216-covid-tests",
-                 :commit "626d7d078456e5dd56206755a02892f509ae1b9a",
-                 :wdl "",
-                 :uuid "91dd6874-ec14-4f2e-921d-591b44fc91de",
-                 :executor {:id 2,
-                            :details "TerraExecutorDetails_000000002",
-                            :type "TerraExecutor",
-                            :workspace
-                            "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-                            :methodConfiguration "",
-                            :methodConfigurationVersion 0,
-                            :fromSource ""},
-                 :version "0.7.0",
-                 :sink {:id 2,
-                        :details "TerraWorkspaceSinkDetails_000000002",
-                        :workspace
-                        "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-                        :entity "",
-                        :fromOutputs {},
-                        :identifier "",
-                        :type "TerraWorkspaceSink"}})
+  (def response
+    {:watchers [],
+     :labels
+     ["hornet:test"
+      "pipeline:Sarscov2IlluminaFull"
+      "project:(Test) tbl/GH-1216-covid-tests"],
+     :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+     :pipeline "Sarscov2IlluminaFull",
+     :release "",
+     :created "2021-05-17T21:38:38Z",
+     :source
+     {:id 20,
+      :details "TerraDataRepoSourceDetails_000000020",
+      :last_checked nil,
+      :type "TerraDataRepoSource",
+      :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+      :table "flowcells",
+      :column "run_date"},
+     :output "",
+     :workflows [],
+     :project "(Test) tbl/GH-1216-covid-tests",
+     :commit "cd46caa3fde7152e171fcdda557dc48bb93288bf",
+     :wdl "",
+     :uuid "67598dc9-03fd-4121-a616-ed58a8eccc73",
+     :executor
+     {:id 20,
+      :details "TerraExecutorDetails_000000020",
+      :type "TerraExecutor",
+      :workspace
+      "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+      :methodConfiguration "",
+      :methodConfigurationVersion 0,
+      :fromSource ""},
+     :version "0.7.0",
+     :sink
+     {:id 20,
+      :details "TerraWorkspaceSinkDetails_000000020",
+      :workspace
+      "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+      :entity "",
+      :fromOutputs {},
+      :identifier "",
+      :type "TerraWorkspaceSink"}})
   )
-

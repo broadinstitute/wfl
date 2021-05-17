@@ -109,8 +109,8 @@
 (s/def ::covid-executor (s/keys :req-un [::fromSource
                                          ::methodConfiguration
                                          ::methodConfigurationVersion
-                                         ::name
-                                         ::workspace]))
+                                         ::workspace]
+                                :opt-un [::name]))
 
 (s/def ::executor (s/or :batch ::batch-executor
                         :covid ::covid-executor))
@@ -169,7 +169,17 @@
                                                  ::project
                                                  ::watchers]))
 
-(s/def ::covid-workload-response (s/keys :opt-un [::finished
+(s/def ::covid-workload-response (s/keys :req-un [::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::labels
+                                                  ::pipeline
+                                                  ::sink
+                                                  ::source
+                                                  ::uuid
+                                                  ::version
+                                                  ::watchers]
+                                         :opt-un [::finished
                                                   ::release
                                                   ::started
                                                   ::stopped]))

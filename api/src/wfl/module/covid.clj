@@ -118,7 +118,7 @@
         src-exc-snk [(create-source! tx id source)
                      (create-executor! tx id executor)
                      (create-sink! tx id sink)]
-        items       (->> (map second src-exc-snk)
+        items       (->> (map second (wfl.debug/trace src-exc-snk))
                          (zipmap [:source_items :executor_items :sink_items])
                          (jdbc/insert! tx continuous-workload-table-name)
                          first
@@ -160,7 +160,7 @@
 
 ;; TODO: validate the request before creating the workload
 (defn create-covid-workload [tx request]
-  (wfl.debug/trace request)
+  (wfl.debug/trace [:create-covid-workload request])
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
@@ -169,8 +169,8 @@
     (wfl.debug/trace id)
     (wfl.debug/trace items)
     (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
-    (workloads/load-workload-for-id tx id)))
+    (wfl.debug/trace (jdbc/update! tx :workload {:items items} ["id = ?" id]))
+    (wfl.debug/trace (workloads/load-workload-for-id tx id))))
 
 (defn load-covid-workload-impl [tx {:keys [items] :as workload}]
   (if-let [id (util/parse-int items)]
@@ -503,6 +503,8 @@
    :fromSource                 :from_source})
 
 (defn ^:private create-terra-executor [tx id request]
+  (wfl.debug/trace [:create-terra-executor id])
+  (wfl.debug/trace request)
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" terra-executor-type id)
@@ -512,7 +514,8 @@
                     (update :fromSource pr-str)
                     (set/rename-keys terra-executor-serialized-fields)
                     (assoc :details details)
-                    (->> (jdbc/insert! tx terra-executor-table)))]
+                    (->> (jdbc/insert! tx terra-executor-table))
+                    wfl.debug/trace)]
     [terra-executor-type (-> items first :id str)]))
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as workload}]
@@ -522,6 +525,10 @@
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
+
+(comment
+  (create-terra-executor (postgres/wfl-db-config) 23 )
+  )
 
 (defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
@@ -732,6 +739,7 @@
   [values mapping]
   (letfn [(literal? [x] (str/starts-with? x "$"))
           (go! [v]
+            (wfl.debug/trace v)
             (cond (literal? v) (subs v 1 (count v))
                   (string?  v) (values (keyword v))
                   (map?     v) (rename-gather values v)
