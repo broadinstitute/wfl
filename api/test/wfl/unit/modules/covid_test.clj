@@ -34,9 +34,9 @@
                 :dataset_table "flowcell"}
         row-ids (take mock-new-rows-size (range))
         now-obj (OffsetDateTime/now (ZoneId/of "UTC"))
-        snapshot-requests (with-redefs-fn
-                            {#'datarepo/create-snapshot-job mock-create-snapshot-job}
-                            #(#'covid/create-snapshots source now-obj row-ids))]
+        [shards snapshot-requests] (with-redefs-fn
+                                     {#'datarepo/create-snapshot-job mock-create-snapshot-job}
+                                     #(#'covid/create-snapshots source now-obj row-ids))]
     (testing "snapshot requests are properly partitioned and made unique"
-      (is (= expected-num-shards (count snapshot-requests)) "requests are not partitioned correctly!")
-      (is (distinct? (map #(get-in % [:request :name]))) "requests are not made unique!"))))
+      (is (= expected-num-shards (count shards)) "requests are not partitioned correctly!")
+      (is (apply distinct? (map #(get-in % [:request :name]) snapshot-requests)) "requests are not made unique!"))))
