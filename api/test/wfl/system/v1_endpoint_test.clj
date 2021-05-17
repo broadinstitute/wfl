@@ -1,5 +1,6 @@
 (ns wfl.system.v1-endpoint-test
   (:require [clojure.test               :refer :all]
+            [clojure.instant            :as instant]
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
@@ -228,72 +229,15 @@
         workspace-namespace  "wfl-dev"
         workspace-name (str/join "_" [workspace-template workspace-randomizer])
         workspace      (str/join "/" [workspace-namespace workspace-name])
-        mc-namespace "cdc-covid-surveillance"
-        mc-name      "sarscov2_illumina_full"
+        mc-namespace   "cdc-covid-surveillance"
+        mc-name        "sarscov2_illumina_full"
         method_configuration (str/join "/" [mc-namespace mc-name])
         source   (util/make-map column dataset table)
         executor (util/make-map method_configuration workspace)
         sink     (util/make-map workspace)
         request  (workloads/covid-workload-request source executor sink)
-        response (endpoints/create-workload request)]
-    (wfl.debug/trace response)
+        raw-resp (endpoints/create-workload request)
+        response (update raw-resp :created instant/read-instant-timestamp)]
     (is (s/valid? ::spec/covid-workload-request  request))
-    (wfl.debug/trace (s/valid? ::spec/covid-workload-response response))
-    (wfl.debug/trace (s/explain ::spec/covid-workload-response response))))
+    (is (s/valid? ::spec/covid-workload-response response))))
 
-(comment
-  (test-vars [#'test-create-covid-workload])
-  "Remember to: export WFL_WFL_URL=http://localhost:3000"
-  (System/getenv "WFL_WFL_URL")
-  (clj-test/test-vars [#'test-create-covid-workload])
-  (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
-  (clojure.spec.alpha/valid? :wfl.api.spec/workload-response response)
-  (clojure.spec.alpha/explain :wfl.api.spec/workload-response response)
-  (clojure.data.json/read-str
-   :key-fn keyword)
-  (clojure.edn/read-string)
-  (endpoints/create-workload request)
-  (def response
-    {:watchers [],
-     :labels
-     ["hornet:test"
-      "pipeline:Sarscov2IlluminaFull"
-      "project:(Test) tbl/GH-1216-covid-tests"],
-     :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-     :pipeline "Sarscov2IlluminaFull",
-     :release "",
-     :created "2021-05-17T21:38:38Z",
-     :source
-     {:id 20,
-      :details "TerraDataRepoSourceDetails_000000020",
-      :last_checked nil,
-      :type "TerraDataRepoSource",
-      :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
-      :table "flowcells",
-      :column "run_date"},
-     :output "",
-     :workflows [],
-     :project "(Test) tbl/GH-1216-covid-tests",
-     :commit "cd46caa3fde7152e171fcdda557dc48bb93288bf",
-     :wdl "",
-     :uuid "67598dc9-03fd-4121-a616-ed58a8eccc73",
-     :executor
-     {:id 20,
-      :details "TerraExecutorDetails_000000020",
-      :type "TerraExecutor",
-      :workspace
-      "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-      :methodConfiguration "",
-      :methodConfigurationVersion 0,
-      :fromSource ""},
-     :version "0.7.0",
-     :sink
-     {:id 20,
-      :details "TerraWorkspaceSinkDetails_000000020",
-      :workspace
-      "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
-      :entity "",
-      :fromOutputs {},
-      :identifier "",
-      :type "TerraWorkspaceSink"}})
-  )
