@@ -175,8 +175,10 @@
 
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraDataRepoSourceDetails_%09d" id)
-        _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/db-do-commands tx [(format create details)
+                                         (format alter details)])
         items   (-> (select-keys request (keys tdr-source-serialized-fields))
                     (set/rename-keys tdr-source-serialized-fields)
                     (assoc :details details)
