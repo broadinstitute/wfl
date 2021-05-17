@@ -80,12 +80,12 @@
   "Return the workflows managed by the workload."
   [request]
   (let [uuid (get-in request [:path-params :uuid])]
-    (log/infof "GET /api/v1/workflows with uuid: %s" uuid)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (workloads/load-workload-for-uuid tx uuid)
-           workloads/workflows
-           (mapv strip-workflow-internals)
-           succeed))))
+    (log/infof "GET /api/v1/workload/%s/workflows" uuid)
+    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (workloads/load-workload-for-uuid tx uuid))
+         workloads/workflows
+         (mapv strip-workflow-internals)
+         succeed)))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
