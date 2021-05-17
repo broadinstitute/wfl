@@ -160,14 +160,6 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx {:keys [items] :as workload}]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (->> (postgres/get-table tx items)
-         (mapv (comp #(update % :inputs util/parse-json) unnilify))
-         (assoc workload :workflows)
-         unnilify)))
-
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
 (defoverload workloads/stop-workload! pipeline batch/stop-workload!)
 (defoverload workloads/workflows      pipeline batch/workflows)

@@ -27,7 +27,9 @@
 
 (defn ^:private prune
   [coll]
-  (apply dissoc coll [:id :items]))
+  (->> (apply dissoc coll [:id :items])
+       (filter second)
+       (into {})))
 
 (defn strip-workflow-internals
   [workflow]
@@ -36,10 +38,7 @@
 (defn strip-internals
   "Strip internal properties from the `workload` and its `workflows`."
   [workload]
-  (->> (workloads/workflows workload)
-       (mapv strip-workflow-internals)
-       (assoc workload :workflows)
-       prune))
+  (prune workload))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."

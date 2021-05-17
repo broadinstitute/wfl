@@ -94,7 +94,13 @@
     (jdbc/update!        tx :workload {:items table} ["id = ?" id])
     [id table]))
 
-(defn pre-v0.4.0-load-workload-impl
+(defn load-batch-workload-impl
+  "Use transaction `tx` to load and associate the workflows in the `workload`
+  stored in a CromwellWorkflow table."
+  [_ workload]
+  (into {} (filter second workload)))
+
+(defn ^:private pre-v0.4.0-load-workflows
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
@@ -103,21 +109,17 @@
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx (:items workload))
          (mapv (comp unnilify split-inputs load-options))
-         (assoc workload :workflows)
-         unnilify)))
+         (assoc workload :workflows))))
 
-(defn load-batch-workload-impl
-  "Use transaction `tx` to load and associate the workflows in the `workload`
-  stored in a CromwellWorkflow table."
-  [tx {:keys [items] :as workload}]
+(defn ^:private load-batch-workflows
+  "Use transaction `tx` to load the workflows in the `_workload` stored in a
+   CromwellWorkflow table."
+  [tx {:keys [items] :as _workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
-         (mapv (comp unnilify load-options load-inputs))
-         (assoc workload :workflows)
-         load-options
-         unnilify)))
+         (mapv (comp unnilify load-options load-inputs)))))
 
 (defn submit-workload!
   "Use transaction TX to start the WORKLOAD."
@@ -160,4 +162,7 @@
 (defn workflows
   "Return the workflows managed by the `workload`."
   [workload]
-  (:workflows workload))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (if (workloads/saved-before? "0.4.0" workload)
+      (pre-v0.4.0-load-workflows tx workload)
+      (load-batch-workflows tx workload))))

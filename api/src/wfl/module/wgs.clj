@@ -191,14 +191,7 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/update-workload! pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!   pipeline batch/stop-workload!)
-
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (if (workloads/saved-before? "0.4.0" workload)
-    (batch/pre-v0.4.0-load-workload-impl tx workload)
-    (batch/load-batch-workload-impl tx workload)))
-
-(defoverload workloads/workflows pipeline batch/workflows)
+(defoverload workloads/update-workload!   pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows          pipeline batch/workflows)
