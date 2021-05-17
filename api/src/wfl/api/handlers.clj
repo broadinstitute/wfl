@@ -37,13 +37,8 @@
   [workflow]
   (prune workflow))
 
-(defn strip-internals
-  "Strip internal properties from the `workload` and its `workflows`."
-  [workload]
-  (prune workload))
-
 (defn append-to-aou-workload
-  "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
+  "Append workflows described in BODY of REQUEST to a started AoU workload."
   [request]
   (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
     (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
@@ -60,12 +55,13 @@
         {:keys [email]}  (gcs/userinfo request)]
     (wfl.debug/trace workload-request)
     (logr/info "POST /api/v1/create with request: " workload-request)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (assoc workload-request :creator email)
-           (workloads/create-workload! tx)
-           strip-internals
-           wfl.debug/trace
-           succeed))))
+    (-> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (->> email
+               (assoc workload-request :creator)
+               (workloads/create-workload! tx)))
+        strip-internals
+        wfl.debug/trace
+        succeed)))
 
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
@@ -95,23 +91,23 @@
   [request]
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "POST /api/v1/start with uuid: " uuid)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [{:keys [started] :as workload}
-            (workloads/load-workload-for-uuid tx uuid)]
-        (-> (if-not started (workloads/start-workload! tx workload) workload)
-            strip-internals
-            succeed)))))
+    (-> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (let [{:keys [started] :as workload}
+                (workloads/load-workload-for-uuid tx uuid)]
+            (if started workload (workloads/start-workload! tx workload))))
+        strip-internals
+        succeed)))
 
 (defn post-stop
   "Stop managing workflows for the workload specified by 'request'."
   [request]
   (let [{uuid :uuid} (:body-params request)]
     (logr/infof "POST /api/v1/stop with uuid: %s" uuid)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (workloads/load-workload-for-uuid tx uuid)
-           (workloads/stop-workload! tx)
-           strip-internals
-           succeed))))
+    (-> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (->> (workloads/load-workload-for-uuid tx uuid)
+               (workloads/stop-workload! tx)))
+        strip-internals
+        succeed)))
 
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
@@ -119,10 +115,10 @@
   (let [workload-request (-> (:body-params request)
                              (rename-keys {:cromwell :executor}))]
     (logr/info "POST /api/v1/exec with request: " workload-request)
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (gcs/userinfo request)
-           :email
-           (assoc workload-request :creator)
-           (workloads/execute-workload! tx)
-           strip-internals
-           succeed))))
+    (-> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (->> (gcs/userinfo request)
+               :email
+               (assoc workload-request :creator)
+               (workloads/execute-workload! tx)))
+        strip-internals
+        succeed)))
