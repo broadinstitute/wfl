@@ -55,6 +55,11 @@
            :parameters {:query ::spec/workload-query}
            :responses  {200 {:body ::spec/workload-responses}}
            :handler    handlers/get-workload}}]
+   ["/api/v1/workload/:uuid/workflows"
+    {:get {:summary    "Get workflows managed by the workload."
+           :parameters {:path-params ::spec/uuid}
+           :responses  {200 {:body ::spec/workflows}}
+           :handler    handlers/get-workflows}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::spec/workload-request}
