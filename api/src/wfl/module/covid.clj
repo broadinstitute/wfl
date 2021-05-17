@@ -255,8 +255,10 @@
 
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraExecutorDetails_%09d" id)
         _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/execute! tx [(format alter details)])
         items   (-> (select-keys request (keys terra-executor-serialized-fields))
                     (update :fromSource pr-str)
                     (set/rename-keys terra-executor-serialized-fields)
@@ -288,16 +290,14 @@
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [now      (OffsetDateTime/now)
-          id-start (inc (postgres/table-max tx details :id))
-          to-rows  (fn [idx {:keys [status workflowId] :as _workflow}]
-                     {:id                    (+ id-start idx)
-                      :snapshot_reference_id referenceId
-                      :rawls_submission_id   submissionId
-                      :workflow_id           workflowId
-                      :workflow_status       status
-                      :updated               now})]
-      (jdbc/insert-multi! tx details (map-indexed to-rows workflows)))))
+    (let [now     (OffsetDateTime/now)
+          to-rows (fn [{:keys [status workflowId] :as _workflow}]
+                    {:snapshot_reference_id referenceId
+                     :rawls_submission_id   submissionId
+                     :workflow_id           workflowId
+                     :workflow_status       status
+                     :updated               now})]
+      (jdbc/insert-multi! tx details (map to-rows workflows)))))
 
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
@@ -360,11 +360,11 @@
               (jdbc/query tx)))
        (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
-(defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload update-executor! terra-executor-type update-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
-(defoverload peek-queue!      terra-executor-type peek-terra-executor-queue)
-(defoverload pop-queue!       terra-executor-type pop-terra-executor-queue)
+(defoverload create-executor!   terra-executor-name create-terra-executor)
+(defoverload update-executor!   terra-executor-type update-terra-executor)
+(defoverload load-executor!     terra-executor-type load-terra-executor)
+(defoverload peek-queue!        terra-executor-type peek-terra-executor-queue)
+(defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
 
 ;; Terra Workspace Sink
@@ -379,8 +379,10 @@
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraWorkspaceSinkDetails_%09d" id)
         _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/execute! tx [(format alter details)])
         items   (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
                     (update :fromOutputs pr-str)
                     (set/rename-keys terra-workspace-sink-serialized-fields)
@@ -435,8 +437,7 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity_name name
               :workflow    uuid
-              :updated     (OffsetDateTime/now)
-              :id          (inc (postgres/table-max tx details :id))}
+              :updated     (OffsetDateTime/now)}
              (jdbc/insert! tx details))))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
