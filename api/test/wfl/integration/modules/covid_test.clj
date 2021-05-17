@@ -99,9 +99,6 @@
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
 
-;; Flag for team discussion
-;; org.postgresql.util.PSQLException: ERROR:
-;; null value in column "id" of relation "terradatareposourcedetails_000000001" violates not-null constraint
 (deftest test-update-tdr-source
   (let [{:keys [source]}
         (workloads/create-workload!
@@ -110,7 +107,7 @@
       {#'covid/create-snapshots mock-create-snapshots
        #'covid/find-new-rows mock-find-new-rows
        #'covid/check-tdr-job mock-check-tdr-job}
-      #(#'covid/update-tdr-source source))
+      #(#'covid/update-source! source))
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [records (->> source :details (postgres/get-table tx))
             expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
