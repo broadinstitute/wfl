@@ -42,40 +42,6 @@
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
 
-(s/def ::batch-executor string?)
-(s/def ::covid-executor (s/keys :req-un [::fromSource
-                                         ::methodConfiguration
-                                         ::methodConfigurationVersion
-                                         ::name
-                                         ::workspace]))
-
-(s/def ::executor (s/or :batch ::batch-executor
-                        :covid ::covid-executor))
-
-(s/def ::batch-workload-request (s/keys :opt-un [::common
-                                                 ::input
-                                                 ::items]
-                                        :req-un [(or ::cromwell ::executor)
-                                                 ::output
-                                                 ::pipeline
-                                                 ::project]))
-(s/def ::batch-workload-response (s/keys :opt-un [::finished
-                                                  ::input
-                                                  ::started
-                                                  ::stopped
-                                                  ::wdl
-                                                  ::workflows]
-                                         :req-un [::commit
-                                                  ::created
-                                                  ::creator
-                                                  ::executor
-                                                  ::output
-                                                  ::pipeline
-                                                  ::project
-                                                  ::release
-                                                  ::uuid
-                                                  ::version]))
-
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
@@ -138,6 +104,17 @@
                                            ::environment
                                            ::start]))
 
+
+(s/def ::batch-executor string?)
+(s/def ::covid-executor (s/keys :req-un [::fromSource
+                                         ::methodConfiguration
+                                         ::methodConfigurationVersion
+                                         ::name
+                                         ::workspace]))
+
+(s/def ::executor (s/or :batch ::batch-executor
+                        :covid ::covid-executor))
+
 (s/def ::column string?)
 (s/def ::dataset string?)
 (s/def ::entity string?)
@@ -159,10 +136,35 @@
                                  ::dataset
                                  ::table]))
 
-(s/def ::covid-workload-request (s/keys :req-un [::source
-                                                 ::sink
+(s/def ::batch-workload-request (s/keys :opt-un [::common
+                                                 ::input
+                                                 ::items
+                                                 ::output]
+                                        :req-un [(or ::cromwell ::executor)
                                                  ::pipeline
-                                                 ::executor]
+                                                 ::project]))
+
+(s/def ::batch-workload-response (s/keys :opt-un [::finished
+                                                  ::input
+                                                  ::started
+                                                  ::stopped
+                                                  ::wdl
+                                                  ::workflows]
+                                         :req-un [::commit
+                                                  ::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::output
+                                                  ::pipeline
+                                                  ::project
+                                                  ::release
+                                                  ::uuid
+                                                  ::version]))
+
+(s/def ::covid-workload-request (s/keys :req-un [::executor
+                                                 ::pipeline
+                                                 ::sink
+                                                 ::source]
                                         :opt-un [::labels
                                                  ::project
                                                  ::watchers]))
