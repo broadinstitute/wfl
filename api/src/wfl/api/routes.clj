@@ -1,5 +1,5 @@
 (ns wfl.api.routes
-  "Define routes for API endpoints"
+  "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
             [clojure.tools.logging              :as log]
             [clojure.tools.logging.readable     :as logr]
@@ -65,19 +65,13 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-create}}]
-   (wfl.debug/trace
-    ["/api/v1/create"
-     {:post {:summary    "Create a new workload."
-             :parameters {:body ::spec/workload-request}
-             :responses  {200 {:body ::spec/workload-response}}
-             :handler    #(handlers/post-create (wfl.debug/trace %))}}])
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
-    {:post {:summary    "Stop managing workflows for the workload specified by 'request'."
+    {:post {:summary    "Stop managing the workload specified by 'request'."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
