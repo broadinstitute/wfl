@@ -1,5 +1,6 @@
 (ns wfl.integration.modules.wgs-test
   (:require [clojure.set :refer [rename-keys]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest testing is] :as clj-test]
             [wfl.integration.modules.shared :as shared]
             [wfl.service.cromwell :as cromwell]
@@ -10,7 +11,6 @@
             [wfl.module.all :as all]
             [wfl.util :as util]
             [wfl.references :as references]
-            [clojure.string :as str]
             [wfl.service.postgres :as postgres])
   (:import (java.util UUID)
            (java.time OffsetDateTime)))
