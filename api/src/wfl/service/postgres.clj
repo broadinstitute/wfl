@@ -1,14 +1,8 @@
 (ns wfl.service.postgres
   "Talk to the Postgres database."
   (:require [clojure.string        :as str]
-            [clj-http.client       :as http]
             [wfl.environment       :as env]
-            [wfl.jdbc              :as jdbc]
-            [wfl.auth              :as auth]
-            [wfl.service.cromwell  :as cromwell]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.util              :as util])
-  (:import [java.time OffsetDateTime]))
+            [wfl.jdbc              :as jdbc]))
 
 (def ^:private testing-db-overrides
   "Override the configuration used by `wfl-db-config` for testing. Use
@@ -66,70 +60,3 @@
       first
       :max
       (or 0)))
-
-(defn ^:private cromwell-status
-  "`status` of the workflow with `uuid` in `cromwell`."
-  [cromwell uuid]
-  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
-      (http/get {:headers (auth/get-auth-header)})
-      :body
-      util/parse-json
-      :status))
-
-(def ^:private finished?
-  "Test if a workflow `:status` is in a terminal state."
-  (set (conj cromwell/final-statuses "skipped")))
-
-(defn ^:private make-update-workflows [get-status!]
-  (fn [tx {:keys [items workflows] :as workload}]
-    (letfn [(update! [{:keys [id uuid]} status]
-              (jdbc/update! tx items
-                            {:status status
-                             :updated (OffsetDateTime/now)
-                             :uuid uuid}
-                            ["id = ?" id]))]
-      (->> workflows
-           (remove (comp nil? :uuid))
-           (remove (comp finished? :status))
-           (run! #(update! % (get-status! workload %)))))))
-
-(def update-workflow-statuses!
-  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status executor uuid)))]
-    (make-update-workflows get-cromwell-status)))
-
-(def update-terra-workflow-statuses!
-  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
-  (letfn [(get-terra-status [{:keys [project]} workflow]
-            (firecloud/get-workflow-status-by-entity project workflow))]
-    (make-update-workflows get-terra-status)))
-
-(defn batch-update-workflow-statuses!
-  "Use `tx` to update the `status` of the workflows in `_workload`."
-  [tx {:keys [executor uuid items] :as _workoad}]
-  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
-                          (cromwell/query executor)
-                          (map (juxt :id :status)))]
-    (letfn [(update! [[uuid status]]
-              (jdbc/update! tx items
-                            {:status status :updated (OffsetDateTime/now)}
-                            ["uuid = ?" uuid]))]
-      (run! update! uuid->status))))
-
-(defn active-workflows
-  "Use `tx` to query all the workflows in `_workload` whose :status is not in
-  `finished?`"
-  [tx {:keys [items] :as _workload}]
-  (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
-    (->> (util/to-quoted-comma-separated-list finished?)
-         (format query items)
-         (jdbc/query tx))))
-
-(defn update-workload-status!
-  "Use `tx` to mark `workload` finished when all `workflows` are finished."
-  [tx {:keys [id] :as workload}]
-  (when (empty? (active-workflows tx workload))
-    (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))
