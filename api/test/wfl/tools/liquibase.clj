@@ -22,7 +22,7 @@
   []
   (try
     (run-liquibase "../database/changelog.xml" (postgres/wfl-db-config))
-    (System/exit 0)
+    #_(System/exit 0)
     (catch ExceptionInfo e
       (binding [*out* *err*]
         (-> e .getMessage println)
