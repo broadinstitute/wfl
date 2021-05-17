@@ -245,10 +245,11 @@
   [job-id]
   (when-let [job-metadata (datarepo/get-job-metadata-when-done job-id)]
     (let [{:keys [id job-status] :as result} job-metadata]
-      ;; TODO: catch but not throw at (= job-status "succeeded")
       (if (= job-status "succeeded")
         (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
-        (assoc result :snapshot_id nil)))))
+        (do
+          (log/error "TDR Snapshot creation job %s failed!" id)
+          (assoc result :snapshot_id nil))))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table
