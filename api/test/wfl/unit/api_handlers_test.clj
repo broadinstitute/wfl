@@ -3,7 +3,7 @@
             [wfl.api.handlers   :as handlers]))
 
 (deftest test-strip-internals
-  (let [workload  (handlers/strip-internals
+  (let [workload  (#'handlers/strip-internals
                    {:id 0
                     :pipeline "Test"
                     :items "ExampleTable_0000001"})]
