@@ -81,7 +81,8 @@
 (def ^:private testing-dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
 
 ;; Get row-ids from BigQuery and use them to create a snapshot.
-(deftest test-create-snapshot
+;; excluded, the testing-dataset has been removed from dev-TDR
+(deftest ^:excluded test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset     (datarepo/dataset testing-dataset)
         table       "sample"
