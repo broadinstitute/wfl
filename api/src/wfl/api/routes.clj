@@ -57,7 +57,7 @@
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path-params ::spec/uuid}
+           :parameters {:path {:uuid ::spec/uuid}}
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/create"
