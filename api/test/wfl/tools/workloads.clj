@@ -287,7 +287,8 @@
     (wfl.api.workloads/update-workload! tx workload)))
 
 (defn workflows [workload]
-  (wfl.api.workloads/workflows workload))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/workflows tx workload)))
 
 (defn load-workload-for-uuid [uuid]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]

@@ -161,8 +161,7 @@
 
 (defn workflows
   "Return the workflows managed by the `workload`."
-  [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (if (workloads/saved-before? "0.4.0" workload)
-      (pre-v0.4.0-load-workflows tx workload)
-      (load-batch-workflows tx workload))))
+  [tx workload]
+  (if (workloads/saved-before? "0.4.0" workload)
+    (pre-v0.4.0-load-workflows tx workload)
+    (load-batch-workflows tx workload)))
