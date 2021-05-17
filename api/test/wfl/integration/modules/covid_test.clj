@@ -105,9 +105,7 @@
          (covid/load-source! tx))))
 
 (defn ^:private reload-source [tx {:keys [type id] :as _source}]
-  (->> [type (str id)]
-       (zipmap [:source_type :source_items])
-       (covid/load-source! tx)))
+  (covid/load-source! tx {:source_type type :source_items (str id)}))
 
 (deftest test-start-tdr-source
   (let [source (create-tdr-source (rand-int 1000000))]
