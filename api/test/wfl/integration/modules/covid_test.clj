@@ -80,20 +80,23 @@
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
 
+(defn ^:private create-terra-executor [id]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> {:name                       "Terra"
+          :workspace                  "workspace-ns/workspace-name"
+          :methodConfiguration        "mc-namespace/mc-name"
+          :methodConfigurationVersion 1
+          :fromSource                 "importSnapshot"
+          :skipValidation             true}
+         (covid/create-executor! tx id)
+         (zipmap [:executor_type :executor_items])
+         (covid/load-executor! tx))))
+
 (deftest test-update-terra-executor
   (let [snapshot {:name "test-snapshot-name"
                   :id   (str (UUID/randomUUID))}
         source   (make-queue-from-list [snapshot])
-        executor (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                   (->> {:name                       "Terra"
-                         :workspace                  "workspace-ns/workspace-name"
-                         :methodConfiguration        "mc-namespace/mc-name"
-                         :methodConfigurationVersion 1
-                         :fromSource                 "importSnapshot"
-                         :skipValidation             true}
-                        (covid/create-executor! tx (rand-int 1000000))
-                        (zipmap [:executor_type :executor_items])
-                        (covid/load-executor! tx)))]
+        executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record)))
               (is (= (:status workflow) (:workflow_status record)))
@@ -118,16 +121,7 @@
   (let [succeeded? #{"Succeeded"}
         source     (make-queue-from-list [{:name "test-snapshot-name"
                                            :id   (str (UUID/randomUUID))}])
-        executor   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                     (->> {:name                       "Terra"
-                           :workspace                  "workspace-ns/workspace-name"
-                           :methodConfiguration        "mc-namespace/mc-name"
-                           :methodConfigurationVersion 1
-                           :fromSource                 "importSnapshot"
-                           :skipValidation             true}
-                          (covid/create-executor! tx (rand-int 1000000))
-                          (zipmap [:executor_type :executor_items])
-                          (covid/load-executor! tx)))]
+        executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
       {#'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
        #'covid/create-submission!          mock-create-submission}
