@@ -218,24 +218,26 @@
 
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
-   using the frozen `now-obj`, from `row-ids`, return TDR job-ids."
+   using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
   [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
   (let [shards (partition-all 500 row-ids)
-        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))]
-    (doall (map-indexed (fn [idx shard]
-                          (go-create-snapshot!
-                           (format "_%s_%s" compact-now idx)
-                           dataset
-                           dataset_table
-                           shard)) shards))))
+        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))
+        job-ids (doall (map-indexed (fn [idx shard]
+                                      (go-create-snapshot!
+                                       (format "_%s_%s" compact-now idx)
+                                       dataset
+                                       dataset_table
+                                       shard)) shards))]
+    [shards job-ids]))
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
   (let [query "SELECT snapshot_creation_job_id
                FROM %s
-               WHERE snapshot_creation_job_status = 'running'"]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (format query details)
-           (jdbc/query tx)))))
+               WHERE snapshot_creation_job_status = 'running'"
+        result (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                 (->> (format query details)
+                      (jdbc/query tx)))]
+    (map :snapshot_creation_job_id result)))
 
 (defn ^:private check-tdr-job
   "Check TDR job status for `job-id`, return a map with job-id,
@@ -263,17 +265,19 @@
                   ["snapshot_creation_job_id = ?" id])))
 
 (defn ^:private write-snapshots-creation-jobs
-  "Write all `snapshots-creation-jobs` along with the `row-ids` they
-   try to snapshot into source `details` table, with the frozen `now`."
-  [{:keys [last_checked details] :as _source} now row-ids snapshots-creation-jobs]
+  "Write all `snapshots-creation-jobs` along with the `shards` they
+   try to snapshot into source `details` table, with the frozen `now`.
+   Also initialize all jobs statuses to running."
+  [{:keys [last_checked details] :as _source} now shards snapshots-creation-jobs]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/insert-multi! tx
                         details
-                        (mapv (fn [id] {:snapshot_creation_job_id id
-                                        :datarepo_row_ids         row-ids
-                                        :start_time               last_checked
-                                        :end_time                 now})
-                              snapshots-creation-jobs))))
+                        (mapv (fn [shard id] {:snapshot_creation_job_id id
+                                              :snapshot_creation_job_status "running"
+                                              :datarepo_row_ids         (vec shard)
+                                              :start_time               last_checked
+                                              :end_time                 now})
+                              shards snapshots-creation-jobs))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
@@ -289,11 +293,11 @@
    timestamp for next time using transaction TX."
   [source]
   ;; attempt to snapshot new rows in TDR
-  (let [utc-now-obj     (OffsetDateTime/now (ZoneId/of "UTC"))
-        utc-now         (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
-        row-ids         (vec (find-new-rows source utc-now))
-        tdr-job-ids     (create-snapshots source utc-now-obj row-ids)]
-    (write-snapshots-creation-jobs source utc-now-obj row-ids tdr-job-ids)
+  (let [utc-now-obj           (OffsetDateTime/now (ZoneId/of "UTC"))
+        utc-now               (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss"))
+        row-ids               (find-new-rows source utc-now)
+        [shards tdr-job-ids]  (create-snapshots source utc-now-obj row-ids)]
+    (write-snapshots-creation-jobs source utc-now-obj shards tdr-job-ids)
     (update-last-checked source utc-now-obj))
   ;; update TDR jobs that are still "running"
   (let [pending-tdr-job-ids (get-pending-tdr-jobs source)
