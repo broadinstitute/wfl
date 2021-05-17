@@ -6,6 +6,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
+            [wfl.debug]
             [wfl.jdbc :as jdbc]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.firecloud :as firecloud]
@@ -150,16 +151,23 @@
     (-> (update request :labels combine-labels)
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (assoc :executor ""
+               :output   ""
+               :release  ""
+               :wdl      ""
+               :uuid     (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; TODO: validate the request before creating the workload
 (defn create-covid-workload [tx request]
+  (wfl.debug/trace request)
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
         id           (add-workload-record tx request)
         items        (add-continuous-workload-record tx id request)]
+    (wfl.debug/trace id)
+    (wfl.debug/trace items)
     (jdbc/execute! tx [set-pipeline pipeline id])
     (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))

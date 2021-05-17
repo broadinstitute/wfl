@@ -13,6 +13,11 @@
   "(transaction workload-request) -> workload"
   (fn [_ body] (:pipeline body)))
 
+(comment
+  (create-workload! (postgres/wfl-db-config)
+                    {:pipeline "Sarscov2IlluminaFull"})
+  )
+
 (defmulti start-workload!
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
@@ -94,11 +99,12 @@
 ;; :default implementations
 (defmethod create-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as body}]
   (throw
    (ex-info "Failed to create workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:cause    body
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default

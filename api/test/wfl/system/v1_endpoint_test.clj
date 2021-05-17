@@ -236,7 +236,37 @@
     (wfl.debug/trace request)
     (wfl.debug/trace (endpoints/create-workload request))))
 
+(deftest tbl
+  (let [request
+        {:source
+         {:name "Terra DataRepo",
+          :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+          :table "flowcells",
+          :column "run_date"},
+         :executor
+         {:name "Terra",
+          :workspace
+          "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+          :methodConfiguration "",
+          :methodConfigurationVersion 0,
+          :fromSource "",
+          :method_configuration
+          "cdc-covid-surveillance/sarscov2_illumina_full"},
+         :sink
+         {:name "Terra Workspace",
+          :workspace
+          "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+          :entity "",
+          :fromOutputs {},
+          :identifier ""},
+         :pipeline "Sarscov2IlluminaFull",
+         :project "(Test) tbl/GH-1216-covid-tests",
+         :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+         :labels ["hornet:test"]}]
+    (endpoints/create-workload request)))
+
 (comment
+  (clj-test/test-vars [#'tbl])
   "Remember to: export WFL_WFL_URL=http://localhost:3000"
   (clj-test/test-vars [#'test-create-covid-workload])
   (clojure.spec.alpha/valid? :wfl.api.spec/workload-request request)
@@ -270,7 +300,7 @@
                 :pipeline "Sarscov2IlluminaFull",
                 :project "(Test) tbl/GH-1216-covid-tests",
                 :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
-                :labels ["hornet:test"]}) ;
+                :labels ["hornet:test"]})
   (def response {:watchers [],
                  :labels ["hornet:test"
                           "pipeline:Sarscov2IlluminaFull"
