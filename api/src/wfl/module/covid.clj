@@ -23,12 +23,6 @@
 (defn ^:private get-snapshots-from-workspace
   [workspace])
 
-(defn start-covid-workload
-  "Mark WORKLOAD with a started timestamp."
-  [tx {:keys [id started] :as workload}]
-  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
-  (workloads/load-workload-for-id tx id))
-
 ;; Generic helpers
 (defn ^:private load-record-by-id! [tx table id]
   (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
@@ -52,6 +46,10 @@
   "Use `tx` and workload `id` to write the source to persisted storage and
    return a [type item] pair to be written into the parent table."
   (fn [tx id source-request] (:name source-request)))
+
+(defmulti start-source!
+  "Use `tx` to start accepting data from the `source`."
+  (fn [tx source] (:type source)))
 
 (defmulti update-source!
   "Update the source."
@@ -144,6 +142,13 @@
     (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
 
+(defn start-covid-workload
+  "Start creating and managing workflows from the source."
+  [tx {:keys [id source] :as _workload}]
+  (start-source! source)
+  (jdbc/update! tx :workload {:started (OffsetDateTime/now)} ["id = ?" id])
+  (workloads/load-workload-for-id tx id))
+
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
   [tx {:keys [started finished] :as workload}]
@@ -213,27 +218,26 @@
    into `source-details-name` table, `suffix` will be
    appended to the snapshot names."
   [suffix dataset table row-ids]
-  (let [columns     (-> (datarepo/all-columns dataset table)
-                        (->> (map :name) set)
-                        (conj "datarepo_row_id"))
-        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
-                   (update :name #(str % suffix))
-                   datarepo/create-snapshot-job)]
-    job-id))
+  (let [columns (-> (datarepo/all-columns dataset table)
+                    (->> (map :name) set)
+                    (conj "datarepo_row_id"))]
+    (-> (datarepo/make-snapshot-request dataset columns table row-ids)
+        (update :name #(str % suffix))
+        datarepo/create-snapshot-job)))
 
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
-  [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
-  (let [shards (mapv vec (partition-all 500 row-ids))
-        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))
-        job-ids (vec (map-indexed (fn [idx shard]
-                                    (go-create-snapshot!
-                                     (format "_%s_%s" compact-now idx)
-                                     dataset
-                                     dataset_table
-                                     shard)) shards))]
-    [shards job-ids]))
+  [{:keys [dataset table] :as _source} now-obj row-ids]
+  (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
+        compact-now (.format now-obj dt-format)]
+    (letfn [(create-snapshot [idx shard]
+              [shard (-> (format "_%s_%s" compact-now idx)
+                         (go-create-snapshot! dataset table shard))])]
+      (->> row-ids
+           (partition-all 500)
+           (map-indexed create-snapshot)
+           vec))))
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
   (let [query "SELECT id, snapshot_creation_job_id
@@ -285,9 +289,11 @@
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
    the frozen `now`."
-  [{:keys [id] :as _source} now]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (jdbc/update! tx tdr-source-table {:last_checked now} ["id = ?" id])))
+  ([tx {:keys [id] :as _source} now]
+   (jdbc/update! tx tdr-source-table {:last_checked now} ["id = ?" id]))
+  ([source now]
+   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+     (update-last-checked tx source now))))
 
 (defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
   (if-let [id (util/parse-int source_items)]
@@ -296,6 +302,12 @@
         (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
     (throw (ex-info "source_items is not an integer" details))))
 
+(defn ^:private find-and-snapshot-new-rows [source utc-now]
+  (let [date-format (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")]
+    (->> (.format utc-now date-format)
+         (find-new-rows source)
+         (create-snapshots source utc-now))))
+
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source
   "Check for new data in TDR, create new snapshots, insert
@@ -303,12 +315,10 @@
    timestamp for next time using transaction TX."
   [source]
   ;; attempt to snapshot new rows in TDR
-  (let [utc-now-obj           (OffsetDateTime/now (ZoneId/of "UTC"))
-        utc-now               (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
-        row-ids               (find-new-rows source utc-now)
-        [shards tdr-job-ids]  (create-snapshots source utc-now-obj row-ids)]
-    (write-snapshots-creation-jobs source utc-now-obj shards tdr-job-ids)
-    (update-last-checked source utc-now-obj))
+  (let [utc-now              (OffsetDateTime/now (ZoneId/of "UTC"))
+        [shards tdr-job-ids] (find-and-snapshot-new-rows source utc-now)]
+    (write-snapshots-creation-jobs source utc-now shards tdr-job-ids)
+    (update-last-checked source utc-now))
   ;; update TDR jobs that are still "running"
   (let [id+pending-tdr-job-ids (get-pending-tdr-jobs source)
         id+job-metadatas (map #(update % 1 check-tdr-job) id+pending-tdr-job-ids)]
@@ -316,6 +326,9 @@
   ;; load and return the source table
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (load-tdr-source tx {:source_items (str (:id source))})))
+
+(defn ^:private start-tdr-source [tx source]
+  (update-last-checked tx source (OffsetDateTime/now (ZoneId/of "UTC"))))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
@@ -348,6 +361,7 @@
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
+(defoverload start-source!  tdr-source-type start-tdr-source)
 (defoverload update-source! tdr-source-type update-tdr-source)
 (defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
