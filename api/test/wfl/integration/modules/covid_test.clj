@@ -13,26 +13,25 @@
             [wfl.util              :as util])
   (:import [java.util ArrayDeque UUID]))
 
-
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
-(def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583")
+(def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
 (def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_TDR_URL"       "https://data.terra.bio"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-  (use-fixtures :once (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+;(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+;               "WFL_TDR_URL"       "https://data.terra.bio"
+;               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
+;  (use-fixtures :once (fixtures/temporary-environment new-env)
+;    fixtures/temporary-postgresql-database))
 
 (def workload {:id 1})
 
 ;; For temporary workspace creation
-(def workspace-prefix "general-dev-billing-account/test-workspace")
-(def group "hornet-eng")
+(def workspace-prefix "wfl-dev/test-workspace")
+(def group "workflow-launcher-dev")
 
 (def snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
 (def reference-id "2d15f9bd-ecb9-46b3-bb6c-f22e20235232")
@@ -65,8 +64,9 @@
   {:submissionId submission-id
    :workflows [running-workflow succeeded-workflow]})
 
-(let [new-env {"WFL_FIRECLOUD_URL"
-               "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
+(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+               "WFL_TDR_URL"       "https://data.terra.bio"
+               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database
@@ -76,10 +76,12 @@
      covid/pop-queue! test-queue-type test-queue-pop)))
 
 ;; For temporary workspace creation
-(def workspace-prefix "general-dev-billing-account/test-workspace")
-(def group "hornet-eng")
+(def workspace-prefix "wfl-dev/test-workspace")
+(def group "workflow-launcher-dev")
 
 (deftest test-create-workload
+  (wfl.debug/trace (System/getenv "WFL_TDR_URL"))
+  (wfl.debug/trace (wfl.auth/service-account-email))
   (letfn [(verify-source [{:keys [type last_checked details]}]
             (is (= type "TerraDataRepoSource"))
             (is (not last_checked) "The TDR should not have been checked yet")
@@ -92,12 +94,12 @@
             (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
-           (workloads/covid-workload-request {:dataset testing-dataset
-                                              :table testing-table-name
-                                              :column testing-column-name}
-                                             {:workspace testing-workspace
-                                              :method_configuration testing-method-configuration}
-                                             {:workspace testing-workspace}))]
+            (workloads/covid-workload-request {:dataset testing-dataset
+                                               :table   testing-table-name
+                                               :column  testing-column-name}
+                                              {:workspace            testing-workspace
+                                               :method_configuration testing-method-configuration}
+                                              {:workspace testing-workspace}))]
       (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
@@ -106,6 +108,22 @@
       (is (seq labels) "workload did not contain any labels")
       (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
       (is (vector? watchers)))))
+
+;(defn list-datasets
+;  "Query the DataRepo for all the Datasets."
+;  []
+;  (-> (repository "datasets")
+;      (http/get {:content-type :application/json
+;                 :headers      (auth/get-service-account-header)
+;                 :params       {:limit 999}})
+;      util/response-body-json))
+;
+;(comment
+;  (test-vars [#'test-create-workload])
+;  (list-datasets)
+;  (datarepo-url)
+;  (auth/service-account-email)
+;  )
 
 (defn ^:private make-covid-workload-request []
   (-> (workloads/covid-workload-request {} {} {})
