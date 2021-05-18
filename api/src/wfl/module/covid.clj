@@ -196,13 +196,13 @@
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-(defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
+(defn ^:private load-tdr-source [tx {:keys [source_items] :as workload}]
   (if-let [id (util/parse-int source_items)]
     (-> (load-record-by-id! tx tdr-source-table id)
         (set/rename-keys (set/map-invert tdr-source-serialized-fields))
         (assoc :type tdr-source-type)
         (update :dataset edn/read-string))
-    (throw (ex-info "source_items is not an integer" details))))
+    (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
@@ -392,6 +392,14 @@
                     (->> (jdbc/insert! tx terra-executor-table)))]
     [terra-executor-type (-> items first :id str)]))
 
+(defn ^:private load-terra-executor [tx {:keys [executor_items] :as workload}]
+  (if-let [id (util/parse-int executor_items)]
+    (-> (load-record-by-id! tx terra-executor-table id)
+        (assoc :type terra-executor-type)
+        (set/rename-keys (set/map-invert terra-executor-serialized-fields))
+        (update :fromSource edn/read-string))
+    (throw (ex-info "Invalid executor_items" {:workload workload}))))
+
 (defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
   [{:keys [workspace] :as _executor}
@@ -436,14 +444,6 @@
       (write-workflows! executor reference submission)
       (pop-queue! source)))
   executor)
-
-(defn ^:private load-terra-executor [tx {:keys [executor_items] :as details}]
-  (if-let [id (util/parse-int executor_items)]
-    (-> (load-record-by-id! tx terra-executor-table id)
-        (assoc :type terra-executor-type)
-        (set/rename-keys (set/map-invert terra-executor-serialized-fields))
-        (update :fromSource edn/read-string))
-    (throw (ex-info "Invalid executor_items" details))))
 
 (defn ^:private peek-terra-executor-details
   "Get first unconsumed successful workflow record from DETAILS table."
@@ -516,14 +516,13 @@
                     (->> (jdbc/insert! tx terra-workspace-sink-table)))]
     [terra-workspace-sink-type (-> items first :id str)]))
 
-(defn ^:private load-terra-workspace-sink
-  [tx {:keys [sink_items] :as details}]
+(defn ^:private load-terra-workspace-sink [tx {:keys [sink_items] :as workload}]
   (if-let [id (util/parse-int sink_items)]
     (-> (load-record-by-id! tx terra-workspace-sink-table id)
         (set/rename-keys (set/map-invert terra-workspace-sink-serialized-fields))
         (update :fromOutputs edn/read-string)
         (assoc :type terra-workspace-sink-type))
-    (throw (ex-info "Invalid sink_items" details))))
+    (throw (ex-info "Invalid sink_items" {:workload workload}))))
 
 ;; visible for testing
 (defn rename-gather
