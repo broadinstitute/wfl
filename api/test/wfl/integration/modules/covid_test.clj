@@ -88,12 +88,12 @@
             (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
-            (workloads/covid-workload-request {:dataset testing-dataset
-                                               :table   testing-table-name
-                                               :column  testing-column-name}
-                                              {:workspace            testing-workspace
-                                               :method_configuration testing-method-configuration}
-                                              {:workspace testing-workspace}))]
+           (workloads/covid-workload-request {:dataset testing-dataset
+                                              :table   testing-table-name
+                                              :column  testing-column-name}
+                                             {:workspace            testing-workspace
+                                              :method_configuration testing-method-configuration}
+                                             {:workspace testing-workspace}))]
       (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
@@ -129,44 +129,44 @@
 ;      (is workload))))
 
 (deftest test-create-covid-workload-with-misnamed-source
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:source :name] "Bad_Name")
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:source :name] "Bad_Name")
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-source-name
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:source :name] nil)
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:source :name] nil)
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-dataset
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:source :dataset] nil)
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:source :dataset] nil)
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-with-misnamed-executor
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:executor :name] "Bad_Name")
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:executor :name] "Bad_Name")
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-named-executor
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:executor :name] nil)
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:executor :name] nil)
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-method-configuration
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:executor :method_configuration] nil)
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:executor :method_configuration] nil)
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-with-misnamed-sink
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:sink :name] "Bad_Name")
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:sink :name] "Bad_Name")
+                                    workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-named-sink
-    (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                      (assoc-in [:sink :name] nil)
-                                      workloads/create-workload!))))
+  (is (thrown? RuntimeException (-> (make-covid-workload-request)
+                                    (assoc-in [:sink :name] nil)
+                                    workloads/create-workload!))))
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
