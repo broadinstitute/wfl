@@ -88,6 +88,148 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+;; Workload Functions
+(def ^:private dataset-table-name "flowcells")
+(def ^:private dataset-column-name "run_date")
+(def ^:private expected-source-name "Terra DataRepo")
+(def ^:private expected-executor-name "Terra")
+(def ^:private expected-sink-name "Terra Workspace")
+
+(defn ^:private add-workload-record
+  "Use `tx` to create a workload `record` for `request` and return the id of the
+   new workload."
+  [tx request]
+  (letfn [(combine-labels [labels]
+            (->> (mapv request [:pipeline :project])
+                 (map str ["pipeline:" "project:"])
+                 (concat labels)
+                 set
+                 sort
+                 vec))]
+    (-> (update request :labels combine-labels)
+        (select-keys [:creator :watchers :labels :project])
+        (merge (select-keys (wfl/get-the-version) [:commit :version]))
+        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (->> (jdbc/insert! tx :workload) first :id))))
+
+(defn throw-unless-column-exists
+  "Throw or return the column from `table`"
+  [dataset table]
+  (let [[result & more :as all] (-> table
+                                    (get-in [:columns])
+                                    (->> (filter (comp #{dataset-column-name} :name))))]
+    (when-not result
+      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
+    result))
+
+(defn throw-unless-table-exists
+  "Throw or return the table from `dataset`"
+  [dataset]
+  (let [[result & more :as all] (-> dataset
+                                    (get-in [:schema :tables])
+                                    (->> (filter (comp #{dataset-table-name} :name))))]
+    (when-not result
+      (throw (ex-info "No table with name" {:name dataset-table-name :dataset dataset})))
+    (when result
+      (throw-unless-column-exists dataset result))
+    result))
+
+(defn verify-source!
+  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
+  [{:keys [name dataset] :as source}]
+  (when-not (some? dataset)
+    (throw (ex-info "Source is nil" {:source source})))
+  (when-not (= (:name source) expected-source-name)
+    (throw (ex-info "Unknown Source" {:source source})))
+  (-> (datarepo/dataset (:dataset source))
+      (throw-unless-table-exists)))
+
+(defn verify-executor!
+  "Verify the method-configuration exists."
+  [{:keys [name method_configuration] :as executor}]
+  (when-not (= (:name executor) expected-executor-name)
+    (throw (ex-info "Unknown Executor" {:executor executor})))
+  (when-not (:method_configuration executor)
+    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
+
+(defn verify-sink!
+  "Verify that the WFL has access to both firecloud and the `workspace`."
+  [{:keys [name workspace] :as sink}]
+  (when-not (= (:name sink) expected-sink-name)
+    (throw (ex-info "Unknown Sink" {:sink sink})))
+  (try
+    (firecloud/get-workspace workspace)
+    (catch Throwable t
+      (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                     :cause     (.getMessage t)})))))
+
+(defn ^:private add-continuous-workload-record
+  "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
+  return the ID of the ContinuousWorkload."
+  [tx id {:keys [source sink executor] :as _request}]
+  (let [set-details "UPDATE
+                         ContinuousWorkload
+                     SET
+                         source_type   = ?::source,
+                         executor_type = ?::executor,
+                         sink_type     = ?::sink
+                     WHERE
+                         id = ? "
+        src-exc-snk [(create-source! tx id source)
+                     (create-executor! tx id executor)
+                     (create-sink! tx id sink)]
+        items       (->> (map second src-exc-snk)
+                         (zipmap [:source_items :executor_items :sink_items])
+                         (jdbc/insert! tx :ContinuousWorkload)
+                         first
+                         :id)]
+    (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
+    items))
+
+(defn create-covid-workload [tx request]
+  (verify-source! (get-in request [:source]))
+  (verify-executor! (get-in request [:executor]))
+  (verify-sink! (get-in request [:sink]))
+  (let [set-pipeline "UPDATE workload
+                      SET pipeline = ?::pipeline
+                      WHERE id = ?"
+        id           (add-workload-record tx request)
+        items        (add-continuous-workload-record tx id request)]
+    (jdbc/execute! tx [set-pipeline pipeline id])
+    (jdbc/update! tx :workload {:items items} ["id = ?" id])
+    (workloads/load-workload-for-id tx id)))
+
+(defn update-covid-workload
+  "Use transaction TX to update WORKLOAD statuses."
+  [tx {:keys [started finished] :as workload}]
+  (letfn [(update-workload-status [])
+          (update! [{:keys [id source executor sink] :as _workload}]
+            (-> (update-source! source)
+                (update-executor! executor)
+                (update-sink! sink))
+            (update-workload-status)
+            (workloads/load-workload-for-id tx id))]
+    (if (and started (not finished)) (update! workload) workload)))
+
+(defn load-covid-workload-impl [tx {:keys [items] :as workload}]
+  (if-let [id (util/parse-int items)]
+    (let [details (load-record-by-id! tx "ContinuousWorkload" id)]
+      (->> {:source   (load-source! tx details)
+            :executor (load-executor! tx details)
+            :sink     (load-sink! tx details)}
+           (merge workload)
+           (filter second)
+           (into {})))
+    (throw (ex-info "Invalid ContinuousWorkload identifier"
+                    {:id       items
+                     :workload workload}))))
+
+(defoverload workloads/create-workload! pipeline create-covid-workload)
+(defoverload workloads/start-workload! pipeline start-covid-workload)
+(defoverload workloads/update-workload! pipeline update-covid-workload)
+(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
+
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
@@ -351,142 +493,3 @@
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
-
-;; Workload Functions
-(defn ^:private add-workload-record
-  "Use `tx` to create a workload `record` for `request` and return the id of the
-   new workload."
-  [tx request]
-  (letfn [(combine-labels [labels]
-            (->> (mapv request [:pipeline :project])
-                 (map str ["pipeline:" "project:"])
-                 (concat labels)
-                 set
-                 sort
-                 vec))]
-    (-> (update request :labels combine-labels)
-        (select-keys [:creator :watchers :labels :project])
-        (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
-        (->> (jdbc/insert! tx :workload) first :id))))
-
-(def ^:private dataset-table-name "flowcells")
-(def ^:private dataset-column-name "run_date")
-
-(defn throw-unless-column-exists
-  "Throw or return the column from `table`"
-  [dataset table]
-  (let [[result & more :as all] (-> table
-                                    (get-in [:columns])
-                                    (->> (filter (comp #{dataset-column-name} :name))))]
-    (when-not result
-      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
-    result))
-
-(defn throw-unless-table-exists
-  "Throw or return the table from `dataset`"
-  [dataset]
-  (let [[result & more :as all] (-> dataset
-                                    (get-in [:schema :tables])
-                                    (->> (filter (comp #{dataset-table-name} :name))))]
-    (when-not result
-      (throw (ex-info "No table with name" {:name dataset-table-name :dataset dataset})))
-    (when result
-      (throw-unless-column-exists dataset result))
-    result))
-
-(defn verify-source!
-  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
-  [{:keys [name dataset] :as source}]
-  (when-not (some? dataset)
-    (throw (ex-info "Source is nil" {:source source})))
-  (when-not (= (:name source) tdr-source-name)
-    (throw (ex-info "Unknown Source" {:source source})))
-  (-> (datarepo/dataset (:dataset source))
-      (throw-unless-table-exists)))
-
-(defn verify-executor!
-  "Verify the method-configuration exists."
-  [{:keys [name method_configuration] :as executor}]
-  (when-not (= (:name executor) terra-executor-name)
-    (throw (ex-info "Unknown Executor" {:executor executor})))
-  (when-not (:method_configuration executor)
-    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
-
-(defn verify-sink!
-  "Verify that the WFL has access to both firecloud and the `workspace`."
-  [{:keys [name workspace] :as sink}]
-  (when-not (= (:name sink) terra-workspace-sink-name)
-    (throw (ex-info "Unknown Sink" {:sink sink})))
-  (try
-    (firecloud/get-workspace workspace)
-    (catch Throwable t
-      (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                     :cause     (.getMessage t)})))))
-
-(defn ^:private add-continuous-workload-record
-  "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
-  return the ID of the ContinuousWorkload."
-  [tx id {:keys [source sink executor] :as _request}]
-  (let [set-details "UPDATE
-                         ContinuousWorkload
-                     SET
-                         source_type   = ?::source,
-                         executor_type = ?::executor,
-                         sink_type     = ?::sink
-                     WHERE
-                         id = ? "
-        src-exc-snk [(create-source! tx id source)
-                     (create-executor! tx id executor)
-                     (create-sink! tx id sink)]
-        items       (->> (map second src-exc-snk)
-                         (zipmap [:source_items :executor_items :sink_items])
-                         (jdbc/insert! tx :ContinuousWorkload)
-                         first
-                         :id)]
-    (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
-    items))
-
-(defn create-covid-workload [tx request]
-  (verify-source! (get-in request [:source]))
-  (verify-executor! (get-in request [:executor]))
-  (verify-sink! (get-in request [:sink]))
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        id           (add-workload-record tx request)
-        items        (add-continuous-workload-record tx id request)]
-    (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
-    (workloads/load-workload-for-id tx id)))
-
-(defn update-covid-workload
-  "Use transaction TX to update WORKLOAD statuses."
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update-workload-status [])
-          (update! [{:keys [id source executor sink] :as _workload}]
-            (-> (update-source! source)
-                (update-executor! executor)
-                (update-sink! sink))
-            (update-workload-status)
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload) workload)))
-
-(defn load-covid-workload-impl [tx {:keys [items] :as workload}]
-  (if-let [id (util/parse-int items)]
-    (let [details (load-record-by-id! tx "ContinuousWorkload" id)]
-      (->> {:source   (load-source! tx details)
-            :executor (load-executor! tx details)
-            :sink     (load-sink! tx details)}
-           (merge workload)
-           (filter second)
-           (into {})))
-    (throw (ex-info "Invalid ContinuousWorkload identifier"
-                    {:id       items
-                     :workload workload}))))
-
-(defoverload workloads/create-workload! pipeline create-covid-workload)
-(defoverload workloads/start-workload! pipeline start-covid-workload)
-(defoverload workloads/update-workload! pipeline update-covid-workload)
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)

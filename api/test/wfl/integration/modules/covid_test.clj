@@ -21,12 +21,6 @@
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
-;(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-;               "WFL_TDR_URL"       "https://data.terra.bio"
-;               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-;  (use-fixtures :once (fixtures/temporary-environment new-env)
-;    fixtures/temporary-postgresql-database))
-
 (def workload {:id 1})
 
 ;; For temporary workspace creation
