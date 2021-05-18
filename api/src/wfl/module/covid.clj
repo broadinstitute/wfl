@@ -88,12 +88,25 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+;; validations
+(defmulti verify-source!
+  "Validate the source of a `request`"
+  (fn [source] (:name source)))
+
+(defmulti verify-executor!
+  "Validate the executor of a `request`"
+  (fn [executor] (:name executor)))
+
+(defmulti verify-sink!
+  "Validate the sink of a `request`"
+  (fn [sink] (:name sink)))
+
 ;; Workload Functions
 (def ^:private dataset-table-name "flowcells")
 (def ^:private dataset-column-name "run_date")
-(def ^:private expected-source-name "Terra DataRepo")
-(def ^:private expected-executor-name "Terra")
-(def ^:private expected-sink-name "Terra Workspace")
+(def ^:private source-name "Terra DataRepo")
+(def ^:private executor-name "Terra")
+(def ^:private sink-name "Terra Workspace")
 
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
@@ -134,34 +147,38 @@
       (throw-unless-column-exists dataset result))
     result))
 
-(defn verify-source!
+(defn verify-data-repo-source!
   "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
   [{:keys [name dataset] :as source}]
   (when-not (some? dataset)
     (throw (ex-info "Source is nil" {:source source})))
-  (when-not (= (:name source) expected-source-name)
+  (when-not (= (:name source) source-name)
     (throw (ex-info "Unknown Source" {:source source})))
   (-> (datarepo/dataset (:dataset source))
       (throw-unless-table-exists)))
 
-(defn verify-executor!
+(defn verify-terra-executor!
   "Verify the method-configuration exists."
   [{:keys [name method_configuration] :as executor}]
-  (when-not (= (:name executor) expected-executor-name)
+  (when-not (= (:name executor) executor-name)
     (throw (ex-info "Unknown Executor" {:executor executor})))
   (when-not (:method_configuration executor)
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
-(defn verify-sink!
+(defn verify-terra-sink!
   "Verify that the WFL has access to both firecloud and the `workspace`."
   [{:keys [name workspace] :as sink}]
-  (when-not (= (:name sink) expected-sink-name)
+  (when-not (= (:name sink) sink-name)
     (throw (ex-info "Unknown Sink" {:sink sink})))
   (try
     (firecloud/get-workspace workspace)
     (catch Throwable t
       (throw (ex-info "Cannot access the workspace" {:workspace workspace
                                                      :cause     (.getMessage t)})))))
+
+(defoverload verify-source! source-name verify-data-repo-source!)
+(defoverload verify-executor! executor-name verify-terra-executor!)
+(defoverload verify-sink! sink-name verify-terra-sink!)
 
 (defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
@@ -189,6 +206,7 @@
 (defn create-covid-workload
   "Verify the `request` and create a workload"
   [tx request]
+  (wfl.debug/trace (get-in request [:source]))
   (verify-source! (get-in request [:source]))
   (verify-executor! (get-in request [:executor]))
   (verify-sink! (get-in request [:sink]))

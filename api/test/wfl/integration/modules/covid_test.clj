@@ -74,8 +74,6 @@
 (def group "workflow-launcher-dev")
 
 (deftest test-create-workload
-  (wfl.debug/trace (System/getenv "WFL_TDR_URL"))
-  (wfl.debug/trace (wfl.auth/service-account-email))
   (letfn [(verify-source [{:keys [type last_checked details]}]
             (is (= type "TerraDataRepoSource"))
             (is (not last_checked) "The TDR should not have been checked yet")
@@ -103,30 +101,9 @@
       (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
       (is (vector? watchers)))))
 
-;(defn list-datasets
-;  "Query the DataRepo for all the Datasets."
-;  []
-;  (-> (repository "datasets")
-;      (http/get {:content-type :application/json
-;                 :headers      (auth/get-service-account-header)
-;                 :params       {:limit 999}})
-;      util/response-body-json))
-;
-;(comment
-;  (test-vars [#'test-create-workload])
-;  (list-datasets)
-;  (datarepo-url)
-;  (auth/service-account-email)
-;  )
-
 (defn ^:private make-covid-workload-request []
   (-> (workloads/covid-workload-request {} {} {})
       (assoc :creator @workloads/email)))
-
-;(deftest test-create-covid-workload
-;  (testing "That COVID workload-request can pass verification"
-;    (let [workload (workloads/create-workload! (make-covid-workload-request))]
-;      (is workload))))
 
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown? RuntimeException (-> (make-covid-workload-request)
