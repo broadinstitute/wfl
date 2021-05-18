@@ -519,10 +519,6 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(comment
-  (create-terra-executor (postgres/wfl-db-config) 23 )
-  )
-
 (defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
   [{:keys [workspace] :as _executor}

@@ -22,10 +22,8 @@
   []
   (try
     (run-liquibase "../database/changelog.xml" (postgres/wfl-db-config))
-    #_(System/exit 0)
+    (System/exit 0)
     (catch ExceptionInfo e
       (binding [*out* *err*]
         (-> e .getMessage println)
         (-> e .getData :status System/exit)))))
-
-(comment (-main))                       ; Aid testing in REPL.

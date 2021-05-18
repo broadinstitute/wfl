@@ -54,7 +54,7 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 
 # Run `clojure -M:format` in this directory when this fails.
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	: $(CLOJURE) -M:lint -m cljfmt.main check
+	$(CLOJURE) -M:lint -m cljfmt.main check
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC)

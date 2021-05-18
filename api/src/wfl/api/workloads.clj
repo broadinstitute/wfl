@@ -13,11 +13,6 @@
   "(transaction workload-request) -> workload"
   (fn [_ body] (:pipeline body)))
 
-(comment
-  (create-workload! (postgres/wfl-db-config)
-                    {:pipeline "Sarscov2IlluminaFull"})
-  )
-
 (defmulti start-workload!
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
