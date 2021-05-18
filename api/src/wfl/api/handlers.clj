@@ -5,7 +5,6 @@
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
-            [wfl.debug]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
             [wfl.module.arrays]
@@ -58,7 +57,6 @@
   (let [workload-request (-> (:body-params request)
                              (rename-keys {:cromwell :executor}))
         {:keys [email]}  (gcs/userinfo request)]
-    (wfl.debug/trace workload-request)
     (logr/info "POST /api/v1/create with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (assoc workload-request :creator email)

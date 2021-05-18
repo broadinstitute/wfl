@@ -108,7 +108,6 @@
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
            (workloads/covid-workload-request {} {} {}))]
-      (wfl.debug/trace created)
       (is (inst? created) "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))

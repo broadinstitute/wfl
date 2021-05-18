@@ -1,10 +1,8 @@
 (ns wfl.tools.endpoints
-  (:require 
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.string    :as str]
             [clj-http.client   :as http]
             [wfl.auth          :as auth]
-            [wfl.debug]
             [wfl.environment   :as env]
             [wfl.util          :as util]))
 
