@@ -5,6 +5,7 @@
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.covid               :as covid]
+            [wfl.service.firecloud          :as firecloud]
             [wfl.service.postgres           :as postgres]
             [wfl.service.rawls              :as rawls]
             [wfl.tools.fixtures             :as fixtures]
@@ -54,6 +55,16 @@
 (defn ^:private mock-create-submission [& _]
   {:submissionId submission-id
    :workflows [running-workflow succeeded-workflow]})
+
+;; Workflow fetch mocks within update-workflow-statuses!
+(defn ^:private mock-workflow-update-status [_ _ workflow-id]
+  (is (not (= (:workflowId succeeded-workflow) workflow-id))
+      "Successful workflow records should be filtered out before firecloud fetch")
+  {:status "Succeeded" :workflowId workflow-id})
+(defn ^:private mock-workflow-keep-status [_ _ workflow-id]
+  (is (not (= (:workflowId succeeded-workflow) workflow-id))
+      "Successful workflow records should be filtered out before firecloud fetch")
+  running-workflow)
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
@@ -167,22 +178,30 @@
         source   (make-queue-from-list [snapshot])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
-              (is (= idx (:id record)))
-              (is (= (:status workflow) (:workflow_status record)))
-              (is (= (:workflowId workflow) (:workflow_id record))))]
+              (is (= idx (:id record))
+                  "The record ID was incorrect given the workflow order in mocked submission")
+              (is (= (:workflowId workflow) (:workflow_id record))
+                  "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
-        {#'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
-         #'covid/create-submission!          mock-create-submission}
+        {#'rawls/create-snapshot-reference mock-rawls-create-snapshot-reference
+         #'covid/create-submission!        mock-create-submission
+         #'firecloud/get-workflow          mock-workflow-update-status}
         #(covid/update-executor! source executor))
       (is (-> source :queue empty?) "The snapshot was not consumed.")
       (is (== 2 (covid/queue-length! executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
-              (->> executor :details (postgres/get-table tx))]
-          (is (== 2 (count records)) "The workflows were not written to the database")
-          (is (every? #(= snapshot-reference-id (:snapshot_reference_id %)) records))
-          (is (every? #(= submission-id (:rawls_submission_id %)) records))
-          (is (every? #(nil? (:consumed %)) records))
+              (->> executor :details (postgres/get-table tx) (sort-by :id))]
+          (is (== 2 (count records))
+              "Exactly 2 workflows should have been written to the database")
+          (is (every? #(= snapshot-reference-id (:snapshot_reference_id %)) records)
+              "The snapshot reference ID was incorrect and should match all records")
+          (is (every? #(= submission-id (:rawls_submission_id %)) records)
+              "The submission ID was incorrect and should match all records")
+          (is (every? #(= "Succeeded" (:workflow_status %)) records)
+              "Status update mock should have marked running workflow as succeeded")
+          (is (every? #(nil? (:consumed %)) records)
+              "All records should be unconsumed")
           (verify-record-against-workflow running-record running-workflow 1)
           (verify-record-against-workflow succeeded-record succeeded-workflow 2))))))
 
@@ -193,7 +212,8 @@
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
       {#'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
-       #'covid/create-submission!          mock-create-submission}
+       #'covid/create-submission!          mock-create-submission
+       #'firecloud/get-workflow            mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
       {#'covid/peek-terra-executor-queue #'covid/peek-terra-executor-details}
@@ -246,12 +266,13 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'covid/find-new-rows               mock-find-new-rows
-     #'covid/create-snapshots            mock-create-snapshots
-     #'covid/check-tdr-job               mock-check-tdr-job
-     #'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
-     #'covid/create-submission!          mock-create-submission
-     #'rawls/batch-upsert                (constantly nil)}
+    {#'covid/find-new-rows              mock-find-new-rows
+     #'covid/create-snapshots           mock-create-snapshots
+     #'covid/check-tdr-job              mock-check-tdr-job
+     #'rawls/create-snapshot-reference  mock-rawls-create-snapshot-reference
+     #'covid/create-submission!         mock-create-submission
+     #'firecloud/get-workflow           mock-workflow-update-status
+     #'rawls/batch-upsert               (constantly nil)}
     #(shared/run-workload-state-transition-test!
       (workloads/covid-workload-request))))
 
