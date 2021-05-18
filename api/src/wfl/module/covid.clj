@@ -31,6 +31,11 @@
       (throw (ex-info (str "No such record") {:id id :table table})))
     record))
 
+(defn ^:private utc-now
+  "Return OffsetDateTime/now in UTC."
+  []
+  (OffsetDateTime/now (ZoneId/of "UTC")))
+
 ;; interfaces
 ;; queue operations
 (defmulti peek-queue!
@@ -317,7 +322,7 @@
    timestamp for next time using transaction TX."
   [source]
   ;; attempt to snapshot new rows in TDR
-  (let [utc-now             (OffsetDateTime/now (ZoneId/of "UTC"))
+  (let [utc-now             (utc-now)
         shards->tdr-job-ids (find-and-snapshot-new-rows source utc-now)]
     (write-snapshots-creation-jobs source utc-now shards->tdr-job-ids)
     (update-last-checked source utc-now))
@@ -330,7 +335,7 @@
     (load-tdr-source tx {:source_items (str (:id source))})))
 
 (defn ^:private start-tdr-source [tx source]
-  (update-last-checked tx source (OffsetDateTime/now (ZoneId/of "UTC"))))
+  (update-last-checked tx source (utc-now)))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
