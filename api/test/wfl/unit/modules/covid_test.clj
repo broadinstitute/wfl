@@ -1,8 +1,8 @@
 (ns wfl.unit.modules.covid-test
-  (:require [clojure.test        :refer :all]
-            [wfl.module.covid    :as covid]
+  (:require [clojure.test         :refer :all]
+            [wfl.module.covid     :as covid]
             [wfl.service.datarepo :as datarepo]
-            [wfl.tools.resources :as resources])
+            [wfl.tools.resources  :as resources])
   (:import [java.time OffsetDateTime ZoneId]
            [java.lang Math]))
 
@@ -21,22 +21,24 @@
                      :workspace_name "$SARSCoV2-Illumina-Full"}})))))
 
 ;; Snapshot creation mock
-(defn ^:private mock-create-snapshot-job
+(defn mock-create-snapshot-job
   [snapshot-request]
-  {:id "mock-job-id"
-   ;; inject the request for testing purposes
-   :request snapshot-request})
+  (-> snapshot-request
+      (select-keys [:name])
+      (assoc :id "mock-job-id")))
 
 (deftest test-create-snapshots
-  (let [mock-new-rows-size 2021
+  (let [mock-new-rows-size  2021
         expected-num-shards (int (Math/ceil (/ mock-new-rows-size 500)))
-        source {:dataset {}
-                :dataset_table "flowcell"}
-        row-ids (take mock-new-rows-size (range))
-        now-obj (OffsetDateTime/now (ZoneId/of "UTC"))
-        [shards snapshot-requests] (with-redefs-fn
-                                     {#'datarepo/create-snapshot-job mock-create-snapshot-job}
-                                     #(#'covid/create-snapshots source now-obj row-ids))]
+        source              {:dataset {} :table "flowcell"}
+        row-ids             (take mock-new-rows-size (range))
+        now-obj             (OffsetDateTime/now (ZoneId/of "UTC"))
+        shards->snapshot-requests
+        (with-redefs-fn
+          {#'datarepo/create-snapshot-job mock-create-snapshot-job}
+          #(vec (#'covid/create-snapshots source now-obj row-ids)))]
     (testing "snapshot requests are properly partitioned and made unique"
-      (is (= expected-num-shards (count shards)) "requests are not partitioned correctly!")
-      (is (apply distinct? (map #(get-in % [:request :name]) snapshot-requests)) "requests are not made unique!"))))
+      (is (= expected-num-shards (count shards->snapshot-requests))
+          "requests are not partitioned correctly!")
+      (is (apply distinct? (map #(get-in % [1 :name]) shards->snapshot-requests))
+          "requests are not made unique!"))))

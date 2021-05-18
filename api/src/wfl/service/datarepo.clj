@@ -211,15 +211,14 @@
   "Return a snapshot request for `row-ids`and `columns` from `table` name
    in `_dataset`."
   [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
-  (let [row-ids (vec row-ids)]
-    {:contents    [{:datasetName name
-                    :mode        "byRowId"
-                    :rowIdSpec   {:tables   [{:columns columns
-                                              :rowIds	 row-ids
-                                              :tableName table}]}}]
-     :description description
-     :name        name
-     :profileId   defaultProfileId}))
+  {:contents    [{:datasetName name
+                  :mode        "byRowId"
+                  :rowIdSpec   {:tables [{:columns   columns
+                                          :rowIds    row-ids
+                                          :tableName table}]}}]
+   :description description
+   :name        name
+   :profileId   defaultProfileId})
 
 ;; hack - TDR adds the "datarepo_" prefix to the dataset name in BigQuery
 ;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
