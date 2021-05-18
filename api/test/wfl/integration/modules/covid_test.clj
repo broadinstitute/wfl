@@ -16,10 +16,10 @@
 (def ^:private mock-new-rows-size 2021)
 (defn ^:private mock-find-new-rows [_ _] (take mock-new-rows-size (range)))
 (defn ^:private mock-create-snapshots [_ _ row-ids]
-  (let [shards (mapv vec (partition-all 500 row-ids))
-        job-ids (vec (map-indexed (fn [idx _shard]
-                                    (format "mock_job_id_%s" idx)) shards))]
-    [shards job-ids]))
+  (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
+    (->> (partition-all 500 row-ids)
+         (map-indexed f))))
+
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id]
   {:snapshot_id (str (UUID/randomUUID))
