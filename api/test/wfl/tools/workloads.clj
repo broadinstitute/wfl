@@ -129,10 +129,11 @@
   "Make a COVID Sarscov2IlluminaFull workload creation request."
   [source executor sink]
   {:source   (merge
-              {:name    "Terra DataRepo",
-               :dataset ""
-               :table   ""
-               :column  ""}
+              {:name            "Terra DataRepo",
+               :dataset         ""
+               :table           ""
+               :column          ""
+               :snapshotReaders []}
               source)
    :executor (merge
               {:name                       "Terra"
