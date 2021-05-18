@@ -8,8 +8,7 @@
             [wfl.service.rawls     :as rawls]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.workloads   :as workloads]
-            [wfl.tools.resources   :as resources]
-            [wfl.util              :as util])
+            [wfl.tools.resources   :as resources])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]))
 
@@ -17,10 +16,10 @@
 (def ^:private mock-new-rows-size 2021)
 (defn ^:private mock-find-new-rows [_ _] (take mock-new-rows-size (range)))
 (defn ^:private mock-create-snapshots [_ _ row-ids]
-  (let [shards (mapv vec (partition-all 500 row-ids))
-        job-ids (vec (map-indexed (fn [idx _shard]
-                                    (format "mock_job_id_%s" idx)) shards))]
-    [shards job-ids]))
+  (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
+    (->> (partition-all 500 row-ids)
+         (map-indexed f))))
+
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id]
   {:snapshot_id (str (UUID/randomUUID))
@@ -94,25 +93,49 @@
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
 
+(defn ^:private create-tdr-source [id]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> {:name           "Terra DataRepo",
+          :dataset        "this"
+          :table          "is"
+          :column         "fun"
+          :skipValidation true}
+         (covid/create-source! tx id)
+         (zipmap [:source_type :source_items])
+         (covid/load-source! tx))))
+
+(defn ^:private reload-source [tx {:keys [type id] :as _source}]
+  (covid/load-source! tx {:source_type type :source_items (str id)}))
+
+(deftest test-start-tdr-source
+  (let [source (create-tdr-source (rand-int 1000000))]
+    (is (-> source :last_checked nil?))
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (covid/start-source! tx source)
+      (is (:last_checked (reload-source tx source))
+          ":last_checked was not updated"))))
+
 (deftest test-update-tdr-source
-  (let [{:keys [source]}
-        (workloads/create-workload!
-         (workloads/covid-workload-request {} {} {}))]
+  (let [source (create-tdr-source (rand-int 1000000))]
     (with-redefs-fn
       {#'covid/create-snapshots mock-create-snapshots
-       #'covid/find-new-rows mock-find-new-rows
-       #'covid/check-tdr-job mock-check-tdr-job}
-      #(#'covid/update-source! source))
+       #'covid/find-new-rows    mock-find-new-rows
+       #'covid/check-tdr-job    mock-check-tdr-job}
+      #(covid/update-source!
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (covid/start-source! tx source)
+          (reload-source tx source))))
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [records (->> source :details (postgres/get-table tx))
-            expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
-            record-updated? (fn [record] (and (= "succeeded" (:snapshot_creation_job_status record))
-                                              (not (nil? (:snapshot_creation_job_id record)))
-                                              (not (nil? (:snapshot_id record)))))]
-        (testing "source details got updated with correct number of snapshot jobs"
-          (is (= expected-num-records (count records))))
-        (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
-          (is (every? record-updated? records)))))))
+      (let [records              (->> source :details (postgres/get-table tx))
+            expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
+        (letfn [(record-updated? [record]
+                  (and (= "succeeded" (:snapshot_creation_job_status record))
+                       (not (nil? (:snapshot_creation_job_id record)))
+                       (not (nil? (:snapshot_id record)))))]
+          (testing "source details got updated with correct number of snapshot jobs"
+            (is (= expected-num-records (count records))))
+          (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
+            (is (every? record-updated? records))))))))
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
