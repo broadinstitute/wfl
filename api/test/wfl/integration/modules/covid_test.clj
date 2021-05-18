@@ -231,7 +231,3 @@
   (let [workload (workloads/create-workload!
                   (workloads/covid-workload-request {} {} {}))]
     (is (empty? (workloads/workflows workload)))))
-
-(comment
-  (test-vars [#'test-start-tdr-source
-              #'test-update-tdr-source]))
