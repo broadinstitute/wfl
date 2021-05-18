@@ -20,9 +20,9 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn get-workspace [workspace]
+(defn get-workspace [workspace & parts]
   {:pre [(some? workspace)]}
-  (get-workspace-json workspace))
+  (apply get-workspace-json workspace parts))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
