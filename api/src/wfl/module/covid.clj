@@ -109,6 +109,32 @@
   "Validate the sink of a `request`"
   (fn [sink] (:name sink)))
 
+;; :default implementations
+(defmethod throw-when-malformed-source-request!
+  :default
+  [source]
+  (throw
+    (ex-info "Failed to create workload - unknown source"
+             {:source source
+              :type  ::invalid-source})))
+
+(defmethod throw-when-malformed-executor-request!
+  :default
+  [executor]
+  (throw
+    (ex-info "Failed to create workload - unknown executor"
+             {:source executor
+              :type  ::invalid-executor})))
+
+(defmethod throw-when-malformed-sink-request!
+  :default
+  [sink]
+  (throw
+    (ex-info "Failed to create workload - unknown sink"
+             {:source sink
+              :type  ::invalid-sink})))
+
+
 ;; Workload Functions
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
@@ -254,8 +280,6 @@
   [{:keys [name dataset table column] :as source}]
   (when-not (some? dataset)
     (throw (ex-info "Dataset is Nil" {:source source})))
-  (when-not (:name source)
-    (throw (ex-info "Unknown Source" {:source source})))
   (-> (datarepo/dataset (:dataset source))
       (throw-unless-table-exists table column)))
 
@@ -463,8 +487,6 @@
 (defn verify-terra-executor!
   "Verify the method-configuration exists."
   [{:keys [name methodConfiguration] :as executor}]
-  (when-not (:name executor)
-    (throw (ex-info "Unknown Executor" {:executor executor})))
   (when-not (:methodConfiguration executor)
     (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
@@ -595,8 +617,6 @@
 (defn verify-terra-sink!
   "Verify that the WFL has access to both firecloud and the `workspace`."
   [{:keys [name workspace] :as sink}]
-  (when-not (:name sink)
-    (throw (ex-info "Unknown Sink" {:sink sink})))
   (try
     (firecloud/get-workspace workspace)
     (catch Throwable t
