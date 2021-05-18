@@ -1,15 +1,14 @@
 (ns wfl.module.wgs
   "Reprocess (External) Whole Genomes."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.references :as references]
+  (:require [clojure.data.json          :as json]
+            [clojure.string             :as str]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.module.batch           :as batch]
+            [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.module.batch :as batch])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
@@ -186,18 +185,20 @@
   (letfn [(update-record! [{:keys [id] :as workflow}]
             (let [values (select-keys workflow [:uuid :status :updated])]
               (jdbc/update! tx items values ["id = ?" id])))]
-    (let [now (OffsetDateTime/now)
+    (let [now      (OffsetDateTime/now)
           executor (is-known-cromwell-url? executor)]
-      (run! update-record! (batch/submit-workload! workload executor workflow-wdl make-workflow-inputs cromwell-label (make-workflow-options executor)))
+      (run! update-record!
+            (batch/submit-workload! workload
+                                    (workloads/workflows tx workload)
+                                    executor
+                                    workflow-wdl
+                                    make-workflow-inputs
+                                    cromwell-label
+                                    (make-workflow-options executor)))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/update-workload! pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!   pipeline batch/stop-workload!)
-
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (if (workloads/saved-before? "0.4.0" workload)
-    (workloads/default-load-workload-impl tx workload)
-    (batch/load-batch-workload-impl tx workload)))
+(defoverload workloads/update-workload!   pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows          pipeline batch/workflows)

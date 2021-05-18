@@ -1,7 +1,10 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
   (:require [clojure.edn :as edn]
+            [clojure.data.json :as json]
             [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -10,11 +13,9 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log])
-  (:import [java.time OffsetDateTime]
+            [wfl.wfl :as wfl])
+  (:import [java.time OffsetDateTime ZoneId]
+           [java.time.format DateTimeFormatter]
            [java.util UUID]))
 
 (def pipeline "Sarscov2IlluminaFull")
@@ -69,6 +70,10 @@
 (defmulti update-executor!
   "Update the executor with the `source`"
   (fn [source executor] (:type executor)))
+
+(defmulti executor-workflows
+  "Use `tx` to return the workflows created by the `executor"
+  (fn [tx executor] (:type executor)))
 
 (defmulti load-executor!
   "Use `tx` to load the workload executor with `executor_type`."
@@ -261,25 +266,114 @@
 
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraDataRepoSourceDetails_%09d" id)
-        _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/db-do-commands tx [(format create details)
+                                         (format alter details)])
         items   (-> (select-keys request (keys tdr-source-serialized-fields))
                     (set/rename-keys tdr-source-serialized-fields)
                     (assoc :details details)
                     (->> (jdbc/insert! tx tdr-source-table)))]
     [tdr-source-type (-> items first :id str)]))
 
-;; Create and add new snapshots to the snapshot queue
-(defn ^:private update-tdr-source [source]
-  (letfn [(find-new-rows       [source now] [])
-          (make-snapshots      [source row-ids])
-          (write-snapshots     [source snapshots])
-          (update-last-checked [source now])]
-    (let [now     (OffsetDateTime/now)
-          row-ids (find-new-rows source now)]
-      (when-not (empty? row-ids)
-        (write-snapshots source (make-snapshots source row-ids)))
-      (update-last-checked source now))))
+(defn ^:private find-new-rows
+  "Find new rows in TDR by querying between `last_checked` and the
+   frozen `now`."
+  [{:keys [dataset
+           dataset_table
+           table_column_name
+           last_checked] :as _source}
+   now]
+  (-> (datarepo/query-table-between
+       dataset
+       dataset_table
+       table_column_name
+       [last_checked now]
+       [:datarepo_row_id])
+      :rows
+      flatten))
+
+(defn ^:private go-create-snapshot!
+  "Create snapshot in TDR from `dataset` body, `table`
+   and `row-ids` then write job info as well as rows
+   into `source-details-name` table, `suffix` will be
+   appended to the snapshot names."
+  [suffix dataset table row-ids]
+  (let [columns     (-> (datarepo/all-columns dataset table)
+                        (->> (map :name) set)
+                        (conj "datarepo_row_id"))
+        job-id (-> (datarepo/make-snapshot-request dataset columns table row-ids)
+                   (update :name #(str % suffix))
+                   datarepo/create-snapshot-job)]
+    job-id))
+
+(defn ^:private create-snapshots
+  "Create uniquely named snapshots in TDR with max partition size of 500,
+   using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
+  [{:keys [dataset dataset_table] :as _source} now-obj row-ids]
+  (let [shards (mapv vec (partition-all 500 row-ids))
+        compact-now (.format now-obj (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss"))
+        job-ids (vec (map-indexed (fn [idx shard]
+                                    (go-create-snapshot!
+                                     (format "_%s_%s" compact-now idx)
+                                     dataset
+                                     dataset_table
+                                     shard)) shards))]
+    [shards job-ids]))
+
+(defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
+  (let [query "SELECT id, snapshot_creation_job_id
+               FROM %s
+               WHERE snapshot_creation_job_status = 'running'"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (format query details)
+           (jdbc/query tx)
+           (map (juxt :id :snapshot_creation_job_id))))))
+
+(defn ^:private check-tdr-job
+  "Check TDR job status for `job-id`, return a map with job-id,
+   snapshot_id and job_status if job has failed or succeeded, otherwise nil."
+  [job-id]
+  (when-let [job-metadata (datarepo/get-job-metadata-when-done job-id)]
+    (let [{:keys [id job-status] :as result} job-metadata]
+      (if (= job-status "succeeded")
+        (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
+        (do
+          (log/error "TDR Snapshot creation job %s failed!" id)
+          (assoc result :snapshot_id nil))))))
+
+(defn ^:private write-snapshot-id
+  "Write `snapshot_id` and `job_status` into source `details` table
+   from the `_tdr-job-metadata` map, update timestamp with real now."
+  [{:keys [details] :as _source}
+   [id {:keys [job_status snapshot_id] :as _tdr-job-metadata}]]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/update! tx details {:snapshot_creation_job_status job_status
+                              :snapshot_id snapshot_id
+                              :updated  (OffsetDateTime/now)}
+                  ["id = ?" id])))
+
+(defn ^:private write-snapshots-creation-jobs
+  "Write all `snapshots-creation-jobs` along with the `shards` they
+   try to snapshot into source `details` table, with the frozen `now`.
+   Also initialize all jobs statuses to running."
+  [{:keys [last_checked details] :as _source} now shards snapshots-creation-jobs]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/insert-multi! tx
+                        details
+                        (mapv (fn [shard id] {:snapshot_creation_job_id id
+                                              :snapshot_creation_job_status "running"
+                                              :datarepo_row_ids         shard
+                                              :start_time               last_checked
+                                              :end_time                 now})
+                              shards snapshots-creation-jobs))))
+
+(defn ^:private update-last-checked
+  "Update the `last_checked` field in source table with
+   the frozen `now`."
+  [{:keys [id] :as _source} now]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/update! tx tdr-source-table {:last_checked now} ["id = ?" id])))
 
 (defn ^:private load-tdr-source [tx {:keys [source_items] :as details}]
   (if-let [id (util/parse-int source_items)]
@@ -287,6 +381,27 @@
         (assoc :type tdr-source-type)
         (set/rename-keys (set/map-invert tdr-source-serialized-fields)))
     (throw (ex-info "source_items is not an integer" details))))
+
+;; Create and add new snapshots to the snapshot queue
+(defn ^:private update-tdr-source
+  "Check for new data in TDR, create new snapshots, insert
+   resulting job creation ids into database and update the
+   timestamp for next time using transaction TX."
+  [source]
+  ;; attempt to snapshot new rows in TDR
+  (let [utc-now-obj           (OffsetDateTime/now (ZoneId/of "UTC"))
+        utc-now               (.format utc-now-obj (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+        row-ids               (find-new-rows source utc-now)
+        [shards tdr-job-ids]  (create-snapshots source utc-now-obj row-ids)]
+    (write-snapshots-creation-jobs source utc-now-obj shards tdr-job-ids)
+    (update-last-checked source utc-now-obj))
+  ;; update TDR jobs that are still "running"
+  (let [id+pending-tdr-job-ids (get-pending-tdr-jobs source)
+        id+job-metadatas (map #(update % 1 check-tdr-job) id+pending-tdr-job-ids)]
+    (run! (partial write-snapshot-id source) id+job-metadatas))
+  ;; load and return the source table
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (load-tdr-source tx {:source_items (str (:id source))})))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
@@ -336,8 +451,10 @@
 
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraExecutorDetails_%09d" id)
         _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/execute! tx [(format alter details)])
         items   (-> (select-keys request (keys terra-executor-serialized-fields))
                     (update :fromSource pr-str)
                     (set/rename-keys terra-executor-serialized-fields)
@@ -369,16 +486,14 @@
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [now      (OffsetDateTime/now)
-          id-start (inc (postgres/table-max tx details :id))
-          to-rows  (fn [idx {:keys [status workflowId] :as _workflow}]
-                     {:id                    (+ id-start idx)
-                      :snapshot_reference_id referenceId
-                      :rawls_submission_id   submissionId
-                      :workflow_id           workflowId
-                      :workflow_status       status
-                      :updated               now})]
-      (jdbc/insert-multi! tx details (map-indexed to-rows workflows)))))
+    (let [now     (OffsetDateTime/now)
+          to-rows (fn [{:keys [status workflowId] :as _workflow}]
+                    {:snapshot_reference_id referenceId
+                     :rawls_submission_id   submissionId
+                     :workflow_id           workflowId
+                     :workflow_status       status
+                     :updated               now})]
+      (jdbc/insert-multi! tx details (map to-rows workflows)))))
 
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
@@ -432,11 +547,20 @@
                       ["id = ?" id])))
     (throw (ex-info "No successful workflows in queue" {:executor executor}))))
 
-(defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload update-executor! terra-executor-type update-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
-(defoverload peek-queue!      terra-executor-type peek-terra-executor-queue)
-(defoverload pop-queue!       terra-executor-type pop-terra-executor-queue)
+(defn ^:private terra-executor-workflows
+  [tx {:keys [workspace details] :as _executor}]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
+       (jdbc/query tx)
+       (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
+
+(defoverload create-executor!   terra-executor-name create-terra-executor)
+(defoverload update-executor!   terra-executor-type update-terra-executor)
+(defoverload load-executor!     terra-executor-type load-terra-executor)
+(defoverload peek-queue!        terra-executor-type peek-terra-executor-queue)
+(defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
+(defoverload executor-workflows terra-executor-type terra-executor-workflows)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -450,8 +574,10 @@
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "TerraWorkspaceSinkDetails_%09d" id)
         _       (jdbc/execute! tx [(format create details)])
+        _       (jdbc/execute! tx [(format alter details)])
         items   (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
                     (update :fromOutputs pr-str)
                     (set/rename-keys terra-workspace-sink-serialized-fields)
@@ -506,10 +632,18 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity_name name
               :workflow    uuid
-              :updated     (OffsetDateTime/now)
-              :id          (inc (postgres/table-max tx details :id))}
+              :updated     (OffsetDateTime/now)}
              (jdbc/insert! tx details))))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
+
+(defoverload workloads/create-workload!   pipeline create-covid-workload)
+(defoverload workloads/start-workload!    pipeline start-covid-workload)
+(defoverload workloads/update-workload!   pipeline update-covid-workload)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
+(defmethod   workloads/workflows          pipeline
+  [tx {:keys [executor] :as _workload}]
+  (executor-workflows tx executor))

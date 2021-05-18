@@ -252,13 +252,13 @@
   (letfn [(finished? [{:keys [status] :as workflow}]
             (let [skipped? #(-> % :uuid util/uuid-nil?)]
               (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
-    (let [interval 10
-          timeout  3600]                ; 1 hour
+    (let [interval 60
+          timeout  4800]                ; 80 minutes
       (loop [elapsed 0 wl workload]
         (when (> elapsed timeout)
           (throw (TimeoutException.
                   (format "Timed out waiting for workload %s" uuid))))
-        (if (or (:finished workload) (every? finished? (:workflows wl)))
+        (if (or (:finished workload) (every? finished? (endpoints/get-workflows wl)))
           (done! wl)
           (do
             (log/infof "Waiting for workload %s to complete" uuid)
@@ -285,6 +285,10 @@
 (defn update-workload! [workload]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/update-workload! tx workload)))
+
+(defn workflows [workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/workflows tx workload)))
 
 (defn load-workload-for-uuid [uuid]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]

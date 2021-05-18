@@ -1,19 +1,20 @@
 (ns wfl.integration.modules.wgs-test
-  (:require [clojure.set :refer [rename-keys]]
+  (:require [clojure.set  :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
+            [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.module.wgs :as wgs]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.util :as util]
-            [wfl.references :as references]
-            [clojure.string :as str]
-            [wfl.service.postgres :as postgres])
-  (:import (java.util UUID)
-           (java.time OffsetDateTime)))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.all                 :as all]
+            [wfl.module.batch               :as batch]
+            [wfl.module.wgs                 :as wgs]
+            [wfl.references                 :as references]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.postgres           :as postgres]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util])
+  (:import [java.util UUID]
+           [java.time OffsetDateTime]))
 
 (clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -41,7 +42,7 @@
             (-> (make-wgs-workload-request)
                 (assoc-in [:common :inputs] {:reference_fasta_prefix prefix})
                 workloads/create-workload!
-                :workflows)))))
+                workloads/workflows)))))
 
 (deftest test-create-with-reference-fasta-prefix-override
   (let [prefix "gs://fake-input-bucket/ref-fasta"]
@@ -57,7 +58,7 @@
                 (assoc-in [:common :inputs] {:reference_fasta_prefix "gs://ignore/this/ref-fasta"})
                 (update :items (partial map #(update % :inputs (fn [xs] (assoc xs :reference_fasta_prefix prefix)))))
                 workloads/create-workload!
-                :workflows)))))
+                workloads/workflows)))))
 
 (deftest test-start-wgs-workload!
   (with-redefs-fn {#'cromwell/submit-workflows mock-submit-workflows}
@@ -69,7 +70,7 @@
                  (is
                   (not-any? (partial contains? workflow) (keys workloads/wgs-inputs))
                   "Inputs are not at the top-level"))]
-         (run! check-nesting (:workflows workload))))))
+         (run! check-nesting (workloads/workflows workload))))))
 
 (defn ^:private old-create-wgs-workload! []
   (let [request (make-wgs-workload-request)]
@@ -111,12 +112,12 @@
              inputs))]
     (with-redefs-fn
       {#'cromwell/submit-workflows verify-inputs}
-      #(-> (make-wgs-workload-request)
-           (update :items use-input_bam)
-           (workloads/execute-workload!)
-           (as-> workload
-                 (is (:started workload))
-             (run! go! (:workflows workload)))))))
+      #(let [workload (-> (make-wgs-workload-request)
+                          (update :items use-input_bam)
+                          workloads/execute-workload!)]
+
+         (is (:started workload))
+         (run! go! (workloads/workflows workload))))))
 
 (deftest test-submitted-workflow-inputs
   (letfn [(prefixed? [prefix key] (str/starts-with? (str key) (str prefix)))
@@ -187,7 +188,7 @@
                  (partial map
                           #(assoc % :options {:supports_options true :overwritten true})))
          workloads/execute-workload!
-         :workflows
+         workloads/workflows
          (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
@@ -196,20 +197,20 @@
                   (assoc-in [:common :options] {})
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
-                  :workflows))))
+                  workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [workflows items] :as _workload}]
+  [tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! workflows)))
+    (run! update! (wfl.api.workloads/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflows                mock-submit-workflows
-     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    {#'cromwell/submit-workflows             mock-submit-workflows
+     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
     #(shared/run-workload-state-transition-test! (make-wgs-workload-request))))
 
 (deftest test-stop-workload-state-transition

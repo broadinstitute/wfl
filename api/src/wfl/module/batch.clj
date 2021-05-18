@@ -1,13 +1,77 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
-  (:require [wfl.api.workloads :as workloads]
-            [wfl.jdbc :as jdbc]
+  (:require [clj-http.client      :as http]
+            [clojure.string       :as str]
+            [wfl.api.workloads    :as workloads]
+            [wfl.auth             :as auth]
+            [wfl.jdbc             :as jdbc]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util             :as util]
+            [wfl.wfl              :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
+
+(defn ^:private cromwell-status
+  "`status` of the workflow with `uuid` in `cromwell`."
+  [cromwell uuid]
+  (-> (str/join "/" [cromwell "api" "workflows" "v1" uuid "status"])
+      (http/get {:headers (auth/get-auth-header)})
+      :body
+      util/parse-json
+      :status))
+
+(def ^:private finished?
+  "Test if a workflow `:status` is in a terminal state."
+  (set (conj cromwell/final-statuses "skipped")))
+
+(defn make-update-workflows [get-status!]
+  (fn [tx {:keys [items] :as workload}]
+    (letfn [(update! [{:keys [id uuid]} status]
+              (jdbc/update! tx items
+                            {:status status
+                             :updated (OffsetDateTime/now)
+                             :uuid uuid}
+                            ["id = ?" id]))]
+      (->> (workloads/workflows tx workload)
+           (remove (comp nil? :uuid))
+           (remove (comp finished? :status))
+           (run! #(update! % (get-status! workload %)))))))
+
+(def update-workflow-statuses!
+  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
+  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
+            (if (util/uuid-nil? uuid)
+              "skipped"
+              (cromwell-status executor uuid)))]
+    (make-update-workflows get-cromwell-status)))
+
+(defn batch-update-workflow-statuses!
+  "Use `tx` to update the `status` of the workflows in `_workload`."
+  [tx {:keys [executor uuid items] :as _workoad}]
+  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+                          (cromwell/query executor)
+                          (map (juxt :id :status)))]
+    (letfn [(update! [[uuid status]]
+              (jdbc/update! tx items
+                            {:status status :updated (OffsetDateTime/now)}
+                            ["uuid = ?" uuid]))]
+      (run! update! uuid->status))))
+
+(defn active-workflows
+  "Use `tx` to query all the workflows in `_workload` whose :status is not in
+  `finished?`"
+  [tx {:keys [items] :as _workload}]
+  (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
+    (->> (util/to-quoted-comma-separated-list finished?)
+         (format query items)
+         (jdbc/query tx))))
+
+(defn update-workload-status!
+  "Use `tx` to mark `workload` finished when all `workflows` are finished."
+  [tx {:keys [id] :as workload}]
+  (when (empty? (active-workflows tx workload))
+    (jdbc/update! tx :workload {:finished (OffsetDateTime/now)} ["id = ?" id])))
 
 (defn add-workload-table!
   "Use transaction `tx` to add a `CromwellWorkflow` table
@@ -31,42 +95,65 @@
     [id table]))
 
 (defn load-batch-workload-impl
-  "Use transaction `tx` to load and associate the workflows in the `workload`
-  stored in a CromwellWorkflow table."
-  [tx {:keys [items] :as workload}]
+  "Load workload metadata + trim any unused vars."
+  [_ workload]
+  (into {} (filter second workload)))
+
+(defn pre-v0_4_0-load-workflows
+  [tx workload]
+  (letfn [(unnilify [m] (into {} (filter second m)))
+          (split-inputs [m]
+            (let [keep [:id :finished :status :updated :uuid :options]]
+              (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
+    (->> (postgres/get-table tx (:items workload))
+         (mapv (comp unnilify split-inputs load-options)))))
+
+(defn ^:private load-batch-workflows
+  "Use transaction `tx` to load the workflows in the `_workload` stored in a
+   CromwellWorkflow table."
+  [tx {:keys [items] :as _workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
-         (mapv (comp unnilify load-options load-inputs))
-         (assoc workload :workflows)
-         load-options
-         unnilify)))
+         (mapv (comp unnilify load-options load-inputs)))))
 
 (defn submit-workload!
-  "Use transaction TX to start the WORKLOAD."
-  ([{:keys [uuid workflows]} url workflow-wdl make-cromwell-inputs! cromwell-label default-options]
-   (letfn [(update-workflow [workflow cromwell-uuid]
-             (assoc workflow :uuid cromwell-uuid
-                    :status "Submitted"
-                    :updated (OffsetDateTime/now)))
-           (submit-batch! [[options workflows]]
-             (map update-workflow
-                  workflows
-                  (cromwell/submit-workflows
-                   url
-                   workflow-wdl
-                   (map (partial make-cromwell-inputs! url) workflows)
-                   (util/deep-merge default-options options)
-                   (merge cromwell-label {:workload uuid}))))]
-     (mapcat submit-batch! (group-by :options workflows)))))
+  "Submit the `workflows` to Cromwell with `url`."
+  [{:keys [uuid labels] :as _workload}
+   workflows
+   url
+   workflow-wdl
+   make-cromwell-inputs!
+   cromwell-label
+   default-options]
+  (letfn [(update-workflow [workflow cromwell-uuid]
+            (merge workflow {:uuid cromwell-uuid
+                             :status "Submitted"
+                             :updated (OffsetDateTime/now)}))
+          (submit-batch! [[options workflows]]
+            (map update-workflow
+                 workflows
+                 (cromwell/submit-workflows
+                  url
+                  workflow-wdl
+                  (map (partial make-cromwell-inputs! url) workflows)
+                  (util/deep-merge default-options options)
+                  (merge
+                   cromwell-label
+                   {:workload uuid}
+                   (into {} (map #(-> (str/split % #":" 2) (update 0 keyword)) labels))))))]
+    (->> workflows
+         (group-by :options)
+         (mapcat submit-batch!))))
 
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
+            (batch-update-workflow-statuses! tx workload)
+            (update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
@@ -80,3 +167,10 @@
               (when-not (:started workload) (patch! {:finished now}))
               (workloads/load-workload-for-id tx id)))]
     (if-not (or stopped finished) (stop! workload) workload)))
+
+(defn workflows
+  "Return the workflows managed by the `workload`."
+  [tx workload]
+  (if (workloads/saved-before? "0.4.0" workload)
+    (pre-v0_4_0-load-workflows tx workload)
+    (load-batch-workflows tx workload)))

@@ -1,19 +1,18 @@
 (ns wfl.module.sg
   "Handle Somatic Genomes."
-  (:require [clojure.data.json :as json]
-            [clojure.set :as set]
-            [clojure.string :as str]
+  (:require [clojure.data.json              :as json]
+            [clojure.set                    :as set]
+            [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
-            [wfl.references :as references]
-            [wfl.service.clio :as clio]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.api.workloads              :as workloads :refer [defoverload]]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.batch               :as batch]
+            [wfl.references                 :as references]
+            [wfl.service.clio               :as clio]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.google.storage     :as gcs]
+            [wfl.util                       :as util]
+            [wfl.wfl                        :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
@@ -86,6 +85,7 @@
     (let [now (OffsetDateTime/now)]
       (run! update-record!
             (batch/submit-workload! workload
+                                    (workloads/workflows tx workload)
                                     executor
                                     workflow-wdl
                                     cromwellify-workflow-inputs
@@ -190,20 +190,22 @@
 
 ;; visible for testing
 (defn register-workload-in-clio
-  "Register `_workload` outputs with Clio."
-  [{:keys [executor output workflows] :as _workload}]
+  "Register `workload` outputs with Clio."
+  [{:keys [executor output] :as _workload} workflows]
   (run! (partial register-workflow-in-clio executor output) workflows))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/batch-update-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
+            (batch/batch-update-workflow-statuses! tx workload)
+            (batch/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished))
       (let [workload' (update! workload)]
-        (when (:finished workload') (register-workload-in-clio workload'))
+        (when (:finished workload')
+          (->> (workloads/workflows tx workload')
+               (register-workload-in-clio workload')))
         workload')
       workload)))
 
@@ -211,5 +213,5 @@
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
 (defoverload workloads/update-workload!   pipeline update-sg-workload!)
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline
-  batch/load-batch-workload-impl)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows          pipeline batch/workflows)
