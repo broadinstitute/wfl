@@ -258,7 +258,7 @@
         (when (> elapsed timeout)
           (throw (TimeoutException.
                   (format "Timed out waiting for workload %s" uuid))))
-        (if (or (:finished workload) (every? finished? (:workflows wl)))
+        (if (or (:finished workload) (every? finished? (endpoints/get-workflows wl)))
           (done! wl)
           (do
             (log/infof "Waiting for workload %s to complete" uuid)
@@ -287,7 +287,8 @@
     (wfl.api.workloads/update-workload! tx workload)))
 
 (defn workflows [workload]
-  (wfl.api.workloads/workflows workload))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/workflows tx workload)))
 
 (defn load-workload-for-uuid [uuid]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]

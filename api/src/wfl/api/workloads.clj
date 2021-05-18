@@ -30,8 +30,8 @@
   (fn [_ body] (:pipeline body)))
 
 (defmulti workflows
-  "Return the workflows managed by the `workload`."
-  (fn [workload] (:pipeline workload)))
+  "Use `tx` to return the workflows managed by the `workload`."
+  (fn [tx workload] (:pipeline workload)))
 
 ;; loading utilities
 (defmulti load-workload-impl

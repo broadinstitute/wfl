@@ -33,7 +33,7 @@
                              :updated (OffsetDateTime/now)
                              :uuid uuid}
                             ["id = ?" id]))]
-      (->> (workloads/workflows workload)
+      (->> (workloads/workflows tx workload)
            (remove (comp nil? :uuid))
            (remove (comp finished? :status))
            (run! #(update! % (get-status! workload %)))))))
@@ -94,7 +94,12 @@
     (jdbc/update!        tx :workload {:items table} ["id = ?" id])
     [id table]))
 
-(defn pre-v0.4.0-load-workload-impl
+(defn load-batch-workload-impl
+  "Load workload metadata + trim any unused vars."
+  [_ workload]
+  (into {} (filter second workload)))
+
+(defn pre-v0_4_0-load-workflows
   [tx workload]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (split-inputs [m]
@@ -102,40 +107,46 @@
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx (:items workload))
-         (mapv (comp unnilify split-inputs load-options))
-         (assoc workload :workflows)
-         unnilify)))
+         (mapv (comp unnilify split-inputs load-options)))))
 
-(defn load-batch-workload-impl
-  "Use transaction `tx` to load and associate the workflows in the `workload`
-  stored in a CromwellWorkflow table."
-  [tx {:keys [items] :as workload}]
+(defn ^:private load-batch-workflows
+  "Use transaction `tx` to load the workflows in the `_workload` stored in a
+   CromwellWorkflow table."
+  [tx {:keys [items] :as _workload}]
   (letfn [(unnilify [m] (into {} (filter second m)))
           (load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
-         (mapv (comp unnilify load-options load-inputs))
-         (assoc workload :workflows)
-         load-options
-         unnilify)))
+         (mapv (comp unnilify load-options load-inputs)))))
 
 (defn submit-workload!
-  "Use transaction TX to start the WORKLOAD."
-  ([{:keys [uuid workflows]} url workflow-wdl make-cromwell-inputs! cromwell-label default-options]
-   (letfn [(update-workflow [workflow cromwell-uuid]
-             (assoc workflow :uuid cromwell-uuid
-                    :status "Submitted"
-                    :updated (OffsetDateTime/now)))
-           (submit-batch! [[options workflows]]
-             (map update-workflow
-                  workflows
-                  (cromwell/submit-workflows
-                   url
-                   workflow-wdl
-                   (map (partial make-cromwell-inputs! url) workflows)
-                   (util/deep-merge default-options options)
-                   (merge cromwell-label {:workload uuid}))))]
-     (mapcat submit-batch! (group-by :options workflows)))))
+  "Submit the `workflows` to Cromwell with `url`."
+  [{:keys [uuid labels] :as _workload}
+   workflows
+   url
+   workflow-wdl
+   make-cromwell-inputs!
+   cromwell-label
+   default-options]
+  (letfn [(update-workflow [workflow cromwell-uuid]
+            (merge workflow {:uuid cromwell-uuid
+                             :status "Submitted"
+                             :updated (OffsetDateTime/now)}))
+          (submit-batch! [[options workflows]]
+            (map update-workflow
+                 workflows
+                 (cromwell/submit-workflows
+                  url
+                  workflow-wdl
+                  (map (partial make-cromwell-inputs! url) workflows)
+                  (util/deep-merge default-options options)
+                  (merge
+                   cromwell-label
+                   {:workload uuid}
+                   (into {} (map #(-> (str/split % #":" 2) (update 0 keyword)) labels))))))]
+    (->> workflows
+         (group-by :options)
+         (mapcat submit-batch!))))
 
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
@@ -159,5 +170,7 @@
 
 (defn workflows
   "Return the workflows managed by the `workload`."
-  [workload]
-  (:workflows workload))
+  [tx workload]
+  (if (workloads/saved-before? "0.4.0" workload)
+    (pre-v0_4_0-load-workflows tx workload)
+    (load-batch-workflows tx workload)))

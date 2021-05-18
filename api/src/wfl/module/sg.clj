@@ -11,7 +11,6 @@
             [wfl.service.clio               :as clio]
             [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
-            [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
   (:import [java.time OffsetDateTime]))
@@ -86,6 +85,7 @@
     (let [now (OffsetDateTime/now)]
       (run! update-record!
             (batch/submit-workload! workload
+                                    (workloads/workflows tx workload)
                                     executor
                                     workflow-wdl
                                     cromwellify-workflow-inputs
@@ -191,9 +191,8 @@
 ;; visible for testing
 (defn register-workload-in-clio
   "Register `workload` outputs with Clio."
-  [{:keys [executor output] :as workload}]
-  (run! (partial register-workflow-in-clio executor output)
-        (workloads/workflows workload)))
+  [{:keys [executor output] :as _workload} workflows]
+  (run! (partial register-workflow-in-clio executor output) workflows))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."
@@ -204,7 +203,9 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished))
       (let [workload' (update! workload)]
-        (when (:finished workload') (register-workload-in-clio workload'))
+        (when (:finished workload')
+          (->> (workloads/workflows tx workload')
+               (register-workload-in-clio workload')))
         workload')
       workload)))
 
@@ -212,6 +213,5 @@
 (defoverload workloads/start-workload!    pipeline start-sg-workload!)
 (defoverload workloads/update-workload!   pipeline update-sg-workload!)
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline
-  batch/load-batch-workload-impl)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
 (defoverload workloads/workflows          pipeline batch/workflows)
