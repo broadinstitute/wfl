@@ -114,28 +114,30 @@
   :default
   [source]
   (throw
-    (ex-info "Failed to create workload - unknown source"
-             {:source source
-              :type  ::invalid-source})))
+   (ex-info "Failed to create workload - unknown source"
+            {:source source
+             :type  ::invalid-source})))
 
 (defmethod throw-when-malformed-executor-request!
   :default
   [executor]
   (throw
-    (ex-info "Failed to create workload - unknown executor"
-             {:source executor
-              :type  ::invalid-executor})))
+   (ex-info "Failed to create workload - unknown executor"
+            {:source executor
+             :type  ::invalid-executor})))
 
 (defmethod throw-when-malformed-sink-request!
   :default
   [sink]
   (throw
-    (ex-info "Failed to create workload - unknown sink"
-             {:source sink
-              :type  ::invalid-sink})))
+   (ex-info "Failed to create workload - unknown sink"
+            {:source sink
+             :type  ::invalid-sink})))
 
 
 ;; Workload Functions
+
+
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
@@ -668,7 +670,6 @@
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
 (defoverload throw-when-malformed-sink-request! terra-workspace-sink-name verify-terra-sink!)
-
 
 (defoverload workloads/create-workload!   pipeline create-covid-workload)
 (defoverload workloads/start-workload!    pipeline start-covid-workload)
