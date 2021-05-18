@@ -412,24 +412,34 @@
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in DETAILS table for active or failed WORKSPACE workflows."
   [{:keys [workspace details] :as _executor}]
-  (let [query  "SELECT *
-                FROM %s
-                WHERE rawls_submission_id IS NOT NULL
-                AND workflow_id IS NOT NULL
-                AND workflow_status NOT IN ('Succeeded', 'Aborted')"
-        records (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                  (jdbc/query tx (format query details)))]
-    (letfn [(get-status! [{:keys [rawls_submission_id workflow_id] :as _record}]
-              (:status (firecloud/get-workflow workspace
-                                               rawls_submission_id
-                                               workflow_id)))
-            (update!     [{:keys [id] :as _record} status]
+  (letfn [(read-active-or-failed-workflows
+            []
+            (let [query "SELECT *
+                         FROM %s
+                         WHERE rawls_submission_id IS NOT NULL
+                         AND workflow_id IS NOT NULL
+                         AND workflow_status NOT IN ('Succeeded', 'Aborted')"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (jdbc/update! tx details
-                              {:workflow_status status
-                               :updated (OffsetDateTime/now)}
-                              ["id = ?" id])))]
-      (run! #(update! % (get-status! %)) records))))
+                (jdbc/query tx (format query details)))))
+          (update-workflow-status
+            [{:keys [rawls_submission_id workflow_id] :as record}]
+            (let [{:keys [status] :as _workflow}
+                  (firecloud/get-workflow workspace
+                                          rawls_submission_id
+                                          workflow_id)]
+              (assoc record :workflow_status status)))
+          (write-workflow-statuses
+            [now records]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (-> (fn [{:keys [id workflow_status] :as _record}]
+                    (jdbc/update! tx details
+                                  {:workflow_status workflow_status
+                                   :updated         now}
+                                  ["id = ?" id]))
+                  (run! records))))]
+    (->> (read-active-or-failed-workflows)
+         (map update-workflow-status)
+         (write-workflow-statuses (OffsetDateTime/now)))))
 
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
