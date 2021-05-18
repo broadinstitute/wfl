@@ -110,12 +110,6 @@
   (fn [sink] (:name sink)))
 
 ;; Workload Functions
-(def ^:private dataset-table-name "flowcells")
-(def ^:private dataset-column-name "run_date")
-(def ^:private source-name "Terra DataRepo")
-(def ^:private executor-name "Terra")
-(def ^:private sink-name "Terra Workspace")
-
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
@@ -132,61 +126,6 @@
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
-
-(defn throw-unless-column-exists
-  "Throw or return the column from `table`"
-  [dataset table]
-  (let [[result & more :as all] (-> table
-                                    (get-in [:columns])
-                                    (->> (filter (comp #{dataset-column-name} :name))))]
-    (when-not result
-      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
-    result))
-
-(defn throw-unless-table-exists
-  "Throw or return the table from `dataset`"
-  [dataset]
-  (let [[result & more :as all] (-> dataset
-                                    (get-in [:schema :tables])
-                                    (->> (filter (comp #{dataset-table-name} :name))))]
-    (when-not result
-      (throw (ex-info "No table with name" {:name dataset-table-name :dataset dataset})))
-    (when result
-      (throw-unless-column-exists dataset result))
-    result))
-
-(defn verify-data-repo-source!
-  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
-  [{:keys [name dataset] :as source}]
-  (when-not (some? dataset)
-    (throw (ex-info "Source is nil" {:source source})))
-  (when-not (= (:name source) source-name)
-    (throw (ex-info "Unknown Source" {:source source})))
-  (-> (datarepo/dataset (:dataset source))
-      (throw-unless-table-exists)))
-
-(defn verify-terra-executor!
-  "Verify the method-configuration exists."
-  [{:keys [name method_configuration] :as executor}]
-  (when-not (= (:name executor) executor-name)
-    (throw (ex-info "Unknown Executor" {:executor executor})))
-  (when-not (:method_configuration executor)
-    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
-
-(defn verify-terra-sink!
-  "Verify that the WFL has access to both firecloud and the `workspace`."
-  [{:keys [name workspace] :as sink}]
-  (when-not (= (:name sink) sink-name)
-    (throw (ex-info "Unknown Sink" {:sink sink})))
-  (try
-    (firecloud/get-workspace workspace)
-    (catch Throwable t
-      (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                     :cause     (.getMessage t)})))))
-
-(defoverload throw-when-malformed-source-request! source-name verify-data-repo-source!)
-(defoverload throw-when-malformed-executor-request! executor-name verify-terra-executor!)
-(defoverload throw-when-malformed-sink-request! sink-name verify-terra-sink!)
 
 (defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
@@ -258,12 +197,6 @@
                     {:id       items
                      :workload workload}))))
 
-(defoverload workloads/create-workload! pipeline create-covid-workload)
-(defoverload workloads/start-workload! pipeline start-covid-workload)
-(defoverload workloads/update-workload! pipeline update-covid-workload)
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")
@@ -293,6 +226,38 @@
         (assoc :type tdr-source-type)
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
+
+(defn throw-unless-column-exists
+  "Throw or return the column from `table`"
+  [dataset table dataset-column-name]
+  (let [[result & more :as all] (-> table
+                                    (get-in [:columns])
+                                    (->> (filter (comp #{dataset-column-name} :name))))]
+    (when-not result
+      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
+    result))
+
+(defn throw-unless-table-exists
+  "Throw or return the table from `dataset`"
+  [dataset table-name dataset-column-name]
+  (let [[result & more :as all] (-> dataset
+                                    (get-in [:schema :tables])
+                                    (->> (filter (comp #{table-name} :name))))]
+    (when-not result
+      (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
+    (when result
+      (throw-unless-column-exists dataset result dataset-column-name))
+    result))
+
+(defn verify-data-repo-source!
+  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
+  [{:keys [name dataset table column] :as source}]
+  (when-not (some? dataset)
+    (throw (ex-info "Dataset is Nil" {:source source})))
+  (when-not (:name source)
+    (throw (ex-info "Unknown Source" {:source source})))
+  (-> (datarepo/dataset (:dataset source))
+      (throw-unless-table-exists table column)))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
@@ -462,6 +427,7 @@
 (defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
+(defoverload throw-when-malformed-source-request! tdr-source-name verify-data-repo-source!)
 
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
@@ -493,6 +459,14 @@
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
+
+(defn verify-terra-executor!
+  "Verify the method-configuration exists."
+  [{:keys [name methodConfiguration] :as executor}]
+  (when-not (:name executor)
+    (throw (ex-info "Unknown Executor" {:executor executor})))
+  (when-not (:methodConfiguration executor)
+    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
 
 (defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
@@ -585,6 +559,7 @@
 (defoverload peek-queue!        terra-executor-type peek-terra-executor-queue)
 (defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
+(defoverload throw-when-malformed-executor-request! terra-executor-name verify-terra-executor!)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -616,6 +591,17 @@
         (update :fromOutputs edn/read-string)
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
+
+(defn verify-terra-sink!
+  "Verify that the WFL has access to both firecloud and the `workspace`."
+  [{:keys [name workspace] :as sink}]
+  (when-not (:name sink)
+    (throw (ex-info "Unknown Sink" {:sink sink})))
+  (try
+    (firecloud/get-workspace workspace)
+    (catch Throwable t
+      (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                     :cause     (.getMessage t)})))))
 
 ;; visible for testing
 (defn rename-gather
@@ -661,6 +647,8 @@
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
+(defoverload throw-when-malformed-sink-request! terra-workspace-sink-name verify-terra-sink!)
+
 
 (defoverload workloads/create-workload!   pipeline create-covid-workload)
 (defoverload workloads/start-workload!    pipeline start-covid-workload)

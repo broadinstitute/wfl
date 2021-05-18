@@ -15,10 +15,14 @@
 (def ^:private workspace-api-url
   (partial firecloud-url "api/workspaces"))
 
-(defn get-workspace [& parts]
+(defn ^:private get-workspace-json [& parts]
   (-> (apply workspace-api-url parts)
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
+
+(defn get-workspace [workspace]
+  {:pre [(some? workspace)]}
+  (get-workspace-json workspace))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
