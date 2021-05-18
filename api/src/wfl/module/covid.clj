@@ -211,7 +211,6 @@
 (defn create-covid-workload
   "Verify the `request` and create a workload"
   [tx request]
-  (wfl.debug/trace (get-in request [:source]))
   (throw-when-malformed-source-request! (get-in request [:source]))
   (throw-when-malformed-executor-request! (get-in request [:executor]))
   (throw-when-malformed-sink-request! (get-in request [:sink]))
