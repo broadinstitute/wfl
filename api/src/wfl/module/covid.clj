@@ -309,11 +309,22 @@
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
 
-(defn ^:private find-and-snapshot-new-rows [source utc-now]
+(defn ^:private find-and-snapshot-new-rows
+  "Create and enqueue snapshots from new rows in the `source` dataset."
+  [source utc-now]
   (let [date-format (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss")]
     (->> (.format utc-now date-format)
          (find-new-rows source)
-         (create-snapshots source utc-now))))
+         (create-snapshots source utc-now)
+         (write-snapshots-creation-jobs source utc-now))
+    (update-last-checked source utc-now)))
+
+(defn ^:private update-pending-snapshot-jobs
+  "Update the status of TDR snapshot jobs that are still 'running'."
+  [source]
+  (->> (get-pending-tdr-jobs source)
+       (map #(update % 1 check-tdr-job))
+       (run! #(write-snapshot-id source %))))
 
 ;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source
@@ -321,15 +332,8 @@
    resulting job creation ids into database and update the
    timestamp for next time using transaction TX."
   [source]
-  ;; attempt to snapshot new rows in TDR
-  (let [utc-now             (utc-now)
-        shards->tdr-job-ids (find-and-snapshot-new-rows source utc-now)]
-    (write-snapshots-creation-jobs source utc-now shards->tdr-job-ids)
-    (update-last-checked source utc-now))
-  ;; update TDR jobs that are still "running"
-  (let [id+pending-tdr-job-ids (get-pending-tdr-jobs source)
-        id+job-metadatas (map #(update % 1 check-tdr-job) id+pending-tdr-job-ids)]
-    (run! (partial write-snapshot-id source) id+job-metadatas))
+  (find-and-snapshot-new-rows source (utc-now))
+  (update-pending-snapshot-jobs source)
   ;; load and return the source table
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (load-tdr-source tx {:source_items (str (:id source))})))
