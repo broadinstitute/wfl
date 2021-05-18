@@ -220,7 +220,8 @@
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
 
-(deftest test-create-covid-workload
+(def ^:private covid-workload-request
+  "Build a covid workload request."
   (let [dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8"
         column  "run_date"
         table   "flowcells"
@@ -234,10 +235,28 @@
         method_configuration (str/join "/" [mc-namespace mc-name])
         source   (util/make-map column dataset table)
         executor (util/make-map method_configuration workspace)
-        sink     (util/make-map workspace)
-        request  (workloads/covid-workload-request source executor sink)
-        raw-resp (endpoints/create-workload request)
-        response (update raw-resp :created instant/read-instant-timestamp)]
-    (is (s/valid? ::spec/covid-workload-request  request))
-    (is (s/valid? ::spec/covid-workload-response response))))
+        sink     (util/make-map workspace)]
+    (workloads/covid-workload-request source executor sink)))
+
+(deftest test-create-covid-workload
+  (testing "/create covid workload"
+    (let [{:keys [creator started] :as response}
+          (-> covid-workload-request endpoints/create-workload
+              (update :created instant/read-instant-timestamp))]
+      (is (s/valid? ::spec/covid-workload-request  covid-workload-request))
+      (is (s/valid? ::spec/covid-workload-response response))
+      (verify-internal-properties-removed response)
+      (is (not started))
+      (is (= @workloads/email creator)))))
+
+(deftest test-start-covid-workload
+  (testing "/start covid workload"
+    (is false)))
+
+(comment
+  (test-vars [#'test-create-covid-workload])
+  (test-vars [#'test-start-covid-workload])
+  (clojure.data.json/read-str
+   :key-fn keyword)
+  )
 
