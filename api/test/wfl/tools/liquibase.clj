@@ -7,13 +7,13 @@
   "Migrate the database schema using Liquibase."
   [changelog {:keys [user password connection-uri]}]
   (let [status (Main/run
-                 (into-array
-                  String
-                  [(str "--url=" connection-uri)
-                   (str "--changeLogFile=" changelog)
-                   (str "--username=" user)
-                   (str "--password=" password)
-                   "update"]))]
+                (into-array
+                 String
+                 [(str "--url=" connection-uri)
+                  (str "--changeLogFile=" changelog)
+                  (str "--username=" user)
+                  (str "--password=" password)
+                  "update"]))]
     (when-not (zero? status)
       (throw (ex-info "Liquibase migration failed" {:status status})))))
 

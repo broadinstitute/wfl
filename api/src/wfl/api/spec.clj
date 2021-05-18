@@ -104,7 +104,6 @@
                                            ::environment
                                            ::start]))
 
-
 (s/def ::batch-executor string?)
 (s/def ::covid-executor (s/keys :req-un [::fromSource
                                          ::methodConfiguration

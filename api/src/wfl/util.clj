@@ -519,12 +519,12 @@
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
 
-(def digit?             (set "0123456789"))                          
-(def lowercase?         (set "abcdefghijklmnopqrstuvwxyz"))          
-(def uppercase?         (set (map #(Character/toUpperCase %) lowercase?)))       
-(def letter?            (into lowercase? uppercase?))                
-(def alphanumeric?      (into letter? digit?))                       
-(def spaceunderdash?    (set " _-"))                                 
+(def digit?             (set "0123456789"))
+(def lowercase?         (set "abcdefghijklmnopqrstuvwxyz"))
+(def uppercase?         (set (map #(Character/toUpperCase %) lowercase?)))
+(def letter?            (into lowercase? uppercase?))
+(def alphanumeric?      (into letter? digit?))
+(def spaceunderdash?    (set " _-"))
 (def workspace-allowed? (into alphanumeric? spaceunderdash?))
 (def workspace-name?    (partial every? workspace-allowed?))
 
