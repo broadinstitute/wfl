@@ -1,5 +1,5 @@
 (ns wfl.api.handlers
-  "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
+  "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
             [clojure.tools.logging          :as log]
             [clojure.tools.logging.readable :as logr]
@@ -36,6 +36,11 @@
 (defn strip-workflow-internals
   [workflow]
   (prune workflow))
+
+(defn strip-internals
+  "Strip internal properties from the `workload` and its `workflows`."
+  [workload]
+  (prune workload))
 
 (defn append-to-aou-workload
   "Append workflows described in BODY of REQUEST to a started AoU workload."
