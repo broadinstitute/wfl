@@ -20,6 +20,15 @@
 
 (def pipeline "Sarscov2IlluminaFull")
 
+(comment
+  (letfn [(entity-exists? [entity]
+            (let [entities (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")]
+              (->> entity keyword entities some?)))]
+    (when-not (entity-exists? "flowcell")
+      (throw (ex-info "Entity does not exist in workspace" {:workspace "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev"
+                                                            :entity "flowcell"}))))
+  )
+
 (defn ^:private get-snapshots-from-workspace
   [workspace])
 
