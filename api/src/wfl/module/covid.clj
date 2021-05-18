@@ -124,8 +124,8 @@
                          :id)]
     (-> [(format set-details continuous-workload-table-name)]
         (concat (map first src-exc-snk) [items])
-        (->> (jdbc/execute! tx))
-        first)))
+        (->> (jdbc/execute! tx)))
+    items))
 
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
