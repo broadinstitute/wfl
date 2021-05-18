@@ -24,24 +24,25 @@
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs labels status updated uuid] :as workflow}]
+  [{:keys [inputs labels status updated uuid] :as _workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
   (is updated)
   (is uuid)
   (is (= "Succeeded" status)))
 
 (defn ^:private verify-succeeded-workload
-  [{:keys [pipeline workflows] :as workload}]
-  (run! verify-succeeded-workflow workflows)
+  [workload]
+  (run! verify-succeeded-workflow (endpoints/get-workflows workload))
   (workloads/postcheck workload))
 
 (defn ^:private verify-internal-properties-removed [workload]
-  (letfn [(go! [key]
-            (is (util/absent? workload key)
-                (format "workload should not contain %s" key))
-            (is (every? #(util/absent? % key) (:workflows workload))
-                (format "workflows should not contain %s" key)))]
-    (run! go! [:id :items])))
+  (let [workflows (endpoints/get-workflows workload)]
+    (letfn [(go! [key]
+              (is (util/absent? workload key)
+                  (format "workload should not contain %s" key))
+              (is (every? #(util/absent? % key) workflows)
+                  (format "workflows should not contain %s" key)))]
+      (run! go! [:id :items]))))
 
 (deftest test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
@@ -95,7 +96,7 @@
     (let [workload (endpoints/start-workload workload)]
       (is (= uuid (:uuid workload)))
       (is (:started workload))
-      (let [{:keys [workflows]} workload]
+      (let [workflows (endpoints/get-workflows workload)]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
@@ -123,10 +124,11 @@
 
 (defn ^:private test-stop-workload
   [{:keys [uuid pipeline] :as workload}]
-  (letfn [(verify-no-workflows-run [{:keys [workflows] :as workload}]
+  (letfn [(verify-no-workflows-run [workload]
             (is (:finished workload))
-            (is (every? (comp nil? :uuid) workflows))
-            (is (every? (comp nil? :status) workflows)))]
+            (let [workflows (endpoints/get-workflows workload)]
+              (is (every? (comp nil? :uuid) workflows))
+              (is (every? (comp nil? :status) workflows))))]
     (testing (format "calling api/v1/start with %s workload" pipeline)
       (let [workload (endpoints/stop-workload workload)]
         (is (= uuid (:uuid workload)))
@@ -149,7 +151,7 @@
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
-    (let [{:keys [created creator started uuid workflows] :as workload}
+    (let [{:keys [created creator started uuid] :as workload}
           (endpoints/exec-workload request)]
       (is uuid    "workloads should have a uuid")
       (is created "should have a created timestamp")
@@ -158,8 +160,9 @@
           "creator inferred from auth token")
       (letfn [(included [m] (select-keys m [:pipeline :project]))]
         (is (= (included request) (included workload))))
-      (is (every? :updated workflows))
-      (is (every? :uuid workflows))
+      (let [workflows (endpoints/get-workflows workload)]
+        (is (every? :updated workflows))
+        (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 

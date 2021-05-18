@@ -163,7 +163,14 @@
               (jdbc/update! tx items values ["id = ?" id])))]
     (let [now (OffsetDateTime/now)
           executor (is-known-cromwell-url? executor)]
-      (run! update-record! (batch/submit-workload! workload executor workflow-wdl cromwellify-workflow-inputs cromwell-label (make-workflow-options executor)))
+      (run! update-record!
+            (batch/submit-workload! workload
+                                    (workloads/workflows tx workload)
+                                    executor
+                                    workflow-wdl
+                                    cromwellify-workflow-inputs
+                                    cromwell-label
+                                    (make-workflow-options executor)))
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 

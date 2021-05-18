@@ -1,6 +1,7 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
   (:require [clojure.set                    :refer [rename-keys]]
+            [clojure.tools.logging          :as log]
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
@@ -24,14 +25,20 @@
   [body]
   (constantly (succeed body)))
 
+(defn ^:private prune
+  [coll]
+  (->> (apply dissoc coll [:id :items])
+       (filter second)
+       (into {})))
+
+(defn strip-workflow-internals
+  [workflow]
+  (prune workflow))
+
 (defn strip-internals
   "Strip internal properties from the `workload` and its `workflows`."
   [workload]
-  (let [prune #(apply dissoc % [:id :items])]
-    (->> (workloads/workflows workload)
-         (mapv prune)
-         (assoc workload :workflows)
-         prune)))
+  (prune workload))
 
 (defn append-to-aou-workload
   "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
@@ -67,6 +74,17 @@
             (cond uuid    [(workloads/load-workload-for-uuid tx uuid)]
                   project (workloads/load-workloads-with-project tx project)
                   :else   (workloads/load-workloads tx)))))))
+
+(defn get-workflows
+  "Return the workflows managed by the workload."
+  [request]
+  (let [uuid (get-in request [:path-params :uuid])]
+    (log/infof "GET /api/v1/workload/%s/workflows" uuid)
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (workloads/load-workload-for-uuid tx uuid)
+           (workloads/workflows tx)
+           (mapv strip-workflow-internals)
+           succeed))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."

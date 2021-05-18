@@ -72,8 +72,8 @@
   (fn [source executor] (:type executor)))
 
 (defmulti executor-workflows
-  "Return the workflows created by the `executor"
-  (fn [executor] (:type executor)))
+  "Use `tx` to return the workflows created by the `executor"
+  (fn [tx executor] (:type executor)))
 
 (defmulti load-executor!
   "Use `tx` to load the workload executor with `executor_type`."
@@ -462,12 +462,11 @@
     (throw (ex-info "No successful workflows in queue" {:executor executor}))))
 
 (defn ^:private terra-executor-workflows
-  [{:keys [workspace details] :as _executor}]
-  (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (when-not (postgres/table-exists? tx details)
-           (throw (ex-info "Missing executor details table" {:table details})))
-         (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
-              (jdbc/query tx)))
+  [tx {:keys [workspace details] :as _executor}]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
+       (jdbc/query tx)
        (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
 (defoverload create-executor!   terra-executor-name create-terra-executor)
@@ -559,4 +558,6 @@
 (defoverload workloads/update-workload!   pipeline update-covid-workload)
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-(defoverload workloads/workflows          pipeline (comp executor-workflows :executor))
+(defmethod   workloads/workflows          pipeline
+  [tx {:keys [executor] :as _workload}]
+  (executor-workflows tx executor))
