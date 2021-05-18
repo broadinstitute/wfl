@@ -173,7 +173,12 @@
 (deftest test-update-tdr-source
   (let [{:keys [source]}
         (workloads/create-workload!
-         (workloads/covid-workload-request {} {} {}))]
+         (workloads/covid-workload-request {:dataset testing-dataset
+                                            :table testing-table-name
+                                            :column testing-column-name}
+                                           {:workspace testing-workspace
+                                            :method_configuration testing-method-configuration}
+                                           {:workspace testing-workspace}))]
     (with-redefs-fn
       {#'covid/create-snapshots mock-create-snapshots
        #'covid/find-new-rows mock-find-new-rows
@@ -282,5 +287,10 @@
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request {} {} {}))]
+                  (workloads/covid-workload-request {:dataset testing-dataset
+                                                     :table testing-table-name
+                                                     :column testing-column-name}
+                                                    {:workspace testing-workspace
+                                                     :method_configuration testing-method-configuration}
+                                                    {:workspace testing-workspace}))]
     (is (empty? (workloads/workflows workload)))))
