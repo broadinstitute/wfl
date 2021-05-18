@@ -89,15 +89,15 @@
   (fn [tx workload] (:sink_type workload)))
 
 ;; validations
-(defmulti verify-source!
+(defmulti throw-when-malformed-source-request!
   "Validate the source of a `request`"
   (fn [source] (:name source)))
 
-(defmulti verify-executor!
+(defmulti throw-when-malformed-executor-request!
   "Validate the executor of a `request`"
   (fn [executor] (:name executor)))
 
-(defmulti verify-sink!
+(defmulti throw-when-malformed-sink-request!
   "Validate the sink of a `request`"
   (fn [sink] (:name sink)))
 
@@ -176,9 +176,9 @@
       (throw (ex-info "Cannot access the workspace" {:workspace workspace
                                                      :cause     (.getMessage t)})))))
 
-(defoverload verify-source! source-name verify-data-repo-source!)
-(defoverload verify-executor! executor-name verify-terra-executor!)
-(defoverload verify-sink! sink-name verify-terra-sink!)
+(defoverload throw-when-malformed-source-request! source-name verify-data-repo-source!)
+(defoverload throw-when-malformed-executor-request! executor-name verify-terra-executor!)
+(defoverload throw-when-malformed-sink-request! sink-name verify-terra-sink!)
 
 (defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
@@ -207,9 +207,9 @@
   "Verify the `request` and create a workload"
   [tx request]
   (wfl.debug/trace (get-in request [:source]))
-  (verify-source! (get-in request [:source]))
-  (verify-executor! (get-in request [:executor]))
-  (verify-sink! (get-in request [:sink]))
+  (throw-when-malformed-source-request! (get-in request [:source]))
+  (throw-when-malformed-executor-request! (get-in request [:executor]))
+  (throw-when-malformed-sink-request! (get-in request [:sink]))
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
