@@ -1,14 +1,15 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test          :refer :all]
-            [clojure.string        :as str]
-            [wfl.jdbc              :as jdbc]
-            [wfl.module.covid      :as covid]
-            [wfl.service.postgres  :as postgres]
-            [wfl.service.rawls     :as rawls]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.workloads   :as workloads]
-            [wfl.tools.resources   :as resources])
+  (:require [clojure.test                   :refer :all]
+            [clojure.string                 :as str]
+            [wfl.integration.modules.shared :as shared]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.covid               :as covid]
+            [wfl.service.postgres           :as postgres]
+            [wfl.service.rawls              :as rawls]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.tools.resources            :as resources])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]))
 
@@ -77,7 +78,7 @@
             (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
-           (workloads/covid-workload-request {} {} {}))]
+           (workloads/covid-workload-request))]
       (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
@@ -86,12 +87,6 @@
       (is (seq labels) "workload did not contain any labels")
       (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
       (is (vector? watchers)))))
-
-(deftest test-start-workload
-  (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request {} {} {}))]
-    (is (not (:started workload)))
-    (is (:started (workloads/start-workload! workload)))))
 
 (defn ^:private create-tdr-source [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -116,26 +111,43 @@
           ":last_checked was not updated"))))
 
 (deftest test-update-tdr-source
-  (let [source (create-tdr-source (rand-int 1000000))]
+  (let [source               (create-tdr-source (rand-int 1000000))
+        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
     (with-redefs-fn
       {#'covid/create-snapshots mock-create-snapshots
        #'covid/find-new-rows    mock-find-new-rows
        #'covid/check-tdr-job    mock-check-tdr-job}
-      #(covid/update-source!
+      (fn []
+        (covid/update-source!
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (covid/start-source! tx source)
+           (reload-source tx source)))
+        (is (== expected-num-records (covid/queue-length! source))
+            "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (covid/start-source! tx source)
-          (reload-source tx source))))
+          (let [records (->> source :details (postgres/get-table tx))]
+            (letfn [(record-updated? [record]
+                      (and (= "succeeded" (:snapshot_creation_job_status record))
+                           (not (nil? (:snapshot_creation_job_id record)))
+                           (not (nil? (:snapshot_id record)))))]
+              (testing "source details got updated with correct number of snapshot jobs"
+                (is (= expected-num-records (count records))))
+              (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
+                (is (every? record-updated? records))))))
+        (covid/update-source!
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (covid/stop-source! tx source)
+           (reload-source tx source)))
+        (is (== expected-num-records (covid/queue-length! source))
+            "no more snapshots should be enqueued")))))
+
+(deftest test-stop-tdr-source
+  (let [source (create-tdr-source (rand-int 1000000))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [records              (->> source :details (postgres/get-table tx))
-            expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
-        (letfn [(record-updated? [record]
-                  (and (= "succeeded" (:snapshot_creation_job_status record))
-                       (not (nil? (:snapshot_creation_job_id record)))
-                       (not (nil? (:snapshot_id record)))))]
-          (testing "source details got updated with correct number of snapshot jobs"
-            (is (= expected-num-records (count records))))
-          (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
-            (is (every? record-updated? records))))))))
+      (covid/start-source! tx source)
+      (covid/stop-source! tx source)
+      (let [source (reload-source tx source)]
+        (is (:stopped (reload-source tx source)) ":stopped was not written")))))
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -163,11 +175,11 @@
          #'covid/create-submission!          mock-create-submission}
         #(covid/update-executor! source executor))
       (is (-> source :queue empty?) "The snapshot was not consumed.")
+      (is (== 2 (covid/queue-length! executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx))]
-          (is (== 2 (count records))
-              "The workflows were not written to the database")
+          (is (== 2 (count records)) "The workflows were not written to the database")
           (is (every? #(= snapshot-reference-id (:snapshot_reference_id %)) records))
           (is (every? #(= submission-id (:rawls_submission_id %)) records))
           (is (every? #(nil? (:consumed %)) records))
@@ -229,5 +241,20 @@
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request {} {} {}))]
+                  (workloads/covid-workload-request))]
     (is (empty? (workloads/workflows workload)))))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'covid/find-new-rows               mock-find-new-rows
+     #'covid/create-snapshots            mock-create-snapshots
+     #'covid/check-tdr-job               mock-check-tdr-job
+     #'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
+     #'covid/create-submission!          mock-create-submission
+     #'rawls/batch-upsert                (constantly nil)}
+    #(shared/run-workload-state-transition-test!
+      (workloads/covid-workload-request))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test!
+   (workloads/covid-workload-request)))
