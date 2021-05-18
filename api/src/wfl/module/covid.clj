@@ -186,7 +186,9 @@
     (jdbc/execute! tx (concat [set-details] (map first src-exc-snk) [items]))
     items))
 
-(defn create-covid-workload [tx request]
+(defn create-covid-workload
+  "Verify the `request` and create a workload"
+  [tx request]
   (verify-source! (get-in request [:source]))
   (verify-executor! (get-in request [:executor]))
   (verify-sink! (get-in request [:sink]))
