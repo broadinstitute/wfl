@@ -155,44 +155,49 @@
       (assoc :creator @workloads/email)))
 
 (deftest test-create-covid-workload-with-misnamed-source
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:source :name] "Bad_Name")
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown source" (-> (make-covid-workload-request)
+                                                                                           (assoc-in [:source :name] "Bad_Name")
+                                                                                           workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-source-name
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:source :name] nil)
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown source" (-> (make-covid-workload-request)
+                                                                                           (assoc-in [:source :name] nil)
+                                                                                           workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-dataset
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:source :dataset] nil)
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Dataset is Nil" (-> (make-covid-workload-request)
+                                                               (assoc-in [:source :dataset] nil)
+                                                               workloads/create-workload!))))
 
 (deftest test-create-covid-workload-with-misnamed-executor
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:executor :name] "Bad_Name")
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
+                                                                                             (assoc-in [:executor :name] "Bad_Name")
+                                                                                             workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-named-executor
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:executor :name] nil)
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
+                                                                                             (assoc-in [:executor :name] nil)
+                                                                                             workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-method-configuration
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:executor :method_configuration] nil)
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Unknown Method Configuration" (-> (make-covid-workload-request)
+                                                                             (assoc-in [:executor :methodConfiguration] nil)
+                                                                             workloads/create-workload!))))
 
 (deftest test-create-covid-workload-with-misnamed-sink
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:sink :name] "Bad_Name")
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown sink" (-> (make-covid-workload-request)
+                                                                                         (assoc-in [:sink :name] "Bad_Name")
+                                                                                         workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-named-sink
-  (is (thrown? RuntimeException (-> (make-covid-workload-request)
-                                    (assoc-in [:sink :name] nil)
-                                    workloads/create-workload!))))
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown sink" (-> (make-covid-workload-request)
+                                                                                         (assoc-in [:sink :name] nil)
+                                                                                         workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-workspace
+  (is (thrown-with-msg? RuntimeException #"Cannot access the workspace"  (-> (make-covid-workload-request)
+                                                                             (assoc-in [:sink :workspace] nil)
+                                                                             workloads/create-workload!))))
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
@@ -398,8 +403,18 @@
      #'covid/create-submission!              mock-create-submission
      #'firecloud/get-workflow                mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
-      (workloads/covid-workload-request))))
+      (workloads/covid-workload-request {:dataset testing-dataset
+                                         :table testing-table-name
+                                         :column testing-column-name}
+                                        {:workspace testing-workspace
+                                         :method_configuration testing-method-configuration}
+                                        {:workspace testing-workspace}))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!
-   (workloads/covid-workload-request)))
+   (workloads/covid-workload-request {:dataset testing-dataset
+                                      :table testing-table-name
+                                      :column testing-column-name}
+                                     {:workspace testing-workspace
+                                      :method_configuration testing-method-configuration}
+                                     {:workspace testing-workspace})))
