@@ -131,13 +131,13 @@
   (jdbc/update! tx :workload colls ["id = ?" id]))
 
 (defn ^:private patch-continuous-workload
-  "Use `tx` to update the colls of the `_workload`."
+  "Use `tx` to update the `colls` of the `_workload`."
   [tx {:keys [items] :as _workload} colls]
   (jdbc/update! tx continuous-workload-table-name colls
                 ["id = ?" (util/parse-int items)]))
 
 (defn ^:private add-workload-record
-  "Use `tx` to create a workload `record` for `request` and return the id of the
+  "Use `tx` to create a workload record for `request` and return the id of the
    new workload."
   [tx request]
   (letfn [(combine-labels [labels]
@@ -183,7 +183,7 @@
                     {:id items :workload workload}))))
 
 (defn start-covid-workload
-  "Start creating and managing workflows from the source."
+  "Start creating and managing workflows from the `source`."
   [tx {:keys [id source] :as workload}]
   (let [now (OffsetDateTime/now)]
     (start-source! tx source)
@@ -192,7 +192,7 @@
     (workloads/load-workload-for-id tx id)))
 
 (defn update-covid-workload
-  "Use transaction TX to update WORKLOAD statuses."
+  "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id stopped source executor sink] :as workload}]
             (let [now (OffsetDateTime/now)]
@@ -364,11 +364,10 @@
        (map #(update % 1 check-tdr-job))
        (run! #(write-snapshot-id source %))))
 
-;; Create and add new snapshots to the snapshot queue
 (defn ^:private update-tdr-source
-  "Check for new data in TDR, create new snapshots, insert
-   resulting job creation ids into database and update the
-   timestamp for next time using transaction TX."
+  "Check for new data in TDR from `source`, create new snapshots,
+  insert resulting job creation ids into database and update the
+  timestamp for next time."
   [{:keys [stopped] :as source}]
   (when-not stopped
     (find-and-snapshot-new-rows source (utc-now)))
@@ -386,7 +385,7 @@
                 ["id = ?" id]))
 
 (defn ^:private peek-tdr-source-details
-  "Get first unconsumed snapshot record from DETAILS table."
+  "Get first unconsumed snapshot record from `details` table."
   [{:keys [details] :as _source}]
   (let [query "SELECT * FROM %s
                WHERE consumed    IS NULL
@@ -398,13 +397,13 @@
            first))))
 
 (defn ^:private peek-tdr-source-queue
-  "Get first unconsumed snapshot from SOURCE queue."
+  "Get first unconsumed snapshot from `source` queue."
   [source]
   (if-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
     (datarepo/snapshot snapshot_id)))
 
 (defn ^:private tdr-source-queue-length
-  "Return the number of unconsumed snapshot records from DETAILS table."
+  "Return the number of unconsumed snapshot records from `details` table."
   [{:keys [details] :as _source}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed IS NULL
@@ -416,7 +415,7 @@
            :count))))
 
 (defn ^:private pop-tdr-source-queue
-  "Consume first unconsumed snapshot record in DETAILS table, or throw if none."
+  "Consume first unconsumed snapshot record in `details` table, or throw if none."
   [{:keys [details] :as source}]
   (if-let [{:keys [id] :as _record} (peek-tdr-source-details source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -520,22 +519,22 @@
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
 (defn ^:private import-snapshot!
-  "Return snapshot reference for ID imported to WORKSPACE as NAME."
+  "Return snapshot reference for `id` imported to `workspace` as `name`."
   [{:keys [workspace] :as _executor}
    {:keys [name id]   :as _snapshot}]
   (rawls/create-snapshot-reference workspace id name))
 
 (defn ^:private from-source
-  "Coerce SOURCE-ITEM to form understood by EXECUTOR via FROMSOURCE."
+  "Coerce `source-item` to form understood by `executor` via `fromSource`."
   [{:keys [fromSource] :as executor}
    source-item]
   (cond (= "importSnapshot" fromSource) (import-snapshot! executor source-item)
         :else (throw (ex-info "Unknown fromSource" {:executor executor}))))
 
 (defn ^:private update-method-configuration!
-  "Update METHODCONFIGURATION in WORKSPACE with snapshot reference NAME
+  "Update `methodConfiguration` in `workspace` with snapshot reference `name`
   as :dataReferenceName via Firecloud.
-  Update executor table record ID with incremented METHODCONFIGURATIONVERSION."
+  Update executor table record ID with incremented `methodConfigurationVersion`."
   [{:keys [id
            workspace
            methodConfiguration
@@ -563,14 +562,14 @@
                     ["id = ?" id]))))
 
 (defn ^:private create-submission!
-  "Update METHODCONFIGURATION to use REFERENCE.
-  Create and return submission in WORKSPACE for METHODCONFIGURATION via Firecloud."
+  "Update `methodConfiguration` to use `reference`.
+  Create and return submission in `workspace` for `methodConfiguration` via Firecloud."
   [{:keys [workspace methodConfiguration] :as executor} reference]
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
 (defn ^:private write-workflows!
-  "Write WORKFLOWS to DETAILS table."
+  "Write `workflows` to `details` table."
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
@@ -585,7 +584,7 @@
       (jdbc/insert-multi! tx details (map to-rows workflows)))))
 
 (defn ^:private update-terra-workflow-statuses!
-  "Update statuses in DETAILS table for active or failed WORKSPACE workflows."
+  "Update statuses in `details` table for active or failed `workspace` workflows."
   [{:keys [workspace details] :as _executor}]
   (letfn [(read-active-or-failed-workflows
             []
@@ -617,12 +616,12 @@
          (write-workflow-statuses (OffsetDateTime/now)))))
 
 (defn ^:private update-terra-executor
-  "Create new submission from new SOURCE snapshot if available,
-  writing its workflows to DETAILS table.
-  Update statuses for active or failed workflows in DETAILS table.
-  Return EXECUTOR."
+  "Create new submission from new `source` snapshot if available,
+  writing its workflows to `details` table.
+  Update statuses for active or failed workflows in `details` table.
+  Return `executor`."
   [source executor]
-  (if-let [snapshot (peek-queue! source)]
+  (when-let [snapshot (peek-queue! source)]
     (let [reference  (from-source executor snapshot)
           submission (create-submission! executor reference)]
       (write-workflows! executor reference submission)
@@ -631,7 +630,7 @@
   executor)
 
 (defn ^:private peek-terra-executor-details
-  "Get first unconsumed successful workflow record from DETAILS table."
+  "Get first unconsumed successful workflow record from `details` table."
   [{:keys [details] :as _executor}]
   (let [query "SELECT * FROM %s
                WHERE consumed IS NULL
@@ -643,14 +642,14 @@
            first))))
 
 (defn ^:private peek-terra-executor-queue
-  "Get first unconsumed successful workflow from EXECUTOR queue."
+  "Get first unconsumed successful workflow from `executor` queue."
   [{:keys [workspace] :as executor}]
   (if-let [{:keys [rawls_submission_id workflow_id] :as _record}
            (peek-terra-executor-details executor)]
     (firecloud/get-workflow workspace rawls_submission_id workflow_id)))
 
 (defn ^:private pop-terra-executor-queue
-  "Consume first unconsumed successful workflow record in DETAILS table,
+  "Consume first unconsumed successful workflow record in `details` table,
   or throw if none."
   [{:keys [details] :as executor}]
   (if-let [{:keys [id] :as _record} (peek-terra-executor-details executor)]
@@ -661,7 +660,7 @@
     (throw (ex-info "No successful workflows in queue" {:executor executor}))))
 
 (defn ^:private terra-executor-queue-length
-  "Return the number of unconsumed succeeded workflows records from DETAILS table."
+  "Return the number of unconsumed succeeded workflows records from `details` table."
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed        IS NULL
