@@ -327,8 +327,7 @@
                   :entity "",
                   :fromOutputs {},
                   :identifier "",
-                  :type "TerraWorkspaceSink"}})
-  )
+                  :type "TerraWorkspaceSink"}}))
 {:spec
  "(spec-tools.core/spec {:spec (clojure.spec.alpha/or :batch :wfl.api.spec/batch-workload-response :covid :wfl.api.spec/covid-workload-response), :type [:or [:map]], :leaf? true})",
  :problems
