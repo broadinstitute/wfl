@@ -1,7 +1,7 @@
 (ns wfl.tools.endpoints
-  (:require [clj-http.client   :as http]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.string    :as str]
+            [clj-http.client   :as http]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.util          :as util]))
@@ -47,8 +47,7 @@
   (-> (wfl-url "/api/v1/create")
       (http/post {:headers      (auth/get-auth-header)
                   :content-type :application/json
-                  :body         (json/write-str workload
-                                                :escape-slash false)})
+                  :body         (json/write-str workload :escape-slash false)})
       util/response-body-json))
 
 (defn start-workload

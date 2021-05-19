@@ -156,7 +156,11 @@
     (-> (update request :labels combine-labels)
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (assoc :executor ""
+               :output   ""
+               :release  ""
+               :wdl      ""
+               :uuid     (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 (def ^:private continuous-workload-table-name "ContinuousWorkload")
@@ -191,6 +195,7 @@
         (concat (map first src-exc-snk) [items])
         (->> (jdbc/execute! tx)))
     items))
+
 
 (defn create-covid-workload
   "Verify the `request` and create a workload"
