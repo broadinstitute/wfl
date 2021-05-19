@@ -266,9 +266,10 @@
 (def ^:private tdr-source-type  "TerraDataRepoSource")
 (def ^:private tdr-source-table "TerraDataRepoSource")
 (def ^:private tdr-source-serialized-fields
-  {:dataset :dataset
-   :table   :dataset_table
-   :column  :table_column_name})
+  {:dataset         :dataset
+   :table           :dataset_table
+   :column          :table_column_name
+   :snapshotReaders :snapshot_readers})
 
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
@@ -340,27 +341,28 @@
       flatten))
 
 (defn ^:private go-create-snapshot!
-  "Create snapshot in TDR from `dataset` body, `table`
-   and `row-ids` then write job info as well as rows
-   into `source-details-name` table, `suffix` will be
-   appended to the snapshot names."
-  [suffix dataset table row-ids]
+  "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
+   write job info as well as rows into `source-details-name` table.
+   Snapshots will be readable by members of the `snapshotReaders` list.
+   `suffix` will be appended to the snapshot names."
+  [suffix {:keys [dataset table snapshotReaders] :as _source} row-ids]
   (let [columns (->> (datarepo/all-columns dataset table)
                      (mapv :name)
                      (cons "datarepo_row_id"))]
     (-> (datarepo/make-snapshot-request dataset columns table row-ids)
         (update :name #(str % suffix))
+        (assoc :readers snapshotReaders)
         datarepo/create-snapshot-job)))
 
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
-  [{:keys [dataset table] :as _source} now-obj row-ids]
+  [{:keys [dataset table snapshotReaders] :as source} now-obj row-ids]
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
         compact-now (.format now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
               [shard (-> (format "_%s_%s" compact-now idx)
-                         (go-create-snapshot! dataset table shard))])]
+                         (go-create-snapshot! source shard))])]
       (->> row-ids
            (partition-all 500)
            (map vec)
