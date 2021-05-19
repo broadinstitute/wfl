@@ -107,8 +107,8 @@
             (is (str/starts-with? details "TerraWorkspaceSink_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
-           (workloads/covid-workload-request {} {} {}))]
-      (is (inst? created) "workload is missing :created timestamp")
+           (workloads/covid-workload-request))]
+      (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
       (is (and executor (verify-executor executor)))
@@ -291,5 +291,22 @@
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request {} {} {}))]
+                  (workloads/covid-workload-request))]
     (is (empty? (workloads/workflows workload)))))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'covid/find-new-rows                   mock-find-new-rows
+     #'covid/create-snapshots                mock-create-snapshots
+     #'covid/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'covid/create-submission!              mock-create-submission
+     #'firecloud/get-workflow                mock-workflow-keep-status}
+    #(shared/run-workload-state-transition-test!
+      (workloads/covid-workload-request))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test!
+   (workloads/covid-workload-request)))
