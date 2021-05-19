@@ -1,15 +1,18 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set                :as set]
+  (:require [clojure.test               :refer :all]
+            [clojure.instant            :as instant]
+            [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [clojure.test               :refer [deftest testing is]]
+            [wfl.api.spec               :as spec]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
             [wfl.util                   :as util])
-  (:import (clojure.lang ExceptionInfo)
-           (java.util UUID)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]))
 
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
@@ -215,3 +218,62 @@
     (testing "exec-workload! fails (400) with bad request"
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
+
+(def ^:private covid-workload-request
+  "Build a covid workload request."
+  (let [dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8"
+        column  "run_date"
+        table   "flowcells"
+        workspace-template "CDC_Viral_Sequencing"
+        workspace-uniqued  "GPc586b76e8ef24a97b354cf0226dfe583"
+        workspace-namespace  "wfl-dev"
+        workspace-name (str/join "_" [workspace-template workspace-uniqued])
+        workspace      (str/join "/" [workspace-namespace workspace-name])
+        mc-namespace   "cdc-covid-surveillance"
+        mc-name        "sarscov2_illumina_full"
+        methodConfiguration (str/join "/" [mc-namespace mc-name])
+        source   (util/make-map column dataset table)
+        executor (util/make-map methodConfiguration workspace)
+        sink     (util/make-map workspace)]
+    (workloads/covid-workload-request source executor sink)))
+
+(defn instantify-timestamps
+  "Replace timestamps at keys KS of map M with parsed #inst values."
+  [m & ks]
+  (reduce (fn [m k] (update m k instant/read-instant-timestamp)) m ks))
+
+(deftest test-covid-workload
+  (testing "/create covid workload"
+    (let [{:keys [creator started uuid] :as workload}
+          (-> covid-workload-request endpoints/create-workload
+              (update :created instant/read-instant-timestamp))]
+      (is (s/valid? ::spec/covid-workload-request  covid-workload-request))
+      (is (s/valid? ::spec/covid-workload-response workload))
+      (verify-internal-properties-removed workload)
+      (is (not started))
+      (is (= @workloads/email creator))
+      (testing "/workload status"
+        (let [{:keys [started] :as response}
+              (-> uuid endpoints/get-workload-status
+                  (instantify-timestamps :created))]
+          (is (not started))
+          (verify-internal-properties-removed response)
+          (is (s/valid? ::spec/covid-workload-response response))))
+      (testing "/workload all"
+        (let [{:keys [started] :as response}
+              (-> (endpoints/get-workloads)
+                  (->> (filter (comp #{uuid} :uuid)))
+                  first
+                  (instantify-timestamps :created))]
+          (is (not started))
+          (verify-internal-properties-removed response)
+          (is (s/valid? ::spec/covid-workload-response response))))
+      (testing "/start covid workload"
+        (let [{:keys [created started] :as response}
+              (-> workload endpoints/start-workload
+                  (instantify-timestamps :created :started))]
+          (is (s/valid? ::spec/covid-workload-response response))
+          (is (inst? created))
+          (is (inst? started)))))))
+
+
