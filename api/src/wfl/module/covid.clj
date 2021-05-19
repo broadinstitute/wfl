@@ -422,7 +422,7 @@
   (cond (= "importSnapshot" fromSource) (import-snapshot! executor source-item)
         :else (throw (ex-info "Unknown fromSource" {:executor executor}))))
 
-(defn ^:private update-method-configuration
+(defn ^:private update-method-configuration!
   "Update METHODCONFIGURATION in WORKSPACE with snapshot reference NAME
   as :dataReferenceName via Firecloud.
   Update executor table record ID with incremented METHODCONFIGURATIONVERSION.
@@ -432,21 +432,20 @@
            methodConfiguration
            methodConfigurationVersion] :as executor}
    {:keys [name]                       :as _reference}]
-  (let [{:keys [methodConfigVersion] :as firecloud-mc}
+  (let [firecloud-mc
         (try
           (firecloud/get-method-configuration workspace methodConfiguration)
-          (catch Throwable t
+          (catch Throwable cause
             (throw (ex-info "Method configuration does not exist in workspace"
-                            {:executor executor
-                             :cause    (.getMessage t)}))))
+                            {:executor executor} cause))))
         inc-version (inc methodConfigurationVersion)]
-    (when-not (== methodConfigurationVersion methodConfigVersion)
+    (when-not (== methodConfigurationVersion (:methodConfigVersion firecloud-mc))
       (throw (ex-info (str "Firecloud method configuration version != expected: "
                            "possible concurrent modification")
                       {:executor            executor
                        :methodConfiguration firecloud-mc})))
     (-> firecloud-mc
-        (assoc :dataReferenceName name)
+        (assoc :dataReferenceName name :methodConfigVersion inc-version)
         (->> (firecloud/update-method-configuration workspace
                                                     methodConfiguration)))
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -517,7 +516,7 @@
   [source executor]
   (if-let [snapshot (peek-queue! source)]
     (let [reference        (from-source executor snapshot)
-          updated-executor (update-method-configuration executor reference)
+          updated-executor (update-method-configuration! executor reference)
           submission       (create-submission! updated-executor reference)]
       (write-workflows! updated-executor reference submission)
       (pop-queue! source)

@@ -55,9 +55,11 @@
 (defn ^:private mock-firecloud-get-method-configuration [& _]
   {:methodConfigVersion methodConfigVersion})
 (defn ^:private mock-firecloud-update-method-configuration
-  [_ _ {:keys [dataReferenceName]}]
+  [_ _ {:keys [dataReferenceName] :as mc}]
   (is (= dataReferenceName snapshot-reference-name)
       "Snapshot reference name should be passed to method config update")
+  (is (= (:methodConfigVersion mc) (inc methodConfigVersion))
+      "Incremented version should be passed to method config update")
   nil)
 
 ;; Submission mock
