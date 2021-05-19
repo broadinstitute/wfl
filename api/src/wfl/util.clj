@@ -518,3 +518,7 @@
     (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
+
+(defmulti to-edn
+  "Return an EDN representation of the `object` that will be shown to users."
+  (fn [object] (:type object)))

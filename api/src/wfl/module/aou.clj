@@ -287,3 +287,4 @@
 
 (defoverload workloads/workflows          pipeline batch/pre-v0_4_0-load-workflows)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/to-edn             pipeline batch/workload-to-edn)

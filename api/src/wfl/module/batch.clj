@@ -97,7 +97,7 @@
 (defn load-batch-workload-impl
   "Load workload metadata + trim any unused vars."
   [_ workload]
-  (into {} (filter second workload)))
+  (into {:type :workload} (filter second workload)))
 
 (defn pre-v0_4_0-load-workflows
   [tx workload]
@@ -174,3 +174,26 @@
   (if (workloads/saved-before? "0.4.0" workload)
     (pre-v0_4_0-load-workflows tx workload)
     (load-batch-workflows tx workload)))
+
+(defn workload-to-edn
+  "Return a user-friendly EDN representation of the batch `workload`"
+  [workload]
+  (letfn [(keep [keys]
+            (->> (select-keys workload keys)
+                 (filter second)
+                 (into {})))]
+    (keep [:commit
+           :created
+           :creator
+           :executor
+           :finished
+           :input
+           :output
+           :pipeline
+           :project
+           :release
+           :started
+           :stopped
+           :uuid
+           :version
+           :wdl])))

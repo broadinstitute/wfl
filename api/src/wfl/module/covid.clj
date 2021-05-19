@@ -168,7 +168,8 @@
   (if-let [id (util/parse-int items)]
     (let [{:keys [updated] :as details}
           (load-record-by-id! tx "ContinuousWorkload" id)]
-      (->> {:source   (load-source! tx details)
+      (->> {:type     :workload
+            :source   (load-source! tx details)
             :executor (load-executor! tx details)
             :sink     (load-sink! tx details)
             :updated  updated}

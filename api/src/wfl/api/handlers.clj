@@ -13,7 +13,8 @@
             [wfl.module.sg]
             [wfl.jdbc                       :as jdbc]
             [wfl.service.google.storage     :as gcs]
-            [wfl.service.postgres           :as postgres]))
+            [wfl.service.postgres           :as postgres]
+            [wfl.util                       :as util]))
 
 (defn succeed
   "A successful response with BODY."
@@ -30,10 +31,6 @@
   (->> (apply dissoc coll [:id :items])
        (filter second)
        (into {})))
-
-(defn strip-workflow-internals
-  [workflow]
-  (prune workflow))
 
 (defn strip-internals
   "Strip internal properties from the `workload` and its `workflows`."
@@ -60,7 +57,7 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (assoc workload-request :creator email)
            (workloads/create-workload! tx)
-           strip-internals
+           util/to-edn
            succeed))))
 
 (defn get-workload
@@ -69,7 +66,7 @@
   (let [{:keys [uuid project] :as query} (get-in request [:parameters :query])]
     (logr/info "GET /api/v1/workload with query: " query)
     (succeed
-     (map strip-internals
+     (map util/to-edn
           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
             (cond uuid    [(workloads/load-workload-for-uuid tx uuid)]
                   project (workloads/load-workloads-with-project tx project)
@@ -83,7 +80,7 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/workflows tx)
-           (mapv strip-workflow-internals)
+           (mapv util/to-edn)
            succeed))))
 
 (defn post-start
@@ -95,7 +92,7 @@
       (let [{:keys [started] :as workload}
             (workloads/load-workload-for-uuid tx uuid)]
         (-> (if-not started (workloads/start-workload! tx workload) workload)
-            strip-internals
+            util/to-edn
             succeed)))))
 
 (defn post-stop
@@ -106,7 +103,7 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/stop-workload! tx)
-           strip-internals
+           util/to-edn
            succeed))))
 
 (defn post-exec
@@ -120,5 +117,5 @@
            :email
            (assoc workload-request :creator)
            (workloads/execute-workload! tx)
-           strip-internals
+           util/to-edn
            succeed))))

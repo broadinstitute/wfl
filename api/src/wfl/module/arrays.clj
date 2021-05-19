@@ -161,5 +161,6 @@
     (if (and started (not finished)) (update! workload) workload)))
 
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
-(defoverload workloads/workflows      pipeline batch/workflows)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/to-edn             pipeline batch/workload-to-edn)

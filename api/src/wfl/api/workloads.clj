@@ -33,6 +33,10 @@
   "Use `tx` to return the workflows managed by the `workload`."
   (fn [tx workload] (:pipeline workload)))
 
+(defmulti to-edn
+  "Return an EDN representation of the `workload` that will be shown to users."
+  (fn [workload] (:pipeline workload)))
+
 ;; loading utilities
 (defmulti load-workload-impl
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.
@@ -129,6 +133,15 @@
             {:cause body
              :type  ::invalid-pipeline})))
 
+(defmethod to-edn
+  :default
+  [{:keys [pipeline] :as workload}]
+  (throw
+   (ex-info "Failed to update workload - no such pipeline"
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
+
 (defmethod load-workload-impl
   :default
   [_ body]
@@ -138,6 +151,8 @@
              :type  ::invalid-pipeline})))
 
 ;; Common workload operations
+(defoverload util/to-edn :workload to-edn)
+
 (defn saved-before?
   "Test if the `_workload` was saved before the `reference` version string.
    Version strings must be in the form \"major.minor.patch\"."
