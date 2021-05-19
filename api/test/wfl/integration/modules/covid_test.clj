@@ -40,9 +40,6 @@
 (def workload {:id 1})
 
 ;; For temporary workspace creation
-(def workspace-prefix "wfl-dev/test-workspace")
-(def group "workflow-launcher-dev")
-
 (def snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
 (def reference-id "2d15f9bd-ecb9-46b3-bb6c-f22e20235232")
 
@@ -113,10 +110,6 @@
      covid/peek-queue! test-queue-type test-queue-peek)
     (fixtures/method-overload-fixture
      covid/pop-queue! test-queue-type test-queue-pop)))
-
-;; For temporary workspace creation
-(def workspace-prefix "wfl-dev/test-workspace")
-(def group "workflow-launcher-dev")
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
