@@ -196,7 +196,6 @@
         (->> (jdbc/execute! tx)))
     items))
 
-
 (defn create-covid-workload
   "Verify the `request` and create a workload"
   [tx request]
@@ -306,8 +305,8 @@
   "Throw or return the table from `dataset`"
   [dataset table-name dataset-column-name]
   (let [[result & more] (-> dataset
-                                    (get-in [:schema :tables])
-                                    (->> (filter (comp #{table-name} :name))))]
+                            (get-in [:schema :tables])
+                            (->> (filter (comp #{table-name} :name))))]
     (when-not result
       (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
     (when result
