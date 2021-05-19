@@ -97,13 +97,13 @@
   (letfn [(verify-source [{:keys [type last_checked details]}]
             (is (= type "TerraDataRepoSource"))
             (is (not last_checked) "The TDR should not have been checked yet")
-            (is (str/starts-with? details "TerraDataRepoSourceDetails_")))
+            (is (str/starts-with? details "TerraDataRepoSource_")))
           (verify-executor [{:keys [type details]}]
             (is (= type "TerraExecutor"))
-            (is (str/starts-with? details "TerraExecutorDetails_")))
+            (is (str/starts-with? details "TerraExecutor_")))
           (verify-sink [{:keys [type details]}]
             (is (= type "TerraWorkspaceSink"))
-            (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
+            (is (str/starts-with? details "TerraWorkspaceSink_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
            (workloads/covid-workload-request {} {} {}))]
@@ -166,6 +166,15 @@
           (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
             (is (every? record-updated? records))))))))
 
+(defn ^:private create-tdr-snapshot-list [snapshots]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> {:name           "TDR Snapshots"
+          :snapshots      snapshots
+          :validateSource false}
+         (covid/create-source! tx (rand-int 1000000))
+         (zipmap [:source_type :source_items])
+         (covid/load-source! tx))))
+
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name                       "Terra"
@@ -179,7 +188,7 @@
          (covid/load-executor! tx))))
 
 (deftest test-update-terra-executor
-  (let [source   (make-queue-from-list [snapshot])
+  (let [source   (create-tdr-snapshot-list [snapshot])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -195,7 +204,7 @@
         #(let [updated-executor (covid/update-executor! source executor)]
            (is (= (inc methodConfigVersion) (:methodConfigurationVersion updated-executor))
                "Method configuration version was not incremented.")))
-      (is (-> source :queue empty?) "The snapshot was not consumed.")
+      #_(is (-> source :queue empty?) "The snapshot was not consumed.")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))]
@@ -214,7 +223,7 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
-        source     (make-queue-from-list [snapshot])
+        source     (create-tdr-snapshot-list [snapshot])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
       {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
