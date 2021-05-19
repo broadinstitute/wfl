@@ -191,7 +191,7 @@
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "TerraDataRepoSourceDetails_%09d" id)
+        details (format "%s_%09d" tdr-source-type id)
         _       (jdbc/db-do-commands tx [(format create details)
                                          (format alter details)])
         items   (-> (select-keys request (keys tdr-source-serialized-fields))
@@ -378,6 +378,50 @@
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 
+;; TDR Snapshot List Source
+(def ^:private tdr-snapshot-list-name "TDR Snapshots")
+(def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
+
+(defn ^:private create-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
+  (let [create  "CREATE TABLE %s OF ListSource (PRIMARY KEY (id))"
+        alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
+        details (format "%s_%09d" tdr-snapshot-list-type id)]
+    (jdbc/db-do-commands tx [(format create details) (format alter details)])
+    (jdbc/insert-multi! tx details (map #(-> {:item (pr-str %)}) snapshots))
+    [tdr-snapshot-list-type details]))
+
+(defn ^:private load-tdr-snapshot-list [tx {:keys [source_items] :as _workload}]
+  (when-not (postgres/table-exists? tx source_items)
+    (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
+                    {:table source_items})))
+  {:type tdr-snapshot-list-type :items source_items})
+
+(defn ^:private start-tdr-snapshot-list [_ source] source)
+(defn ^:private update-tdr-snapshot-list [source]  source)
+
+(defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
+  (let [query "SELECT *        FROM %s
+               WHERE  consumed IS NULL
+               ORDER BY id ASC LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (format query items)
+           (jdbc/query tx)
+           first))))
+
+(defn ^:private pop-tdr-snapshot-list [{:keys [items] :as source}]
+  (if-let [{:keys [id]} (peek-tdr-snapshot-list source)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/update! tx items {:consumed (OffsetDateTime/now)} ["id = ?" id]))
+    (throw (ex-info "Attempt to pop empty queue" {:source source}))))
+
+(defoverload create-source! tdr-snapshot-list-name create-tdr-snapshot-list)
+(defoverload start-source!  tdr-snapshot-list-type start-tdr-snapshot-list)
+(defoverload update-source! tdr-snapshot-list-type update-tdr-snapshot-list)
+(defoverload load-source!   tdr-snapshot-list-type load-tdr-snapshot-list)
+(defoverload peek-queue!    tdr-snapshot-list-type
+  (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload pop-queue!     tdr-snapshot-list-type pop-tdr-snapshot-list)
+
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
 (def ^:private terra-executor-type  "TerraExecutor")
@@ -391,7 +435,7 @@
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "TerraExecutorDetails_%09d" id)
+        details (format "%s_%09d" terra-executor-type id)
         _       (jdbc/db-do-commands tx [(format create details)
                                          (format alter details)])
         items   (-> (select-keys request (keys terra-executor-serialized-fields))
@@ -583,7 +627,7 @@
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "TerraWorkspaceSinkDetails_%09d" id)
+        details (format "%s_%09d" terra-workspace-sink-type id)
         _       (jdbc/db-do-commands tx [(format create details)
                                          (format alter details)])
         items   (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
