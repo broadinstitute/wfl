@@ -279,11 +279,12 @@
 
 (defn verify-data-repo-source!
   "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
-  [{:keys [name dataset table column] :as source}]
-  (when-not (some? dataset)
-    (throw (ex-info "Dataset is Nil" {:source source})))
-  (-> (datarepo/dataset (:dataset source))
-      (throw-unless-table-exists table column)))
+  [{:keys [name dataset table column skipValidation] :as source}]
+  (when-not skipValidation
+    (when-not (some? dataset)
+      (throw (ex-info "Dataset is Nil" {:source source})))
+    (-> (datarepo/dataset (:dataset source))
+        (throw-unless-table-exists table column))))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
@@ -488,9 +489,10 @@
 
 (defn verify-terra-executor!
   "Verify the method-configuration exists."
-  [{:keys [name methodConfiguration] :as executor}]
-  (when-not (:methodConfiguration executor)
-    (throw (ex-info "Unknown Method Configuration" {:executor executor}))))
+  [{:keys [name methodConfiguration skipValidation] :as executor}]
+  (when-not skipValidation
+    (when-not (:methodConfiguration executor)
+      (throw (ex-info "Unknown Method Configuration" {:executor executor})))))
 
 (defn ^:private import-snapshot!
   "Return snapshot reference for ID imported to WORKSPACE as NAME."
@@ -652,12 +654,13 @@
 
 (defn verify-terra-sink!
   "Verify that the WFL has access to both firecloud and the `workspace`."
-  [{:keys [name workspace] :as sink}]
-  (try
-    (firecloud/get-workspace workspace)
-    (catch Throwable t
-      (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                     :cause     (.getMessage t)})))))
+  [{:keys [name workspace skipValidation] :as sink}]
+  (when-not skipValidation
+    (try
+      (firecloud/get-workspace workspace)
+      (catch Throwable t
+        (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                       :cause     (.getMessage t)}))))))
 
 ;; visible for testing
 (defn rename-gather
