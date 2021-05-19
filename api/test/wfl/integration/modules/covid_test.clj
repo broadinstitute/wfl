@@ -217,7 +217,8 @@
     (with-redefs-fn
       {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
        #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
-       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration       #'covid/create-submission!          mock-create-submission
+       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+       #'covid/create-submission!              mock-create-submission
        #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
