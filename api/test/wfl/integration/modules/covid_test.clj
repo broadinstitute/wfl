@@ -12,7 +12,7 @@
             [wfl.tools.resources   :as resources])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]
-           (org.postgresql.util PSQLException)))
+           [org.postgresql.util PSQLException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
@@ -152,14 +152,14 @@
                                                                workloads/create-workload!))))
 
 (deftest test-create-covid-workload-without-dataset-and-skipping-validation
-  (workloads/create-workload!
-   (workloads/covid-workload-request {:dataset nil
-                                      :table   testing-table-name
-                                      :column  testing-column-name
-                                      :skipValidation true}
-                                     {:workspace            testing-workspace
-                                      :methodConfiguration testing-method-configuration}
-                                     {:workspace testing-workspace})))
+  (is (workloads/create-workload!
+       (workloads/covid-workload-request {:dataset nil
+                                          :table   testing-table-name
+                                          :column  testing-column-name
+                                          :skipValidation true}
+                                         {:workspace            testing-workspace
+                                          :methodConfiguration testing-method-configuration}
+                                         {:workspace testing-workspace}))))
 
 (deftest test-create-covid-workload-with-misnamed-executor
   (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
