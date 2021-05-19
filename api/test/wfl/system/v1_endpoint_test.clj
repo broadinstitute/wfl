@@ -5,6 +5,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.spec               :as spec]
+            [wfl.debug]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
@@ -231,11 +232,11 @@
         workspace      (str/join "/" [workspace-namespace workspace-name])
         mc-namespace   "cdc-covid-surveillance"
         mc-name        "sarscov2_illumina_full"
-        method_configuration (str/join "/" [mc-namespace mc-name])
+        methodConfiguration (str/join "/" [mc-namespace mc-name])
         source   (util/make-map column dataset table)
-        executor (util/make-map method_configuration workspace)
+        executor (util/make-map methodConfiguration workspace)
         sink     (util/make-map workspace)]
-    (workloads/covid-workload-request source executor sink)))
+    (wfl.debug/trace (workloads/covid-workload-request source executor sink))))
 
 (defn instantify-timestamps
   "Replace timestamps at keys KS of map M with parsed #inst values."
@@ -247,6 +248,7 @@
     (let [{:keys [creator started uuid] :as workload}
           (-> covid-workload-request endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
+      (wfl.debug/trace workload)
       (is (s/valid? ::spec/covid-workload-request  covid-workload-request))
       (is (s/valid? ::spec/covid-workload-response workload))
       (verify-internal-properties-removed workload)
@@ -275,3 +277,207 @@
           (is (s/valid? ::spec/covid-workload-response response))
           (is (inst? created))
           (is (inst? started)))))))
+
+(comment
+  (test-vars [#'test-covid-workload])
+  (s/valid? ::spec/workload-request covid-workload-request)
+  (s/explain ::spec/workload-request covid-workload-request)
+  (s/explain ::spec/workload-response response)
+
+  (clojure.data.json/read-str
+   :key-fn keyword)
+  (def response {:watchers [],
+                 :labels
+                 ["hornet:test"
+                  "pipeline:Sarscov2IlluminaFull"
+                  "project:(Test) tbl/GH-1216-covid-tests"],
+                 :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+                 :pipeline "Sarscov2IlluminaFull",
+                 :release "",
+                 :created "2021-05-19T17:54:09Z",
+                 :source
+                 {:id 2,
+                  :details "TerraDataRepoSourceDetails_000000002",
+                  :last_checked nil,
+                  :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+                  :table "flowcells",
+                  :column "run_date",
+                  :type "TerraDataRepoSource"},
+                 :output "",
+                 :project "(Test) tbl/GH-1216-covid-tests",
+                 :commit "1c599153502ce3bc9d1eb181d88c407efc0ba461",
+                 :wdl "",
+                 :uuid "5c7bc3e0-0a33-4469-bfd9-0d71f201a564",
+                 :executor
+                 {:id 2,
+                  :details "TerraExecutorDetails_000000002",
+                  :type "TerraExecutor",
+                  :workspace
+                  "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                  :methodConfiguration
+                  "cdc-covid-surveillance/sarscov2_illumina_full",
+                  :methodConfigurationVersion 0,
+                  :fromSource ""},
+                 :version "0.7.0",
+                 :sink
+                 {:id 2,
+                  :details "TerraWorkspaceSinkDetails_000000002",
+                  :workspace
+                  "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+                  :entity "",
+                  :fromOutputs {},
+                  :identifier "",
+                  :type "TerraWorkspaceSink"}})
+  )
+{:spec
+ "(spec-tools.core/spec {:spec (clojure.spec.alpha/or :batch :wfl.api.spec/batch-workload-response :covid :wfl.api.spec/covid-workload-response), :type [:or [:map]], :leaf? true})",
+ :problems
+ [{:path ["batch" "executor" "batch"],
+   :pred "clojure.core/string?",
+   :val
+   {:id 2,
+    :details "TerraExecutorDetails_000000002",
+    :type "TerraExecutor",
+    :workspace
+    "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+    :methodConfiguration
+    "cdc-covid-surveillance/sarscov2_illumina_full",
+    :methodConfigurationVersion 0,
+    :fromSource ""},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/batch-workload-response"
+    "wfl.api.spec/executor"
+    "wfl.api.spec/batch-executor"],
+   :in ["executor"]}
+  {:path ["batch" "executor" "covid"],
+   :pred "(clojure.core/fn [%] (clojure.core/contains? % :name))",
+   :val
+   {:id 2,
+    :details "TerraExecutorDetails_000000002",
+    :type "TerraExecutor",
+    :workspace
+    "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+    :methodConfiguration
+    "cdc-covid-surveillance/sarscov2_illumina_full",
+    :methodConfigurationVersion 0,
+    :fromSource ""},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/batch-workload-response"
+    "wfl.api.spec/executor"
+    "wfl.api.spec/covid-executor"],
+   :in ["executor"]}
+  {:path ["covid" "source"],
+   :pred "(clojure.core/fn [%] (clojure.core/contains? % :name))",
+   :val
+   {:id 2,
+    :details "TerraDataRepoSourceDetails_000000002",
+    :last_checked nil,
+    :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+    :table "flowcells",
+    :column "run_date",
+    :type "TerraDataRepoSource"},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/covid-workload-response"
+    "wfl.api.spec/source"],
+   :in ["source"]}
+  {:path ["covid" "executor" "batch"],
+   :pred "clojure.core/string?",
+   :val
+   {:id 2,
+    :details "TerraExecutorDetails_000000002",
+    :type "TerraExecutor",
+    :workspace
+    "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+    :methodConfiguration
+    "cdc-covid-surveillance/sarscov2_illumina_full",
+    :methodConfigurationVersion 0,
+    :fromSource ""},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/covid-workload-response"
+    "wfl.api.spec/executor"
+    "wfl.api.spec/batch-executor"],
+   :in ["executor"]}
+  {:path ["covid" "executor" "covid"],
+   :pred "(clojure.core/fn [%] (clojure.core/contains? % :name))",
+   :val
+   {:id 2,
+    :details "TerraExecutorDetails_000000002",
+    :type "TerraExecutor",
+    :workspace
+    "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+    :methodConfiguration
+    "cdc-covid-surveillance/sarscov2_illumina_full",
+    :methodConfigurationVersion 0,
+    :fromSource ""},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/covid-workload-response"
+    "wfl.api.spec/executor"
+    "wfl.api.spec/covid-executor"],
+   :in ["executor"]}
+  {:path ["covid" "sink"],
+   :pred "(clojure.core/fn [%] (clojure.core/contains? % :name))",
+   :val
+   {:id 2,
+    :details "TerraWorkspaceSinkDetails_000000002",
+    :workspace
+    "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+    :entity "",
+    :fromOutputs {},
+    :identifier "",
+    :type "TerraWorkspaceSink"},
+   :via
+   ["wfl.api.spec/workload-response"
+    "wfl.api.spec/covid-workload-response"
+    "wfl.api.spec/sink"],
+   :in ["sink"]}],
+ :type "reitit.coercion/response-coercion",
+ :coercion "spec",
+ :value
+ {:watchers [],
+  :labels
+  ["hornet:test"
+   "pipeline:Sarscov2IlluminaFull"
+   "project:(Test) tbl/GH-1216-covid-tests"],
+  :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+  :pipeline "Sarscov2IlluminaFull",
+  :release "",
+  :created "2021-05-19T17:54:09Z",
+  :source
+  {:id 2,
+   :details "TerraDataRepoSourceDetails_000000002",
+   :last_checked nil,
+   :dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8",
+   :table "flowcells",
+   :column "run_date",
+   :type "TerraDataRepoSource"},
+  :output "",
+  :project "(Test) tbl/GH-1216-covid-tests",
+  :commit "1c599153502ce3bc9d1eb181d88c407efc0ba461",
+  :wdl "",
+  :uuid "5c7bc3e0-0a33-4469-bfd9-0d71f201a564",
+  :executor
+  {:id 2,
+   :details "TerraExecutorDetails_000000002",
+   :type "TerraExecutor",
+   :workspace
+   "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+   :methodConfiguration
+   "cdc-covid-surveillance/sarscov2_illumina_full",
+   :methodConfigurationVersion 0,
+   :fromSource ""},
+  :version "0.7.0",
+  :sink
+  {:id 2,
+   :details "TerraWorkspaceSinkDetails_000000002",
+   :workspace
+   "wfl-dev/CDC_Viral_Sequencing_GPc586b76e8ef24a97b354cf0226dfe583",
+   :entity "",
+   :fromOutputs {},
+   :identifier "",
+   :type "TerraWorkspaceSink"}},
+ :in ["response" "body"]}

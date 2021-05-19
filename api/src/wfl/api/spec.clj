@@ -54,9 +54,8 @@
                       :sg       ::sg-workflow-inputs))
 
 (s/def ::workflows (s/* ::workflow))
-(s/def ::workflow
-  (s/keys :req-un [::inputs]
-          :opt-un [::status ::updated ::uuid ::options]))
+(s/def ::workflow  (s/keys :req-un [::inputs]
+                           :opt-un [::status ::updated ::uuid ::options]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -97,23 +96,6 @@
                                              ::dbsnp_vcf_index
                                              ::input_cram]))
 
-;; /api/v1/workflows
-(s/def ::start string?)
-(s/def ::end string?)
-(s/def ::workflow-request (s/keys :req-un [::end
-                                           ::environment
-                                           ::start]))
-
-(s/def ::batch-executor string?)
-(s/def ::covid-executor (s/keys :req-un [::fromSource
-                                         ::methodConfiguration
-                                         ::methodConfigurationVersion
-                                         ::workspace]
-                                :opt-un [::name]))
-
-(s/def ::executor (s/or :batch ::batch-executor
-                        :covid ::covid-executor))
-
 (s/def ::column string?)
 (s/def ::dataset string?)
 (s/def ::entity string?)
@@ -121,18 +103,30 @@
 (s/def ::fromSource string?)
 (s/def ::labels (s/* string?))
 (s/def ::name string?)
-(s/def ::methodConfiguration string?)
+(s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::table string?)
 (s/def ::watchers (s/* string?))
-(s/def ::workspace (s/and string? util/namespaced-workspace-name?))
+(s/def ::workspace (s/and string? util/terra-namespaced-name?))
+
+(s/def ::batch-executor string?)
+(s/def ::covid-executor (s/keys :req-un [::fromSource
+                                         ::methodConfiguration
+                                         ::methodConfigurationVersion
+                                         ::name
+                                         ::workspace]))
+
+(s/def ::executor (s/or :batch ::batch-executor
+                        :covid ::covid-executor))
 
 (s/def ::sink (s/keys :req-un [::entity
                                ::fromOutputs
+                               ::name
                                ::workspace]))
 
 (s/def ::source (s/keys :req-un [::column
                                  ::dataset
+                                 ::name
                                  ::table]))
 
 (s/def ::batch-workload-request (s/keys :opt-un [::common
@@ -190,5 +184,3 @@
                                  :covid ::covid-workload-response))
 
 (s/def ::workload-responses (s/* ::workload-response))
-
-(s/def ::whatever (constantly true))

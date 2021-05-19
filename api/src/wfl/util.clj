@@ -519,23 +519,23 @@
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
 
-(def digit?             (set "0123456789"))
-(def lowercase?         (set "abcdefghijklmnopqrstuvwxyz"))
-(def uppercase?         (set (map #(Character/toUpperCase %) lowercase?)))
-(def letter?            (into lowercase? uppercase?))
-(def alphanumeric?      (into letter? digit?))
-(def spaceunderdash?    (set " _-"))
-(def workspace-allowed? (into alphanumeric? spaceunderdash?))
-(def workspace-name?    (partial every? workspace-allowed?))
+(def digit?          (set "0123456789"))
+(def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
+(def uppercase?      (set (map #(Character/toUpperCase %) lowercase?)))
+(def letter?         (into lowercase? uppercase?))
+(def alphanumeric?   (into letter? digit?))
+(def spaceunderdash? (set " _-"))
+(def terra-allowed?  (into alphanumeric? spaceunderdash?))
+(def terra-name?     (partial every? terra-allowed?))
 
-(defn namespaced-workspace-name?
-  "Return nil or the workspace [namespace name] pair in workspace-name."
-  [workspace-name]
-  (let [[namespace workspace & more] (str/split workspace-name #"/" 3)]
+(defn terra-namespaced-name?
+  "Return nil or the Terra [namespace name] pair in NAMESPACE-NAME."
+  [namespace-name]
+  (let [[namespace name & more] (str/split namespace-name #"/" 3)]
     (when (and (nil? more)
-               (seq namespace) (seq workspace)
-               (workspace-name? namespace) (workspace-name? workspace))
-      [namespace workspace])))
+               (seq namespace) (seq name)
+               (terra-name? namespace) (terra-name? name))
+      [namespace name])))
 
 (defmacro make-map
   "Map SYMBOLS as keywords to their values in the environment."
