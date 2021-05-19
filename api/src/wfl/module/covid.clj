@@ -103,7 +103,76 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+;; validations
+(defmulti throw-when-malformed-source-request!
+  "Validate the source of a `request`"
+  (fn [source] (:name source)))
+
+(defmulti throw-when-malformed-executor-request!
+  "Validate the executor of a `request`"
+  (fn [executor] (:name executor)))
+
+(defmulti throw-when-malformed-sink-request!
+  "Validate the sink of a `request`"
+  (fn [sink] (:name sink)))
+
+;; :default implementations
+(defmethod throw-when-malformed-source-request!
+  :default
+  [source]
+  (throw
+   (ex-info "Failed to create workload - unknown source"
+            {:source source
+             :type  ::invalid-source})))
+
+(defmethod throw-when-malformed-executor-request!
+  :default
+  [executor]
+  (throw
+   (ex-info "Failed to create workload - unknown executor"
+            {:source executor
+             :type  ::invalid-executor})))
+
+(defmethod throw-when-malformed-sink-request!
+  :default
+  [sink]
+  (throw
+   (ex-info "Failed to create workload - unknown sink"
+            {:source sink
+             :type  ::invalid-sink})))
+
+;; Workload Functions
+(defn ^:private add-workload-record
+  "Use `tx` to create a workload `record` for `request` and return the id of the
+   new workload."
+  [tx request]
+  (letfn [(combine-labels [labels]
+            (->> (mapv request [:pipeline :project])
+                 (map str ["pipeline:" "project:"])
+                 (concat labels)
+                 set
+                 sort
+                 vec))]
+    (-> (update request :labels combine-labels)
+        (select-keys [:creator :watchers :labels :project])
+        (merge (select-keys (wfl/get-the-version) [:commit :version]))
+        (assoc :executor ""
+               :output   ""
+               :release  ""
+               :wdl      ""
+               :uuid     (UUID/randomUUID))
+        (->> (jdbc/insert! tx :workload) first :id))))
+
 (def ^:private continuous-workload-table-name "ContinuousWorkload")
+
+(defn ^:private patch-workload [tx {:keys [id]} colls]
+  (jdbc/update! tx :workload colls ["id = ?" id]))
+
+(defn ^:private patch-continuous-workload
+  "Use `tx` to update the colls of the `_workload`."
+  [tx {:keys [items] :as _workload} colls]
+  (jdbc/update! tx continuous-workload-table-name colls
+                ["id = ?" (util/parse-int items)]))
 
 (defn ^:private add-continuous-workload-record
   "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
@@ -127,38 +196,12 @@
         (->> (jdbc/execute! tx)))
     items))
 
-(defn ^:private patch-workload [tx {:keys [id]} colls]
-  (jdbc/update! tx :workload colls ["id = ?" id]))
-
-(defn ^:private patch-continuous-workload
-  "Use `tx` to update the `colls` of the `_workload`."
-  [tx {:keys [items] :as _workload} colls]
-  (jdbc/update! tx continuous-workload-table-name colls
-                ["id = ?" (util/parse-int items)]))
-
-(defn ^:private add-workload-record
-  "Use `tx` to create a workload record for `request` and return the id of the
-   new workload."
+(defn create-covid-workload
+  "Verify the `request` and create a workload"
   [tx request]
-  (letfn [(combine-labels [labels]
-            (->> (mapv request [:pipeline :project])
-                 (map str ["pipeline:" "project:"])
-                 (concat labels)
-                 set
-                 sort
-                 vec))]
-    (-> (update request :labels combine-labels)
-        (select-keys [:creator :watchers :labels :project])
-        (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor ""
-               :output   ""
-               :release  ""
-               :wdl      ""
-               :uuid     (UUID/randomUUID))
-        (->> (jdbc/insert! tx :workload) first :id))))
-
-;; TODO: validate the request before creating the workload
-(defn create-covid-workload [tx request]
+  (throw-when-malformed-source-request! (get-in request [:source]))
+  (throw-when-malformed-executor-request! (get-in request [:executor]))
+  (throw-when-malformed-sink-request! (get-in request [:sink]))
   (let [set-pipeline "UPDATE workload
                       SET pipeline = ?::pipeline
                       WHERE id = ?"
@@ -223,9 +266,10 @@
 (def ^:private tdr-source-type  "TerraDataRepoSource")
 (def ^:private tdr-source-table "TerraDataRepoSource")
 (def ^:private tdr-source-serialized-fields
-  {:dataset :dataset
-   :table   :dataset_table
-   :column  :table_column_name})
+  {:dataset         :dataset
+   :table           :dataset_table
+   :column          :table_column_name
+   :snapshotReaders :snapshot_readers})
 
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
@@ -248,6 +292,37 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
+(defn throw-unless-column-exists
+  "Throw or return the column from `table`"
+  [dataset table dataset-column-name]
+  (let [[result & more] (-> table
+                            (get-in [:columns])
+                            (->> (filter (comp #{dataset-column-name} :name))))]
+    (when-not result
+      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
+    result))
+
+(defn throw-unless-table-exists
+  "Throw or return the table from `dataset`"
+  [dataset table-name dataset-column-name]
+  (let [[result & more] (-> dataset
+                            (get-in [:schema :tables])
+                            (->> (filter (comp #{table-name} :name))))]
+    (when-not result
+      (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
+    (when result
+      (throw-unless-column-exists dataset result dataset-column-name))
+    result))
+
+(defn verify-data-repo-source!
+  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
+  [{:keys [name dataset table column skipValidation] :as source}]
+  (when-not skipValidation
+    (when-not (some? dataset)
+      (throw (ex-info "Dataset is Nil" {:source source})))
+    (-> (datarepo/dataset (:dataset source))
+        (throw-unless-table-exists table column))))
+
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
    frozen `now`."
@@ -266,27 +341,28 @@
       flatten))
 
 (defn ^:private go-create-snapshot!
-  "Create snapshot in TDR from `dataset` body, `table`
-   and `row-ids` then write job info as well as rows
-   into `source-details-name` table, `suffix` will be
-   appended to the snapshot names."
-  [suffix dataset table row-ids]
+  "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
+   write job info as well as rows into `source-details-name` table.
+   Snapshots will be readable by members of the `snapshotReaders` list.
+   `suffix` will be appended to the snapshot names."
+  [suffix {:keys [dataset table snapshotReaders] :as _source} row-ids]
   (let [columns (->> (datarepo/all-columns dataset table)
                      (mapv :name)
                      (cons "datarepo_row_id"))]
     (-> (datarepo/make-snapshot-request dataset columns table row-ids)
         (update :name #(str % suffix))
+        (assoc :readers snapshotReaders)
         datarepo/create-snapshot-job)))
 
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
-  [{:keys [dataset table] :as _source} now-obj row-ids]
+  [{:keys [dataset table snapshotReaders] :as source} now-obj row-ids]
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
         compact-now (.format now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
               [shard (-> (format "_%s_%s" compact-now idx)
-                         (go-create-snapshot! dataset table shard))])]
+                         (go-create-snapshot! source shard))])]
       (->> row-ids
            (partition-all 500)
            (map vec)
@@ -433,6 +509,7 @@
 (defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
 (defoverload queue-length!  tdr-source-type tdr-source-queue-length)
+(defoverload throw-when-malformed-source-request! tdr-source-name verify-data-repo-source!)
 
 ;; TDR Snapshot List Source
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
@@ -517,6 +594,13 @@
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
+
+(defn verify-terra-executor!
+  "Verify the method-configuration exists."
+  [{:keys [name methodConfiguration skipValidation] :as executor}]
+  (when-not skipValidation
+    (when-not (:methodConfiguration executor)
+      (throw (ex-info "Unknown Method Configuration" {:executor executor})))))
 
 (defn ^:private import-snapshot!
   "Return snapshot reference for `id` imported to `workspace` as `name`."
@@ -686,6 +770,7 @@
 (defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
 (defoverload queue-length!      terra-executor-type terra-executor-queue-length)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
+(defoverload throw-when-malformed-executor-request! terra-executor-name verify-terra-executor!)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -717,6 +802,16 @@
         (update :fromOutputs edn/read-string)
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
+
+(defn verify-terra-sink!
+  "Verify that the WFL has access to both firecloud and the `workspace`."
+  [{:keys [name workspace skipValidation] :as sink}]
+  (when-not skipValidation
+    (try
+      (firecloud/get-workspace workspace)
+      (catch Throwable t
+        (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                       :cause     (.getMessage t)}))))))
 
 ;; visible for testing
 (defn rename-gather
@@ -762,6 +857,7 @@
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
+(defoverload throw-when-malformed-sink-request! terra-workspace-sink-name verify-terra-sink!)
 
 (defoverload workloads/create-workload!   pipeline create-covid-workload)
 (defoverload workloads/start-workload!    pipeline start-covid-workload)

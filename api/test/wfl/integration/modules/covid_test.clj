@@ -12,7 +12,8 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.tools.resources            :as resources])
   (:import [java.util ArrayDeque UUID]
-           [java.lang Math]))
+           [java.lang Math]
+           [org.postgresql.util PSQLException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
@@ -27,6 +28,20 @@
   {:snapshot_id (str (UUID/randomUUID))
    :job_status "succeeded"
    :id job-id})
+
+(use-fixtures :once fixtures/temporary-postgresql-database)
+
+(def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
+(def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
+(def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
+(def ^:private testing-table-name "flowcells")
+(def ^:private testing-column-name "run_date")
+
+(def workload {:id 1})
+
+;; For temporary workspace creation
+(def snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
+(def reference-id "2d15f9bd-ecb9-46b3-bb6c-f22e20235232")
 
 ;; Queue mocks
 (def ^:private test-queue-type "TestQueue")
@@ -84,8 +99,10 @@
       "Successful workflow records should be filtered out before firecloud fetch")
   running-workflow)
 
-(let [new-env {"WFL_FIRECLOUD_URL"
-               "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
+(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+               "WFL_TDR_URL"       "https://data.terra.bio"
+               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
+
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database
@@ -107,7 +124,12 @@
             (is (str/starts-with? details "TerraWorkspaceSink_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
-           (workloads/covid-workload-request))]
+           (workloads/covid-workload-request {:dataset testing-dataset
+                                              :table   testing-table-name
+                                              :column  testing-column-name}
+                                             {:workspace            testing-workspace
+                                              :methodConfiguration testing-method-configuration}
+                                             {:workspace testing-workspace}))]
       (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
@@ -116,6 +138,101 @@
       (is (seq labels) "workload did not contain any labels")
       (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
       (is (vector? watchers)))))
+
+(defn ^:private make-covid-workload-request []
+  (-> (workloads/covid-workload-request {:dataset testing-dataset
+                                         :table   testing-table-name
+                                         :column  testing-column-name}
+                                        {:workspace            testing-workspace
+                                         :methodConfiguration testing-method-configuration}
+                                        {:workspace testing-workspace})
+      (assoc :creator @workloads/email)))
+
+(deftest test-create-covid-workload-with-misnamed-source
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown source" (-> (make-covid-workload-request)
+                                                                                           (assoc-in [:source :name] "Bad_Name")
+                                                                                           workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-source-name
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown source" (-> (make-covid-workload-request)
+                                                                                           (assoc-in [:source :name] nil)
+                                                                                           workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-dataset
+  (is (thrown-with-msg? RuntimeException #"Dataset is Nil" (-> (make-covid-workload-request)
+                                                               (assoc-in [:source :dataset] nil)
+                                                               workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-dataset-and-skipping-validation
+  (is (workloads/create-workload!
+       (workloads/covid-workload-request {:dataset nil
+                                          :table   testing-table-name
+                                          :column  testing-column-name
+                                          :skipValidation true}
+                                         {:workspace            testing-workspace
+                                          :methodConfiguration testing-method-configuration}
+                                         {:workspace testing-workspace}))))
+
+(deftest test-create-covid-workload-with-misnamed-executor
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
+                                                                                             (assoc-in [:executor :name] "Bad_Name")
+                                                                                             workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-named-executor
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
+                                                                                             (assoc-in [:executor :name] nil)
+                                                                                             workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-method-configuration
+  (is (thrown-with-msg? RuntimeException #"Unknown Method Configuration" (-> (make-covid-workload-request)
+                                                                             (assoc-in [:executor :methodConfiguration] nil)
+                                                                             workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-method-configuration-and-skipping-validation
+  (is (thrown? PSQLException (workloads/create-workload!
+                              (workloads/covid-workload-request {:dataset testing-dataset
+                                                                 :table   testing-table-name
+                                                                 :column  testing-column-name}
+                                                                {:workspace            testing-workspace
+                                                                 :methodConfiguration nil
+                                                                 :skipValidation true}
+                                                                {:workspace testing-workspace})))))
+
+(deftest test-create-covid-workload-with-misnamed-sink
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown sink" (-> (make-covid-workload-request)
+                                                                                         (assoc-in [:sink :name] "Bad_Name")
+                                                                                         workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-named-sink
+  (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown sink" (-> (make-covid-workload-request)
+                                                                                         (assoc-in [:sink :name] nil)
+                                                                                         workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-workspace
+  (is (thrown-with-msg? RuntimeException #"Cannot access the workspace"  (-> (make-covid-workload-request)
+                                                                             (assoc-in [:sink :workspace] nil)
+                                                                             workloads/create-workload!))))
+
+(deftest test-create-covid-workload-without-workspace-and-skipping-validation
+  (is (thrown? PSQLException (workloads/create-workload!
+                              (workloads/covid-workload-request {:dataset testing-dataset
+                                                                 :table   testing-table-name
+                                                                 :column  testing-column-name}
+                                                                {:workspace            testing-workspace
+                                                                 :methodConfiguration testing-method-configuration}
+                                                                {:workspace nil
+                                                                 :skipValidation true})))))
+
+(deftest test-start-workload
+  (let [workload (workloads/create-workload!
+                  (workloads/covid-workload-request {:dataset testing-dataset
+                                                     :table testing-table-name
+                                                     :column testing-column-name}
+                                                    {:workspace testing-workspace
+                                                     :method_configuration testing-method-configuration}
+                                                    {:workspace testing-workspace}))]
+    (is (not (:started workload)))
+    (is (:started (workloads/start-workload! workload)))))
 
 (defn ^:private create-tdr-source [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -293,7 +410,12 @@
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request))]
+                  (workloads/covid-workload-request {:dataset testing-dataset
+                                                     :table testing-table-name
+                                                     :column testing-column-name}
+                                                    {:workspace testing-workspace
+                                                     :method_configuration testing-method-configuration}
+                                                    {:workspace testing-workspace}))]
     (is (empty? (workloads/workflows workload)))))
 
 (deftest test-workload-state-transition
@@ -307,8 +429,18 @@
      #'covid/create-submission!              mock-create-submission
      #'firecloud/get-workflow                mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
-      (workloads/covid-workload-request))))
+      (workloads/covid-workload-request {:dataset testing-dataset
+                                         :table testing-table-name
+                                         :column testing-column-name}
+                                        {:workspace testing-workspace
+                                         :method_configuration testing-method-configuration}
+                                        {:workspace testing-workspace}))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!
-   (workloads/covid-workload-request)))
+   (workloads/covid-workload-request {:dataset testing-dataset
+                                      :table testing-table-name
+                                      :column testing-column-name}
+                                     {:workspace testing-workspace
+                                      :method_configuration testing-method-configuration}
+                                     {:workspace testing-workspace})))
