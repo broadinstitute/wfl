@@ -21,7 +21,6 @@
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::environment string?)
-(s/def ::executor string?)
 (s/def ::finished inst?)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
@@ -42,30 +41,6 @@
 (s/def ::common map?)
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
-(s/def ::workload-request (s/keys :opt-un [::common
-                                           ::input
-                                           ::items]
-                                  :req-un [(or ::executor ::cromwell)
-                                           ::output
-                                           ::pipeline
-                                           ::project]))
-(s/def ::workload-response (s/keys :opt-un [::finished
-                                            ::input
-                                            ::started
-                                            ::stopped
-                                            ::wdl
-                                            ::workflows]
-                                   :req-un [::commit
-                                            ::created
-                                            ::creator
-                                            ::executor
-                                            ::output
-                                            ::pipeline
-                                            ::project
-                                            ::release
-                                            ::uuid
-                                            ::version]))
-(s/def ::workload-responses (s/* ::workload-response))
 
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
@@ -79,9 +54,8 @@
                       :sg       ::sg-workflow-inputs))
 
 (s/def ::workflows (s/* ::workflow))
-(s/def ::workflow
-  (s/keys :req-un [::inputs]
-          :opt-un [::status ::updated ::uuid ::options]))
+(s/def ::workflow  (s/keys :req-un [::inputs]
+                           :opt-un [::status ::updated ::uuid ::options]))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -122,9 +96,91 @@
                                              ::dbsnp_vcf_index
                                              ::input_cram]))
 
-;; /api/v1/workflows
-(s/def ::start string?)
-(s/def ::end string?)
-(s/def ::workflow-request (s/keys :req-un [::end
-                                           ::environment
-                                           ::start]))
+(s/def ::column string?)
+(s/def ::dataset string?)
+(s/def ::entity string?)
+(s/def ::fromOutputs map?)
+(s/def ::fromSource string?)
+(s/def ::labels (s/* string?))
+(s/def ::name string?)
+(s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
+(s/def ::methodConfigurationVersion integer?)
+(s/def ::table string?)
+(s/def ::watchers (s/* string?))
+(s/def ::workspace (s/and string? util/terra-namespaced-name?))
+
+(s/def ::batch-executor string?)
+(s/def ::covid-executor (s/keys :req-un [::fromSource
+                                         ::methodConfiguration
+                                         ::methodConfigurationVersion
+                                         ::workspace]
+                                :opt-un [::name]))
+
+(s/def ::executor (s/or :batch ::batch-executor
+                        :covid ::covid-executor))
+
+(s/def ::sink (s/keys :req-un [::entity
+                               ::fromOutputs
+                               ::workspace]
+                      :opt-un [::name]))
+
+(s/def ::source (s/keys :req-un [::column
+                                 ::dataset
+                                 ::table]
+                        :opt-un [::name]))
+
+(s/def ::batch-workload-request (s/keys :opt-un [::common
+                                                 ::input
+                                                 ::items
+                                                 ::output]
+                                        :req-un [(or ::cromwell ::executor)
+                                                 ::pipeline
+                                                 ::project]))
+
+(s/def ::batch-workload-response (s/keys :opt-un [::finished
+                                                  ::input
+                                                  ::started
+                                                  ::stopped
+                                                  ::wdl
+                                                  ::workflows]
+                                         :req-un [::commit
+                                                  ::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::output
+                                                  ::pipeline
+                                                  ::project
+                                                  ::release
+                                                  ::uuid
+                                                  ::version]))
+
+(s/def ::covid-workload-request (s/keys :req-un [::executor
+                                                 ::pipeline
+                                                 ::sink
+                                                 ::source]
+                                        :opt-un [::labels
+                                                 ::project
+                                                 ::watchers]))
+
+(s/def ::covid-workload-response (s/keys :req-un [::created
+                                                  ::creator
+                                                  ::executor
+                                                  ::labels
+                                                  ::pipeline
+                                                  ::sink
+                                                  ::source
+                                                  ::uuid
+                                                  ::version
+                                                  ::watchers]
+                                         :opt-un [::finished
+                                                  ::release
+                                                  ::started
+                                                  ::stopped]))
+
+(s/def ::workload-request (s/or :batch ::batch-workload-request
+                                :covid ::covid-workload-request))
+
+(s/def ::workload-response (s/or :batch ::batch-workload-response
+                                 :covid ::covid-workload-response))
+
+(s/def ::workload-responses (s/* ::workload-response))

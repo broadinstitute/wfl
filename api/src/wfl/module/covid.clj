@@ -150,7 +150,11 @@
     (-> (update request :labels combine-labels)
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor "" :output "" :release "" :wdl "" :uuid (UUID/randomUUID))
+        (assoc :executor ""
+               :output   ""
+               :release  ""
+               :wdl      ""
+               :uuid     (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; TODO: validate the request before creating the workload

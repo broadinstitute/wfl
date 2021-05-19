@@ -1,5 +1,5 @@
 (ns wfl.module.xx
-  "Reprocess External Exomes, whatever they are."
+  "Reprocess eXternal eXomes."
   (:require [clojure.data.json          :as json]
             [clojure.string             :as str]
             [wfl.api.workloads          :refer [defoverload]]
