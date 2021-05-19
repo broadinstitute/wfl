@@ -293,9 +293,9 @@
 (defn throw-unless-column-exists
   "Throw or return the column from `table`"
   [dataset table dataset-column-name]
-  (let [[result & more :as all] (-> table
-                                    (get-in [:columns])
-                                    (->> (filter (comp #{dataset-column-name} :name))))]
+  (let [[result & more] (-> table
+                            (get-in [:columns])
+                            (->> (filter (comp #{dataset-column-name} :name))))]
     (when-not result
       (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
     result))
