@@ -113,21 +113,21 @@
 (s/def ::covid-executor (s/keys :req-un [::fromSource
                                          ::methodConfiguration
                                          ::methodConfigurationVersion
-                                         ::name
-                                         ::workspace]))
+                                         ::workspace]
+                                :opt-un [::name]))
 
 (s/def ::executor (s/or :batch ::batch-executor
                         :covid ::covid-executor))
 
 (s/def ::sink (s/keys :req-un [::entity
                                ::fromOutputs
-                               ::name
-                               ::workspace]))
+                               ::workspace]
+                      :opt-un [::name]))
 
 (s/def ::source (s/keys :req-un [::column
                                  ::dataset
-                                 ::name
-                                 ::table]))
+                                 ::table]
+                        :opt-un [::name]))
 
 (s/def ::batch-workload-request (s/keys :opt-un [::common
                                                  ::input
