@@ -20,9 +20,12 @@
             {:extra {:account_name   "package_genbank_ftp_submission.account_name"
                      :workspace_name "$SARSCoV2-Illumina-Full"}})))))
 
+(def ^:private readers-list ["hornet@firecloud.org"])
+
 ;; Snapshot creation mock
 (defn mock-create-snapshot-job
   [snapshot-request]
+  (is (= readers-list (:readers snapshot-request)))
   (-> snapshot-request
       (select-keys [:name])
       (assoc :id "mock-job-id")))
@@ -30,7 +33,9 @@
 (deftest test-create-snapshots
   (let [mock-new-rows-size  2021
         expected-num-shards (int (Math/ceil (/ mock-new-rows-size 500)))
-        source              {:dataset {} :table "flowcell"}
+        source              {:dataset {}
+                             :table "flowcell"
+                             :snapshotReaders readers-list}
         row-ids             (take mock-new-rows-size (range))
         now-obj             (OffsetDateTime/now (ZoneId/of "UTC"))
         shards->snapshot-requests

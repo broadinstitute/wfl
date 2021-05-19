@@ -524,3 +524,26 @@
   (fn [object] (:type object)))
 
 (defmethod to-edn :default [x] x)
+
+(def digit?          (set "0123456789"))
+(def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
+(def uppercase?      (set (map #(Character/toUpperCase %) lowercase?)))
+(def letter?         (into lowercase? uppercase?))
+(def alphanumeric?   (into letter? digit?))
+(def spaceunderdash? (set " _-"))
+(def terra-allowed?  (into alphanumeric? spaceunderdash?))
+(def terra-name?     (partial every? terra-allowed?))
+
+(defn terra-namespaced-name?
+  "Return nil or the Terra [namespace name] pair in NAMESPACE-NAME."
+  [namespace-name]
+  (let [[namespace name & more] (str/split namespace-name #"/" 3)]
+    (when (and (nil? more)
+               (seq namespace) (seq name)
+               (terra-name? namespace) (terra-name? name))
+      [namespace name])))
+
+(defmacro make-map
+  "Map SYMBOLS as keywords to their values in the environment."
+  [& symbols]
+  (zipmap (map keyword symbols) symbols))

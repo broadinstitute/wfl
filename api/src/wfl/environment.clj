@@ -8,9 +8,6 @@
 
 (declare getenv)
 
-;; TODO: `is-known-cromwell-url?` in modules means new projects require new releases
-;;  since this is baked in code. Can we improve this?
-
 (defn ^:private vault-secrets
   "Return the secrets at `path` in vault."
   [path]

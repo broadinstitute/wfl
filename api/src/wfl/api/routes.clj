@@ -1,5 +1,5 @@
 (ns wfl.api.routes
-  "Define routes for API endpoints"
+  "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
             [clojure.tools.logging              :as log]
             [clojure.tools.logging.readable     :as logr]
@@ -71,7 +71,7 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
-    {:post {:summary    "Stop managing workflows for the workload specified by 'request'."
+    {:post {:summary    "Stop managing the workload specified by 'request'."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
@@ -100,10 +100,15 @@
   [endpoints]
   (let [security-info {:swagger {:tags ["Authenticated"]
                                  :security [{:googleoauth []}]}}]
-    (letfn [(needs-security? [endpoint] (str/starts-with? (first endpoint) "/api"))
-            (write-security-info [method-description] (merge-with merge security-info method-description))
-            (modify-method [method] (zipmap (keys method) (map write-security-info (vals method))))]
-      (vec (map #(if (needs-security? %) (apply vector (first %) (map modify-method (rest %))) %)
+    (letfn [(needs-security? [endpoint]
+              (str/starts-with? (first endpoint) "/api"))
+            (write-security-info [method-description]
+              (merge-with merge security-info method-description))
+            (modify-method [method]
+              (zipmap (keys method)
+                      (map write-security-info (vals method))))]
+      (vec (map #(if (needs-security? %)
+                   (apply vector (first %) (map modify-method (rest %))) %)
                 endpoints)))))
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
@@ -146,25 +151,25 @@
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
     {;; uncomment for easier debugging with coercion and middleware transformations
-       ;; :reitit.middleware/transform dev/print-request-diffs
-       ;; :exception pretty/exception
+     ;; :reitit.middleware/transform dev/print-request-diffs
+     ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muuntaja-core/instance
             :middleware [exception-middleware
                          ;; query-params & form-params
                          parameters/parameters-middleware
-                           ;; content-negotiation
+                         ;; content-negotiation
                          muuntaja/format-negotiate-middleware
-                           ;; encoding response body
+                         ;; encoding response body
                          muuntaja/format-response-middleware
-                           ;; decoding request body
+                         ;; decoding request body
                          muuntaja/format-request-middleware
-                           ;; coercing response bodys
+                         ;; coercing response bodys
                          coercion/coerce-response-middleware
-                           ;; coercing request parameters
+                         ;; coercing request parameters
                          coercion/coerce-request-middleware
                          multipart/multipart-middleware]}})
-    ;; get more correct http error responses on routes
+   ;; get more correct http error responses on routes
    (ring/create-default-handler
     {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
      :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))

@@ -98,11 +98,12 @@
 ;; :default implementations
 (defmethod create-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as body}]
   (throw
    (ex-info "Failed to create workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:cause    body
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default

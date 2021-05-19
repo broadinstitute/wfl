@@ -1,17 +1,18 @@
 (ns wfl.api.handlers
-  "Define handlers for API endpoints. Note that pipeline modules MUST be required here."
+  "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
             [clojure.tools.logging          :as log]
             [clojure.tools.logging.readable :as logr]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
+            [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
             [wfl.module.arrays]
             [wfl.module.copyfile]
+            [wfl.module.covid]
+            [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
-            [wfl.module.sg]
-            [wfl.jdbc                       :as jdbc]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util]))
@@ -26,9 +27,10 @@
   [body]
   (constantly (succeed body)))
 
-(defn ^:private prune
+(defn ^:private strip-internals
+  "Strip internal properties from the workflow or workload `coll`."
   [coll]
-  (->> (apply dissoc coll [:id :items])
+  (->> (dissoc coll :id :items)
        (filter second)
        (into {})))
 
@@ -38,7 +40,7 @@
   (prune workload))
 
 (defn append-to-aou-workload
-  "Append new workflows to an existing started AoU workload describe in BODY of REQUEST."
+  "Append workflows described in BODY of REQUEST to a started AoU workload."
   [request]
   (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
     (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
