@@ -141,10 +141,7 @@
             {:source sink
              :type  ::invalid-sink})))
 
-
 ;; Workload Functions
-
-
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
    new workload."
@@ -303,7 +300,7 @@
 (defn throw-unless-table-exists
   "Throw or return the table from `dataset`"
   [dataset table-name dataset-column-name]
-  (let [[result & more :as all] (-> dataset
+  (let [[result & more] (-> dataset
                                     (get-in [:schema :tables])
                                     (->> (filter (comp #{table-name} :name))))]
     (when-not result
