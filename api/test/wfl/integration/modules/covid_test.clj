@@ -213,6 +213,11 @@
                                                                              (assoc-in [:sink :workspace] nil)
                                                                              workloads/create-workload!))))
 
+(deftest test-create-covid-workload-when-workspace-entity-doesnt-exist
+  (with-redefs-fn {#'firecloud/list-entity-types (fn [x] {})}
+    #(is (thrown-with-msg? RuntimeException #"Entity does not exist in workspace"  (-> (make-covid-workload-request)
+                                                                                       workloads/create-workload!)))))
+
 (deftest test-create-covid-workload-without-workspace-and-skipping-validation
   (is (thrown? PSQLException (workloads/create-workload!
                               (workloads/covid-workload-request {:dataset testing-dataset
@@ -426,7 +431,7 @@
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-     #'covid/create-submission!              mock-create-submission
+     #'covid/create-submission!              mock-firecloud-create-submission
      #'firecloud/get-workflow                mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
       (workloads/covid-workload-request {:dataset testing-dataset

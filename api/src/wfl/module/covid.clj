@@ -19,15 +19,6 @@
 
 (def pipeline "Sarscov2IlluminaFull")
 
-(comment
-  (letfn [(entity-exists? [entity]
-            (let [entities (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")]
-              (->> entity keyword entities some?)))]
-    (when-not (entity-exists? "flowcell")
-      (throw (ex-info "Entity does not exist in workspace" {:workspace "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev"
-                                                            :entity "flowcell"}))))
-  )
-
 (defn ^:private get-snapshots-from-workspace
   [workspace])
 
@@ -814,13 +805,19 @@
 
 (defn verify-terra-sink!
   "Verify that the WFL has access to both firecloud and the `workspace`."
-  [{:keys [name workspace skipValidation] :as sink}]
+  [{:keys [entity workspace skipValidation] :as _sink}]
   (when-not skipValidation
-    (try
-      (firecloud/get-workspace workspace)
-      (catch Throwable t
-        (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                       :cause     (.getMessage t)}))))))
+    (letfn [(entity-exists? [entity]
+              (let [entities (firecloud/list-entity-types workspace)]
+                (->> entity keyword entities some?)))]
+      (try
+        (firecloud/get-workspace workspace)
+        (catch Throwable t
+          (throw (ex-info "Cannot access the workspace" {:workspace workspace
+                                                         :cause     (.getMessage t)}))))
+      (when-not (entity-exists? entity)
+        (throw (ex-info "Entity does not exist in workspace" {:workspace workspace
+                                                              :entity entity}))))))
 
 ;; visible for testing
 (defn rename-gather
