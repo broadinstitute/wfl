@@ -461,6 +461,14 @@
            (jdbc/query tx)
            first))))
 
+(defn ^:private tdr-snapshot-list-queue-length [{:keys [items] :as _source}]
+  (let [query "SELECT COUNT (*) FROM %s WHERE consumed IS NULL"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (format query items)
+           (jdbc/query tx)
+           first
+           :count))))
+
 (defn ^:private pop-tdr-snapshot-list [{:keys [items] :as source}]
   (if-let [{:keys [id]} (peek-tdr-snapshot-list source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -473,6 +481,7 @@
 (defoverload load-source!   tdr-snapshot-list-type load-tdr-snapshot-list)
 (defoverload peek-queue!    tdr-snapshot-list-type
   (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload queue-length!  tdr-snapshot-list-type tdr-snapshot-list-queue-length)
 (defoverload pop-queue!     tdr-snapshot-list-type pop-tdr-snapshot-list)
 
 ;; Terra Executor
