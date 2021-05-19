@@ -69,7 +69,7 @@
   {:status "Running" :workflowId (str (UUID/randomUUID))})
 (def ^:private succeeded-workflow
   {:status "Succeeded" :workflowId (str (UUID/randomUUID))})
-(defn ^:private mock-create-submission [& _]
+(defn ^:private mock-firecloud-create-submission [& _]
   {:submissionId submission-id
    :workflows [running-workflow succeeded-workflow]})
 
@@ -199,15 +199,15 @@
         {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
          #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
          #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-         #'covid/create-submission!              mock-create-submission
+         #'firecloud/submit-method               mock-firecloud-create-submission
          #'firecloud/get-workflow                mock-workflow-update-status}
-        #(let [updated-executor (covid/update-executor! source executor)]
-           (is (= (inc methodConfigVersion) (:methodConfigurationVersion updated-executor))
-               "Method configuration version was not incremented.")))
-      #_(is (-> source :queue empty?) "The snapshot was not consumed.")
+        #(covid/update-executor! source executor))
+      (is (-> source :queue empty?) "The snapshot was not consumed.")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
-              (->> executor :details (postgres/get-table tx) (sort-by :id))]
+              (->> executor :details (postgres/get-table tx) (sort-by :id))
+              executor-record
+              (#'covid/load-record-by-id! tx "TerraExecutor" (:id executor))]
           (is (== 2 (count records))
               "Exactly 2 workflows should have been written to the database")
           (is (every? #(= snapshot-reference-id (:snapshot_reference_id %)) records)
@@ -219,7 +219,9 @@
           (is (every? #(nil? (:consumed %)) records)
               "All records should be unconsumed")
           (verify-record-against-workflow running-record running-workflow 1)
-          (verify-record-against-workflow succeeded-record succeeded-workflow 2))))))
+          (verify-record-against-workflow succeeded-record succeeded-workflow 2)
+          (is (== (inc methodConfigVersion) (:method_configuration_version executor-record))
+              "Method configuration version was not incremented."))))))
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
@@ -229,7 +231,7 @@
       {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
        #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
        #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-       #'covid/create-submission!              mock-create-submission
+       #'firecloud/submit-method               mock-firecloud-create-submission
        #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn

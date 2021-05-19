@@ -469,8 +469,7 @@
 (defn ^:private update-method-configuration!
   "Update METHODCONFIGURATION in WORKSPACE with snapshot reference NAME
   as :dataReferenceName via Firecloud.
-  Update executor table record ID with incremented METHODCONFIGURATIONVERSION.
-  Return EXECUTOR with incremented METHODCONFIGURATIONVERSION."
+  Update executor table record ID with incremented METHODCONFIGURATIONVERSION."
   [{:keys [id
            workspace
            methodConfiguration
@@ -495,13 +494,14 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx terra-executor-table
                     {:method_configuration_version inc-version}
-                    ["id = ?" id]))
-    (assoc executor :methodConfigurationVersion inc-version)))
+                    ["id = ?" id]))))
 
 (defn ^:private create-submission!
-  "TO IMPLEMENT:
-  Create submission from REFERENCE."
-  [executor reference])
+  "Update METHODCONFIGURATION to use REFERENCE.
+  Create and return submission in WORKSPACE for METHODCONFIGURATION via Firecloud."
+  [{:keys [workspace methodConfiguration] :as executor} reference]
+  (update-method-configuration! executor reference)
+  (firecloud/submit-method workspace methodConfiguration))
 
 (defn ^:private write-workflows!
   "Write WORKFLOWS to DETAILS table."
@@ -519,9 +519,8 @@
       (jdbc/insert-multi! tx details (map to-rows workflows)))))
 
 (defn ^:private update-terra-workflow-statuses!
-  "Update statuses in DETAILS table for active or failed WORKSPACE workflows.
-  Return EXECUTOR."
-  [{:keys [workspace details] :as executor}]
+  "Update statuses in DETAILS table for active or failed WORKSPACE workflows."
+  [{:keys [workspace details] :as _executor}]
   (letfn [(read-active-or-failed-workflows
             []
             (let [query "SELECT *
@@ -549,8 +548,7 @@
                   (run! records))))]
     (->> (read-active-or-failed-workflows)
          (map update-workflow-status)
-         (write-workflow-statuses (OffsetDateTime/now)))
-    executor))
+         (write-workflow-statuses (OffsetDateTime/now)))))
 
 (defn ^:private update-terra-executor
   "Create new submission from new SOURCE snapshot if available,
@@ -559,13 +557,12 @@
   Return EXECUTOR."
   [source executor]
   (if-let [snapshot (peek-queue! source)]
-    (let [reference        (from-source executor snapshot)
-          updated-executor (update-method-configuration! executor reference)
-          submission       (create-submission! updated-executor reference)]
-      (write-workflows! updated-executor reference submission)
-      (pop-queue! source)
-      (update-terra-workflow-statuses! updated-executor))
-    (update-terra-workflow-statuses! executor)))
+    (let [reference  (from-source executor snapshot)
+          submission (create-submission! executor reference)]
+      (write-workflows! executor reference submission)
+      (pop-queue! source)))
+  (update-terra-workflow-statuses! executor)
+  executor)
 
 (defn ^:private peek-terra-executor-details
   "Get first unconsumed successful workflow record from DETAILS table."
