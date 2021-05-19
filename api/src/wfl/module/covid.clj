@@ -103,38 +103,8 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
-(def ^:private continuous-workload-table-name "ContinuousWorkload")
-
-(defn ^:private add-continuous-workload-record
-  "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
-  return the ID of the ContinuousWorkload."
-  [tx id {:keys [source sink executor] :as _request}]
-  (let [set-details "UPDATE %s
-                     SET    source_type   = ?::source,
-                            executor_type = ?::executor,
-                            sink_type     = ?::sink
-                     WHERE  id = ? "
-        src-exc-snk [(create-source! tx id source)
-                     (create-executor! tx id executor)
-                     (create-sink! tx id sink)]
-        items       (->> (map second src-exc-snk)
-                         (zipmap [:source_items :executor_items :sink_items])
-                         (jdbc/insert! tx continuous-workload-table-name)
-                         first
-                         :id)]
-    (-> [(format set-details continuous-workload-table-name)]
-        (concat (map first src-exc-snk) [items])
-        (->> (jdbc/execute! tx)))
-    items))
-
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
-
-(defn ^:private patch-continuous-workload
-  "Use `tx` to update the colls of the `_workload`."
-  [tx {:keys [items] :as _workload} colls]
-  (jdbc/update! tx continuous-workload-table-name colls
-                ["id = ?" (util/parse-int items)]))
 
 (defn ^:private add-workload-record
   "Use `tx` to create a workload `record` for `request` and return the id of the
@@ -154,66 +124,80 @@
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; TODO: validate the request before creating the workload
-(defn create-covid-workload [tx request]
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        id           (add-workload-record tx request)
-        items        (add-continuous-workload-record tx id request)]
-    (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
+(defn create-covid-workload [tx {:keys [source executor sink] :as request}]
+  (let [id      (add-workload-record tx request)
+        update "UPDATE workload
+                SET    pipeline      = ?::pipeline
+                ,      source_type   = ?::source
+                ,      executor_type = ?::executor
+                ,      sink_type     = ?::sink
+                WHERE  id = ?"
+        src-exc-snk [(create-source! tx id source)
+                     (create-executor! tx id executor)
+                     (create-sink! tx id sink)]]
+    (->> (map second src-exc-snk)
+         (zipmap [:source_items :executor_items :sink_items])
+         (jdbc/insert! tx :workload))
+    (->> (concat [update pipeline] (for [[type _] src-exc-snk] type) [id])
+         (jdbc/execute! tx))
     (workloads/load-workload-for-id tx id)))
 
-(defn load-covid-workload-impl [tx {:keys [items] :as workload}]
-  (if-let [id (util/parse-int items)]
-    (let [{:keys [updated] :as details}
-          (load-record-by-id! tx "ContinuousWorkload" id)]
-      (->> {:type     :workload
-            :source   (load-source! tx details)
-            :executor (load-executor! tx details)
-            :sink     (load-sink! tx details)
-            :updated  updated}
-           (merge workload)
-           (filter second)
-           (into {})))
-    (throw (ex-info "Invalid ContinuousWorkload identifier"
-                    {:id items :workload workload}))))
+(def ^:private workload-metadata-keys
+  [:commit
+   :created
+   :creator
+   :executor
+   :finished
+   :pipeline
+   :sink
+   :source
+   :started
+   :stopped
+   :uuid
+   :version])
+
+(defn load-covid-workload-impl [tx workload]
+  (let [src-exc-sink {:source   (load-source! tx workload)
+                      :executor (load-executor! tx workload)
+                      :sink     (load-sink! tx workload)}]
+    (as-> workload $
+      (select-keys $ workload-metadata-keys)
+      (merge $ src-exc-sink)
+      (filter second $)
+      (into {:type :workload} $))))
 
 (defn start-covid-workload
   "Start creating and managing workflows from the source."
-  [tx {:keys [id source] :as workload}]
-  (let [now (OffsetDateTime/now)]
-    (start-source! tx source)
-    (patch-continuous-workload tx workload {:updated now})
-    (patch-workload tx workload {:started (OffsetDateTime/now)})
-    (workloads/load-workload-for-id tx id)))
+  [tx {:keys [started stopped] :as workload}]
+  (letfn [(start [{:keys [id source] :as workload} now]
+            (start-source! tx source)
+            (patch-workload tx workload {:started now :updated now})
+            (workloads/load-workload-for-id tx id))]
+    (if-not (or started stopped) (start workload (utc-now)) workload)))
 
 (defn update-covid-workload
   "Use transaction TX to update WORKLOAD statuses."
   [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id stopped source executor sink] :as workload}]
-            (let [now (OffsetDateTime/now)]
-              (-> (update-source! source)
-                  (update-executor! executor)
-                  (update-sink! sink))
-              (patch-continuous-workload tx workload {:updated now})
-              (when (and stopped (every? zero? (map queue-length! [source executor])))
-                (patch-workload tx workload {:finished now})))
+  (letfn [(update! [{:keys [id stopped source executor sink] :as workload} now]
+            (-> (update-source! source)
+                (update-executor! executor)
+                (update-sink! sink))
+            (patch-workload tx workload {:updated now})
+            (when (and stopped (every? zero? (map queue-length! [source executor])))
+              (patch-workload tx workload {:finished now}))
             (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload) workload)))
+    (if (and started (not finished)) (update! workload (utc-now)) workload)))
 
 (defn ^:private stop-covid-workload
   "Use transaction `tx` to stop the `workload` looking for new data."
   [tx {:keys [stopped finished] :as workload}]
-  (letfn [(stop! [{:keys [id source] :as workload}]
-            (let [now (OffsetDateTime/now)]
-              (stop-source! tx source)
-              (patch-continuous-workload tx workload {:updated now})
-              (patch-workload tx workload {:stopped now})
-              (when-not (:started workload)
-                (patch-workload tx workload {:finished now}))
-              (workloads/load-workload-for-id tx id)))]
-    (if-not (or stopped finished) (stop! workload) workload)))
+  (letfn [(stop! [{:keys [id source] :as workload} now]
+            (stop-source! tx source)
+            (patch-workload tx workload {:stopped now :updated now})
+            (when-not (:started workload)
+              (patch-workload tx workload {:finished now}))
+            (workloads/load-workload-for-id tx id))]
+    (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
@@ -316,8 +300,8 @@
    [id {:keys [job_status snapshot_id] :as _tdr-job-metadata}]]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/update! tx details {:snapshot_creation_job_status job_status
-                              :snapshot_id snapshot_id
-                              :updated  (OffsetDateTime/now)}
+                              :snapshot_id                  snapshot_id
+                              :updated                      (utc-now)}
                   ["id = ?" id])))
 
 (defn ^:private write-snapshots-creation-jobs
@@ -378,9 +362,7 @@
   (update-last-checked tx source (utc-now)))
 
 (defn ^:private stop-tdr-source [tx {:keys [id] :as _source}]
-  (jdbc/update! tx tdr-source-table
-                {:stopped (OffsetDateTime/now)}
-                ["id = ?" id]))
+  (jdbc/update! tx tdr-source-table {:stopped (utc-now)} ["id = ?" id]))
 
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from DETAILS table."
@@ -417,10 +399,8 @@
   [{:keys [details] :as source}]
   (if-let [{:keys [id] :as _record} (peek-tdr-source-details source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [now (OffsetDateTime/now)]
-        (jdbc/update! tx details {:consumed now
-                                  :updated  now}
-                      ["id = ?" id])))
+      (let [now (utc-now)]
+        (jdbc/update! tx details {:consumed now :updated now} ["id = ?" id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defoverload create-source! tdr-source-name create-tdr-source)
@@ -473,7 +453,7 @@
 (defn ^:private pop-tdr-snapshot-list [{:keys [items] :as source}]
   (if-let [{:keys [id]} (peek-tdr-snapshot-list source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/update! tx items {:consumed (OffsetDateTime/now)} ["id = ?" id]))
+      (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
 (defoverload create-source! tdr-snapshot-list-name create-tdr-snapshot-list)
@@ -571,27 +551,25 @@
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [now     (OffsetDateTime/now)
-          to-rows (fn [{:keys [status workflowId] :as _workflow}]
-                    {:snapshot_reference_id referenceId
-                     :rawls_submission_id   submissionId
-                     :workflow_id           workflowId
-                     :workflow_status       status
-                     :updated               now})]
-      (jdbc/insert-multi! tx details (map to-rows workflows)))))
+  (letfn [(to-row [now {:keys [status workflowId] :as _workflow}]
+            {:snapshot_reference_id referenceId
+             :rawls_submission_id   submissionId
+             :workflow_id           workflowId
+             :workflow_status       status
+             :updated               now})]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (->> (map (partial to-row (utc-now)) workflows)
+           (jdbc/insert-multi! tx details)))))
 
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in DETAILS table for active or failed WORKSPACE workflows.
   Return EXECUTOR."
   [{:keys [workspace details] :as executor}]
-  (letfn [(read-active-or-failed-workflows
-            []
-            (let [query "SELECT *
-                         FROM %s
+  (letfn [(read-active-or-failed-workflows []
+            (let [query "SELECT * FROM %s
                          WHERE rawls_submission_id IS NOT NULL
-                         AND workflow_id IS NOT NULL
-                         AND workflow_status NOT IN ('Succeeded', 'Aborted')"]
+                         AND   workflow_id IS NOT NULL
+                         AND   workflow_status NOT IN ('Succeeded', 'Aborted')"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (jdbc/query tx (format query details)))))
           (update-workflow-status
@@ -601,8 +579,7 @@
                                           rawls_submission_id
                                           workflow_id)]
               (assoc record :workflow_status status)))
-          (write-workflow-statuses
-            [now records]
+          (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (-> (fn [{:keys [id workflow_status] :as _record}]
                     (jdbc/update! tx details
@@ -612,7 +589,7 @@
                   (run! records))))]
     (->> (read-active-or-failed-workflows)
          (map update-workflow-status)
-         (write-workflow-statuses (OffsetDateTime/now)))
+         (write-workflow-statuses (utc-now)))
     executor))
 
 (defn ^:private update-terra-executor
@@ -655,9 +632,8 @@
   [{:keys [details] :as executor}]
   (if-let [{:keys [id] :as _record} (peek-terra-executor-details executor)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [now (OffsetDateTime/now)]
-        (jdbc/update! tx details {:consumed now :updated now}
-                      ["id = ?" id])))
+      (let [now (utc-now)]
+        (jdbc/update! tx details {:consumed now :updated now} ["id = ?" id])))
     (throw (ex-info "No successful workflows in queue" {:executor executor}))))
 
 (defn ^:private terra-executor-queue-length
@@ -757,7 +733,7 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity_name name
               :workflow    uuid
-              :updated     (OffsetDateTime/now)}
+              :updated     (utc-now)}
              (jdbc/insert! tx details))))))
 
 (defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)

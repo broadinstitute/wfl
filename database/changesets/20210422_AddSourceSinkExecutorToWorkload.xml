@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="chengche@broadinstitute.org"
+               dbms="postgresql"
+               id="20210422"
+               logicalFilePath="20210422_AddSourceSinkExecutorToWorkload.xml"
+               runInTransaction="false">
+        <sql>
+            ALTER TABLE workload
+            ADD COLUMN source_type     SOURCE,   -- type of this source
+            ADD COLUMN source_items    TEXT,     -- the identifier of the source table
+            ADD COLUMN executor_type   EXECUTOR, -- type of this executor
+            ADD COLUMN executor_items  TEXT,     -- the identifier of the executor table
+            ADD COLUMN sink_type       SINK,     -- type of this sink
+            ADD COLUMN sink_items      TEXT,     -- the identifier of the sink table
+            ADD COLUMN updated         TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL; -- when was this workload updated
+        </sql>
+    </changeSet>
+</databaseChangeLog>
