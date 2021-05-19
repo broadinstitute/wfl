@@ -1,6 +1,6 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.string                 :as str]
-            [clojure.test                   :refer [deftest is testing use-fixtures]]
+            [clojure.test                   :refer :all]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
