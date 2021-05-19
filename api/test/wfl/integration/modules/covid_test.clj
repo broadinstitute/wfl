@@ -38,11 +38,27 @@
 (defn ^:private test-queue-pop [this]
   (-> this :queue .removeFirst))
 
-;; Snapshot reference mock
+;; Snapshot and snapshot reference mocks
+(def ^:private snapshot
+  {:name "test-snapshot-name"
+   :id   (str (UUID/randomUUID))})
 (def ^:private snapshot-reference-id
   (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-name
+  (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-create-snapshot-reference [& _]
-  {:referenceId snapshot-reference-id})
+  {:referenceId snapshot-reference-id
+   :name        snapshot-reference-name})
+
+;; Method configuration mocks
+(def methodConfigVersion 1)
+(defn ^:private mock-firecloud-get-method-configuration [& _]
+  {:methodConfigVersion methodConfigVersion})
+(defn ^:private mock-firecloud-update-method-configuration
+  [_ _ {:keys [dataReferenceName]}]
+  (is (= dataReferenceName snapshot-reference-name)
+      "Snapshot reference name should be passed to method config update")
+  nil)
 
 ;; Submission mock
 (def ^:private submission-id
@@ -153,7 +169,7 @@
     (->> {:name                       "Terra"
           :workspace                  "workspace-ns/workspace-name"
           :methodConfiguration        "mc-namespace/mc-name"
-          :methodConfigurationVersion 1
+          :methodConfigurationVersion methodConfigVersion
           :fromSource                 "importSnapshot"
           :skipValidation             true}
          (covid/create-executor! tx id)
@@ -161,9 +177,7 @@
          (covid/load-executor! tx))))
 
 (deftest test-update-terra-executor
-  (let [snapshot {:name "test-snapshot-name"
-                  :id   (str (UUID/randomUUID))}
-        source   (make-queue-from-list [snapshot])
+  (let [source   (make-queue-from-list [snapshot])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -171,10 +185,14 @@
               (is (= (:workflowId workflow) (:workflow_id record))
                   "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
-        {#'rawls/create-snapshot-reference mock-rawls-create-snapshot-reference
-         #'covid/create-submission!        mock-create-submission
-         #'firecloud/get-workflow          mock-workflow-update-status}
-        #(covid/update-executor! source executor))
+        {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+         #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+         #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+         #'covid/create-submission!              mock-create-submission
+         #'firecloud/get-workflow                mock-workflow-update-status}
+        #(let [updated-executor (covid/update-executor! source executor)]
+           (is (= (inc methodConfigVersion) (:methodConfigurationVersion updated-executor))
+               "Method configuration version was not incremented.")))
       (is (-> source :queue empty?) "The snapshot was not consumed.")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
@@ -194,13 +212,13 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
-        source     (make-queue-from-list [{:name "test-snapshot-name"
-                                           :id   (str (UUID/randomUUID))}])
+        source     (make-queue-from-list [snapshot])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
-      {#'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
-       #'covid/create-submission!          mock-create-submission
-       #'firecloud/get-workflow            mock-workflow-keep-status}
+      {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+       #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration       #'covid/create-submission!          mock-create-submission
+       #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
       {#'covid/peek-terra-executor-queue #'covid/peek-terra-executor-details}
