@@ -27,18 +27,6 @@
   [body]
   (constantly (succeed body)))
 
-(defn ^:private strip-internals
-  "Strip internal properties from the workflow or workload `coll`."
-  [coll]
-  (->> (dissoc coll :id :items)
-       (filter second)
-       (into {})))
-
-(defn strip-internals
-  "Strip internal properties from the `workload` and its `workflows`."
-  [workload]
-  (prune workload))
-
 (defn append-to-aou-workload
   "Append workflows described in BODY of REQUEST to a started AoU workload."
   [request]

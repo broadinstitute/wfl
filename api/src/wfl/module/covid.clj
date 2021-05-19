@@ -106,9 +106,25 @@
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
 
-(defn ^:private add-workload-record
-  "Use `tx` to create a workload `record` for `request` and return the id of the
-   new workload."
+(def ^:private workload-metadata-keys
+  [:commit
+   :created
+   :creator
+   :executor
+   :finished
+   :labels
+   :pipeline
+   :sink
+   :source
+   :started
+   :stopped
+   :uuid
+   :version
+   :watchers])
+
+(defn ^:private add-workload-metadata
+  "Use `tx` to record the workload metadata in `request` in the workload table
+   and return the ID the of the new row."
   [tx request]
   (letfn [(combine-labels [labels]
             (->> (mapv request [:pipeline :project])
@@ -121,44 +137,32 @@
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor ""
-               :output   ""
-               :release  ""
-               :wdl      ""
-               :uuid     (UUID/randomUUID))
+               :output ""
+               :release ""
+               :wdl ""
+               :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 ;; TODO: validate the request before creating the workload
 (defn create-covid-workload [tx {:keys [source executor sink] :as request}]
-  (let [id      (add-workload-record tx request)
+  (let [id      (add-workload-metadata tx request)
         update "UPDATE workload
-                SET    pipeline      = ?::pipeline
-                ,      source_type   = ?::source
-                ,      executor_type = ?::executor
-                ,      sink_type     = ?::sink
-                WHERE  id = ?"
-        src-exc-snk [(create-source! tx id source)
-                     (create-executor! tx id executor)
-                     (create-sink! tx id sink)]]
-    (->> (map second src-exc-snk)
-         (zipmap [:source_items :executor_items :sink_items])
-         (jdbc/insert! tx :workload))
-    (->> (concat [update pipeline] (for [[type _] src-exc-snk] type) [id])
-         (jdbc/execute! tx))
+                SET    pipeline       = ?::pipeline
+                ,      source_type    = ?::source
+                ,      source_items   = ?
+                ,      executor_type  = ?::executor
+                ,      executor_items = ?
+                ,      sink_type      = ?::sink
+                ,      sink_items     = ?
+                WHERE  id = ?"]
+    (jdbc/execute!
+     tx
+     (concat [update pipeline]
+             (create-source! tx id source)
+             (create-executor! tx id executor)
+             (create-sink! tx id sink)
+             [id]))
     (workloads/load-workload-for-id tx id)))
-
-(def ^:private workload-metadata-keys
-  [:commit
-   :created
-   :creator
-   :executor
-   :finished
-   :pipeline
-   :sink
-   :source
-   :started
-   :stopped
-   :uuid
-   :version])
 
 (defn load-covid-workload-impl [tx workload]
   (let [src-exc-sink {:source   (load-source! tx workload)
@@ -216,15 +220,14 @@
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "%s_%09d" tdr-source-type id)
-        _       (jdbc/db-do-commands tx [(format create details)
-                                         (format alter details)])
-        items   (-> (select-keys request (keys tdr-source-serialized-fields))
-                    (update :dataset pr-str)
-                    (set/rename-keys tdr-source-serialized-fields)
-                    (assoc :details details)
-                    (->> (jdbc/insert! tx tdr-source-table)))]
-    [tdr-source-type (-> items first :id str)]))
+        details (format "%s_%09d" tdr-source-type id)]
+    (jdbc/db-do-commands tx [(format create details) (format alter details)])
+    [tdr-source-type
+     (-> (select-keys request (keys tdr-source-serialized-fields))
+         (update :dataset pr-str)
+         (set/rename-keys tdr-source-serialized-fields)
+         (assoc :details details)
+         (->> (jdbc/insert! tx tdr-source-table) first :id str))]))
 
 (defn ^:private load-tdr-source [tx {:keys [source_items] :as workload}]
   (if-let [id (util/parse-int source_items)]
@@ -268,7 +271,7 @@
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
-  [{:keys [dataset table snapshotReaders] :as source} now-obj row-ids]
+  [source now-obj row-ids]
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
         compact-now (.format now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
@@ -484,15 +487,14 @@
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "%s_%09d" terra-executor-type id)
-        _       (jdbc/db-do-commands tx [(format create details)
-                                         (format alter details)])
-        items   (-> (select-keys request (keys terra-executor-serialized-fields))
-                    (update :fromSource pr-str)
-                    (set/rename-keys terra-executor-serialized-fields)
-                    (assoc :details details)
-                    (->> (jdbc/insert! tx terra-executor-table)))]
-    [terra-executor-type (-> items first :id str)]))
+        details (format "%s_%09d" terra-executor-type id)]
+    (jdbc/db-do-commands tx [(format create details) (format alter details)])
+    [terra-executor-type
+     (-> (select-keys request (keys terra-executor-serialized-fields))
+         (update :fromSource pr-str)
+         (set/rename-keys terra-executor-serialized-fields)
+         (assoc :details details)
+         (->> (jdbc/insert! tx terra-executor-table) first :id str))]))
 
 (defn ^:private load-terra-executor [tx {:keys [executor_items] :as workload}]
   (if-let [id (util/parse-int executor_items)]
@@ -683,15 +685,14 @@
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
-        details (format "%s_%09d" terra-workspace-sink-type id)
-        _       (jdbc/db-do-commands tx [(format create details)
-                                         (format alter details)])
-        items   (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
-                    (update :fromOutputs pr-str)
-                    (set/rename-keys terra-workspace-sink-serialized-fields)
-                    (assoc :details details)
-                    (->> (jdbc/insert! tx terra-workspace-sink-table)))]
-    [terra-workspace-sink-type (-> items first :id str)]))
+        details (format "%s_%09d" terra-workspace-sink-type id)]
+    (jdbc/db-do-commands tx [(format create details) (format alter details)])
+    [terra-workspace-sink-type
+     (-> (select-keys request (keys terra-workspace-sink-serialized-fields))
+         (update :fromOutputs pr-str)
+         (set/rename-keys terra-workspace-sink-serialized-fields)
+         (assoc :details details)
+         (->> (jdbc/insert! tx terra-workspace-sink-table) first :id str))]))
 
 (defn ^:private load-terra-workspace-sink [tx {:keys [sink_items] :as workload}]
   (if-let [id (util/parse-int sink_items)]
