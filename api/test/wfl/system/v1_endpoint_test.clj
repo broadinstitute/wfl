@@ -5,7 +5,6 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.spec               :as spec]
-            [wfl.debug]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
@@ -236,7 +235,7 @@
         source   (util/make-map column dataset table)
         executor (util/make-map methodConfiguration workspace)
         sink     (util/make-map workspace)]
-    (wfl.debug/trace (workloads/covid-workload-request source executor sink))))
+    (workloads/covid-workload-request source executor sink)))
 
 (defn instantify-timestamps
   "Replace timestamps at keys KS of map M with parsed #inst values."
@@ -248,7 +247,6 @@
     (let [{:keys [creator started uuid] :as workload}
           (-> covid-workload-request endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
-      (wfl.debug/trace workload)
       (is (s/valid? ::spec/covid-workload-request  covid-workload-request))
       (is (s/valid? ::spec/covid-workload-response workload))
       (verify-internal-properties-removed workload)
