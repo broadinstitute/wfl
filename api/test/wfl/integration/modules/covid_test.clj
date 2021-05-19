@@ -1,15 +1,16 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test          :refer :all]
-            [clojure.string        :as str]
-            [wfl.jdbc              :as jdbc]
-            [wfl.module.covid      :as covid]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres  :as postgres]
-            [wfl.service.rawls     :as rawls]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.workloads   :as workloads]
-            [wfl.tools.resources   :as resources])
+  (:require [clojure.test                   :refer :all]
+            [clojure.string                 :as str]
+            [wfl.integration.modules.shared :as shared]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.covid               :as covid]
+            [wfl.service.firecloud          :as firecloud]
+            [wfl.service.postgres           :as postgres]
+            [wfl.service.rawls              :as rawls]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.tools.resources            :as resources])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]
            [org.postgresql.util PSQLException]))
@@ -56,11 +57,29 @@
 (defn ^:private test-queue-pop [this]
   (-> this :queue .removeFirst))
 
-;; Snapshot reference mock
+;; Snapshot and snapshot reference mocks
+(def ^:private snapshot
+  {:name "test-snapshot-name"
+   :id   (str (UUID/randomUUID))})
 (def ^:private snapshot-reference-id
   (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-name
+  (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-create-snapshot-reference [& _]
-  {:referenceId snapshot-reference-id})
+  {:referenceId snapshot-reference-id
+   :name        snapshot-reference-name})
+
+;; Method configuration mocks
+(def methodConfigVersion 1)
+(defn ^:private mock-firecloud-get-method-configuration [& _]
+  {:methodConfigVersion methodConfigVersion})
+(defn ^:private mock-firecloud-update-method-configuration
+  [_ _ {:keys [dataReferenceName] :as mc}]
+  (is (= dataReferenceName snapshot-reference-name)
+      "Snapshot reference name should be passed to method config update")
+  (is (= (:methodConfigVersion mc) (inc methodConfigVersion))
+      "Incremented version should be passed to method config update")
+  nil)
 
 ;; Submission mock
 (def ^:private submission-id
@@ -103,13 +122,13 @@
   (letfn [(verify-source [{:keys [type last_checked details]}]
             (is (= type "TerraDataRepoSource"))
             (is (not last_checked) "The TDR should not have been checked yet")
-            (is (str/starts-with? details "TerraDataRepoSourceDetails_")))
+            (is (str/starts-with? details "TerraDataRepoSource_")))
           (verify-executor [{:keys [type details]}]
             (is (= type "TerraExecutor"))
-            (is (str/starts-with? details "TerraExecutorDetails_")))
+            (is (str/starts-with? details "TerraExecutor_")))
           (verify-sink [{:keys [type details]}]
             (is (= type "TerraWorkspaceSink"))
-            (is (str/starts-with? details "TerraWorkspaceSinkDetails_")))]
+            (is (str/starts-with? details "TerraWorkspaceSink_")))]
     (let [{:keys [created creator source executor sink labels watchers]}
           (workloads/create-workload!
            (workloads/covid-workload-request {:dataset testing-dataset
@@ -245,33 +264,59 @@
           ":last_checked was not updated"))))
 
 (deftest test-update-tdr-source
-  (let [source (create-tdr-source (rand-int 1000000))]
+  (let [source               (create-tdr-source (rand-int 1000000))
+        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
     (with-redefs-fn
       {#'covid/create-snapshots mock-create-snapshots
        #'covid/find-new-rows    mock-find-new-rows
        #'covid/check-tdr-job    mock-check-tdr-job}
-      #(covid/update-source!
+      (fn []
+        (covid/update-source!
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (covid/start-source! tx source)
+           (reload-source tx source)))
+        (is (== expected-num-records (covid/queue-length! source))
+            "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (covid/start-source! tx source)
-          (reload-source tx source))))
+          (let [records (->> source :details (postgres/get-table tx))]
+            (letfn [(record-updated? [record]
+                      (and (= "succeeded" (:snapshot_creation_job_status record))
+                           (not (nil? (:snapshot_creation_job_id record)))
+                           (not (nil? (:snapshot_id record)))))]
+              (testing "source details got updated with correct number of snapshot jobs"
+                (is (= expected-num-records (count records))))
+              (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
+                (is (every? record-updated? records))))))
+        (covid/update-source!
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (covid/stop-source! tx source)
+           (reload-source tx source)))
+        (is (== expected-num-records (covid/queue-length! source))
+            "no more snapshots should be enqueued")))))
+
+(deftest test-stop-tdr-source
+  (let [source (create-tdr-source (rand-int 1000000))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (let [records              (->> source :details (postgres/get-table tx))
-            expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
-        (letfn [(record-updated? [record]
-                  (and (= "succeeded" (:snapshot_creation_job_status record))
-                       (not (nil? (:snapshot_creation_job_id record)))
-                       (not (nil? (:snapshot_id record)))))]
-          (testing "source details got updated with correct number of snapshot jobs"
-            (is (= expected-num-records (count records))))
-          (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
-            (is (every? record-updated? records))))))))
+      (covid/start-source! tx source)
+      (covid/stop-source! tx source)
+      (let [source (reload-source tx source)]
+        (is (:stopped (reload-source tx source)) ":stopped was not written")))))
+
+(defn ^:private create-tdr-snapshot-list [snapshots]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> {:name           "TDR Snapshots"
+          :snapshots      snapshots
+          :validateSource false}
+         (covid/create-source! tx (rand-int 1000000))
+         (zipmap [:source_type :source_items])
+         (covid/load-source! tx))))
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name                       "Terra"
           :workspace                  "workspace-ns/workspace-name"
           :methodConfiguration        "mc-namespace/mc-name"
-          :methodConfigurationVersion 1
+          :methodConfigurationVersion methodConfigVersion
           :fromSource                 "importSnapshot"
           :skipValidation             true}
          (covid/create-executor! tx id)
@@ -279,9 +324,7 @@
          (covid/load-executor! tx))))
 
 (deftest test-update-terra-executor
-  (let [snapshot {:name "test-snapshot-name"
-                  :id   (str (UUID/randomUUID))}
-        source   (make-queue-from-list [snapshot])
+  (let [source   (create-tdr-snapshot-list [snapshot])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -289,11 +332,16 @@
               (is (= (:workflowId workflow) (:workflow_id record))
                   "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
-        {#'rawls/create-snapshot-reference mock-rawls-create-snapshot-reference
-         #'covid/create-submission!        mock-create-submission
-         #'firecloud/get-workflow          mock-workflow-update-status}
-        #(covid/update-executor! source executor))
-      (is (-> source :queue empty?) "The snapshot was not consumed.")
+        {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+         #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+         #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+         #'covid/create-submission!              mock-create-submission
+         #'firecloud/get-workflow                mock-workflow-update-status}
+        #(let [updated-executor (covid/update-executor! source executor)]
+           (is (= (inc methodConfigVersion) (:methodConfigurationVersion updated-executor))
+               "Method configuration version was not incremented.")))
+      (is (zero? (covid/queue-length! source)) "The snapshot was not consumed.")
+      (is (== 2 (covid/queue-length! executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))]
@@ -312,13 +360,14 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
-        source     (make-queue-from-list [{:name "test-snapshot-name"
-                                           :id   (str (UUID/randomUUID))}])
+        source     (create-tdr-snapshot-list [snapshot])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
-      {#'rawls/create-snapshot-reference   mock-rawls-create-snapshot-reference
-       #'covid/create-submission!          mock-create-submission
-       #'firecloud/get-workflow            mock-workflow-keep-status}
+      {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+       #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+       #'covid/create-submission!              mock-create-submission
+       #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
       {#'covid/peek-terra-executor-queue #'covid/peek-terra-executor-details}
@@ -373,3 +422,30 @@
                                                      :method_configuration testing-method-configuration}
                                                     {:workspace testing-workspace}))]
     (is (empty? (workloads/workflows workload)))))
+
+(deftest test-workload-state-transition
+  (with-redefs-fn
+    {#'covid/find-new-rows                   mock-find-new-rows
+     #'covid/create-snapshots                mock-create-snapshots
+     #'covid/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'covid/create-submission!              mock-create-submission
+     #'firecloud/get-workflow                mock-workflow-keep-status}
+    #(shared/run-workload-state-transition-test!
+      (workloads/covid-workload-request {:dataset testing-dataset
+                                         :table testing-table-name
+                                         :column testing-column-name}
+                                        {:workspace testing-workspace
+                                         :method_configuration testing-method-configuration}
+                                        {:workspace testing-workspace}))))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test!
+   (workloads/covid-workload-request {:dataset testing-dataset
+                                      :table testing-table-name
+                                      :column testing-column-name}
+                                     {:workspace testing-workspace
+                                      :method_configuration testing-method-configuration}
+                                     {:workspace testing-workspace})))

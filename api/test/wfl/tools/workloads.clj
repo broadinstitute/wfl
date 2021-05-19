@@ -155,6 +155,8 @@
    :project  @project
    :creator  @email
    :labels   ["hornet:test"]})
+  ([]
+   (covid-workload-request {} {} {})))
 
 (defn xx-workload-request
   [identifier]
