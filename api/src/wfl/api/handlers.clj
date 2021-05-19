@@ -26,20 +26,12 @@
   [body]
   (constantly (succeed body)))
 
-(defn ^:private prune
+(defn ^:private strip-internals
+  "Strip internal properties from the workflow or workload `coll`."
   [coll]
-  (->> (apply dissoc coll [:id :items])
+  (->> (dissoc coll :id :items)
        (filter second)
        (into {})))
-
-(defn strip-workflow-internals
-  [workflow]
-  (prune workflow))
-
-(defn strip-internals
-  "Strip internal properties from the `workload` and its `workflows`."
-  [workload]
-  (prune workload))
 
 (defn append-to-aou-workload
   "Append workflows described in BODY of REQUEST to a started AoU workload."
@@ -84,7 +76,7 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/workflows tx)
-           (mapv strip-workflow-internals)
+           (mapv strip-internals)
            succeed))))
 
 (defn post-start
