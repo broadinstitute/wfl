@@ -715,7 +715,7 @@
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in DETAILS table for active or failed WORKSPACE workflows.
   Return EXECUTOR."
-  [{:keys [workspace details] :as executor}]
+  [{:keys [workspace details] :as _executor}]
   (letfn [(read-active-or-failed-workflows []
             (let [query "SELECT * FROM %s
                          WHERE rawls_submission_id IS NOT NULL
@@ -740,8 +740,7 @@
                   (run! records))))]
     (->> (read-active-or-failed-workflows)
          (map update-workflow-status)
-         (write-workflow-statuses (utc-now)))
-    executor))
+         (write-workflow-statuses (utc-now)))))
 
 (defn ^:private update-terra-executor
   "Create new submission from new `source` snapshot if available,
