@@ -148,7 +148,7 @@
                             :sink_type
                             :sink_items
                             :type]))
-    (is (not-any? (:source workload) [:id :details :type]))
+    (is (not-any? (:source workload) [:id :details :type :last_checked]))
     (is (not-any? (:executor workload) [:id :details :type]))
     (is (not-any? (:sink workload) [:id :details :type]))))
 

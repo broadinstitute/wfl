@@ -475,7 +475,7 @@
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defn ^:private tdr-source-to-edn [source]
-  (-> (dissoc source :id :details :type)
+  (-> (dissoc source :id :details :type :last_checked)
       (assoc :name tdr-source-name)
       (update :dataset :id)
       remove-nil-values))
