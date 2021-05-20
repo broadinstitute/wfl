@@ -1,12 +1,14 @@
 (ns wfl.api.spec
   "Define specs used in routes"
-  (:require [wfl.service.cromwell :as cromwell]
-            [clojure.spec.alpha :as s]
-            [wfl.util :as util]
-            [clojure.string :as str])
-  (:import [java.util UUID]))
+  (:require [clojure.spec.alpha   :as s]
+            [clojure.string       :as str]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.util             :as util])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
+(defn datetime-string? [s] (util/do-or-nil (OffsetDateTime/parse s)))
 
 ;; shared
 (s/def ::base_file_name string?)
@@ -15,13 +17,14 @@
 (s/def ::contamination_vcf_index string?)
 (s/def ::cram_ref_fasta string?)
 (s/def ::cram_ref_fasta_index string?)
-(s/def ::created inst?)
+(s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
+(s/def ::created ::timestamp)
 (s/def ::creator string?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::environment string?)
-(s/def ::finished inst?)
+(s/def ::finished ::timestamp)
 (s/def ::input string?)
 (s/def ::input_bam #(str/ends-with? % ".bam"))
 (s/def ::input_cram #(str/ends-with? % ".cram"))
@@ -30,10 +33,10 @@
 (s/def ::project string?)
 (s/def ::release string?)
 (s/def ::status (set (conj cromwell/statuses "skipped")))
-(s/def ::started inst?)
-(s/def ::stopped inst?)
-(s/def ::updated inst?)
-(s/def ::uuid (s/and string? uuid-string?))
+(s/def ::started ::timestamp)
+(s/def ::stopped ::timestamp)
+(s/def ::updated ::timestamp)
+(s/def ::uuid uuid-string?)
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
 (s/def ::version string?)
 (s/def ::wdl string?)
@@ -51,7 +54,8 @@
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
-                      :sg       ::sg-workflow-inputs))
+                      :sg       ::sg-workflow-inputs
+                      :covid    map?))
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow  (s/keys :req-un [::inputs]
@@ -109,7 +113,7 @@
 (s/def ::table string?)
 (s/def ::watchers (s/* string?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
-(s/def ::snapshots (s/* uuid?))
+(s/def ::snapshots (s/* ::uuid))
 
 (s/def ::batch-executor string?)
 (s/def ::covid-executor (s/keys :req-un [::name

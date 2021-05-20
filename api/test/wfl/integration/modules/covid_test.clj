@@ -1,7 +1,9 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
   (:require [clojure.test                   :refer :all]
+            [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
+            [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.covid               :as covid]
@@ -492,7 +494,8 @@
 (deftest test-tdr-snapshot-list-to-edn
   (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
     (is (not-any? source [:id :type]))
-    (is (= (:snapshots source) [(:id snapshot)]))))
+    (is (= (:snapshots source) [(:id snapshot)]))
+    (is (s/valid? ::spec/snapshot-list-source source))))
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
@@ -517,6 +520,14 @@
        {:skipValidation true}
        {:skipValidation true}
        {:skipValidation true}))))
+
+(deftest test-batch-workload-state-transition
+  (shared/run-workload-state-transition-test!
+   (workloads/covid-workload-request
+    {:name      "TDR Snapshots"
+     :snapshots []}
+    {:skipValidation true}
+    {:skipValidation true})))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!

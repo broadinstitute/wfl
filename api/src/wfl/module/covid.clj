@@ -530,15 +530,18 @@
     (jdbc/insert-multi! tx details (map #(-> {:item (pr-str %)}) snapshots))
     [tdr-snapshot-list-type details]))
 
-(defn ^:private load-tdr-snapshot-list [tx {:keys [source_items] :as _workload}]
+(defn ^:private load-tdr-snapshot-list
+  [tx {:keys [started source_items] :as _workload}]
   (when-not (postgres/table-exists? tx source_items)
     (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
                     {:table source_items})))
   {:type      tdr-snapshot-list-type
    :items     source_items
+   :stopped   started
    :snapshots (postgres/get-table tx source_items)})
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
+(defn ^:private stop-tdr-snapshot-list  [_ source] source)
 (defn ^:private update-tdr-snapshot-list [source]  source)
 
 (defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
@@ -573,6 +576,7 @@
 (defoverload validate-or-throw tdr-snapshot-list-name validate-tdr-snapshot-list)
 (defoverload create-source!    tdr-snapshot-list-name create-tdr-snapshot-list)
 (defoverload start-source!     tdr-snapshot-list-type start-tdr-snapshot-list)
+(defoverload stop-source!      tdr-snapshot-list-type stop-tdr-snapshot-list)
 (defoverload update-source!    tdr-snapshot-list-type update-tdr-snapshot-list)
 (defoverload load-source!      tdr-snapshot-list-type load-tdr-snapshot-list)
 (defoverload peek-queue!       tdr-snapshot-list-type
@@ -756,6 +760,17 @@
   (update-terra-workflow-statuses! executor)
   executor)
 
+(defn ^:private from-firecloud-workflow [methodConfig workflow]
+  (let [[_ name]    (str/split methodConfig #"/")
+        input-name  (comp keyword #(util/unprefix % (str name ".")) :inputName)
+        to-inputs   #(into {} (map (juxt input-name :value) %))]
+    (-> workflow
+        (update :inputResolutions to-inputs)
+        (dissoc :messages)
+        (set/rename-keys {:inputResolutions      :inputs
+                          :statusLastChangedDate :updated
+                          :workflowId            :uuid}))))
+
 (defn ^:private peek-terra-executor-details
   "Get first unconsumed successful workflow record from `details` table."
   [{:keys [details] :as _executor}]
@@ -770,10 +785,12 @@
 
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
-  [{:keys [workspace] :as executor}]
+  [{:keys [workspace methodConfiguration] :as executor}]
   (if-let [{:keys [rawls_submission_id workflow_id] :as _record}
            (peek-terra-executor-details executor)]
-    (firecloud/get-workflow workspace rawls_submission_id workflow_id)))
+    (from-firecloud-workflow
+     methodConfiguration
+     (firecloud/get-workflow workspace rawls_submission_id workflow_id))))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,
@@ -799,12 +816,16 @@
            :count))))
 
 (defn ^:private terra-executor-workflows
-  [tx {:keys [workspace details] :as _executor}]
+  [tx {:keys [workspace details methodConfiguration] :as _executor}]
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
-  (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
-       (jdbc/query tx)
-       (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
+  (let [to-workflow (partial from-firecloud-workflow methodConfiguration)]
+    (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
+         (jdbc/query tx)
+         (mapcat #(->> (:rawls_submission_id %)
+                       (firecloud/get-submission workspace)
+                       :workflows
+                       (map to-workflow))))))
 
 (defn ^:private terra-executor-to-edn [executor]
   (-> executor

@@ -169,9 +169,13 @@
 (defn workflows
   "Return the workflows managed by the `workload`."
   [tx workload]
-  (if (workloads/saved-before? "0.4.0" workload)
-    (pre-v0_4_0-load-workflows tx workload)
-    (load-batch-workflows tx workload)))
+  (map
+   #(assoc % :type :batch-workflow)
+   (if (workloads/saved-before? "0.4.0" workload)
+     (pre-v0_4_0-load-workflows tx workload)
+     (load-batch-workflows tx workload))))
+
+(defmethod util/to-edn :batch-workflow [workflow] (dissoc workflow :id :type))
 
 (defn workload-to-edn
   "Return a user-friendly EDN representation of the batch `workload`"
