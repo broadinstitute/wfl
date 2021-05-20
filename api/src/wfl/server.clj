@@ -19,7 +19,7 @@
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
   (:import (java.util.concurrent Future TimeUnit)
-           (wfl.util UserVisibleException)))
+           (wfl.util UserException)))
 
 (def description
   "The purpose of this command."
@@ -93,7 +93,7 @@
                     (workloads/load-workload-for-id tx id)]
                 (try
                   (workloads/update-workload! tx workload)
-                  (catch UserVisibleException e
+                  (catch UserException e
                     (log/warnf "Error updating workload %s" uuid)
                     (log/warn e)
                     (notify-watchers watchers uuid e))))))

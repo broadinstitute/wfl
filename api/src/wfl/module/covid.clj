@@ -1,7 +1,6 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
   (:require [clojure.edn :as edn]
-            [clojure.data.json :as json]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -11,29 +10,14 @@
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
-            [wfl.util :as util]
+            [wfl.util :as util :refer [do-or-nil]]
             [wfl.wfl :as wfl])
   (:import [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
-           [java.util UUID]))
+           [java.util UUID]
+           (wfl.util UserException)))
 
 (def pipeline "Sarscov2IlluminaFull")
-
-(defn ^:private get-snapshots-from-workspace
-  [workspace])
-
-;; Generic helpers
-(defn ^:private load-record-by-id! [tx table id]
-  (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
-        [record & _] (jdbc/query tx [(format query table) id])]
-    (when-not record
-      (throw (ex-info (str "No such record") {:id id :table table})))
-    record))
-
-(defn ^:private utc-now
-  "Return OffsetDateTime/now in UTC."
-  []
-  (OffsetDateTime/now (ZoneId/of "UTC")))
 
 ;; interfaces
 ;; queue operations
@@ -49,11 +33,25 @@
   "Return the number of objects in the queue."
   (fn [queue] (:type queue)))
 
+;; validation operations
+(defmulti validate-or-throw
+  "Validate the `request` request."
+  (fn [request] (:name request)))
+
+(defmethod validate-or-throw :default
+  [{:keys [name] :as request}]
+  (throw (UserException. "Invalid request - unknown name"
+                         (util/make-map name request))))
+
 ;; source operations
 (defmulti create-source!
   "Use `tx` and workload `id` to write the source to persisted storage and
    return a [type item] pair to be written into the parent table."
   (fn [tx id source-request] (:name source-request)))
+
+(defmulti load-source!
+  "Use `tx` to load the workload source with `source_type`."
+  (fn [tx workload] (:source_type workload)))
 
 (defmulti start-source!
   "Use `tx` to start accepting data from the `source`."
@@ -66,10 +64,6 @@
 (defmulti stop-source!
   "Use `tx` to stop accepting new data from the `source`."
   (fn [tx source] (:type source)))
-
-(defmulti load-source!
-  "Use `tx` to load the workload source with `source_type`."
-  (fn [tx workload] (:source_type workload)))
 
 ;; executor operations
 (defmulti create-executor!
@@ -103,6 +97,21 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+;; Generic helpers
+(defn ^:private utc-now
+  "Return OffsetDateTime/now in UTC."
+  []
+  (OffsetDateTime/now (ZoneId/of "UTC")))
+
+(defn ^:private load-record-by-id! [tx table id]
+  (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
+        [record & _] (jdbc/query tx [(format query table) id])]
+    (when-not record
+      (throw (ex-info (str "No such record") {:id id :table table})))
+    record))
+
+;; Workload
+
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
 
@@ -112,6 +121,7 @@
    :creator
    :executor
    :finished
+   :id
    :labels
    :pipeline
    :sink
@@ -143,134 +153,31 @@
                :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
-;; TODO: validate the request before creating the workload
-(defn create-covid-workload [tx {:keys [source executor sink] :as request}]
-  (let [id      (add-workload-metadata tx request)
-        update "UPDATE workload
-                SET    pipeline       = ?::pipeline
-                ,      source_type    = ?::source
-                ,      source_items   = ?
-                ,      executor_type  = ?::executor
-                ,      executor_items = ?
-                ,      sink_type      = ?::sink
-                ,      sink_items     = ?
-                WHERE  id = ?"]
+(def ^:private update-workload-query
+  "UPDATE workload
+   SET    pipeline       = ?::pipeline
+   ,      source_type    = ?::source
+   ,      source_items   = ?
+   ,      executor_type  = ?::executor
+   ,      executor_items = ?
+   ,      sink_type      = ?::sink
+   ,      sink_items     = ?
+   WHERE  id = ?")
+
+(defn ^:private create-covid-workload
+  [tx {:keys [source executor sink] :as request}]
+  (let [[source executor sink] (mapv validate-or-throw [source executor sink])
+        id                     (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
-     (concat [update pipeline]
+     (concat [update-workload-query pipeline]
              (create-source! tx id source)
              (create-executor! tx id executor)
              (create-sink! tx id sink)
              [id]))
-;; validations
-(defmulti throw-when-malformed-source-request!
-  "Validate the source of a `request`"
-  (fn [source] (:name source)))
-
-(defmulti throw-when-malformed-executor-request!
-  "Validate the executor of a `request`"
-  (fn [executor] (:name executor)))
-
-(defmulti throw-when-malformed-sink-request!
-  "Validate the sink of a `request`"
-  (fn [sink] (:name sink)))
-
-;; :default implementations
-(defmethod throw-when-malformed-source-request!
-  :default
-  [source]
-  (throw
-   (ex-info "Failed to create workload - unknown source"
-            {:source source
-             :type  ::invalid-source})))
-
-(defmethod throw-when-malformed-executor-request!
-  :default
-  [executor]
-  (throw
-   (ex-info "Failed to create workload - unknown executor"
-            {:source executor
-             :type  ::invalid-executor})))
-
-(defmethod throw-when-malformed-sink-request!
-  :default
-  [sink]
-  (throw
-   (ex-info "Failed to create workload - unknown sink"
-            {:source sink
-             :type  ::invalid-sink})))
-
-;; Workload Functions
-(defn ^:private add-workload-record
-  "Use `tx` to create a workload `record` for `request` and return the id of the
-   new workload."
-  [tx request]
-  (letfn [(combine-labels [labels]
-            (->> (mapv request [:pipeline :project])
-                 (map str ["pipeline:" "project:"])
-                 (concat labels)
-                 set
-                 sort
-                 vec))]
-    (-> (update request :labels combine-labels)
-        (select-keys [:creator :watchers :labels :project])
-        (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor ""
-               :output   ""
-               :release  ""
-               :wdl      ""
-               :uuid     (UUID/randomUUID))
-        (->> (jdbc/insert! tx :workload) first :id))))
-
-(def ^:private continuous-workload-table-name "ContinuousWorkload")
-
-(defn ^:private patch-workload [tx {:keys [id]} colls]
-  (jdbc/update! tx :workload colls ["id = ?" id]))
-
-(defn ^:private patch-continuous-workload
-  "Use `tx` to update the colls of the `_workload`."
-  [tx {:keys [items] :as _workload} colls]
-  (jdbc/update! tx continuous-workload-table-name colls
-                ["id = ?" (util/parse-int items)]))
-
-(defn ^:private add-continuous-workload-record
-  "Use `tx` and workload `id` to create a \"ContinuousWorkload\" instance and
-  return the ID of the ContinuousWorkload."
-  [tx id {:keys [source sink executor] :as _request}]
-  (let [set-details "UPDATE %s
-                     SET    source_type   = ?::source,
-                            executor_type = ?::executor,
-                            sink_type     = ?::sink
-                     WHERE  id = ? "
-        src-exc-snk [(create-source! tx id source)
-                     (create-executor! tx id executor)
-                     (create-sink! tx id sink)]
-        items       (->> (map second src-exc-snk)
-                         (zipmap [:source_items :executor_items :sink_items])
-                         (jdbc/insert! tx continuous-workload-table-name)
-                         first
-                         :id)]
-    (-> [(format set-details continuous-workload-table-name)]
-        (concat (map first src-exc-snk) [items])
-        (->> (jdbc/execute! tx)))
-    items))
-
-(defn create-covid-workload
-  "Verify the `request` and create a workload"
-  [tx request]
-  (throw-when-malformed-source-request! (get-in request [:source]))
-  (throw-when-malformed-executor-request! (get-in request [:executor]))
-  (throw-when-malformed-sink-request! (get-in request [:sink]))
-  (let [set-pipeline "UPDATE workload
-                      SET pipeline = ?::pipeline
-                      WHERE id = ?"
-        id           (add-workload-record tx request)
-        items        (add-continuous-workload-record tx id request)]
-    (jdbc/execute! tx [set-pipeline pipeline id])
-    (jdbc/update! tx :workload {:items items} ["id = ?" id])
     (workloads/load-workload-for-id tx id)))
 
-(defn load-covid-workload-impl [tx workload]
+(defn ^:private load-covid-workload-impl [tx workload]
   (let [src-exc-sink {:source   (load-source! tx workload)
                       :executor (load-executor! tx workload)
                       :sink     (load-sink! tx workload)}]
@@ -280,7 +187,7 @@
       (filter second $)
       (into {:type :workload} $))))
 
-(defn start-covid-workload
+(defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
   [tx {:keys [started stopped] :as workload}]
   (letfn [(start [{:keys [id source] :as workload} now]
@@ -289,7 +196,7 @@
             (workloads/load-workload-for-id tx id))]
     (if-not (or started stopped) (start workload (utc-now)) workload)))
 
-(defn update-covid-workload
+(defn ^:private update-covid-workload
   "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id stopped source executor sink] :as workload} now]
@@ -345,34 +252,34 @@
 
 (defn throw-unless-column-exists
   "Throw or return the column from `table`"
-  [dataset table dataset-column-name]
-  (let [[result & more] (-> table
-                            (get-in [:columns])
-                            (->> (filter (comp #{dataset-column-name} :name))))]
-    (when-not result
-      (throw (ex-info "No column with name" {:name dataset-column-name :dataset dataset})))
-    result))
+  [table column-name]
+  (when (->> table :columns (filter (comp #{column-name} :name)) empty?)
+    (throw (UserException. "Column not found"
+                           {:column  column-name
+                            :table   table}))))
 
-(defn throw-unless-table-exists
+(defn get-table-or-throw
   "Throw or return the table from `dataset`"
-  [dataset table-name dataset-column-name]
-  (let [[result & more] (-> dataset
-                            (get-in [:schema :tables])
-                            (->> (filter (comp #{table-name} :name))))]
-    (when-not result
-      (throw (ex-info "No table with name" {:name table-name :dataset dataset})))
-    (when result
-      (throw-unless-column-exists dataset result dataset-column-name))
-    result))
+  [dataset table-name]
+  (let [[table & _] (->> (get-in dataset [:schema :tables])
+                         (filter (comp #{table-name} :name)))]
+    (when-not table
+      (throw (UserException. "Table not found"
+                             {:table table-name :dataset dataset})))
+    table))
 
 (defn verify-data-repo-source!
-  "Verify that the `dataset` exists and that the WFL has the necessary permissions to read it"
-  [{:keys [name dataset table column skipValidation] :as source}]
-  (when-not skipValidation
-    (when-not (some? dataset)
-      (throw (ex-info "Dataset is Nil" {:source source})))
-    (-> (datarepo/dataset (:dataset source))
-        (throw-unless-table-exists table column))))
+  "Verify that the `dataset` exists and that WFL has the necessary permissions
+   to read it."
+  [{:keys [dataset table column skipValidation] :as source}]
+  (if skipValidation
+    source
+    (if-let [dataset (do-or-nil (datarepo/dataset dataset))]
+      (do (-> (get-table-or-throw dataset table)
+              (throw-unless-column-exists column))
+          (assoc source :dataset dataset))
+      (throw (UserException. "Cannot access dataset"
+                             (util/make-map dataset))))))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
@@ -548,19 +455,30 @@
         (jdbc/update! tx details {:consumed now :updated now} ["id = ?" id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
-(defoverload create-source! tdr-source-name create-tdr-source)
-(defoverload start-source!  tdr-source-type start-tdr-source)
-(defoverload update-source! tdr-source-type update-tdr-source)
-(defoverload stop-source!   tdr-source-type stop-tdr-source)
-(defoverload load-source!   tdr-source-type load-tdr-source)
-(defoverload peek-queue!    tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!     tdr-source-type pop-tdr-source-queue)
-(defoverload queue-length!  tdr-source-type tdr-source-queue-length)
-(defoverload throw-when-malformed-source-request! tdr-source-name verify-data-repo-source!)
+(defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
+(defoverload create-source!    tdr-source-name create-tdr-source)
+(defoverload start-source!     tdr-source-type start-tdr-source)
+(defoverload update-source!    tdr-source-type update-tdr-source)
+(defoverload stop-source!      tdr-source-type stop-tdr-source)
+(defoverload load-source!      tdr-source-type load-tdr-source)
+(defoverload peek-queue!       tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue!        tdr-source-type pop-tdr-source-queue)
+(defoverload queue-length!     tdr-source-type tdr-source-queue-length)
 
 ;; TDR Snapshot List Source
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
 (def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
+
+(defn ^:private validate-tdr-snapshot-list
+  [{:keys [skipValidation] :as source}]
+  (letfn [(snapshot-or-throw [snapshot-id]
+            (if-let [snapshot (do-or-nil (datarepo/snapshot snapshot-id))]
+              snapshot
+              (throw (UserException. "Cannot access snapshot"
+                                     {:snapshot snapshot-id}))))]
+    (if skipValidation
+      source
+      (update source :snapshots #(map snapshot-or-throw %)))))
 
 (defn ^:private create-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
   (let [create  "CREATE TABLE %s OF ListSource (PRIMARY KEY (id))"
@@ -602,14 +520,15 @@
       (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
-(defoverload create-source! tdr-snapshot-list-name create-tdr-snapshot-list)
-(defoverload start-source!  tdr-snapshot-list-type start-tdr-snapshot-list)
-(defoverload update-source! tdr-snapshot-list-type update-tdr-snapshot-list)
-(defoverload load-source!   tdr-snapshot-list-type load-tdr-snapshot-list)
-(defoverload peek-queue!    tdr-snapshot-list-type
+(defoverload validate-or-throw tdr-snapshot-list-name validate-tdr-snapshot-list)
+(defoverload create-source!    tdr-snapshot-list-name create-tdr-snapshot-list)
+(defoverload start-source!     tdr-snapshot-list-type start-tdr-snapshot-list)
+(defoverload update-source!    tdr-snapshot-list-type update-tdr-snapshot-list)
+(defoverload load-source!      tdr-snapshot-list-type load-tdr-snapshot-list)
+(defoverload peek-queue!       tdr-snapshot-list-type
   (comp edn/read-string :item peek-tdr-snapshot-list))
-(defoverload queue-length!  tdr-snapshot-list-type tdr-snapshot-list-queue-length)
-(defoverload pop-queue!     tdr-snapshot-list-type pop-tdr-snapshot-list)
+(defoverload queue-length!    tdr-snapshot-list-type tdr-snapshot-list-queue-length)
+(defoverload pop-queue!       tdr-snapshot-list-type pop-tdr-snapshot-list)
 
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
@@ -641,12 +560,33 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(defn verify-terra-executor!
+(defn verify-terra-executor
   "Verify the method-configuration exists."
-  [{:keys [name methodConfiguration skipValidation] :as executor}]
+  [{:keys [skipValidation
+           workspace
+           methodConfiguration
+           methodConfigurationVersion
+           fromSource] :as executor}]
   (when-not skipValidation
-    (when-not (:methodConfiguration executor)
-      (throw (ex-info "Unknown Method Configuration" {:executor executor})))))
+    (when-not (do-or-nil (firecloud/workspace workspace))
+      (throw
+       (UserException. "Cannot access workspace" (util/make-map workspace))))
+    (when-not (= "importSnapshot" fromSource)
+      (throw
+       (UserException. "Unsupported coercion" (util/make-map fromSource))))
+    (if-let [{:keys [methodConfigVersion]}
+             (do-or-nil
+              (firecloud/get-method-configuration
+               workspace methodConfiguration))]
+      (when-not (== methodConfigurationVersion methodConfigVersion)
+        (throw (UserException. "Method configuration mismatch"
+                               {:methodConfiguration methodConfiguration
+                                :expected            methodConfigurationVersion
+                                :actual              methodConfigVersion})))
+      (throw
+       (UserException. "Cannot access method configuration"
+                       (util/make-map methodConfiguration)))))
+  executor)
 
 (defn ^:private import-snapshot!
   "Return snapshot reference for `id` imported to `workspace` as `name`."
@@ -788,7 +728,8 @@
     (throw (ex-info "No successful workflows in queue" {:executor executor}))))
 
 (defn ^:private terra-executor-queue-length
-  "Return the number of unconsumed succeeded workflows records from `details` table."
+  "Return the number workflows in the `_executor` queue that are yet to be
+   consumed."
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed        IS NULL
@@ -807,6 +748,7 @@
        (jdbc/query tx)
        (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
+(defoverload validate-or-throw  terra-executor-name verify-terra-executor)
 (defoverload create-executor!   terra-executor-name create-terra-executor)
 (defoverload update-executor!   terra-executor-type update-terra-executor)
 (defoverload load-executor!     terra-executor-type load-terra-executor)
@@ -814,7 +756,6 @@
 (defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
 (defoverload queue-length!      terra-executor-type terra-executor-queue-length)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
-(defoverload throw-when-malformed-executor-request! terra-executor-name verify-terra-executor!)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -847,14 +788,18 @@
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
 
 (defn verify-terra-sink!
-  "Verify that the WFL has access to both firecloud and the `workspace`."
-  [{:keys [name workspace skipValidation] :as sink}]
-  (when-not skipValidation
-    (try
-      (firecloud/get-workspace workspace)
-      (catch Throwable t
-        (throw (ex-info "Cannot access the workspace" {:workspace workspace
-                                                       :cause     (.getMessage t)}))))))
+  "Verify that the WFL has access the `workspace`."
+  [{:keys [workspace entity skipValidation] :as sink}]
+  (if skipValidation
+    sink
+    (do (when-not (do-or-nil (firecloud/workspace workspace))
+          (throw (UserException. "Cannot access workspace"
+                                 (util/make-map workspace))))
+        (let [types (->> workspace firecloud/list-entity-types keys set)]
+          (when-not (-> entity keyword types)
+            (throw (UserException. "Entity not found"
+                                   (util/make-map entity types workspace)))))
+        sink)))
 
 ;; visible for testing
 (defn rename-gather
@@ -897,10 +842,10 @@
               :updated     (utc-now)}
              (jdbc/insert! tx details))))))
 
-(defoverload create-sink! terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
-(defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
-(defoverload throw-when-malformed-sink-request! terra-workspace-sink-name verify-terra-sink!)
+(defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
+(defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
+(defoverload load-sink!        terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload update-sink!      terra-workspace-sink-type update-terra-workspace-sink)
 
 (defoverload workloads/create-workload!   pipeline create-covid-workload)
 (defoverload workloads/start-workload!    pipeline start-covid-workload)

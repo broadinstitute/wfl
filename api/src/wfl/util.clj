@@ -494,25 +494,25 @@
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
 
 (gen-class
- :name         wfl.util.UserVisibleException
+ :name         wfl.util.UserException
  :extends      java.lang.Exception
  :implements   [clojure.lang.IExceptionInfo]
  :constructors {[String]                                       [String]
                 [String clojure.lang.IPersistentMap]           [String]
                 [String clojure.lang.IPersistentMap Throwable] [String Throwable]}
  :state        data
- :prefix       user-visible-exception-
+ :prefix       user-exception-
  :init         init)
 
-(defn ^:private user-visible-exception-init
+(defn ^:private user-exception-init
   ([message]            [[message] {}])
   ([message data]       [[message] data])
   ([message data cause] [[message cause] data]))
 
-(defn ^:private user-visible-exception-getData [this]
+(defn ^:private user-exception-getData [this]
   (.data this))
 
-(defn ^:private user-visible-exception-toString [this]
+(defn ^:private user-exception-toString [this]
   (let [data  (.getData this)
         cause (.getCause this)]
     (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))

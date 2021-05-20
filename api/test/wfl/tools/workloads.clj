@@ -132,24 +132,21 @@
                {:name    "Terra DataRepo",
                 :dataset ""
                 :table   ""
-                :column  ""
-                :skipValidation false}
+                :column  ""}
                source)
     :executor (merge
                {:name                       "Terra"
                 :workspace                  "namespace/name"
                 :methodConfiguration        ""
                 :methodConfigurationVersion 0
-                :fromSource                 ""
-                :skipValidation false}
+                :fromSource                 ""}
                executor)
     :sink     (merge
                {:name        "Terra Workspace"
                 :workspace   "namespace/name"
                 :entity      ""
                 :fromOutputs {}
-                :identifier  ""
-                :skipValidation false}
+                :identifier  ""}
                sink)
     :pipeline covid/pipeline
     :project  @project
