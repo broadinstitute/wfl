@@ -12,10 +12,11 @@
             [wfl.service.rawls :as rawls]
             [wfl.util :as util :refer [do-or-nil]]
             [wfl.wfl :as wfl])
-  (:import [java.time OffsetDateTime ZoneId]
+  (:import [clojure.lang ExceptionInfo]
+           [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [java.util UUID]
-           (wfl.util UserException)))
+           [wfl.util UserException]))
 
 (def pipeline "Sarscov2IlluminaFull")
 
@@ -267,23 +268,39 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
-(defn throw-unless-column-exists
-  "Throw or return the column from `table`"
-  [table column-name]
-  (when (->> table :columns (filter (comp #{column-name} :name)) empty?)
-    (throw (UserException. "Column not found"
-                           {:column  column-name
-                            :table   table}))))
+(defn ^:private id-and-name [dataset]
+  (select-keys dataset [:id :name]))
 
-(defn get-table-or-throw
+(defn ^:private throw-unless-column-exists
+  "Throw if `table` does not have `column` in `dataset`."
+  [table column dataset]
+  (when (->> table :columns (filter (comp #{column} :name)) empty?)
+    (throw (UserException. "Column not found"
+                           {:column  column
+                            :table   table
+                            :dataset (id-and-name dataset)}))))
+
+(defn ^:private get-table-or-throw
   "Throw or return the table from `dataset`"
-  [dataset table-name]
+  [table-name dataset]
   (let [[table & _] (->> (get-in dataset [:schema :tables])
                          (filter (comp #{table-name} :name)))]
     (when-not table
       (throw (UserException. "Table not found"
-                             {:table table-name :dataset dataset})))
+                             {:table   table-name
+                              :dataset (id-and-name dataset)})))
     table))
+
+(defn ^:private get-dataset-or-throw
+  "Return the dataset with `dataset-id` or throw"
+  [dataset-id]
+  (try
+    (datarepo/dataset dataset-id)
+    (catch ExceptionInfo e
+      (throw
+       (UserException. "Cannot access dataset"
+                       {:dataset dataset-id :status (-> e ex-data :status)}
+                       e)))))
 
 (defn verify-data-repo-source!
   "Verify that the `dataset` exists and that WFL has the necessary permissions
@@ -291,12 +308,10 @@
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
     source
-    (if-let [dataset (do-or-nil (datarepo/dataset dataset))]
-      (do (-> (get-table-or-throw dataset table)
-              (throw-unless-column-exists column))
-          (assoc source :dataset dataset))
-      (throw (UserException. "Cannot access dataset"
-                             (util/make-map dataset))))))
+    (let [dataset (get-dataset-or-throw dataset)]
+      (-> (get-table-or-throw table dataset)
+          (throw-unless-column-exists column dataset))
+      (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
@@ -496,13 +511,16 @@
 (defn ^:private validate-tdr-snapshot-list
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
-            (if-let [snapshot (do-or-nil (datarepo/snapshot snapshot-id))]
-              snapshot
-              (throw (UserException. "Cannot access snapshot"
-                                     {:snapshot snapshot-id}))))]
+            (try
+              (datarepo/snapshot snapshot-id)
+              (catch ExceptionInfo e
+                (throw (UserException. "Cannot access snapshot"
+                                       {:snapshot snapshot-id
+                                        :status   (-> e ex-data :status)}
+                                       e)))))]
     (if skipValidation
       source
-      (update source :snapshots #(map snapshot-or-throw %)))))
+      (update source :snapshots #(mapv snapshot-or-throw %)))))
 
 (defn ^:private create-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
   (let [create  "CREATE TABLE %s OF ListSource (PRIMARY KEY (id))"
@@ -593,6 +611,36 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
+(defn ^:private workspace-or-throw [workspace]
+  (try
+    (firecloud/workspace workspace)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access workspace"
+              {:workspace           workspace
+               :status              (-> cause ex-data :status)}
+              cause)))))
+
+(defn ^:private method-config-or-throw [workspace methodconfig]
+  (try
+    (firecloud/get-method-configuration workspace methodconfig)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access method configuration in workspace"
+              {:workspace           workspace
+               :methodConfiguration methodconfig
+               :status              (-> cause ex-data :status)}
+              cause)))))
+
+(defn ^:private throw-on-method-config-version-mismatch
+  [{:keys [methodConfigVersion] :as methodconfig} expected]
+  (when-not (== expected methodConfigVersion)
+    (throw (UserException.
+            "Unexpected method configuration version"
+            {:methodConfiguration methodconfig
+             :expected            expected
+             :actual              methodConfigVersion}))))
+
 (defn verify-terra-executor
   "Verify the method-configuration exists."
   [{:keys [skipValidation
@@ -601,24 +649,12 @@
            methodConfigurationVersion
            fromSource] :as executor}]
   (when-not skipValidation
-    (when-not (do-or-nil (firecloud/workspace workspace))
-      (throw
-       (UserException. "Cannot access workspace" (util/make-map workspace))))
+    (workspace-or-throw workspace)
     (when-not (= "importSnapshot" fromSource)
       (throw
        (UserException. "Unsupported coercion" (util/make-map fromSource))))
-    (if-let [{:keys [methodConfigVersion]}
-             (do-or-nil
-              (firecloud/get-method-configuration
-               workspace methodConfiguration))]
-      (when-not (== methodConfigurationVersion methodConfigVersion)
-        (throw (UserException. "Method configuration mismatch"
-                               {:methodConfiguration methodConfiguration
-                                :expected            methodConfigurationVersion
-                                :actual              methodConfigVersion})))
-      (throw
-       (UserException. "Cannot access method configuration"
-                       (util/make-map methodConfiguration)))))
+    (-> (method-config-or-throw workspace methodConfiguration)
+        (throw-on-method-config-version-mismatch methodConfigurationVersion)))
   executor)
 
 (defn ^:private import-snapshot!
@@ -641,27 +677,17 @@
   [{:keys [id
            workspace
            methodConfiguration
-           methodConfigurationVersion] :as executor}
+           methodConfigurationVersion] :as _executor}
    {:keys [name]                       :as _reference}]
-  (let [firecloud-mc
-        (try
-          (firecloud/get-method-configuration workspace methodConfiguration)
-          (catch Throwable cause
-            (throw (ex-info "Method configuration does not exist in workspace"
-                            {:executor executor} cause))))
-        inc-version (inc methodConfigurationVersion)]
-    (when-not (== methodConfigurationVersion (:methodConfigVersion firecloud-mc))
-      (throw (ex-info (str "Firecloud method configuration version != expected: "
-                           "possible concurrent modification")
-                      {:executor            executor
-                       :methodConfiguration firecloud-mc})))
-    (-> firecloud-mc
-        (assoc :dataReferenceName name :methodConfigVersion inc-version)
-        (->> (firecloud/update-method-configuration workspace
-                                                    methodConfiguration)))
+  (let [current (method-config-or-throw workspace methodConfiguration)
+        _       (throw-on-method-config-version-mismatch
+                 current methodConfigurationVersion)
+        inc'd   (inc methodConfigurationVersion)]
+    (->> (assoc current :dataReferenceName name :methodConfigVersion inc'd)
+         (firecloud/update-method-configuration workspace methodConfiguration))
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx terra-executor-table
-                    {:method_configuration_version inc-version}
+                    {:method_configuration_version inc'd}
                     ["id = ?" id]))))
 
 (defn ^:private create-submission!
