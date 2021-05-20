@@ -138,7 +138,7 @@
   :default
   [{:keys [pipeline] :as workload}]
   (throw
-   (ex-info "Failed to update workload - no such pipeline"
+   (ex-info "Failed to coerce workload to EDN - no such pipeline"
             {:workload workload
              :pipeline pipeline
              :type     ::invalid-pipeline})))
