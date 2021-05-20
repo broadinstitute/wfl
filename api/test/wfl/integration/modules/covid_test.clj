@@ -32,7 +32,7 @@
    :id job-id})
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
-(def ^:private testing-snapshot "7cb392d8-949b-419d-b40b-d039617d2fc7")
+(def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
 (def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
 (def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
 (def ^:private testing-method-configuration-version 2)
@@ -170,7 +170,7 @@
          {:skipValidation true}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-invalid-dataset-table
+(deftest test-create-covid-workload-with-invalid-dataset-column
   (is (thrown-with-msg?
        UserException #"Column not found"
        (workloads/create-workload!
@@ -178,6 +178,24 @@
          {:dataset testing-dataset
           :table   testing-table-name
           :column  "no_such_column"}
+         {:skipValidation true}
+         {:skipValidation true})))))
+
+(deftest test-create-covid-workload-with-empty-snapshot-list
+  (is (workloads/create-workload!
+       (workloads/covid-workload-request
+        {:name      "TDR Snapshots"
+         :snapshots [testing-snapshot]}
+        {:skipValidation true}
+        {:skipValidation true}))))
+
+(deftest test-create-covid-workload-with-invalid-snapshot
+  (is (thrown-with-msg?
+       UserException #"Cannot access snapshot"
+       (workloads/create-workload!
+        (workloads/covid-workload-request
+         {:name     "TDR Snapshots"
+          :snapshots [util/uuid-nil]}
          {:skipValidation true}
          {:skipValidation true})))))
 
