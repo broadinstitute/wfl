@@ -29,8 +29,6 @@
 (def source-dataset-profile "395f5921-d2d9-480d-b302-f856d787c9d9")
 (def method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
 
-(def well-known-submission "475d0a1d-20c0-42a1-968a-7540b79fcf0c")
-(def well-known-workflow "2768b29e-c808-4bd6-a46b-6c94fd2a67aa")
 (def workspace-table "flowcell")
 
 (defn clone-workspace []

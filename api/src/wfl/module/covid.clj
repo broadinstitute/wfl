@@ -707,11 +707,11 @@
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
   (letfn [(to-row [now {:keys [status workflowId] :as _workflow}]
-            {:snapshot_reference_id referenceId
-             :rawls_submission_id   submissionId
-             :workflow_id           workflowId
-             :workflow_status       status
-             :updated               now})]
+            {:reference  referenceId
+             :submission submissionId
+             :workflow   workflowId
+             :status     status
+             :updated    now})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (map (partial to-row (utc-now)) workflows)
            (jdbc/insert-multi! tx details)))))
@@ -722,28 +722,23 @@
   [{:keys [workspace details] :as _executor}]
   (letfn [(read-active-or-failed-workflows []
             (let [query "SELECT * FROM %s
-                         WHERE rawls_submission_id IS NOT NULL
-                         AND   workflow_id IS NOT NULL
-                         AND   workflow_status NOT IN ('Succeeded', 'Aborted')"]
+                         WHERE submission IS NOT NULL
+                         AND   status     NOT IN ('Succeeded', 'Aborted')"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (jdbc/query tx (format query details)))))
-          (update-workflow-status
-            [{:keys [rawls_submission_id workflow_id] :as record}]
-            (let [{:keys [status] :as _workflow}
-                  (firecloud/get-workflow workspace
-                                          rawls_submission_id
-                                          workflow_id)]
-              (assoc record :workflow_status status)))
+          (update-status-from-firecloud
+            [{:keys [submission workflow] :as record}]
+            (->> (firecloud/get-workflow workspace submission workflow)
+                 :status
+                 (assoc record :status)))
           (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (-> (fn [{:keys [id workflow_status] :as _record}]
-                    (jdbc/update! tx details
-                                  {:workflow_status workflow_status
-                                   :updated         now}
+              (-> (fn [{:keys [id status] :as _record}]
+                    (jdbc/update! tx details {:status status :updated  now}
                                   ["id = ?" id]))
                   (run! records))))]
     (->> (read-active-or-failed-workflows)
-         (map update-workflow-status)
+         (map update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))
 
 (defn ^:private update-terra-executor
@@ -776,7 +771,7 @@
   [{:keys [details] :as _executor}]
   (let [query "SELECT * FROM %s
                WHERE consumed IS NULL
-               AND   workflow_status = 'Succeeded'
+               AND   status = 'Succeeded'
                ORDER BY id ASC LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
@@ -786,11 +781,11 @@
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
   [{:keys [workspace methodConfiguration] :as executor}]
-  (if-let [{:keys [rawls_submission_id workflow_id] :as _record}
+  (if-let [{:keys [submission workflow] :as _record}
            (peek-terra-executor-details executor)]
     (from-firecloud-workflow
      methodConfiguration
-     (firecloud/get-workflow workspace rawls_submission_id workflow_id))))
+     (firecloud/get-workflow workspace submission workflow))))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,
@@ -807,8 +802,8 @@
    consumed."
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
-               WHERE consumed        IS NULL
-               AND   workflow_status <> 'Aborted'"]
+               WHERE consumed IS NULL
+               AND   status   <> 'Aborted'"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -820,9 +815,9 @@
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
   (let [to-workflow (partial from-firecloud-workflow methodConfiguration)]
-    (->> (format "SELECT DISTINCT rawls_submission_id FROM %s" details)
+    (->> (format "SELECT DISTINCT submission FROM %s" details)
          (jdbc/query tx)
-         (mapcat #(->> (:rawls_submission_id %)
+         (mapcat #(->> (:submission %)
                        (firecloud/get-submission workspace)
                        :workflows
                        (map to-workflow))))))

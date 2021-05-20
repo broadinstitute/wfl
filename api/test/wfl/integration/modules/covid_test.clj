@@ -405,7 +405,7 @@
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
                   "The record ID was incorrect given the workflow order in mocked submission")
-              (is (= (:workflowId workflow) (:workflow_id record))
+              (is (= (:workflowId workflow) (:workflow record))
                   "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
         {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
@@ -423,11 +423,11 @@
               (#'covid/load-record-by-id! tx "TerraExecutor" (:id executor))]
           (is (== 2 (count records))
               "Exactly 2 workflows should have been written to the database")
-          (is (every? #(= snapshot-reference-id (:snapshot_reference_id %)) records)
+          (is (every? #(= snapshot-reference-id (:reference %)) records)
               "The snapshot reference ID was incorrect and should match all records")
-          (is (every? #(= submission-id (:rawls_submission_id %)) records)
+          (is (every? #(= submission-id (:submission %)) records)
               "The submission ID was incorrect and should match all records")
-          (is (every? #(= "Succeeded" (:workflow_status %)) records)
+          (is (every? #(= "Succeeded" (:status %)) records)
               "Status update mock should have marked running workflow as succeeded")
           (is (every? #(nil? (:consumed %)) records)
               "All records should be unconsumed")
@@ -449,7 +449,7 @@
       #(covid/update-executor! source executor))
     (with-redefs-fn
       {#'covid/peek-terra-executor-queue #'covid/peek-terra-executor-details}
-      #(do (is (succeeded? (-> executor covid/peek-queue! :workflow_status)))
+      #(do (is (succeeded? (-> executor covid/peek-queue! :status)))
            (covid/pop-queue! executor)
            (is (nil? (covid/peek-queue! executor)))))))
 
