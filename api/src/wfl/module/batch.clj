@@ -101,23 +101,21 @@
 
 (defn pre-v0_4_0-load-workflows
   [tx workload]
-  (letfn [(unnilify [m] (into {} (filter second m)))
-          (split-inputs [m]
+  (letfn [(split-inputs [m]
             (let [keep [:id :finished :status :updated :uuid :options]]
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx (:items workload))
-         (mapv (comp unnilify split-inputs load-options)))))
+         (mapv (comp util/unnilify split-inputs load-options)))))
 
 (defn ^:private load-batch-workflows
   "Use transaction `tx` to load the workflows in the `_workload` stored in a
    CromwellWorkflow table."
   [tx {:keys [items] :as _workload}]
-  (letfn [(unnilify [m] (into {} (filter second m)))
-          (load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
+  (letfn [(load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
     (->> (postgres/get-table tx items)
-         (mapv (comp unnilify load-options load-inputs)))))
+         (mapv (comp util/unnilify load-options load-inputs)))))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
@@ -178,22 +176,20 @@
 (defn workload-to-edn
   "Return a user-friendly EDN representation of the batch `workload`"
   [workload]
-  (letfn [(keep [keys]
-            (->> (select-keys workload keys)
-                 (filter second)
-                 (into {})))]
-    (keep [:commit
-           :created
-           :creator
-           :executor
-           :finished
-           :input
-           :output
-           :pipeline
-           :project
-           :release
-           :started
-           :stopped
-           :uuid
-           :version
-           :wdl])))
+  (util/select-non-nil-keys
+   workload
+   [:commit
+    :created
+    :creator
+    :executor
+    :finished
+    :input
+    :output
+    :pipeline
+    :project
+    :release
+    :started
+    :stopped
+    :uuid
+    :version
+    :wdl]))

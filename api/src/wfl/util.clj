@@ -224,6 +224,18 @@
   [coll key]
   (not (contains? coll key)))
 
+(defn unnilify
+  "Return a map containing only those non-nil entries in `map`."
+  [map]
+  {:pre [(map? map)]}
+  (into {} (filter second map)))
+
+(defn select-non-nil-keys
+  "Returns a map containing only those non-nil entries in `map` whose key is
+  in `keyseq`."
+  [map keyseq]
+  (unnilify (select-keys map keyseq)))
+
 (defn on
   "Apply the function `g` `on` the results of mapping the unary function `f`
   over each of the input arguments in `xs`.

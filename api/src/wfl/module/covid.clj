@@ -110,9 +110,6 @@
       (throw (ex-info (str "No such record") {:id id :table table})))
     record))
 
-(defn ^:private remove-nil-values [map]
-  (into {} (filter second map)))
-
 ;; Workload
 
 (defn ^:private patch-workload [tx {:keys [id]} colls]
@@ -224,7 +221,8 @@
     (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
 (defn ^:private workload-to-edn [workload]
-  (-> (dissoc workload :id :type)
+  (-> workload
+      (util/select-non-nil-keys workload-metadata-keys)
       (update :source   util/to-edn)
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))
@@ -475,10 +473,10 @@
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defn ^:private tdr-source-to-edn [source]
-  (-> (dissoc source :id :details :type :last_checked)
-      (assoc :name tdr-source-name)
+  (-> source
+      (util/select-non-nil-keys (keys tdr-source-serialized-fields))
       (update :dataset :id)
-      remove-nil-values))
+      (assoc :name tdr-source-name)))
 
 (defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
 (defoverload create-source!    tdr-source-name create-tdr-source)
@@ -549,9 +547,10 @@
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
-  (-> (dissoc source :items :type)
-      (assoc :name tdr-snapshot-list-name)
-      (update :snapshots #(map (comp :id edn/read-string :item) %))))
+  (let [read-snapshot-id (comp :id edn/read-string :item)]
+    (-> (select-keys source [:snapshots])
+        (assoc :name tdr-snapshot-list-name)
+        (update :snapshots #(map read-snapshot-id %)))))
 
 (defoverload validate-or-throw tdr-snapshot-list-name validate-tdr-snapshot-list)
 (defoverload create-source!    tdr-snapshot-list-name create-tdr-snapshot-list)
@@ -783,9 +782,9 @@
        (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
 (defn ^:private terra-executor-to-edn [executor]
-  (-> (dissoc executor :id :details :type)
-      (assoc :name terra-executor-name)
-      remove-nil-values))
+  (-> executor
+      (util/select-non-nil-keys (keys terra-executor-serialized-fields))
+      (assoc :name terra-executor-name)))
 
 (defoverload validate-or-throw  terra-executor-name verify-terra-executor)
 (defoverload create-executor!   terra-executor-name create-terra-executor)
@@ -883,9 +882,9 @@
              (jdbc/insert! tx details))))))
 
 (defn ^:private terra-workspace-sink-to-edn [sink]
-  (-> (dissoc sink :id :details :type)
-      (assoc :name terra-workspace-sink-name)
-      remove-nil-values))
+  (-> sink
+      (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
+      (assoc :name terra-workspace-sink-name)))
 
 (defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
 (defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
