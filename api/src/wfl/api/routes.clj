@@ -17,7 +17,8 @@
             [wfl.environment                   :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl])
-  (:import (java.sql SQLException)))
+  (:import [java.sql SQLException]
+           [wfl.util UserException]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -139,6 +140,8 @@
     {;; ex-data with :type :wfl/exception
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
+
+     UserException                         (partial exception-handler 400 "")
        ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
        ;; handle clj-http Slingshot stone exceptions

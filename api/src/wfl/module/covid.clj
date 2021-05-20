@@ -110,6 +110,9 @@
       (throw (ex-info (str "No such record") {:id id :table table})))
     record))
 
+(defn ^:private remove-nil-values [map]
+  (into {} (filter second map)))
+
 ;; Workload
 
 (defn ^:private patch-workload [tx {:keys [id]} colls]
@@ -473,7 +476,9 @@
 
 (defn ^:private tdr-source-to-edn [source]
   (-> (dissoc source :id :details :type)
-      (assoc :name tdr-source-name)))
+      (assoc :name tdr-source-name)
+      (update :dataset :id)
+      remove-nil-values))
 
 (defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
 (defoverload create-source!    tdr-source-name create-tdr-source)
@@ -779,7 +784,8 @@
 
 (defn ^:private terra-executor-to-edn [executor]
   (-> (dissoc executor :id :details :type)
-      (assoc :name terra-executor-name)))
+      (assoc :name terra-executor-name)
+      remove-nil-values))
 
 (defoverload validate-or-throw  terra-executor-name verify-terra-executor)
 (defoverload create-executor!   terra-executor-name create-terra-executor)
@@ -878,7 +884,8 @@
 
 (defn ^:private terra-workspace-sink-to-edn [sink]
   (-> (dissoc sink :id :details :type)
-      (assoc :name terra-workspace-sink-name)))
+      (assoc :name terra-workspace-sink-name)
+      remove-nil-values))
 
 (defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
 (defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)

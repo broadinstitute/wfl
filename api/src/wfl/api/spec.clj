@@ -99,6 +99,7 @@
 (s/def ::column string?)
 (s/def ::dataset string?)
 (s/def ::entity string?)
+(s/def ::identifier string?)
 (s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
 (s/def ::labels (s/* string?))
@@ -108,26 +109,32 @@
 (s/def ::table string?)
 (s/def ::watchers (s/* string?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
+(s/def ::snapshots (s/* uuid?))
 
 (s/def ::batch-executor string?)
-(s/def ::covid-executor (s/keys :req-un [::fromSource
+(s/def ::covid-executor (s/keys :req-un [::name
+                                         ::fromSource
                                          ::methodConfiguration
                                          ::methodConfigurationVersion
-                                         ::workspace]
-                                :opt-un [::name]))
+                                         ::workspace]))
 
 (s/def ::executor (s/or :batch ::batch-executor
                         :covid ::covid-executor))
 
-(s/def ::sink (s/keys :req-un [::entity
+(s/def ::sink (s/keys :req-un [::name
+                               ::entity
                                ::fromOutputs
-                               ::workspace]
-                      :opt-un [::name]))
+                               ::identifier
+                               ::workspace]))
 
-(s/def ::source (s/keys :req-un [::column
-                                 ::dataset
-                                 ::table]
-                        :opt-un [::name]))
+(s/def ::tdr-source
+  (s/keys :req-un [::name ::column ::dataset ::table]))
+
+(s/def ::snapshot-list-source
+  (s/keys :req-un [::name ::snapshots]))
+
+(s/def ::source (s/or :dataset   ::tdr-source
+                      :snapshots ::snapshot-list-source))
 
 (s/def ::batch-workload-request (s/keys :opt-un [::common
                                                  ::input

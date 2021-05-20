@@ -14,7 +14,6 @@
             [wfl.util                       :as util])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]
-           [org.postgresql.util PSQLException]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
@@ -135,11 +134,11 @@
 
 (deftest test-workload-to-edn
   (let [workload (util/to-edn
-                   (workloads/create-workload!
-                     (workloads/covid-workload-request
-                       {:skipValidation true}
-                       {:skipValidation true}
-                       {:skipValidation true})))]
+                  (workloads/create-workload!
+                   (workloads/covid-workload-request
+                    {:skipValidation true}
+                    {:skipValidation true}
+                    {:skipValidation true})))]
     (is (not-any? workload [:id
                             :items
                             :source_type
