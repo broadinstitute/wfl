@@ -170,8 +170,10 @@
                                           :column  testing-column-name
                                           :skipValidation true}
                                          {:workspace            testing-workspace
-                                          :methodConfiguration testing-method-configuration}
-                                         {:workspace testing-workspace}))))
+                                          :methodConfiguration testing-method-configuration
+                                          :skipValidation true}
+                                         {:workspace testing-workspace
+                                          :skipValidation true}))))
 
 (deftest test-create-covid-workload-with-misnamed-executor
   (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
