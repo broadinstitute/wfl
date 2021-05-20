@@ -121,13 +121,13 @@
    :creator
    :executor
    :finished
-   :id
    :labels
    :pipeline
    :sink
    :source
    :started
    :stopped
+   :updated
    :uuid
    :version
    :watchers])
@@ -147,10 +147,10 @@
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor ""
-               :output ""
-               :release ""
-               :wdl ""
-               :uuid (UUID/randomUUID))
+               :output   ""
+               :release  ""
+               :wdl      ""
+               :uuid     (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 (def ^:private update-workload-query
@@ -177,7 +177,7 @@
              [id]))
     (workloads/load-workload-for-id tx id)))
 
-(defn ^:private load-covid-workload-impl [tx workload]
+(defn ^:private load-covid-workload-impl [tx {:keys [id] :as workload}]
   (let [src-exc-sink {:source   (load-source! tx workload)
                       :executor (load-executor! tx workload)
                       :sink     (load-sink! tx workload)}]
@@ -185,7 +185,7 @@
       (select-keys $ workload-metadata-keys)
       (merge $ src-exc-sink)
       (filter second $)
-      (into {:type :workload} $))))
+      (into {:type :workload :id id} $))))
 
 (defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
@@ -219,6 +219,22 @@
               (patch-workload tx workload {:finished now}))
             (workloads/load-workload-for-id tx id))]
     (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
+
+(defn ^:private workload-to-edn [workload]
+  (-> (dissoc workload :id :type)
+      (update :source   util/to-edn)
+      (update :executor util/to-edn)
+      (update :sink     util/to-edn)))
+
+(defoverload workloads/create-workload!   pipeline create-covid-workload)
+(defoverload workloads/start-workload!    pipeline start-covid-workload)
+(defoverload workloads/update-workload!   pipeline update-covid-workload)
+(defoverload workloads/stop-workload!     pipeline stop-covid-workload)
+(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
+(defmethod   workloads/workflows          pipeline
+  [tx {:keys [executor] :as _workload}]
+  (executor-workflows tx executor))
+(defoverload workloads/to-edn             pipeline workload-to-edn)
 
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
@@ -455,6 +471,10 @@
         (jdbc/update! tx details {:consumed now :updated now} ["id = ?" id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
+(defn ^:private tdr-source-to-edn [source]
+  (-> (dissoc source :id :details :type)
+      (assoc :name tdr-source-name)))
+
 (defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
 (defoverload create-source!    tdr-source-name create-tdr-source)
 (defoverload start-source!     tdr-source-type start-tdr-source)
@@ -464,6 +484,7 @@
 (defoverload peek-queue!       tdr-source-type peek-tdr-source-queue)
 (defoverload pop-queue!        tdr-source-type pop-tdr-source-queue)
 (defoverload queue-length!     tdr-source-type tdr-source-queue-length)
+(defoverload util/to-edn       tdr-source-type tdr-source-to-edn)
 
 ;; TDR Snapshot List Source
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
@@ -492,7 +513,9 @@
   (when-not (postgres/table-exists? tx source_items)
     (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
                     {:table source_items})))
-  {:type tdr-snapshot-list-type :items source_items})
+  {:type      tdr-snapshot-list-type
+   :items     source_items
+   :snapshots (postgres/get-table tx source_items)})
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
 (defn ^:private update-tdr-snapshot-list [source]  source)
@@ -520,6 +543,11 @@
       (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
+(defn ^:private tdr-snapshot-list-to-edn [source]
+  (-> (dissoc source :items :type)
+      (assoc :name tdr-snapshot-list-name)
+      (update :snapshots #(map (comp :id edn/read-string :item) %))))
+
 (defoverload validate-or-throw tdr-snapshot-list-name validate-tdr-snapshot-list)
 (defoverload create-source!    tdr-snapshot-list-name create-tdr-snapshot-list)
 (defoverload start-source!     tdr-snapshot-list-type start-tdr-snapshot-list)
@@ -527,8 +555,9 @@
 (defoverload load-source!      tdr-snapshot-list-type load-tdr-snapshot-list)
 (defoverload peek-queue!       tdr-snapshot-list-type
   (comp edn/read-string :item peek-tdr-snapshot-list))
-(defoverload queue-length!    tdr-snapshot-list-type tdr-snapshot-list-queue-length)
-(defoverload pop-queue!       tdr-snapshot-list-type pop-tdr-snapshot-list)
+(defoverload queue-length!     tdr-snapshot-list-type tdr-snapshot-list-queue-length)
+(defoverload pop-queue!        tdr-snapshot-list-type pop-tdr-snapshot-list)
+(defoverload util/to-edn       tdr-snapshot-list-type tdr-snapshot-list-to-edn)
 
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
@@ -748,6 +777,10 @@
        (jdbc/query tx)
        (mapcat (comp :workflows #(firecloud/get-submission workspace %)))))
 
+(defn ^:private terra-executor-to-edn [executor]
+  (-> (dissoc executor :id :details :type)
+      (assoc :name terra-executor-name)))
+
 (defoverload validate-or-throw  terra-executor-name verify-terra-executor)
 (defoverload create-executor!   terra-executor-name create-terra-executor)
 (defoverload update-executor!   terra-executor-type update-terra-executor)
@@ -756,6 +789,7 @@
 (defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
 (defoverload queue-length!      terra-executor-type terra-executor-queue-length)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
+(defoverload util/to-edn        terra-executor-type terra-executor-to-edn)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -842,16 +876,12 @@
               :updated     (utc-now)}
              (jdbc/insert! tx details))))))
 
+(defn ^:private terra-workspace-sink-to-edn [sink]
+  (-> (dissoc sink :id :details :type)
+      (assoc :name terra-workspace-sink-name)))
+
 (defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
 (defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!        terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink!      terra-workspace-sink-type update-terra-workspace-sink)
-
-(defoverload workloads/create-workload!   pipeline create-covid-workload)
-(defoverload workloads/start-workload!    pipeline start-covid-workload)
-(defoverload workloads/update-workload!   pipeline update-covid-workload)
-(defoverload workloads/stop-workload!     pipeline stop-covid-workload)
-(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-(defmethod   workloads/workflows          pipeline
-  [tx {:keys [executor] :as _workload}]
-  (executor-workflows tx executor))
+(defoverload util/to-edn       terra-workspace-sink-type terra-workspace-sink-to-edn)

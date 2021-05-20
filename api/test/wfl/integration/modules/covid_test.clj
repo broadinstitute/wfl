@@ -133,6 +133,26 @@
       (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
       (is (vector? watchers)))))
 
+(deftest test-workload-to-edn
+  (let [workload (util/to-edn
+                   (workloads/create-workload!
+                     (workloads/covid-workload-request
+                       {:skipValidation true}
+                       {:skipValidation true}
+                       {:skipValidation true})))]
+    (is (not-any? workload [:id
+                            :items
+                            :source_type
+                            :source_items
+                            :executor_type
+                            :executor_items
+                            :sink_type
+                            :sink_items
+                            :type]))
+    (is (not-any? (:source workload) [:id :details :type]))
+    (is (not-any? (:executor workload) [:id :details :type]))
+    (is (not-any? (:sink workload) [:id :details :type]))))
+
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown-with-msg?
        UserException #"Invalid request"
@@ -469,6 +489,11 @@
               "The workflow UUID was not written")
           (is (= flowcell-id (:entity_name record))
               "The entity name was not correct"))))))
+
+(deftest test-tdr-snapshot-list-to-edn
+  (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
+    (is (not-any? source [:id :type]))
+    (is (= (:snapshots source) [(:id snapshot)]))))
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
