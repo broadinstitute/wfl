@@ -36,6 +36,7 @@
 (def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
+(def ^:private testing-entity "assemblies")
 
 (def workload {:id 1})
 
@@ -129,7 +130,8 @@
                                               :column  testing-column-name}
                                              {:workspace            testing-workspace
                                               :methodConfiguration testing-method-configuration}
-                                             {:workspace testing-workspace}))]
+                                             {:workspace testing-workspace
+                                              :entity testing-entity}))]
       (is created "workload is missing :created timestamp")
       (is creator "workload is missing :creator field")
       (is (and source (verify-source source)))
@@ -170,10 +172,9 @@
                                           :column  testing-column-name
                                           :skipValidation true}
                                          {:workspace            testing-workspace
-                                          :methodConfiguration testing-method-configuration
-                                          :skipValidation true}
+                                          :methodConfiguration testing-method-configuration}
                                          {:workspace testing-workspace
-                                          :skipValidation true}))))
+                                          :entity testing-entity}))))
 
 (deftest test-create-covid-workload-with-misnamed-executor
   (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown executor" (-> (make-covid-workload-request)
@@ -198,7 +199,8 @@
                                                                 {:workspace            testing-workspace
                                                                  :methodConfiguration nil
                                                                  :skipValidation true}
-                                                                {:workspace testing-workspace})))))
+                                                                {:workspace testing-workspace
+                                                                 :entity testing-entity})))))
 
 (deftest test-create-covid-workload-with-misnamed-sink
   (is (thrown-with-msg? RuntimeException #"Failed to create workload - unknown sink" (-> (make-covid-workload-request)
@@ -237,7 +239,8 @@
                                                      :column testing-column-name}
                                                     {:workspace testing-workspace
                                                      :method_configuration testing-method-configuration}
-                                                    {:workspace testing-workspace}))]
+                                                    {:workspace testing-workspace
+                                                     :entity testing-entity}))]
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
 
@@ -422,7 +425,8 @@
                                                      :column testing-column-name}
                                                     {:workspace testing-workspace
                                                      :method_configuration testing-method-configuration}
-                                                    {:workspace testing-workspace}))]
+                                                    {:workspace testing-workspace
+                                                     :entity testing-entity}))]
     (is (empty? (workloads/workflows workload)))))
 
 (deftest test-workload-state-transition
@@ -441,7 +445,8 @@
                                          :column testing-column-name}
                                         {:workspace testing-workspace
                                          :method_configuration testing-method-configuration}
-                                        {:workspace testing-workspace}))))
+                                        {:workspace testing-workspace
+                                         :entity testing-entity}))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!
@@ -450,4 +455,5 @@
                                       :column testing-column-name}
                                      {:workspace testing-workspace
                                       :method_configuration testing-method-configuration}
-                                     {:workspace testing-workspace})))
+                                     {:workspace testing-workspace
+                                      :entity testing-entity})))
