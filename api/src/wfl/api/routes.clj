@@ -119,10 +119,11 @@
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception request]
   {:status (or (:status (ex-data exception)) status)
-   :body {:message (or (.getMessage exception) message)
-          :exception (str (.getClass exception))
-          :data (ex-data exception)
-          :uri (:uri request)}})
+   :body   {:message   (or (.getMessage exception) message)
+            :exception (str (.getClass exception))
+            :data      (ex-data exception)
+            :cause     (when-let [c (.getCause exception) (.getMessage c)])
+            :uri       (:uri request)}})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
@@ -140,7 +141,6 @@
     {;; ex-data with :type :wfl/exception
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
-
      UserException                         (partial exception-handler 400 "")
        ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
