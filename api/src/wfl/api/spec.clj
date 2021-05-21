@@ -102,7 +102,7 @@
 
 (s/def ::column string?)
 (s/def ::dataset string?)
-(s/def ::entity string?)
+(s/def ::entityType string?)
 (s/def ::identifier string?)
 (s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
@@ -126,7 +126,7 @@
                         :covid ::covid-executor))
 
 (s/def ::sink (s/keys :req-un [::name
-                               ::entity
+                               ::entityType
                                ::fromOutputs
                                ::identifier
                                ::workspace]))
