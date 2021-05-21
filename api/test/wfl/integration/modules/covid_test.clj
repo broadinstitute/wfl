@@ -90,13 +90,21 @@
 ;; Submission mock
 (def ^:private submission-id
   (str (UUID/randomUUID)))
+
 (def ^:private running-workflow
   {:status "Running" :workflowId (str (UUID/randomUUID))})
 (def ^:private succeeded-workflow
   {:status "Succeeded" :workflowId (str (UUID/randomUUID))})
+
+;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
   {:submissionId submission-id
-   :workflows [running-workflow succeeded-workflow]})
+   :workflows    [{:status "Queued"} {:status "Queued"}]})
+
+;; when we get the submission later, the workflows may have a uuid assigned
+(defn ^:private mock-firecloud-get-submission [& _]
+  {:submissionId submission-id
+   :workflows    [running-workflow succeeded-workflow]})
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
@@ -412,6 +420,7 @@
          #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
          #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
          #'firecloud/submit-method               mock-firecloud-create-submission
+         #'firecloud/get-submission              mock-firecloud-get-submission
          #'firecloud/get-workflow                mock-workflow-update-status}
         #(covid/update-executor! source executor))
       (is (zero? (covid/queue-length! source)) "The snapshot was not consumed.")
@@ -445,6 +454,7 @@
        #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
        #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
        #'firecloud/submit-method               mock-firecloud-create-submission
+       #'firecloud/get-submission              mock-firecloud-get-submission
        #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
@@ -514,6 +524,7 @@
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
      #'firecloud/submit-method               mock-firecloud-create-submission
+     #'firecloud/get-submission              mock-firecloud-get-submission
      #'firecloud/get-workflow                mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
       (workloads/covid-workload-request

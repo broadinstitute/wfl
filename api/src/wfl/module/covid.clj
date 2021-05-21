@@ -454,7 +454,7 @@
   (let [query "SELECT * FROM %s
                WHERE consumed    IS NULL
                AND   snapshot_id IS NOT NULL
-               ORDER BY id ASC LIMIT 1"]
+               LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -547,7 +547,7 @@
 (defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s
                WHERE  consumed IS NULL
-               ORDER BY id ASC LIMIT 1"]
+               LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query items)
            (jdbc/query tx)
@@ -701,7 +701,7 @@
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
-(defn ^:private write-workflows!
+(defn ^:private allocate-workflows
   "Write `workflows` to `details` table."
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
@@ -716,6 +716,37 @@
       (->> (map (partial to-row (utc-now)) workflows)
            (jdbc/insert-multi! tx details)))))
 
+;; Workflows in newly created firecloud submissions may not have been scheduled
+;; yet and thus do not have a workflow uuid. Thus, we first "allocate" the
+;; workflow in the database and then later assign workflow uuids.
+(defn ^:private assign-workflow-uuids!
+  "Assign workflow ids from previous submissions"
+  [{:keys [workspace details] :as executor}]
+  (letfn [(read-submission-without-workflows []
+            (let [query "SELECT * FROM %s WHERE submission IN (
+                             SELECT submission FROM %s WHERE workflow IS NULL
+                             LIMIT 1
+                         )"]
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (jdbc/query tx (format query details details)))))
+          (zip-record [record {:keys [workflowId status]}]
+            (assoc record :workflow workflowId :status status))
+          (write-workflow-statuses [now records]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (-> (fn [{:keys [id workflow status]}]
+                    (jdbc/update! tx details
+                                  {:status status :workflow workflow :updated now}
+                                  ["id = ?" id]))
+                  (run! records))))]
+    (when-let [records (seq (read-submission-without-workflows))]
+      (let [submission          (-> records first :submission)
+            {:keys [workflows]} (firecloud/get-submission workspace submission)]
+        (when-not (== (count records) (count workflows))
+          (throw (ex-info "Allocated more records than created workflows"
+                          {:submission submission :executor executor})))
+        (->> (map zip-record records workflows)
+             (write-workflow-statuses (utc-now)))))))
+
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in DETAILS table for active or failed WORKSPACE workflows.
   Return EXECUTOR."
@@ -723,6 +754,7 @@
   (letfn [(read-active-or-failed-workflows []
             (let [query "SELECT * FROM %s
                          WHERE submission IS NOT NULL
+                         AND   workflow   IS NOT NULL
                          AND   status     NOT IN ('Succeeded', 'Aborted')"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (jdbc/query tx (format query details)))))
@@ -734,11 +766,11 @@
           (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (-> (fn [{:keys [id status] :as _record}]
-                    (jdbc/update! tx details {:status status :updated  now}
+                    (jdbc/update! tx details {:status status :updated now}
                                   ["id = ?" id]))
                   (run! records))))]
     (->> (read-active-or-failed-workflows)
-         (map update-status-from-firecloud)
+         (mapv update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))
 
 (defn ^:private update-terra-executor
@@ -750,8 +782,9 @@
   (when-let [snapshot (peek-queue! source)]
     (let [reference  (from-source executor snapshot)
           submission (create-submission! executor reference)]
-      (write-workflows! executor reference submission)
+      (allocate-workflows executor reference submission)
       (pop-queue! source)))
+  (assign-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
   executor)
 
@@ -772,7 +805,7 @@
   (let [query "SELECT * FROM %s
                WHERE consumed IS NULL
                AND   status = 'Succeeded'
-               ORDER BY id ASC LIMIT 1"]
+               LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)

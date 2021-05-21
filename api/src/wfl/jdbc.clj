@@ -130,10 +130,10 @@
 (defmacro with-db-transaction
   "Logged alias for [[clojure.java.jdbc/with-db-transaction]]"
   [binding & body]
-  `(let [id# (rand-int 10000)]
-     (log/info "JDBC SQL transaction" id# "started to"
-               (format-db ~(second binding)))
-     (let [exe# (jdbc/with-db-transaction ~binding ~@body)]
+  `(let [id#    (rand-int 10000)
+         init# ~(second binding)]
+     (log/info "JDBC transaction" id# "started to" (format-db init#))
+     (let [exe# (jdbc/with-db-transaction [~(first binding) init#] ~@body)]
        (log/info "JDBC SQL transaction" id# "ended")
        exe#)))
 
