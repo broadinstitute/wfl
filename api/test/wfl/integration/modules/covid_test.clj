@@ -246,9 +246,9 @@
         {:skipValidation true}
         {:skipValidation true}
         {:workspace   testing-workspace
-         :entityType   "reads"
-         :identity    "reads_id"
-         :fromOutputs {:submission_xml "submission_xml"}}))))
+         :entityType  "assemblies"
+         :identity    "Who cares?"
+         :fromOutputs {:flowcell_id "flowcell_id"}}))))
 
 (deftest test-create-covid-workload-with-invalid-sink-entity-type
   (let [request (workloads/covid-workload-request
