@@ -41,15 +41,21 @@
 (def ^:private testing-column-name "run_date")
 
 ;; Queue mocks
-(def ^:private test-queue-type "TestQueue")
+(def ^:private testing-queue-type "TestQueue")
 (defn ^:private make-queue-from-list [items]
-  {:type test-queue-type :queue (ArrayDeque. items)})
+  {:type testing-queue-type :queue (ArrayDeque. items)})
 
-(defn ^:private test-queue-peek [this]
+(defn ^:private testing-queue-peek [this]
   (-> this :queue .getFirst))
 
-(defn ^:private test-queue-pop [this]
+(defn ^:private testing-queue-pop [this]
   (-> this :queue .removeFirst))
+
+(defn ^:private testing-queue-length [this]
+  (-> this :queue .size))
+
+(defn ^:private testing-queue-done? [this]
+  (-> this :queue .empty))
 
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_TDR_URL"       "https://data.terra.bio"
@@ -59,9 +65,13 @@
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database
     (fixtures/method-overload-fixture
-     covid/peek-queue! test-queue-type test-queue-peek)
+     covid/peek-queue! testing-queue-type testing-queue-peek)
     (fixtures/method-overload-fixture
-     covid/pop-queue! test-queue-type test-queue-pop)))
+     covid/pop-queue! testing-queue-type testing-queue-pop)
+    (fixtures/method-overload-fixture
+     covid/queue-length! testing-queue-type testing-queue-length)
+    (fixtures/method-overload-fixture
+     covid/done? testing-queue-type testing-queue-done?)))
 
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot

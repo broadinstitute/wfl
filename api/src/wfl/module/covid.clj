@@ -98,6 +98,11 @@
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
+;; Processing "stage" operations
+(defmulti done?
+  "Test if the processing stage is complete and will not process any more data"
+  (fn [stage] (:type stage)))
+
 ;; Generic helpers
 (defn ^:private utc-now
   "Return OffsetDateTime/now in UTC."
@@ -200,12 +205,12 @@
 (defn ^:private update-covid-workload
   "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id stopped source executor sink] :as workload} now]
+  (letfn [(update! [{:keys [id source executor sink] :as workload} now]
             (-> (update-source! source)
                 (update-executor! executor)
                 (update-sink! sink))
             (patch-workload tx workload {:updated now})
-            (when (and stopped (every? zero? (map queue-length! [source executor])))
+            (when (every? done? [source executor sink])
               (patch-workload tx workload {:finished now}))
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload (utc-now)) workload)))
@@ -487,6 +492,9 @@
         (jdbc/update! tx details {:consumed now :updated now} ["id = ?" id])))
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
+(defn ^:private tdr-source-done? [{:keys [stopped] :as source}]
+  (and stopped (zero? (queue-length! source))))
+
 (defn ^:private tdr-source-to-edn [source]
   (-> source
       (util/select-non-nil-keys (keys tdr-source-serialized-fields))
@@ -494,15 +502,20 @@
       (assoc :name tdr-source-name)))
 
 (defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
-(defoverload create-source!    tdr-source-name create-tdr-source)
-(defoverload start-source!     tdr-source-type start-tdr-source)
-(defoverload update-source!    tdr-source-type update-tdr-source)
-(defoverload stop-source!      tdr-source-type stop-tdr-source)
-(defoverload load-source!      tdr-source-type load-tdr-source)
-(defoverload peek-queue!       tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!        tdr-source-type pop-tdr-source-queue)
-(defoverload queue-length!     tdr-source-type tdr-source-queue-length)
-(defoverload util/to-edn       tdr-source-type tdr-source-to-edn)
+
+(defoverload create-source! tdr-source-name create-tdr-source)
+(defoverload start-source!  tdr-source-type start-tdr-source)
+(defoverload update-source! tdr-source-type update-tdr-source)
+(defoverload stop-source!   tdr-source-type stop-tdr-source)
+
+(defoverload load-source!  tdr-source-type load-tdr-source)
+(defoverload peek-queue!   tdr-source-type peek-tdr-source-queue)
+(defoverload pop-queue!    tdr-source-type pop-tdr-source-queue)
+(defoverload queue-length! tdr-source-type tdr-source-queue-length)
+
+(defoverload done? tdr-source-type tdr-source-done?)
+
+(defoverload util/to-edn tdr-source-type tdr-source-to-edn)
 
 ;; TDR Snapshot List Source
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
@@ -531,13 +544,12 @@
     [tdr-snapshot-list-type details]))
 
 (defn ^:private load-tdr-snapshot-list
-  [tx {:keys [started source_items] :as _workload}]
+  [tx {:keys [source_items] :as _workload}]
   (when-not (postgres/table-exists? tx source_items)
     (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
                     {:table source_items})))
   {:type      tdr-snapshot-list-type
    :items     source_items
-   :stopped   started
    :snapshots (postgres/get-table tx source_items)})
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
@@ -567,23 +579,30 @@
       (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
+(defn ^:private tdr-snapshot-list-done? [source]
+  (zero? (queue-length! source)))
+
 (defn ^:private tdr-snapshot-list-to-edn [source]
   (let [read-snapshot-id (comp :id edn/read-string :item)]
     (-> (select-keys source [:snapshots])
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
-(defoverload validate-or-throw tdr-snapshot-list-name validate-tdr-snapshot-list)
-(defoverload create-source!    tdr-snapshot-list-name create-tdr-snapshot-list)
-(defoverload start-source!     tdr-snapshot-list-type start-tdr-snapshot-list)
-(defoverload stop-source!      tdr-snapshot-list-type stop-tdr-snapshot-list)
-(defoverload update-source!    tdr-snapshot-list-type update-tdr-snapshot-list)
-(defoverload load-source!      tdr-snapshot-list-type load-tdr-snapshot-list)
-(defoverload peek-queue!       tdr-snapshot-list-type
-  (comp edn/read-string :item peek-tdr-snapshot-list))
-(defoverload queue-length!     tdr-snapshot-list-type tdr-snapshot-list-queue-length)
-(defoverload pop-queue!        tdr-snapshot-list-type pop-tdr-snapshot-list)
-(defoverload util/to-edn       tdr-snapshot-list-type tdr-snapshot-list-to-edn)
+(defoverload validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
+
+(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
+(defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
+(defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
+(defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
+(defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
+
+(defoverload peek-queue!   tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload queue-length! tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
+(defoverload pop-queue!    tdr-snapshot-list-type  pop-tdr-snapshot-list)
+
+(defoverload done? tdr-snapshot-list-type tdr-snapshot-list-done?)
+
+(defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)
 
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
@@ -858,20 +877,28 @@
                        :workflows
                        (map to-workflow))))))
 
+(defn ^:private terra-executor-done? [executor]
+  (zero? (queue-length! executor)))
+
 (defn ^:private terra-executor-to-edn [executor]
   (-> executor
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
       (assoc :name terra-executor-name)))
 
-(defoverload validate-or-throw  terra-executor-name verify-terra-executor)
+(defoverload validate-or-throw terra-executor-name verify-terra-executor)
+
 (defoverload create-executor!   terra-executor-name create-terra-executor)
 (defoverload update-executor!   terra-executor-type update-terra-executor)
 (defoverload load-executor!     terra-executor-type load-terra-executor)
-(defoverload peek-queue!        terra-executor-type peek-terra-executor-queue)
-(defoverload pop-queue!         terra-executor-type pop-terra-executor-queue)
-(defoverload queue-length!      terra-executor-type terra-executor-queue-length)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
-(defoverload util/to-edn        terra-executor-type terra-executor-to-edn)
+
+(defoverload peek-queue!   terra-executor-type peek-terra-executor-queue)
+(defoverload pop-queue!    terra-executor-type pop-terra-executor-queue)
+(defoverload queue-length! terra-executor-type terra-executor-queue-length)
+
+(defoverload done? terra-executor-type terra-executor-done?)
+
+(defoverload util/to-edn terra-executor-type terra-executor-to-edn)
 
 ;; Terra Workspace Sink
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
@@ -958,13 +985,19 @@
               :updated     (utc-now)}
              (jdbc/insert! tx details))))))
 
+(defn terra-workspace-sink-done? [_sink] true)
+
 (defn ^:private terra-workspace-sink-to-edn [sink]
   (-> sink
       (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
       (assoc :name terra-workspace-sink-name)))
 
 (defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
-(defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
-(defoverload load-sink!        terra-workspace-sink-type load-terra-workspace-sink)
-(defoverload update-sink!      terra-workspace-sink-type update-terra-workspace-sink)
-(defoverload util/to-edn       terra-workspace-sink-type terra-workspace-sink-to-edn)
+
+(defoverload create-sink!  terra-workspace-sink-name create-terra-workspace-sink)
+(defoverload load-sink!    terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload update-sink!  terra-workspace-sink-type update-terra-workspace-sink)
+
+(defoverload done? terra-workspace-sink-type terra-workspace-sink-done?)
+
+(defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)
