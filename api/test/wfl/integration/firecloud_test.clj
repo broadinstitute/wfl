@@ -74,9 +74,8 @@
 
 (defn ^:private matches-entity?
   "Check if entity reference [Type Name] matches item from HTTP response."
-  [[ref-type ref-name]]
-  (fn [{response-type :entityType response-name :entityName}]
-    (and (= ref-type response-type) (= ref-name response-name))))
+  [[ref-type ref-name]] (fn [{response-type :entityType response-name :entityName}]
+                          (and (= ref-type response-type) (= ref-name response-name))))
 
 (deftest test-import-entity-set
   (doseq [entity-count (range 1 4)]

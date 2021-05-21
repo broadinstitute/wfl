@@ -288,4 +288,3 @@
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))
-
