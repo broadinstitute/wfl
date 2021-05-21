@@ -971,9 +971,7 @@
         (throw (UserException. "Entity not found"
                                (util/make-map entityType types workspace))))
       (let [attributes    (get-in entity-types [entity-type :attributeNames])
-            attribute?    (set attributes)
-            output?       (set (vals fromOutputs))
-            [missing _ _] (data/diff output? attribute?)]
+            [missing _ _] (data/diff (set (vals fromOutputs)) (set attributes))]
         (when (seq missing)
           (throw (UserException. "Attributes missing for these outputs"
                                  (util/make-map missing)))))))
