@@ -365,7 +365,8 @@
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
   (let [query "SELECT id, snapshot_creation_job_id FROM %s
-               WHERE snapshot_creation_job_status = 'running'"]
+               WHERE snapshot_creation_job_status = 'running'
+               ORDER BY id ASC"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -459,6 +460,7 @@
   (let [query "SELECT * FROM %s
                WHERE consumed    IS NULL
                AND   snapshot_id IS NOT NULL
+               ORDER BY id ASC
                LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
@@ -559,6 +561,7 @@
 (defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s
                WHERE  consumed IS NULL
+               ORDER BY id ASC
                LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query items)
@@ -781,7 +784,7 @@
         (->> workflows
              (map #(update % :workflowEntity :entityName))
              (sort-by :workflowEntity)
-             (map zip-record records)
+             (map zip-record (sort-by :entity records))
              (write-workflow-statuses (utc-now)))))))
 
 (defn ^:private update-terra-workflow-statuses!
@@ -792,7 +795,8 @@
             (let [query "SELECT * FROM %s
                          WHERE submission IS NOT NULL
                          AND   workflow   IS NOT NULL
-                         AND   status     NOT IN ('Succeeded', 'Aborted')"]
+                         AND   status     NOT IN ('Succeeded', 'Aborted')
+                         ORDER BY id ASC"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (jdbc/query tx (format query details)))))
           (update-status-from-firecloud
@@ -848,6 +852,7 @@
   (let [query "SELECT * FROM %s
                WHERE consumed IS NULL
                AND   status = 'Succeeded'
+               ORDER BY id ASC
                LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
@@ -878,7 +883,8 @@
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed IS NULL
-               AND   status   NOT IN ('Failed', 'Aborted')"]
+               AND   status   NOT IN ('Failed', 'Aborted')
+               ORDER BY id ASC"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
