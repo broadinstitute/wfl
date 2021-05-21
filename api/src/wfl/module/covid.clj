@@ -839,7 +839,7 @@
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed IS NULL
-               AND   status   <> 'Aborted'"]
+               AND   status   NOT IN ('Failed', 'Aborted')"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)

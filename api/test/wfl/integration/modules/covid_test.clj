@@ -106,6 +106,11 @@
   {:submissionId submission-id
    :workflows    [running-workflow succeeded-workflow]})
 
+(defn ^:private mock-firecloud-create-failed-submission [& _]
+  {:submissionId submission-id
+   :workflows    [{:status "Failed" :uuid (str (UUID/randomUUID))}
+                  {:status "Aborted" :uuid (str (UUID/randomUUID))}]})
+
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
   (is (not (= (:workflowId succeeded-workflow) workflow-id))
@@ -546,3 +551,19 @@
     {:skipValidation true}
     {:skipValidation true}
     {:skipValidation true})))
+
+(deftest test-workload-state-transition-with-failed-workflow
+  (with-redefs-fn
+    {#'covid/find-new-rows                   mock-find-new-rows
+     #'covid/create-snapshots                mock-create-snapshots
+     #'covid/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'firecloud/submit-method               mock-firecloud-create-submission
+     #'firecloud/get-workflow                (constantly {:status "Failed"})}
+    #(shared/run-workload-state-transition-test!
+      (workloads/covid-workload-request
+       {:skipValidation true}
+       {:skipValidation true}
+       {:skipValidation true}))))
