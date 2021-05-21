@@ -53,7 +53,7 @@
               :fromSource                 "importSnapshot"}
    :sink     {:name           "Terra Workspace"
               :workspace      workspace
-              :entity         "run_date"
+              :entityType     "run_date"
               :identifier     "run_date"
               :fromOutputs    (resources/read-resource
                                "sarscov2_illumina_full/entity-from-outputs.edn")

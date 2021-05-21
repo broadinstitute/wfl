@@ -840,11 +840,12 @@
                           :tasks)]
     (-> workflow
         (update :inputResolutions to-inputs)
-        (update :outputs wdl-outputs)
+        (update :outputs #(when % (wdl-outputs %)))
         (dissoc :messages)
         (set/rename-keys {:inputResolutions      :inputs
                           :statusLastChangedDate :updated
-                          :workflowId            :uuid}))))
+                          :workflowId            :uuid})
+        util/unnilify)))
 
 (defn ^:private peek-terra-executor-details
   "Get first unconsumed successful workflow record from `details` table."
