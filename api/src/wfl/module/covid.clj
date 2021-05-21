@@ -701,8 +701,8 @@
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
-(defn ^:private allocate-workflows
-  "Write `workflows` to `details` table."
+(defn ^:private allocate-submission
+  "Write or allocate workflow records for `submission` in `details` table."
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
@@ -719,28 +719,30 @@
 ;; Workflows in newly created firecloud submissions may not have been scheduled
 ;; yet and thus do not have a workflow uuid. Thus, we first "allocate" the
 ;; workflow in the database and then later assign workflow uuids.
-(defn ^:private assign-workflow-uuids!
-  "Assign workflow ids from previous submissions"
+(defn ^:private update-unassigned-workflow-uuids!
+  "Assign workflow uuids from previous submissions"
   [{:keys [workspace details] :as executor}]
-  (letfn [(read-submission-without-workflows []
-            (let [query "SELECT * FROM %s WHERE submission IN (
+  (letfn [(read-a-submission-without-workflows []
+            (let [query "SELECT id, submission FROM %s WHERE submission IN (
                              SELECT submission FROM %s WHERE workflow IS NULL
                              LIMIT 1
                          )"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (jdbc/query tx (format query details details)))))
+                (let [records (jdbc/query tx (format query details details))]
+                  (when-first [{:keys [submission]} records]
+                    [submission records])))))
           (zip-record [record {:keys [workflowId status]}]
             (assoc record :workflow workflowId :status status))
           (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (-> (fn [{:keys [id workflow status]}]
-                    (jdbc/update! tx details
-                                  {:status status :workflow workflow :updated now}
-                                  ["id = ?" id]))
-                  (run! records))))]
-    (when-let [records (seq (read-submission-without-workflows))]
-      (let [submission          (-> records first :submission)
-            {:keys [workflows]} (firecloud/get-submission workspace submission)]
+              (run!
+               (fn [{:keys [id workflow status]}]
+                 (jdbc/update! tx details
+                               {:status status :workflow workflow :updated now}
+                               ["id = ?" id]))
+               records)))]
+    (when-let [[submission records] (read-a-submission-without-workflows)]
+      (let [{:keys [workflows]} (firecloud/get-submission workspace submission)]
         (when-not (== (count records) (count workflows))
           (throw (ex-info "Allocated more records than created workflows"
                           {:submission submission :executor executor})))
@@ -765,10 +767,11 @@
                  (assoc record :status)))
           (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (-> (fn [{:keys [id status] :as _record}]
-                    (jdbc/update! tx details {:status status :updated now}
-                                  ["id = ?" id]))
-                  (run! records))))]
+              (run!
+               (fn [{:keys [id status] :as _record}]
+                 (jdbc/update! tx details {:status status :updated now}
+                               ["id = ?" id]))
+               records)))]
     (->> (read-active-or-failed-workflows)
          (mapv update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))
@@ -782,9 +785,9 @@
   (when-let [snapshot (peek-queue! source)]
     (let [reference  (from-source executor snapshot)
           submission (create-submission! executor reference)]
-      (allocate-workflows executor reference submission)
+      (allocate-submission executor reference submission)
       (pop-queue! source)))
-  (assign-workflow-uuids! executor)
+  (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
   executor)
 

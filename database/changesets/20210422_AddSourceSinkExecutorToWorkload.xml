@@ -14,13 +14,13 @@
                runInTransaction="false">
         <sql>
             ALTER TABLE workload
-            ADD COLUMN source_type     SOURCE,   -- type of this source
-            ADD COLUMN source_items    TEXT,     -- the identifier of the source table
-            ADD COLUMN executor_type   EXECUTOR, -- type of this executor
-            ADD COLUMN executor_items  TEXT,     -- the identifier of the executor table
-            ADD COLUMN sink_type       SINK,     -- type of this sink
-            ADD COLUMN sink_items      TEXT,     -- the identifier of the sink table
-            ADD COLUMN updated         TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL; -- when was this workload updated
+            ADD COLUMN source_type     SOURCE,      -- type of this source
+            ADD COLUMN source_items    TEXT,        -- the identifier of the source table
+            ADD COLUMN executor_type   EXECUTOR,    -- type of this executor
+            ADD COLUMN executor_items  TEXT,        -- the identifier of the executor table
+            ADD COLUMN sink_type       SINK,        -- type of this sink
+            ADD COLUMN sink_items      TEXT,        -- the identifier of the sink table
+            ADD COLUMN updated         TIMESTAMPTZ; -- when was this workload updated in utc
         </sql>
     </changeSet>
 </databaseChangeLog>
