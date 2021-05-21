@@ -720,15 +720,21 @@
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
+(defn ^:private entity-to-pair
+  "Coerce the firecloud entity to a [type name] pair."
+  [entity]
+  (mapv entity [:entityType :entityName]))
+
 (defn ^:private allocate-submission
   "Write or allocate workflow records for `submission` in `details` table."
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
-  (letfn [(to-row [now {:keys [status workflowId] :as _workflow}]
+  (letfn [(to-row [now {:keys [status workflowId workflowEntity] :as _workflow}]
             {:reference  referenceId
              :submission submissionId
              :workflow   workflowId
+             :entity     (entity-to-pair workflowEntity)
              :status     status
              :updated    now})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -742,7 +748,8 @@
   "Assign workflow uuids from previous submissions"
   [{:keys [workspace details] :as executor}]
   (letfn [(read-a-submission-without-workflows []
-            (let [query "SELECT id, submission FROM %s WHERE submission IN (
+            (let [query "SELECT id, submission, entity FROM %s
+                         WHERE submission IN (
                              SELECT submission FROM %s WHERE workflow IS NULL
                              LIMIT 1
                          )"]
@@ -750,7 +757,13 @@
                 (let [records (jdbc/query tx (format query details details))]
                   (when-first [{:keys [submission]} records]
                     [submission records])))))
-          (zip-record [record {:keys [workflowId status]}]
+          (zip-record [{:keys [entity] :as record}
+                       {:keys [workflowId workflowEntity status]}]
+            (when-not (= entity workflowEntity)
+              (throw (ex-info "Failed to write workflow uuid: entity did not match"
+                              {:expected entity
+                               :actual   workflowEntity
+                               :executor executor})))
             (assoc record :workflow workflowId :status status))
           (write-workflow-statuses [now records]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -765,7 +778,10 @@
         (when-not (== (count records) (count workflows))
           (throw (ex-info "Allocated more records than created workflows"
                           {:submission submission :executor executor})))
-        (->> (map zip-record records workflows)
+        (->> workflows
+             (map #(update % :workflowEntity entity-to-pair))
+             (sort-by :workflowEntity)
+             (map zip-record records)
              (write-workflow-statuses (utc-now)))))))
 
 (defn ^:private update-terra-workflow-statuses!
@@ -790,7 +806,7 @@
                (fn [{:keys [id status] :as _record}]
                  (jdbc/update! tx details {:status status :updated now}
                                ["id = ?" id]))
-               records)))]
+               (sort-by :entity records))))]
     (->> (read-active-or-failed-workflows)
          (mapv update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))

@@ -102,14 +102,20 @@
   (str (UUID/randomUUID)))
 
 (def ^:private running-workflow
-  {:status "Running" :workflowId (str (UUID/randomUUID))})
+  {:status         "Running"
+   :workflowId     (str (UUID/randomUUID))
+   :workflowEntity {:entityType "foo" :entityName "running"}})
+
 (def ^:private succeeded-workflow
-  {:status "Succeeded" :workflowId (str (UUID/randomUUID))})
+  {:status         "Succeeded"
+   :workflowId     (str (UUID/randomUUID))
+   :workflowEntity {:entityType "foo" :entityName "running"}})
 
 ;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
-  {:submissionId submission-id
-   :workflows    [{:status "Queued"} {:status "Queued"}]})
+  (let [enqueue #(-> % (dissoc :workflowId) (assoc :staus "Queued"))]
+    {:submissionId submission-id
+     :workflows    [(enqueue running-workflow) (enqueue succeeded-workflow)]}))
 
 ;; when we get the submission later, the workflows may have a uuid assigned
 (defn ^:private mock-firecloud-get-submission [& _]
@@ -118,8 +124,12 @@
 
 (defn ^:private mock-firecloud-create-failed-submission [& _]
   {:submissionId submission-id
-   :workflows    [{:status "Failed" :uuid (str (UUID/randomUUID))}
-                  {:status "Aborted" :uuid (str (UUID/randomUUID))}]})
+   :workflows    [{:status         "Failed"
+                   :uuid           (str (UUID/randomUUID))
+                   :workflowEntity {:entityType "foo" :entityName "failed"}}
+                  {:status         "Aborted"
+                   :uuid           (str (UUID/randomUUID))
+                   :workflowEntity {:entityType "foo" :entityName "aborted"}}]})
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
