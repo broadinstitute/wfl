@@ -251,16 +251,20 @@
          :fromOutputs {:submission_xml "submission_xml"}}))))
 
 (deftest test-create-covid-workload-with-invalid-sink-entity-type
-  (is (thrown-with-msg?
-       UserException #"Entity not found"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:skipValidation true}
-         {:workspace   testing-workspace
-          :entityType  "moo"
-          :identity    "reads_id"
-          :fromOutputs {:submission_xml "submission_xml"}})))))
+  (let [request (workloads/covid-workload-request
+                 {:skipValidation true}
+                 {:skipValidation true}
+                 {:workspace   testing-workspace
+                  :entityType  "assemblies"
+                  :identity    "Who cares?"
+                  :fromOutputs {:fnord "fnord"}})]
+    (is (thrown-with-msg?
+         UserException #"Entity not found"
+         (workloads/create-workload!
+          (assoc-in request [:sink :entityType] "fnord"))))
+    (is (thrown-with-msg?
+         UserException #"Attributes missing for these outputs"
+         (workloads/create-workload! request)))))
 
 (deftest test-create-covid-workload-with-invalid-sink-workspace
   (is (thrown-with-msg?
