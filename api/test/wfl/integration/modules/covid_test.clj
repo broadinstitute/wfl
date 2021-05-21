@@ -35,7 +35,8 @@
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
 (def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
-(def ^:private testing-method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
+(def ^:private testing-method-name "sarscov2_illumina_full")
+(def ^:private testing-method-configuration (str "cdc-covid-surveillance/" testing-method-name))
 (def ^:private testing-method-configuration-version 2)
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
@@ -72,74 +73,6 @@
      covid/queue-length! testing-queue-type testing-queue-length)
     (fixtures/method-overload-fixture
      covid/done? testing-queue-type testing-queue-done?)))
-
-;; Snapshot and snapshot reference mocks
-(def ^:private snapshot
-  {:name "test-snapshot-name"
-   :id   (str (UUID/randomUUID))})
-(def ^:private snapshot-reference-id
-  (str (UUID/randomUUID)))
-(def ^:private snapshot-reference-name
-  (str (:name snapshot) "-ref"))
-(defn ^:private mock-rawls-create-snapshot-reference [& _]
-  {:referenceId snapshot-reference-id
-   :name        snapshot-reference-name})
-
-;; Method configuration mocks
-(def methodConfigVersion 1)
-(defn ^:private mock-firecloud-get-method-configuration [& _]
-  {:methodConfigVersion methodConfigVersion})
-(defn ^:private mock-firecloud-update-method-configuration
-  [_ _ {:keys [dataReferenceName] :as mc}]
-  (is (= dataReferenceName snapshot-reference-name)
-      "Snapshot reference name should be passed to method config update")
-  (is (= (:methodConfigVersion mc) (inc methodConfigVersion))
-      "Incremented version should be passed to method config update")
-  nil)
-
-;; Submission mock
-(def ^:private submission-id
-  (str (UUID/randomUUID)))
-
-(def ^:private running-workflow
-  {:status         "Running"
-   :workflowId     (str (UUID/randomUUID))
-   :workflowEntity {:entityType "foo" :entityName "running"}})
-
-(def ^:private succeeded-workflow
-  {:status         "Succeeded"
-   :workflowId     (str (UUID/randomUUID))
-   :workflowEntity {:entityType "foo" :entityName "running"}})
-
-;; when we create submissions, workflows have been queued for execution
-(defn ^:private mock-firecloud-create-submission [& _]
-  (let [enqueue #(-> % (dissoc :workflowId) (assoc :staus "Queued"))]
-    {:submissionId submission-id
-     :workflows    [(enqueue running-workflow) (enqueue succeeded-workflow)]}))
-
-;; when we get the submission later, the workflows may have a uuid assigned
-(defn ^:private mock-firecloud-get-submission [& _]
-  {:submissionId submission-id
-   :workflows    [running-workflow succeeded-workflow]})
-
-(defn ^:private mock-firecloud-create-failed-submission [& _]
-  {:submissionId submission-id
-   :workflows    [{:status         "Failed"
-                   :uuid           (str (UUID/randomUUID))
-                   :workflowEntity {:entityType "foo" :entityName "failed"}}
-                  {:status         "Aborted"
-                   :uuid           (str (UUID/randomUUID))
-                   :workflowEntity {:entityType "foo" :entityName "aborted"}}]})
-
-;; Workflow fetch mocks within update-workflow-statuses!
-(defn ^:private mock-workflow-update-status [_ _ workflow-id]
-  (is (not (= (:workflowId succeeded-workflow) workflow-id))
-      "Successful workflow records should be filtered out before firecloud fetch")
-  {:status "Succeeded" :workflowId workflow-id})
-(defn ^:private mock-workflow-keep-status [_ _ workflow-id]
-  (is (not (= (:workflowId succeeded-workflow) workflow-id))
-      "Successful workflow records should be filtered out before firecloud fetch")
-  running-workflow)
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
@@ -350,6 +283,87 @@
     (is (not (:started workload)))
     (is (:started (workloads/start-workload! workload)))))
 
+;; Mocks
+
+(def ^:private method-name-mock "method-name")
+(def ^:private method-config-mock (str "method-namespace/" method-name-mock))
+;; Snapshot and snapshot reference mocks
+(def ^:private snapshot
+  {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
+
+(def ^:private snapshot-reference-id (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
+(defn ^:private mock-rawls-create-snapshot-reference [& _]
+  {:referenceId snapshot-reference-id
+   :name        snapshot-reference-name})
+
+(def ^:private method-config-version-mock 1)
+
+(defn ^:private mock-firecloud-get-method-configuration [& _]
+  {:methodConfigVersion method-config-version-mock})
+
+(defn ^:private mock-firecloud-update-method-configuration
+  [_ _ {:keys [dataReferenceName methodConfigVersion]}]
+  (is (= dataReferenceName snapshot-reference-name)
+      "Snapshot reference name should be passed to method config update")
+  (is (= methodConfigVersion (inc method-config-version-mock))
+      "Incremented version should be passed to method config update")
+  nil)
+
+(def ^:private submission-id-mock (str (UUID/randomUUID)))
+
+(def ^:private running-workflow-mock
+  {:status           "Running"
+   :workflowId       (str (UUID/randomUUID))
+   :inputResolutions [{:inputName (str method-name-mock ".input")
+                       :value     "value"}]
+   :workflowEntity   {:entityType "foo" :entityName "running"}})
+
+(def ^:private succeeded-workflow-mock
+  {:status         "Succeeded"
+   :workflowId     (str (UUID/randomUUID))
+   :inputResolutions [{:inputName (str method-name-mock ".input")
+                       :value     "value"}]
+   :workflowEntity {:entityType "foo" :entityName "running"}})
+
+;; when we create submissions, workflows have been queued for execution
+(defn ^:private mock-firecloud-create-submission [& _]
+  (let [enqueue #(-> % (dissoc :workflowId) (assoc :staus "Queued"))]
+    {:submissionId submission-id-mock
+     :workflows    [(enqueue running-workflow-mock) (enqueue succeeded-workflow-mock)]}))
+
+;; when we get the submission later, the workflows may have a uuid assigned
+(defn ^:private mock-firecloud-get-submission [& _]
+  {:submissionId submission-id-mock
+   :workflows    [running-workflow-mock succeeded-workflow-mock]})
+
+(defn ^:private mock-firecloud-create-failed-submission [& _]
+  {:submissionId submission-id-mock
+   :workflows    [{:status         "Failed"
+                   :uuid           (str (UUID/randomUUID))
+                   :workflowEntity {:entityType "foo" :entityName "failed"}}
+                  {:status         "Aborted"
+                   :uuid           (str (UUID/randomUUID))
+                   :workflowEntity {:entityType "foo" :entityName "aborted"}}]})
+
+;; Workflow fetch mocks within update-workflow-statuses!
+(defn ^:private mock-workflow-update-status [_ _ workflow-id]
+  (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
+      "Successful workflow records should be filtered out before firecloud fetch")
+  {:status "Succeeded" :workflowId workflow-id})
+
+(defn ^:private mock-workflow-keep-status [_ _ workflow-id]
+  (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
+      "Successful workflow records should be filtered out before firecloud fetch")
+  running-workflow-mock)
+
+(defn ^:private mock-firecloud-get-workflow-outputs [_ _ workflow]
+  {:workflowId workflow
+   :tasks {:noise
+           {}
+           (keyword method-name-mock)
+           (util/prefix-keys {:output "value"} (str method-name-mock "."))}})
+
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name           "Terra DataRepo",
@@ -401,9 +415,10 @@
            (covid/stop-source! tx source)
            (reload-source tx source)))
         (is (== expected-num-records (covid/queue-length! source))
-            "no more snapshots should be enqueued")))))
+            "no more snapshots should be enqueued")
+        (is (not (covid/done? source)) "the tdr source was done before snapshots were consumed")))))
 
-(deftest test-stop-tdr-source
+(deftest test-stop-tdr-sourced
   (let [source (create-tdr-source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (covid/start-source! tx source)
@@ -424,8 +439,8 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name                       "Terra"
           :workspace                  "workspace-ns/workspace-name"
-          :methodConfiguration        "mc-namespace/mc-name"
-          :methodConfigurationVersion methodConfigVersion
+          :methodConfiguration        method-config-mock
+          :methodConfigurationVersion method-config-version-mock
           :fromSource                 "importSnapshot"
           :skipValidation             true}
          (covid/create-executor! tx id)
@@ -459,15 +474,16 @@
               "Exactly 2 workflows should have been written to the database")
           (is (every? #(= snapshot-reference-id (:reference %)) records)
               "The snapshot reference ID was incorrect and should match all records")
-          (is (every? #(= submission-id (:submission %)) records)
+          (is (every? #(= submission-id-mock (:submission %)) records)
               "The submission ID was incorrect and should match all records")
           (is (every? #(= "Succeeded" (:status %)) records)
               "Status update mock should have marked running workflow as succeeded")
           (is (every? #(nil? (:consumed %)) records)
               "All records should be unconsumed")
-          (verify-record-against-workflow running-record running-workflow 1)
-          (verify-record-against-workflow succeeded-record succeeded-workflow 2)
-          (is (== (inc methodConfigVersion) (:method_configuration_version executor-record))
+          (is (not (covid/done? executor)) "executor should not have finished processing")
+          (verify-record-against-workflow running-record running-workflow-mock 1)
+          (verify-record-against-workflow succeeded-record succeeded-workflow-mock 2)
+          (is (== (inc method-config-version-mock) (:method_configuration_version executor-record))
               "Method configuration version was not incremented."))))))
 
 (deftest test-peek-terra-executor-queue
@@ -483,10 +499,17 @@
        #'firecloud/get-workflow                mock-workflow-keep-status}
       #(covid/update-executor! source executor))
     (with-redefs-fn
-      {#'covid/peek-terra-executor-queue #'covid/peek-terra-executor-details}
-      #(do (is (succeeded? (-> executor covid/peek-queue! :status)))
-           (covid/pop-queue! executor)
-           (is (nil? (covid/peek-queue! executor)))))))
+      {#'firecloud/get-workflow         (constantly succeeded-workflow-mock)
+       #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
+      #(let [workflow (covid/peek-queue! executor)]
+         (is (succeeded? (:status workflow)))
+         (is (= "value" (-> workflow :inputs :input)))
+         (is (= "value" (-> workflow :outputs :output)))
+         (is (not (-> workflow :outputs :noise)))
+         (covid/pop-queue! executor)
+         (is (nil? (covid/peek-queue! executor)))
+         (is (== 1 (covid/queue-length! executor)))
+         (is (not (covid/done? executor)))))))
 
 (deftest test-update-terra-workspace-sink
   (let [flowcell-id "test"

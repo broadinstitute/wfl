@@ -827,11 +827,16 @@
   executor)
 
 (defn ^:private from-firecloud-workflow [methodConfig workflow]
-  (let [[_ name]    (str/split methodConfig #"/")
+  (let [[_ name]    (str/split methodConfig #"/" 2)
         input-name  (comp keyword #(util/unprefix % (str name ".")) :inputName)
-        to-inputs   #(into {} (map (juxt input-name :value) %))]
+        to-inputs   #(into {} (map (juxt input-name :value) %))
+        wdl-outputs (comp (partial into {})
+                          #(util/unprefix-keys % (str name "."))
+                          (keyword name)
+                          :tasks)]
     (-> workflow
         (update :inputResolutions to-inputs)
+        (update :outputs wdl-outputs)
         (dissoc :messages)
         (set/rename-keys {:inputResolutions      :inputs
                           :statusLastChangedDate :updated
@@ -852,11 +857,10 @@
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
   [{:keys [workspace methodConfiguration] :as executor}]
-  (if-let [{:keys [submission workflow] :as _record}
-           (peek-terra-executor-details executor)]
-    (from-firecloud-workflow
-     methodConfiguration
-     (firecloud/get-workflow workspace submission workflow))))
+  (if-let [{:keys [submission workflow]} (peek-terra-executor-details executor)]
+    (-> (firecloud/get-workflow workspace submission workflow)
+        (assoc :outputs (firecloud/get-workflow-outputs workspace submission workflow))
+        (->> (from-firecloud-workflow methodConfiguration)))))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,
