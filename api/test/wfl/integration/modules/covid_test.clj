@@ -546,8 +546,8 @@
           (is (empty? rest) "More than one record was written")
           (is (= (:uuid workflow) (:workflow record))
               "The workflow UUID was not written")
-          (is (= flowcell-id (:entity_name record))
-              "The entity name was not correct"))))))
+          (is (= [entity-type flowcell-id] (:entity record))
+              "The entity was not correct"))))))
 
 (deftest test-tdr-snapshot-list-to-edn
   (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]

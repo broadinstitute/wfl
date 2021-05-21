@@ -1000,7 +1000,7 @@
       (pop-queue! executor)
       (log/info "Sank workflow" uuid "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (->> {:entity_name name
+        (->> {:entity      [entity name]
               :workflow    uuid
               :updated     (utc-now)}
              (jdbc/insert! tx details))))))

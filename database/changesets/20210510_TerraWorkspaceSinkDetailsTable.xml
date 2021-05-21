@@ -17,10 +17,10 @@
         </comment>
         <sql>
             CREATE TYPE TerraWorkspaceSinkDetails AS (
-                id                     BIGINT,      -- unique to this table
-                workflow               TEXT,        -- workflow id
-                entity_name            TEXT,        -- name of the entity
-                updated                TIMESTAMPTZ  -- status update time
+                id          BIGINT,      -- unique to this table
+                workflow    TEXT,        -- workflow id
+                entity      TEXT[],      -- [type name] pair of the entity
+                updated     TIMESTAMPTZ  -- status update time
             )
         </sql>
     </changeSet>
