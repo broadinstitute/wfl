@@ -195,12 +195,12 @@
 
 (defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
-  [tx {:keys [started stopped] :as workload}]
+  [tx {:keys [started] :as workload}]
   (letfn [(start [{:keys [id source] :as workload} now]
             (start-source! tx source)
             (patch-workload tx workload {:started now :updated now})
             (workloads/load-workload-for-id tx id))]
-    (if-not (or started stopped) (start workload (utc-now)) workload)))
+    (if-not started (start workload (utc-now)) workload)))
 
 (defn ^:private update-covid-workload
   "Use transaction `tx` to update `workload` statuses."
@@ -217,13 +217,16 @@
 
 (defn ^:private stop-covid-workload
   "Use transaction `tx` to stop the `workload` looking for new data."
-  [tx {:keys [stopped finished] :as workload}]
+  [tx {:keys [started stopped finished] :as workload}]
   (letfn [(stop! [{:keys [id source] :as workload} now]
             (stop-source! tx source)
             (patch-workload tx workload {:stopped now :updated now})
             (when-not (:started workload)
               (patch-workload tx workload {:finished now}))
             (workloads/load-workload-for-id tx id))]
+    (when-not started
+      (throw (UserException. "Cannot stop workload before it's been started."
+                             {:workload workload})))
     (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
 (defn ^:private workload-to-edn [workload]
