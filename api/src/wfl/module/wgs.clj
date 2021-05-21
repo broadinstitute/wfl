@@ -202,3 +202,4 @@
 (defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
 (defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
 (defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
