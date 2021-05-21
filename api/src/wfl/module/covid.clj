@@ -730,11 +730,11 @@
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}
    {:keys [submissionId workflows] :as _submission}]
-  (letfn [(to-row [now {:keys [status workflowId workflowEntity] :as _workflow}]
+  (letfn [(to-row [now {:keys [status workflowId entityName] :as _workflow}]
             {:reference  referenceId
              :submission submissionId
              :workflow   workflowId
-             :entity     (entity-to-pair workflowEntity)
+             :entity     entityName
              :status     status
              :updated    now})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -779,7 +779,7 @@
           (throw (ex-info "Allocated more records than created workflows"
                           {:submission submission :executor executor})))
         (->> workflows
-             (map #(update % :workflowEntity entity-to-pair))
+             (map #(update % :workflowEntity :entityName))
              (sort-by :workflowEntity)
              (map zip-record records)
              (write-workflow-statuses (utc-now)))))))
@@ -926,7 +926,7 @@
 (def ^:private terra-workspace-sink-table "TerraWorkspaceSink")
 (def ^:private terra-workspace-sink-serialized-fields
   {:workspace   :workspace
-   :entity      :entity
+   :entityType  :entity_type
    :fromOutputs :from_outputs
    :identifier  :identifier})
 
@@ -952,16 +952,16 @@
 
 (defn verify-terra-sink!
   "Verify that the WFL has access the `workspace`."
-  [{:keys [workspace entity skipValidation] :as sink}]
+  [{:keys [workspace entityType skipValidation] :as sink}]
   (if skipValidation
     sink
     (do (when-not (do-or-nil (firecloud/workspace workspace))
           (throw (UserException. "Cannot access workspace"
                                  (util/make-map workspace))))
         (let [types (->> workspace firecloud/list-entity-types keys set)]
-          (when-not (-> entity keyword types)
+          (when-not (-> entityType keyword types)
             (throw (UserException. "Entity not found"
-                                   (util/make-map entity types workspace)))))
+                                   (util/make-map entityType types workspace)))))
         sink)))
 
 ;; visible for testing
@@ -990,17 +990,17 @@
                       cause)))))
 
 (defn ^:private update-terra-workspace-sink
-  [executor {:keys [fromOutputs workspace entity identifier details] :as _sink}]
+  [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
   (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
-    (log/debug "Coercing workflow" uuid "outputs to" entity)
+    (log/debug "Coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           name       (outputs (keyword identifier))]
       (log/debug "Upserting workflow" uuid "outputs as" name)
-      (rawls/batch-upsert workspace [[name entity attributes]])
+      (rawls/batch-upsert workspace [[name entityType attributes]])
       (pop-queue! executor)
       (log/info "Sank workflow" uuid "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (->> {:entity      [entity name]
+        (->> {:entity      name
               :workflow    uuid
               :updated     (utc-now)}
              (jdbc/insert! tx details))))))

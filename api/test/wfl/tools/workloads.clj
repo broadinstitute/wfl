@@ -1,25 +1,25 @@
 (ns wfl.tools.workloads
-  (:require [clojure.string :as str]
+  (:require [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
-            [wfl.auth :as auth]
-            [wfl.environment :as env]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.aou :as aou]
-            [wfl.module.arrays :as arrays]
-            [wfl.module.copyfile :as cp]
-            [wfl.module.covid :as covid]
-            [wfl.module.sg :as sg]
-            [wfl.module.wgs :as wgs]
-            [wfl.module.xx :as xx]
-            [wfl.service.clio :as clio]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]
-            [wfl.tools.endpoints :as endpoints]
-            [wfl.util :as util :refer [shell!]])
-  (:import (java.time OffsetDateTime)
-           (java.util.concurrent TimeoutException)
-           (java.util UUID)))
+            [wfl.auth                       :as auth]
+            [wfl.environment                :as env]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.aou                 :as aou]
+            [wfl.module.arrays              :as arrays]
+            [wfl.module.copyfile            :as cp]
+            [wfl.module.covid               :as covid]
+            [wfl.module.sg                  :as sg]
+            [wfl.module.wgs                 :as wgs]
+            [wfl.module.xx                  :as xx]
+            [wfl.service.clio               :as clio]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.google.storage     :as gcs]
+            [wfl.service.postgres           :as postgres]
+            [wfl.tools.endpoints            :as endpoints]
+            [wfl.util                       :as util :refer [shell!]])
+  (:import [java.time OffsetDateTime]
+           [java.util.concurrent TimeoutException]
+           [java.util UUID]))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))
 
@@ -144,7 +144,7 @@
     :sink     (merge
                {:name        "Terra Workspace"
                 :workspace   "namespace/name"
-                :entity      ""
+                :entityType  ""
                 :fromOutputs {}
                 :identifier  ""}
                sink)

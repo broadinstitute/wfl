@@ -246,7 +246,7 @@
         {:skipValidation true}
         {:skipValidation true}
         {:workspace   testing-workspace
-         :entity      "reads"
+         :entityType   "reads"
          :identity    "reads_id"
          :fromOutputs {:submission_xml "submission_xml"}}))))
 
@@ -258,7 +258,7 @@
          {:skipValidation true}
          {:skipValidation true}
          {:workspace   testing-workspace
-          :entity      "moo"
+          :entityType  "moo"
           :identity    "reads_id"
           :fromOutputs {:submission_xml "submission_xml"}})))))
 
@@ -270,7 +270,7 @@
          {:skipValidation true}
          {:skipValidation true}
          {:workspace   "moo/moo"
-          :entity      "moo"
+          :entityType  "moo"
           :identity    "reads_id"
           :fromOutputs {:submission_xml "submission_xml"}})))))
 
@@ -315,36 +315,40 @@
 (def ^:private running-workflow-mock
   {:status           "Running"
    :workflowId       (str (UUID/randomUUID))
+   :entityName "entity"
    :inputResolutions [{:inputName (str method-name-mock ".input")
-                       :value     "value"}]
-   :workflowEntity   {:entityType "foo" :entityName "running"}})
+                       :value     "value"}]})
 
 (def ^:private succeeded-workflow-mock
   {:status         "Succeeded"
    :workflowId     (str (UUID/randomUUID))
+   :entityName     "entity"
    :inputResolutions [{:inputName (str method-name-mock ".input")
-                       :value     "value"}]
-   :workflowEntity {:entityType "foo" :entityName "running"}})
+                       :value     "value"}]})
 
 ;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
   (let [enqueue #(-> % (dissoc :workflowId) (assoc :staus "Queued"))]
     {:submissionId submission-id-mock
-     :workflows    [(enqueue running-workflow-mock) (enqueue succeeded-workflow-mock)]}))
+     :workflows    (map enqueue [running-workflow-mock succeeded-workflow-mock])}))
 
 ;; when we get the submission later, the workflows may have a uuid assigned
 (defn ^:private mock-firecloud-get-submission [& _]
-  {:submissionId submission-id-mock
-   :workflows    [running-workflow-mock succeeded-workflow-mock]})
+  (letfn [(add-workflow-entity [{:keys [entityName] :as workflow}]
+            (-> workflow
+                (assoc :workflowEntity {:entityType "test" :entityName entityName})
+                (dissoc :entityName)))]
+    {:submissionId submission-id-mock
+     :workflows   (map add-workflow-entity [running-workflow-mock succeeded-workflow-mock])}))
 
 (defn ^:private mock-firecloud-create-failed-submission [& _]
   {:submissionId submission-id-mock
-   :workflows    [{:status         "Failed"
-                   :uuid           (str (UUID/randomUUID))
-                   :workflowEntity {:entityType "foo" :entityName "failed"}}
-                  {:status         "Aborted"
-                   :uuid           (str (UUID/randomUUID))
-                   :workflowEntity {:entityType "foo" :entityName "aborted"}}]})
+   :workflows    [{:status     "Failed"
+                   :uuid       (str (UUID/randomUUID))
+                   :entityName "failed"}
+                  {:status     "Aborted"
+                   :uuid       (str (UUID/randomUUID))
+                   :entityName "aborted"}]})
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
@@ -523,7 +527,7 @@
         sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (->> {:name           "Terra Workspace"
                             :workspace      "workspace-ns/workspace-name"
-                            :entity         entity-type
+                            :entityType     entity-type
                             :fromOutputs    (resources/read-resource
                                              "sarscov2_illumina_full/entity-from-outputs.edn")
                             :identifier     "flowcell_id"
@@ -546,7 +550,7 @@
           (is (empty? rest) "More than one record was written")
           (is (= (:uuid workflow) (:workflow record))
               "The workflow UUID was not written")
-          (is (= [entity-type flowcell-id] (:entity record))
+          (is (= flowcell-id (:entity record))
               "The entity was not correct"))))))
 
 (deftest test-tdr-snapshot-list-to-edn

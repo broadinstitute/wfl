@@ -14,7 +14,7 @@
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.workloads                  :as workloads]
-            [wfl.environment                   :as env]
+            [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
@@ -120,11 +120,11 @@
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
   [status message exception {:keys [uri] :as _request}]
   {:status (or (:status (ex-data exception)) status)
-   :body   {:message   (or (.getMessage exception) message)
-            :uri       uri
-            :data      (ex-data exception)
-            :cause     (when-let [c (.getCause exception)]
-                         (ExceptionUtils/getRootCauseMessage c))}})
+   :body   (-> (when-let [cause (.getCause exception)]
+                 {:cause (ExceptionUtils/getRootCauseMessage cause)})
+               (merge {:uri     uri
+                       :message (or (.getMessage exception) message)
+                       :details (-> exception ex-data (dissoc :status))}))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."

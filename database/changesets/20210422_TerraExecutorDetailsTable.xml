@@ -21,7 +21,7 @@
                 reference     TEXT,        -- id of the snapshot reference in the workspace
                 submission    TEXT,        -- id of the Rawls submission
                 workflow      TEXT,        -- id of the Terra workflow
-                entity        TEXT[],      -- A (type, name) pair of the workflow entity
+                entity        TEXT,        -- name of the workflow entity
                 status        TEXT,        -- status of the Terra workflow
                 updated       TIMESTAMPTZ, -- status update time
                 consumed      TIMESTAMPTZ  -- time when consumed, null otherwise
