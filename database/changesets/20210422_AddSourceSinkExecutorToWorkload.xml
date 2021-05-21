@@ -9,19 +9,18 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="chengche@broadinstitute.org"
                dbms="postgresql"
-               id="20210510"
-               logicalFilePath="20210510_TerraSinkDetailsTable.xml"
+               id="20210422"
+               logicalFilePath="20210422_AddSourceSinkExecutorToWorkload.xml"
                runInTransaction="false">
-        <comment>
-            the details table of 'Terra' executor
-        </comment>
         <sql>
-            CREATE TYPE TerraWorkspaceSinkDetails AS (
-                id          BIGINT,      -- unique to this table
-                workflow    TEXT,        -- workflow id
-                entity      TEXT,        -- name the entity created
-                updated     TIMESTAMPTZ  -- status update time
-            )
+            ALTER TABLE workload
+            ADD COLUMN source_type     SOURCE,      -- type of this source
+            ADD COLUMN source_items    TEXT,        -- the identifier of the source table
+            ADD COLUMN executor_type   EXECUTOR,    -- type of this executor
+            ADD COLUMN executor_items  TEXT,        -- the identifier of the executor table
+            ADD COLUMN sink_type       SINK,        -- type of this sink
+            ADD COLUMN sink_items      TEXT,        -- the identifier of the sink table
+            ADD COLUMN updated         TIMESTAMPTZ; -- when was this workload updated in utc
         </sql>
     </changeSet>
 </databaseChangeLog>

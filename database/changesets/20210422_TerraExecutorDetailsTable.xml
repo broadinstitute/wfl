@@ -17,13 +17,14 @@
         </comment>
         <sql>
             CREATE TYPE TerraExecutorDetails AS (
-                id                     BIGINT,      -- unique to this table
-                snapshot_reference_id  TEXT,        -- id of the snapshot reference lives in the workspace
-                rawls_submission_id    TEXT,        -- id of the Rawls submission
-                workflow_id            TEXT,        -- id of the Terra workflow
-                workflow_status        TEXT,        -- status of the Terra workflow
-                updated                TIMESTAMPTZ, -- status update time
-                consumed               TIMESTAMPTZ  -- time when consumed, null otherwise
+                id            BIGINT,      -- unique to this table
+                reference     TEXT,        -- id of the snapshot reference in the workspace
+                submission    TEXT,        -- id of the Rawls submission
+                workflow      TEXT,        -- id of the Terra workflow
+                entity        TEXT,        -- name of the workflow entity
+                status        TEXT,        -- status of the Terra workflow
+                updated       TIMESTAMPTZ, -- status update time
+                consumed      TIMESTAMPTZ  -- time when consumed, null otherwise
             )
         </sql>
     </changeSet>

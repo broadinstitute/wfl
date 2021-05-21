@@ -14,10 +14,12 @@
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.workloads                  :as workloads]
-            [wfl.environment                   :as env]
+            [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl])
-  (:import (java.sql SQLException)))
+  (:import [java.sql SQLException]
+           [wfl.util UserException]
+           [org.apache.commons.lang3.exception ExceptionUtils]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -116,12 +118,13 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception request]
+  [status message exception {:keys [uri] :as _request}]
   {:status (or (:status (ex-data exception)) status)
-   :body {:message (or (.getMessage exception) message)
-          :exception (str (.getClass exception))
-          :data (ex-data exception)
-          :uri (:uri request)}})
+   :body   (-> (when-let [cause (.getCause exception)]
+                 {:cause (ExceptionUtils/getRootCauseMessage cause)})
+               (merge {:uri     uri
+                       :message (or (.getMessage exception) message)
+                       :details (-> exception ex-data (dissoc :status))}))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
@@ -139,6 +142,7 @@
     {;; ex-data with :type :wfl/exception
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
+     UserException                         (partial exception-handler 400 "")
        ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
        ;; handle clj-http Slingshot stone exceptions

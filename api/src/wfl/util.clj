@@ -224,6 +224,18 @@
   [coll key]
   (not (contains? coll key)))
 
+(defn unnilify
+  "Return a map containing only those non-nil entries in `map`."
+  [map]
+  {:pre [(map? map)]}
+  (into {} (filter second map)))
+
+(defn select-non-nil-keys
+  "Returns a map containing only those non-nil entries in `map` whose key is
+  in `keyseq`."
+  [map keyseq]
+  (unnilify (select-keys map keyseq)))
+
 (defn on
   "Apply the function `g` `on` the results of mapping the unary function `f`
   over each of the input arguments in `xs`.
@@ -494,30 +506,36 @@
    (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
 
 (gen-class
- :name         wfl.util.UserVisibleException
+ :name         wfl.util.UserException
  :extends      java.lang.Exception
  :implements   [clojure.lang.IExceptionInfo]
  :constructors {[String]                                       [String]
                 [String clojure.lang.IPersistentMap]           [String]
                 [String clojure.lang.IPersistentMap Throwable] [String Throwable]}
  :state        data
- :prefix       user-visible-exception-
+ :prefix       user-exception-
  :init         init)
 
-(defn ^:private user-visible-exception-init
+(defn ^:private user-exception-init
   ([message]            [[message] {}])
   ([message data]       [[message] data])
   ([message data cause] [[message cause] data]))
 
-(defn ^:private user-visible-exception-getData [this]
+(defn ^:private user-exception-getData [this]
   (.data this))
 
-(defn ^:private user-visible-exception-toString [this]
+(defn ^:private user-exception-toString [this]
   (let [data  (.getData this)
         cause (.getCause this)]
     (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))
       (and data (seq data)) (str " " data)
       cause                 (str " caused by " cause))))
+
+(defmulti to-edn
+  "Return an EDN representation of the `object` that will be shown to users."
+  (fn [object] (:type object)))
+
+(defmethod to-edn :default [x] x)
 
 (def digit?          (set "0123456789"))
 (def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))

@@ -10,6 +10,7 @@
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
+            [wfl.tools.resources        :as resources]
             [wfl.util                   :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
@@ -219,22 +220,24 @@
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
 
-(def ^:private covid-workload-request
+(defn ^:private covid-workload-request []
   "Build a covid workload request."
-  (let [dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8"
-        column  "run_date"
-        table   "flowcells"
-        workspace-template "CDC_Viral_Sequencing"
-        workspace-uniqued  "GPc586b76e8ef24a97b354cf0226dfe583"
-        workspace-namespace  "wfl-dev"
-        workspace-name (str/join "_" [workspace-template workspace-uniqued])
-        workspace      (str/join "/" [workspace-namespace workspace-name])
-        mc-namespace   "cdc-covid-surveillance"
-        mc-name        "sarscov2_illumina_full"
-        methodConfiguration (str/join "/" [mc-namespace mc-name])
-        source   (util/make-map column dataset table)
-        executor (util/make-map methodConfiguration workspace)
-        sink     (util/make-map workspace)]
+  (let [source   {:name    "Terra DataRepo"
+                  :dataset "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
+                  :table   "flowcells"
+                  :column  "last_modified_date"}
+        executor {:name                       "Terra"
+                  :workspace                  "wfl-dev/CDC_Viral_Sequencing"
+                  :methodConfiguration        "cdc-covid-surveillance/sarscov2_illumina_full"
+                  :methodConfigurationVersion 1
+                  :fromSource                 "importSnapshot"}
+        sink     {:name           "Terra Workspace"
+                  :workspace      "wfl-dev/CDC_Viral_Sequencing"
+                  :entityType     "flowcells"
+                  :identifier     "flowcell_id"
+                  :fromOutputs    (resources/read-resource
+                                   "sarscov2_illumina_full/entity-from-outputs.edn")
+                  :skipValidation true}]
     (workloads/covid-workload-request source executor sink)))
 
 (defn instantify-timestamps
@@ -244,10 +247,12 @@
 
 (deftest test-covid-workload
   (testing "/create covid workload"
-    (let [{:keys [creator started uuid] :as workload}
-          (-> covid-workload-request endpoints/create-workload
+    (let [workload-request (covid-workload-request)
+          {:keys [creator started uuid] :as workload}
+          (-> workload-request
+              endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
-      (is (s/valid? ::spec/covid-workload-request  covid-workload-request))
+      (is (s/valid? ::spec/covid-workload-request  workload-request))
       (is (s/valid? ::spec/covid-workload-response workload))
       (verify-internal-properties-removed workload)
       (is (not started))
@@ -274,6 +279,14 @@
                   (instantify-timestamps :created :started))]
           (is (s/valid? ::spec/covid-workload-response response))
           (is (inst? created))
-          (is (inst? started)))))))
+          (is (inst? started))))
+      (testing "/stop covid workload"
+        (let [{:keys [created started stopped] :as response}
+              (-> workload endpoints/stop-workload
+                  (instantify-timestamps :created :started :stopped))]
+          (is (s/valid? ::spec/covid-workload-response response))
+          (is (inst? created))
+          (is (inst? started))
+          (is (inst? stopped)))))))
 
 

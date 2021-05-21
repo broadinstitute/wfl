@@ -1,11 +1,11 @@
 (ns wfl.service.firecloud
   "Analyze data in Terra using the Firecloud/Terra API."
-  (:require [clj-http.client :as http]
+  (:require [clj-http.client   :as http]
             [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.auth :as auth]
-            [wfl.environment :as env]
-            [wfl.util :as util])
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.environment   :as env]
+            [wfl.util          :as util])
   (:import [java.util UUID]))
 
 (defn ^:private firecloud-url [& parts]
@@ -20,9 +20,9 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn get-workspace [workspace & parts]
+(defn workspace [workspace]
   {:pre [(some? workspace)]}
-  (apply get-workspace-json workspace parts))
+  (get-workspace-json workspace))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
@@ -106,19 +106,19 @@
 (defn get-submission
   "Return the submission in the Terra `workspace` with `submission-id`."
   [workspace submission-id]
-  (get-workspace workspace "submissions" submission-id))
+  (get-workspace-json workspace "submissions" submission-id))
 
 (defn get-workflow
   "Query the `firecloud-url` for the the `workflow` created by the `submission`
    in the Terra `workspace`."
   [workspace submission-id workflow-id]
-  (get-workspace workspace "submissions" submission-id "workflows" workflow-id))
+  (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id))
 
 (defn get-workflow-outputs
   "Query the `firecloud-url` for the outputs of the `workflow` created by
    the `submission` in the Terra `workspace`."
   [workspace submission-id workflow-id]
-  (get-workspace workspace "submissions" submission-id "workflows" workflow-id "outputs"))
+  (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id "outputs"))
 
 (defn get-workflow-status-by-entity
   "Get workflow status given a Terra submission-id and entity-name."
@@ -218,12 +218,13 @@
 (defn list-method-configurations
   "List all method configurations in the `workspace`."
   [workspace]
-  (get-workspace workspace "methodconfigs?allRepos=true"))
+  (get-workspace-json workspace "methodconfigs?allRepos=true"))
 
 (defn get-method-configuration
   "Return the `methodconfig` in the `workspace`."
   [workspace methodconfig]
-  (get-workspace workspace "method_configs" methodconfig))
+  {:pre [(every? some? [workspace methodconfig])]}
+  (get-workspace-json workspace "method_configs" methodconfig))
 
 (defn update-method-configuration
   "Update the method-configuration `method-config-name` to be `methodconfig` in
@@ -238,12 +239,12 @@
 (defn list-entities
   "List all entities with `entity-type` in `workspace`."
   [workspace entity-type]
-  (get-workspace workspace "entities" entity-type))
+  (get-workspace-json workspace "entities" entity-type))
 
 (defn list-entity-types
   "List the entity types along with their attributes in `workspace`."
   [workspace]
-  (get-workspace workspace "entities"))
+  (get-workspace-json workspace "entities"))
 
 (defn describe-workflow
   "Get a machine-readable description of the `workflow`, including its inputs
