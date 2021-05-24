@@ -1,6 +1,7 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [clojure.edn :as edn]
+  (:require [clojure.data :as data]
+            [clojure.edn :as edn]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -961,17 +962,24 @@
 
 (defn verify-terra-sink!
   "Verify that the WFL has access the `workspace`."
-  [{:keys [workspace entityType skipValidation] :as sink}]
-  (if skipValidation
-    sink
-    (do (when-not (do-or-nil (firecloud/workspace workspace))
-          (throw (UserException. "Cannot access workspace"
-                                 (util/make-map workspace))))
-        (let [types (->> workspace firecloud/list-entity-types keys set)]
-          (when-not (-> entityType keyword types)
-            (throw (UserException. "Entity not found"
-                                   (util/make-map entityType types workspace)))))
-        sink)))
+  [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
+  (when-not skipValidation
+    (when-not (do-or-nil (firecloud/workspace workspace))
+      (throw (UserException. "Cannot access workspace"
+                             (util/make-map workspace))))
+    (let [entity-type  (keyword entityType)
+          entity-types (firecloud/list-entity-types workspace)
+          types        (-> entity-types keys set)]
+      (when-not (types entity-type)
+        (throw (UserException. "Entity not found"
+                               (util/make-map entityType types workspace))))
+      (let [attributes    (get-in entity-types [entity-type :attributeNames])
+            [missing _ _] (data/diff (set (vals fromOutputs)) (set attributes))]
+        (when (seq missing)
+          (throw (UserException. "Attributes missing for these outputs"
+                                 {:attributes (sort attributes)
+                                  :missing    (sort missing)}))))))
+  sink)
 
 ;; visible for testing
 (defn rename-gather
