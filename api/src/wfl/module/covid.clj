@@ -974,7 +974,8 @@
             [missing _ _] (data/diff (set (vals fromOutputs)) (set attributes))]
         (when (seq missing)
           (throw (UserException. "Attributes missing for these outputs"
-                                 (util/make-map missing)))))))
+                                 {:attributes (sorted attributes)
+                                  :missing    (sorted missing)}))))))
   sink)
 
 ;; visible for testing
