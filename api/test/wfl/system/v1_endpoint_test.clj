@@ -233,7 +233,7 @@
                   :fromSource                 "importSnapshot"}
         sink     {:name           "Terra Workspace"
                   :workspace      "wfl-dev/CDC_Viral_Sequencing"
-                  :entityType     "flowcells"
+                  :entityType     "assemblies"
                   :identifier     "flowcell_id"
                   :fromOutputs    (resources/read-resource
                                    "sarscov2_illumina_full/entity-from-outputs.edn")
@@ -288,5 +288,3 @@
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))
-
-
