@@ -127,19 +127,16 @@
         (test-start-workload (create-copyfile-workload src dst))))))
 
 (defn ^:private test-stop-workload
-  [{:keys [uuid pipeline] :as workload}]
-  (letfn [(verify-no-workflows-run [workload]
-            (is (:finished workload))
-            (let [workflows (endpoints/get-workflows workload)]
-              (is (every? (comp nil? :uuid) workflows))
-              (is (every? (comp nil? :status) workflows))))]
-    (testing (format "calling api/v1/start with %s workload" pipeline)
-      (let [workload (endpoints/stop-workload workload)]
-        (is (= uuid (:uuid workload)))
-        (is (not (:started workload)))
-        (is (:stopped workload))
-        (verify-internal-properties-removed workload)
-        (workloads/when-done verify-no-workflows-run workload)))))
+  [{:keys [pipeline] :as workload}]
+  (testing (format "calling /stop with %s workload before /start" pipeline)
+    (is (thrown-with-msg?
+         ExceptionInfo #"400"
+         (endpoints/stop-workload workload)))
+    (testing (format "calling /stop with %s workload after /start" pipeline)
+      (let [workload (endpoints/stop-workload
+                      (endpoints/start-workload workload))]
+        (is (:started workload))
+        (is (:stopped workload))))))
 
 (deftest ^:parallel test-stop-wgs-workload
   (test-stop-workload (create-wgs-workload)))
@@ -245,7 +242,7 @@
   [m & ks]
   (reduce (fn [m k] (update m k instant/read-instant-timestamp)) m ks))
 
-(deftest test-covid-workload
+(deftest ^:private test-covid-workload
   (testing "/create covid workload"
     (let [workload-request (covid-workload-request)
           {:keys [creator started uuid] :as workload}
