@@ -964,9 +964,7 @@
   "Verify that the WFL has access the `workspace`."
   [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
   (when-not skipValidation
-    (when-not (do-or-nil (firecloud/workspace workspace))
-      (throw (UserException. "Cannot access workspace"
-                             (util/make-map workspace))))
+    (workspace-or-throw workspace)
     (let [entity-type  (keyword entityType)
           entity-types (firecloud/list-entity-types workspace)
           types        (-> entity-types keys set)]
