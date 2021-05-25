@@ -16,21 +16,21 @@ below for all options.
 
 External Exome Reprocessing workload supports the following API endpoints:
 
-| Verb | Endpoint                     | Description                                                    |
-|------|------------------------------|----------------------------------------------------------------|
-| GET  | `/api/v1/workload`           | List all workloads                                             |
-| GET  | `/api/v1/workload/{uuid}`    | Query for a workload by its UUID                               |
-| GET  | `/api/v1/workload/{project}` | Query for a workload by its Project name                       |
-| POST | `/api/v1/create`             | Create a new workload                                          |
-| POST | `/api/v1/start`              | Start a workload                                               |
-| POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
+| Verb | Endpoint                            | Description                                                    |
+|------|-------------------------------------|----------------------------------------------------------------|
+| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project    |
+| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for a specified workload uuid               |
+| POST | `/api/v1/create`                    | Create a new workload                                          |
+| POST | `/api/v1/start`                     | Start a workload                                               |
+| POST | `/api/v1/stop`                      | Stop a running workload                                        |
+| POST | `/api/v1/exec`                      | Create and start (execute) a workload                          |
 
 ???+ warning "Permissions in production"
     External Exome Reprocessing in `gotc-prod` uses a set of execution projects, please refer to 
     [this page](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
     when you have questions about permissions.
 
-### Create Workload: `/api/v1/create`
+### Create Workload: `POST /api/v1/create`
 Create a new workload. Ensure that `workflow-launcher` and `cromwell`'s service
 accounts have at least read access to the input files.
 
@@ -63,15 +63,6 @@ accounts have at least read access to the input files.
       "release" : "ExternalExomeReprocessing_vX.Y.Z",
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-      "workflows" : [ {
-        "inputs" : {
-          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-          "sample_name" : "NA12878_PLUMBING",
-          "base_file_name" : "NA12878_PLUMBING.cram",
-          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-        }
-      } ],
       "commit" : "commit-ish",
       "project" : "Example Project",
       "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
@@ -84,7 +75,7 @@ Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
 "workflowOptions" via the `options` map. See the
 [reference page](./usage-workflow-options) for more information.
 
-### Start Workload: `/api/v1/start`
+### Start Workload: `POST /api/v1/start`
 
 Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.
@@ -109,18 +100,6 @@ particular input cram, WFL will not re-submit that workflow.
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-      "workflows" : [ {
-        "status" : "Submitted",
-        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-        "inputs" : {
-          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-          "sample_name" : "NA12878_PLUMBING",
-          "base_file_name" : "NA12878_PLUMBING.cram",
-          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-        }
-      } ],
       "commit" : "commit-ish",
       "project" : "Example Project",
       "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
@@ -129,7 +108,40 @@ particular input cram, WFL will not re-submit that workflow.
     }
     ```
 
-### Exec Workload: `/api/v1/exec`
+### Stop Workload: `POST /api/v1/stop`
+
+Included for compatibility with continuous workloads. 
+
+=== "Request"
+
+    ```bash
+    curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
+         -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+         -H 'Content-Type: application/json' \
+         -d '{ "uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c" }'
+    ```
+
+=== "Response"
+
+    ```json
+    {
+      "creator" : "user@domain",
+      "pipeline" : "ExternalExomeReprocessing",
+      "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+      "release" : "ExternalExomeReprocessing_vX.Y.Z",
+      "created" : "YYYY-MM-DDTHH:MM:SSZ",
+      "started" : "YYYY-MM-DDTHH:MM:SSZ",
+      "stopped" : "YYYY-MM-DDTHH:MM:SSZ",
+      "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+      "commit" : "commit-ish",
+      "project" : "Example Project",
+      "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+      "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+      "version" : "X.Y.Z"
+    }
+    ```
+
+### Exec Workload: `POST /api/v1/exec`
 
 Creates and then starts a Cromwell workflow for each item in the workload.
 
@@ -163,18 +175,6 @@ Creates and then starts a Cromwell workflow for each item in the workload.
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-      "workflows" : [ {
-        "status" : "Submitted",
-        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-        "inputs" : {
-            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-            "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-            "sample_name" : "NA12878_PLUMBING",
-            "base_file_name" : "NA12878_PLUMBING.cram",
-            "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-          }
-      } ],
       "commit" : "commit-ish",
       "project" : "Example Project",
       "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
@@ -183,7 +183,7 @@ Creates and then starts a Cromwell workflow for each item in the workload.
     }
     ```
 
-### Query Workload: `/api/v1/workload?uuid=<uuid>`
+### Query Workload: `GET /api/v1/workload?uuid=<uuid>`
 
 Queries the WFL database for workloads. Specify the uuid to query for a specific workload.
 
@@ -205,18 +205,6 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-      "workflows" : [ {
-        "status" : "Submitted",
-        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-        "inputs" : {
-          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-          "sample_name" : "NA12878_PLUMBING",
-          "base_file_name" : "NA12878_PLUMBING.cram",
-          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-        }
-      } ],
       "commit" : "commit-ish",
       "project" : "Example Project",
       "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
@@ -225,12 +213,7 @@ Queries the WFL database for workloads. Specify the uuid to query for a specific
     }]
     ```
 
-The "workflows" field lists out each Cromwell workflow that was started, and
-includes their status information. It is also possible to use the Job Manager
-to check workflow progress and easily see information about any workflow
-failures.
-
-### Query Workload with project: `/api/v1/workload?project=<project>`
+### Query Workload with project: `GET /api/v1/workload?project=<project>`
 
 Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).
 
@@ -252,18 +235,6 @@ Queries the WFL database for workloads. Specify the project name to query for a 
       "created" : "YYYY-MM-DDTHH:MM:SSZ",
       "started" : "YYYY-MM-DDTHH:MM:SSZ",
       "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
-      "workflows" : [ {
-        "status" : "Submitted",
-        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
-        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
-        "inputs" : {
-          "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
-          "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
-          "sample_name" : "NA12878_PLUMBING",
-          "base_file_name" : "NA12878_PLUMBING.cram",
-          "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
-        }
-      } ],
       "commit" : "commit-ish",
       "project" : "Example Project",
       "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
@@ -272,15 +243,43 @@ Queries the WFL database for workloads. Specify the project name to query for a 
     }]
     ```
 
-The "workflows" field lists out each Cromwell workflow that was started, and
-includes their status information. It is also possible to use the Job Manager
-to check workflow progress and easily see information about any workflow
-failures.
-
 !!! warning "Note"
     `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.
+
+### List Workflows in a Workload: `GET /api/v1/workload/{uuid}/workflows`
+
+Returns the workflows created and managed by the workload with `uuid`.
+
+=== "Request"
+
+    ```bash
+    curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload/1337254e-f7d8-438d-a2b3-a74b199fee3c/workflows' \
+         -H "Authorization: Bearer $(gcloud auth print-access-token)"
+    ```
+
+=== "Response"
+
+    ```json
+    [{
+        "status" : "Submitted",
+        "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+        "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+        "inputs" : {
+            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+            "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+            "sample_name" : "NA12878_PLUMBING",
+            "base_file_name" : "NA12878_PLUMBING.cram",
+            "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+        }
+    }]
+    ```
+
+"workflows" lists out each workflow managed by this workload,
+including their status. It is also possible to use the Job Manager
+to check workflow progress and easily see information about any workflow
+failures.
 
 ## A1 External Exome Workload-Request JSON Spec
 ```json
