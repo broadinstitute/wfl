@@ -130,7 +130,7 @@
   [{:keys [pipeline] :as workload}]
   (testing (format "calling /stop with %s workload before /start" pipeline)
     (is (thrown-with-msg?
-         ExceptionInfo #""
+         ExceptionInfo #"400"
          (endpoints/stop-workload workload)))
     (testing (format "calling /stop with %s workload after /start" pipeline)
       (let [workload (endpoints/stop-workload
