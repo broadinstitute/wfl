@@ -20,7 +20,7 @@
           (str filename " does not have the expected mime-type")))))
 
 (deftest test-workflow-mime-types
-  (let [exclude? #{"gs://broad-gotc-dev-wfl-ptc-test-inputs/sarscov2_illumina_full/outputs/call-demux_deplete/demux_deplete/955c74b3-854a-4075-839f-856d0f41e020/call-sra_meta_prep/write_lines_bc5302b8fdd987961b17ced77e1da4ab.tmp"}
+  (let [exclude? #{"gs://fc-f9083173-1e35-4c1b-9d80-d837d6d12283/475d0a1d-20c0-42a1-968a-7540b79fcf0c/sarscov2_illumina_full/2768b29e-c808-4bd6-a46b-6c94fd2a67aa/call-demux_deplete/demux_deplete/7045e3bd-cf81-401d-b7da-4eee334cc937/call-sra_meta_prep/cacheCopy/write_lines_0128f217b922021a3b05cdc678f982d2.tmp"}
         cases [[(resources/read-resource "assemble_refbased/outputs.edn")
                 (-> "assemble_refbased.edn" resources/read-resource :outputs)]
                [(resources/read-resource "sarscov2_illumina_full/outputs.edn")

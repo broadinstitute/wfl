@@ -1,15 +1,17 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.json     :as json]
+  (:require [clojure.data.csv      :as csv]
+            [clojure.data.json     :as json]
             [clojure.java.io       :as io]
             [clojure.java.shell    :as shell]
+            [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [clojure.tools.logging :as log]
             [wfl.wfl               :as wfl])
-  (:import [java.io File Writer IOException]
+  (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime Clock LocalDate]
+           [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
@@ -21,14 +23,7 @@
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn x# "Swallowed exception and returned nil in wfl.util/do-or-nil"))))
-
-(defmacro do-or-nil-silently
-  "Value of `body` or `nil` if it throws, without logging exceptions.
-  See also [[do-or-nil]]."
-  [& body]
-  `(try (do ~@body)
-        (catch Exception x#)))
+          (log/warn x# "from wfl.util/do-or-nil"))))
 
 ;; Parsers that will not throw.
 ;;
@@ -229,6 +224,18 @@
   [coll key]
   (not (contains? coll key)))
 
+(defn unnilify
+  "Return a map containing only those non-nil entries in `map`."
+  [map]
+  {:pre [(map? map)]}
+  (into {} (filter second map)))
+
+(defn select-non-nil-keys
+  "Returns a map containing only those non-nil entries in `map` whose key is
+  in `keyseq`."
+  [map keyseq]
+  (unnilify (select-keys map keyseq)))
+
 (defn on
   "Apply the function `g` `on` the results of mapping the unary function `f`
   over each of the input arguments in `xs`.
@@ -389,17 +396,6 @@
   (letfn [(make-part [[k v]] {:name (name k) :content v})]
     (map make-part parts)))
 
-(defn today
-  "Return a ^LocalDate of today's date in UTC."
-  []
-  (LocalDate/now (Clock/systemUTC)))
-
-(defn days-from-today
-  "Return n-days from today's date in ^LocalDate, either
-   backward or forward depends on the sign of n."
-  [^Integer n]
-  (.plus (today) n ChronoUnit/DAYS))
-
 (defn randomize
   "Append a random suffix to `string`."
   [string]
@@ -432,3 +428,134 @@
    (poll task seconds 3))
   ([task]
    (poll task 1)))
+
+"A set of all mutually supported TSV file types (by FireCloud and WFL)"
+(s/def ::tsv-type #{:entity :membership})
+
+(defn terra-id
+  "
+  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+
+  The first column of the table must be its primary key, and named accordingly:
+    entity:[entity-type]_id
+    membership:[entity-type]_set_id
+
+  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data into a `sample` table
+  in the workspace (or create one if it does not exist).
+  If the table already contains a sample with that id, it will get overwritten.
+
+  For tsv-type :membership, 'membership:sample_set_id' will append sample names to a `sample_set` table
+  in the workspace (or create one if it does not exist).
+  If the table already contains a sample set with that id, it will be appended to and not overwritten.
+
+  Parameters
+  ----------
+    tsv-type - A member of ::tsv-type
+    col      - Entity name or primary key column base
+
+  Examples
+  --------
+    (terra_id :entity \"flowcell\")
+    (terra_id :membership \"flowcell\")
+  "
+  [tsv-type col]
+  {:pre [(s/valid? ::tsv-type tsv-type)]}
+  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
+    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+
+(defn columns-rows->tsv
+  "
+  Write COLUMNS and ROWS to a .tsv named FILE, or to bytes if FILE not specified.
+
+  Examples
+  --------
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
+    (columns-rows->tsv [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"destination.tsv\")
+  "
+  ([columns rows file]
+   (with-open [writer (io/writer file)]
+     (csv/write-csv writer columns :separator \tab)
+     (csv/write-csv writer rows :separator \tab)
+     file))
+  ([columns rows]
+   (str (columns-rows->tsv columns rows (StringWriter.)))))
+
+(defn columns-rows->terra-tsv
+  "
+  Write COLUMNS and ROWS to a .tsv named FILE in a Terra-compatible format
+  as dictated by TSV-TYPE, or to bytes if FILE not specified.
+
+  Parameters
+  ----------
+    tsv-type - A member of ::tsv-type
+    columns  - Column names (first will be formatted as primary key identifier)
+    rows     - Rows with element counts matching the column count
+    file     - [optional] TSV file name to dump
+
+  Examples
+  --------
+    (columns-rows->terra-tsv :entity [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...])
+    (columns-rows->terra-tsv :membership [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"dest.tsv\")
+  "
+  ([tsv-type columns rows file]
+   {:pre [(s/valid? ::tsv-type tsv-type)]}
+   (letfn [(format-entity-type [[head & rest]]
+             (cons (terra-id tsv-type head) rest))]
+     (columns-rows->tsv [(format-entity-type columns)] rows file)))
+  ([tsv-type columns rows]
+   (str (columns-rows->terra-tsv tsv-type columns rows (StringWriter.)))))
+
+(gen-class
+ :name         wfl.util.UserException
+ :extends      java.lang.Exception
+ :implements   [clojure.lang.IExceptionInfo]
+ :constructors {[String]                                       [String]
+                [String clojure.lang.IPersistentMap]           [String]
+                [String clojure.lang.IPersistentMap Throwable] [String Throwable]}
+ :state        data
+ :prefix       user-exception-
+ :init         init)
+
+(defn ^:private user-exception-init
+  ([message]            [[message] {}])
+  ([message data]       [[message] data])
+  ([message data cause] [[message cause] data]))
+
+(defn ^:private user-exception-getData [this]
+  (.data this))
+
+(defn ^:private user-exception-toString [this]
+  (let [data  (.getData this)
+        cause (.getCause this)]
+    (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))
+      (and data (seq data)) (str " " data)
+      cause                 (str " caused by " cause))))
+
+(defmulti to-edn
+  "Return an EDN representation of the `object` that will be shown to users."
+  (fn [object] (:type object)))
+
+(defmethod to-edn :default [x] x)
+
+(def digit?          (set "0123456789"))
+(def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
+(def uppercase?      (set (map #(Character/toUpperCase %) lowercase?)))
+(def letter?         (into lowercase? uppercase?))
+(def alphanumeric?   (into letter? digit?))
+(def spaceunderdash? (set " _-"))
+(def terra-allowed?  (into alphanumeric? spaceunderdash?))
+(def terra-name?     (partial every? terra-allowed?))
+
+(defn terra-namespaced-name?
+  "Return nil or the Terra [namespace name] pair in NAMESPACE-NAME."
+  [namespace-name]
+  (let [[namespace name & more] (str/split namespace-name #"/" 3)]
+    (when (and (nil? more)
+               (seq namespace) (seq name)
+               (terra-name? namespace) (terra-name? name))
+      [namespace name])))
+
+(defmacro make-map
+  "Map SYMBOLS as keywords to their values in the environment."
+  [& symbols]
+  (zipmap (map keyword symbols) symbols))

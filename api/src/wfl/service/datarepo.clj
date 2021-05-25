@@ -27,6 +27,7 @@
 (defn dataset
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
+  {:pre [(some? dataset-id)]}
   (get-repository-json "datasets" dataset-id))
 
 (defn ^:private ingest
@@ -96,6 +97,18 @@
   ([job-id]
    (poll-job job-id 5)))
 
+(defn get-job-metadata-when-done
+  "Nil or the metadata of job with `job-id` when done."
+  [job-id]
+  (let [metadata (get-repository-json "jobs" job-id)]
+    (when-not (-> metadata :job_status #{"running"})
+      metadata)))
+
+(defn get-job-result
+  "Get the result of job with `job-id`."
+  [job-id]
+  (get-repository-json "jobs" job-id "result"))
+
 (defn create-dataset
   "Create a dataset with EDN `dataset-request` and return the id
    of the created dataset. See `DatasetRequestModel` in the
@@ -122,6 +135,18 @@
       :id
       poll-job))
 
+(defn create-snapshot-job
+  "Return snapshot creation job-id defined by `snapshot-request` right away.
+   See `SnapshotRequestModel` in the DataRepo swagger page for more information.
+   https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
+  [snapshot-request]
+  (-> (repository "snapshots")
+      (http/post {:headers      (auth/get-service-account-header)
+                  :content-type :application/json
+                  :form-params  snapshot-request})
+      util/response-body-json
+      :id))
+
 ;; Note the TDR is under active development, the endpoint spec is getting
 ;; changed so the spec in this function is not consistent with the TDR Swagger
 ;; page in order to make the request work.
@@ -131,12 +156,8 @@
    See `SnapshotRequestModel` in the DataRepo swagger page for more information.
    https://jade.datarepo-dev.broadinstitute.org/swagger-ui.html#/"
   [snapshot-request]
-  (-> (repository "snapshots")
-      (http/post {:headers      (auth/get-service-account-header)
-                  :content-type :application/json
-                  :form-params  snapshot-request})
-      util/response-body-json
-      :id
+  (-> snapshot-request
+      create-snapshot-job
       poll-job
       :id))
 
@@ -176,7 +197,8 @@
   (get-repository-json "snapshots" snapshot-id))
 
 (defn all-columns
-  "Return all of the columns of `table` in `dataset` content."
+  "Helper function to parse all of the columns
+   of `table` in `dataset` body."
   [dataset table]
   (->> (get-in dataset [:schema :tables])
        (filter #(= (:name %) table))
@@ -189,15 +211,14 @@
   "Return a snapshot request for `row-ids`and `columns` from `table` name
    in `_dataset`."
   [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
-  (let [row-ids (vec row-ids)]
-    {:contents    [{:datasetName name
-                    :mode        "byRowId"
-                    :rowIdSpec   {:tables   [{:columns columns
-                                              :rowIds	 row-ids
-                                              :tableName table}]}}]
-     :description description
-     :name        name
-     :profileId   defaultProfileId}))
+  {:contents    [{:datasetName name
+                  :mode        "byRowId"
+                  :rowIdSpec   {:tables [{:columns   columns
+                                          :rowIds    row-ids
+                                          :tableName table}]}}]
+   :description description
+   :name        name
+   :profileId   defaultProfileId})
 
 ;; hack - TDR adds the "datarepo_" prefix to the dataset name in BigQuery
 ;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
@@ -224,22 +245,24 @@
         (query-table-impl dataset table))))
 
 (defn ^:private query-table-between-impl
-  [{:keys [dataProject] :as dataset} table [start end] col-spec]
-  (let [bq-name (bigquery-name dataset)
-        query   "SELECT %s
-                 FROM   `%s.%s.%s`
-                 WHERE  datarepo_ingest_date > '%s'
-                 AND    datarepo_ingest_date <= '%s'"]
-    (->> (format query col-spec dataProject bq-name table start end)
-         (bigquery/query-sync dataProject))))
+  [{:keys [dataProject] :as dataset} table between [start end] col-spec]
+  (let [[table between] (map name [table between])
+        bq-name (bigquery-name dataset)
+        query   (str/join \newline ["SELECT %s"
+                                    "FROM `%s.%s.%s`"
+                                    "WHERE %s BETWEEN '%s' AND '%s'"])]
+    (-> query
+        (format col-spec dataProject bq-name table between start end)
+        (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table-between
-  "Query everything or optionally the `columns` in `table` in the Terra DataRepo
-   `dataset` in the open-closed `interval` of `datarepo_ingest_date`, where
-   `dataset` is a DataRepo dataset or a snapshot of a dataset. If no rows match
-   the `interval`, TDR will respond with error 400."
-  ([dataset table interval]
-   (query-table-between-impl dataset table interval "*"))
-  ([dataset table interval columns]
-   (->> (util/to-comma-separated-list (map name columns))
-        (query-table-between-impl dataset table interval))))
+  "Return rows from `table` of `dataset`, where `dataset` can name a
+  snapshot and values in the `between` column fall within `interval`.
+  Select `columns` from matching rows when specified.  A 400 response
+  means no rows matched the query."
+  ([dataset table between interval]
+   (query-table-between-impl dataset table between interval "*"))
+  ([dataset table between interval columns]
+   (->> (map name columns)
+        util/to-comma-separated-list
+        (query-table-between-impl dataset table between interval))))

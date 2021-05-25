@@ -1,9 +1,8 @@
 (ns wfl.api.workloads
-  (:require [clojure.string :as str]
-            [wfl.jdbc :as jdbc]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [clojure.tools.logging :as log]))
+  (:require [clojure.string        :as str]
+            [clojure.tools.logging :as log]
+            [wfl.jdbc              :as jdbc]
+            [wfl.util              :as util]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -29,6 +28,14 @@
 (defmulti update-workload!
   "(transaction workload) -> workload"
   (fn [_ body] (:pipeline body)))
+
+(defmulti workflows
+  "Use `tx` to return the workflows managed by the `workload`."
+  (fn [tx workload] (:pipeline workload)))
+
+(defmulti to-edn
+  "Return an EDN representation of the `workload` that will be shown to users."
+  (fn [workload] (:pipeline workload)))
 
 ;; loading utilities
 (defmulti load-workload-impl
@@ -91,11 +98,12 @@
 ;; :default implementations
 (defmethod create-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as body}]
   (throw
    (ex-info "Failed to create workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:cause    body
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default
@@ -126,21 +134,26 @@
             {:cause body
              :type  ::invalid-pipeline})))
 
-(defn default-load-workload-impl
-  [tx workload]
-  (letfn [(unnilify [m] (into {} (filter second m)))
-          (split-inputs [m]
-            (let [keep [:id :finished :status :updated :uuid :options]]
-              (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
-          (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (postgres/get-table tx (:items workload))
-         (mapv (comp unnilify split-inputs load-options))
-         (assoc workload :workflows)
-         unnilify)))
+(defmethod to-edn
+  :default
+  [{:keys [pipeline] :as workload}]
+  (throw
+   (ex-info "Failed to coerce workload to EDN - no such pipeline"
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
-(defoverload load-workload-impl :default default-load-workload-impl)
+(defmethod load-workload-impl
+  :default
+  [_ body]
+  (throw
+   (ex-info "Failed to load workload - no such pipeline"
+            {:cause body
+             :type  ::invalid-pipeline})))
 
 ;; Common workload operations
+(defoverload util/to-edn :workload to-edn)
+
 (defn saved-before?
   "Test if the `_workload` was saved before the `reference` version string.
    Version strings must be in the form \"major.minor.patch\"."

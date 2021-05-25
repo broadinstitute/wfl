@@ -1,15 +1,16 @@
 (ns wfl.tools.endpoints
-  (:require [clj-http.client :as http]
-            [clojure.data.json :as json]
-            [wfl.auth :as auth]
-            [wfl.environment :as env]
-            [wfl.util :as util]))
+  (:require [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [clj-http.client   :as http]
+            [wfl.auth          :as auth]
+            [wfl.environment   :as env]
+            [wfl.util          :as util]))
 
 (defn ^:private wfl-url
   "The WFL server URL to test."
   [& parts]
-  (let [url (env/getenv "WFL_WFL_URL")]
-    (apply str url parts)))
+  (let [url (util/de-slashify (env/getenv "WFL_WFL_URL"))]
+    (str/join "/" (cons url parts))))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
@@ -33,14 +34,20 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+(defn get-workflows
+  "Query v1 api for all workflows managed by `_workload`."
+  [{:keys [uuid] :as _workload}]
+  (-> (wfl-url "/api/v1/workload/" uuid "/workflows")
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
 (defn create-workload
   "Create workload defined by WORKLOAD"
   [workload]
   (-> (wfl-url "/api/v1/create")
       (http/post {:headers      (auth/get-auth-header)
                   :content-type :application/json
-                  :body         (json/write-str workload
-                                                :escape-slash false)})
+                  :body         (json/write-str workload :escape-slash false)})
       util/response-body-json))
 
 (defn start-workload

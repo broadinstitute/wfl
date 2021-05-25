@@ -1,24 +1,25 @@
 (ns wfl.tools.workloads
-  (:require [clojure.string :as str]
+  (:require [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
-            [wfl.auth :as auth]
-            [wfl.environment :as env]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.aou :as aou]
-            [wfl.module.arrays :as arrays]
-            [wfl.module.copyfile :as cp]
-            [wfl.module.sg :as sg]
-            [wfl.module.wgs :as wgs]
-            [wfl.module.xx :as xx]
-            [wfl.service.clio :as clio]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.google.storage :as gcs]
-            [wfl.tools.endpoints :as endpoints]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.util :as util :refer [shell!]])
-  (:import (java.time OffsetDateTime)
-           (java.util.concurrent TimeoutException)
-           (java.util UUID)))
+            [wfl.auth                       :as auth]
+            [wfl.environment                :as env]
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.aou                 :as aou]
+            [wfl.module.arrays              :as arrays]
+            [wfl.module.copyfile            :as cp]
+            [wfl.module.covid               :as covid]
+            [wfl.module.sg                  :as sg]
+            [wfl.module.wgs                 :as wgs]
+            [wfl.module.xx                  :as xx]
+            [wfl.service.clio               :as clio]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.google.storage     :as gcs]
+            [wfl.service.postgres           :as postgres]
+            [wfl.tools.endpoints            :as endpoints]
+            [wfl.util                       :as util :refer [shell!]])
+  (:import [java.time OffsetDateTime]
+           [java.util.concurrent TimeoutException]
+           [java.util UUID]))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))
 
@@ -124,6 +125,36 @@
    :project  @project
    :items    [{:inputs {:src src :dst dst}}]})
 
+(defn covid-workload-request
+  "Make a COVID Sarscov2IlluminaFull workload creation request."
+  ([source executor sink]
+   {:source   (merge
+               {:name    "Terra DataRepo",
+                :dataset ""
+                :table   ""
+                :column  ""}
+               source)
+    :executor (merge
+               {:name                       "Terra"
+                :workspace                  "namespace/name"
+                :methodConfiguration        ""
+                :methodConfigurationVersion 0
+                :fromSource                 ""}
+               executor)
+    :sink     (merge
+               {:name        "Terra Workspace"
+                :workspace   "namespace/name"
+                :entityType  ""
+                :fromOutputs {}
+                :identifier  ""}
+               sink)
+    :pipeline covid/pipeline
+    :project  @project
+    :creator  @email
+    :labels   ["hornet:test"]})
+  ([]
+   (covid-workload-request {} {} {})))
+
 (defn xx-workload-request
   [identifier]
   "A whole genome sequencing workload used for testing."
@@ -223,13 +254,13 @@
   (letfn [(finished? [{:keys [status] :as workflow}]
             (let [skipped? #(-> % :uuid util/uuid-nil?)]
               (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
-    (let [interval 10
-          timeout  3600]                ; 1 hour
+    (let [interval 60
+          timeout  4800]                ; 80 minutes
       (loop [elapsed 0 wl workload]
         (when (> elapsed timeout)
           (throw (TimeoutException.
                   (format "Timed out waiting for workload %s" uuid))))
-        (if (or (:finished workload) (every? finished? (:workflows wl)))
+        (if (or (:finished workload) (every? finished? (endpoints/get-workflows wl)))
           (done! wl)
           (do
             (log/infof "Waiting for workload %s to complete" uuid)
@@ -238,42 +269,46 @@
                    (endpoints/get-workload-status uuid))))))))
 
 (defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/create-workload! tx workload-request)))
 
 (defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/start-workload! tx workload)))
 
 (defn stop-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/stop-workload! tx workload)))
 
 (defn execute-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/execute-workload! tx workload-request)))
 
 (defn update-workload! [workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/update-workload! tx workload)))
 
+(defn workflows [workload]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (wfl.api.workloads/workflows tx workload)))
+
 (defn load-workload-for-uuid [uuid]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workload-for-uuid tx uuid)))
 
 (defn load-workload-for-id [id]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workload-for-id tx id)))
 
 (defn load-workloads-with-project [project]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (wfl.api.workloads/load-workloads-with-project tx project)))
 
 (defn append-to-workload! [samples workload]
-  (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (aou/append-to-workload! tx samples workload)))
 
-(defmulti  postcheck
+(defmulti postcheck
   "Implement this to validate `workload` after all workflows complete."
   (fn [workload] (:pipeline workload)))
 

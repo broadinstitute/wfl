@@ -1,19 +1,18 @@
 (ns wfl.integration.modules.sg-test
-  (:require [clojure.string :as str]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [clojure.string                 :as str]
+            [clojure.test                   :refer :all]
             [wfl.integration.modules.shared :as shared]
-            [wfl.module.batch :as batch]
-            [wfl.module.sg :as sg]
-            [wfl.service.clio :as clio]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.google.storage :as gcs]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util :refer [absent?]]
-            [wfl.service.postgres :as postgres]
-            [wfl.jdbc :as jdbc])
-  (:import (java.time OffsetDateTime)
-           (java.util UUID)))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.batch               :as batch]
+            [wfl.module.sg                  :as sg]
+            [wfl.service.clio               :as clio]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.google.storage     :as gcs]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util :refer [absent?]])
+  (:import [java.time OffsetDateTime]
+           [java.util UUID]))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -46,7 +45,7 @@
    :creator @workloads/email})
 
 (defn mock-submit-workload
-  [{:keys [workflows]} _ _ _ _ _]
+  [_ workflows _ _ _ _ _]
   (let [now (OffsetDateTime/now)]
     (letfn [(submit [workflow uuid] (assoc workflow
                                            :status "Submitted"
@@ -64,7 +63,7 @@
               (is (:created workload))
               (is (absent? workload :started))
               (is (absent? workload :finished))
-              (run! verify-workflow (:workflows workload))))]
+              (run! verify-workflow (workloads/workflows workload))))]
     (testing "single-sample workload-request"
       (go! (the-sg-workload-request)))))
 
@@ -75,7 +74,8 @@
               (is (= expected (select-keys inputs (keys expected)))))]
       (run! ok (-> (the-sg-workload-request)
                    (assoc-in [:common :inputs] expected)
-                   workloads/create-workload! :workflows
+                   workloads/create-workload!
+                   workloads/workflows
                    (->> (map :inputs)))))))
 
 (deftest test-start-workload!
@@ -84,12 +84,11 @@
             (is (:status workflow))
             (is (:updated workflow)))]
     (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(-> (the-sg-workload-request)
-           workloads/create-workload!
-           workloads/start-workload!
-           (as-> workload
-                 (is (:started workload))
-             (run! go! (:workflows workload)))))))
+      #(let [workload (-> (the-sg-workload-request)
+                          workloads/create-workload!
+                          workloads/start-workload!)]
+         (is (:started workload))
+         (run! go! (workloads/workflows workload))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -98,7 +97,7 @@
               (is (absent? inputs :google_account_vault_path)))]
       (->> (the-sg-workload-request)
            workloads/create-workload!
-           :workflows
+           workloads/workflows
            (run! (comp go! :inputs))))))
 
 (deftest test-submitted-workflow-inputs
@@ -142,7 +141,8 @@
              (assoc-in [:common :options] {:overwritten             false
                                            :supports_common_options true})
              (update :items (partial map overmap))
-             workloads/execute-workload! :workflows
+             workloads/execute-workload!
+             workloads/workflows
              (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
@@ -151,7 +151,8 @@
     (run! go! (-> (the-sg-workload-request)
                   (assoc-in [:common :options] {})
                   (update :items (partial map empty-options))
-                  workloads/create-workload! :workflows))))
+                  workloads/create-workload!
+                  workloads/workflows))))
 
 (defn ^:private mock-clio-add-bam-found
   "Fail because a `_clio` BAM record already exists for `_md`"
@@ -316,10 +317,10 @@
         workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline workflows]} workload]
+              (let [{:keys [finished pipeline]} workload]
                 (is finished)
                 (is (= sg/pipeline pipeline))
-                (is (= (count items) (count workflows))))))))
+                (is (= (count items) (-> workload workloads/workflows count))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
@@ -365,24 +366,24 @@
     (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
 
 (defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
-  [{:keys [output workflows] :as _workload}]
-  (run! (partial workflow-postcheck output) workflows))
+  [{:keys [output] :as workload}]
+  (run! (partial workflow-postcheck output) (workloads/workflows workload)))
 
 (defn ^:private mock-batch-update-workflow-statuses!
-  [tx {:keys [workflows items] :as _workload}]
+  [tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! workflows)))
+    (run! update! (wfl.api.workloads/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (let [count           (atom 0)
-        increment-count (fn [_] (swap! count inc))]
+        increment-count (fn [& _] (swap! count inc))]
     (with-redefs-fn
-      {#'cromwell/submit-workflows                mock-cromwell-submit-workflows
-       #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
-       #'sg/register-workload-in-clio             increment-count}
+      {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
+       #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
+       #'sg/register-workload-in-clio          increment-count}
       #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
     (is (== 1 @count) "Clio was updated more than once")))
 

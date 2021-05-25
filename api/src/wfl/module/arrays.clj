@@ -1,14 +1,14 @@
 (ns wfl.module.arrays
   "Process Arrays for the Broad Genomics Platform."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
-            [wfl.references :as references]
+  (:require [clojure.data.json     :as json]
+            [clojure.string        :as str]
+            [wfl.api.workloads     :as workloads :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.module.batch      :as batch]
+            [wfl.references        :as references]
             [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres :as postgres]
-            [wfl.util :as util])
+            [wfl.service.postgres  :as postgres]
+            [wfl.util              :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GPArrays")
@@ -119,21 +119,25 @@
 (defn start-arrays-workload!
   "Use transaction TX to start the WORKLOAD."
   [tx {:keys [items project uuid] :as workload}]
-  (let [now (OffsetDateTime/now)
-        methodconfig-ns (first (str/split project #"/"))]
+  (let [now             (OffsetDateTime/now)
+        methodconfig-ns (first (str/split project #"/"))
+        methodconfig    (str/join "/" [methodconfig-ns methodconfig-name])]
     (letfn [(submit! [{:keys [id inputs] :as _workflow}]
-              [id (firecloud/create-submission
-                   project
-                   (str/join "/" [methodconfig-ns methodconfig-name])
-                   (mapv inputs [:entity-type :entity-name]))])
-            (update! [tx [id uuid]]
-              (when uuid
-                (jdbc/update! tx items
-                              {:updated now :uuid uuid :status "Submitted"}
-                              ["id = ?" id])))]
-      (let [ids-uuids (map submit! (:workflows workload))]
+              (let [entity (mapv inputs [:entity-type :entity-name])]
+                [id (firecloud/create-submission project methodconfig entity)]))
+            (update! [tx [id {:keys [submissionId]}]]
+              (jdbc/update! tx items
+                            {:updated now :uuid submissionId :status "Submitted"}
+                            ["id = ?" id]))]
+      (let [ids-uuids (map submit! (workloads/workflows tx workload))]
         (run! (partial update! tx) ids-uuids)
         (jdbc/update! tx :workload {:started now} ["uuid = ?" uuid])))))
+
+(def update-terra-workflow-statuses!
+  "Use `tx` to update `status` of Terra `workflows` in a `workload`."
+  (letfn [(get-terra-status [{:keys [project]} workflow]
+            (firecloud/get-workflow-status-by-entity project workflow))]
+    (batch/make-update-workflows get-terra-status)))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -144,25 +148,19 @@
 (defmethod workloads/start-workload!
   pipeline
   [tx {:keys [id] :as workload}]
-  (do (start-arrays-workload! tx workload)
-      (workloads/load-workload-for-id tx id)))
+  (start-arrays-workload! tx workload)
+  (workloads/load-workload-for-id tx id))
 
 (defmethod workloads/update-workload!
   pipeline
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (postgres/update-terra-workflow-statuses! tx workload)
-            (postgres/update-workload-status! tx workload)
+            (update-terra-workflow-statuses! tx workload)
+            (batch/update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx {:keys [items] :as workload}]
-  (letfn [(unnilify [m] (into {} (filter second m)))]
-    (->> (postgres/get-table tx items)
-         (mapv (comp #(update % :inputs util/parse-json) unnilify))
-         (assoc workload :workflows)
-         unnilify)))
-
-(defoverload workloads/stop-workload! pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/to-edn             pipeline batch/workload-to-edn)

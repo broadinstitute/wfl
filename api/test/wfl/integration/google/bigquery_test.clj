@@ -3,7 +3,7 @@
             [wfl.service.google.bigquery :as bigquery]))
 
 (def ^:private google-project "broad-jade-dev-data")
-(def ^:private dr-dataset "zerosnapshot")
+(def ^:private dr-dataset "datarepo_zerotest_partition")
 (def ^:private dr-view "sample")
 
 (deftest test-list-datasets
