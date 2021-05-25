@@ -10,7 +10,8 @@
             [wfl.util             :as util]
             [wfl.wfl              :as wfl])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           [wfl.util UserException]))
 
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."
@@ -157,13 +158,16 @@
 
 (defn stop-workload!
   "Use transaction TX to stop the WORKLOAD."
-  [tx {:keys [stopped finished id] :as workload}]
+  [tx {:keys [started stopped finished id] :as workload}]
   (letfn [(patch! [cols] (jdbc/update! tx :workload cols ["id = ?" id]))
           (stop! [{:keys [id] :as workload}]
             (let [now (OffsetDateTime/now)]
               (patch! {:stopped now})
               (when-not (:started workload) (patch! {:finished now}))
               (workloads/load-workload-for-id tx id)))]
+    (when-not started
+      (throw (UserException. "Cannot stop workload before it's been started."
+                             {:workload workload})))
     (if-not (or stopped finished) (stop! workload) workload)))
 
 (defn workflows
