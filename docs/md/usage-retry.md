@@ -22,10 +22,31 @@ Usage: `bash retry.sh QUERY`
 Ex: `bash retry.sh project=PO-29619`
 
 ```bash
-WORKLOAD=$(curl -X GET "https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?$1" \
-    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    -H 'Content-Type: application/json' | jq)
+WFL_URL='https://gotc-prod-wfl.gotc-prod.broadinstitute.org'
+WFL_URL='localhost:3000'
 
+getWorkloads () {
+    curl -s -X GET "${WFL_URL}/api/v1/workload?$1"
+         -H "Authorization: Bearer $(gcloud auth print-access-token)"
+         | jq
+}
+
+getWorkflows() {
+    uuid=$(jq -r .uuid <<< "$1")
+    curl -s -X GET "${WFL_URL}/api/v1/workload/${uuid}/workflows" \
+         -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+         | jq
+}
+
+WORKLOADS=$(getWorkloads "$1")
+
+WORKFLOWS=$(jq -c '.[]' <<< "${WORKLOADS}" | while read workload; do
+             getWorkflows("${workload}")
+           done)
+
+echo ${WORKFLOWS}
+
+for workload in workloads 
 jq '{
     executor: .[0].executor,
     output: .[0].output,
