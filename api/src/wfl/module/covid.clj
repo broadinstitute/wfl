@@ -373,8 +373,8 @@
    snapshot_id and job_status if job has failed or succeeded, otherwise nil."
   [job-id]
   (when-let [job-metadata (datarepo/get-job-metadata-when-done job-id)]
-    (let [{:keys [id job-status] :as result} job-metadata]
-      (if (= job-status "succeeded")
+    (let [{:keys [id job_status] :as result} job-metadata]
+      (if (= job_status "succeeded")
         (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
         (do
           (log/error "TDR Snapshot creation job %s failed!" id)
