@@ -325,15 +325,11 @@
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying between `last_checked` and the
    frozen `now`."
-  [{:keys [dataset
-           dataset_table
-           table_column_name
-           last_checked] :as _source}
-   now]
+  [{:keys [dataset table column last_checked] :as _source} now]
   (-> (datarepo/query-table-between
        dataset
-       dataset_table
-       table_column_name
+       table
+       column
        [last_checked now]
        [:datarepo_row_id])
       :rows
