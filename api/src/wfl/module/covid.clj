@@ -425,12 +425,13 @@
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [last_checked] :as source} utc-now]
-  (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
-       (mapv #(.format % bigquery-datetime-format))
-       (find-new-rows source)
-       (create-snapshots source utc-now)
-       (write-snapshots-creation-jobs source utc-now))
-  (update-last-checked source utc-now))
+  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+                          (mapv #(.format % bigquery-datetime-format))
+                          (find-new-rows source)
+                          (create-snapshots source utc-now))]
+    (when (seq shards->jobs)
+      (write-snapshots-creation-jobs source utc-now shards->jobs)
+      (update-last-checked source utc-now))))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
