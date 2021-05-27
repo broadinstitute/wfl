@@ -372,13 +372,12 @@
   "Check TDR job status for `job-id`, return a map with job-id,
    snapshot_id and job_status if job has failed or succeeded, otherwise nil."
   [job-id]
-  (when-let [job-metadata (datarepo/get-job-metadata-when-done job-id)]
-    (let [{:keys [id job_status] :as result} job-metadata]
-      (if (= job_status "succeeded")
-        (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
-        (do
-          (log/error "TDR Snapshot creation job %s failed!" id)
-          (assoc result :snapshot_id nil))))))
+  (let [{:keys [job_status] :as result} (datarepo/get-job-metadata job-id)]
+    (case job_status
+      "running"   result
+      "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
+      (do (log/warnf "Snapshot creation job %s failed!" job-id)
+          result))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table
