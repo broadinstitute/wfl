@@ -106,7 +106,7 @@
 (s/def ::identifier string?)
 (s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
-(s/def ::labels (s/* string?))
+(s/def ::labels (s/* util/label?))
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
@@ -143,7 +143,9 @@
 (s/def ::batch-workload-request (s/keys :opt-un [::common
                                                  ::input
                                                  ::items
-                                                 ::output]
+                                                 ::labels
+                                                 ::output
+                                                 ::watchers]
                                         :req-un [(or ::cromwell ::executor)
                                                  ::pipeline
                                                  ::project]))
@@ -167,26 +169,25 @@
 
 (s/def ::covid-workload-request (s/keys :req-un [::executor
                                                  ::pipeline
+                                                 ::project
                                                  ::sink
                                                  ::source]
                                         :opt-un [::labels
-                                                 ::project
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
                                                   ::creator
                                                   ::executor
                                                   ::labels
-                                                  ::pipeline
                                                   ::sink
                                                   ::source
                                                   ::uuid
                                                   ::version
                                                   ::watchers]
                                          :opt-un [::finished
-                                                  ::release
                                                   ::started
-                                                  ::stopped]))
+                                                  ::stopped
+                                                  ::updated]))
 
 (s/def ::workload-request (s/or :batch ::batch-workload-request
                                 :covid ::covid-workload-request))
