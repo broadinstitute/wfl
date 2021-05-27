@@ -28,3 +28,19 @@
         (let [uuid-request {:uuid uuid}
               proj-request {:project project}]
           (run! valid? [uuid-request proj-request]))))))
+
+(deftest test-labels-spec
+  (let [valid?   s/valid?
+        invalid? (comp not s/valid?)] ;; i die
+    (doseq [[test? label]
+            [[valid?   "test:label"]
+             [valid?   "te_-st:l ab31 "]
+             [valid?   "test:00000000-0000-0000-0000-000000000000"]
+             [invalid? ":"]
+             [invalid? "::"]
+             [invalid? "test:"]
+             [invalid? "test :"]
+             [invalid? ":label"]
+             [invalid? "label"]
+             [invalid? "test:label:bad"]]]
+      (is (test? ::spec/labels [label]) (format "failed: %s" label)))))
