@@ -16,11 +16,14 @@
             [wfl.util                       :as util])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]
-           [wfl.util UserException]))
+           [wfl.util UserException]
+           (java.time LocalDateTime)))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
-(defn ^:private mock-find-new-rows [_ _] (take mock-new-rows-size (range)))
+(defn ^:private mock-find-new-rows [_ interval]
+  (is (every? #(LocalDateTime/parse % @#'covid/bigquery-datetime-format) interval))
+  (take mock-new-rows-size (range)))
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
