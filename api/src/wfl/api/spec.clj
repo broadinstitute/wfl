@@ -5,10 +5,16 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.util             :as util])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           [javax.mail.internet InternetAddress]))
 
 (defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
 (defn datetime-string? [s] (util/do-or-nil (OffsetDateTime/parse s)))
+
+(defn email-address?
+  "True if `s` is an email address."
+  [s]
+  (util/do-or-nil (or (.validate (InternetAddress. s)) true)))
 
 ;; shared
 (s/def ::base_file_name string?)
@@ -19,7 +25,7 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
 (s/def ::created ::timestamp)
-(s/def ::creator string?)
+(s/def ::creator email-address?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -111,7 +117,7 @@
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::table string?)
-(s/def ::watchers (s/* string?))
+(s/def ::watchers (s/* email-address?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
 (s/def ::snapshots (s/* ::uuid))
 
