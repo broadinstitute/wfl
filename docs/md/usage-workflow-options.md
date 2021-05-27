@@ -102,35 +102,29 @@ resolve the options for individual workflows. You can see this in WFL's
 response, which includes all workflow options calculated for each workflow:
 
 ```json
+[{  
+  "inputs": {
+    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+    "sample_name": "TestSample1234"
+  },
+  "options": {
+    "jes_gcs_root": "gs://broad-gotc-something-execution",
+    "write_to_cache": false,
+    "google_project": "broad-google-project"
+  }
+},
 {
-  "pipeline": "ExternalWholeGenomeReprocessing",
-  "created": "2020-10-05T15:50:01Z",
-  "workflows": [
-    {
-      "inputs": {
-        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-        "sample_name": "TestSample1234"
-      },
-      "options": {
-        "jes_gcs_root": "gs://broad-gotc-something-execution",
-        "write_to_cache": false,
-        "google_project": "broad-google-project"
-      }
-    },
-    {
-      "inputs": {
-        "input_cram": "develop/20k/NA12878_PLUMBING.cram",
-        "sample_name": "TestSample5678"
-      },
-      "options": {
-        "jes_gcs_root": "gs://broad-gotc-different-execution",
-        "default_runtime_attributes": {"maxRetries": 3},
-        "write_to_cache": false,
-        "google_project": "broad-google-project-2"
-      }
-    }
-  ]
-}
+  "inputs": {
+    "input_cram": "develop/20k/NA12878_PLUMBING.cram",
+    "sample_name": "TestSample5678"
+  },
+  "options": {
+    "jes_gcs_root": "gs://broad-gotc-different-execution",
+    "default_runtime_attributes": {"maxRetries": 3},
+    "write_to_cache": false,
+    "google_project": "broad-google-project-2"
+  }
+}]
 ```
 
 One note is that WFL already has some default values it passes for
