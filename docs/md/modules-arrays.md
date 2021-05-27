@@ -89,7 +89,7 @@ To give more information, here are some example inputs to the above endpoints:
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) 
     ```
 
-**POST /api/v1/workload/create**
+**POST /api/v1/create**
 
 === "Request"
 
