@@ -372,13 +372,12 @@
   "Check TDR job status for `job-id`, return a map with job-id,
    snapshot_id and job_status if job has failed or succeeded, otherwise nil."
   [job-id]
-  (when-let [job-metadata (datarepo/get-job-metadata-when-done job-id)]
-    (let [{:keys [id job-status] :as result} job-metadata]
-      (if (= job-status "succeeded")
-        (assoc result :snapshot_id (:id (datarepo/get-job-result id)))
-        (do
-          (log/error "TDR Snapshot creation job %s failed!" id)
-          (assoc result :snapshot_id nil))))))
+  (let [{:keys [job_status] :as result} (datarepo/get-job-metadata job-id)]
+    (case job_status
+      "running"   result
+      "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
+      (do (log/warnf "Snapshot creation job %s failed!" job-id)
+          result))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table
@@ -425,12 +424,13 @@
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [last_checked] :as source} utc-now]
-  (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
-       (mapv #(.format % bigquery-datetime-format))
-       (find-new-rows source)
-       (create-snapshots source utc-now)
-       (write-snapshots-creation-jobs source utc-now))
-  (update-last-checked source utc-now))
+  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+                          (mapv #(.format % bigquery-datetime-format))
+                          (find-new-rows source)
+                          (create-snapshots source utc-now))]
+    (when (seq shards->jobs)
+      (write-snapshots-creation-jobs source utc-now shards->jobs)
+      (update-last-checked source utc-now))))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
