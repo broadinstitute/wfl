@@ -22,27 +22,74 @@ Usage: `bash retry.sh QUERY`
 Ex: `bash retry.sh project=PO-29619`
 
 ```bash
-WORKLOAD=$(curl -X GET "https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?$1" \
-    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    -H 'Content-Type: application/json' | jq)
+# Usage: bash abort.sh QUERY [WFL_URL]
+#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`
+#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]
 
-jq '{
-    executor: .[0].executor,
-    output: .[0].output,
-    input: .[0].input,
-    pipeline: .[0].pipeline,
-    project: .[0].project,
-    items: .[].workflows
-        | group_by({inputs: .inputs, options: .options}) 
-        | map(select(all(.status=="Failed")) | .[0]
-            | {inputs: .inputs, options: .options})
+WFL_URL="${2:-https://gotc-prod-wfl.gotc-prod.broadinstitute.org}"
+AUTH_HEADER="Authorization: Bearer $(gcloud auth print-access-token)"
+
+getWorkloads () {
+    # Query -> [Workload]
+    curl -s -X GET "${WFL_URL}/api/v1/workload?$1" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}
+
+getWorkflows() {
+    # Workload -> [Workflow]
+    uuid=$(jq -r .uuid <<< "$1")
+    curl -s -X GET "${WFL_URL}/api/v1/workload/${uuid}/workflows" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}
+
+removeSucceeded() {
+    # [[Workflow]] -> [Workflow]
+    jq 'flatten
+        | group_by( {inputs: .inputs, options: .options} )
+        | map( select( all(.status=="Succeeded") )
+             | .[0]
+             | {inputs: .inputs, options: .options} )
         | del(.[][] | nulls)
-} | del(.[] | nulls)' <<< "$WORKLOAD" > retry.json
+        ' <<< "$1"
+}
 
-curl -X POST "https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec" \
-    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    -H 'Content-Type: application/json' \
-    -d "@retry.json"
+makeRetryRequest() {
+    # [Workload], [Workflow] -> Request
+    jq --argjson 'workflows' "$2" \
+        '.[0]
+         | { executor: .executor
+           , input: .input
+           , output: .output
+           , pipeline: .pipeline
+           , project: .project
+           , items: $workflows
+           }
+        | del(.[] | nulls)
+        ' <<< "$1"
+}
+
+mapjq () {
+    jq -c '.[]' <<< "${2}" \
+    | while read elem; do ${1} "${elem}"; done \
+    | jq -s '[ .[] ]'
+}
+
+main() {
+    # Query -> ()
+    workloads=$(getWorkloads "${1}")
+    workflows=$(mapjq getWorkflows "${workloads}")
+    toSubmit=$(removeSucceeded "${workflows}")
+    makeRetryRequest "${workloads[0]}" "${toSubmit}" > /tmp/retry.json
+
+    curl -X POST "${WFL_URL}/api/v1/exec" \
+         -H "${AUTH_HEADER}" \
+         -H "Content-Type: application/json" \
+         -d @/tmp/retry.json
+}
+
+main "$1"
 ```
 
 ## Tips
@@ -54,7 +101,7 @@ you can do that with a `common` block. For example, replace this:
 
 ```
 jq '{
-    executor: .[0].executor,
+    executor: .executor,
 ```
 
 with this:
@@ -62,7 +109,7 @@ with this:
 ```
 jq '{
     common: { inputs: { "WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.BamToCram.ValidateCram.memory_multiplier": 2 } },
-    executor: .[0].executor,
+    executor: .executor,
 ```
 
 That example uses WFL's arbitrary input feature to bump up the memory multiplier
@@ -71,27 +118,3 @@ for a particular WGS task.
 - Nested inputs will have periods in them, you'll need to use quotes around it
 - You can't override inputs or options that the workflows originally had (the
 `common` block has lower precedence)
-
-
-### "Simpler" Retries
-
-The script tries to be a bit intelligent about not making multiple resubmissions
-for the same sets of inputs/options. If you don't want that logic for whatever
-reason, replace this:
-
-```
-    items: .[].workflows
-        | group_by({inputs: .inputs, options: .options}) 
-        | map(select(all(.status=="Failed")) | .[0]
-            | {inputs: .inputs, options: .options})
-        | del(.[][] | nulls)
-```
-
-with this:
-
-```
-    items: .[].workflows
-        | map(select(.status=="Failed")
-            | {inputs: .inputs, options: .options})
-        | del(.[][] | nulls)
-```

@@ -82,14 +82,14 @@ specified as an `input_cram`.
 
 GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
 
-| Verb | Endpoint                     | Description                                                    |
-|------|------------------------------|----------------------------------------------------------------|
-| GET  | `/api/v1/workload`           | List all workloads                                             |
-| GET  | `/api/v1/workload/{uuid}`    | Query for a workload by its UUID                               |
-| GET  | `/api/v1/workload/{project}` | Query for a workload by its Project name                       |
-| POST | `/api/v1/create`             | Create a new workload                                          |
-| POST | `/api/v1/start`              | Start a workload                                               |
-| POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
+| Verb | Endpoint                            | Description                                                    |
+|------|-------------------------------------|----------------------------------------------------------------|
+| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project    |
+| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for a specified workload uuid               |
+| POST | `/api/v1/create`                    | Create a new workload                                          |
+| POST | `/api/v1/start`                     | Start a workload                                               |
+| POST | `/api/v1/stop`                      | Stop a running workload                                        |
+| POST | `/api/v1/exec`                      | Create and start (execute) a workload                          |
 
 ???+ warning "Permissions in production"
     External Whole Genome Reprocessing in `gotc-prod` uses a set of execution projects, please refer to
@@ -147,28 +147,8 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
   "release": "GDCWholeGenomeSomaticSingleSample_v1.1.0",
   "started": "2021-04-05T16:02:32Z",
   "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2",
-  "version": "0.6.0",
-  "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
-  "workflows": [
-    {
-      "status": "Submitted",
-      "updated": "2021-04-05T16:02:32Z",
-      "uuid": "8c1f586e-036b-4690-87c2-2af5d7e00450",
-      "inputs": {
-        "base_file_name": "27B-6",
-        "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
-        "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
-        "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-        "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-        "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
-        "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
-        "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
-      },
-      "options": {
-        "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
-      }
-    }
-  ]
+  "version": "0.7.0",
+  "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"
 }
 ```
 
@@ -206,28 +186,41 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start \
   "release": "GDCWholeGenomeSomaticSingleSample_v1.1.0",
   "started": "2021-04-05T16:02:32Z",
   "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2",
-  "version": "0.6.0",
-  "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
-  "workflows": [
-    {
-      "status": "Submitted",
-      "updated": "2021-04-05T16:02:32Z",
-      "uuid": "8c1f586e-036b-4690-87c2-2af5d7e00450",
-      "inputs": {
-        "base_file_name": "27B-6",
-        "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
-        "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
-        "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-        "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-        "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
-        "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
-        "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
-      },
-      "options": {
-        "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
-      }
-    }
-  ]
+  "version": "0.7.0",
+  "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"
+}
+```
+
+### Start Workload: `/api/v1/start`
+
+Included for compatibility with continuous workloads.
+
+=== "Request"
+
+```bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
+     -X "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -X 'Content-Type: application/json' \
+     -d '{ "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2" }'
+```
+
+=== "Response"
+
+```json
+{
+  "commit": "477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c",
+  "created": "2021-04-05T16:02:31Z",
+  "creator": "tbl@broadinstitute.org",
+  "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "output": "gs://broad-prod-somatic-genomes-output",
+  "pipeline": "GDCWholeGenomeSomaticSingleSample",
+  "project": "PO-1234",
+  "release": "GDCWholeGenomeSomaticSingleSample_v1.1.0",
+  "started": "2021-04-05T16:02:32Z",
+  "stopped": "2021-04-05T16:02:33Z",
+  "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2",
+  "version": "0.7.0",
+  "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"
 }
 ```
 
@@ -278,34 +271,11 @@ but specifying a UUID returns only one.
    "release": "GDCWholeGenomeSomaticSingleSample_v1.1.0",
    "started": "2021-04-05T16:02:32Z",
    "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2",
-   "version": "0.6.0",
-   "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
-   "workflows": [
-     {
-       "status": "Submitted",
-       "updated": "2021-04-05T16:02:32Z",
-       "uuid": "8c1f586e-036b-4690-87c2-2af5d7e00450",
-       "inputs": {
-         "base_file_name": "27B-6",
-         "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
-         "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
-         "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-         "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-         "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
-         "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
-         "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
-       },
-       "options": {
-         "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
-       }
-     }
-   ]
+   "version": "0.7.0",
+   "wdl": "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"
  }
 ]
 ```
-
-The `workflows` field
-lists each Cromwell workflow and its status.
 
 ### Query Workload with project: `/api/v1/workload?project=<project>`
 
@@ -330,3 +300,39 @@ that share the same `project` value.
     that WFL knows about.
     That response might be large
     and take a while to process.
+
+
+### List workflows managed by the workload `GET /api/v1/workload/{uuid}/workflows`
+
+=== "Request"
+
+```bash
+curl -X GET '/api/v1/workload/efb00901-378e-4365-86e7-edd0fbdaaab2/workflows' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token)
+```
+
+=== "Response"
+
+A successful response from `/api/v1/workload/{uuid}/workload`
+is always an array of Cromwell workflows with their statuses.
+
+```json
+[{
+      "status": "Submitted",
+      "updated": "2021-04-05T16:02:32Z",
+      "uuid": "8c1f586e-036b-4690-87c2-2af5d7e00450",
+      "inputs": {
+          "base_file_name": "27B-6",
+          "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
+          "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
+          "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+          "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+          "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
+          "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
+          "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
+      },
+      "options": {
+          "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
+      }
+}]
+```

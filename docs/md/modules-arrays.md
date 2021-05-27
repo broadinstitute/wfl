@@ -21,15 +21,15 @@ caller.
 
 It supports the following API endpoints:
 
-| Verb | Endpoint                     | Description                                                    |
-|------|------------------------------|----------------------------------------------------------------|
-| GET  | `/api/v1/workload`           | List all workloads                                             |
-| GET  | `/api/v1/workload/{uuid}`    | Query for a workload by its UUID                               |
-| GET  | `/api/v1/workload/{project}` | Query for a workload by its Project name                       |
-| POST | `/api/v1/create`             | Create a new workload                                          |
-| POST | `/api/v1/start`              | Start a workload                                               |
-| POST | `/api/v1/exec`               | Create and start (execute) a workload                          |
-| POST | `/api/v1/append_to_aou`      | Append a new or multiple sample(s) to an existing AOU workload |
+| Verb | Endpoint                            | Description                                                              |
+|------|-------------------------------------|--------------------------------------------------------------------------|
+| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project              |
+| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for a specified workload uuid                         |
+| POST | `/api/v1/create`                    | Create a new workload                                                    |
+| POST | `/api/v1/start`                     | Start a workload                                                         |
+| POST | `/api/v1/stop`                      | Stop a running workload                                                  |
+| POST | `/api/v1/exec`                      | Create and start (execute) a workload                                    |
+| POST | `/api/v1/append_to_aou`             | Append one or more sample(s) to an existing AOU workload, unless stopped |
 
 Different from the fixed workload types that caller only needs to create a workload with a series of sample inputs and
 then simply start the workload, `aou-arrays` module requires the caller to manage the life cycle of a workload on their
@@ -50,27 +50,27 @@ To give more information, here are some example inputs to the above endpoints:
 === "Request"
 
     ```shell
-    curl "http://localhost:8080/api/v1/workload" \
+    curl 'http://localhost:8080/api/v1/workload' \
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
 
-**GET /api/v1/workload/{uuid}**
+**GET /api/v1/workload?uuid={uuid}**
 
 === "Request"
 
     ```shell
-    curl "http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000" \
+    curl 'http://localhost:8080/api/v1/workload?uuid=00000000-0000-0000-0000-000000000000' \
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
 
-**GET /api/v1/workload/{project}**
+**GET /api/v1/workload?project={project}**
 
 === "Request"
 
     ```shell
-    curl "http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing" \
+    curl 'http://localhost:8080/api/v1/workload?project=(Test)%20WFL%20Local%20Testing' \
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H 'Accept: application/json'
     ```
@@ -80,47 +80,69 @@ To give more information, here are some example inputs to the above endpoints:
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.
 
-**GET /api/v1/workload/create**
+**GET /api/v1/workload/{uuid}/workflows**
 
 === "Request"
 
     ```shell
-    curl -X "POST" "http://localhost:8080/api/v1/create" \
-        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
-        -H 'Accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d '{
-                "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
-                "output":   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/",
-                "project":  "Example Project",
-                "pipeline": "AllOfUsArrays"
-            }'
+    curl 'http://localhost:8080/api/v1/workload/00000000-0000-0000-0000-000000000000/workflows' \
+        -H 'Authorization: Bearer '$(gcloud auth print-access-token) 
     ```
 
-**GET /api/v1/workload/start**
+**POST /api/v1/create**
 
 === "Request"
 
     ```shell
-    curl -X "POST" "http://localhost:8080/api/v1/start" \
-        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
-        -H 'Accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d $'{
-                "uuid": "00000000-0000-0000-0000-000000000000"
-              }'
+    curl -X POST 'http://localhost:8080/api/v1/create' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d '{
+               "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+               "output":   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/",
+               "project":  "Example Project",
+               "pipeline": "AllOfUsArrays"
+             }'
     ```
 
-**GET /api/v1/workload/append_to_aou**
+**POST /api/v1/start**
 
 === "Request"
 
     ```shell
-    curl -X "POST" "http://localhost:8080/api/v1/append_to_aou" \
-        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
-        -H 'Accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d $'{
+    curl -X POST 'http://localhost:8080/api/v1/start' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d $'{ "uuid": "00000000-0000-0000-0000-000000000000" }'
+    ```
+
+**POST /api/v1/stop**
+
+Stops the workload from accepting new samples.
+See also: `/api/v1/append_to_aou`.
+
+=== "Request"
+
+    ```shell
+    curl -X POST 'http://localhost:8080/api/v1/stop' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d $'{ "uuid": "00000000-0000-0000-0000-000000000000" }'
+    ```
+    
+**POST /api/v1/workload/append_to_aou**
+
+=== "Request"
+
+    ```shell
+    curl -X POST 'http://localhost:8080/api/v1/append_to_aou' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d $'{
       "uuid": "00000000-0000-0000-0000-000000000000",
       "notifications": [
         {
@@ -185,7 +207,7 @@ Note that different from the fixed workload types, `input`, `output` and `items`
 since these fields vary from sample to sample. Any information the caller provided to these fields will stored as
 placeholders.
 
-More importantly, eve though `id` is the `primary` key here, `(pipeline, project, release)` works as the
+More importantly, even though `id` is the `primary` key here, `(pipeline, project, release)` works as the
 unique identifier for arrays workloads, for instance, if there's already a workload with values:
 `(AllOfUsArrays, gotc-dev, Arrays_v1.9)`, any further attempts to create a new workload with exact the same values
 will return the information of this existing workload rather than create a new row.
