@@ -97,12 +97,11 @@
   ([job-id]
    (poll-job job-id 5)))
 
-(defn get-job-metadata-when-done
-  "Nil or the metadata of job with `job-id` when done."
+(defn get-job-metadata
+  "Return the metadata of job with `job-id` when done."
   [job-id]
-  (let [metadata (get-repository-json "jobs" job-id)]
-    (when-not (-> metadata :job_status #{"running"})
-      metadata)))
+  {:pre [(some? job-id)]}
+  (get-repository-json "jobs" job-id))
 
 (defn get-job-result
   "Get the result of job with `job-id`."
