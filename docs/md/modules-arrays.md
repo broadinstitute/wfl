@@ -106,7 +106,7 @@ To give more information, here are some example inputs to the above endpoints:
              }'
     ```
 
-**POST /api/v1/workload/start**
+**POST /api/v1/start**
 
 === "Request"
 
