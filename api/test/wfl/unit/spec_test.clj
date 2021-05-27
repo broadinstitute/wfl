@@ -44,3 +44,13 @@
              [invalid? "label"]
              [invalid? "test:label:bad"]]]
       (is (test? ::spec/labels [label]) (format "failed: %s" label)))))
+
+(deftest test-watchers-spec
+  (let [valid?   s/valid?
+        invalid? (comp not s/valid?)] ;; i die
+    (doseq [[test? email]
+            [[valid?   "hornet-eng@broadinstitute.org"]
+             ;; From tbl: https://www.netmeister.org/blog/email.html
+             [valid?   "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]
+             [invalid? "foo"]]]
+      (is (test? ::spec/watchers [email]) (format "failed: %s" email)))))
