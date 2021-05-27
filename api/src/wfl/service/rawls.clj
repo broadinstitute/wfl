@@ -4,10 +4,8 @@
   (:require [clj-http.client      :as http]
             [clojure.data.json    :as json]
             [clojure.string       :as str]
-            [wfl.api.spec         :as spec]
             [wfl.auth             :as auth]
             [wfl.environment      :as env]
-            [wfl.service.datarepo :as datarepo]
             [wfl.util             :as util]))
 
 (defn ^:private rawls-url [& parts]
@@ -22,10 +20,13 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+(def ^:private snapshot-endpoint
+  "snapshots")
+
 (defn create-snapshot-reference
-  "Link SNAPSHOT-ID to WORKSPACE as NAME with DESCRIPTION."
+  "Link `snapshot-id` to `workspace` as `name` with `description`."
   ([workspace snapshot-id name description]
-   (-> (workspace-api-url workspace "snapshots")
+   (-> (workspace-api-url workspace snapshot-endpoint)
        (http/post {:headers      (auth/get-auth-header)
                    :content-type :application/json
                    :body         (json/write-str {:snapshotId  snapshot-id
@@ -37,14 +38,33 @@
    (create-snapshot-reference workspace snapshot-id name "")))
 
 (defn get-snapshot-reference
-  "Return the snapshot reference in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+  "Return the snapshot reference in `workspace` with `reference-id`."
   [workspace reference-id]
-  (get-workspace-json workspace "snapshots" reference-id))
+  (get-workspace-json workspace snapshot-endpoint reference-id))
 
-(defn delete-snapshot
-  "Delete the snapshot in fully-qualified Terra WORKSPACE with REFERENCE-ID."
+(defn get-snapshot-references
+  "Lazily returns the snapshot references in `workspace`
+  with `limit` resources per page (default: 100)."
+  ([workspace limit]
+   (letfn
+    [(page [offset]
+       (println "Getting resources with offset " offset)
+       (let [{:keys [resources] :as _response}
+             (-> (workspace-api-url workspace snapshot-endpoint)
+                 (http/get {:headers      (auth/get-auth-header)
+                            :query-params {:offset offset
+                                           :limit  limit}})
+                 (util/response-body-json))
+             total    (+ offset (count resources))]
+         (lazy-cat resources (when (seq resources) (page total)))))]
+     (util/lazy-unchunk (page 0))))
+  ([workspace]
+   (get-snapshot-references workspace 100)))
+
+(defn delete-snapshot-reference
+  "Delete the snapshot reference in `workspace` with `reference-id`."
   [workspace reference-id]
-  (-> (workspace-api-url workspace "snapshots" reference-id)
+  (-> (workspace-api-url workspace snapshot-endpoint reference-id)
       (http/delete {:headers (auth/get-auth-header)})
       util/response-body-json))
 

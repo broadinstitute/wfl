@@ -686,17 +686,29 @@
         (throw-on-method-config-version-mismatch methodConfigurationVersion)))
   executor)
 
-(defn ^:private import-snapshot!
-  "Return snapshot reference for `id` imported to `workspace` as `name`."
+(defn ^:private get-or-import-snapshot!
+  "Return snapshot reference for `id` imported to `workspace` as `name`,
+  creating it if it does not yet exist."
   [{:keys [workspace] :as _executor}
    {:keys [name id]   :as _snapshot}]
-  (rawls/create-snapshot-reference workspace id name))
+  (try
+    (rawls/create-snapshot-reference workspace id name)
+    (catch ExceptionInfo cause
+      (if-let [reference (-> (rawls/get-snapshot-references workspace)
+                             (filter #(= (get-in % [:reference :snapshot]) id))
+                             first)]
+        reference
+        (throw (ex-info (str "Could not create snapshot reference and found "
+                             "no snapshot reference matching the snapshot id. ")
+                        {:workspace workspace
+                         :snapshot  snapshot}
+                        cause))))))
 
 (defn ^:private from-source
   "Coerce `source-item` to form understood by `executor` via `fromSource`."
   [{:keys [fromSource] :as executor}
    source-item]
-  (cond (= "importSnapshot" fromSource) (import-snapshot! executor source-item)
+  (cond (= "importSnapshot" fromSource) (get-or-import-snapshot! executor source-item)
         :else (throw (ex-info "Unknown fromSource" {:executor executor}))))
 
 (defn ^:private update-method-configuration!
