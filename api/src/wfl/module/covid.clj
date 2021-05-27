@@ -690,7 +690,7 @@
   "Return snapshot reference for `id` imported to `workspace` as `name`,
   creating it if it does not yet exist."
   [{:keys [workspace] :as _executor}
-   {:keys [name id]   :as _snapshot}]
+   {:keys [name id]   :as snapshot}]
   (try
     (rawls/create-snapshot-reference workspace id name)
     (catch ExceptionInfo cause
