@@ -38,7 +38,6 @@ nav:
   - Module-Specific Usage:
     - Overview: modules-general.md
     - Arrays: modules-arrays.md
-    - GPArrays: modules-gp-arrays.md
     - Whole Genome: modules-wgs.md
     - External Exome: modules-external-exome-reprocessing.md
     - Somatic Genomes: modules-sg.md
