@@ -118,7 +118,7 @@ To give more information, here are some example inputs to the above endpoints:
          -d $'{ "uuid": "00000000-0000-0000-0000-000000000000" }'
     ```
 
-**POST /api/v1/workload/stop**
+**POST /api/v1/stop**
 
 Stops the workload from accepting new inputs.
 See also: `/api/v1/append_to_aou`.
