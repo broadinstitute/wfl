@@ -14,6 +14,7 @@
             [wfl.util :as util :refer [do-or-nil]]
             [wfl.wfl :as wfl])
   (:import [clojure.lang ExceptionInfo]
+           [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [java.util UUID]
@@ -323,19 +324,10 @@
       (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
-  "Find new rows in TDR by querying between `last_checked` and the
-   frozen `now`."
-  [{:keys [dataset
-           dataset_table
-           table_column_name
-           last_checked] :as _source}
-   now]
-  (-> (datarepo/query-table-between
-       dataset
-       dataset_table
-       table_column_name
-       [last_checked now]
-       [:datarepo_row_id])
+  "Find new rows in TDR by querying the dataset between the `interval`."
+  [{:keys [dataset table column] :as _source} interval]
+  (-> dataset
+      (datarepo/query-table-between table column interval [:datarepo_row_id])
       :rows
       flatten))
 
@@ -423,15 +415,22 @@
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
 
+(defn ^:private timestamp-to-offsetdatetime [^Timestamp t]
+  "Parse the Timestamp `t` into an `OffsetDateTime`."
+  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
+
+(def ^:private bigquery-datetime-format
+  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [source utc-now]
-  (let [date-format (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss")]
-    (->> (.format utc-now date-format)
-         (find-new-rows source)
-         (create-snapshots source utc-now)
-         (write-snapshots-creation-jobs source utc-now))
-    (update-last-checked source utc-now)))
+  [{:keys [last_checked] :as source} utc-now]
+  (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+       (mapv #(.format % bigquery-datetime-format))
+       (find-new-rows source)
+       (create-snapshots source utc-now)
+       (write-snapshots-creation-jobs source utc-now))
+  (update-last-checked source utc-now))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
