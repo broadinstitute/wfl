@@ -244,7 +244,7 @@ Queries the WFL database for workloads. Specify the project name to query for a 
     ```
 
 !!! warning "Note"
-    `project` and `uuid` are optional path parameters to the `/api/v1/workload` endpoint,
+    `project` and `uuid` are optional query parameters to the `/api/v1/workload` endpoint,
     hitting this endpoint without them will return all workloads. However, they cannot be specified
     together.
 
