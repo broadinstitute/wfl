@@ -130,7 +130,6 @@
    :executor
    :finished
    :labels
-   :pipeline
    :sink
    :source
    :started
@@ -193,7 +192,7 @@
       (select-keys $ workload-metadata-keys)
       (merge $ src-exc-sink)
       (filter second $)
-      (into {:type :workload :id id} $))))
+      (into {:type :workload :id id :pipeline pipeline} $))))
 
 (defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
@@ -234,6 +233,7 @@
 (defn ^:private workload-to-edn [workload]
   (-> workload
       (util/select-non-nil-keys workload-metadata-keys)
+      (dissoc :pipeline)
       (update :source   util/to-edn)
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))

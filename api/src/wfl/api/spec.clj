@@ -5,10 +5,16 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.util             :as util])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           [javax.mail.internet InternetAddress]))
 
 (defn uuid-string? [s] (uuid? (util/do-or-nil (UUID/fromString s))))
 (defn datetime-string? [s] (util/do-or-nil (OffsetDateTime/parse s)))
+
+(defn email-address?
+  "True if `s` is an email address."
+  [s]
+  (util/do-or-nil (or (.validate (InternetAddress. s)) true)))
 
 ;; shared
 (s/def ::base_file_name string?)
@@ -19,7 +25,7 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
 (s/def ::created ::timestamp)
-(s/def ::creator string?)
+(s/def ::creator email-address?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -106,12 +112,12 @@
 (s/def ::identifier string?)
 (s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
-(s/def ::labels (s/* string?))
+(s/def ::labels (s/* util/label?))
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::table string?)
-(s/def ::watchers (s/* string?))
+(s/def ::watchers (s/* email-address?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
 (s/def ::snapshots (s/* ::uuid))
 
@@ -143,7 +149,9 @@
 (s/def ::batch-workload-request (s/keys :opt-un [::common
                                                  ::input
                                                  ::items
-                                                 ::output]
+                                                 ::labels
+                                                 ::output
+                                                 ::watchers]
                                         :req-un [(or ::cromwell ::executor)
                                                  ::pipeline
                                                  ::project]))
@@ -167,26 +175,25 @@
 
 (s/def ::covid-workload-request (s/keys :req-un [::executor
                                                  ::pipeline
+                                                 ::project
                                                  ::sink
                                                  ::source]
                                         :opt-un [::labels
-                                                 ::project
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
                                                   ::creator
                                                   ::executor
                                                   ::labels
-                                                  ::pipeline
                                                   ::sink
                                                   ::source
                                                   ::uuid
                                                   ::version
                                                   ::watchers]
                                          :opt-un [::finished
-                                                  ::release
                                                   ::started
-                                                  ::stopped]))
+                                                  ::stopped
+                                                  ::updated]))
 
 (s/def ::workload-request (s/or :batch ::batch-workload-request
                                 :covid ::covid-workload-request))

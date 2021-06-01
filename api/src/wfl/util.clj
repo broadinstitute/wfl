@@ -559,3 +559,21 @@
   "Map SYMBOLS as keywords to their values in the environment."
   [& symbols]
   (zipmap (map keyword symbols) symbols))
+
+(let [alphanumunderdash? (into (set "-_") alphanumeric?)]
+  (defn ^:private label-name?
+    "True if `_s` starts with a letter followed by any number of letters, numbers
+     underscores or dashes."
+    [[first & rest :as _s]]
+    (and (letter? first) (every? alphanumunderdash? rest))))
+
+(defn ^:private label-value?
+  "True if `s` is not a blank string."
+  [^String s]
+  (not (str/blank? s)))
+
+(defn label?
+  "True if `s` is a string of the form \"name:value\"."
+  [s]
+  (let [[name value & rest] (str/split s #":" 3)]
+    (and (label-name? name) (label-value? value) (nil? rest))))
