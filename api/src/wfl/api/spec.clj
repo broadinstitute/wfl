@@ -60,8 +60,7 @@
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
-                      :sg       ::sg-workflow-inputs
-                      :covid    map?))
+                      :sg       ::sg-workflow-inputs))
 
 (s/def ::workflows (s/* ::workflow))
 (s/def ::workflow  (s/keys :req-un [::inputs]
@@ -121,15 +120,12 @@
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
 (s/def ::snapshots (s/* ::uuid))
 
-(s/def ::batch-executor string?)
-(s/def ::covid-executor (s/keys :req-un [::name
-                                         ::fromSource
-                                         ::methodConfiguration
-                                         ::methodConfigurationVersion
-                                         ::workspace]))
-
-(s/def ::executor (s/or :batch ::batch-executor
-                        :covid ::covid-executor))
+(s/def :batch/executor string?)
+(s/def :covid/executor (s/keys :req-un [::name
+                                        ::fromSource
+                                        ::methodConfiguration
+                                        ::methodConfigurationVersion
+                                        ::workspace]))
 
 (s/def ::sink (s/keys :req-un [::name
                                ::entityType
@@ -152,7 +148,7 @@
                                                  ::labels
                                                  ::output
                                                  ::watchers]
-                                        :req-un [(or ::cromwell ::executor)
+                                        :req-un [(or ::cromwell :batch/executor)
                                                  ::pipeline
                                                  ::project]))
 
@@ -165,7 +161,7 @@
                                          :req-un [::commit
                                                   ::created
                                                   ::creator
-                                                  ::executor
+                                                  :batch/executor
                                                   ::output
                                                   ::pipeline
                                                   ::project
@@ -173,8 +169,7 @@
                                                   ::uuid
                                                   ::version]))
 
-(s/def ::covid-workload-request (s/keys :req-un [::executor
-                                                 ::pipeline
+(s/def ::covid-workload-request (s/keys :req-un [:covid/executor
                                                  ::project
                                                  ::sink
                                                  ::source]
@@ -183,7 +178,7 @@
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
                                                   ::creator
-                                                  ::executor
+                                                  :covid/executor
                                                   ::labels
                                                   ::sink
                                                   ::source
