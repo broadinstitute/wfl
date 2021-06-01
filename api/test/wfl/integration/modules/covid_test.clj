@@ -253,22 +253,42 @@
         {:workspace   testing-workspace
          :entityType  "assemblies"
          :identity    "Who cares?"
-         :fromOutputs {:flowcell_id "flowcell_id"}}))))
+         :fromOutputs {:assemblies_id "foo"}}))))
 
 (deftest test-create-covid-workload-with-invalid-sink-entity-type
   (let [request (workloads/covid-workload-request
                  {:skipValidation true}
                  {:skipValidation true}
                  {:workspace   testing-workspace
+                  :entityType  "does_not_exist"
+                  :identity    "Who cares?"
+                  :fromOutputs {}})]
+    (is (thrown-with-msg?
+         UserException (re-pattern covid/unknown-entity-type-error-message)
+         (workloads/create-workload! request)))))
+
+(deftest test-create-covid-workload-with-malformed-fromOutputs
+  (let [request (workloads/covid-workload-request
+                 {:skipValidation true}
+                 {:skipValidation true}
+                 {:workspace   testing-workspace
                   :entityType  "assemblies"
                   :identity    "Who cares?"
-                  :fromOutputs {:fnord "fnord"}})]
+                  :fromOutputs "geoff"})]
     (is (thrown-with-msg?
-         UserException #"Entity not found"
-         (workloads/create-workload!
-          (assoc-in request [:sink :entityType] "fnord"))))
+         UserException (re-pattern covid/malformed-from-outputs-error-message)
+         (workloads/create-workload! request)))))
+
+(deftest test-create-covid-workload-with-unknown-attributes-listed-in-fromOutputs
+  (let [request (workloads/covid-workload-request
+                 {:skipValidation true}
+                 {:skipValidation true}
+                 {:workspace   testing-workspace
+                  :entityType  "assemblies"
+                  :identity    "Who cares?"
+                  :fromOutputs {:does_not_exist "genbank_source_table"}})]
     (is (thrown-with-msg?
-         UserException #"Attributes missing for these outputs"
+         UserException (re-pattern covid/unknown-attributes-error-message)
          (workloads/create-workload! request)))))
 
 (deftest test-create-covid-workload-with-invalid-sink-workspace
