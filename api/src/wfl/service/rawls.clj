@@ -6,7 +6,8 @@
             [clojure.string       :as str]
             [wfl.auth             :as auth]
             [wfl.environment      :as env]
-            [wfl.util             :as util]))
+            [wfl.util             :as util])
+  (:import [clojure.lang ExceptionInfo]))
 
 (defn ^:private rawls-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_RAWLS_URL"))]
@@ -59,6 +60,34 @@
      (util/lazy-unchunk (page 0))))
   ([workspace]
    (get-snapshot-references workspace 100)))
+
+(defn create-or-get-snapshot-reference
+  "Return first snapshot reference for `snapshot-id` in `workspace`,
+  creating it as `name` with `description` if it does not yet exist."
+  ([workspace snapshot-id name description]
+   (try
+     (create-snapshot-reference workspace snapshot-id name description)
+     (catch ExceptionInfo cause
+       (let [{:keys [status] :as _data} (.getData cause)]
+         (cond
+           (= 409 status)
+           ;; On a duplicate resource exception, try to fetch the resource.
+           (if-let [reference
+                    (->> (get-snapshot-references workspace)
+                         (filter #(= (get-in % [:reference :snapshot])
+                                     snapshot-id))
+                         first)]
+             reference
+             (throw (ex-info (str "Could not create snapshot reference and "
+                                  "found no snapshot reference matching the "
+                                  "snapshot id.")
+                             {:workspace   workspace
+                              :snapshot-id snapshot-id
+                              :name        name}
+                             cause)))
+           :else (throw cause))))))
+  ([workspace snapshot-id name]
+   (create-or-get-snapshot-reference workspace snapshot-id name "")))
 
 (defn delete-snapshot-reference
   "Delete the snapshot reference in `workspace` with `reference-id`."

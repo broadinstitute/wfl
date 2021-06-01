@@ -43,6 +43,11 @@
                   (rawls/get-snapshot-references workspace 10)]
               (is (empty? rest))
               (verify-snapshots snapshots names)))
+          (testing "Create or get"
+            (let [snapshot (rawls/create-or-get-snapshot-reference workspace
+                                                                   snapshot-id
+                                                                   (first names))]
+              (verify-snapshot [snapshot (first names)])))
           (testing "Create already exists"
             (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                   (make-reference (first names))))))))))
