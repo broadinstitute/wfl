@@ -142,15 +142,23 @@
 (s/def ::source (s/or :dataset   ::tdr-source
                       :snapshots ::snapshot-list-source))
 
-(s/def ::batch-workload-request (s/keys :opt-un [::common
-                                                 ::input
-                                                 ::items
-                                                 ::labels
-                                                 ::output
-                                                 ::watchers]
-                                        :req-un [(or ::cromwell :batch/executor)
-                                                 ::pipeline
-                                                 ::project]))
+;; This is the wrong thing to do. See [1] for more information.
+;; As a consequence, I've included the keys for a covid pipeline as optional
+;; inputs for batch workloads so that these keys are not removed during
+;; coercion.
+;; [1]: https://github.com/metosin/reitit/issues/494
+(s/def ::batch-workload-request
+  (s/keys :opt-un [::common
+                   ::input
+                   ::items
+                   ::labels
+                   ::output
+                   ::sink
+                   ::source
+                   ::watchers]
+          :req-un [(or ::cromwell :batch/executor)
+                   ::pipeline
+                   ::project]))
 
 (s/def ::batch-workload-response (s/keys :opt-un [::finished
                                                   ::input
