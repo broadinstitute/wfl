@@ -991,7 +991,7 @@
           (throw (UserException. unknown-attributes-error-message
                                  {:entityType  entityType
                                   :attributes  attributes
-                                  :missing     (vec (sort missing))
+                                  :missing     (sort missing)
                                   :fromOutputs fromOutputs}))))))
   sink)
 
