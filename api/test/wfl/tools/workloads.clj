@@ -7,7 +7,6 @@
             [wfl.module.aou                 :as aou]
             [wfl.module.arrays              :as arrays]
             [wfl.module.copyfile            :as cp]
-            [wfl.module.covid               :as covid]
             [wfl.module.sg                  :as sg]
             [wfl.module.wgs                 :as wgs]
             [wfl.module.xx                  :as xx]
@@ -130,25 +129,24 @@
   ([source executor sink]
    {:source   (merge
                {:name    "Terra DataRepo",
-                :dataset ""
-                :table   ""
-                :column  ""}
+                :dataset (str util/uuid-nil)
+                :table   "table"
+                :column  "column"}
                source)
     :executor (merge
                {:name                       "Terra"
                 :workspace                  "namespace/name"
-                :methodConfiguration        ""
+                :methodConfiguration        "namespace/name"
                 :methodConfigurationVersion 0
-                :fromSource                 ""}
+                :fromSource                 "importSnapshot"}
                executor)
     :sink     (merge
                {:name        "Terra Workspace"
                 :workspace   "namespace/name"
-                :entityType  ""
-                :fromOutputs {}
-                :identifier  ""}
+                :entityType  "entity"
+                :identifier  "foo"
+                :fromOutputs {}}
                sink)
-    :pipeline covid/pipeline
     :project  @project
     :creator  @email
     :labels   ["hornet:test"]})

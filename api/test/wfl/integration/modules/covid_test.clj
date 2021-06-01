@@ -88,7 +88,7 @@
           (verify-sink [{:keys [type details]}]
             (is (= type "TerraWorkspaceSink"))
             (is (str/starts-with? details "TerraWorkspaceSink_")))]
-    (let [{:keys [created creator source executor sink labels watchers]}
+    (let [{:keys [created creator source executor sink labels watchers] :as workload}
           (workloads/create-workload!
            (workloads/covid-workload-request
             {:skipValidation true}
@@ -100,16 +100,18 @@
       (is (and executor (verify-executor executor)))
       (is (and sink (verify-sink sink)))
       (is (seq labels) "workload did not contain any labels")
-      (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
+      (is (contains? (set labels) (str "project:" @workloads/project)))
+      (is (util/absent? workload :pipeline) ":pipeline should not be defined")
       (is (vector? watchers)))))
 
 (deftest test-workload-to-edn
-  (let [workload (util/to-edn
-                  (workloads/create-workload!
-                   (workloads/covid-workload-request
-                    {:skipValidation true}
-                    {:skipValidation true}
-                    {:skipValidation true})))]
+  (let [request  (workloads/covid-workload-request
+                  {:skipValidation true}
+                  {:skipValidation true}
+                  {:skipValidation true})
+        _        (is (s/valid? ::spec/workload-request request)
+                     (s/explain-str ::spec/workload-request request))
+        workload (util/to-edn (workloads/create-workload! request))]
     (is (not-any? workload [:id
                             :items
                             :source_type
