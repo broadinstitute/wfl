@@ -98,28 +98,30 @@
 ;; :default implementations
 (defmethod create-workload!
   :default
-  [_ {:keys [pipeline] :as body}]
+  [_ {:keys [pipeline] :as request}]
   (throw
    (ex-info "Failed to create workload - no such pipeline"
-            {:cause    body
+            {:request  request
              :pipeline pipeline
              :type     ::invalid-pipeline})))
 
 (defmethod start-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as workload}]
   (throw
    (ex-info "Failed to start workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:workload  workload
+             :pipeline  pipeline
+             :type      ::invalid-pipeline})))
 
 (defmethod stop-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as workload}]
   (throw
    (ex-info "Failed to stop workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 (defmethod execute-workload!
   :default
@@ -128,11 +130,12 @@
 
 (defmethod update-workload!
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as workload}]
   (throw
    (ex-info "Failed to update workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 (defmethod to-edn
   :default
@@ -145,11 +148,12 @@
 
 (defmethod load-workload-impl
   :default
-  [_ body]
+  [_ {:keys [pipeline] :as workload}]
   (throw
    (ex-info "Failed to load workload - no such pipeline"
-            {:cause body
-             :type  ::invalid-pipeline})))
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
 
 ;; Common workload operations
 (defoverload util/to-edn :workload to-edn)
