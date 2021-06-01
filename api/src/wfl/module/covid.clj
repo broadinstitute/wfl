@@ -984,13 +984,12 @@
                                (util/make-map entityType fromOutputs))))
       (let [attributes    (->> (get-in entity-types [entity-type :attributeNames])
                                (cons (str entityType "_id"))
-                               sort
                                (mapv keyword))
             [missing _ _] (data/diff (set (keys fromOutputs)) (set attributes))]
         (when (seq missing)
           (throw (UserException. unknown-attributes-error-message
                                  {:entityType  entityType
-                                  :attributes  attributes
+                                  :attributes  (sort attributes)
                                   :missing     (sort missing)
                                   :fromOutputs fromOutputs}))))))
   sink)
