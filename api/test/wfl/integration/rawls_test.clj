@@ -7,8 +7,7 @@
             [wfl.util              :as util])
   (:import [clojure.lang ExceptionInfo]))
 
-;; A known Terra Data Repository snapshot's ID...
-(def snapshot-name "snapshot")
+;; A known TDR Dev snapshot ID
 (def snapshot-id   "7cb392d8-949b-419d-b40b-d039617d2fc7")
 
 (let [new-env {"WFL_FIRECLOUD_URL"
@@ -20,23 +19,33 @@
     "general-dev-billing-account/test-workspace"
     "hornet-eng"
     (fn [workspace]
-      (let [make-reference
-            #(rawls/create-snapshot-reference workspace snapshot-id snapshot-name)
-            reference-id
-            (testing "Create"
-              (let [snapshot (make-reference)]
+      (letfn [(make-reference [snapshot-name]
+                (rawls/create-snapshot-reference workspace snapshot-id snapshot-name))
+              (verify-snapshot [[snapshot snapshot-name]]
                 (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
                 (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
-                (is (= snapshot-name (:name snapshot)))
-                (:referenceId snapshot)))]
-        (testing "Get"
-          (let [snapshot (rawls/get-snapshot-reference workspace reference-id)]
-            (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
-            (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
-            (is (= snapshot-name (:name snapshot)))))
-        (testing "Create already exists"
-          (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
-                                (make-reference))))))))
+                (is (= snapshot-name (:name snapshot))))
+              (verify-snapshots [snapshots snapshot-names]
+                (->> (map list snapshots snapshot-names)
+                     (run! verify-snapshot)))]
+        (let [names ["snapshot1" "snapshot2"]
+              reference-ids
+              (testing "Create"
+                (let [snapshots (map make-reference names)]
+                  (verify-snapshots snapshots names)
+                  (map :referenceId snapshots)))]
+          (testing "Get"
+            (let [snapshots
+                  (map #(rawls/get-snapshot-reference workspace %) reference-ids)]
+              (verify-snapshots snapshots names)))
+          (testing "Get all"
+            (let [[_first _second & rest :as snapshots]
+                  (rawls/get-snapshot-references workspace 10)]
+              (is (empty? rest))
+              (verify-snapshots snapshots names)))
+          (testing "Create already exists"
+            (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
+                                  (make-reference (first names))))))))))
 
 (deftest test-batch-upsert-entities
   (let [entity-type   "outputs"
