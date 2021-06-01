@@ -48,7 +48,6 @@
   ([workspace limit]
    (letfn
     [(page [offset]
-       (println "Getting resources with offset " offset)
        (let [{:keys [resources] :as _response}
              (-> (workspace-api-url workspace snapshot-endpoint)
                  (http/get {:headers      (auth/get-auth-header)
