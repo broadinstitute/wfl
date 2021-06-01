@@ -61,6 +61,18 @@
   ([workspace]
    (get-snapshot-references workspace 100)))
 
+(defn ^:private get-reference-for-snapshot-id
+  "Return first snapshot reference for `snapshot-id` in `workspace`."
+  [workspace snapshot-id]
+  (->> (get-snapshot-references workspace)
+       (filter #(= (get-in % [:reference :snapshot]) snapshot-id))
+       first))
+
+(def ^:private reference-creation-failed-message
+  (str/join " " ["Could not create snapshot reference and"
+                 "found no snapshot reference matching the"
+                 "snapshot id."]))
+
 (defn create-or-get-snapshot-reference
   "Return first snapshot reference for `snapshot-id` in `workspace`,
   creating it as `name` with `description` if it does not yet exist."
@@ -68,24 +80,14 @@
    (try
      (create-snapshot-reference workspace snapshot-id name description)
      (catch ExceptionInfo cause
-       (let [{:keys [status] :as _data} (.getData cause)]
-         (cond
-           (= 409 status)
-           ;; On a duplicate resource exception, try to fetch the resource.
-           (if-let [reference
-                    (->> (get-snapshot-references workspace)
-                         (filter #(= (get-in % [:reference :snapshot])
-                                     snapshot-id))
-                         first)]
-             reference
-             (throw (ex-info (str "Could not create snapshot reference and "
-                                  "found no snapshot reference matching the "
-                                  "snapshot id.")
-                             {:workspace   workspace
-                              :snapshot-id snapshot-id
-                              :name        name}
-                             cause)))
-           :else (throw cause))))))
+       (when-not (== 409 (:status (ex-data cause)))
+         (throw cause))
+       (or (get-reference-for-snapshot-id workspace snapshot-id)
+           (throw (ex-info reference-creation-failed-message
+                           {:workspace   workspace
+                            :snapshot-id snapshot-id
+                            :name        name}
+                           cause))))))
   ([workspace snapshot-id name]
    (create-or-get-snapshot-reference workspace snapshot-id name "")))
 

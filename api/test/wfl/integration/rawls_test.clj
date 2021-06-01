@@ -8,7 +8,7 @@
   (:import [clojure.lang ExceptionInfo]))
 
 ;; A known TDR Dev snapshot ID
-(def snapshot-id   "7cb392d8-949b-419d-b40b-d039617d2fc7")
+(def snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
 
 (let [new-env {"WFL_FIRECLOUD_URL"
                "https://firecloud-orchestration.dsde-dev.broadinstitute.org"}]
