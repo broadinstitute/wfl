@@ -17,10 +17,6 @@ without logging in first because it is bundled with the UI and not the API.
     server and access via the UI. See the development tips below for more
     information.
 
-!!! tip
-To access the swagger page locally, you'll need to start a development server
-and access via the UI. See the development tips below for more information.
-
 ## Development Setup
 
 Clojure development feels very different from Scala and Java development. It
