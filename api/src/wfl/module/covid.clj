@@ -684,18 +684,14 @@
         (throw-on-method-config-version-mismatch methodConfigurationVersion)))
   executor)
 
-(defn ^:private import-snapshot!
-  "Return snapshot reference for `id` imported to `workspace` as `name`."
-  [{:keys [workspace] :as _executor}
-   {:keys [name id]   :as _snapshot}]
-  (rawls/create-snapshot-reference workspace id name))
-
 (defn ^:private from-source
   "Coerce `source-item` to form understood by `executor` via `fromSource`."
-  [{:keys [fromSource] :as executor}
-   source-item]
-  (cond (= "importSnapshot" fromSource) (import-snapshot! executor source-item)
-        :else (throw (ex-info "Unknown fromSource" {:executor executor}))))
+  [{:keys [workspace fromSource] :as executor}
+   {:keys [name id]              :as _source-item}]
+  (cond (= "importSnapshot" fromSource)
+        (rawls/create-or-get-snapshot-reference workspace id name)
+        :else
+        (throw (ex-info "Unknown fromSource" {:executor executor}))))
 
 (defn ^:private update-method-configuration!
   "Update `methodConfiguration` in `workspace` with snapshot reference `name`
