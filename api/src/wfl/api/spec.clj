@@ -139,7 +139,8 @@
                    ::column
                    ::dataset
                    ::table
-                   ::snapshotReaders]))
+                   ::snapshotReaders]
+          :opt-un [::snapshots]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::name ::snapshots]))
