@@ -1,8 +1,11 @@
 (ns wfl.unit.modules.covid-test
-  (:require [clojure.test         :refer :all]
+  (:require [clojure.spec.alpha   :as s]
+            [clojure.test         :refer :all]
+            [wfl.api.spec         :as spec]
             [wfl.module.covid     :as covid]
             [wfl.service.datarepo :as datarepo]
-            [wfl.tools.resources  :as resources])
+            [wfl.tools.resources  :as resources]
+            [wfl.tools.workloads  :as workloads])
   (:import [java.time OffsetDateTime ZoneId]
            [java.lang Math]))
 
@@ -47,3 +50,10 @@
           "requests are not partitioned correctly!")
       (is (apply distinct? (map #(get-in % [1 :name]) shards->snapshot-requests))
           "requests are not made unique!"))))
+
+(deftest test-tdr-source-spec
+  (let [valid?           (partial s/valid? ::spec/tdr-source)
+        {:keys [source]} (workloads/covid-workload-request)]
+    (is (valid? source) (s/explain-str ::spec/tdr-source source))
+    (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
+        "snapshotReaders should be a list of email addresses")))
