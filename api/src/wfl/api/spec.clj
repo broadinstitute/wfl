@@ -116,6 +116,7 @@
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::table string?)
+(s/def ::snapshotReaders (s/* email-address?))
 (s/def ::watchers (s/* email-address?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
 (s/def ::snapshots (s/* ::uuid))
@@ -134,7 +135,11 @@
                                ::workspace]))
 
 (s/def ::tdr-source
-  (s/keys :req-un [::name ::column ::dataset ::table]))
+  (s/keys :req-un [::name
+                   ::column
+                   ::dataset
+                   ::table
+                   ::snapshotReaders]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::name ::snapshots]))

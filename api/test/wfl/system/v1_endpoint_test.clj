@@ -221,10 +221,11 @@
   "Build a covid workload request."
   (let [terra-ns  (comp (partial str/join "/") (partial vector "wfl-dev"))
         workspace (terra-ns "CDC_Viral_Sequencing")
-        source    {:name    "Terra DataRepo"
-                   :dataset "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
-                   :table   "flowcells"
-                   :column  "last_modified_date"}
+        source    {:name            "Terra DataRepo"
+                   :dataset         "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
+                   :table           "flowcells"
+                   :column          "last_modified_date"
+                   :snapshotReaders ["hornet@firecloud.org"]}
         executor  {:name                       "Terra"
                    :workspace                  workspace
                    :methodConfiguration        (terra-ns "sarscov2_illumina_full")
