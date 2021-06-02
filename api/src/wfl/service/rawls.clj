@@ -69,9 +69,9 @@
        first))
 
 (def ^:private reference-creation-failed-message
-  (str/join " " ["Could not create snapshot reference and"
-                 "found no snapshot reference matching the"
-                 "snapshot id."]))
+  (str/join " " ["Could not create snapshot reference"
+                 "and found no snapshot reference"
+                 "matching the snapshot id."]))
 
 (defn create-or-get-snapshot-reference
   "Return first snapshot reference for `snapshot-id` in `workspace`,

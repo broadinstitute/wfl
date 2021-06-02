@@ -166,10 +166,7 @@ shared database in `gotc-dev` or *gasp* production.
         thus you could use `pq start` or `pq stop` to easily spin up and turn down
         the db.
 
-If an API references an undefined spec, HTTP requests and responses might
-silently fail or the Swagger page will fail to render. Check the
-`clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
-hair out.
+3. [Optional] Create wfl DB.
 
     If you see errors like this when launching a local WFL server
     or applying liquibase updates:
