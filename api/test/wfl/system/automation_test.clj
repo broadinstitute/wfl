@@ -2,7 +2,6 @@
   (:require [clojure.pprint        :as pprint]
             [clojure.test          :refer [deftest is]]
             [wfl.environment       :as env]
-            [wfl.module.covid      :as covid]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
             [wfl.tools.workflows   :as workflows]
@@ -58,7 +57,6 @@
               :fromOutputs    (resources/read-resource
                                "sarscov2_illumina_full/entity-from-outputs.edn")
               :skipValidation true}
-   :pipeline covid/pipeline
    :project  @workloads/project
    :creator  @workloads/email
    :labels   ["hornet:test"]})

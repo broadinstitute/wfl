@@ -88,7 +88,7 @@
           (verify-sink [{:keys [type details]}]
             (is (= type "TerraWorkspaceSink"))
             (is (str/starts-with? details "TerraWorkspaceSink_")))]
-    (let [{:keys [created creator source executor sink labels watchers]}
+    (let [{:keys [created creator source executor sink labels watchers] :as workload}
           (workloads/create-workload!
            (workloads/covid-workload-request
             {:skipValidation true}
@@ -100,16 +100,18 @@
       (is (and executor (verify-executor executor)))
       (is (and sink (verify-sink sink)))
       (is (seq labels) "workload did not contain any labels")
-      (is (contains? (set labels) (str "pipeline:" covid/pipeline)))
+      (is (contains? (set labels) (str "project:" @workloads/project)))
+      (is (util/absent? workload :pipeline) ":pipeline should not be defined")
       (is (vector? watchers)))))
 
 (deftest test-workload-to-edn
-  (let [workload (util/to-edn
-                  (workloads/create-workload!
-                   (workloads/covid-workload-request
-                    {:skipValidation true}
-                    {:skipValidation true}
-                    {:skipValidation true})))]
+  (let [request  (workloads/covid-workload-request
+                  {:skipValidation true}
+                  {:skipValidation true}
+                  {:skipValidation true})
+        _        (is (s/valid? ::spec/workload-request request)
+                     (s/explain-str ::spec/workload-request request))
+        workload (util/to-edn (workloads/create-workload! request))]
     (is (not-any? workload [:id
                             :items
                             :source_type
@@ -251,22 +253,42 @@
         {:workspace   testing-workspace
          :entityType  "assemblies"
          :identity    "Who cares?"
-         :fromOutputs {:flowcell_id "flowcell_id"}}))))
+         :fromOutputs {:assemblies_id "foo"}}))))
 
 (deftest test-create-covid-workload-with-invalid-sink-entity-type
   (let [request (workloads/covid-workload-request
                  {:skipValidation true}
                  {:skipValidation true}
                  {:workspace   testing-workspace
+                  :entityType  "does_not_exist"
+                  :identity    "Who cares?"
+                  :fromOutputs {}})]
+    (is (thrown-with-msg?
+         UserException (re-pattern covid/unknown-entity-type-error-message)
+         (workloads/create-workload! request)))))
+
+(deftest test-create-covid-workload-with-malformed-fromOutputs
+  (let [request (workloads/covid-workload-request
+                 {:skipValidation true}
+                 {:skipValidation true}
+                 {:workspace   testing-workspace
                   :entityType  "assemblies"
                   :identity    "Who cares?"
-                  :fromOutputs {:fnord "fnord"}})]
+                  :fromOutputs "geoff"})]
     (is (thrown-with-msg?
-         UserException #"Entity not found"
-         (workloads/create-workload!
-          (assoc-in request [:sink :entityType] "fnord"))))
+         UserException (re-pattern covid/malformed-from-outputs-error-message)
+         (workloads/create-workload! request)))))
+
+(deftest test-create-covid-workload-with-unknown-attributes-listed-in-fromOutputs
+  (let [request (workloads/covid-workload-request
+                 {:skipValidation true}
+                 {:skipValidation true}
+                 {:workspace   testing-workspace
+                  :entityType  "assemblies"
+                  :identity    "Who cares?"
+                  :fromOutputs {:does_not_exist "genbank_source_table"}})]
     (is (thrown-with-msg?
-         UserException #"Attributes missing for these outputs"
+         UserException (re-pattern covid/unknown-attributes-error-message)
          (workloads/create-workload! request)))))
 
 (deftest test-create-covid-workload-with-invalid-sink-workspace

@@ -20,7 +20,7 @@
            [java.util UUID]
            [wfl.util UserException]))
 
-(def pipeline "Sarscov2IlluminaFull")
+(def pipeline nil)
 
 ;; interfaces
 ;; queue operations
@@ -142,11 +142,10 @@
 (defn ^:private add-workload-metadata
   "Use `tx` to record the workload metadata in `request` in the workload table
    and return the ID the of the new row."
-  [tx request]
+  [tx {:keys [project] :as request}]
   (letfn [(combine-labels [labels]
-            (->> (mapv request [:pipeline :project])
-                 (map str ["pipeline:" "project:"])
-                 (concat labels)
+            (->> (str "project:" project)
+                 (conj labels)
                  set
                  sort
                  vec))]
@@ -162,8 +161,7 @@
 
 (def ^:private update-workload-query
   "UPDATE workload
-   SET    pipeline       = ?::pipeline
-   ,      source_type    = ?::source
+   SET    source_type    = ?::source
    ,      source_items   = ?
    ,      executor_type  = ?::executor
    ,      executor_items = ?
@@ -177,7 +175,7 @@
         id                     (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
-     (concat [update-workload-query pipeline]
+     (concat [update-workload-query]
              (create-source! tx id source)
              (create-executor! tx id executor)
              (create-sink! tx id sink)
@@ -192,7 +190,7 @@
       (select-keys $ workload-metadata-keys)
       (merge $ src-exc-sink)
       (filter second $)
-      (into {:type :workload :id id :pipeline pipeline} $))))
+      (into {:type :workload :id id} $))))
 
 (defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
@@ -955,7 +953,18 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
 
-(defn verify-terra-sink!
+(def unknown-entity-type-error-message
+  "The entityType was not found in workspace.")
+
+(def malformed-from-outputs-error-message
+  (str/join " " ["fromOutputs must define a mapping from workflow outputs"
+                 "to the attributes of entityType."]))
+
+(def unknown-attributes-error-message
+  (str/join " " ["Found additional attributes in fromOutputs that are not"
+                 "present in the entityType."]))
+
+(defn ^:private verify-terra-sink!
   "Verify that the WFL has access the `workspace`."
   [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
   (when-not skipValidation
@@ -964,14 +973,21 @@
           entity-types (firecloud/list-entity-types workspace)
           types        (-> entity-types keys set)]
       (when-not (types entity-type)
-        (throw (UserException. "Entity not found"
+        (throw (UserException. unknown-entity-type-error-message
                                (util/make-map entityType types workspace))))
-      (let [attributes    (get-in entity-types [entity-type :attributeNames])
-            [missing _ _] (data/diff (set (vals fromOutputs)) (set attributes))]
+      (when-not (map? fromOutputs)
+        (throw (UserException. malformed-from-outputs-error-message
+                               (util/make-map entityType fromOutputs))))
+      (let [attributes    (->> (get-in entity-types [entity-type :attributeNames])
+                               (cons (str entityType "_id"))
+                               (mapv keyword))
+            [missing _ _] (data/diff (set (keys fromOutputs)) (set attributes))]
         (when (seq missing)
-          (throw (UserException. "Attributes missing for these outputs"
-                                 {:attributes (sort attributes)
-                                  :missing    (sort missing)}))))))
+          (throw (UserException. unknown-attributes-error-message
+                                 {:entityType  entityType
+                                  :attributes  (sort attributes)
+                                  :missing     (sort missing)
+                                  :fromOutputs fromOutputs}))))))
   sink)
 
 ;; visible for testing
