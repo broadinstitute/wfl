@@ -60,11 +60,12 @@
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
-                      :sg       ::sg-workflow-inputs))
+                      :sg       ::sg-workflow-inputs
+                      :other    map?))
 
-(s/def ::workflows (s/* ::workflow))
 (s/def ::workflow  (s/keys :req-un [::inputs]
                            :opt-un [::status ::updated ::uuid ::options]))
+(s/def ::workflows (s/* ::workflow))
 
 ;; aou
 (s/def ::analysis_version_number integer?)
@@ -170,8 +171,7 @@
                                                   ::input
                                                   ::started
                                                   ::stopped
-                                                  ::wdl
-                                                  ::workflows]
+                                                  ::wdl]
                                          :req-un [::commit
                                                   ::created
                                                   ::creator
