@@ -1,23 +1,24 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test                   :refer :all]
-            [clojure.spec.alpha             :as s]
-            [clojure.string                 :as str]
+  (:require [clojure.test :refer :all]
+            [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [reitit.coercion.spec]
-            [reitit.ring                    :as ring]
-            [reitit.ring.coercion           :as coercion]
-            [wfl.api.spec                   :as spec]
-            [wfl.api.spec                   :as spec]
+            [reitit.ring :as ring]
+            [reitit.ring.coercion :as coercion]
+            [wfl.api.spec :as spec]
+            [wfl.api.spec :as spec]
             [wfl.integration.modules.shared :as shared]
-            [wfl.jdbc                       :as jdbc]
-            [wfl.module.covid               :as covid]
-            [wfl.service.firecloud          :as firecloud]
-            [wfl.service.postgres           :as postgres]
-            [wfl.service.rawls              :as rawls]
-            [wfl.tools.fixtures             :as fixtures]
-            [wfl.tools.workloads            :as workloads]
-            [wfl.tools.resources            :as resources]
-            [wfl.util                       :as util])
+            [wfl.jdbc :as jdbc]
+            [wfl.module.covid :as covid]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.postgres :as postgres]
+            [wfl.service.rawls :as rawls]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.workloads :as workloads]
+            [wfl.tools.resources :as resources]
+            [wfl.util :as util]
+            [clojure.set :as set])
   (:import [java.util ArrayDeque UUID]
            [java.lang Math]
            [wfl.util UserException]
@@ -318,8 +319,8 @@
 
 ;; Mocks
 
-(def ^:private method-name-mock "method-name")
-(def ^:private method-config-mock (str "method-namespace/" method-name-mock))
+(def ^:private fake-method-name "method-name")
+(def ^:private fake-method-config (str "method-namespace/" fake-method-name))
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
   {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
@@ -346,22 +347,22 @@
 (def ^:private submission-id-mock (str (UUID/randomUUID)))
 
 (def ^:private running-workflow-mock
-  {:status           "Running"
-   :workflowId       (str (UUID/randomUUID))
-   :entityName "entity"
-   :inputResolutions [{:inputName (str method-name-mock ".input")
-                       :value     "value"}]})
+  {:entityName   "entity"
+   :id           (str (UUID/randomUUID))
+   :inputs       {:input "value"}
+   :status       "Running"
+   :workflowName fake-method-name})
 
 (def ^:private succeeded-workflow-mock
-  {:status         "Succeeded"
-   :workflowId     (str (UUID/randomUUID))
-   :entityName     "entity"
-   :inputResolutions [{:inputName (str method-name-mock ".input")
-                       :value     "value"}]})
+  {:entityName   "entity"
+   :id           (str (UUID/randomUUID))
+   :inputs       {:input "value"}
+   :status       "Succeeded"
+   :workflowName fake-method-name})
 
 ;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
-  (let [enqueue #(-> % (dissoc :workflowId) (assoc :staus "Queued"))]
+  (let [enqueue #(-> % (dissoc :id) (assoc :staus "Queued"))]
     {:submissionId submission-id-mock
      :workflows    (map enqueue [running-workflow-mock succeeded-workflow-mock])}))
 
@@ -369,6 +370,7 @@
 (defn ^:private mock-firecloud-get-submission [& _]
   (letfn [(add-workflow-entity [{:keys [entityName] :as workflow}]
             (-> workflow
+                (set/rename-keys {:id :workflowId})
                 (assoc :workflowEntity {:entityType "test" :entityName entityName})
                 (dissoc :entityName)))]
     {:submissionId submission-id-mock
@@ -387,7 +389,7 @@
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
   (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
       "Successful workflow records should be filtered out before firecloud fetch")
-  {:status "Succeeded" :workflowId workflow-id})
+  {:status "Succeeded" :id workflow-id :workflowName fake-method-name})
 
 (defn ^:private mock-workflow-keep-status [_ _ workflow-id]
   (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
@@ -395,11 +397,13 @@
   running-workflow-mock)
 
 (defn ^:private mock-firecloud-get-workflow-outputs [_ _ workflow]
-  {:workflowId workflow
-   :tasks {:noise
-           {}
-           (keyword method-name-mock)
-           (util/prefix-keys {:output "value"} (str method-name-mock "."))}})
+  (is (= (:id succeeded-workflow-mock) workflow))
+  {:tasks
+   {:noise
+    {}
+    (keyword fake-method-name)
+    {:outputs
+     (util/prefix-keys {:output "value"} (str fake-method-name "."))}}})
 
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -476,7 +480,7 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name                       "Terra"
           :workspace                  "workspace-ns/workspace-name"
-          :methodConfiguration        method-config-mock
+          :methodConfiguration        fake-method-config
           :methodConfigurationVersion method-config-version-mock
           :fromSource                 "importSnapshot"
           :skipValidation             true}
@@ -490,7 +494,7 @@
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
                   "The record ID was incorrect given the workflow order in mocked submission")
-              (is (= (:workflowId workflow) (:workflow record))
+              (is (= (:id workflow) (:workflow record))
                   "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
         {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
@@ -540,6 +544,8 @@
        #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
       #(let [workflow (covid/peek-queue! executor)]
          (is (succeeded? (:status workflow)))
+         (is (= (:id succeeded-workflow-mock) (:uuid workflow)))
+         (is (contains? workflow :updated))
          (is (= "value" (-> workflow :inputs :input)))
          (is (= "value" (-> workflow :outputs :output)))
          (is (not (-> workflow :outputs :noise)))
@@ -578,8 +584,7 @@
       (is (-> executor :queue empty?) "The workflow was not consumed")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[record & rest] (->> sink :details (postgres/get-table tx))]
-          (is record
-              "The record was not written to the database")
+          (is record "The record was not written to the database")
           (is (empty? rest) "More than one record was written")
           (is (= (:uuid workflow) (:workflow record))
               "The workflow UUID was not written")

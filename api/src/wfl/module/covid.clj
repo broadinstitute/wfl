@@ -720,11 +720,6 @@
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
-(defn ^:private entity-to-pair
-  "Coerce the firecloud entity to a [type name] pair."
-  [entity]
-  (mapv entity [:entityType :entityName]))
-
 (defn ^:private allocate-submission
   "Write or allocate workflow records for `submission` in `details` table."
   [{:keys [details]                :as _executor}
@@ -827,22 +822,18 @@
   (update-terra-workflow-statuses! executor)
   executor)
 
-(defn ^:private from-firecloud-workflow [methodConfig workflow]
-  (let [[_ name]    (str/split methodConfig #"/" 2)
-        input-name  (comp keyword #(util/unprefix % (str name ".")) :inputName)
-        to-inputs   #(into {} (map (juxt input-name :value) %))
-        wdl-outputs (comp (partial into {})
-                          #(util/unprefix-keys % (str name "."))
-                          (keyword name)
-                          :tasks)]
-    (-> workflow
-        (update :inputResolutions to-inputs)
-        (update :outputs #(when % (wdl-outputs %)))
-        (dissoc :messages)
-        (set/rename-keys {:inputResolutions      :inputs
-                          :statusLastChangedDate :updated
-                          :workflowId            :uuid})
-        util/unnilify)))
+(defn ^:private combine-record-workflow-and-outputs
+  [{:keys [updated] :as _record}
+   {:keys [workflowName] :as workflow}
+   firecloud-outputs]
+  (let [prefix  (str workflowName ".")
+        outputs (-> firecloud-outputs
+                    (get-in [:tasks (keyword workflowName) :outputs])
+                    (util/unprefix-keys prefix))]
+    (-> (assoc workflow :updated updated :outputs outputs)
+        (update :inputs #(util/unprefix-keys % prefix))
+        (set/rename-keys {:id :uuid})
+        (util/select-non-nil-keys [:inputs :uuid :status :outputs :updated]))))
 
 (defn ^:private peek-terra-executor-details
   "Get first unconsumed successful workflow record from `details` table."
@@ -859,11 +850,13 @@
 
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
-  [{:keys [workspace methodConfiguration] :as executor}]
-  (if-let [{:keys [submission workflow]} (peek-terra-executor-details executor)]
-    (-> (firecloud/get-workflow workspace submission workflow)
-        (assoc :outputs (firecloud/get-workflow-outputs workspace submission workflow))
-        (->> (from-firecloud-workflow methodConfiguration)))))
+  [{:keys [workspace] :as executor}]
+  (when-let [{:keys [submission workflow] :as record}
+             (peek-terra-executor-details executor)]
+    (combine-record-workflow-and-outputs
+     record
+     (firecloud/get-workflow workspace submission workflow)
+     (firecloud/get-workflow-outputs workspace submission workflow))))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,
@@ -889,16 +882,17 @@
            :count))))
 
 (defn ^:private terra-executor-workflows
-  [tx {:keys [workspace details methodConfiguration] :as _executor}]
+  [tx {:keys [workspace details] :as _executor}]
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
-  (let [to-workflow (partial from-firecloud-workflow methodConfiguration)]
-    (->> (format "SELECT DISTINCT submission FROM %s" details)
-         (jdbc/query tx)
-         (mapcat #(->> (:submission %)
-                       (firecloud/get-submission workspace)
-                       :workflows
-                       (map to-workflow))))))
+  (letfn [(from-record [{:keys [workflow submission status] :as record}]
+            (combine-record-workflow-and-outputs
+             record
+             (firecloud/get-workflow workspace submission workflow)
+             (when (= "Succeeded" status)
+               (firecloud/get-workflow-outputs workspace submission workflow))))]
+    (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
+      (map from-record (jdbc/query tx (format query details))))))
 
 (defn ^:private terra-executor-done? [executor]
   (zero? (queue-length! executor)))
@@ -1018,17 +1012,15 @@
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
   (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
-    (log/debug "Coercing workflow" uuid "outputs to" entityType)
+    (log/debug "coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           name       (outputs (keyword identifier))]
-      (log/debug "Upserting workflow" uuid "outputs as" name)
+      (log/debug "upserting workflow" uuid "outputs as" name)
       (rawls/batch-upsert workspace [[name entityType attributes]])
       (pop-queue! executor)
-      (log/info "Sank workflow" uuid "as" name)
+      (log/info "sunk workflow" uuid "to" workspace "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (->> {:entity      name
-              :workflow    uuid
-              :updated     (utc-now)}
+        (->> {:entity name :workflow uuid :updated (utc-now)}
              (jdbc/insert! tx details))))))
 
 (defn terra-workspace-sink-done? [_sink] true)
