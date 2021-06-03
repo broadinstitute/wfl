@@ -329,6 +329,10 @@
       (throw (Exception. (format "%s: %s exit status from: %s"
                                  wfl/the-name exit args))))))
 
+(def uuid-nil
+  "The nil UUID."
+  (UUID/fromString "00000000-0000-0000-0000-000000000000"))
+
 (defn extract-resource
   "Extract the resource given by RESOURCE-NAME to a temporary folder
     @returns  java.io.File to the extracted resource

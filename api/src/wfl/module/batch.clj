@@ -45,10 +45,6 @@
       util/parse-json
       :status))
 
-(def ^:private finished?
-  "Test if a workflow `:status` is in a terminal state."
-  (set (conj cromwell/final-statuses "skipped")))
-
 (defn make-update-workflows [get-status!]
   (fn [tx {:keys [items] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
@@ -59,15 +55,13 @@
                             ["id = ?" id]))]
       (->> (workloads/workflows tx workload)
            (remove (comp nil? :uuid))
-           (remove (comp finished? :status))
+           (remove (comp cromwell/final? :status))
            (run! #(update! % (get-status! workload %)))))))
 
 (def update-workflow-statuses!
   "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
   (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status executor uuid)))]
+            (cromwell-status executor uuid))]
     (make-update-workflows get-cromwell-status)))
 
 (defn batch-update-workflow-statuses!
@@ -85,10 +79,10 @@
 
 (defn active-workflows
   "Use `tx` to query all the workflows in `_workload` whose :status is not in
-  `finished?`"
+  `final?`"
   [tx {:keys [items] :as _workload}]
   (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
-    (->> (util/to-quoted-comma-separated-list finished?)
+    (->> (util/to-quoted-comma-separated-list cromwell/final?)
          (format query items)
          (jdbc/query tx))))
 
