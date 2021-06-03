@@ -1,28 +1,28 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test :refer :all]
-            [clojure.spec.alpha :as s]
-            [clojure.string :as str]
+  (:require [clojure.test                   :refer :all]
+            [clojure.set                    :as set]
+            [clojure.spec.alpha             :as s]
+            [clojure.string                 :as str]
             [reitit.coercion.spec]
-            [reitit.ring :as ring]
-            [reitit.ring.coercion :as coercion]
-            [wfl.api.spec :as spec]
-            [wfl.api.spec :as spec]
+            [reitit.ring                    :as ring]
+            [reitit.ring.coercion           :as coercion]
+            [wfl.api.spec                   :as spec]
+            [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.covid :as covid]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres :as postgres]
-            [wfl.service.rawls :as rawls]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.tools.resources :as resources]
-            [wfl.util :as util]
-            [clojure.set :as set])
-  (:import [java.util ArrayDeque UUID]
-           [java.lang Math]
-           [wfl.util UserException]
-           (java.time LocalDateTime)))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.covid               :as covid]
+            [wfl.service.firecloud          :as firecloud]
+            [wfl.service.postgres           :as postgres]
+            [wfl.service.rawls              :as rawls]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.tools.resources            :as resources]
+            [wfl.util                       :as util])
+  (:import [java.lang Math]
+           [java.time LocalDateTime]
+           [java.util ArrayDeque UUID]
+           [wfl.util UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
