@@ -71,7 +71,7 @@
          (run! check-inputs workflows)
          (run! check-workflow workflows)))))
 
-(deftest test-update-arrays-workload!
+(deftest ^:excluded test-update-arrays-workload!
   (letfn [(check-status [status workflow]
             (is (= status (:status workflow))))]
     (with-redefs-fn {#'terra/get-workflow-status-by-entity mock-get-workflow-status-by-entity}
