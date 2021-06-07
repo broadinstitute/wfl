@@ -554,19 +554,20 @@
          (is (== 1 (covid/queue-length! executor)))
          (is (not (covid/done? executor)))))))
 
+(def ^:private fake-entity-type "flowcell")
+(def ^:private fake-entity-name "test")
+
 (deftest test-update-terra-workspace-sink
-  (let [flowcell-id "test"
-        entity-type "flowcell"
-        workflow    {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+  (let [workflow    {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
                      :status  "Succeeded"
                      :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                   resources/read-resource
-                                  (assoc :flowcell_id flowcell-id))}
+                                  (assoc :flowcell_id fake-entity-name))}
         executor    (make-queue-from-list [workflow])
         sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (->> {:name           "Terra Workspace"
                             :workspace      "workspace-ns/workspace-name"
-                            :entityType     entity-type
+                            :entityType     fake-entity-type
                             :fromOutputs    (resources/read-resource
                                              "sarscov2_illumina_full/entity-from-outputs.edn")
                             :identifier     "flowcell_id"
@@ -574,22 +575,74 @@
                            (covid/create-sink! tx (rand-int 1000000))
                            (zipmap [:sink_type :sink_items])
                            (covid/load-sink! tx)))]
-    (letfn [(verify-upsert-request [workspace [[name type _]]]
+    (letfn [(verify-upsert-request [workspace [[type name _]]]
               (is (= "workspace-ns/workspace-name" workspace))
-              (is (= name flowcell-id))
-              (is (= type entity-type)))]
+              (is (= type fake-entity-type))
+              (is (= name fake-entity-name)))
+            (throw-if-called [fname & args]
+              (throw (ex-info (str fname " should not have been called")
+                              {:called-with args})))]
       (with-redefs-fn
-        {#'rawls/batch-upsert verify-upsert-request}
+        {#'rawls/batch-upsert        verify-upsert-request
+         #'covid/entity-exists?      (constantly false)
+         #'firecloud/delete-entities (partial throw-if-called "delete-entities")}
         #(covid/update-sink! executor sink))
-      (is (-> executor :queue empty?) "The workflow was not consumed")
+      (is (zero? (covid/queue-length! executor)) "The workflow was not consumed")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[record & rest] (->> sink :details (postgres/get-table tx))]
           (is record "The record was not written to the database")
           (is (empty? rest) "More than one record was written")
           (is (= (:uuid workflow) (:workflow record))
               "The workflow UUID was not written")
-          (is (= flowcell-id (:entity record))
+          (is (= fake-entity-name (:entity record))
               "The entity was not correct"))))))
+
+(deftest test-sinking-resubmitted-workflow
+  (fixtures/with-temporary-workspace
+    (fn [workspace]
+      (let [workflow1 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+                       :status  "Succeeded"
+                       :outputs {:run_id  fake-entity-name
+                                 :results ["aligned-thing.cram"]}}
+            workflow2 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67ab"
+                       :status  "Succeeded"
+                       :outputs {:run_id  fake-entity-name
+                                 :results ["another-aligned-thing.cram"]}}
+            executor  (make-queue-from-list [workflow1 workflow2])
+            sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                        (->> {:name           "Terra Workspace"
+                              :workspace      workspace
+                              :entityType     fake-entity-type
+                              :fromOutputs    {:aligned_crams "results"}
+                              :identifier     "run_id"
+                              :skipValidation true}
+                             (covid/create-sink! tx (rand-int 1000000))
+                             (zipmap [:sink_type :sink_items])
+                             (covid/load-sink! tx)))]
+        (covid/update-sink! executor sink)
+        (is (== 1 (covid/queue-length! executor))
+            "one workflow should have been consumed")
+        (let [{:keys [entityType name attributes]}
+              (firecloud/get-entity workspace [fake-entity-type fake-entity-name])]
+          (is (= fake-entity-type entityType))
+          (is (= fake-entity-name name))
+          (is (== 1 (count attributes)))
+          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["aligned-thing.cram"]}]
+                 (first attributes))))
+        (covid/update-sink! executor sink)
+        (is (zero? (covid/queue-length! executor))
+            "one workflow should have been consumed")
+        (let [entites (firecloud/list-entities workspace fake-entity-type)]
+          (is (== 1 (count entites))
+              "No new entities should have been added"))
+        (let [{:keys [entityType name attributes]}
+              (firecloud/get-entity workspace [fake-entity-type fake-entity-name])]
+          (is (= fake-entity-type entityType))
+          (is (= fake-entity-name name))
+          (is (== 1 (count attributes)))
+          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["another-aligned-thing.cram"]}]
+                 (first attributes))
+              "attributes should have been overwritten"))))))
 
 (deftest test-tdr-snapshot-list-to-edn
   (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]

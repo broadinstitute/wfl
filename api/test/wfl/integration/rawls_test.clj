@@ -60,7 +60,7 @@
       "general-dev-billing-account/test-workspace"
       "hornet-eng"
       (fn [workspace]
-        (rawls/batch-upsert workspace [[entity-name entity-type outputs]])
+        (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
         (let [[{:keys [name attributes]} & _]
               (util/poll
                #(not-empty (firecloud/list-entities workspace entity-type)))]

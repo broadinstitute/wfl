@@ -1009,21 +1009,32 @@
                       {:fromOutputs fromOutputs :workflow workflow}
                       cause)))))
 
+(defn ^:private entity-exists? [workspace entity]
+  "Test if the `entity` exists in the `workspace`."
+  (try
+    (firecloud/get-entity workspace entity)
+    (catch ExceptionInfo ex
+      (when (not= (-> ex ex-data :status) 404)
+        (throw ex)))))
+
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
   (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
     (log/debug "coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
-          name       (outputs (keyword identifier))]
+          [_ name :as entity] [entityType (outputs (keyword identifier))]]
+      (when (entity-exists? workspace entity)
+        (log/debug "entity" name "already exists - deleting previous entity.")
+        (firecloud/delete-entities workspace [entity]))
       (log/debug "upserting workflow" uuid "outputs as" name)
-      (rawls/batch-upsert workspace [[name entityType attributes]])
+      (rawls/batch-upsert workspace [(conj entity attributes)])
       (pop-queue! executor)
       (log/info "sunk workflow" uuid "to" workspace "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity name :workflow uuid :updated (utc-now)}
              (jdbc/insert! tx details))))))
 
-(defn terra-workspace-sink-done? [_sink] true)
+(defn ^:private terra-workspace-sink-done? [_sink] true)
 
 (defn ^:private terra-workspace-sink-to-edn [sink]
   (-> sink

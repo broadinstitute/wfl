@@ -130,6 +130,11 @@
          first
          :status)))
 
+(defn get-entity
+  "Fetch the `entity` metadata from the `workspace`."
+  [workspace [type name :as _entity]]
+  (get-workspace-json workspace "entities" type name))
+
 (defn delete-entities
   "Delete the `entities` from the Terra `workspace`.
    Parameters
@@ -137,7 +142,7 @@
      workspace - Terra Workspace to delete entities from
      entities  - list of entity `[type name]` pairs"
   [workspace entities]
-  (letfn [(make-entity [[type name]] {:entityType type :entityName name})]
+  (let [make-entity (partial zipmap [:entityType :entityName])]
     (-> (workspace-api-url workspace "entities" "delete")
         (http/post {:headers      (auth/get-auth-header)
                     :content-type :application/json
