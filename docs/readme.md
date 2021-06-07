@@ -7,10 +7,10 @@
 You may wish to launch a local version of our documentation website
 to test changes for formatting, link resolution, etc.
 
-Python 3 is requred:
+Python 3 is required:
 ```
 cd /path/to/wfl/docs
-python3 pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 mkdocs serve
 ```
 
