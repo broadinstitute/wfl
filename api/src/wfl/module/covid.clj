@@ -1009,8 +1009,9 @@
                       {:fromOutputs fromOutputs :workflow workflow}
                       cause)))))
 
-(defn ^:private entity-exists? [workspace entity]
-  "Test if the `entity` exists in the `workspace`."
+(defn ^:private entity-exists?
+  "True when the `entity` exists in the `workspace`."
+  [workspace entity]
   (try
     (firecloud/get-entity workspace entity)
     (catch ExceptionInfo ex
