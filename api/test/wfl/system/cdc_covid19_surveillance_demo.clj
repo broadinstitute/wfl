@@ -100,7 +100,7 @@
                          (util/unprefix-keys (keyword (str pipeline "."))))
         attributes   (covid/rename-gather outputs from-outputs)
         entity-name  "test"]
-    (rawls/batch-upsert workspace [[entity-name workspace-table attributes]])))
+    (rawls/batch-upsert workspace [[workspace-table entity-name attributes]])))
 
 (defn delete-snapshot [{:keys [name id] :as _snapshot}]
   (println "Deleting snapshot" name)

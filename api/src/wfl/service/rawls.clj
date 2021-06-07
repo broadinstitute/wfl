@@ -100,7 +100,7 @@
 
 (defn batch-upsert
   "Batch update and insert entities into a `workspace`."
-  [workspace [[_name _type _attributes] & _ :as entities]]
+  [workspace [[_type _name _attributes] & _ :as entities]]
   {:pre [(string? workspace) (not-empty entities)]}
   (letfn [(add-scalar [k v]
             [{:op                 "AddUpdateAttribute"
@@ -127,8 +127,8 @@
                      (coll?   v) (add-list   k v)
                      (nil?    v) (no-op)
                      :else       (on-unhandled-attribute k v)))))
-          (make-request [[name type attributes]]
-            {:name name :entityType type :operations (to-operations attributes)})]
+          (make-request [[type name attributes]]
+            {:entityType type :name name :operations (to-operations attributes)})]
     (-> (workspace-api-url workspace "entities/batchUpsert")
         (http/post {:headers      (auth/get-auth-header)
                     :content-type :application/json
