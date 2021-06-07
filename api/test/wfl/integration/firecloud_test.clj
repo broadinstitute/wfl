@@ -1,8 +1,9 @@
 (ns wfl.integration.firecloud-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [wfl.service.cromwell :as cromwell]
+  (:require [clojure.string        :as str]
+            [clojure.test          :refer [deftest is testing]]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util :as util])
+            [wfl.util              :as util])
   (:import [java.util UUID]))
 
 ;; Of the form NAMESPACE/NAME
@@ -34,11 +35,7 @@
    #(let [get-workflows (fn [] (:workflows (firecloud/get-submission workspace %)))
           workflow      (first (get-workflows))]
       (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
-      (is (#{"Queued" "Submitted"}
-           ;; GH-1212: `get-submission` can return the workflow before it has
-           ;; been queued. In such cases :status is nil so try again
-           (or (:status workflow)
-               (util/poll (comp :status first get-workflows))))))))
+      (is (not (str/blank? (util/poll (comp :status first get-workflows))))))))
 
 (deftest test-create-submissions-for-entity-set
   (testing "Empty entity list throws AssertionError"
@@ -62,11 +59,7 @@
                 [workflow & rest] (get-workflows)]
             (is (empty? rest))
             (is (= (second entity) (get-in workflow [:workflowEntity :entityName])))
-            (is (#{"Queued" "Submitted"}
-                ;; GH-1212: `get-submission` can return the workflow before it has
-                ;; been queued. In such cases :status is nil so try again
-                 (or (:status workflow)
-                     (util/poll (comp :status first get-workflows)))))))))))
+            (is (not (str/blank? (util/poll (comp :status first get-workflows)))))))))))
 
 (defn ^:private with-entity?
   "Check if entity name is found in HTTP response."
