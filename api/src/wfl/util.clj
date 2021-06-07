@@ -417,7 +417,7 @@
    [default: 3]."
   ([task! seconds max-attempts]
    (loop [attempt 1]
-     (if-let [result (task!)]
+     (if-some [result (task!)]
        result
        (do (when (<= max-attempts attempt)
              (throw (TimeoutException. "Max number of attempts exceeded")))
