@@ -1,10 +1,9 @@
 (ns wfl.integration.firecloud-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [wfl.service.cromwell :as cromwell]
+  (:require [clojure.string        :as str]
+            [clojure.test          :refer [deftest is testing]]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util :as util]
-            [clojure.tools.logging.readable :as log]
-            [clojure.string :as str])
+            [wfl.util              :as util])
   (:import [java.util UUID]))
 
 ;; Of the form NAMESPACE/NAME
