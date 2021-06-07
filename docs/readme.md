@@ -10,7 +10,7 @@ to test changes for formatting, link resolution, etc.
 Python 3 is required:
 ```
 cd /path/to/wfl/docs
-pip3 install -r requirements.txt
+python3 -m pip install -r requirements.txt
 mkdocs serve
 ```
 
