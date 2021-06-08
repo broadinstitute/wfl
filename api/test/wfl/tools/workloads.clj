@@ -259,13 +259,15 @@
         (when (> elapsed timeout)
           (throw (TimeoutException.
                   (format "Timed out waiting for workload %s" uuid))))
-        (if (or (:finished workload) (every? finished? (endpoints/get-workflows wl)))
-          (done! wl)
-          (do
-            (log/infof "Waiting for workload %s to complete" uuid)
-            (util/sleep-seconds interval)
-            (recur (+ elapsed interval)
-                   (endpoints/get-workload-status uuid))))))))
+        (let [workflows (endpoints/get-workflows wl)]
+          (if (or (:finished wl)
+                  (and (not-empty workflows) (every? finished? workflows)))
+            (done! wl)
+            (do
+              (log/infof "Waiting for workload %s to complete" uuid)
+              (util/sleep-seconds interval)
+              (recur (+ elapsed interval)
+                     (endpoints/get-workload-status uuid)))))))))
 
 (defn create-workload! [workload-request]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]

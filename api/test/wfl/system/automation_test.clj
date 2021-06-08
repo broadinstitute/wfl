@@ -32,7 +32,7 @@
 
 (defn clone-workspace []
   (println "Cloning workspace" workspace-to-clone)
-  (let [clone-name (util/randomize "wfl-dev/CDC_Viral_Sequencing_GP")]
+  (let [clone-name (util/randomize workspace-to-clone)]
     (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
     (println "Cloned new workspace " clone-name)
     clone-name))
@@ -47,7 +47,7 @@
               :snapshots ["f9242ab8-c522-4305-966d-7c51419377ab"]}
    :executor {:name                       "Terra"
               :workspace                  workspace
-              :methodConfiguration        "cdc-covid-surveillance/sarscov2_illumina_full"
+              :methodConfiguration        "wfl-dev/sarscov2_illumina_full"
               :methodConfigurationVersion 1
               :fromSource                 "importSnapshot"}
    :sink     {:name           "Terra Workspace"
@@ -66,8 +66,8 @@
     (fixtures/with-fixtures
       [(util/bracket clone-workspace delete-workspace)]
       (fn [[workspace]]
-        (let [workload (endpoints/create-workload
-                        (covid-workload-request workspace))]
+        (let [workload (-> (covid-workload-request workspace)
+                           (endpoints/create-workload))]
           (endpoints/start-workload workload)
           (workloads/when-done
            (comp pprint/pprint endpoints/get-workflows)
