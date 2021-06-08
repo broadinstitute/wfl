@@ -93,7 +93,7 @@
   (if (= "/" filename)
     filename
     (if-let [idx (str/last-index-of filename "/" (- (count filename) 2))]
-      (if (= idx 0) "/" (subs filename 0 idx))
+      (if (zero? idx) "/" (subs filename 0 idx))
       "")))
 
 (defn deep-merge
@@ -399,7 +399,7 @@
 (defn randomize
   "Append a random suffix to `string`."
   [string]
-  (->> (str/replace (UUID/randomUUID) "-" "") (str string)))
+  (str string (str/replace (UUID/randomUUID) "-" "")))
 
 (defn curry
   "Curry the function `f` such that its arguments may be supplied across two
@@ -434,19 +434,25 @@
 
 (defn terra-id
   "
-  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+  Generate a Terra-compatible primary key column name for the
+  specified TSV-TYPE and base COL.
 
   The first column of the table must be its primary key, and named accordingly:
     entity:[entity-type]_id
     membership:[entity-type]_set_id
 
-  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data into a `sample` table
-  in the workspace (or create one if it does not exist).
+  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data
+  into a `sample` table in the workspace (or create one if it does not
+  exist).
+
   If the table already contains a sample with that id, it will get overwritten.
 
-  For tsv-type :membership, 'membership:sample_set_id' will append sample names to a `sample_set` table
-  in the workspace (or create one if it does not exist).
-  If the table already contains a sample set with that id, it will be appended to and not overwritten.
+  For tsv-type :membership, 'membership:sample_set_id' will append
+  sample names to a `sample_set` table in the workspace (or create one
+  if it does not exist).
+
+  If the table already contains a sample set with that id, it will be
+  appended to and not overwritten.
 
   Parameters
   ----------
@@ -460,8 +466,11 @@
   "
   [tsv-type col]
   {:pre [(s/valid? ::tsv-type tsv-type)]}
-  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
-    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+  (str/join [(name tsv-type)
+             ":"
+             (-> col (unsuffix "_id") (unsuffix "_set"))
+             (when (= :membership tsv-type) "_set")
+             "_id"]))
 
 (defn columns-rows->tsv
   "

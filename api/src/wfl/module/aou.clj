@@ -269,8 +269,7 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->> (add-aou-workload! tx request)
-       (workloads/load-workload-for-id tx)))
+  (workloads/load-workload-for-id tx (add-aou-workload! tx request)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
 (defoverload workloads/stop-workload!  pipeline batch/stop-workload!)

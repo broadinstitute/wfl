@@ -27,8 +27,9 @@
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
   [workspace submission-id]
-  (-> (workspace-api-url workspace "submissions" submission-id)
-      (http/delete {:headers (auth/get-auth-header)})))
+  (http/delete
+   (workspace-api-url workspace "submissions" submission-id)
+   {:headers (auth/get-auth-header)}))
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
@@ -162,11 +163,12 @@
    -------
      (import-entities \"workspace-namespace/workspace-name\" \"./samples.tsv\")"
   [workspace file]
-  (-> (workspace-api-url workspace "flexibleImportEntities")
-      (http/post {:headers   (auth/get-auth-header)
-                  :multipart (util/multipart-body
-                              {:Content/type "text/tab-separated-values"
-                               :entities     (slurp file)})})))
+  (http/post
+   (workspace-api-url workspace "flexibleImportEntities")
+   {:headers   (auth/get-auth-header)
+    :multipart (util/multipart-body
+                {:Content/type "text/tab-separated-values"
+                 :entities     (slurp file)})}))
 
 (defn import-entity-set
   "

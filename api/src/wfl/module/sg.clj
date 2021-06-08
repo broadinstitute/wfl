@@ -204,8 +204,8 @@
     (if (and started (not finished))
       (let [workload' (update! workload)]
         (when (:finished workload')
-          (->> (workloads/workflows tx workload')
-               (register-workload-in-clio workload')))
+          (register-workload-in-clio workload'
+                                     (workloads/workflows tx workload')))
         workload')
       workload)))
 

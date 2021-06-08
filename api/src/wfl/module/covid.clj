@@ -38,7 +38,7 @@
   (fn [tx source] (:type source)))
 
 (defmulti update-source!
-  "Update the source."
+  "Update the `source`."
   (fn [source] (:type source)))
 
 (defmulti stop-source!
@@ -60,21 +60,21 @@
   (fn [tx executor] (:type executor)))
 
 (defmulti load-executor!
-  "Use `tx` to load the workload executor with `executor_type`."
+  "Use `tx` to load the `workload` executor with `executor_type`."
   (fn [tx workload] (:executor_type workload)))
 
 ;; sink operations
 (defmulti create-sink!
-  "Use `tx` and workload `id` to write the sink to persisted storage and
-   return a [type item] pair to be written into the parent table."
+  "Use `tx` and workload `id` to write the `sink-request` to persisted
+  storage and return a [type item] pair for writing to the parent table."
   (fn [tx id sink-request] (:name sink-request)))
 
 (defmulti update-sink!
-  "Update the sink with the `executor`"
+  "Update the `sink` with the `executor`."
   (fn [executor sink] (:type sink)))
 
 (defmulti load-sink!
-  "Use `tx` to load the workload sink with `sink_type`."
+  "Use `tx` to load the `workload` sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
 
 ;; Generic helpers
@@ -263,7 +263,8 @@
 (defn ^:private get-table-or-throw
   "Throw or return the table from `dataset`"
   [table-name dataset]
-  (let [[table & _] (->> (get-in dataset [:schema :tables])
+  (let [[table & _] (->> [:schema :tables]
+                         (get-in dataset)
                          (filter (comp #{table-name} :name)))]
     (when-not table
       (throw (UserException. "Table not found"
@@ -289,8 +290,8 @@
   (if skipValidation
     source
     (let [dataset (get-dataset-or-throw dataset)]
-      (-> (get-table-or-throw table dataset)
-          (throw-unless-column-exists column dataset))
+      (throw-unless-column-exists (get-table-or-throw table dataset)
+                                  column dataset)
       (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
@@ -322,8 +323,8 @@
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
         compact-now (.format now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
-              [shard (-> (format "_%s_%s" compact-now idx)
-                         (go-create-snapshot! source shard))])]
+              [shard (go-create-snapshot! (format "_%s_%s" compact-now idx)
+                                          source shard)])]
       (->> row-ids
            (partition-all 500)
            (map vec)
@@ -372,7 +373,8 @@
              :start_time                   last_checked
              :end_time                     now})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (map make-record shards->snapshot-jobs)
+      (->> shards->snapshot-jobs
+           (map make-record)
            (jdbc/insert-multi! tx details)))))
 
 (defn ^:private update-last-checked
@@ -652,8 +654,9 @@
     (when-not (= "importSnapshot" fromSource)
       (throw
        (UserException. "Unsupported coercion" (util/make-map fromSource))))
-    (-> (method-config-or-throw workspace methodConfiguration)
-        (throw-on-method-config-version-mismatch methodConfigurationVersion)))
+    (throw-on-method-config-version-mismatch
+     (method-config-or-throw workspace methodConfiguration)
+     methodConfigurationVersion))
   executor)
 
 (defn ^:private from-source
@@ -678,8 +681,9 @@
         _       (throw-on-method-config-version-mismatch
                  current methodConfigurationVersion)
         inc'd   (inc methodConfigurationVersion)]
-    (->> (assoc current :dataReferenceName name :methodConfigVersion inc'd)
-         (firecloud/update-method-configuration workspace methodConfiguration))
+    (firecloud/update-method-configuration
+     workspace methodConfiguration
+     (assoc current :dataReferenceName name :methodConfigVersion inc'd))
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx terra-executor-table
                     {:method_configuration_version inc'd}
@@ -705,7 +709,8 @@
              :status     status
              :updated    now})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (map (partial to-row (utc-now)) workflows)
+      (->> workflows
+           (map (partial to-row (utc-now)))
            (jdbc/insert-multi! tx details)))))
 
 ;; Workflows in newly created firecloud submissions may not have been scheduled
@@ -1003,8 +1008,9 @@
       (stage/pop-queue! executor)
       (log/info "sunk workflow" uuid "to" workspace "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (->> {:entity name :workflow uuid :updated (utc-now)}
-             (jdbc/insert! tx details))))))
+        (jdbc/insert! tx details {:entity   name
+                                  :updated  (utc-now)
+                                  :workflow uuid})))))
 
 (defn ^:private terra-workspace-sink-done? [_sink] true)
 

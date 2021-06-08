@@ -103,7 +103,8 @@
 
 (defn ^:private normalize-reference-fasta [inputs]
   (if-let [prefix (:reference_fasta_prefix inputs)]
-    (-> (update-in inputs [:references :reference_fasta]
+    (-> inputs
+        (update-in [:references :reference_fasta]
                    #(util/deep-merge (references/reference_fasta prefix) %))
         (dissoc :reference_fasta_prefix))
     inputs))
@@ -127,12 +128,13 @@
 (defn ^:private make-workflow-inputs
   "Make the final pipeline inputs from Cromwell URL."
   [url {:keys [inputs]}]
-  (-> (util/deep-merge cram-ref
-                       hack-task-level-values
-                       {:references default-references}
-                       (static-inputs url)
-                       inputs)
-      (util/prefix-keys (keyword (str pipeline ".")))))
+  (util/prefix-keys
+   (util/deep-merge cram-ref
+                    hack-task-level-values
+                    {:references default-references}
+                    (static-inputs url)
+                    inputs)
+   (keyword (str pipeline "."))))
 
 ;; visible for testing
 (defn make-workflow-options
@@ -159,7 +161,7 @@
 (defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items output common] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
+  (letfn [(nil-if-empty [x] (when (seq x) x))
           (serialize [workflow id]
             (-> (assoc workflow :id id)
                 (update :options

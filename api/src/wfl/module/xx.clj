@@ -142,7 +142,7 @@
 
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
+  (letfn [(nil-if-empty [x] (when (seq x) x))
           (merge-to-json [shared specific]
             (json/write-str (nil-if-empty (util/deep-merge shared specific))))
           (serialize [item id]

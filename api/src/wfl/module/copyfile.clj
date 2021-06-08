@@ -22,7 +22,7 @@
   (cromwell/submit-workflow
    url
    workflow-wdl
-   (-> inputs (util/prefix-keys (str pipeline ".")))
+   (util/prefix-keys inputs (str pipeline "."))
    options
    labels))
 
@@ -101,7 +101,7 @@
 (defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items common] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
+  (letfn [(nil-if-empty [x] (when (seq x) x))
           (merge-to-json [shared specific]
             (json/write-str (nil-if-empty (util/deep-merge shared specific))))
           (serialize [workflow id]

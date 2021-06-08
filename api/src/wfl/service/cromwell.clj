@@ -46,8 +46,7 @@
 (defn ^:private request-json
   "Response to REQUEST with :body parsed as JSON."
   [request]
-  (-> (http/request request)
-      (update :body (fnil util/parse-json "null"))))
+  (update (http/request request) :body (fnil util/parse-json "null")))
 
 (def ^:private bogus-key-character-map
   "Map bogus characters in metadata keys to replacements."
