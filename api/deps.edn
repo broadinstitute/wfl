@@ -63,6 +63,10 @@
   :kibit
   {:extra-deps  {jonase/kibit {:mvn/version "0.1.8"}}
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
+
+  :eastwood
+  {:main-opts ["-m" "eastwood.lint" {:source-paths ["src" "test"]}]
+   :extra-deps {jonase/eastwood {:mvn/version "0.4.3"}}}
   
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
