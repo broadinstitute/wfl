@@ -216,7 +216,7 @@
          {:name "bad name"}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-valid-executor-request
+(deftest test-create-covid-workload-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
        (workloads/create-workload!
@@ -228,7 +228,7 @@
           :fromSource                 "frobnicate"}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-wrong-method-configuration
+(deftest test-create-covid-workload-with-wrong-method-configuration-1
   (is (thrown-with-msg?
        UserException #"Method configuration version mismatch"
        (workloads/create-workload!
@@ -742,11 +742,11 @@
                    :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
                   (assoc request :source)
                   app)]
-        (is (== 200 status) body)))
+        (is (== 200 status) (pr-str body))))
     (testing "Workload with a TDR Snapshots Source"
       (let [{:keys [status body]}
             (->> {:name      "TDR Snapshots"
                   :snapshots [testing-snapshot]}
                  (assoc request :source)
                  app)]
-        (is (== 200 status) body)))))
+        (is (== 200 status) (pr-str body))))))

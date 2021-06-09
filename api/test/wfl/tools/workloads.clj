@@ -43,8 +43,8 @@
      :input_cram           (str input-folder "NA12878_PLUMBING.cram")}))
 
 (defn wgs-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
@@ -145,8 +145,8 @@
    (covid-workload-request {} {} {})))
 
 (defn xx-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])

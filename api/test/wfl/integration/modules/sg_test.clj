@@ -1,6 +1,7 @@
 (ns wfl.integration.modules.sg-test
   (:require [clojure.string                 :as str]
             [clojure.test                   :refer :all]
+            [wfl.api.workloads]             ; for mocking
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -19,8 +20,8 @@
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
 (defn the-sg-workload-request
-  []
   "A request suitable when all external services are mocked."
+  []
   {:executor @workloads/cromwell-url
    :output   "gs://broad-gotc-dev-wfl-sg-test-outputs"
    :pipeline "GDCWholeGenomeSomaticSingleSample"

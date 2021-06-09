@@ -41,8 +41,9 @@
   (println "Deleting" workspace)
   (firecloud/delete-workspace workspace))
 
-(defn ^:private covid-workload-request [workspace]
+(defn ^:private covid-workload-request
   "Build a covid workload request."
+  [workspace]
   {:source   {:name      "TDR Snapshots"
               :snapshots ["f9242ab8-c522-4305-966d-7c51419377ab"]}
    :executor {:name                       "Terra"

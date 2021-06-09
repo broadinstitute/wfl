@@ -2,6 +2,7 @@
   (:require [clojure.set  :refer [rename-keys]]
             [clojure.test :refer [deftest testing is] :as clj-test]
             [clojure.string                 :as str]
+            [wfl.api.workloads              :as api]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.all                 :as all]
@@ -205,7 +206,7 @@
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! (wfl.api.workloads/workflows tx workload))))
+    (run! update! (api/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn

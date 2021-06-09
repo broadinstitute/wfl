@@ -208,8 +208,9 @@
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
 
-(defn ^:private covid-workload-request []
+(defn ^:private covid-workload-request
   "Build a covid workload request."
+  []
   (let [terra-ns  (comp (partial str/join "/") (partial vector "wfl-dev"))
         workspace (terra-ns "CDC_Viral_Sequencing")
         source    {:name            "Terra DataRepo"

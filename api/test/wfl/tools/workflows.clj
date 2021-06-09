@@ -65,7 +65,8 @@
        (f state (:typeName type) value)))
    init type object))
 
-(defn get-files [type value]
+(defn get-files
   "Return the unique set of objects in `value` of WDL type `File`."
+  [type value]
   (letfn [(f [files type object] (if (= "File" type) (conj files object) files))]
     (foldl f #{} type value)))
