@@ -14,7 +14,7 @@
     
     
       
-        <title>Workflow Launcher</title>
+        <title>Development Process and Tips - Workflow Launcher</title>
       
     
     
@@ -63,7 +63,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#welcome-to-workflow-launcher" class="md-skip">
+        <a href="#development-process" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +93,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Get Started
+              Development Process and Tips
             
           </span>
         </div>
@@ -219,6 +219,44 @@
 
   
   
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        Get Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      <label class="md-nav__link" for="__nav_2">
+        Development Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Development Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
     
   
   
@@ -231,12 +269,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Get Started
+          Development Process and Tips
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="index.html" class="md-nav__link md-nav__link--active">
-        Get Started
+      <a href="dev-process.html" class="md-nav__link md-nav__link--active">
+        Development Process and Tips
       </a>
       
         
@@ -254,98 +292,80 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+  <a href="#the-swagger-page" class="md-nav__link">
+    The Swagger page
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
-    Quickstart
+  <a href="#development-setup" class="md-nav__link">
+    Development Setup
   </a>
-  
-    <nav class="md-nav" aria-label="Quickstart">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#build" class="md-nav__link">
-    Build
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
-  </a>
-  
-    <nav class="md-nav" aria-label="Test">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#clojure-test" class="md-nav__link">
-    Clojure Test
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deploy" class="md-nav__link">
-    Deploy
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    Implementation
+  <a href="#process" class="md-nav__link">
+    Process
   </a>
   
-    <nav class="md-nav" aria-label="Implementation">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-tips" class="md-nav__link">
+    Development Tips
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Tips">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#top-level-files" class="md-nav__link">
-    Top-level files
+  <a href="#setting-up-a-local-postgres" class="md-nav__link">
+    setting up a local Postgres
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-module" class="md-nav__link">
-    api Module
-  </a>
-  
-    <nav class="md-nav" aria-label="api Module">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#source-code" class="md-nav__link">
-    Source code
+  <a href="#migrating-a-database" class="md-nav__link">
+    migrating a database
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#exomes-in-the-cloud-resources" class="md-nav__link">
-    Exomes in the Cloud Resources
+  <a href="#debugging-jdbc-sql" class="md-nav__link">
+    debugging JDBC SQL
   </a>
   
 </li>
         
-      </ul>
-    </nav>
+          <li class="md-nav__item">
+  <a href="#debugging-api-specs" class="md-nav__link">
+    debugging API specs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-liquibase-locally" class="md-nav__link">
+    debugging Liquibase locally
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#override-environment-variables-for-local-development" class="md-nav__link">
+    Override ENVIRONMENT variables for local development
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repl-testing-with-fixtures" class="md-nav__link">
+    REPL testing with fixtures.
+  </a>
   
 </li>
         
@@ -358,42 +378,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
-      
-      <label class="md-nav__link" for="__nav_2">
-        Development Guide
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-      <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
-        <label class="md-nav__title" for="__nav_2">
-          <span class="md-nav__icon md-icon"></span>
-          Development Guide
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="dev-process.html" class="md-nav__link">
-        Development Process and Tips
-      </a>
     </li>
   
 
@@ -676,98 +660,80 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+  <a href="#the-swagger-page" class="md-nav__link">
+    The Swagger page
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
-    Quickstart
+  <a href="#development-setup" class="md-nav__link">
+    Development Setup
   </a>
-  
-    <nav class="md-nav" aria-label="Quickstart">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#build" class="md-nav__link">
-    Build
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
-  </a>
-  
-    <nav class="md-nav" aria-label="Test">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#clojure-test" class="md-nav__link">
-    Clojure Test
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deploy" class="md-nav__link">
-    Deploy
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation" class="md-nav__link">
-    Implementation
+  <a href="#process" class="md-nav__link">
+    Process
   </a>
   
-    <nav class="md-nav" aria-label="Implementation">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-tips" class="md-nav__link">
+    Development Tips
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Tips">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#top-level-files" class="md-nav__link">
-    Top-level files
+  <a href="#setting-up-a-local-postgres" class="md-nav__link">
+    setting up a local Postgres
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-module" class="md-nav__link">
-    api Module
-  </a>
-  
-    <nav class="md-nav" aria-label="api Module">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#source-code" class="md-nav__link">
-    Source code
+  <a href="#migrating-a-database" class="md-nav__link">
+    migrating a database
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#exomes-in-the-cloud-resources" class="md-nav__link">
-    Exomes in the Cloud Resources
+  <a href="#debugging-jdbc-sql" class="md-nav__link">
+    debugging JDBC SQL
   </a>
   
 </li>
         
-      </ul>
-    </nav>
+          <li class="md-nav__item">
+  <a href="#debugging-api-specs" class="md-nav__link">
+    debugging API specs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-liquibase-locally" class="md-nav__link">
+    debugging Liquibase locally
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#override-environment-variables-for-local-development" class="md-nav__link">
+    Override ENVIRONMENT variables for local development
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repl-testing-with-fixtures" class="md-nav__link">
+    REPL testing with fixtures.
+  </a>
   
 </li>
         
@@ -788,268 +754,252 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/dev-process.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="welcome-to-workflow-launcher">Welcome to WorkFlow Launcher<a class="headerlink" href="#welcome-to-workflow-launcher" title="Permanent link">⚓︎</a></h1>
-<p><a href="https://internal.broadinstitute.org/~chengche/green-hornet-status.html"><img alt="Build Board" src="https://img.shields.io/badge/-The%20Build%20Board%20(VPN)-blue" /></a>
-<img alt="Docsite Build" src="https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=main" />
-<img alt="Build on Main" src="https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Main/badge.svg?branch=main" />
-<a href="https://github.com/broadinstitute/wfl/blob/main/CHANGELOG.md"><img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release" /></a></p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">⚓︎</a></h2>
-<p><a href="https://github.com/broadinstitute/wfl.git">WorkFlow Launcher (WFL)</a>
-is a workload manager.</p>
-<p>For example, a workload could be a set of Whole Genome samples to be reprocessed in a
-given project/bucket, the workflow is the processing of an individual sample
-in that workload running WGS reprocessing; a workload could also be a queue of
-incoming notifications that describe all of the required inputs to launch Arrays
-scientific pipelines in Cromwell.</p>
-<p>WFL is designed to be deployed to run as a service in the cloud, primarily
-on Kubernetes clusters.</p>
-<div class="admonition info">
-<p>For more on Workflow Launcher's role in the Terra infrastructure
-see <a href="terra.html">Workflow Launcher's role in Terra</a>.</p>
-</div>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">⚓︎</a></h2>
-<details class="tip" open="open"><summary>Tip</summary><p>This is the Quickstart section, which should cover the most frequent
-uses cases that interact with WFL. For more detailed information, please
-check other sections such as the <a href="dev-process.html">development guide</a>
-or <a href="modules-general.html">modules design principles</a>.</p>
-</details>
-<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">⚓︎</a></h3>
-<p>The easiest way to build WFL is via <code>make</code>, in addition, the following
-prerequisites are needed:</p>
+                <h1 id="development-process">Development Process<a class="headerlink" href="#development-process" title="Permanent link">⚓︎</a></h1>
+<p>This is a development process we are tying to standardize within the team and
+encourage ourselves to follow in most cases.</p>
+<h2 id="the-swagger-page">The Swagger page<a class="headerlink" href="#the-swagger-page" title="Permanent link">⚓︎</a></h2>
+<p>WFL ships with a Swagger UI that documents all available endpoints. It's
+available at path <code>/swagger</code>.  At present, we cannot hit it directly
+without logging in first because it is bundled with the UI and not the API.</p>
 <ul>
-<li><a href="https://www.docker.com/products/docker-desktop">The Docker daemon</a></li>
-<li>Clojure (<code>brew install clojure</code> on macOS)</li>
-<li>Python3 (<code>brew install python@3.9</code> on macOS)</li>
-<li>NodeJS (<code>brew install node</code> on macOS)</li>
-<li>Google Cloud SDK (<code>brew install --cask google-cloud-sdk</code> on macOS)</li>
+<li>Log into WFL UI, e.g. https://dev-wfl.gotc-dev.broadinstitute.org/login</li>
+<li>Navigate to <code>/swagger</code> via Swagger API button in top right</li>
 </ul>
 <div class="admonition tip">
-<p class="admonition-title">Arch Linux tips</p>
-<ul>
-<li>Install <a href="https://www.archlinux.org/packages/?name=clojure">clojure</a>
-  from the official repository.</li>
-<li>Install
-  <a href="https://aur.archlinux.org/packages/google-cloud-sdk">google-cloud-sdk</a>
-  from the AUR.</li>
-</ul>
-<p>You could then invoke <code>make</code> at the project level to test and build all
-<code>workflow-launcher</code> modules:</p>
+<p class="admonition-title">Tip</p>
+<p>To access the swagger page locally, you'll need to start a development
+server and access via the UI. See the development tips below for more
+information.</p>
 </div>
-<p><div class="highlight"><pre><span></span><code>$ make -j8
-</code></pre></div>
-where <code>8</code> can be replaced by any number that represents the concurrent
-jobs you wish to run.</p>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>If the version of your <code>make</code> is above GNU Make 4.0 (you could check
-by running <code>make --version</code>), it's <strong>highly recommended</strong> to use
-<code>--output-sync</code> along with <code>-j</code> so the standard outputs are sorted, i.e.
-<div class="highlight"><pre><span></span><code>$ make -j8 --output-sync
+<h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">⚓︎</a></h2>
+<p>Clojure development feels very different from Scala and Java development. It
+even differs markedly from development in other <em>dynamic languages</em> such as
+Python or Ruby.</p>
+<p>Get a demonstration from someone familiar with Clojure development before you
+spend too much time trying to figure things out on your own.</p>
+<p>Find a local Cursive user for guidance if you like IntelliJ.
+<a href="mailto:chengche@broadinstitute.org">Rex Wang</a> knows how to use it.</p>
+<p>Cursive licences are available
+<a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
+If none are available, free
+<a href="https://cursive-ide.com/buy.html">non-commercial licenses</a> are suitable for
+open-source development.</p>
+<p>The steps for getting this project set up with very recent versions of IntelliJ
+differ from Cursive's docs:</p>
+<details class="tip" open="open"><summary>Tip</summary><p>Run <code>make prebuild</code> before launching IntelliJ as it sets up all libraries
+and derived resources and sources:
+<div class="highlight"><pre><span></span><code>make <span class="nv">TARGET</span><span class="o">=</span>prebuild -jN
 </code></pre></div></p>
-</div>
-<p><code>make</code> will <strong>build</strong> each module in <code>workflow-launcher</code>, <strong>run tests</strong> and <strong>generate</strong>
-<code>Docker</code> images. All generated files go into a <code>derived</code> directory under the
-project root.</p>
-<p>You can also invoke <code>make</code> on a module from the top level directory by</p>
-<div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">={</span>prebuild<span class="p">|</span>build<span class="p">|</span>check<span class="p">|</span>images<span class="p">|</span>clean<span class="p">|</span>distclean<span class="o">}</span>
-</code></pre></div>
-<p>where currently available <code>MODULE</code>s are {api functions/aou docs helm ui}</p>
-<p>For most of the time, you would want to run something like:</p>
-<div class="highlight"><pre><span></span><code>$ make clean
-</code></pre></div>
-<p>to clean up the built modules (<code>-j8</code> is also available for <code>make clean</code>).</p>
-<p>and then run:</p>
-<div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
-</code></pre></div>
-<p>to <strong>only build</strong> the WFL and its docker images without running tests.</p>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>Note if you updated the second party repositories such as
-<code>pipeline-config</code> or <code>gotc-deploy</code>, you might have to run:
-<div class="highlight"><pre><span></span><code>$ make distclean
-</code></pre></div>
-to remove them. This is not always needed but can help completely
-purge the local derived files.</p>
-</div>
-<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">⚓︎</a></h3>
-<p>If you only want to run tests on specific modules, you could run:</p>
-<div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
-</code></pre></div>
-<p>such as <code>make api TARGET=check</code> or <code>make functions/aou TARGET=check</code>.
-Note this automatically makes all of <code>check</code>'s prerequisites.</p>
-<h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">⚓︎</a></h4>
-<p>When it comes to clojure tests, sometimes it's useful to only run a subset
-of tests to save time and filter out noise. You can do this by directly
-invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
-<div class="highlight"><pre><span></span><code>$ clojure -M:test integration --focus wfl.integration.modules.copyfile-test
-</code></pre></div>
-<p>In general, we implement Clojure tests under the <code>test/</code> root directory and use the
-<a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
-runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
-line arguments to <code>kaocha</code>, such as the above <code>--focus</code> flag.
-You can see the full list of options with the following:</p>
-<div class="highlight"><pre><span></span><code>clojure -M:test --help
-</code></pre></div>
-<p>At present, <code>wfl</code> api has three kinds of test, <code>unit</code>, <code>integration</code>, and <code>system</code>.
-These can be run via the <code>deps.edn</code>, optionally specifying the kind:</p>
-<div class="highlight"><pre><span></span><code>clojure -M:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="p">|</span>system<span class="o">]</span>
-</code></pre></div>
-<p>Note that the integration tests currently require a little more configuration
-before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
-<div class="highlight"><pre><span></span><code>./ops/server.sh
-</code></pre></div>
-<p>Additionally, there is a custom parallel test runner that can be invoked
-to help speed up the <code>system</code> tests. Rather than <code>clojure -M:test system</code> you'd
-just specify the namespace(s) to try to parallelize.</p>
-<div class="highlight"><pre><span></span><code>clojure -M:parallel-test wfl.system.v1-endpoint-test
-</code></pre></div>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>Note for <code>system</code> tests, no matter it's kicked off through <code>clojure -M:test system</code> or
-<code>clojure -M:parallel-test wfl.system.v1-endpoint-test</code>, you can use an environment
-variable <code>WFL_CROMWELL_URL</code> to override the default Cromwell instance that's used in the test. For
-example:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">WFL_CROMWELL_URL</span><span class="o">=</span>https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test
-</code></pre></div>
-<p>will tell the test to submit workflows to the "gotc-prod" Cromwell instance no matter what the
-default instance was defined in the test. However, you need to make sure the validity of the Cromwell
-URL you passed in; certain IAM permissions will also be required in order for Cromwell to execute the
-testing workflows smoothly.</p>
-</div>
-<h3 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">⚓︎</a></h3>
-<p>Currently, we mainly deploy WFL to <code>broad-gotc-dev</code> and <code>broad-gotc-prod</code> projects.
-When it's time to deploy WFL, for most of the time developers need to
-release a new version following the steps in <a href="dev-release.html">Release Guide</a></p>
-<p>After which, the developers who have broad VPN connected can go to the
-<a href="https://gotc-jenkins.dsp-techops.broadinstitute.org/job/deploy-wfl/build?delay=0sec">Jenkins Page</a>
-to deploy applicable versions of WFL to various available cloud projects.</p>
-<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">⚓︎</a></h2>
-<p>For frontend details, check <a href="dev-frontend.html">Frontend Section</a></p>
-<h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">⚓︎</a></h3>
-<p>After cloning a new WFL repo, the top-level files are:
-<div class="highlight"><pre><span></span><code>.
-├── api/            - `workflow-launcher` backend
-├── functions/      - cloud functions deployed separately
-├── database/       - database scheme migration changelog and changeset
-├── derived/        - generated artifacts
-├── docs/           - ancillary documentation
-├── helm/           - helm-managed k8s configuration
-├── LICENSE.txt
-├── Makefile        - project level` Makefile`
-├── makerules/      - common `Makefile` functionality
-├── ops/            - scripts to support Operations
-├── README.md       - symbolic link to docs/md/README.md
-├── ui/             - `workflow-launcher` frontend
-└── version         - holds the current semantic version
-</code></pre></div>
-Tip: Run <code>make</code> at least once after cloning the repo to make sure all the
-necessary files are in place.</p>
-<h3 id="api-module"><code>api</code> Module<a class="headerlink" href="#api-module" title="Permanent link">⚓︎</a></h3>
-<h4 id="source-code">Source code<a class="headerlink" href="#source-code" title="Permanent link">⚓︎</a></h4>
-<p>The Clojure source code is in the <code>api/src/</code> directory.</p>
-<p>The entry point for the WFL executable is the <code>-main</code> function
-in <code>main.clj</code>. It takes the command line arguments as strings,
-validates the arguments, then launches the appropriate process.</p>
-<p>The <code>server.clj</code> file implements the WFL server. The
-<code>server_debug.clj</code> file adds some tools to aid in debugging the
-server.</p>
-<p>Some hacks specific to WFL are in <code>wfl.clj</code>.</p>
-<p>The <code>build.clj</code> file includes build and deployment code.</p>
-<p>The <code>debug.clj</code> file defines some macros useful when debugging
-or logging.</p>
-<p>The <code>util.clj</code> file contains a few functions and macros used in
-WFL that are not specific to its function.</p>
-<p>The <code>environments.clj</code> file defines configuration parameters for
-different execution contexts. It's a placeholder in this repo
-but will be loaded in build/deploy time from a private repo.</p>
-<p>The <code>module/xx.clj</code> file implements a command-line starter for
-reprocessing <em>eXternal eXomes</em>.</p>
-<p>The <code>module/wgs.clj</code> file helps implements a command-line starter for
-reprocessing <em>Whole GenomeS</em>.</p>
-<p>The <code>module/sg.clj</code> file implements <em>Somatic Genomes</em> support.</p>
-<p>The <code>module/all.clj</code> file hosts some utilities shared across modules.</p>
-<p>The <code>metadata.clj</code> file implements a tool to extract metadata
-from Cromwell that can be archived with the outputs generated by
-a workflow.</p>
-<p>The <code>dx.clj</code> file implements miscellaneous pipeline debugging
-tools.</p>
-<p>The <code>once.clj</code> file defines some initialization functions mostly
-supporting authentication.</p>
-<p>The <code>api/handlers.clj</code> file defines the handler functions used by
-server.</p>
-<p>The <code>api/routes.clj</code> file defines the routing strategy for server.</p>
-<p>Each of the other source files implement an interface to one of
-the services WFL talks to, and are named accordingly.</p>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Service</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>cromwell.clj</td>
-<td>Cromwell workflow runner</td>
-</tr>
-<tr>
-<td>datarepo.clj</td>
-<td>DSP DataRepo</td>
-</tr>
-<tr>
-<td>db.clj</td>
-<td>On-prem and Cloud SQL databases</td>
-</tr>
-<tr>
-<td>gcs.clj</td>
-<td>Google Cloud Storage</td>
-</tr>
-<tr>
-<td>jms.clj</td>
-<td>Java Message Service queues</td>
-</tr>
-<tr>
-<td>postgres.clj</td>
-<td>Cloud SQL postgres databases</td>
-</tr>
-<tr>
-<td>server.clj</td>
-<td>the WFL server itself</td>
-</tr>
-</tbody>
-</table>
-<h4 id="exomes-in-the-cloud-resources">Exomes in the Cloud Resources<a class="headerlink" href="#exomes-in-the-cloud-resources" title="Permanent link">⚓︎</a></h4>
-<p>From <a href="https://docs.google.com/a/broadinstitute.org/document/d/1g8EmPjOZl-DzHlypXeOjKHzI4ff1LvzBiigDbZTy1Cs/edit?usp=sharing">Hybrid Selection in the Cloud V1</a></p>
+</details>
+<ol>
+<li><em>Outside of IntelliJ</em>, <code>clone</code> the repo.</li>
+<li><em>Now inside of IntelliJ</em>, import the project.</li>
+<li>Use the Project Structure window (Help -&gt; Find Action -&gt; Project Structure)
+   to set a JDK as the Project SDK</li>
+</ol>
+<p>There is also a
+<a href="https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva">Calva</a>
+plugin for <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
+<p>I hack Clojure in Emacs using
+<a href="https://cider.readthedocs.io/">CIDER</a> and
+<a href="https://github.com/clojure/tools.nrepl">nREPL</a>. CIDER is not
+trivial to set up, but not <em>especially</em> difficult if you are
+used to Emacs. (I can help if CIDER gives you trouble.)</p>
+<h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">⚓︎</a></h2>
+<p>We base feature branches off <code>develop</code>, make pull requests, ask for reviews
+and merge back to <code>develop</code> on Github.</p>
+<p>For the release process, please refer to the <a href="dev-release.html">release guide</a>.</p>
 <ol>
 <li>
-<p>Clients</p>
+<p>Clone the repo
+    <div class="highlight"><pre><span></span><code>git@github.com:broadinstitute/wfl.git
+</code></pre></div></p>
+</li>
+<li>
+<p>Start from the latest copy of the remote develop
+    <div class="highlight"><pre><span></span><code>git checkout develop
+git pull origin develop
+</code></pre></div></p>
+</li>
+<li>
+<p>Create a feature branch</p>
+<p><em>It is highly recommended that you follow the naming convention
+shown below so JIRA could pick up the branch and link it
+to our JIRA board.</em>
+<div class="highlight"><pre><span></span><code>git checkout -b tbl/GH-666-feature-branch-something
+</code></pre></div></p>
+</li>
+<li>
+<p>Start your work, add and commit your changes
+    <div class="highlight"><pre><span></span><code>git add &quot;README.md&quot;
+git commit -m &quot;Update the readme file.&quot;
+</code></pre></div></p>
+</li>
+<li>
+<p>[Optional] Rebase onto latest develop if you want to get updates
+    <div class="highlight"><pre><span></span><code>git checkout develop
+git pull origin develop --ff
+git checkout tbl/GH-666-feature-branch-something
+git rebase develop
+</code></pre></div></p>
+<p>alternatively, you could use the following commands without switching
+branches:
+<div class="highlight"><pre><span></span><code>git checkout tbl/GH-666-feature-branch-something
+git fetch origin develop
+git merge develop
+</code></pre></div></p>
+</li>
+<li>
+<p>Push branch to Github in the early stage of your development (recommended):
+    <div class="highlight"><pre><span></span><code>git push --set-upstream origin tbl/GH-666-feature-branch-something
+</code></pre></div></p>
+</li>
+<li>
+<p>Create the pull request on Github UI. Be sure to fill out the PR description
+   following the PR template instructions.</p>
 <ul>
-<li><a href="https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java">Google Cloud Storage Client Library (Java)</a></li>
-<li><a href="https://googlecloudplatform.github.io/google-cloud-java/0.30.0/index.html">Google Cloud Client Library for Java</a></li>
+<li>
+<p>If the PR is still in development, make sure use the dropdown menu and
+  choose <code>Create draft pull request</code></p>
+</li>
+<li>
+<p>If the PR is ready for review, click <code>Create pull request</code>.</p>
+</li>
 </ul>
 </li>
 <li>
-<p>Diagrams</p>
-<ul>
-<li><a href="https://confluence.broadinstitute.org/download/attachments/39552724/ZamboniOverview.pdf">Zamboni Overview</a></li>
-</ul>
+<p>Look for reviewer(s) in the team.</p>
 </li>
 <li>
-<p>Sources</p>
-<ul>
-<li>/Users/tbl/Broad/zamboni/Client/src/scala/org/broadinstitute/zamboni/client/lightning/clp/Lightning.scala</li>
-<li>/Users/tbl/Broad/picard-private/src/java/edu/mit/broad/picard/lightning</li>
-<li>/Users/tbl/Broad/gppipeline-devtools/release<sub>client</sub></li>
-<li>/Users/tbl/Broad/gppipeline-devtools/starter<sub>control</sub></li>
-<li>/picard02:/seq/pipeline/gppipeline-devtools/current/defs/prod.defs</li>
-</ul>
+<p>Address reviewer comments with more commits.</p>
+</li>
+<li>
+<p>Receive approval from reviewers.</p>
+</li>
+<li>
+<p>Merge the PR.</p>
 </li>
 </ol>
+<h2 id="development-tips">Development Tips<a class="headerlink" href="#development-tips" title="Permanent link">⚓︎</a></h2>
+<p>Here are some tips for WFL development.</p>
+<p>Some of this advice might help when testing Liquibase migration or other
+changes that affect WFL's Postgres database.</p>
+<h3 id="setting-up-a-local-postgres">setting up a local Postgres<a class="headerlink" href="#setting-up-a-local-postgres" title="Permanent link">⚓︎</a></h3>
+<p>You can test against a local Postgres before running Liquibase or SQL against a
+shared database in <code>gotc-dev</code> or <em>gasp</em> production.</p>
+<ol>
+<li>
+<p>Install Postgres locally.
+    You need version 11 because that is what Google's hosted service supports,
+    and there are differences in the SQL syntax.</p>
+<div class="highlight"><pre><span></span><code>brew install postgresql@11
+</code></pre></div>
+</li>
+<li>
+<p>Start Postgres.</p>
+<div class="highlight"><pre><span></span><code>pg_ctl -D /usr/local/var/postgresql@11 start
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>It might be useful to set up some an alias for postgres if you are using
+zsh, for example:
+<div class="highlight"><pre><span></span><code>alias pq=&quot;pg_ctl -D /usr/local/var/postgresql@11&quot;
+</code></pre></div>
+thus you could use <code>pq start</code> or <code>pq stop</code> to easily spin up and turn down
+the db.</p>
+</div>
+</li>
+<li>
+<p>[Optional] Create wfl DB.</p>
+<p>If you see errors like this when launching a local WFL server
+or applying liquibase updates:</p>
+<div class="highlight"><pre><span></span><code>FATAL:  database &quot;wfl&quot; does not exist
+</code></pre></div>
+<p>You should do as instructed within your terminal:</p>
+<div class="highlight"><pre><span></span><code>createdb wfl
+</code></pre></div>
+<p>Or to recreate an existing wfl DB:</p>
+<div class="highlight"><pre><span></span><code>dropdb wfl
+createdb wfl
+</code></pre></div>
+</li>
+</ol>
+<p>You are now free to launch a local WFL server pointing to your local DB.</p>
+<p>Assuming that <code>WFL_POSTGRES_URL</code> in <code>(wfl.environment/defaults)</code> is set to
+point at a running local Postgres (e.g. <code>jdbc:postgresql:wfl</code>), running
+<code>./ops/server.sh</code> (or however you launch a local WFL server) will
+connect the server to that running local Postgres.</p>
+<p>Now any changes to WFL state will affect only your local database.
+That includes running Liquibase, so don't forget to reset <code>:debug</code> to <code>env</code>
+before deploying your changes after merging a PR.</p>
+<h3 id="migrating-a-database">migrating a database<a class="headerlink" href="#migrating-a-database" title="Permanent link">⚓︎</a></h3>
+<p>To change WFL's Postgres database schema, add a changeset XML file in the
+<code>database/changesets</code> directory. Name the file for a recent or the current date
+followed by something describing the change. That will ensure that the
+changesets list in the order in which they apply. Note that the <code>id</code> and
+<code>logicalFilePath</code> attributes are derived from the changeset's file name.
+Then add the changeset file to the <code>database/changlog.xml</code> file.</p>
+<p>Test the changes against a local <em>scratch database</em>. See the next section for
+suggestions.</p>
+<h3 id="debugging-jdbc-sql">debugging JDBC SQL<a class="headerlink" href="#debugging-jdbc-sql" title="Permanent link">⚓︎</a></h3>
+<p>Something seems to swallow SQL exceptions raised by Postgres and the JDBC
+library. Wrap suspect <code>clojure.java.jdbc</code> calls in <code>wfl.util/do-or-nil</code> to
+ensure that any exceptions show up in the server logs.</p>
+<h3 id="debugging-api-specs">debugging API specs<a class="headerlink" href="#debugging-api-specs" title="Permanent link">⚓︎</a></h3>
+<p>If an API references an undefined spec, HTTP requests and responses might
+silently fail or the Swagger page will fail to render. Check the
+<code>clojure.spec.alpha/def</code>s in <code>wfl.api.routes</code> for typos before tearing your
+hair out.</p>
+<h3 id="debugging-liquibase-locally">debugging Liquibase locally<a class="headerlink" href="#debugging-liquibase-locally" title="Permanent link">⚓︎</a></h3>
+<p>Running <code>liquibase update</code>:
+<div class="highlight"><pre><span></span><code>liquibase --classpath<span class="o">=</span><span class="k">$(</span>clojure -Spath<span class="k">)</span>          <span class="se">\</span>
+          --url<span class="o">=</span>jdbc:postgresql:wfl               <span class="se">\</span>
+          --changeLogFile<span class="o">=</span>database/changelog.xml <span class="se">\</span>
+          --username<span class="o">=</span><span class="nv">$USER</span> update
+</code></pre></div>
+For the above, the username and password need to be correct for the target
+environment.</p>
+<p>If you're running a local server with the postgres command above, you don't
+need a password and can omit it.</p>
+<p>Otherwise, you may be able to find this data in the Vault entry for the
+environment's server --
+<code>resources/wfl/environments.clj</code> has some environments if you've built locally.
+You can use <code>--password=$ENV_SOMETHING</code> to supply it.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>It is more convenient to use the following alias to migrate the database
+schema from within the <code>api</code> directory:
+<div class="highlight"><pre><span></span><code>clojure -M:liquibase
+</code></pre></div>
+if you are working with a local database.</p>
+</div>
+<h3 id="override-environment-variables-for-local-development">Override ENVIRONMENT variables for local development<a class="headerlink" href="#override-environment-variables-for-local-development" title="Permanent link">⚓︎</a></h3>
+<p>WFL uses <code>src/wfl/api/environment.clj</code> to read and process environment variables.
+Most of the variables have their default values, which can be overwritten for development
+purposes. For example, if we want to run system tests in parallel against a local
+WFL instance, use below under <code>api/</code> directory:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">WFL_WFL_URL</span><span class="o">=</span>http://localhost:3000 clojure -M:parallel-test wfl.system.v1-endpoint-test
+</code></pre></div>
+<h3 id="repl-testing-with-fixtures">REPL testing with fixtures.<a class="headerlink" href="#repl-testing-with-fixtures" title="Permanent link">⚓︎</a></h3>
+<p>Now that we're using fixtures,
+and so on,
+in our tests,
+it is no longer good enough
+to run <code>deftest</code> vars as functions.
+Running a test like this <code>(test-something)</code>
+does not set up the necessary fixtures.</p>
+<p>However,
+<code>clojure.test/test-vars</code> can run a test
+with all the surrounding <code>clojure.test</code>
+mechanism in place.
+It takes a vector of <code>var</code>s like this.</p>
+<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nb">comment </span><span class="p">(</span><span class="nf">test-vars</span> <span class="p">[</span><span class="o">#</span><span class="ss">&#39;test-something</span><span class="p">]))</span>
+</code></pre></div>
                 
               
               
@@ -1068,15 +1018,30 @@ the services WFL talks to, and are named accordingly.</p>
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
+        
+        <a href="index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Get Started" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Get Started
+            </div>
+          </div>
+        </a>
+      
       
         
-        <a href="dev-process.html" class="md-footer__link md-footer__link--next" aria-label="Next: Development Process and Tips" rel="next">
+        <a href="dev-release.html" class="md-footer__link md-footer__link--next" aria-label="Next: Release Process" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Development Process and Tips
+              Release Process
             </div>
           </div>
           <div class="md-footer__button md-icon">
