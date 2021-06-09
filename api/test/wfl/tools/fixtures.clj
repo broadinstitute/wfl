@@ -1,70 +1,69 @@
 (ns wfl.tools.fixtures
-  (:require [clojure.string :as str]
-            [wfl.service.datarepo :as datarepo]
-            [wfl.service.google.pubsub :as pubsub]
+  (:require [wfl.service.datarepo       :as datarepo]
+            [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
-            [wfl.service.postgres :as postgres]
-            [wfl.tools.liquibase :as liquibase]
-            [wfl.jdbc :as jdbc]
-            [wfl.util :as util]
-            [wfl.environment :as env]
-            [wfl.service.firecloud :as firecloud])
-  (:import [java.util UUID]
-           (java.nio.file Files)
-           (org.apache.commons.io FileUtils)
-           (java.nio.file.attribute FileAttribute)))
+            [wfl.service.postgres       :as postgres]
+            [wfl.tools.liquibase        :as liquibase]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.util                   :as util]
+            [wfl.environment            :as env]
+            [wfl.service.firecloud      :as firecloud])
+  (:import [java.nio.file.attribute FileAttribute]
+           [java.nio.file Files]
+           [java.util UUID]
+           [org.apache.commons.io FileUtils]))
+
+(defn with-temporary-overload
+  "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
+  [multifn dispatch-val overload f]
+  (defmethod multifn dispatch-val [& xs] (apply overload xs))
+  (try
+    (f)
+    (finally
+      (remove-method multifn dispatch-val))))
 
 (defn method-overload-fixture
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
   [multifn dispatch-val overload]
-  (fn [run-test]
-    (defmethod multifn dispatch-val [& xs] (apply overload xs))
-    (run-test)
-    (remove-method multifn dispatch-val)))
+  (partial with-temporary-overload multifn dispatch-val overload))
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
 
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)
-      (dissoc :instance-name)
       (merge {:connection-uri "jdbc:postgresql:postgres"
-              :db-name        "postgres"})))
+              :db-name        "postgres"
+              :instance-name  nil})))
 
-(def ^:private test-db-name
-  (str "wfltest" (str/replace (UUID/randomUUID) "-" "")))
-
-(defn testing-db-config
-  []
-  (-> (postgres/wfl-db-config)
-      (dissoc :instance-name)
-      (merge {:connection-uri (str "jdbc:postgresql:" test-db-name)
-              :db-name        test-db-name})))
+(def testing-db-name
+  "The name of the test database"
+  (util/randomize "wfltest"))
 
 (defn ^:private create-local-database
   "Create a local PostgreSQL database with DBNAME."
   [dbname]
-  (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
-    (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname))))
+  (let [config (postgres-db-config)]
+    (clojure.java.jdbc/with-db-connection [conn config]
+      (jdbc/db-do-commands conn false (format "CREATE DATABASE %s" dbname))
+      (merge config {:connection-uri (str "jdbc:postgresql:" dbname)
+                     :db-name        dbname}))))
 
 (defn ^:private setup-local-database
-  "Run liquibase migrations on the local PostgreSQL database `dbname`."
-  [dbname]
-  (let [changelog "../database/changelog.xml"
-        url       (format "jdbc:postgresql:%s" dbname)
-        {:keys [user password]} (postgres/wfl-db-config)]
-    (liquibase/run-liquibase url changelog user password)))
+  "Run liquibase migrations using PostgreSQL database `config`."
+  [config]
+  (liquibase/run-liquibase "../database/changelog.xml" config))
 
 (defn ^:private drop-local-db
   "Drop the local PostgreSQL database `dbname`."
-  [dbname]
+  [{:keys [db-name]}]
   (clojure.java.jdbc/with-db-connection [conn (postgres-db-config)]
-    (jdbc/db-do-commands conn false (format "DROP DATABASE %s" dbname))))
+    (jdbc/db-do-commands conn false (format "DROP DATABASE %s" db-name))))
 
 (defn temporary-postgresql-database
-  "Create a temporary PostgreSQL database whose configuration is
-   `testing-db-config` for testing. Assumes that the database does not
-   already exist.
+  "Create a temporary PostgreSQL database named `testing-db-name` and
+   reconfigure `postgres/wfl-db-config` to use it for testing. Assumes that
+   the database does not already exist.
 
    Example
    -------
@@ -73,28 +72,29 @@
    (clj-test/use-fixtures :once temporary-postgresql-database)
 
    (deftest test-requiring-database-access
-     (jdbc/with-db-transaction [tx (testing-db-config)]
+     (jdbc/with-db-transaction [tx (wfl-db-config)]
       #_(use tx)))"
   [f]
-  (let [name (:db-name (testing-db-config))]
-    (create-local-database name)
-    (try
-      (setup-local-database name)
-      (f)
-      (finally
-        (drop-local-db name)))))
+  (util/bracket
+   #(create-local-database testing-db-name)
+   drop-local-db
+   (fn [config]
+     (setup-local-database config)
+     (let [prev @@#'postgres/testing-db-overrides]
+       (swap! @#'postgres/testing-db-overrides merge config)
+       (try
+         (f)
+         (finally
+           (reset! @#'postgres/testing-db-overrides prev)))))))
 
 (defn create-local-database-for-testing
-  "Create and run liquibase on a PostgreSQL database whose configuration is
-   `config` for testing. Assumes that the database `(:db-name config)` does
-   not already exist.
+  "Create and run liquibase on a PostgreSQL database named `dbname`. Assumes
+   that `dbname` does not already exist.
    Notes:
    - This is intended for interactive development in a REPL.
    - The new database will NOT be cleaned up automatically."
-  [config]
-  (let [name (:db-name config)]
-    (create-local-database name)
-    (setup-local-database name)))
+  [dbname]
+  (-> dbname create-local-database setup-local-database))
 
 (defmacro with-fixtures
   "Use 0 or more `fixtures` in `use-fixtures`.
@@ -200,12 +200,13 @@
 
 (defn with-temporary-workspace
   "Create and use a temporary Terra Workspace."
-  [f]
-  (util/bracket
-   #(doto (util/randomize "wfl-dev/test-workspace")
-      (firecloud/create-workspace "workflow-launcher-dev"))
-   firecloud/delete-workspace
-   f))
+  ([workspace-prefix group f]
+   (util/bracket
+    #(doto (util/randomize workspace-prefix) (firecloud/create-workspace group))
+    firecloud/delete-workspace
+    f))
+  ([f]
+   (with-temporary-workspace "wfl-dev/test-workspace" "workflow-launcher-dev" f)))
 
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.

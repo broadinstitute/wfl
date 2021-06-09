@@ -60,3 +60,17 @@
 (deftest test-assoc-when
   (is (= {:a 2} (util/assoc-when {:a 1} contains? :a 2)))
   (is (= {:a 1} (util/assoc-when {:a 1} (constantly false) :a 2))))
+
+(deftest test-terra-id
+  (is (thrown? AssertionError (util/terra-id "not-in-tsv-type-spec" "flowcell")))
+  (letfn [(go [[first second expected]]
+              (is (= expected (util/terra-id first second))))]
+    (let [entity "entity:flowcell_id"
+          membership "membership:flowcell_set_id"
+          parameters [[:entity "flowcell" entity]
+                      [:entity "flowcell_id" entity]
+                      [:membership "flowcell" membership]
+                      [:membership "flowcell_id" membership]
+                      [:membership "flowcell_set" membership]
+                      [:membership "flowcell_set_id" membership]]]
+      (run! go parameters))))

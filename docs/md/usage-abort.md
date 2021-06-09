@@ -17,19 +17,49 @@ Here's a script that can help with that:
 #   THREADS is optionally the number of threads to use to talk to Cromwell
 #       Default is 2
 
-WORKLOAD=$(curl -X GET "${2:-https://gotc-prod-wfl.gotc-prod.broadinstitute.org}/api/v1/workload?$1" \
-        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-        -H 'Content-Type: application/json' | jq)
+# Usage: bash abort.sh QUERY [WFL_URL]
+#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`
+#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]
 
-CROMWELL=$(jq -r 'map(.executor) | .[0]' <<< "$WORKLOAD")
+WFL_URL="${2:-https://gotc-prod-wfl.gotc-prod.broadinstitute.org}"
+AUTH_HEADER="Authorization: Bearer $(gcloud auth print-access-token)"
 
-jq -r 'map(.workflows)
-        | flatten
-        | map(select(.status != "Failed" and .status != "Succeeded") | .uuid)
-        | .[]' <<< "$WORKLOAD" \
-    | xargs -I % -n 1 -P ${3:-2} curl -w "\n" -s -X POST "$CROMWELL/api/workflows/v1/%/abort" \
-        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-        -H "Content-Type: application/json"
+getWorkloads () {
+    # Query -> [Workload]
+    curl -s -X GET "${WFL_URL}/api/v1/workload?$1" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}
+
+getWorkflows() {
+    # Workload -> [Workflow]
+    uuid=$(jq -r .uuid <<< "$1")
+    curl -s -X GET "${WFL_URL}/api/v1/workload/${uuid}/workflows" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}
+
+mapjq () {
+    jq -c '.[]' <<< "${2}" \
+    | while read elem; do ${1} "${elem}"; done \
+    | jq '[ .[] ]'
+}
+
+main() {
+    # Query -> ()
+    workloads=$(getWorkloads "${1}")
+    cromwell=$(jq -r 'map(.executor) | .[0]' <<< "$WORKLOAD")
+
+    mapjq getWorkflows "${workloads}"
+        | jq -s 'flatten
+                | map(select(.status != "Failed" and .status != "Succeeded") | .uuid)
+                | .[]' \
+        | xargs -I % -n 1 -P ${3:-2} curl -w "\n" -s -X POST "$CROMWELL/api/workflows/v1/%/abort" \
+                -H "${AUTH_HEADER}" \
+                -H "Content-Type: application/json"
+}
+
+main "$1"
 ```
 
 The 'QUERY' part is like you'd pass to [retry.sh](./usage-retry).

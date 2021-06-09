@@ -1,5 +1,5 @@
 (ns wfl.api.routes
-  "Define routes for API endpoints"
+  "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
             [clojure.tools.logging              :as log]
             [clojure.tools.logging.readable     :as logr]
@@ -14,10 +14,12 @@
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.workloads                  :as workloads]
-            [wfl.environment                   :as env]
+            [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
             [wfl.wfl                            :as wfl])
-  (:import (java.sql SQLException)))
+  (:import [java.sql SQLException]
+           [wfl.util UserException]
+           [org.apache.commons.lang3.exception ExceptionUtils]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -55,6 +57,11 @@
            :parameters {:query ::spec/workload-query}
            :responses  {200 {:body ::spec/workload-responses}}
            :handler    handlers/get-workload}}]
+   ["/api/v1/workload/:uuid/workflows"
+    {:get {:summary    "Get workflows managed by the workload."
+           :parameters {:path {:uuid ::spec/uuid}}
+           :responses  {200 {:body ::spec/workflows}}
+           :handler    handlers/get-workflows}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::spec/workload-request}
@@ -66,7 +73,7 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
-    {:post {:summary    "Stop managing workflows for the workload specified by 'request'."
+    {:post {:summary    "Stop managing the workload specified by 'request'."
             :parameters {:body ::spec/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
@@ -95,10 +102,15 @@
   [endpoints]
   (let [security-info {:swagger {:tags ["Authenticated"]
                                  :security [{:googleoauth []}]}}]
-    (letfn [(needs-security? [endpoint] (str/starts-with? (first endpoint) "/api"))
-            (write-security-info [method-description] (merge-with merge security-info method-description))
-            (modify-method [method] (zipmap (keys method) (map write-security-info (vals method))))]
-      (vec (map #(if (needs-security? %) (apply vector (first %) (map modify-method (rest %))) %)
+    (letfn [(needs-security? [endpoint]
+              (str/starts-with? (first endpoint) "/api"))
+            (write-security-info [method-description]
+              (merge-with merge security-info method-description))
+            (modify-method [method]
+              (zipmap (keys method)
+                      (map write-security-info (vals method))))]
+      (vec (map #(if (needs-security? %)
+                   (apply vector (first %) (map modify-method (rest %))) %)
                 endpoints)))))
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
@@ -106,12 +118,13 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception request]
+  [status message exception {:keys [uri] :as _request}]
   {:status (or (:status (ex-data exception)) status)
-   :body {:message (or (.getMessage exception) message)
-          :exception (str (.getClass exception))
-          :data (ex-data exception)
-          :uri (:uri request)}})
+   :body   (-> (when-let [cause (.getCause exception)]
+                 {:cause (ExceptionUtils/getRootCauseMessage cause)})
+               (merge {:uri     uri
+                       :message (or (.getMessage exception) message)
+                       :details (-> exception ex-data (dissoc :status))}))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
@@ -129,6 +142,7 @@
     {;; ex-data with :type :wfl/exception
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
+     UserException                         (partial exception-handler 400 "")
        ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
        ;; handle clj-http Slingshot stone exceptions
@@ -141,25 +155,25 @@
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
     {;; uncomment for easier debugging with coercion and middleware transformations
-       ;; :reitit.middleware/transform dev/print-request-diffs
-       ;; :exception pretty/exception
+     ;; :reitit.middleware/transform dev/print-request-diffs
+     ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muuntaja-core/instance
             :middleware [exception-middleware
                          ;; query-params & form-params
                          parameters/parameters-middleware
-                           ;; content-negotiation
+                         ;; content-negotiation
                          muuntaja/format-negotiate-middleware
-                           ;; encoding response body
+                         ;; encoding response body
                          muuntaja/format-response-middleware
-                           ;; decoding request body
+                         ;; decoding request body
                          muuntaja/format-request-middleware
-                           ;; coercing response bodys
+                         ;; coercing response bodys
                          coercion/coerce-response-middleware
-                           ;; coercing request parameters
+                         ;; coercing request parameters
                          coercion/coerce-request-middleware
                          multipart/multipart-middleware]}})
-    ;; get more correct http error responses on routes
+   ;; get more correct http error responses on routes
    (ring/create-default-handler
     {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
      :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))

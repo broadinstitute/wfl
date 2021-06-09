@@ -1,12 +1,12 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.api.workloads :as workloads :refer [defoverload]]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
+  (:require [clojure.data.json    :as json]
+            [clojure.string       :as str]
+            [wfl.api.workloads    :as workloads :refer [defoverload]]
+            [wfl.jdbc             :as jdbc]
+            [wfl.module.batch     :as batch]
             [wfl.service.cromwell :as cromwell]
-            [wfl.util :as util])
+            [wfl.util             :as util])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
@@ -118,7 +118,7 @@
 (defn start-copyfile-workload!
   "Use transaction TX to start _WORKLOAD."
   [tx {:keys [items uuid executor] :as workload}]
-  (let [executor (is-known-cromwell-url? executor)
+  (let [executor        (is-known-cromwell-url? executor)
         default-options (make-workflow-options executor)]
     (letfn [(submit! [{:keys [id inputs options]}]
               [id (submit-workflow executor inputs
@@ -128,7 +128,7 @@
               (jdbc/update! tx items
                             {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
                             ["id = ?" id]))]
-      (run! (comp (partial update! tx) submit!) (:workflows workload))
+      (run! (comp (partial update! tx) submit!) (workloads/workflows tx workload))
       (jdbc/update! tx :workload
                     {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
@@ -141,12 +141,8 @@
     (start-copyfile-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/update-workload! pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!   pipeline batch/stop-workload!)
-
-(defmethod workloads/load-workload-impl
-  pipeline
-  [tx workload]
-  (if (workloads/saved-before? "0.4.0" workload)
-    (workloads/default-load-workload-impl tx workload)
-    (batch/load-batch-workload-impl tx workload)))
+(defoverload workloads/update-workload!   pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows          pipeline batch/workflows)
+(defoverload workloads/to-edn             pipeline batch/workload-to-edn)

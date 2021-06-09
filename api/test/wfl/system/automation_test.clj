@@ -1,84 +1,74 @@
 (ns wfl.system.automation-test
-  (:require [clojure.data.json          :as json]
-            [clojure.test               :refer [deftest is]]
-            [wfl.environment            :as env]
-            [wfl.service.datarepo       :as datarepo]
-            [wfl.service.google.storage :as storage]
-            [wfl.tools.datasets         :as datasets]
-            [wfl.tools.fixtures         :as fixtures]
-            [wfl.tools.resources        :as resources]
-            [wfl.tools.workflows        :as workflows])
-  (:import (java.util UUID)))
+  (:require [clojure.pprint        :as pprint]
+            [clojure.test          :refer [deftest is]]
+            [wfl.environment       :as env]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.resources   :as resources]
+            [wfl.tools.workflows   :as workflows]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.util              :as util]
+            [wfl.tools.endpoints   :as endpoints]
+            [wfl.tools.workloads   :as workloads]))
 
 (defn ^:private replace-urls-with-file-ids
   [file->fileid type value]
   (-> (fn [type value]
         (case type
           ("Boolean" "Float" "Int" "Number" "String") value
-          "File"                                      (file->fileid value)
+          "File" (file->fileid value)
           (throw (ex-info "Unknown type" {:type type :value value}))))
       (workflows/traverse type value)))
+
+(def workspace-to-clone "wfl-dev/CDC_Viral_Sequencing")
+(def firecloud-group "workflow-launcher-dev")
+(def snapshot-readers ["cdc-covid-surveillance@firecloud.org"])
+(def source-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
+(def source-table "flowcells")
+(def snapshot-column "run_date")
+(def source-dataset-profile "395f5921-d2d9-480d-b302-f856d787c9d9")
+(def method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
+
+(def workspace-table "flowcell")
+
+(defn clone-workspace []
+  (println "Cloning workspace" workspace-to-clone)
+  (let [clone-name (util/randomize "wfl-dev/CDC_Viral_Sequencing_GP")]
+    (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
+    (println "Cloned new workspace " clone-name)
+    clone-name))
+
+(defn delete-workspace [workspace]
+  (println "Deleting" workspace)
+  (firecloud/delete-workspace workspace))
+
+(defn ^:private covid-workload-request [workspace]
+  "Build a covid workload request."
+  {:source   {:name      "TDR Snapshots"
+              :snapshots ["f9242ab8-c522-4305-966d-7c51419377ab"]}
+   :executor {:name                       "Terra"
+              :workspace                  workspace
+              :methodConfiguration        "cdc-covid-surveillance/sarscov2_illumina_full"
+              :methodConfigurationVersion 1
+              :fromSource                 "importSnapshot"}
+   :sink     {:name           "Terra Workspace"
+              :workspace      workspace
+              :entityType     "run_date"
+              :identifier     "run_date"
+              :fromOutputs    (resources/read-resource
+                               "sarscov2_illumina_full/entity-from-outputs.edn")
+              :skipValidation true}
+   :project  @workloads/project
+   :creator  @workloads/email
+   :labels   ["hornet:test"]})
 
 (deftest test-automate-sarscov2-illumina-full
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
-       (fixtures/with-temporary-dataset
-         (datasets/unique-dataset-request
-          tdr-profile
-          "sarscov2-illumina-full-inputs.json"))
-       (fixtures/with-temporary-dataset
-         (datasets/unique-dataset-request
-          tdr-profile
-          "sarscov2-illumina-full-outputs.json"))]
-      (fn [[temp source sink]]
-        ;; TODO: create + start the workload
-        ;; upload a sample
-        (let [;; This defines how we'll convert the inputs of the pipeline into
-              ;; a form that can be ingested as a new row in the dataset.
-              ;; I think a user would specify something like this in the initial
-              ;; workload request, one mapping for dataset to workspace entity
-              ;; names and one for outputs to dataset.
-              from-inputs   (resources/read-resource "sarscov2_illumina_full/dataset-from-inputs.edn")
-              inputs        (-> (resources/read-resource "sarscov2_illumina_full/inputs.edn")
-                                (select-keys (map keyword (vals from-inputs))))
-              inputs-type   (-> "sarscov2_illumina_full.edn"
-                                resources/read-resource
-                                :inputs
-                                workflows/make-object-type)
-              table-name    "flowcell"
-              unique-prefix (UUID/randomUUID)
-              table-url     (str temp "inputs.json")]
-          (-> (->> (workflows/get-files inputs-type inputs)
-                   (datasets/ingest-files tdr-profile source unique-prefix))
-              (replace-urls-with-file-ids inputs-type inputs)
-              (datasets/rename-gather from-inputs)
-              (json/write-str :escape-slash false)
-              (storage/upload-content table-url))
-          (let [{:keys [bad_row_count row_count]}
-                (datarepo/poll-job
-                 (datarepo/ingest-table source table-url table-name))]
-            (is (= 1 row_count))
-            (is (= 0 bad_row_count))))
-        ;; At this point, workflow-launcher should run the workflow. The code
-        ;; below simulates this effect.
-        (let [outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")
-              outputs-type  (-> "sarscov2_illumina_full.edn"
-                                resources/read-resource
-                                :outputs
-                                workflows/make-object-type)
-              table-name    "sarscov2_illumina_full_outputs"
-              unique-prefix (UUID/randomUUID)
-              table-url     (str temp "outputs.json")]
-          (-> (->> (workflows/get-files outputs-type outputs)
-                   (datasets/ingest-files tdr-profile sink unique-prefix))
-              (replace-urls-with-file-ids outputs-type outputs)
-              (json/write-str :escape-slash false)
-              (storage/upload-content table-url))
-          (let [{:keys [bad_row_count row_count]}
-                (datarepo/poll-job
-                 (datarepo/ingest-table sink table-url table-name))]
-            (is (= 1 row_count))
-            (is (= 0 bad_row_count))))
-        ;; TODO: verify the outputs have been written to TDR
-        ))))
+      [(util/bracket clone-workspace delete-workspace)]
+      (fn [[workspace]]
+        (let [workload (endpoints/create-workload
+                        (covid-workload-request workspace))]
+          (endpoints/start-workload workload)
+          (workloads/when-done
+           (comp pprint/pprint endpoints/get-workflows)
+           workload))))))

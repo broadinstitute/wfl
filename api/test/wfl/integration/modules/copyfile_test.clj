@@ -1,19 +1,20 @@
 (ns wfl.integration.modules.copyfile-test
-  (:require [clojure.test :refer [deftest testing is] :as clj-test]
-            [clojure.string :as str]
+  (:require [clojure.test                   :refer [deftest testing is use-fixtures]]
+            [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.all :as all]
-            [wfl.module.copyfile :as copyfile]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.postgres :as postgres]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.workloads :as workloads]
-            [wfl.util :as util])
-  (:import (java.util UUID)
-           (java.time OffsetDateTime)))
+            [wfl.jdbc                       :as jdbc]
+            [wfl.module.all                 :as all]
+            [wfl.module.batch               :as batch]
+            [wfl.module.copyfile            :as copyfile]
+            [wfl.service.cromwell           :as cromwell]
+            [wfl.service.postgres           :as postgres]
+            [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.workloads            :as workloads]
+            [wfl.util                       :as util])
+  (:import [java.util UUID]
+           [java.time OffsetDateTime]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-copyfile-workload-request
   [src dst]
@@ -22,7 +23,7 @@
 
 (defn ^:private old-create-copyfile-workload! []
   (let [request (make-copyfile-workload-request "gs://fake/input" "gs://fake/output")]
-    (jdbc/with-db-transaction [tx (fixtures/testing-db-config)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [[id table] (all/add-workload-table! tx copyfile/workflow-wdl request)
             add-id (fn [m id] (assoc (:inputs m) :id id))]
         (jdbc/insert-multi! tx table (map add-id (:items request) (range)))
@@ -55,7 +56,7 @@
                  (partial map
                           #(assoc % :options {:supports_options true :overwritten true})))
          workloads/execute-workload!
-         :workflows
+         workloads/workflows
          (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-submitted-workflow-inputs
@@ -89,20 +90,20 @@
                   (assoc-in [:common :options] {})
                   (update :items (partial map #(assoc % :options {})))
                   workloads/create-workload!
-                  :workflows))))
+                  workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [workflows items] :as _workload}]
+  [tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
                           {:status "Succeeded" :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! workflows)))
+    (run! update! (workloads/workflows workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
     {#'cromwell/submit-workflow                 (fn [& _] (UUID/randomUUID))
-     #'postgres/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
     #(shared/run-workload-state-transition-test!
       (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))
 

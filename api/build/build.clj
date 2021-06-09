@@ -1,42 +1,40 @@
 (ns build
-  (:require [clojure.data.xml :as xml]
-            [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
-            [wfl.module.aou :as aou]
-            [wfl.module.wgs :as wgs]
-            [wfl.module.xx :as xx]
-            [wfl.module.sg :as sg]
+  (:require [clojure.data.xml      :as xml]
+            [clojure.java.io       :as io]
+            [clojure.pprint        :refer [pprint]]
+            [clojure.string        :as str]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util :as util])
+            [wfl.util              :as util])
   (:import [java.time OffsetDateTime]
            [java.time.temporal ChronoUnit]))
+
+(defmacro do-or-nil-silently
+  "Value of `body` or `nil` if it throws, without logging exceptions.
+  See also [[wfl.util/do-or-nil]]."
+  [& body]
+  `(try (do ~@body)
+        (catch Exception x#)))
 
 ;; Java chokes on colons in the version string of the jarfile manifest.
 ;; And GAE chokes on everything else.
 ;;
 (def the-version
   "A map of version information."
-  (letfn [(frob [{:keys [release path]}] [(util/basename path) release])]
+  (delay
     (let [built     (-> (OffsetDateTime/now)
                         (.truncatedTo ChronoUnit/SECONDS)
                         .toInstant .toString)
           commit    (util/shell! "git" "rev-parse" "HEAD")
           committed (->> commit
-                         (util/shell! "git" "show" "-s" "--format=%cI")
-                         OffsetDateTime/parse .toInstant .toString)
-          clean?    (util/do-or-nil-silently
-                     (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
-      (into
-       {:version          (or (System/getenv "WFL_VERSION") "devel")
-        :commit           commit
-        :committed        committed
-        :built            built
-        :user             (or (System/getenv "USER") "wfl")}
-       (map frob [aou/workflow-wdl
-                  sg/workflow-wdl
-                  wgs/workflow-wdl
-                  xx/workflow-wdl])))))
+                        (util/shell! "git" "show" "-s" "--format=%cI")
+                        OffsetDateTime/parse .toInstant .toString)
+          clean?    (do-or-nil-silently
+                      (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+      {:version   (or (System/getenv "WFL_VERSION") "devel")
+       :commit    commit
+       :committed committed
+       :built     built
+       :user      (or (System/getenv "USER") "wfl")})))
 
 (defn write-the-version-file
   "Write VERSION.edn into the RESOURCES directory."
@@ -57,7 +55,7 @@
            :groupId     (namespace artifactId)
            :name        "WorkFlow Launcher"
            :url         "https://github.com/broadinstitute/wfl.git"
-           :version     (:version the-version)}))
+           :version     (:version @the-version)}))
 
 (defn update-the-pom
   "Update the Project Object Model (pom.xml) file for this program."
@@ -97,7 +95,11 @@
   (let [derived        (str/join "/" [".." "derived" "api"])
         resources      (io/file derived "resources")
         test-resources (io/file derived "test" "resources")]
-    (pprint the-version)
-    (write-the-version-file resources the-version)
-    (run! #(write-workflow-description test-resources %) (find-wdls))
-    (System/exit 0)))
+    (try
+      (pprint @the-version)
+      (write-the-version-file resources @the-version)
+      (run! #(write-workflow-description test-resources %) (find-wdls))
+      (System/exit 0)
+      (catch Throwable t
+        (pprint t)
+        (System/exit 1)))))

@@ -1,10 +1,9 @@
 (ns wfl.unit.spec-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [wfl.tools.workloads :as workloads]
-            [wfl.api.spec :as spec]
-            [clojure.spec.alpha :as s]
-            [clojure.walk :as walk])
-  (:import (java.util UUID)))
+  (:require [clojure.spec.alpha  :as s]
+            [clojure.test        :refer [deftest testing is]]
+            [wfl.api.spec        :as spec]
+            [wfl.tools.workloads :as workloads])
+  (:import [java.util UUID]))
 
 (deftest request-spec-test
   (testing "Requests are valid"
@@ -13,16 +12,6 @@
                         [workloads/wgs-workload-request
                          workloads/aou-workload-request
                          workloads/xx-workload-request])))))
-
-(deftest request-spec-negative-test
-  (testing "Mismatched cram/bam inputs cannot pass spec validation"
-    (letfn [(invalid? [req] (is (not (s/valid? ::spec/workload-request req))))]
-      (let [requests (map #(% (UUID/randomUUID))
-                          [workloads/wgs-workload-request
-                           workloads/xx-workload-request])
-            mismatched-requests (map #(walk/postwalk-replace {:input_cram :input_bam} %)
-                                     requests)]
-        (run! invalid? mismatched-requests)))))
 
 (deftest workload-query-spec-test
   (letfn [(invalid? [req] (is (not (s/valid? ::spec/workload-query req))))
@@ -39,3 +28,29 @@
         (let [uuid-request {:uuid uuid}
               proj-request {:project project}]
           (run! valid? [uuid-request proj-request]))))))
+
+(deftest test-labels-spec
+  (let [valid?   s/valid?
+        invalid? (comp not s/valid?)] ;; i die
+    (doseq [[test? label]
+            [[valid?   "test:label"]
+             [valid?   "te_-st:l ab31 "]
+             [valid?   "test:00000000-0000-0000-0000-000000000000"]
+             [invalid? ":"]
+             [invalid? "::"]
+             [invalid? "test:"]
+             [invalid? "test :"]
+             [invalid? ":label"]
+             [invalid? "label"]
+             [invalid? "test:label:bad"]]]
+      (is (test? ::spec/labels [label]) (format "failed: %s" label)))))
+
+(deftest test-watchers-spec
+  (let [valid?   s/valid?
+        invalid? (comp not s/valid?)] ;; i die
+    (doseq [[test? email]
+            [[valid?   "hornet-eng@broadinstitute.org"]
+             ;; From tbl: https://www.netmeister.org/blog/email.html
+             [valid?   "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]
+             [invalid? "foo"]]]
+      (is (test? ::spec/watchers [email]) (format "failed: %s" email)))))

@@ -1,15 +1,19 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.set                :as set]
+  (:require [clojure.test               :refer :all]
+            [clojure.instant            :as instant]
+            [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [clojure.test               :refer [deftest testing is]]
+            [wfl.api.spec               :as spec]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
             [wfl.tools.workloads        :as workloads]
+            [wfl.tools.resources        :as resources]
             [wfl.util                   :as util])
-  (:import (clojure.lang ExceptionInfo)
-           (java.util UUID)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]))
 
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
@@ -24,24 +28,25 @@
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs labels status updated uuid] :as workflow}]
+  [{:keys [inputs labels status updated uuid] :as _workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
   (is updated)
   (is uuid)
   (is (= "Succeeded" status)))
 
 (defn ^:private verify-succeeded-workload
-  [{:keys [pipeline workflows] :as workload}]
-  (run! verify-succeeded-workflow workflows)
+  [workload]
+  (run! verify-succeeded-workflow (endpoints/get-workflows workload))
   (workloads/postcheck workload))
 
 (defn ^:private verify-internal-properties-removed [workload]
-  (letfn [(go! [key]
-            (is (util/absent? workload key)
-                (format "workload should not contain %s" key))
-            (is (every? #(util/absent? % key) (:workflows workload))
-                (format "workflows should not contain %s" key)))]
-    (run! go! [:id :items])))
+  (let [workflows (endpoints/get-workflows workload)]
+    (letfn [(go! [key]
+              (is (util/absent? workload key)
+                  (format "workload should not contain %s" key))
+              (is (every? #(util/absent? % key) workflows)
+                  (format "workflows should not contain %s" key)))]
+      (run! go! [:id :items]))))
 
 (deftest test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
@@ -95,7 +100,7 @@
     (let [workload (endpoints/start-workload workload)]
       (is (= uuid (:uuid workload)))
       (is (:started workload))
-      (let [{:keys [workflows]} workload]
+      (let [workflows (endpoints/get-workflows workload)]
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
@@ -122,18 +127,16 @@
         (test-start-workload (create-copyfile-workload src dst))))))
 
 (defn ^:private test-stop-workload
-  [{:keys [uuid pipeline] :as workload}]
-  (letfn [(verify-no-workflows-run [{:keys [workflows] :as workload}]
-            (is (:finished workload))
-            (is (every? (comp nil? :uuid) workflows))
-            (is (every? (comp nil? :status) workflows)))]
-    (testing (format "calling api/v1/start with %s workload" pipeline)
-      (let [workload (endpoints/stop-workload workload)]
-        (is (= uuid (:uuid workload)))
-        (is (not (:started workload)))
-        (is (:stopped workload))
-        (verify-internal-properties-removed workload)
-        (workloads/when-done verify-no-workflows-run workload)))))
+  [{:keys [pipeline] :as workload}]
+  (testing (format "calling /stop with %s workload before /start" pipeline)
+    (is (thrown-with-msg?
+         ExceptionInfo #"400"
+         (endpoints/stop-workload workload)))
+    (testing (format "calling /stop with %s workload after /start" pipeline)
+      (let [workload (endpoints/stop-workload
+                      (endpoints/start-workload workload))]
+        (is (:started workload))
+        (is (:stopped workload))))))
 
 (deftest ^:parallel test-stop-wgs-workload
   (test-stop-workload (create-wgs-workload)))
@@ -149,7 +152,7 @@
 (defn ^:private test-exec-workload
   [{:keys [pipeline] :as request}]
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
-    (let [{:keys [created creator started uuid workflows] :as workload}
+    (let [{:keys [created creator started uuid] :as workload}
           (endpoints/exec-workload request)]
       (is uuid    "workloads should have a uuid")
       (is created "should have a created timestamp")
@@ -158,8 +161,9 @@
           "creator inferred from auth token")
       (letfn [(included [m] (select-keys m [:pipeline :project]))]
         (is (= (included request) (included workload))))
-      (is (every? :updated workflows))
-      (is (every? :uuid workflows))
+      (let [workflows (endpoints/get-workflows workload)]
+        (is (every? :updated workflows))
+        (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
       (workloads/when-done verify-succeeded-workload workload))))
 
@@ -212,3 +216,75 @@
     (testing "exec-workload! fails (400) with bad request"
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
+
+(defn ^:private covid-workload-request []
+  "Build a covid workload request."
+  (let [terra-ns  (comp (partial str/join "/") (partial vector "wfl-dev"))
+        workspace (terra-ns "CDC_Viral_Sequencing")
+        source    {:name            "Terra DataRepo"
+                   :dataset         "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
+                   :table           "flowcells"
+                   :column          "last_modified_date"
+                   :snapshotReaders ["hornet@firecloud.org"]}
+        executor  {:name                       "Terra"
+                   :workspace                  workspace
+                   :methodConfiguration        (terra-ns "sarscov2_illumina_full")
+                   :methodConfigurationVersion 1
+                   :fromSource                 "importSnapshot"}
+        sink      {:name           "Terra Workspace"
+                   :workspace      workspace
+                   :entityType     "assemblies"
+                   :identifier     "flowcell_id"
+                   :fromOutputs    (resources/read-resource
+                                    "sarscov2_illumina_full/entity-from-outputs.edn")
+                   :skipValidation true}]
+    (workloads/covid-workload-request source executor sink)))
+
+(defn instantify-timestamps
+  "Replace timestamps at keys KS of map M with parsed #inst values."
+  [m & ks]
+  (reduce (fn [m k] (update m k instant/read-instant-timestamp)) m ks))
+
+(deftest ^:parallel test-covid-workload
+  (testing "/create covid workload"
+    (let [workload-request (covid-workload-request)
+          {:keys [creator started uuid] :as workload}
+          (-> workload-request
+              endpoints/create-workload
+              (update :created instant/read-instant-timestamp))]
+      (is (s/valid? ::spec/covid-workload-request  workload-request))
+      (is (s/valid? ::spec/covid-workload-response workload))
+      (verify-internal-properties-removed workload)
+      (is (not started))
+      (is (= @workloads/email creator))
+      (testing "/workload status"
+        (let [{:keys [started] :as response}
+              (-> uuid endpoints/get-workload-status
+                  (instantify-timestamps :created))]
+          (is (not started))
+          (verify-internal-properties-removed response)
+          (is (s/valid? ::spec/covid-workload-response response))))
+      (testing "/workload all"
+        (let [{:keys [started] :as response}
+              (-> (endpoints/get-workloads)
+                  (->> (filter (comp #{uuid} :uuid)))
+                  first
+                  (instantify-timestamps :created))]
+          (is (not started))
+          (verify-internal-properties-removed response)
+          (is (s/valid? ::spec/covid-workload-response response))))
+      (testing "/start covid workload"
+        (let [{:keys [created started] :as response}
+              (-> workload endpoints/start-workload
+                  (instantify-timestamps :created :started))]
+          (is (s/valid? ::spec/covid-workload-response response))
+          (is (inst? created))
+          (is (inst? started))))
+      (testing "/stop covid workload"
+        (let [{:keys [created started stopped] :as response}
+              (-> workload endpoints/stop-workload
+                  (instantify-timestamps :created :started :stopped))]
+          (is (s/valid? ::spec/covid-workload-response response))
+          (is (inst? created))
+          (is (inst? started))
+          (is (inst? stopped)))))))
