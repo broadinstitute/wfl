@@ -35,8 +35,9 @@
   [^String object]
   (json/read-str object :key-fn keyword))
 
-(defn response-body-json [response]
+(defn response-body-json
   "Return the :body of the http `response` as JSON"
+  [response]
   (-> response :body (or "null") parse-json))
 
 (defn slurp-json
@@ -382,11 +383,11 @@
    ----------
    acquire - thunk returning newly acquired resource
    release - function to clean up resource, called before this function returns
-   use     - function that uses the resource"
-  [acquire release use]
+   utilize - function that uses the resource"
+  [acquire release utilize]
   (let [resource (acquire)]
     (try
-      (use resource)
+      (utilize resource)
       (finally
         (release resource)))))
 

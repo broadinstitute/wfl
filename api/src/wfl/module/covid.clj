@@ -386,8 +386,9 @@
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
 
-(defn ^:private timestamp-to-offsetdatetime [^Timestamp t]
+(defn ^:private timestamp-to-offsetdatetime
   "Parse the Timestamp `t` into an `OffsetDateTime`."
+  [^Timestamp t]
   (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
 
 (def ^:private bigquery-datetime-format
@@ -517,7 +518,7 @@
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-snapshot-list-type id)]
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
-    (jdbc/insert-multi! tx details (map #(-> {:item (pr-str %)}) snapshots))
+    (jdbc/insert-multi! tx details (map #(hash-map :item (pr-str %)) snapshots))
     [tdr-snapshot-list-type details]))
 
 (defn ^:private load-tdr-snapshot-list

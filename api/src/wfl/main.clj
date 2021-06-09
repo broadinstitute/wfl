@@ -68,13 +68,12 @@
   (try
     (let [[verb & args] the-args]
       (if-let [run (commands verb)]
-        (do
-          (apply run args)
-          (exit 0))
+        (apply run args)
         (do
           (if verb (printf "%s is not a command.\n" verb))
           (help)
           (exit 1))))
     (catch Throwable t
       (println (.getMessage t))
-      (exit 1))))
+      (exit 1)))
+  (exit 0))
