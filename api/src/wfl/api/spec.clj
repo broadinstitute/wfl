@@ -25,7 +25,8 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
 (s/def ::created ::timestamp)
-(s/def ::creator email-address?)
+(s/def :batch/creator string?)
+(s/def :covid/creator email-address?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -174,7 +175,7 @@
                                                   ::wdl]
                                          :req-un [::commit
                                                   ::created
-                                                  ::creator
+                                                  :batch/creator
                                                   :batch/executor
                                                   ::output
                                                   ::pipeline
@@ -191,7 +192,7 @@
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
-                                                  ::creator
+                                                  :covid/creator
                                                   :covid/executor
                                                   ::labels
                                                   ::sink
@@ -211,3 +212,64 @@
                                  :covid ::covid-workload-response))
 
 (s/def ::workload-responses (s/* ::workload-response))
+
+(comment
+  (s/explain
+   ::workload-responses
+   [{:started "2020-11-23T20:49:01Z",
+     :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+     :pipeline "ExternalExomeReprocessing",
+     :release "ExternalExomeReprocessing_v2.1.1",
+     :created "2020-11-23T20:49:01Z",
+     :output
+     "gs://broad-gotc-dev-zero-test/wgs-test-output/single_sample/plumbing/truth",
+     :finished "2020-11-23T21:10:15Z",
+     :project "(Test) WFL Feature Testing",
+     :commit "4fc04a044d51b3be789e1d0f9c6c1d86c269934a",
+     :wdl
+     "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+     :input
+     "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+     :uuid "847d8e96-f4fb-4cde-a1a6-377186d65b5f",
+     :executor
+     "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+     :version "0.4.1"}
+    {:started "2020-08-27T16:27:49Z",
+     :creator "saman",
+     :pipeline "ExternalWholeGenomeReprocessing",
+     :release "ExternalWholeGenomeReprocessing_v1.0",
+     :created "2020-08-27T16:27:40Z",
+     :output
+     "gs://broad-gotc-dev-zero-test/wgs-test-output/single_sample/plumbing/truth",
+     :finished "2020-09-18T05:17:16Z",
+     :project "wgs-dev",
+     :commit "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
+     :wdl
+     "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+     :input
+     "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+     :uuid "03238b14-a326-4148-ad7b-0e4a5c8b7bee",
+     :executor
+     "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+     :version "0.1.7"}
+                                        ;
+                                        ; Deleted about 6000 lines.
+                                        ;
+    {:started "2021-04-20T15:50:13Z",
+     :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com",
+     :pipeline "GDCWholeGenomeSomaticSingleSample",
+     :release "GDCWholeGenomeSomaticSingleSample_v1.1.0",
+     :created "2021-04-20T15:50:13Z",
+     :output
+     "gs://broad-gotc-dev-wfl-sg-test-outputs/05d912ac-f1f8-4a3b-bb50-48c273213370",
+     :finished "2021-04-20T17:09:18Z",
+     :project "(Test) rex/covid-polling-impl",
+     :commit "75dd604c557ddf9b7843f747a0338916b511e37e",
+     :wdl
+     "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl",
+     :uuid "9ab83554-fc3b-4359-b03c-be4c46a63778",
+     :executor
+     "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+     :version "0.6.1"}]
+   )
+  )
