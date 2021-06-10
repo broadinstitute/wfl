@@ -212,5 +212,3 @@
                                  :covid ::covid-workload-response))
 
 (s/def ::workload-responses (s/* ::workload-response))
-
-
