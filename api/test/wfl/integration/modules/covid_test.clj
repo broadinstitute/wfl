@@ -15,6 +15,7 @@
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.postgres           :as postgres]
             [wfl.service.rawls              :as rawls]
+            [wfl.stage                      :as stage]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.tools.resources            :as resources]
@@ -74,13 +75,13 @@
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database
     (fixtures/method-overload-fixture
-     covid/peek-queue! testing-queue-type testing-queue-peek)
+     stage/queue-peek testing-queue-type testing-queue-peek)
     (fixtures/method-overload-fixture
-     covid/pop-queue! testing-queue-type testing-queue-pop)
+     stage/queue-pop! testing-queue-type testing-queue-pop)
     (fixtures/method-overload-fixture
-     covid/queue-length! testing-queue-type testing-queue-length)
+     stage/queue-length testing-queue-type testing-queue-length)
     (fixtures/method-overload-fixture
-     covid/done? testing-queue-type testing-queue-done?)))
+     stage/done? testing-queue-type testing-queue-done?)))
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
@@ -439,7 +440,7 @@
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (covid/start-source! tx source)
            (reload-source tx source)))
-        (is (== expected-num-records (covid/queue-length! source))
+        (is (== expected-num-records (stage/queue-length source))
             "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
           (let [records (->> source :details (postgres/get-table tx))]
@@ -455,9 +456,9 @@
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (covid/stop-source! tx source)
            (reload-source tx source)))
-        (is (== expected-num-records (covid/queue-length! source))
+        (is (== expected-num-records (stage/queue-length source))
             "no more snapshots should be enqueued")
-        (is (not (covid/done? source)) "the tdr source was done before snapshots were consumed")))))
+        (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
 
 (deftest test-stop-tdr-sourced
   (let [source (create-tdr-source)]
@@ -504,8 +505,8 @@
          #'firecloud/get-submission              mock-firecloud-get-submission
          #'firecloud/get-workflow                mock-workflow-update-status}
         #(covid/update-executor! source executor))
-      (is (zero? (covid/queue-length! source)) "The snapshot was not consumed.")
-      (is (== 2 (covid/queue-length! executor)) "Two workflows should be enqueued")
+      (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
+      (is (== 2 (stage/queue-length executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))
@@ -521,7 +522,7 @@
               "Status update mock should have marked running workflow as succeeded")
           (is (every? #(nil? (:consumed %)) records)
               "All records should be unconsumed")
-          (is (not (covid/done? executor)) "executor should not have finished processing")
+          (is (not (stage/done? executor)) "executor should not have finished processing")
           (verify-record-against-workflow running-record running-workflow-mock 1)
           (verify-record-against-workflow succeeded-record succeeded-workflow-mock 2)
           (is (== (inc method-config-version-mock) (:method_configuration_version executor-record))
@@ -542,17 +543,17 @@
     (with-redefs-fn
       {#'firecloud/get-workflow         (constantly succeeded-workflow-mock)
        #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
-      #(let [workflow (covid/peek-queue! executor)]
+      #(let [workflow (stage/queue-peek executor)]
          (is (succeeded? (:status workflow)))
          (is (= (:id succeeded-workflow-mock) (:uuid workflow)))
          (is (contains? workflow :updated))
          (is (= "value" (-> workflow :inputs :input)))
          (is (= "value" (-> workflow :outputs :output)))
          (is (not (-> workflow :outputs :noise)))
-         (covid/pop-queue! executor)
-         (is (nil? (covid/peek-queue! executor)))
-         (is (== 1 (covid/queue-length! executor)))
-         (is (not (covid/done? executor)))))))
+         (stage/queue-pop! executor)
+         (is (nil? (stage/queue-peek executor)))
+         (is (== 1 (stage/queue-length executor)))
+         (is (not (stage/done? executor)))))))
 
 (def ^:private fake-entity-type "flowcell")
 (def ^:private fake-entity-name "test")
@@ -587,7 +588,7 @@
          #'covid/entity-exists?      (constantly false)
          #'firecloud/delete-entities (partial throw-if-called "delete-entities")}
         #(covid/update-sink! executor sink))
-      (is (zero? (covid/queue-length! executor)) "The workflow was not consumed")
+      (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[record & rest] (->> sink :details (postgres/get-table tx))]
           (is record "The record was not written to the database")
@@ -620,7 +621,7 @@
                              (zipmap [:sink_type :sink_items])
                              (covid/load-sink! tx)))]
         (covid/update-sink! executor sink)
-        (is (== 1 (covid/queue-length! executor))
+        (is (== 1 (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [{:keys [entityType name attributes]}
               (firecloud/get-entity workspace [fake-entity-type fake-entity-name])]
@@ -630,7 +631,7 @@
           (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["aligned-thing.cram"]}]
                  (first attributes))))
         (covid/update-sink! executor sink)
-        (is (zero? (covid/queue-length! executor))
+        (is (zero? (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [entites (firecloud/list-entities workspace fake-entity-type)]
           (is (== 1 (count entites))
