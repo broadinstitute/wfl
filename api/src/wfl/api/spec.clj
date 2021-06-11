@@ -25,7 +25,8 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
 (s/def ::created ::timestamp)
-(s/def ::creator email-address?)
+(s/def :batch/creator string?)
+(s/def :covid/creator email-address?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -174,7 +175,7 @@
                                                   ::wdl]
                                          :req-un [::commit
                                                   ::created
-                                                  ::creator
+                                                  :batch/creator
                                                   :batch/executor
                                                   ::output
                                                   ::pipeline
@@ -191,7 +192,7 @@
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
-                                                  ::creator
+                                                  :covid/creator
                                                   :covid/executor
                                                   ::labels
                                                   ::sink
