@@ -1,3 +1,6 @@
+# Release 0.7.1
+- GH-1375: Fix AoU nightly test: GET /api/v1/workload fails with spec error from invalid creator ([#442](https://github.com/broadinstitute/wfl/pull/442))
+
 # Release 0.7.0
 - Bump ws from 6.2.1 to 6.2.2 in /ui ([#433](https://github.com/broadinstitute/wfl/pull/433))
 - [GH-1363] Fix Sporadic Firecloud Test Failures ([#437](https://github.com/broadinstitute/wfl/pull/437))
