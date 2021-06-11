@@ -66,8 +66,8 @@
     (fixtures/with-fixtures
       [(util/bracket clone-workspace delete-workspace)]
       (fn [[workspace]]
-        (let [workload (-> (covid-workload-request workspace)
-                           (endpoints/create-workload))]
+        (let [workload (endpoints/create-workload
+                         (covid-workload-request workspace))]
           (endpoints/start-workload workload)
           (workloads/when-done
            (comp pprint/pprint endpoints/get-workflows)
