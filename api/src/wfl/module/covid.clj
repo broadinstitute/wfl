@@ -27,15 +27,15 @@
 (defmulti create-source!
   "Use `tx` and workload `id` to write the source to persisted storage and
    return a [type item] pair to be written into the parent table."
-  (fn [tx id source-request] (:name source-request)))
+  (fn [_tx _id source-request] (:name source-request)))
 
 (defmulti load-source!
   "Use `tx` to load the workload source with `source_type`."
-  (fn [tx workload] (:source_type workload)))
+  (fn [_tx workload] (:source_type workload)))
 
 (defmulti start-source!
   "Use `tx` to start accepting data from the `source`."
-  (fn [tx source] (:type source)))
+  (fn [_tx source] (:type source)))
 
 (defmulti update-source!
   "Update the `source`."
@@ -43,39 +43,39 @@
 
 (defmulti stop-source!
   "Use `tx` to stop accepting new data from the `source`."
-  (fn [tx source] (:type source)))
+  (fn [_tx source] (:type source)))
 
 ;; executor operations
 (defmulti create-executor!
   "Use `tx` and workload `id` to write the executor to persisted storage and
    return a [type item] pair to be written into the parent table."
-  (fn [tx id executor-request] (:name executor-request)))
+  (fn [_tx _id executor-request] (:name executor-request)))
 
 (defmulti update-executor!
   "Update the executor with the `source`"
-  (fn [source executor] (:type executor)))
+  (fn [_source executor] (:type executor)))
 
 (defmulti executor-workflows
   "Use `tx` to return the workflows created by the `executor"
-  (fn [tx executor] (:type executor)))
+  (fn [_tx executor] (:type executor)))
 
 (defmulti load-executor!
   "Use `tx` to load the `workload` executor with `executor_type`."
-  (fn [tx workload] (:executor_type workload)))
+  (fn [_tx workload] (:executor_type workload)))
 
 ;; sink operations
 (defmulti create-sink!
   "Use `tx` and workload `id` to write the `sink-request` to persisted
   storage and return a [type item] pair for writing to the parent table."
-  (fn [tx id sink-request] (:name sink-request)))
+  (fn [_tx _id sink-request] (:name sink-request)))
 
 (defmulti update-sink!
   "Update the `sink` with the `executor`."
-  (fn [executor sink] (:type sink)))
+  (fn [_executor sink] (:type sink)))
 
 (defmulti load-sink!
   "Use `tx` to load the `workload` sink with `sink_type`."
-  (fn [tx workload] (:sink_type workload)))
+  (fn [_tx workload] (:sink_type workload)))
 
 ;; Generic helpers
 (defn ^:private utc-now

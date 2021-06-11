@@ -78,7 +78,7 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers uuid exception]
+(defn notify-watchers [watchers _uuid _exception]
   {:pre [(some? watchers)]}
   (log/info "notifying: " watchers))
 

@@ -124,9 +124,10 @@
    `(let [db#     ~db
           table#  ~table
           cols#   ~cols
-          values# ~values]
-      (log/info "jdbc/insert" (format-db db#) table# cols# values# opts)
-      "jdbc/insert" db# table# cols# values# opts)))
+          values# ~values
+          opts#   ~opts]
+      (log/info "jdbc/insert" (format-db db#) table# cols# values# opts#)
+      "jdbc/insert" db# table# cols# values# opts#)))
 
 (defmacro with-db-transaction
   "Logged alias for [[clojure.java.jdbc/with-db-transaction]]"
