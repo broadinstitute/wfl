@@ -57,7 +57,6 @@
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
                                  :opt-un [::options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
-                      :arrays   ::arrays-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
@@ -80,11 +79,8 @@
 (s/def ::aou-sample (s/keys :req-un [::analysis_version_number
                                      ::chip_well_barcode]))
 
-;; arrays
 (s/def ::entity-name string?)
 (s/def ::entity-type string?)
-(s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
-                                                 ::entity-type]))
 
 ;; copyfile
 (s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
