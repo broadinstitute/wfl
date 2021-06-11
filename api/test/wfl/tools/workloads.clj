@@ -5,7 +5,6 @@
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
-            [wfl.module.arrays              :as arrays]
             [wfl.module.copyfile            :as cp]
             [wfl.module.sg                  :as sg]
             [wfl.module.wgs                 :as wgs]
@@ -105,15 +104,6 @@
 (def arrays-sample-terra
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
-
-(defn arrays-workload-request
-  [identifier]
-  {:executor (env/getenv "WFL_FIRECLOUD_URL")
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/"
-                  identifier)
-   :pipeline arrays/pipeline
-   :project  "general-dev-billing-account/arrays"
-   :items   [{:inputs arrays-sample-terra}]})
 
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
