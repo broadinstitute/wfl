@@ -101,9 +101,8 @@
 (defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items common] :as request}]
-  (letfn [(nil-if-empty [x] (when (seq x) x))
-          (merge-to-json [shared specific]
-            (json/write-str (nil-if-empty (util/deep-merge shared specific))))
+  (letfn [(merge-to-json [shared specific]
+            (json/write-str (not-empty (util/deep-merge shared specific))))
           (serialize [workflow id]
             (-> workflow
                 (assoc :id id)
