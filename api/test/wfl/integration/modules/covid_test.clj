@@ -43,10 +43,11 @@
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
-(def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
+(def ^:private testing-namespace "wfl-dev")
+(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
 (def ^:private testing-method-name "sarscov2_illumina_full")
-(def ^:private testing-method-configuration (str "cdc-covid-surveillance/" testing-method-name))
-(def ^:private testing-method-configuration-version 2)
+(def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
+(def ^:private testing-method-configuration-version 1)
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
@@ -230,7 +231,7 @@
 
 (deftest test-create-covid-workload-with-wrong-method-configuration-1
   (is (thrown-with-msg?
-       UserException #"Method configuration version mismatch"
+       UserException #"Unexpected method configuration version"
        (workloads/create-workload!
         (workloads/covid-workload-request
          {:skipValidation true}
