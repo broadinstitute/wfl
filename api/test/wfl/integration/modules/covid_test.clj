@@ -364,9 +364,10 @@
 
 ;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
-  (let [enqueue #(-> % (dissoc :id) (assoc :staus "Queued"))]
+  (let [enqueue #(-> % (dissoc :id) (assoc :status "Queued"))]
     {:submissionId submission-id-mock
-     :workflows    (map enqueue [running-workflow-mock succeeded-workflow-mock])}))
+     :workflows    (map enqueue [running-workflow-mock
+                                 succeeded-workflow-mock])}))
 
 ;; when we get the submission later, the workflows may have a uuid assigned
 (defn ^:private mock-firecloud-get-submission [& _]
@@ -376,7 +377,8 @@
                 (assoc :workflowEntity {:entityType "test" :entityName entityName})
                 (dissoc :entityName)))]
     {:submissionId submission-id-mock
-     :workflows   (map add-workflow-entity [running-workflow-mock succeeded-workflow-mock])}))
+     :workflows    (map add-workflow-entity [running-workflow-mock
+                                             succeeded-workflow-mock])}))
 
 (defn ^:private mock-firecloud-create-failed-submission [& _]
   {:submissionId submission-id-mock
