@@ -157,7 +157,7 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator executor pipeline project output] :as request}]
+  [tx {:keys [creator executor pipeline project output] :as _request}]
   (gcs/parse-gs-url output)
   (let [slashified-output (util/slashify output)
         {:keys [release path]} workflow-wdl

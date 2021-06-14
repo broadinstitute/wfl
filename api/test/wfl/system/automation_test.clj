@@ -63,13 +63,12 @@
    :labels   ["hornet:test"]})
 
 (deftest test-automate-sarscov2-illumina-full
-  (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
-    (fixtures/with-fixtures
-      [(util/bracket clone-workspace delete-workspace)]
-      (fn [[workspace]]
-        (let [workload (endpoints/create-workload
-                        (covid-workload-request workspace))]
-          (endpoints/start-workload workload)
-          (workloads/when-done
-           (comp pprint/pprint endpoints/get-workflows)
-           workload))))))
+  (fixtures/with-fixtures
+    [(util/bracket clone-workspace delete-workspace)]
+    (fn [[workspace]]
+      (let [workload (endpoints/create-workload
+                      (covid-workload-request workspace))]
+        (endpoints/start-workload workload)
+        (workloads/when-done
+         (comp pprint/pprint endpoints/get-workflows)
+         workload)))))

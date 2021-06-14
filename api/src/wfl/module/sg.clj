@@ -169,7 +169,7 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [status uuid] :as workflow}]
+  [executor output {:keys [status uuid] :as _workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
           clio-url (-> executor cromwell->strings :clio-url)
