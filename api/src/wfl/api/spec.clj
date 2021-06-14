@@ -52,6 +52,17 @@
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
 
+(s/def :version/built     datetime-string?)
+(s/def :version/commit    (s/and string? (comp not str/blank?)))
+(s/def :version/committed datetime-string?)
+(s/def :version/user      (s/and string? (comp not str/blank?)))
+
+(s/def ::version-response (s/keys :req-un [:version/built
+                                           :version/commit
+                                           :version/committed
+                                           :version/user
+                                           ::version]))
+
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]

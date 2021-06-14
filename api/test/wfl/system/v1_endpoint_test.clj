@@ -47,12 +47,15 @@
                   (format "workflows should not contain %s" key)))]
       (run! go! [:id :items]))))
 
-(deftest test-oauth2-endpoint
+(deftest ^:parallel test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
     (let [response (endpoints/get-oauth2-id)]
       (is (= (count response) 2))
       (is (some #(= % :oauth2-client-id) response))
       (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
+
+(deftest ^:parallel test-version-endpoint
+  (is (every? (endpoints/version) [:built :commit :committed :user :version])))
 
 (defn ^:private test-create-workload
   [request]

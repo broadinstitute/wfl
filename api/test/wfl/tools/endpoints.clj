@@ -19,6 +19,11 @@
       util/response-body-json
       first))
 
+(defn version
+  "Return the WFL Server version."
+  []
+  (-> (wfl-url "version") http/get util/response-body-json))
+
 (defn get-workload-status
   "Query v1 api for the status of the workload with UUID"
   [uuid]
