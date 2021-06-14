@@ -485,8 +485,8 @@
 
 (defoverload load-source!  tdr-source-type load-tdr-source)
 
-(defoverload stage/queue-peek   tdr-source-type peek-tdr-source-queue)
-(defoverload stage/queue-pop!   tdr-source-type pop-tdr-source-queue)
+(defoverload stage/peek-queue   tdr-source-type peek-tdr-source-queue)
+(defoverload stage/pop-queue!   tdr-source-type pop-tdr-source-queue)
 (defoverload stage/queue-length tdr-source-type tdr-source-queue-length)
 (defoverload stage/done?        tdr-source-type tdr-source-done?)
 
@@ -572,9 +572,9 @@
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 
-(defoverload stage/queue-peek
+(defoverload stage/peek-queue
   tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
-(defoverload stage/queue-pop!   tdr-snapshot-list-type  pop-tdr-snapshot-list)
+(defoverload stage/pop-queue!   tdr-snapshot-list-type pop-tdr-snapshot-list)
 (defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
 (defoverload stage/done?        tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
@@ -785,11 +785,11 @@
   Update statuses for active or failed workflows in `details` table.
   Return `executor`."
   [source executor]
-  (when-let [snapshot (stage/queue-peek source)]
+  (when-let [snapshot (stage/peek-queue source)]
     (let [reference  (from-source executor snapshot)
           submission (create-submission! executor reference)]
       (allocate-submission executor reference submission)
-      (stage/queue-pop! source)))
+      (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
   executor)
@@ -881,8 +881,8 @@
 (defoverload load-executor!     terra-executor-type load-terra-executor)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
 
-(defoverload stage/queue-peek   terra-executor-type peek-terra-executor-queue)
-(defoverload stage/queue-pop!   terra-executor-type pop-terra-executor-queue)
+(defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
+(defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
 (defoverload stage/queue-length terra-executor-type terra-executor-queue-length)
 (defoverload stage/done?        terra-executor-type terra-executor-done?)
 
@@ -991,7 +991,7 @@
 
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
-  (when-let [{:keys [uuid outputs] :as workflow} (stage/queue-peek executor)]
+  (when-let [{:keys [uuid outputs] :as workflow} (stage/peek-queue executor)]
     (log/debug "coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           [_ name :as entity] [entityType (outputs (keyword identifier))]]
@@ -1000,7 +1000,7 @@
         (firecloud/delete-entities workspace [entity]))
       (log/debug "upserting workflow" uuid "outputs as" name)
       (rawls/batch-upsert workspace [(conj entity attributes)])
-      (stage/queue-pop! executor)
+      (stage/pop-queue! executor)
       (log/info "sunk workflow" uuid "to" workspace "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity name :workflow uuid :updated (utc-now)}

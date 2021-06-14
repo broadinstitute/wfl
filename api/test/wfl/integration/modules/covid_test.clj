@@ -75,9 +75,9 @@
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database
     (fixtures/method-overload-fixture
-     stage/queue-peek testing-queue-type testing-queue-peek)
+     stage/peek-queue testing-queue-type testing-queue-peek)
     (fixtures/method-overload-fixture
-     stage/queue-pop! testing-queue-type testing-queue-pop)
+     stage/pop-queue! testing-queue-type testing-queue-pop)
     (fixtures/method-overload-fixture
      stage/queue-length testing-queue-type testing-queue-length)
     (fixtures/method-overload-fixture
@@ -543,15 +543,15 @@
     (with-redefs-fn
       {#'firecloud/get-workflow         (constantly succeeded-workflow-mock)
        #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
-      #(let [workflow (stage/queue-peek executor)]
+      #(let [workflow (stage/peek-queue executor)]
          (is (succeeded? (:status workflow)))
          (is (= (:id succeeded-workflow-mock) (:uuid workflow)))
          (is (contains? workflow :updated))
          (is (= "value" (-> workflow :inputs :input)))
          (is (= "value" (-> workflow :outputs :output)))
          (is (not (-> workflow :outputs :noise)))
-         (stage/queue-pop! executor)
-         (is (nil? (stage/queue-peek executor)))
+         (stage/pop-queue! executor)
+         (is (nil? (stage/peek-queue executor)))
          (is (== 1 (stage/queue-length executor)))
          (is (not (stage/done? executor)))))))
 
