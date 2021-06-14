@@ -82,10 +82,6 @@
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest test-create-aou-workload
   (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
-(deftest ^:excluded test-create-arrays-workload
-  (testing "Excluded. See GH-1209"
-    #_(test-create-workload
-       (workloads/arrays-workload-request (UUID/randomUUID)))))
 
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
@@ -112,9 +108,6 @@
   (test-start-workload (create-wgs-workload)))
 (deftest ^:parallel test-start-aou-workload
   (test-start-workload (create-aou-workload)))
-(deftest ^:excluded ^:parallel test-start-arrays-workload
-  (testing "Excluded. See GH-1209"
-    #_(test-start-workload (create-arrays-workload))))
 (deftest ^:parallel test-start-xx-workload
   (test-start-workload (create-xx-workload)))
 (deftest ^:parallel test-start-sg-workload
@@ -177,10 +170,6 @@
                           (set/rename-keys {:executor :cromwell}))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
-(deftest ^:excluded ^:parallel test-exec-arrays-workload
-  (testing "Excluded. See GH-1209."
-    #_(test-exec-workload
-       (workloads/arrays-workload-request (UUID/randomUUID)))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
