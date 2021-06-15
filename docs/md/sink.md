@@ -97,9 +97,9 @@ A sink is one satisfying the `Sink` protocol as below:
     The `Sink` protocol is currently implemented by the `update-sink!`
     multimethod.
 
-In addition, to be created and loaded within a workload, a `Sink` implementation
-should satisfy the processing `stage` protocol, the `to-edn` multimethod and the
-following multimethods specific to sinks:
+To be used in a workload, a `Sink` implementation should satisfy the processing
+`stage` protocol and the `to-edn` multimethod in addition to the following
+multimethods specific to sinks:
 ```clojure
 (defmulti create-sink
   "Create a `Sink` instance using the database `transaction` and configuration
