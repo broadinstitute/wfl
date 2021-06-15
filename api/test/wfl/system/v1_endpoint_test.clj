@@ -244,8 +244,8 @@
           (-> workload-request
               endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
-      (is (s/valid? ::spec/covid-workload-request  workload-request))
-      (is (s/valid? ::spec/covid-workload-response workload))
+      (is (s/valid? :wfl.api.spec/covid-workload-request  workload-request))
+      (is (s/valid? :wfl.api.spec/covid-workload-response workload))
       (verify-internal-properties-removed workload)
       (is (not started))
       (is (= @workloads/email creator))
@@ -255,7 +255,7 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::spec/covid-workload-response response))))
+          (is (s/valid? :wfl.api.spec/covid-workload-response response))))
       (testing "/workload all"
         (let [{:keys [started] :as response}
               (-> (endpoints/get-workloads)
@@ -264,19 +264,19 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::spec/covid-workload-response response))))
+          (is (s/valid? :wfl.api.spec/covid-workload-response response))))
       (testing "/start covid workload"
         (let [{:keys [created started] :as response}
               (-> workload endpoints/start-workload
                   (instantify-timestamps :created :started))]
-          (is (s/valid? ::spec/covid-workload-response response))
+          (is (s/valid? :wfl.api.spec/covid-workload-response response))
           (is (inst? created))
           (is (inst? started))))
       (testing "/stop covid workload"
         (let [{:keys [created started stopped] :as response}
               (-> workload endpoints/stop-workload
                   (instantify-timestamps :created :started :stopped))]
-          (is (s/valid? ::spec/covid-workload-response response))
+          (is (s/valid? :wfl.api.spec/covid-workload-response response))
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))

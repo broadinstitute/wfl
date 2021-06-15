@@ -52,8 +52,8 @@
           "requests are not made unique!"))))
 
 (deftest test-tdr-source-spec
-  (let [valid?           (partial s/valid? ::spec/tdr-source)
+  (let [valid?           (partial s/valid? :wfl.api.spec/tdr-source)
         {:keys [source]} (workloads/covid-workload-request)]
-    (is (valid? source) (s/explain-str ::spec/tdr-source source))
+    (is (valid? source) (s/explain-str :wfl.api.spec/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))
