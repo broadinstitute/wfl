@@ -12,7 +12,7 @@ Python 3 is required. It is also good practice to use virtualenv:
 cd /path/to/wfl/docs
 virtualenv <<name>>
 source <<name>>/bin/activate
-python3 pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 mkdocs serve
 ```
 
