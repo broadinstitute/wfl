@@ -59,10 +59,9 @@ Note that when two sets of pipeline outputs share the same "identifier" value,
 the first set of outputs will be overwritten by the second in the workspace.
 
 #### `fromOutputs`
-`fromOutputs` configures how a new entity should be created from pipeline
-outputs by mapping the output names to attributes in the `entityType`. Note
-that all attribute names must exist in the entityType before the workload 
-creation.
+`fromOutputs` configures how to create new entities from pipeline outputs by 
+mapping the output names to attributes in the `entityType`. Note that all 
+attribute names must exist in the entityType before the workload  creation.
 
 `fromOutputs` allows a small about of flexibility in how to construct an entity
 and supports the following relations:
