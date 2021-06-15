@@ -115,22 +115,22 @@
   (let [request  (workloads/covid-workload-request
                   {:skipValidation true}
                   {:skipValidation true}
-                  {:skipValidation true})
-        _        (is (s/valid? ::spec/workload-request request)
-                     (s/explain-str ::spec/workload-request request))
-        workload (util/to-edn (workloads/create-workload! request))]
-    (is (not-any? workload [:id
-                            :items
-                            :source_type
-                            :source_items
-                            :executor_type
-                            :executor_items
-                            :sink_type
-                            :sink_items
-                            :type]))
-    (is (not-any? (:source workload) [:id :details :type :last_checked]))
-    (is (not-any? (:executor workload) [:id :details :type]))
-    (is (not-any? (:sink workload) [:id :details :type]))))
+                  {:skipValidation true})]
+    (is (s/valid? :wfl.api.spec/workload-request request)
+        (s/explain-str :wfl.api.spec/workload-request request))
+    (let [workload (util/to-edn (workloads/create-workload! request))]
+      (is (not-any? workload [:id
+                              :items
+                              :source_type
+                              :source_items
+                              :executor_type
+                              :executor_items
+                              :sink_type
+                              :sink_items
+                              :type]))
+      (is (not-any? (:source workload) [:id :details :type :last_checked]))
+      (is (not-any? (:executor workload) [:id :details :type]))
+      (is (not-any? (:sink workload) [:id :details :type])))))
 
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown-with-msg?
