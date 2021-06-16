@@ -50,7 +50,7 @@ Within the context of Workflow Launcher, a workload is a discrete body of work, 
 |----------|------|---------------------------------|
 | watchers | List | A list of people to notify |
 | labels   | List | A list of user-generated labels |
-| project  | String | The name of the project that this workload is for |
-| source   | Object | |
-| executor   | Object | |
-| source   | Object | |
+| project  | String | The name of the project in Terra |
+| source   | Object | The data source |
+| executor   | Object | The mechanism executing the analysis. (Most often this is Terra)|
+| sink   | Object | The location where data will be placed after analysis is complete|
