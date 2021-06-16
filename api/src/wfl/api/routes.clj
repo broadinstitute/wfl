@@ -32,16 +32,10 @@
             :responses {200 {:body {:status string?}}}
             :swagger {:tags ["Informational"]}}}]
    ["/version"
-    {:get  {:summary "Get the versions of server and supported pipelines"
-            :handler (handlers/success (let [versions (wfl/get-the-version)
-                                             pipeline-versions-keys (keep (fn [x] (when (and (string? x)
-                                                                                             (str/ends-with? x ".wdl")) x))
-                                                                          (keys versions))]
-                                         {:pipeline-versions (select-keys versions pipeline-versions-keys)
-                                          :version (apply dissoc versions pipeline-versions-keys)}))
-            :responses {200 {:body {:version map?
-                                    :pipeline-versions map?}}}
-            :swagger {:tags ["Informational"]}}}]
+    {:get {:summary   "Get the versions of server and supported pipelines"
+           :handler   (handlers/success (wfl/get-the-version))
+           :responses {200 {:body ::spec/version-response}}
+           :swagger   {:tags ["Informational"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
            :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))

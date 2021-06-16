@@ -7,7 +7,6 @@
             [wfl.api.workloads              :as workloads]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
-            [wfl.module.arrays]
             [wfl.module.copyfile]
             [wfl.module.covid]
             [wfl.module.sg]

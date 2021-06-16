@@ -11,6 +11,7 @@
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
+            [wfl.stage :as stage]
             [wfl.util :as util :refer [do-or-nil]]
             [wfl.wfl :as wfl])
   (:import [clojure.lang ExceptionInfo]
@@ -21,30 +22,6 @@
            [wfl.util UserException]))
 
 (def pipeline nil)
-
-;; interfaces
-;; queue operations
-(defmulti peek-queue!
-  "Peek the first object from the `queue`, if one exists."
-  (fn [queue] (:type queue)))
-
-(defmulti pop-queue!
-  "Pop the first object from the `queue`. Throws if none exists."
-  (fn [queue] (:type queue)))
-
-(defmulti queue-length!
-  "Return the number of objects in the queue."
-  (fn [queue] (:type queue)))
-
-;; validation operations
-(defmulti validate-or-throw
-  "Validate the `request` request."
-  (fn [request] (:name request)))
-
-(defmethod validate-or-throw :default
-  [{:keys [name] :as request}]
-  (throw (UserException. "Invalid request - unknown name"
-                         (util/make-map name request))))
 
 ;; source operations
 (defmulti create-source!
@@ -99,11 +76,6 @@
 (defmulti load-sink!
   "Use `tx` to load the workload sink with `sink_type`."
   (fn [tx workload] (:sink_type workload)))
-
-;; Processing "stage" operations
-(defmulti done?
-  "Test if the processing stage is complete and will not process any more data"
-  (fn [stage] (:type stage)))
 
 ;; Generic helpers
 (defn ^:private utc-now
@@ -171,7 +143,7 @@
 
 (defn ^:private create-covid-workload
   [tx {:keys [source executor sink] :as request}]
-  (let [[source executor sink] (mapv validate-or-throw [source executor sink])
+  (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
         id                     (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
@@ -209,7 +181,7 @@
                 (update-executor! executor)
                 (update-sink! sink))
             (patch-workload tx workload {:updated now})
-            (when (every? done? [source executor sink])
+            (when (every? stage/done? [source executor sink])
               (patch-workload tx workload {:finished now}))
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload (utc-now)) workload)))
@@ -496,7 +468,7 @@
     (throw (ex-info "No snapshots in queue" {:source source}))))
 
 (defn ^:private tdr-source-done? [{:keys [stopped] :as source}]
-  (and stopped (zero? (queue-length! source))))
+  (and stopped (zero? (stage/queue-length source))))
 
 (defn ^:private tdr-source-to-edn [source]
   (-> source
@@ -504,7 +476,7 @@
       (update :dataset :id)
       (assoc :name tdr-source-name)))
 
-(defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
+(defoverload stage/validate-or-throw tdr-source-name verify-data-repo-source!)
 
 (defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
@@ -512,11 +484,11 @@
 (defoverload stop-source!   tdr-source-type stop-tdr-source)
 
 (defoverload load-source!  tdr-source-type load-tdr-source)
-(defoverload peek-queue!   tdr-source-type peek-tdr-source-queue)
-(defoverload pop-queue!    tdr-source-type pop-tdr-source-queue)
-(defoverload queue-length! tdr-source-type tdr-source-queue-length)
 
-(defoverload done? tdr-source-type tdr-source-done?)
+(defoverload stage/peek-queue   tdr-source-type peek-tdr-source-queue)
+(defoverload stage/pop-queue!   tdr-source-type pop-tdr-source-queue)
+(defoverload stage/queue-length tdr-source-type tdr-source-queue-length)
+(defoverload stage/done?        tdr-source-type tdr-source-done?)
 
 (defoverload util/to-edn tdr-source-type tdr-source-to-edn)
 
@@ -584,7 +556,7 @@
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
 (defn ^:private tdr-snapshot-list-done? [source]
-  (zero? (queue-length! source)))
+  (zero? (stage/queue-length source)))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
   (let [read-snapshot-id (comp :id edn/read-string :item)]
@@ -592,7 +564,7 @@
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
-(defoverload validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
+(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
 
 (defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
@@ -600,11 +572,11 @@
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 
-(defoverload peek-queue!   tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
-(defoverload queue-length! tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
-(defoverload pop-queue!    tdr-snapshot-list-type  pop-tdr-snapshot-list)
-
-(defoverload done? tdr-snapshot-list-type tdr-snapshot-list-done?)
+(defoverload stage/peek-queue
+  tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload stage/pop-queue!   tdr-snapshot-list-type pop-tdr-snapshot-list)
+(defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
+(defoverload stage/done?        tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)
 
@@ -813,11 +785,11 @@
   Update statuses for active or failed workflows in `details` table.
   Return `executor`."
   [source executor]
-  (when-let [snapshot (peek-queue! source)]
+  (when-let [snapshot (stage/peek-queue source)]
     (let [reference  (from-source executor snapshot)
           submission (create-submission! executor reference)]
       (allocate-submission executor reference submission)
-      (pop-queue! source)))
+      (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
   executor)
@@ -895,25 +867,24 @@
       (map from-record (jdbc/query tx (format query details))))))
 
 (defn ^:private terra-executor-done? [executor]
-  (zero? (queue-length! executor)))
+  (zero? (stage/queue-length executor)))
 
 (defn ^:private terra-executor-to-edn [executor]
   (-> executor
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
       (assoc :name terra-executor-name)))
 
-(defoverload validate-or-throw terra-executor-name verify-terra-executor)
+(defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
 
 (defoverload create-executor!   terra-executor-name create-terra-executor)
 (defoverload update-executor!   terra-executor-type update-terra-executor)
 (defoverload load-executor!     terra-executor-type load-terra-executor)
 (defoverload executor-workflows terra-executor-type terra-executor-workflows)
 
-(defoverload peek-queue!   terra-executor-type peek-terra-executor-queue)
-(defoverload pop-queue!    terra-executor-type pop-terra-executor-queue)
-(defoverload queue-length! terra-executor-type terra-executor-queue-length)
-
-(defoverload done? terra-executor-type terra-executor-done?)
+(defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
+(defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
+(defoverload stage/queue-length terra-executor-type terra-executor-queue-length)
+(defoverload stage/done?        terra-executor-type terra-executor-done?)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)
 
@@ -1020,7 +991,7 @@
 
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
-  (when-let [{:keys [uuid outputs] :as workflow} (peek-queue! executor)]
+  (when-let [{:keys [uuid outputs] :as workflow} (stage/peek-queue executor)]
     (log/debug "coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           [_ name :as entity] [entityType (outputs (keyword identifier))]]
@@ -1029,7 +1000,7 @@
         (firecloud/delete-entities workspace [entity]))
       (log/debug "upserting workflow" uuid "outputs as" name)
       (rawls/batch-upsert workspace [(conj entity attributes)])
-      (pop-queue! executor)
+      (stage/pop-queue! executor)
       (log/info "sunk workflow" uuid "to" workspace "as" name)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (->> {:entity name :workflow uuid :updated (utc-now)}
@@ -1042,12 +1013,12 @@
       (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
       (assoc :name terra-workspace-sink-name)))
 
-(defoverload validate-or-throw terra-workspace-sink-name verify-terra-sink!)
+(defoverload stage/validate-or-throw terra-workspace-sink-name verify-terra-sink!)
 
 (defoverload create-sink!  terra-workspace-sink-name create-terra-workspace-sink)
 (defoverload load-sink!    terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink!  terra-workspace-sink-type update-terra-workspace-sink)
 
-(defoverload done? terra-workspace-sink-type terra-workspace-sink-done?)
+(defoverload stage/done? terra-workspace-sink-type terra-workspace-sink-done?)
 
 (defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)

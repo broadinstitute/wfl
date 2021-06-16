@@ -25,7 +25,8 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime datetime-string?))
 (s/def ::created ::timestamp)
-(s/def ::creator email-address?)
+(s/def :batch/creator string?)
+(s/def :covid/creator email-address?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -51,12 +52,22 @@
 (s/def ::workload-query (s/and (s/keys :opt-un [::uuid ::project])
                                #(not (and (:uuid %) (:project %)))))
 
+(s/def :version/built     datetime-string?)
+(s/def :version/commit    (s/and string? (comp not str/blank?)))
+(s/def :version/committed datetime-string?)
+(s/def :version/user      (s/and string? (comp not str/blank?)))
+
+(s/def ::version-response (s/keys :req-un [:version/built
+                                           :version/commit
+                                           :version/committed
+                                           :version/user
+                                           ::version]))
+
 ;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
                                  :opt-un [::options]))
 (s/def ::inputs (s/or :aou      ::aou-workflow-inputs
-                      :arrays   ::arrays-workflow-inputs
                       :copyfile ::copyfile-workflow-inputs
                       :wgs      ::wgs-workflow-inputs
                       :xx       ::xx-workflow-inputs
@@ -79,11 +90,8 @@
 (s/def ::aou-sample (s/keys :req-un [::analysis_version_number
                                      ::chip_well_barcode]))
 
-;; arrays
 (s/def ::entity-name string?)
 (s/def ::entity-type string?)
-(s/def ::arrays-workflow-inputs (s/keys :req-un [::entity-name
-                                                 ::entity-type]))
 
 ;; copyfile
 (s/def ::copyfile-workflow-inputs (s/keys :req-un [::dst ::src]))
@@ -174,7 +182,7 @@
                                                   ::wdl]
                                          :req-un [::commit
                                                   ::created
-                                                  ::creator
+                                                  :batch/creator
                                                   :batch/executor
                                                   ::output
                                                   ::pipeline
@@ -191,7 +199,7 @@
                                                  ::watchers]))
 
 (s/def ::covid-workload-response (s/keys :req-un [::created
-                                                  ::creator
+                                                  :covid/creator
                                                   :covid/executor
                                                   ::labels
                                                   ::sink

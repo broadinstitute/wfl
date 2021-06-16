@@ -19,7 +19,6 @@
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
 (def create-aou-workload    (make-create-workload workloads/aou-workload-request))
-(def create-arrays-workload (make-create-workload workloads/arrays-workload-request))
 (def create-sg-workload     (make-create-workload workloads/sg-workload-request))
 (def create-wgs-workload    (make-create-workload workloads/wgs-workload-request))
 (def create-xx-workload     (make-create-workload workloads/xx-workload-request))
@@ -48,12 +47,15 @@
                   (format "workflows should not contain %s" key)))]
       (run! go! [:id :items]))))
 
-(deftest test-oauth2-endpoint
+(deftest ^:parallel test-oauth2-endpoint
   (testing "The `oauth2_id` endpoint indeed provides an ID"
     (let [response (endpoints/get-oauth2-id)]
       (is (= (count response) 2))
       (is (some #(= % :oauth2-client-id) response))
       (is (some #(str/includes? % "apps.googleusercontent.com") response)))))
+
+(deftest ^:parallel test-version-endpoint
+  (is (every? (endpoints/version) [:built :commit :committed :user :version])))
 
 (defn ^:private test-create-workload
   [request]
@@ -80,10 +82,6 @@
   (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest test-create-aou-workload
   (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
-(deftest ^:excluded test-create-arrays-workload
-  (testing "Excluded. See GH-1209"
-    #_(test-create-workload
-       (workloads/arrays-workload-request (UUID/randomUUID)))))
 
 (deftest test-create-xx-workload
   (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
@@ -110,9 +108,6 @@
   (test-start-workload (create-wgs-workload)))
 (deftest ^:parallel test-start-aou-workload
   (test-start-workload (create-aou-workload)))
-(deftest ^:excluded ^:parallel test-start-arrays-workload
-  (testing "Excluded. See GH-1209"
-    #_(test-start-workload (create-arrays-workload))))
 (deftest ^:parallel test-start-xx-workload
   (test-start-workload (create-xx-workload)))
 (deftest ^:parallel test-start-sg-workload
@@ -175,10 +170,6 @@
                           (set/rename-keys {:executor :cromwell}))))
 (deftest ^:parallel test-exec-aou-workload
   (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
-(deftest ^:excluded ^:parallel test-exec-arrays-workload
-  (testing "Excluded. See GH-1209."
-    #_(test-exec-workload
-       (workloads/arrays-workload-request (UUID/randomUUID)))))
 (deftest ^:parallel test-exec-xx-workload
   (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-exec-sg-workload
