@@ -91,7 +91,7 @@ A sink is one satisfying the `Sink` protocol as below:
      running external calls, favouring internal queues to manage such tasks
      asynchronously between invocations. Note that The `Sink` and `Queue` are
      parameterised types and the `Queue`'s parameterisation must be convertible
-     to the `Sink`s. "))
+     to the `Sink`s."))
 ```
 
 !!! note
