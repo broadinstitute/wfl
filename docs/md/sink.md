@@ -15,7 +15,7 @@ looks like:
 {
   "name": "Terra Workspace",
   "workspace": "{workspace-namespace}/{workspace-name}",
-  "entityType": "{name}",
+  "entityType": "{entity-type-name}",
   "identifier": "{output-name}",
   "fromOutputs": {
     "attribute0": "output0",
@@ -55,15 +55,16 @@ Example - Let's say the pipeline you're running has an output called
 By setting `"identifier": "sample_name"` in the sink configuration, entities
 will be created using the "sample_name" as the entity name.
 
-Note that when two sets of pipeline outputs share the same "identifier" value,
-the first set of outputs will be overwritten by the second in the workspace.
+!!! note
+    When two sets of pipeline outputs share the same "identifier" value,
+    the first set of outputs will be overwritten by the second in the workspace.
 
 #### `fromOutputs`
 `fromOutputs` configures how to create new entities from pipeline outputs by 
 mapping the output names to attributes in the `entityType`. Note that all 
 attribute names must exist in the entityType before the workload  creation.
 
-`fromOutputs` allows a small about of flexibility in how to construct an entity
+`fromOutputs` allows a small amount of flexibility in how to construct an entity
 and supports the following relations:
 
 - `"attribute": "output"`
@@ -86,16 +87,17 @@ A sink is one satisfying the `Sink` protocol as below:
     ]
     "Update the internal state of the `sink`, consuming objects from the
      upstream `Queue`, performing any external effects as required.
-     Notes:
-     - The `Sink` and `Queue` are parameterised types and the `Queue`'s 
-       parameterisation must be convertible to the `Sink`s.
-     - Where possible, `Sink` implementations should minimise blocking and use
-       an internal queue to schedule and manage long-running computations."))
+     Implementations should avoid maintaining in-memory state and making long-
+     running external calls, favouring internal queues to manage such tasks
+     asynchronously between invocations. Note that The `Sink` and `Queue` are
+     parameterised types and the `Queue`'s parameterisation must be convertible
+     to the `Sink`s. "))
 ```
 
-!!! info
-    The `Sink` protocol is currently implemented by the `update-sink!`
-    multimethod.
+!!! note
+    The `Sink` protocol is implemented by the `update-sink!` multimethod. It's 
+    documented thus as a means of differentiating the in-memory data model from
+    the metadata a user sees.
 
 To be used in a workload, a `Sink` implementation should satisfy the processing
 `stage` protocol and the `to-edn` multimethod in addition to the following
