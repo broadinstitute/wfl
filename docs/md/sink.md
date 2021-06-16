@@ -99,9 +99,8 @@ A sink is one satisfying the `Sink` protocol as below:
     documented thus as a means of differentiating the in-memory data model from
     the metadata a user sees.
 
-To be used in a workload, a `Sink` implementation should satisfy the processing
-`stage` protocol and the `to-edn` multimethod in addition to the following
-multimethods specific to sinks:
+To be used in a workload, a `Sink` implementation should satisfy `Stage`, the 
+`to-edn` multimethod and the following multimethods specific to `Sink`s:
 ```clojure
 (defmulti create-sink
   "Create a `Sink` instance using the database `transaction` and configuration
