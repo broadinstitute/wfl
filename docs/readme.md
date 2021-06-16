@@ -16,6 +16,12 @@ python3 -m pip install -r requirements.txt
 mkdocs serve
 ```
 
+Alternatively, you can use make:
+```
+make docs
+. derived/.venv/docs/bin/activate && (  cd derived/docs; python3 -m mkdocs serve  )
+```
+
 Logging output will indicate that changes are being detected,
 and point you to where documentation is served (e.g. http://127.0.0.1:8000).
 ```

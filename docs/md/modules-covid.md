@@ -255,7 +255,6 @@ To give more information, here are some example inputs to the above endpoints:
                     "hornet:test"
                 ],
                 "project": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
-                "pipeline": null,
                 "source": {
                     "name": "Terra DataRepo",
                     "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
@@ -277,7 +276,6 @@ To give more information, here are some example inputs to the above endpoints:
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "entityType": "flowcell",
                     "identifier": "run_id",
-                    "skipValidation": "true",
                     "fromOutputs": {
                     "genbank_source_table": "genbank_source_table",
                     "demux_metrics": "demux_metrics",
