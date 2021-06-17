@@ -50,7 +50,7 @@ Within the context of Workflow Launcher, a workload is a discrete body of work, 
 |----------|------|---------------------------------|
 | watchers | List | A list of emails to notify |
 | labels   | List | A list of user-defined labels. They must be a string of the form `"name":"value”`, where `name` must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and `value` is any non-blank string |
-| project  | String | The name of the project in Terra |
+| project  | String |  The project is a non-null string required in the workload table. It's needed to support querying workloads by project |
 | source   | Object | The data source |
 | executor   | Object | The mechanism executing the analysis. (Most often this is Terra)|
 | sink   | Object | The location where data will be placed after analysis is complete|
