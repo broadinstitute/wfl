@@ -18,10 +18,10 @@
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
-(def create-aou-workload    (make-create-workload workloads/aou-workload-request))
-(def create-sg-workload     (make-create-workload workloads/sg-workload-request))
-(def create-wgs-workload    (make-create-workload workloads/wgs-workload-request))
-(def create-xx-workload     (make-create-workload workloads/xx-workload-request))
+(def create-aou-workload (make-create-workload workloads/aou-workload-request))
+(def create-sg-workload  (make-create-workload workloads/sg-workload-request))
+(def create-wgs-workload (make-create-workload workloads/wgs-workload-request))
+(def create-xx-workload  (make-create-workload workloads/xx-workload-request))
 
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))

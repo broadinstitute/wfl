@@ -65,8 +65,10 @@
   (let [type    (make-output-type "compound.edn")
         outputs {:outmap {"foo" "lolcats.txt" "bar" "in.gif"}}]
     (testing "foldl"
-      (is (= #{"foo" "bar"} (filtering-type #(= % "String") type outputs)))
-      (is (= #{"lolcats.txt" "in.gif"} (filtering-type #(= % "File") type outputs))))
+      (is (= #{"foo" "bar"}
+             (filtering-type #(= % "String") type outputs)))
+      (is (= #{"lolcats.txt" "in.gif"}
+             (filtering-type #(= % "File") type outputs))))
     (testing "traverse"
       (is (= {:outmap {["foo"] ["lolcats.txt"] ["bar"] ["in.gif"]}}
              (vectorize type outputs))))))
