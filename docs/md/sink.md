@@ -86,7 +86,7 @@ A sink is one satisfying the `Sink` protocol as below:
      ^Sink  sink     ;; This sink instance
     ]
     "Update the internal state of the `sink`, consuming objects from the
-     upstream `Queue`, performing any external effects as required.
+     Queue `upstream`, performing any external effects as required.
      Implementations should avoid maintaining in-memory state and making long-
      running external calls, favouring internal queues to manage such tasks
      asynchronously between invocations. Note that The `Sink` and `Queue` are
