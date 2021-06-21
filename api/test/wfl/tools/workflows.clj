@@ -42,8 +42,8 @@
    type object))
 
 (defn foldl
-  "Use the workflow `type` to left-fold the `object`, calling `f` on the values
-   with primitive types with the current state."
+  "Use ternary function `f` to reduce `object` tree of `type` starting
+  from `init` while preserving the types of intermediate reductions."
   [f init type object]
   ((fn go [state type value]
      (case (:typeName type)
@@ -60,8 +60,9 @@
        (if value (go state (:optionalType type) value) state)
        "Pair"
        (let [{:keys [leftType rightType]} (:pairType type)]
-         (-> (go state leftType  (first value))
-             (go       rightType (second value))))
+         (-> state
+             (go leftType  (first value))
+             (go rightType (second value))))
        (f state (:typeName type) value)))
    init type object))
 
