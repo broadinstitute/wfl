@@ -145,9 +145,9 @@
 
 (defmethod retry
   :default
-  [_ {:keys [pipeline] :as workload}]
+  [{:keys [pipeline] :as workload} _]
   (throw
-   (ex-info "Failed to update workload - no such pipeline"
+   (ex-info "Failed to retry workflows - no such pipeline"
             {:workload workload
              :pipeline pipeline
              :type     ::invalid-pipeline})))
