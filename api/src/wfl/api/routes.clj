@@ -37,8 +37,10 @@
            :responses {200 {:body ::spec/version-response}}
            :swagger   {:tags ["Informational"]}}}]
    ["/oauth2id"
-    {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
-           :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
+    {:get {:summary   "Get the OAuth2 Client ID deployed for this server"
+           :handler   (fn [_] (handlers/succeed
+                               {:oauth2-client-id
+                                (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
@@ -125,9 +127,9 @@
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message exception request]
+  [status message exception {:keys [uri] :as request}]
   (let [response (exception-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :" (:status response) (:uri request))
+    (log/errorf "Server %s error at occurred at %s :" (:status response) uri)
     (logr/error exception (:body response))
     response))
 
@@ -172,5 +174,8 @@
                          multipart/multipart-middleware]}})
    ;; get more correct http error responses on routes
    (ring/create-default-handler
-    {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
-     :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))
+    {:not-found          (fn [m] {:status 404
+                                  :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed (fn [m] {:status 405
+                                  :body (format "Method %s not allowed"
+                                                (name (:request-method m)))})})))
