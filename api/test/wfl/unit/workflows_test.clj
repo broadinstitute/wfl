@@ -52,14 +52,15 @@
       (is (= (util/map-vals vector outputs) (vectorize type outputs))))))
 
 (deftest test-array-types
-  (let [type    (make-output-type "compound.edn")
-        outputs {:outarray  ["clojure" "is" "fun"]}]
-    (testing "foldl"
-      (is (= (:outarray outputs)
-             (workflows/foldl #(conj %1 %3) [] type outputs))))
-    (testing "traverse"
-      (is (= (util/map-vals #(map vector %) outputs)
-             (vectorize type outputs))))))
+  (letfn [(typeless [p1 _p2 p3] (conj p1 p3))]
+    (let [type    (make-output-type "compound.edn")
+          outputs {:outarray  ["clojure" "is" "fun"]}]
+      (testing "foldl"
+        (is (= (:outarray outputs)
+               (workflows/foldl typeless [] type outputs))))
+      (testing "traverse"
+        (is (= (util/map-vals #(map vector %) outputs)
+               (vectorize type outputs)))))))
 
 (deftest test-map-types
   (let [type    (make-output-type "compound.edn")
