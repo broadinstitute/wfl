@@ -1,5 +1,5 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.test               :refer :all]
+  (:require [clojure.test               :refer [deftest is testing]]
             [clojure.instant            :as instant]
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]

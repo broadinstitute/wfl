@@ -12,7 +12,7 @@
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]
             [wfl.stage :as stage]
-            [wfl.util :as util :refer [do-or-nil]]
+            [wfl.util :as util]
             [wfl.wfl :as wfl])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
@@ -446,7 +446,7 @@
 (defn ^:private peek-tdr-source-queue
   "Get first unconsumed snapshot from `source` queue."
   [source]
-  (if-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
+  (when-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
     (datarepo/snapshot snapshot_id)))
 
 (defn ^:private tdr-source-queue-length

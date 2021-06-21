@@ -78,7 +78,7 @@
 (defn extension
   "Return the (last) file extension from `filename`, if one exists."
   [filename]
-  (if-let [idx (str/last-index-of filename ".")]
+  (when-let [idx (str/last-index-of filename ".")]
     (subs filename (inc idx) (count filename))))
 
 (defn basename

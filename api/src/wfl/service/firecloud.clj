@@ -265,17 +265,3 @@
                                                        :workflowSource)
                                                      workflow})})
         util/response-body-json)))
-
-(defn ^:private get-groups
-  "Return the groups caller is in."
-  []
-  (-> (str/join "/" [(firecloud-url) "api" "groups"])
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
-
-(defn ^:private get-group-members
-  "Return the members of group."
-  [group]
-  (-> (str/join "/" [(firecloud-url) "api" "groups" group])
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))

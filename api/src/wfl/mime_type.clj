@@ -1,6 +1,5 @@
 (ns wfl.mime-type
-  (:require [clojure.string :as str]
-            [ring.util.mime-type :as mime-type]
+  (:require [ring.util.mime-type :as mime-type]
             [wfl.util :as util]))
 
 (def ^:private mime-types
@@ -20,7 +19,7 @@
   "Look up the mime-type of the filename by file extension."
   [filename]
   (loop [filename (util/basename filename)]
-    (if-let [ext (util/extension filename)]
+    (when-let [ext (util/extension filename)]
       (or (mime-types ext) (recur (util/remove-extension filename))))))
 
 (defn ext-mime-type

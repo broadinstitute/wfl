@@ -1,6 +1,6 @@
 (ns wfl.unit.workloads-test
-  (:require [clojure.test :refer :all]
-            [wfl.api.workloads :as workloads]
+  (:require [clojure.test       :refer [deftest is testing use-fixtures]]
+            [wfl.api.workloads  :as workloads]
             [wfl.tools.fixtures :refer [method-overload-fixture]])
   (:import (clojure.lang ExceptionInfo)))
 

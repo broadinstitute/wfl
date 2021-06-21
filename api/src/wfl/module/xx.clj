@@ -2,8 +2,7 @@
   "Reprocess eXternal eXomes."
   (:require [clojure.data.json          :as json]
             [clojure.string             :as str]
-            [wfl.api.workloads          :refer [defoverload]]
-            [wfl.api.workloads          :as workloads]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
             [wfl.module.batch           :as batch]
             [wfl.references             :as references]

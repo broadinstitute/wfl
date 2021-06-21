@@ -1,5 +1,5 @@
 (ns wfl.unit.mime-type-test
-  (:require [clojure.test        :refer [deftest is testing]]
+  (:require [clojure.test        :refer [deftest is]]
             [wfl.mime-type       :as mime-type]
             [wfl.tools.resources :as resources]
             [wfl.tools.workflows :as workflows]))

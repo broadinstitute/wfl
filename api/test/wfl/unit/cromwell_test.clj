@@ -1,5 +1,5 @@
 (ns wfl.unit.cromwell-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [wfl.service.cromwell :as cromwell]))
 
 (def a-wdl {:release "foo"

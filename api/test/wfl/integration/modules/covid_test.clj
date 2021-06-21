@@ -1,13 +1,13 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test                   :refer :all]
+  (:require [clojure.test                   :refer [deftest is testing
+                                                    use-fixtures]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [reitit.coercion.spec]
             [reitit.ring                    :as ring]
             [reitit.ring.coercion           :as coercion]
-            [wfl.api.spec                   :as spec]
             [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
@@ -379,15 +379,6 @@
     {:submissionId submission-id-mock
      :workflows    (map add-workflow-entity [running-workflow-mock
                                              succeeded-workflow-mock])}))
-
-(defn ^:private mock-firecloud-create-failed-submission [& _]
-  {:submissionId submission-id-mock
-   :workflows    [{:status     "Failed"
-                   :uuid       (str (UUID/randomUUID))
-                   :entityName "failed"}
-                  {:status     "Aborted"
-                   :uuid       (str (UUID/randomUUID))
-                   :entityName "aborted"}]})
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]

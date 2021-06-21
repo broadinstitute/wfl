@@ -1,8 +1,6 @@
 (ns wfl.server
   "An HTTP API server."
-  (:require [clojure.pprint                 :refer [pprint]]
-            [clojure.stacktrace             :refer [print-throwable]]
-            [clojure.string                 :as str]
+  (:require [clojure.string                 :as str]
             [clojure.tools.logging          :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]

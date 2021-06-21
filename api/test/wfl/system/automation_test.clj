@@ -1,7 +1,6 @@
 (ns wfl.system.automation-test
   (:require [clojure.pprint        :as pprint]
-            [clojure.test          :refer [deftest is]]
-            [wfl.environment       :as env]
+            [clojure.test          :refer [deftest]]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
             [wfl.tools.workflows   :as workflows]
@@ -10,25 +9,15 @@
             [wfl.tools.endpoints   :as endpoints]
             [wfl.tools.workloads   :as workloads]))
 
-(defn ^:private replace-urls-with-file-ids
-  [file->fileid type value]
-  (-> (fn [type value]
-        (case type
-          ("Boolean" "Float" "Int" "Number" "String") value
-          "File" (file->fileid value)
-          (throw (ex-info "Unknown type" {:type type :value value}))))
-      (workflows/traverse type value)))
-
-(def workspace-to-clone "wfl-dev/CDC_Viral_Sequencing")
-(def firecloud-group "workflow-launcher-dev")
-(def snapshot-readers ["cdc-covid-surveillance@firecloud.org"])
-(def source-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
-(def source-table "flowcells")
-(def snapshot-column "run_date")
+(def firecloud-group        "workflow-launcher-dev")
+(def method-configuration   "cdc-covid-surveillance/sarscov2_illumina_full")
+(def snapshot-column        "run_date")
+(def snapshot-readers       ["cdc-covid-surveillance@firecloud.org"])
+(def source-dataset         "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def source-dataset-profile "395f5921-d2d9-480d-b302-f856d787c9d9")
-(def method-configuration "cdc-covid-surveillance/sarscov2_illumina_full")
-
-(def workspace-table "flowcell")
+(def source-table           "flowcells")
+(def workspace-table        "flowcell")
+(def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
 
 (defn clone-workspace []
   (println "Cloning workspace" workspace-to-clone)

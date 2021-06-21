@@ -55,7 +55,7 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
 	-$(CLOJURE) -M:eastwood
 	-$(CLOJURE) -M:kibit
-	-$(CLOJURE) -M:kondo --lint .
+	-$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
 	@$(TOUCH) $@
 
 $(FORMAT): $(SCM_SRC) $(SCM_RESOURCES)

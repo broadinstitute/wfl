@@ -1,8 +1,8 @@
 (ns wfl.unit.workflows-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test        :refer [deftest is testing]]
             [wfl.tools.workflows :as workflows]
             [wfl.tools.resources :as resources]
-            [wfl.util :as util])
+            [wfl.util            :as util])
   (:import (clojure.lang ExceptionInfo)))
 
 (defn ^:private filtering-type [test? type object]

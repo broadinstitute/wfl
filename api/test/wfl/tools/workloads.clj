@@ -1,6 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
+            [wfl.api.workloads]
             [wfl.auth                       :as auth]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
@@ -14,7 +15,7 @@
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.tools.endpoints            :as endpoints]
-            [wfl.util                       :as util :refer [shell!]])
+            [wfl.util                       :as util])
   (:import [java.time OffsetDateTime]
            [java.util.concurrent TimeoutException]
            [java.util UUID]))

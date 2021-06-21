@@ -2,7 +2,6 @@
   "Common utilities and clients to talk to Cromwell."
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [clojure.walk :as walk]
             [clj-http.client :as http]
             [wfl.debug :as debug]
