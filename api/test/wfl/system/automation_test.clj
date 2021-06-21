@@ -3,7 +3,6 @@
             [clojure.test          :refer [deftest]]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
-            [wfl.tools.workflows   :as workflows]
             [wfl.service.firecloud :as firecloud]
             [wfl.util              :as util]
             [wfl.tools.endpoints   :as endpoints]
