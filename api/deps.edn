@@ -57,7 +57,7 @@
    :main-opts  ["-m" "cljfmt.main" "fix"]}
 
   :kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.04.23"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.06.01"}}
    :main-opts ["-m" "clj-kondo.main"]}
 
   :kibit
@@ -65,7 +65,12 @@
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
 
   :eastwood
-  {:main-opts ["-m" "eastwood.lint"
+  {:extra-deps {jonase/eastwood {:mvn/version "0.4.3"}
+                org.liquibase/liquibase-core
+                {:mvn/version "4.3.5"
+                 :exclusions  [ch.qos.logback/logback-classic]}}
+   :extra-paths ["test"]
+   :main-opts ["-m" "eastwood.lint"
                {:add-linters #{:unused-fn-args}
                 :config-files #{"resources/eastwood.clj"}
                 :source-paths ["src" "test"]
@@ -81,12 +86,7 @@
                                                    {:line 53 :column 5}
                                                    {:line 55 :column 5}
                                                    {:line 57 :column 5}
-                                                   {:line 59 :column 5}]}}}]
-   :extra-paths ["test"]
-   :extra-deps {jonase/eastwood {:mvn/version "0.4.3"}
-                org.liquibase/liquibase-core
-                {:mvn/version "4.3.5"
-                 :exclusions  [ch.qos.logback/logback-classic]}}}
+                                                   {:line 59 :column 5}]}}}]}
   
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
