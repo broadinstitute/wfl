@@ -71,9 +71,9 @@
                  :exclusions  [ch.qos.logback/logback-classic]}}
    :extra-paths ["test"]
    :main-opts ["-m" "eastwood.lint"
-               {:add-linters #{#_:keyword-typos :unused-fn-args}
-                :config-files #{"resources/eastwood.clj"}
-                :source-paths ["src" "test"]
+               {:add-linters    #{#_:keyword-typos :unused-fn-args}
+                :config-files   #{"resources/eastwood.clj"}
+                :source-paths   ["src" "test"]
                 :ignored-faults {:keyword-typos {wfl.api.routes [true]}
                                  :suspicious-expression
                                  {wfl.environment [{:line 33 :column 5}
