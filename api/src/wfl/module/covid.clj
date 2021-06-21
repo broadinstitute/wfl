@@ -7,6 +7,7 @@
             [clojure.tools.logging :as log]
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.jdbc :as jdbc]
+            [wfl.module.batch :as batch]
             [wfl.service.datarepo :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
@@ -212,6 +213,7 @@
 (defoverload workloads/start-workload!    pipeline start-covid-workload)
 (defoverload workloads/update-workload!   pipeline update-covid-workload)
 (defoverload workloads/stop-workload!     pipeline stop-covid-workload)
+(defoverload workloads/retry              pipeline batch/retry-unsupported)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
 (defmethod   workloads/workflows          pipeline
   [tx {:keys [executor] :as _workload}]

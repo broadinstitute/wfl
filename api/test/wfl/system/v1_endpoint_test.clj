@@ -184,6 +184,22 @@
             (gcs/upload-file src))
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
+(defn ^:private test-retry-workload
+  [request]
+  (let [workload (endpoints/exec-workload request)]
+    (is (thrown-with-msg?
+         ExceptionInfo #"501"
+         (endpoints/retry-workflows workload "Failed")))))
+
+(deftest ^:parallel test-retry-wgs-workload
+  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-retry-aou-workload
+  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-retry-xx-workload
+  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID))))
+(deftest ^:parallel test-retry-sg-workload
+  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID))))
+
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete
                           @workloads/cromwell-url)

@@ -72,6 +72,19 @@
            (mapv util/to-edn)
            succeed))))
 
+(defn post-retry
+  "Retry the workflows identified in `request`."
+  [request]
+  (let [uuid   (get-in request [:path-params :uuid])
+        status (get-in request [:body-params :status])]
+    (log/infof "POST /api/v1/workload/%s/retry with status: %s" uuid status)
+    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (let [w (workloads/load-workload-for-uuid tx uuid)]
+             [w (workloads/workflows tx w status)]))
+         (apply workloads/retry)
+         util/to-edn
+         succeed)))
+
 (defn post-start
   "Start the workload with UUID in REQUEST."
   [request]

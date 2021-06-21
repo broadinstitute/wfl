@@ -370,10 +370,10 @@
   (run! (partial workflow-postcheck output) (workloads/workflows workload)))
 
 (defn ^:private mock-batch-update-workflow-statuses!
-  [tx {:keys [items] :as workload}]
+  [status tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
-                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
     (run! update! (wfl.api.workloads/workflows tx workload))))
 
@@ -382,10 +382,16 @@
         increment-count (fn [& _] (swap! count inc))]
     (with-redefs-fn
       {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
-       #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
+       #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")
        #'sg/register-workload-in-clio          increment-count}
       #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
     (is (== 1 @count) "Clio was updated more than once")))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))
+
+(deftest test-retry-workflows-supported
+  (with-redefs-fn
+    {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
+    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))

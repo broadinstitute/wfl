@@ -11,27 +11,34 @@
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
   "(transaction workload-request) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [transaction request] (:pipeline request)))
 
 (defmulti start-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [transaction workload] (:pipeline workload)))
 
 (defmulti stop-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [transaction workload] (:pipeline workload)))
 
 (defmulti execute-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [transaction workload] (:pipeline workload)))
 
 (defmulti update-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [transaction workload] (:pipeline workload)))
 
 (defmulti workflows
-  "Use `tx` to return the workflows managed by the `workload`."
-  (fn [tx workload] (:pipeline workload)))
+  "Use db `transaction` to return the workflows managed by the `workload`,
+   optionally filtering by status."
+  (fn ([transaction workload]        (:pipeline workload))
+    ([transaction workload status] (:pipeline workload))))
+
+(defmulti retry
+  "Retry/resubmit the `workflows` managed by the `workload` and return the
+   workload that manages the new workflows."
+  (fn [workload workflows] (:pipeline workload)))
 
 (defmulti to-edn
   "Return an EDN representation of the `workload` that will be shown to users."
@@ -78,16 +85,15 @@
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
   (log/debugf "Loading workloads with project=\"%s\"" project)
-  (let [do-load   (partial load-workload-impl tx)]
-    (mapv do-load
-          (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+  (let [query-str "SELECT * FROM workload WHERE project = ? ORDER BY id ASC"]
+    (mapv (partial load-workload-impl tx) (jdbc/query tx [query-str project]))))
 
 (defn load-workloads
   "Use transaction `tx` to load all known `workloads`."
   [tx]
   (log/debug "Loading all workloads")
   (let [do-load (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))
+    (mapv do-load (jdbc/query tx ["SELECT * FROM workload ORDER BY id ASC"]))))
 
 ;; helper utility for point-free multi-method implementation registration.
 (defmacro defoverload
@@ -129,6 +135,15 @@
   (start-workload! tx (create-workload! tx workload-request)))
 
 (defmethod update-workload!
+  :default
+  [_ {:keys [pipeline] :as workload}]
+  (throw
+   (ex-info "Failed to update workload - no such pipeline"
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
+
+(defmethod retry
   :default
   [_ {:keys [pipeline] :as workload}]
   (throw
