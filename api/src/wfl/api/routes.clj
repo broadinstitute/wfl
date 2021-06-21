@@ -34,7 +34,7 @@
    ["/version"
     {:get {:summary   "Get the versions of server and supported pipelines"
            :handler   (handlers/success (wfl/get-the-version))
-           :responses {200 {:body :wfl.api.spec/version-response}}
+           :responses {200 {:body ::spec/version-response}}
            :swagger   {:tags ["Informational"]}}}]
    ["/oauth2id"
     {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
@@ -43,38 +43,38 @@
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body :wfl.api.spec/append-to-aou-request}
-            :responses  {200 {:body :wfl.api.spec/append-to-aou-response}}
+            :parameters {:body ::spec/append-to-aou-request}
+            :responses  {200 {:body ::spec/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get {:summary    "Get the workloads."
-           :parameters {:query :wfl.api.spec/workload-query}
-           :responses  {200 {:body :wfl.api.spec/workload-responses}}
+           :parameters {:query ::spec/workload-query}
+           :responses  {200 {:body ::spec/workload-responses}}
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path {:uuid :wfl.api.spec/uuid}}
-           :responses  {200 {:body :wfl.api.spec/workflows}}
+           :parameters {:path {:uuid ::spec/uuid}}
+           :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
-            :parameters {:body :wfl.api.spec/workload-request}
-            :responses  {200 {:body :wfl.api.spec/workload-response}}
+            :parameters {:body ::spec/workload-request}
+            :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-create}}]
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
-            :parameters {:body :wfl.api.spec/uuid-kv}
-            :responses  {200 {:body :wfl.api.spec/workload-response}}
+            :parameters {:body ::spec/uuid-kv}
+            :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
     {:post {:summary    "Stop managing the workload specified by 'request'."
-            :parameters {:body :wfl.api.spec/uuid-kv}
-            :responses  {200 {:body :wfl.api.spec/workload-response}}
+            :parameters {:body ::spec/uuid-kv}
+            :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
    ["/api/v1/exec"
     {:post {:summary    "Create and start a new workload."
-            :parameters {:body :wfl.api.spec/workload-request}
-            :responses  {200 {:body :wfl.api.spec/workload-response}}
+            :parameters {:body ::spec/workload-request}
+            :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
    ["/swagger/swagger.json"
     {:get {:no-doc true ;; exclude this endpoint itself from swagger
@@ -134,15 +134,15 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     :wfl.api.workloads/invalid-pipeline       (partial exception-handler 400 "")
-     :wfl.api.workloads/workload-not-found     (partial exception-handler 404 "")
-     UserException                             (partial exception-handler 400 "")
-     ;; SQLException and all its child classes
-     SQLException                              (partial logging-exception-handler 500 "SQL Exception")
-     ;; handle clj-http Slingshot stone exceptions
-     :clj-http.client/unexceptional-status     (partial exception-handler 400 "HTTP Error on request")
-     ;; override the default handler
-     :reitit.ring.middleware.exception/default (partial logging-exception-handler 500 "Internal Server Error")})))
+     ::workloads/invalid-pipeline          (partial exception-handler 400 "")
+     ::workloads/workload-not-found        (partial exception-handler 404 "")
+     UserException                         (partial exception-handler 400 "")
+       ;; SQLException and all its child classes
+     SQLException                          (partial logging-exception-handler 500 "SQL Exception")
+       ;; handle clj-http Slingshot stone exceptions
+     :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
+       ;; override the default handler
+     ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler

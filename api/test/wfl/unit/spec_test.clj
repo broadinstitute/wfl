@@ -7,15 +7,15 @@
 
 (deftest request-spec-test
   (testing "Requests are valid"
-    (letfn [(valid? [req] (is (s/valid? :wfl.api.spec/workload-request req)))]
+    (letfn [(valid? [req] (is (s/valid? ::spec/workload-request req)))]
       (run! valid? (map #(% (UUID/randomUUID))
                         [workloads/wgs-workload-request
                          workloads/aou-workload-request
                          workloads/xx-workload-request])))))
 
 (deftest workload-query-spec-test
-  (letfn [(invalid? [req] (is (not (s/valid? :wfl.api.spec/workload-query req))))
-          (valid? [req] (is (s/valid? :wfl.api.spec/workload-query req)))]
+  (letfn [(invalid? [req] (is (not (s/valid? ::spec/workload-query req))))
+          (valid? [req] (is (s/valid? ::spec/workload-query req)))]
     (let [uuid (str (UUID/randomUUID))
           project "bogus-project"]
       (testing "Workload UUID and project cannot be specified together"
@@ -43,7 +43,7 @@
              [invalid? ":label"]
              [invalid? "label"]
              [invalid? "test:label:bad"]]]
-      (is (test? :wfl.api.spec/labels [label]) (format "failed: %s" label)))))
+      (is (test? ::spec/labels [label]) (format "failed: %s" label)))))
 
 (deftest test-watchers-spec
   (let [valid?   s/valid?
@@ -53,4 +53,4 @@
              ;; From tbl: https://www.netmeister.org/blog/email.html
              [valid?   "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]
              [invalid? "foo"]]]
-      (is (test? :wfl.api.spec/watchers [email]) (format "failed: %s" email)))))
+      (is (test? ::spec/watchers [email]) (format "failed: %s" email)))))

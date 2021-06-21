@@ -643,7 +643,7 @@
   (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
     (is (not-any? source [:id :type]))
     (is (= (:snapshots source) [(:id snapshot)]))
-    (is (s/valid? :wfl.api.spec/snapshot-list-source source))))
+    (is (s/valid? ::spec/snapshot-list-source source))))
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
@@ -720,8 +720,8 @@
             :body-params    request}))))
 
 (deftest test-create-workload-coercion
-  (let [app     (create-app :wfl.api.spec/workload-request
-                            :wfl.api.spec/workload-response
+  (let [app     (create-app ::spec/workload-request
+                            ::spec/workload-response
                             (comp util/to-edn workloads/create-workload!))
         request (workloads/covid-workload-request
                  {}
