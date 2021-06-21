@@ -53,9 +53,9 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 	@$(TOUCH) $@
 
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	$(CLOJURE) -M:eastwood
-	$(CLOJURE) -M:kibit
-	$(CLOJURE) -M:kondo --lint .
+	-$(CLOJURE) -M:eastwood
+	-$(CLOJURE) -M:kibit
+	-$(CLOJURE) -M:kondo --lint .
 	@$(TOUCH) $@
 
 $(FORMAT): $(SCM_SRC) $(SCM_RESOURCES)
