@@ -27,10 +27,10 @@
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs labels status updated uuid] :as _workflow}]
+  [{:keys [inputs status] :as workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
-  (is updated)
-  (is uuid)
+  (is (every? workflow [:updated :uuid]))
+  (is (not-every? workflow [:id]))
   (is (= "Succeeded" status)))
 
 (defn ^:private verify-succeeded-workload
