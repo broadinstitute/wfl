@@ -161,8 +161,6 @@
     (mapv (comp util/unnilify split-inputs load-options) workflows)))
 
 (defn ^:private post-v0_4_0-deserialize-workflows
-  "Use transaction `tx` to load the workflows in the `_workload` stored in a
-   CromwellWorkflow table."
   [workflows]
   (letfn [(load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
