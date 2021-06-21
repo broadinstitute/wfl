@@ -20,8 +20,8 @@
                    "gs://fake/input" "gs://fake/output" project)
                   workloads/create-workload!))
             (create-a-bunch-copyfile-workloads! []
-              (repeatedly 2 (create-copyfile-workload! upper-project))
-              (repeatedly 2 (create-copyfile-workload! lower-project)))
+              (dotimes [_ 2] (create-copyfile-workload! upper-project))
+              (dotimes [_ 2] (create-copyfile-workload! lower-project)))
             (verify-copyfile-workloads-identity [project workloads]
               (is (every? #(= copyfile/pipeline (:pipeline %)) workloads))
               (is (every? #(= project (:project %)) workloads)))]
