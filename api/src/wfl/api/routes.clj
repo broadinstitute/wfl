@@ -77,18 +77,21 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
    ["/swagger/swagger.json"
-    {:get {:no-doc true ;; exclude this endpoint itself from swagger
-           :swagger {:info {:title (str wfl/the-name "-API")
-                            :version (str (:version (wfl/get-the-version)))}
-                     :securityDefinitions {:googleoauth {:type "oauth2"
-                                                         :flow "implicit"
-                                                         :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
-                                                         :scopes {:openid  "Basic OpenID authorization"
-                                                                  :email   "Read access to your email"
-                                                                  :profile "Read access to your profile"}}}
-                     :tags [{:name "Informational"}
-                            {:name "Authenticated"}]
-                     :basePath "/"} ;; prefix for all paths
+    {:get {:no-doc true    ; exclude this endpoint itself from swagger
+           :swagger
+           {:info {:title (str wfl/the-name "-API")
+                   :version (str (:version (wfl/get-the-version)))}
+            :securityDefinitions
+            {:googleoauth
+             {:type "oauth2"
+              :flow "implicit"
+              :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
+              :scopes {:openid  "Basic OpenID authorization"
+                       :email   "Read access to your email"
+                       :profile "Read access to your profile"}}}
+            :tags [{:name "Informational"}
+                   {:name "Authenticated"}]
+            :basePath "/"}              ; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
@@ -137,18 +140,18 @@
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
      UserException                         (partial exception-handler 400 "")
-       ;; SQLException and all its child classes
+     ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
-       ;; handle clj-http Slingshot stone exceptions
+     ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
-       ;; override the default handler
+     ;; override the default handler
      ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
-    {;; uncomment for easier debugging with coercion and middleware transformations
+    {;; uncomment to debug coercion and middleware transformations
      ;; :reitit.middleware/transform dev/print-request-diffs
      ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
