@@ -16,19 +16,19 @@
             [wfl.service.postgres           :as postgres]
             [wfl.service.rawls              :as rawls]
             [wfl.stage                      :as stage]
+            [wfl.source                     :as source]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.tools.resources            :as resources]
             [wfl.util                       :as util])
-  (:import [java.lang Math]
-           [java.time LocalDateTime]
+  (:import [java.time LocalDateTime]
            [java.util ArrayDeque UUID]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
 (defn ^:private mock-find-new-rows [_ interval]
-  (is (every? #(LocalDateTime/parse % @#'covid/bigquery-datetime-format) interval))
+  (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
   (take mock-new-rows-size (range)))
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
@@ -400,77 +400,6 @@
     {:outputs
      (util/prefix-keys {:output "value"} (str fake-method-name "."))}}})
 
-(defn ^:private create-tdr-source []
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "Terra DataRepo",
-          :dataset        "this"
-          :table          "is"
-          :column         "fun"
-          :skipValidation true}
-         (covid/create-source! tx (rand-int 1000000))
-         (zipmap [:source_type :source_items])
-         (covid/load-source! tx))))
-
-(defn ^:private reload-source [tx {:keys [type id] :as _source}]
-  (covid/load-source! tx {:source_type type :source_items (str id)}))
-
-(deftest test-start-tdr-source
-  (let [source (create-tdr-source)]
-    (is (-> source :last_checked nil?))
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (covid/start-source! tx source)
-      (is (:last_checked (reload-source tx source))
-          ":last_checked was not updated"))))
-
-(deftest test-update-tdr-source
-  (let [source               (create-tdr-source)
-        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
-    (with-redefs-fn
-      {#'covid/create-snapshots mock-create-snapshots
-       #'covid/find-new-rows    mock-find-new-rows
-       #'covid/check-tdr-job    mock-check-tdr-job}
-      (fn []
-        (covid/update-source!
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (covid/start-source! tx source)
-           (reload-source tx source)))
-        (is (== expected-num-records (stage/queue-length source))
-            "snapshots should be enqueued")
-        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (let [records (->> source :details (postgres/get-table tx))]
-            (letfn [(record-updated? [record]
-                      (and (= "succeeded" (:snapshot_creation_job_status record))
-                           (not (nil? (:snapshot_creation_job_id record)))
-                           (not (nil? (:snapshot_id record)))))]
-              (testing "source details got updated with correct number of snapshot jobs"
-                (is (= expected-num-records (count records))))
-              (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
-                (is (every? record-updated? records))))))
-        (covid/update-source!
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (covid/stop-source! tx source)
-           (reload-source tx source)))
-        (is (== expected-num-records (stage/queue-length source))
-            "no more snapshots should be enqueued")
-        (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
-
-(deftest test-stop-tdr-sourced
-  (let [source (create-tdr-source)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (covid/start-source! tx source)
-      (covid/stop-source! tx source)
-      (let [source (reload-source tx source)]
-        (is (:stopped (reload-source tx source)) ":stopped was not written")))))
-
-(defn ^:private create-tdr-snapshot-list [snapshots]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "TDR Snapshots"
-          :snapshots      snapshots
-          :skipValidation true}
-         (covid/create-source! tx (rand-int 1000000))
-         (zipmap [:source_type :source_items])
-         (covid/load-source! tx))))
-
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (->> {:name                       "Terra"
@@ -484,7 +413,7 @@
          (covid/load-executor! tx))))
 
 (deftest test-update-terra-executor
-  (let [source   (create-tdr-snapshot-list [snapshot])
+  (let [source   (make-queue-from-list [snapshot])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -505,7 +434,7 @@
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))
               executor-record
-              (#'covid/load-record-by-id! tx "TerraExecutor" (:id executor))]
+              (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor))]
           (is (== 2 (count records))
               "Exactly 2 workflows should have been written to the database")
           (is (every? #(= snapshot-reference-id (:reference %)) records)
@@ -524,7 +453,7 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
-        source     (create-tdr-snapshot-list [snapshot])
+        source     (make-queue-from-list [snapshot])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
       {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
@@ -639,12 +568,6 @@
                  (first attributes))
               "attributes should have been overwritten"))))))
 
-(deftest test-tdr-snapshot-list-to-edn
-  (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
-    (is (not-any? source [:id :type]))
-    (is (= (:snapshots source) [(:id snapshot)]))
-    (is (s/valid? ::spec/snapshot-list-source source))))
-
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
                   (workloads/covid-workload-request
@@ -655,9 +578,9 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'covid/find-new-rows                   mock-find-new-rows
-     #'covid/create-snapshots                mock-create-snapshots
-     #'covid/check-tdr-job                   mock-check-tdr-job
+    {#'source/find-new-rows                  mock-find-new-rows
+     #'source/create-snapshots               mock-create-snapshots
+     #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
@@ -687,9 +610,9 @@
 
 (deftest test-workload-state-transition-with-failed-workflow
   (with-redefs-fn
-    {#'covid/find-new-rows                   mock-find-new-rows
-     #'covid/create-snapshots                mock-create-snapshots
-     #'covid/check-tdr-job                   mock-check-tdr-job
+    {#'source/find-new-rows                   mock-find-new-rows
+     #'source/create-snapshots                mock-create-snapshots
+     #'source/check-tdr-job                   mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration

@@ -11,7 +11,7 @@
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime]
+           [java.time OffsetDateTime ZoneId]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
@@ -587,3 +587,8 @@
   [s]
   (let [[name value & rest] (str/split s #":" 3)]
     (and (label-name? name) (label-value? value) (nil? rest))))
+
+(defn utc-now
+  "Return OffsetDateTime/now in UTC."
+  []
+  (OffsetDateTime/now (ZoneId/of "UTC")))
