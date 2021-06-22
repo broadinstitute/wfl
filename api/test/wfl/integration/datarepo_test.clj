@@ -15,6 +15,11 @@
             [wfl.util                    :as util :refer [>>>]])
   (:import [java.util UUID]))
 
+(def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
+                                :name "workflow_launcher_testing_dataset"})
+(def ^:private testing-snapshot {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
+                                 :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
+
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
@@ -78,11 +83,9 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "4a5d30fe-1f99-42cd-998b-a979885dea00")
-
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        dataset     (datarepo/dataset testing-dataset)
+        dataset     (datarepo/dataset (:id testing-dataset))
         table       "flowcells"
         row-ids     (-> (datarepo/query-table-between
                          dataset
@@ -97,10 +100,8 @@
       #(let [snapshot (datarepo/snapshot %)]
          (is (= % (:id snapshot)))))))
 
-(def ^:private testing-snapshot-id "0ef4bc30-b8a0-4782-b178-e6145b777404")
-
 (deftest test-flattened-query-result
-  (let [samplesheets (-> (datarepo/snapshot testing-snapshot-id)
+  (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
                          (datarepo/query-table "flowcells" [:samplesheet_location])
                          :rows
                          (->> (mapcat first)))]
@@ -152,7 +153,7 @@
                           entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
-        (let [entities (-> (datarepo/snapshot testing-snapshot-id)
+        (let [entities (-> (datarepo/snapshot (:id testing-snapshot))
                            (datarepo/query-table dataset-table)
                            (import-table workspace columns from-dataset))
               names    (->> #(firecloud/list-entities workspace entity)
