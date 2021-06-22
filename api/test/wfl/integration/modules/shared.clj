@@ -1,5 +1,5 @@
 (ns wfl.integration.modules.shared
-  (:require [clojure.test        :refer [deftest is]]
+  (:require [clojure.test        :refer [is]]
             [wfl.tools.workloads :as    workloads]
             [wfl.util            :refer [absent?]])
   (:import [wfl.util UserException]))

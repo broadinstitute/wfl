@@ -158,7 +158,7 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator executor pipeline project output] :as request}]
+  [tx {:keys [creator executor pipeline project output] :as _request}]
   (gcs/parse-gs-url output)
   (let [slashified-output (util/slashify output)
         {:keys [release path]} workflow-wdl
@@ -279,8 +279,7 @@
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->> (add-aou-workload! tx request)
-       (workloads/load-workload-for-id tx)))
+  (workloads/load-workload-for-id tx (add-aou-workload! tx request)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
 (defoverload workloads/stop-workload!  pipeline batch/stop-workload!)

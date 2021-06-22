@@ -1,6 +1,7 @@
 (ns wfl.jdbc
   "clojure.tools.logging wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc              :as jdbc]
+            [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log])
   (:import (clojure.lang IPersistentVector)
            (java.sql PreparedStatement Array)))
@@ -123,9 +124,10 @@
    `(let [db#     ~db
           table#  ~table
           cols#   ~cols
-          values# ~values]
-      (log/info "jdbc/insert" (format-db db#) table# cols# values# opts)
-      "jdbc/insert" db# table# cols# values# opts)))
+          values# ~values
+          opts#   ~opts]
+      (log/info "jdbc/insert" (format-db db#) table# cols# values# opts#)
+      "jdbc/insert" db# table# cols# values# opts#)))
 
 (defmacro with-db-transaction
   "Logged alias for [[clojure.java.jdbc/with-db-transaction]]"
@@ -164,11 +166,11 @@
     (let [conn          (.getConnection stmt)
           meta          (.getParameterMetaData stmt)
           [head & rest] (.getParameterTypeName meta i)]
-      (if-let [elem-type (when (= head \_) (apply str rest))]
+      (if-let [elem-type (when (= head \_) (str/join rest))]
         (.setObject stmt i (.createArrayOf conn elem-type (to-array v)))
         (.setObject stmt i v)))))
 
 (extend-protocol clojure.java.jdbc/IResultSetReadColumn
   Array
   (result-set-read-column [val _ _]
-    (into [] (.getArray val))))
+    (vec (.getArray val))))

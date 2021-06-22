@@ -1,5 +1,6 @@
 (ns wfl.tools.fixtures
-  (:require [wfl.service.datarepo       :as datarepo]
+  (:require [clojure.java.jdbc]
+            [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres       :as postgres]

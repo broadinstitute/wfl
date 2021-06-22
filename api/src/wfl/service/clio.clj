@@ -1,7 +1,6 @@
 (ns wfl.service.clio
   "Manage Clio's BAM and CRAM indexes."
   (:require [clojure.data.json :as json]
-            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clj-http.client :as http]
             [wfl.auth :as auth]))

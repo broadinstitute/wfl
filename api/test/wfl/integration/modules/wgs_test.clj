@@ -1,7 +1,8 @@
 (ns wfl.integration.modules.wgs-test
-  (:require [clojure.set  :refer [rename-keys]]
-            [clojure.test :refer [deftest testing is] :as clj-test]
+  (:require [clojure.test                   :refer [deftest is testing
+                                                    use-fixtures]]
             [clojure.string                 :as str]
+            [wfl.api.workloads              :as api]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.all                 :as all]
@@ -16,7 +17,7 @@
   (:import [java.util UUID]
            [java.time OffsetDateTime]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private mock-submit-workflows [_ _ inputs _ _]
   (map (fn [_] (UUID/randomUUID)) inputs))
@@ -205,7 +206,7 @@
             (jdbc/update! tx items
                           {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
-    (run! update! (wfl.api.workloads/workflows tx workload))))
+    (run! update! (api/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn

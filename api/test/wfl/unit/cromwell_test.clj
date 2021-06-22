@@ -1,5 +1,5 @@
 (ns wfl.unit.cromwell-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [wfl.service.cromwell :as cromwell]))
 
 (def a-wdl {:release "foo"
@@ -17,11 +17,11 @@
       "https://cdn.jsdelivr.net/gh/user/repo@release/path"))
 
 (deftest test-wf-labels
-  (is (select-keys (cromwell/make-workflow-labels a-wdl)
-                   [:wfl-wdl :wfl-wdl-version])
-      {:wfl-wdl "baz.wdl"
-       :wfl-wdl-version "foo"})
-  (is (select-keys (cromwell/make-workflow-labels b-wdl)
-                   [:wfl-wdl :wfl-wdl-version])
-      {:wfl-wdl "path"
-       :wfl-wdl-version "release"}))
+  (is (= (select-keys (cromwell/make-workflow-labels a-wdl)
+                      [:wfl-wdl :wfl-wdl-version])
+         {:wfl-wdl "baz.wdl"
+          :wfl-wdl-version "foo"}))
+  (is (= (select-keys (cromwell/make-workflow-labels b-wdl)
+                      [:wfl-wdl :wfl-wdl-version])
+         {:wfl-wdl "path"
+          :wfl-wdl-version "release"})))

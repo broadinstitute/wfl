@@ -2,8 +2,7 @@
   "Reprocess eXternal eXomes."
   (:require [clojure.data.json          :as json]
             [clojure.string             :as str]
-            [wfl.api.workloads          :refer [defoverload]]
-            [wfl.api.workloads          :as workloads]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
             [wfl.module.batch           :as batch]
             [wfl.references             :as references]
@@ -142,9 +141,8 @@
 
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
-          (merge-to-json [shared specific]
-            (json/write-str (nil-if-empty (util/deep-merge shared specific))))
+  (letfn [(merge-to-json [shared specific]
+            (json/write-str (not-empty (util/deep-merge shared specific))))
           (serialize [item id]
             (-> item
                 (assoc :id id)

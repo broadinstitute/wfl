@@ -1,6 +1,5 @@
 (ns wfl.tools.snapshots
-  (:require [clojure.test         :refer :all]
-            [wfl.service.datarepo :as datarepo]
+  (:require [wfl.service.datarepo :as datarepo]
             [wfl.util             :as util]))
 
 (defn unique-snapshot-request

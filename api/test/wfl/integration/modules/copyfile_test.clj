@@ -1,5 +1,5 @@
 (ns wfl.integration.modules.copyfile-test
-  (:require [clojure.test                   :refer [deftest testing is use-fixtures]]
+  (:require [clojure.test                   :refer [deftest is use-fixtures]]
             [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]

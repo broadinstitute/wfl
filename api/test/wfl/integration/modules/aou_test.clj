@@ -90,16 +90,16 @@
 
 ;; rr: GH-1071
 (deftest test-exec-on-same-workload-request
-  "executing a workload-request twice should not create a new workload"
-  (let [request (make-aou-workload-request)]
-    (is (= (workloads/execute-workload! request)
-           (workloads/execute-workload! request)))))
+  (testing "executing a workload-request twice should not create a new workload"
+    (let [request (make-aou-workload-request)]
+      (is (= (workloads/execute-workload! request)
+             (workloads/execute-workload! request))))))
 
 (deftest test-exec-on-similar-workload-request
-  "output bucket slashes should be standardized to not create new workloads unnecessarily"
-  (let [request (make-aou-workload-request)
-        slashified (update request :output util/slashify)
-        deslashified (update request :output util/de-slashify)]
-    (is (not (= slashified deslashified)))
-    (is (= (workloads/execute-workload! slashified)
-           (workloads/execute-workload! deslashified)))))
+  (testing "output bucket slashes should be standardized to not create new workloads unnecessarily"
+    (let [request (make-aou-workload-request)
+          slashified (update request :output util/slashify)
+          deslashified (update request :output util/de-slashify)]
+      (is (not (= slashified deslashified)))
+      (is (= (workloads/execute-workload! slashified)
+             (workloads/execute-workload! deslashified))))))

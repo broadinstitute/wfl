@@ -19,4 +19,4 @@
 (deftest test-query-table-sync
   (let [query (format "SELECT * FROM `%s.%s.%s`" google-project dr-dataset dr-view)
         query-result (bigquery/query-sync google-project query)]
-    (is (not (empty? (:rows query-result))) "No results found!")))
+    (is (seq (:rows query-result)) "No results found!")))

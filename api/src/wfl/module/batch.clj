@@ -50,7 +50,8 @@
 (defn batch-update-workflow-statuses!
   "Use `tx` to update the `status` of the workflows in `_workload`."
   [tx {:keys [executor uuid items] :as _workoad}]
-  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+  (let [uuid->status (->> {:includeSubworkflows "false"
+                           :label               (str "workload:" uuid)}
                           (cromwell/query executor)
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
@@ -124,7 +125,9 @@
                   (merge
                    cromwell-label
                    {:workload uuid}
-                   (into {} (map #(-> (str/split % #":" 2) (update 0 keyword)) labels))))))]
+                   (->> labels
+                        (map #(-> % (str/split #":" 2) (update 0 keyword)))
+                        (into {}))))))]
     (->> workflows
          (group-by :options)
          (mapcat submit-batch!))))

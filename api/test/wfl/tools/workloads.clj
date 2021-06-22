@@ -1,6 +1,7 @@
 (ns wfl.tools.workloads
   (:require [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
+            [wfl.api.workloads]
             [wfl.auth                       :as auth]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
@@ -14,7 +15,7 @@
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.tools.endpoints            :as endpoints]
-            [wfl.util                       :as util :refer [shell!]])
+            [wfl.util                       :as util])
   (:import [java.time OffsetDateTime]
            [java.util.concurrent TimeoutException]
            [java.util UUID]))
@@ -43,8 +44,8 @@
      :input_cram           (str input-folder "NA12878_PLUMBING.cram")}))
 
 (defn wgs-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
@@ -145,8 +146,8 @@
    (covid-workload-request {} {} {})))
 
 (defn xx-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
