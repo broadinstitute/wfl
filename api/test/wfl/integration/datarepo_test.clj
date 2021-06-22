@@ -85,13 +85,13 @@
         dataset     (datarepo/dataset testing-dataset)
         table       "flowcells"
         row-ids     (-> (datarepo/query-table-between
-                          dataset
-                          table
-                          "run_date"
-                          ["2021-04-30T04:00:00" "2021-05-01T04:00:00"]
-                          [:datarepo_row_id])
-                      :rows
-                      flatten)]
+                         dataset
+                         table
+                         "run_date"
+                         ["2021-04-30T04:00:00" "2021-05-01T04:00:00"]
+                         [:datarepo_row_id])
+                        :rows
+                        flatten)]
     (fixtures/with-temporary-snapshot
       (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
       #(let [snapshot (datarepo/snapshot %)]
