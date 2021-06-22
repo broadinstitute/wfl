@@ -29,8 +29,10 @@
       (testing (str "creating dataset " (util/basename definition))
         (fixtures/with-temporary-dataset
           (datasets/unique-dataset-request tdr-profile definition)
-          #(let [dataset (datarepo/dataset %)]
-             (is (= % (:id dataset)))))))))
+          ;; wait for 3 seconds to avoid random 404 transient issues from TDR
+          #(do (util/sleep-seconds 3)
+               (let [dataset (datarepo/dataset %)]
+                 (is (= % (:id dataset))))))))))
 
 (defn ^:private replace-urls-with-file-ids
   [file->fileid type value]
