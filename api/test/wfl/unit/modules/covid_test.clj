@@ -1,6 +1,6 @@
 (ns wfl.unit.modules.covid-test
   (:require [clojure.spec.alpha   :as s]
-            [clojure.test         :refer :all]
+            [clojure.test         :refer [deftest is testing]]
             [wfl.api.spec         :as spec]
             [wfl.module.covid     :as covid]
             [wfl.service.datarepo :as datarepo]

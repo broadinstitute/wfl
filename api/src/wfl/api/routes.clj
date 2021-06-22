@@ -37,8 +37,10 @@
            :responses {200 {:body ::spec/version-response}}
            :swagger   {:tags ["Informational"]}}}]
    ["/oauth2id"
-    {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
-           :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
+    {:get {:summary   "Get the OAuth2 Client ID deployed for this server"
+           :handler   (fn [_] (handlers/succeed
+                               {:oauth2-client-id
+                                (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
@@ -77,18 +79,21 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
    ["/swagger/swagger.json"
-    {:get {:no-doc true ;; exclude this endpoint itself from swagger
-           :swagger {:info {:title (str wfl/the-name "-API")
-                            :version (str (:version (wfl/get-the-version)))}
-                     :securityDefinitions {:googleoauth {:type "oauth2"
-                                                         :flow "implicit"
-                                                         :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
-                                                         :scopes {:openid  "Basic OpenID authorization"
-                                                                  :email   "Read access to your email"
-                                                                  :profile "Read access to your profile"}}}
-                     :tags [{:name "Informational"}
-                            {:name "Authenticated"}]
-                     :basePath "/"} ;; prefix for all paths
+    {:get {:no-doc true    ; exclude this endpoint itself from swagger
+           :swagger
+           {:info {:title (str wfl/the-name "-API")
+                   :version (str (:version (wfl/get-the-version)))}
+            :securityDefinitions
+            {:googleoauth
+             {:type "oauth2"
+              :flow "implicit"
+              :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
+              :scopes {:openid  "Basic OpenID authorization"
+                       :email   "Read access to your email"
+                       :profile "Read access to your profile"}}}
+            :tags [{:name "Informational"}
+                   {:name "Authenticated"}]
+            :basePath "/"}              ; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
@@ -122,9 +127,9 @@
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message exception request]
+  [status message exception {:keys [uri] :as request}]
   (let [response (exception-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :" (:status response) (:uri request))
+    (log/errorf "Server %s error at occurred at %s :" (:status response) uri)
     (logr/error exception (:body response))
     response))
 
@@ -137,18 +142,18 @@
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
      UserException                         (partial exception-handler 400 "")
-       ;; SQLException and all its child classes
+     ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
-       ;; handle clj-http Slingshot stone exceptions
+     ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
-       ;; override the default handler
+     ;; override the default handler
      ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
-    {;; uncomment for easier debugging with coercion and middleware transformations
+    {;; uncomment to debug coercion and middleware transformations
      ;; :reitit.middleware/transform dev/print-request-diffs
      ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
@@ -169,5 +174,8 @@
                          multipart/multipart-middleware]}})
    ;; get more correct http error responses on routes
    (ring/create-default-handler
-    {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
-     :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))
+    {:not-found          (fn [m] {:status 404
+                                  :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed (fn [m] {:status 405
+                                  :body (format "Method %s not allowed"
+                                                (name (:request-method m)))})})))

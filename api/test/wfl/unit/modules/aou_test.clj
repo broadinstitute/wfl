@@ -1,6 +1,6 @@
 (ns wfl.unit.modules.aou-test
-  (:require [clojure.test :refer :all]
-            [clojure.set  :as set]
+  (:require [clojure.test   :refer [deftest is testing]]
+            [clojure.set    :as set]
             [wfl.module.aou :as aou]))
 
 (def ^:private cromwell-url

@@ -20,14 +20,14 @@
                    "gs://fake/input" "gs://fake/output" project)
                   workloads/create-workload!))
             (create-a-bunch-copyfile-workloads! []
-              (dotimes [n 2] (create-copyfile-workload! upper-project))
-              (dotimes [n 2] (create-copyfile-workload! lower-project)))
+              (dotimes [_ 2] (create-copyfile-workload! upper-project))
+              (dotimes [_ 2] (create-copyfile-workload! lower-project)))
             (verify-copyfile-workloads-identity [project workloads]
               (is (every? #(= copyfile/pipeline (:pipeline %)) workloads))
               (is (every? #(= project (:project %)) workloads)))]
       (create-a-bunch-copyfile-workloads!)
       (testing "No matching returns empty list"
-        (is empty? (workloads/load-workloads-with-project bogus-project)))
+        (is (empty? (workloads/load-workloads-with-project bogus-project))))
       (testing "Query project parameter is case-sensitive"
         (let [fetched-workloads (workloads/load-workloads-with-project
                                  upper-project)]

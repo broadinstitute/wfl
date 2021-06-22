@@ -1,11 +1,10 @@
 (ns wfl.integration.jdbc-test
-  (:require [clojure.test :refer :all :as clj-test]
-            [clojure.test]
-            [wfl.jdbc :as jdbc]
+  (:require [clojure.test         :refer [deftest is testing use-fixtures]]
+            [wfl.jdbc             :as jdbc]
             [wfl.service.postgres :as postgres]
-            [wfl.tools.fixtures :as fixtures]))
+            [wfl.tools.fixtures   :as fixtures]))
 
-(clj-test/use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (deftest test-jdbc-protocol-extensions
   (let [create "CREATE TABLE %s (id SERIAL, arr text[])"

@@ -11,12 +11,12 @@
   [& namespaces]
   (let [symbols  (map symbol namespaces)
         counters (ref test/*initial-report-counters*)]
-    (letfn [(run-test! [test]
+    (letfn [(run-test! [a-test]
               (binding [*out*                  (StringWriter.)
                         test/*test-out*        (StringWriter.)
                         test/*report-counters* counters
                         log/*logger-factory*   disabled-logger-factory]
-                (test)
+                (a-test)
                 (str test/*test-out*)))]
       (run! use symbols)
       (let [{parallel true, sequential false}
