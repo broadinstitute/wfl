@@ -1,0 +1,1 @@
+{:lint-as {wfl.jdbc/with-db-transaction clojure.core/with-open}}

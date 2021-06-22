@@ -1,7 +1,6 @@
 (ns wfl.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.pprint :refer [pprint]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [wfl.jdbc :as jdbc]
             [wfl.service.google.storage :as gcs]
             [wfl.util :as util]

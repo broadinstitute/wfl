@@ -1,5 +1,5 @@
 (ns wfl.unit.modules.xx-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test  :refer [deftest is]]
             [wfl.module.xx :as xx]))
 
 (def ^:private output-url "gs://fake-output-bucket/")

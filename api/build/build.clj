@@ -26,10 +26,8 @@
                         .toInstant .toString)
           commit    (util/shell! "git" "rev-parse" "HEAD")
           committed (->> commit
-                        (util/shell! "git" "show" "-s" "--format=%cI")
-                        OffsetDateTime/parse .toInstant .toString)
-          clean?    (do-or-nil-silently
-                      (util/shell! "git" "diff-index" "--quiet" "HEAD"))]
+                         (util/shell! "git" "show" "-s" "--format=%cI")
+                         OffsetDateTime/parse .toInstant .toString)]
       {:version   (or (System/getenv "WFL_VERSION") "devel")
        :commit    commit
        :committed committed
