@@ -5,11 +5,22 @@ Within the context of Workflow Launcher, a workload is a discrete body of work, 
 
 ## Workload Components
 ### Source
+The workload [Source](./source.md) models the first stage of a processing pipeline. In a
+typical workload configuration, a `Source` can be used to read workflow inputs
+from a specified location or service in the cloud.
+
 ### Executor
+The workload [Executor](./executor.md) models an intermediate stage of a processing pipeline.
+In a typical workload configuration, an `Executor` uses a supported
+service in the cloud to execute workflows.
+
 ### Sink
+The workload [Sink](./sink.md) models the terminal stage of a processing pipeline. In a
+typical workload configuration, a `Sink` can be used to write workflow outputs
+to a desired location in the cloud.
 
 ## Example workload 
-(The specific values below are from the COVID-19 Surveillance in Terra project. Workloads for other projects may have different fields available in the source, executor and sink).
+The specific values below are from the COVID-19 Surveillance in Terra project. Workloads for other projects may have different fields available in the source, executor and sink.
 
 ```
 {
