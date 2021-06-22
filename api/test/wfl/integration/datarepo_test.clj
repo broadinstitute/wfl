@@ -78,32 +78,30 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
+(def ^:private testing-dataset "4a5d30fe-1f99-42cd-998b-a979885dea00")
 
-;; Get row-ids from BigQuery and use them to create a snapshot.
-;; excluded, the testing-dataset has been removed from dev-TDR
-(deftest ^:excluded test-create-snapshot
+(deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         dataset     (datarepo/dataset testing-dataset)
-        table       "sample"
+        table       "flowcells"
         row-ids     (-> (datarepo/query-table-between
-                         dataset
-                         table
-                         "datarepo_ingest_date"
-                         ["2021-01-05" "2021-01-07"]
-                         [:datarepo_row_id])
-                        :rows
-                        flatten)]
+                          dataset
+                          table
+                          "run_date"
+                          ["2021-04-30T04:00:00" "2021-05-01T04:00:00"]
+                          [:datarepo_row_id])
+                      :rows
+                      flatten)]
     (fixtures/with-temporary-snapshot
       (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
       #(let [snapshot (datarepo/snapshot %)]
          (is (= % (:id snapshot)))))))
 
-(def ^:private testing-snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
+(def ^:private testing-snapshot-id "0ef4bc30-b8a0-4782-b178-e6145b777404")
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/snapshot testing-snapshot-id)
-                         (datarepo/query-table "flowcell" [:samplesheets])
+                         (datarepo/query-table "flowcells" [:samplesheet_location])
                          :rows
                          (->> (mapcat first)))]
     (is (every? string? samplesheets) "Nested arrays were not normalized.")))
@@ -146,7 +144,7 @@
        #(mapv keyword %)))
 
 (deftest test-import-snapshot
-  (let [dataset-table "flowcell"
+  (let [dataset-table "flowcells"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
         columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
