@@ -118,7 +118,7 @@
 (defn ^:private maps->table
   "Transform a list of maps into a table with `columns`."
   [maps columns]
-  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) columns)}}
+  (let [table {:schema {:fields (mapv #(hash-map :name (name %)) columns)}}
         f     #(reduce (fn [row attr] (conj row (% attr))) [] columns)]
     (assoc table :rows (map f maps))))
 

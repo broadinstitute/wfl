@@ -52,9 +52,14 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
-# Run `clojure -M:format` in this directory when this fails.
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	$(CLOJURE) -M:lint -m cljfmt.main check
+	-$(CLOJURE) -M:eastwood
+	-$(CLOJURE) -M:kibit
+	-$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
+	@$(TOUCH) $@
+
+$(FORMAT): $(SCM_SRC) $(SCM_RESOURCES)
+	$(CLOJURE) -M:format
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC)
