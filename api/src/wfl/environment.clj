@@ -53,8 +53,6 @@
    #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_TDR_DEFAULT_PROFILE"
    #(-> "6370f5a1-d777-4991-8200-ceab83521d43")
-   "WFL_TDR_SA"
-   #(-> "jade-k8-sa@broad-jade-dev.iam.gserviceaccount.com")
    "WFL_WFL_URL"
    #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
