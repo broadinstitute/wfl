@@ -745,7 +745,7 @@
                  app)]
         (is (== 200 status) (pr-str body))))))
 
-(deftest test-workload-state-transition-with-failed-workflow
+(deftest test-retry-workload-is-not-supported
   (with-redefs-fn
     {#'covid/find-new-rows                   mock-find-new-rows
      #'covid/create-snapshots                mock-create-snapshots
