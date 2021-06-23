@@ -266,3 +266,8 @@
    (->> (map name columns)
         util/to-comma-separated-list
         (query-table-between-impl dataset table between interval))))
+
+(snapshot "0ef4bc30-b8a0-4782-b178-e6145b777404")
+;"workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"
+(dataset "4a5d30fe-1f99-42cd-998b-a979885dea00")
+;"workflow_launcher_testing_dataset"
