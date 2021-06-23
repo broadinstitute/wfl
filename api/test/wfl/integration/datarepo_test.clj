@@ -15,6 +15,11 @@
             [wfl.util                    :as util :refer [>>>]])
   (:import [java.util UUID]))
 
+(def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
+                                :name "workflow_launcher_testing_dataset"})
+(def ^:private testing-snapshot {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
+                                 :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
+
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
@@ -24,8 +29,10 @@
       (testing (str "creating dataset " (util/basename definition))
         (fixtures/with-temporary-dataset
           (datasets/unique-dataset-request tdr-profile definition)
-          #(let [dataset (datarepo/dataset %)]
-             (is (= % (:id dataset)))))))))
+          ;; wait for 3 seconds to avoid random 404 transient issues from TDR
+          #(do (util/sleep-seconds 3)
+               (let [dataset (datarepo/dataset %)]
+                 (is (= % (:id dataset))))))))))
 
 (defn ^:private replace-urls-with-file-ids
   [file->fileid type value]
@@ -78,19 +85,15 @@
             (is (= 1 row_count))
             (is (= 0 bad_row_count))))))))
 
-(def ^:private testing-dataset "85efdfea-52fb-4698-bee6-eef76104a7f4")
-
-;; Get row-ids from BigQuery and use them to create a snapshot.
-;; excluded, the testing-dataset has been removed from dev-TDR
-(deftest ^:excluded test-create-snapshot
+(deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        dataset     (datarepo/dataset testing-dataset)
-        table       "sample"
+        dataset     (datarepo/dataset (:id testing-dataset))
+        table       "flowcells"
         row-ids     (-> (datarepo/query-table-between
                          dataset
                          table
-                         "datarepo_ingest_date"
-                         ["2021-01-05" "2021-01-07"]
+                         "run_date"
+                         ["2021-04-30T04:00:00" "2021-05-01T04:00:00"]
                          [:datarepo_row_id])
                         :rows
                         flatten)]
@@ -99,11 +102,9 @@
       #(let [snapshot (datarepo/snapshot %)]
          (is (= % (:id snapshot)))))))
 
-(def ^:private testing-snapshot-id "7cb392d8-949b-419d-b40b-d039617d2fc7")
-
 (deftest test-flattened-query-result
-  (let [samplesheets (-> (datarepo/snapshot testing-snapshot-id)
-                         (datarepo/query-table "flowcell" [:samplesheets])
+  (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
+                         (datarepo/query-table "flowcells" [:samplesheet_location])
                          :rows
                          (->> (mapcat first)))]
     (is (every? string? samplesheets) "Nested arrays were not normalized.")))
@@ -118,7 +119,7 @@
 (defn ^:private maps->table
   "Transform a list of maps into a table with `columns`."
   [maps columns]
-  (let [table {:schema {:fields (mapv #(-> {:name (name %)}) columns)}}
+  (let [table {:schema {:fields (mapv #(hash-map :name (name %)) columns)}}
         f     #(reduce (fn [row attr] (conj row (% attr))) [] columns)]
     (assoc table :rows (map f maps))))
 
@@ -146,7 +147,7 @@
        #(mapv keyword %)))
 
 (deftest test-import-snapshot
-  (let [dataset-table "flowcell"
+  (let [dataset-table "flowcells"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
         columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
@@ -154,7 +155,7 @@
                           entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
-        (let [entities (-> (datarepo/snapshot testing-snapshot-id)
+        (let [entities (-> (datarepo/snapshot (:id testing-snapshot))
                            (datarepo/query-table dataset-table)
                            (import-table workspace columns from-dataset))
               names    (->> #(firecloud/list-entities workspace entity)

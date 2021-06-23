@@ -50,7 +50,8 @@
 (defn batch-update-workflow-statuses!
   "Use `tx` to update the `status` of the workflows in `_workload`."
   [tx {:keys [executor uuid items] :as _workoad}]
-  (let [uuid->status (->> {:label (str "workload:" uuid) :includeSubworkflows "false"}
+  (let [uuid->status (->> {:includeSubworkflows "false"
+                           :label               (str "workload:" uuid)}
                           (cromwell/query executor)
                           (map (juxt :id :status)))]
     (letfn [(update! [[uuid status]]
@@ -106,7 +107,8 @@
             (let [keep [:id :finished :status :updated :uuid :options]]
               (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (postgres/get-table tx (:items workload))
+    (->> (:items workload)
+         (postgres/get-table tx)
          (mapv (comp util/unnilify split-inputs load-options)))))
 
 (defn ^:private load-batch-workflows
@@ -115,8 +117,8 @@
   [tx {:keys [items] :as _workload}]
   (letfn [(load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
           (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (postgres/get-table tx items)
-         (mapv (comp util/unnilify load-options load-inputs)))))
+    (mapv (comp util/unnilify load-options load-inputs)
+          (postgres/get-table tx items))))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
@@ -142,7 +144,9 @@
                   (merge
                    cromwell-label
                    {:workload uuid}
-                   (into {} (map #(-> (str/split % #":" 2) (update 0 keyword)) labels))))))]
+                   (->> labels
+                        (map #(-> % (str/split #":" 2) (update 0 keyword)))
+                        (into {}))))))]
     (->> workflows
          (group-by :options)
          (mapcat submit-batch!))))

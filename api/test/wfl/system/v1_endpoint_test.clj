@@ -1,5 +1,5 @@
 (ns wfl.system.v1-endpoint-test
-  (:require [clojure.test               :refer :all]
+  (:require [clojure.test               :refer [deftest is testing]]
             [clojure.instant            :as instant]
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
@@ -18,16 +18,16 @@
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
 
-(def create-aou-workload    (make-create-workload workloads/aou-workload-request))
-(def create-sg-workload     (make-create-workload workloads/sg-workload-request))
-(def create-wgs-workload    (make-create-workload workloads/wgs-workload-request))
-(def create-xx-workload     (make-create-workload workloads/xx-workload-request))
+(def create-aou-workload (make-create-workload workloads/aou-workload-request))
+(def create-sg-workload  (make-create-workload workloads/sg-workload-request))
+(def create-wgs-workload (make-create-workload workloads/wgs-workload-request))
+(def create-xx-workload  (make-create-workload workloads/xx-workload-request))
 
 (defn create-copyfile-workload [src dst]
   (endpoints/create-workload (workloads/copyfile-workload-request src dst)))
 
 (defn ^:private verify-succeeded-workflow
-  [{:keys [inputs labels status updated uuid] :as _workflow}]
+  [{:keys [inputs status updated uuid] :as _workflow}]
   (is (map? inputs) "Every workflow should have nested inputs")
   (is updated)
   (is uuid)
@@ -208,8 +208,9 @@
       (is (thrown-with-msg? ExceptionInfo #"clj-http: status 400"
                             (endpoints/exec-workload request))))))
 
-(defn ^:private covid-workload-request []
+(defn ^:private covid-workload-request
   "Build a covid workload request."
+  []
   (let [terra-ns  (comp (partial str/join "/") (partial vector "wfl-dev"))
         workspace (terra-ns "CDC_Viral_Sequencing")
         source    {:name            "Terra DataRepo"
