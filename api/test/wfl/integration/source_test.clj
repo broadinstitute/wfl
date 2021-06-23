@@ -1,7 +1,7 @@
 (ns wfl.integration.source-test
   (:require [clojure.java.jdbc    :as jdbc]
             [clojure.spec.alpha   :as s]
-            [clojure.test         :refer :all]
+            [clojure.test         :refer [deftest is testing use-fixtures]]
             [wfl.api.spec         :as spec]
             [wfl.service.postgres :as postgres]
             [wfl.stage            :as stage]

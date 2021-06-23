@@ -287,24 +287,11 @@
                                              succeeded-workflow-mock])}))
 
 ;; Workflow fetch mocks within update-workflow-statuses!
-(defn ^:private mock-workflow-update-status [_ _ workflow-id]
-  (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
-      "Successful workflow records should be filtered out before firecloud fetch")
-  {:status "Succeeded" :id workflow-id :workflowName fake-method-name})
 
 (defn ^:private mock-workflow-keep-status [_ _ workflow-id]
   (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
       "Successful workflow records should be filtered out before firecloud fetch")
   running-workflow-mock)
-
-(defn ^:private mock-firecloud-get-workflow-outputs [_ _ workflow]
-  (is (= (:id succeeded-workflow-mock) workflow))
-  {:tasks
-   {:noise
-    {}
-    (keyword fake-method-name)
-    {:outputs
-     (util/prefix-keys {:output "value"} (str fake-method-name "."))}}})
 
 (def ^:private fake-entity-type "flowcell")
 (def ^:private fake-entity-name "test")
