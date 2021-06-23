@@ -96,8 +96,8 @@
   "Use transaction `tx` to load all known `workloads`."
   [tx]
   (log/debug "Loading all workloads")
-  (let [do-load (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload ORDER BY id ASC"]))))
+  (let [query-str "SELECT * FROM workload ORDER BY id ASC"]
+    (mapv (partial load-workload-impl tx) (jdbc/query tx query-str))))
 
 ;; helper utility for point-free multi-method implementation registration.
 (defmacro defoverload
