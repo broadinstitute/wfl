@@ -1,8 +1,6 @@
 (ns wfl.server
   "An HTTP API server."
-  (:require [clojure.pprint                 :refer [pprint]]
-            [clojure.stacktrace             :refer [print-throwable]]
-            [clojure.string                 :as str]
+  (:require [clojure.string                 :as str]
             [clojure.tools.logging          :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
@@ -78,7 +76,7 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers uuid exception]
+(defn notify-watchers [watchers _uuid _exception]
   {:pre [(some? watchers)]}
   (log/info "notifying: " watchers))
 

@@ -52,17 +52,17 @@
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
         {:keys [google_project jes_gcs_root]} (cromwell->strings url)]
-    (-> {:backend         "PAPIv2"
-         :final_workflow_outputs_dir output
-         :google_project  google_project
-         :jes_gcs_root    jes_gcs_root
-         :read_from_cache true
-         :write_to_cache  true
-         :default_runtime_attributes
-         {:docker     (str/join "/" [gcr repo image])
-          :maxRetries 1
-          :noAddress  false
-          :zones      util/google-cloud-zones}})))
+    {:backend         "PAPIv2"
+     :final_workflow_outputs_dir output
+     :google_project  google_project
+     :jes_gcs_root    jes_gcs_root
+     :read_from_cache true
+     :write_to_cache  true
+     :default_runtime_attributes
+     {:docker     (str/join "/" [gcr repo image])
+      :maxRetries 1
+      :noAddress  false
+      :zones      util/google-cloud-zones}}))
 
 (defn create-sg-workload!
   [tx {:keys [common items] :as request}]
@@ -169,7 +169,7 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [status uuid] :as workflow}]
+  [executor output {:keys [status uuid] :as _workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
           clio-url (-> executor cromwell->strings :clio-url)
@@ -204,8 +204,8 @@
     (if (and started (not finished))
       (let [workload' (update! workload)]
         (when (:finished workload')
-          (->> (workloads/workflows tx workload')
-               (register-workload-in-clio workload')))
+          (register-workload-in-clio workload'
+                                     (workloads/workflows tx workload')))
         workload')
       workload)))
 

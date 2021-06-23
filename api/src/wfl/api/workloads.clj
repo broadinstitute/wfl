@@ -31,7 +31,7 @@
 
 (defmulti workflows
   "Use `tx` to return the workflows managed by the `workload`."
-  (fn [tx workload] (:pipeline workload)))
+  (fn [_tx workload] (:pipeline workload)))
 
 (defmulti to-edn
   "Return an EDN representation of the `workload` that will be shown to users."

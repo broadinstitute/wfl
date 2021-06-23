@@ -175,11 +175,11 @@
      (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\")"
   [& dataset-ids]
   (letfn [(maybe-merge [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
-    (-> (http/get (repository "snapshots")
-                  (maybe-merge {:headers (auth/get-service-account-header)
-                                :query-params {:limit 999}}
-                               :query-params dataset-ids))
-        util/response-body-json)))
+    (util/response-body-json
+     (http/get (repository "snapshots")
+               (maybe-merge {:headers (auth/get-service-account-header)
+                             :query-params {:limit 999}}
+                            :query-params dataset-ids)))))
 
 (defn delete-snapshot
   "Delete the Snapshot with `snapshot-id`."
@@ -231,8 +231,9 @@
 (defn ^:private query-table-impl
   ([{:keys [dataProject] :as dataset} table col-spec]
    (let [bq-name (bigquery-name dataset)]
-     (->> (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)
-          (bigquery/query-sync dataProject)))))
+     (bigquery/query-sync
+      dataProject
+      (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)))))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
@@ -240,8 +241,8 @@
   ([dataset table]
    (query-table-impl dataset table "*"))
   ([dataset table columns]
-   (->> (util/to-comma-separated-list (map name columns))
-        (query-table-impl dataset table))))
+   (query-table-impl dataset table
+                     (util/to-comma-separated-list (map name columns)))))
 
 (defn ^:private query-table-between-impl
   [{:keys [dataProject] :as dataset} table between [start end] col-spec]
@@ -265,3 +266,8 @@
    (->> (map name columns)
         util/to-comma-separated-list
         (query-table-between-impl dataset table between interval))))
+
+(snapshot "0ef4bc30-b8a0-4782-b178-e6145b777404")
+;"workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"
+(dataset "4a5d30fe-1f99-42cd-998b-a979885dea00")
+;"workflow_launcher_testing_dataset"

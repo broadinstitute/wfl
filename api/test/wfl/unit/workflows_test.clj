@@ -1,8 +1,8 @@
 (ns wfl.unit.workflows-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test        :refer [deftest is testing]]
             [wfl.tools.workflows :as workflows]
             [wfl.tools.resources :as resources]
-            [wfl.util :as util])
+            [wfl.util            :as util])
   (:import (clojure.lang ExceptionInfo)))
 
 (defn ^:private filtering-type [test? type object]
@@ -52,21 +52,24 @@
       (is (= (util/map-vals vector outputs) (vectorize type outputs))))))
 
 (deftest test-array-types
-  (let [type    (make-output-type "compound.edn")
-        outputs {:outarray  ["clojure" "is" "fun"]}]
-    (testing "foldl"
-      (is (= (:outarray outputs)
-             (workflows/foldl #(conj %1 %3) [] type outputs))))
-    (testing "traverse"
-      (is (= (util/map-vals #(map vector %) outputs)
-             (vectorize type outputs))))))
+  (letfn [(typeless [p1 _p2 p3] (conj p1 p3))]
+    (let [type    (make-output-type "compound.edn")
+          outputs {:outarray  ["clojure" "is" "fun"]}]
+      (testing "foldl"
+        (is (= (:outarray outputs)
+               (workflows/foldl typeless [] type outputs))))
+      (testing "traverse"
+        (is (= (util/map-vals #(map vector %) outputs)
+               (vectorize type outputs)))))))
 
 (deftest test-map-types
   (let [type    (make-output-type "compound.edn")
         outputs {:outmap {"foo" "lolcats.txt" "bar" "in.gif"}}]
     (testing "foldl"
-      (is (= #{"foo" "bar"} (filtering-type #(= % "String") type outputs)))
-      (is (= #{"lolcats.txt" "in.gif"} (filtering-type #(= % "File") type outputs))))
+      (is (= #{"foo" "bar"}
+             (filtering-type #(= % "String") type outputs)))
+      (is (= #{"lolcats.txt" "in.gif"}
+             (filtering-type #(= % "File") type outputs))))
     (testing "traverse"
       (is (= {:outmap {["foo"] ["lolcats.txt"] ["bar"] ["in.gif"]}}
              (vectorize type outputs))))))
