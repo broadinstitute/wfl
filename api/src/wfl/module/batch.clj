@@ -200,7 +200,7 @@
      (query-workflows-with-status tx items status)))))
 
 (defn retry-unsupported
-  [workload _workloads]
+  [workload _]
   (throw (UserException. "Cannot retry workflows - operation unsupported."
                          {:workload (util/to-edn workload)
                           :status   501})))

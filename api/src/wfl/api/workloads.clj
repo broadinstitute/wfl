@@ -11,34 +11,35 @@
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
   "(transaction workload-request) -> workload"
-  (fn [transaction request] (:pipeline request)))
+  (fn [_transaction request] (:pipeline request)))
 
 (defmulti start-workload!
   "(transaction workload) -> workload"
-  (fn [transaction workload] (:pipeline workload)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti stop-workload!
   "(transaction workload) -> workload"
-  (fn [transaction workload] (:pipeline workload)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti execute-workload!
   "(transaction workload) -> workload"
-  (fn [transaction workload] (:pipeline workload)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti update-workload!
   "(transaction workload) -> workload"
-  (fn [transaction workload] (:pipeline workload)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti workflows
   "Use db `transaction` to return the workflows managed by the `workload`,
    optionally filtering by status."
-  (fn ([transaction workload]        (:pipeline workload))
-    ([transaction workload status] (:pipeline workload))))
+  (fn
+    ([_transaction workload]         (:pipeline workload))
+    ([_transaction workload _status] (:pipeline workload))))
 
 (defmulti retry
   "Retry/resubmit the `workflows` managed by the `workload` and return the
    workload that manages the new workflows."
-  (fn [workload workflows] (:pipeline workload)))
+  (fn [workload _workflows] (:pipeline workload)))
 
 (defmulti to-edn
   "Return an EDN representation of the `workload` that will be shown to users."
@@ -49,7 +50,7 @@
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.
   NOTE: do NOT call directly in product code - this is only meant to be called
   within this namespace."
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction body] (:pipeline body)))
 
 (defn ^:private try-load-workload-impl [tx workload]
   (try
