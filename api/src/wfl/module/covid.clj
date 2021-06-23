@@ -885,8 +885,8 @@
     (throw (ex-info "Missing executor details table" {:table details})))
   (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
     (terra-workflows-from-records
-      executor
-      (jdbc/query tx (format query details)))))
+     executor
+     (jdbc/query tx (format query details)))))
 
 (defn ^:private terra-executor-workflows-by-status
   [tx {:keys [details] :as executor} status]
@@ -896,8 +896,8 @@
                WHERE workflow IS NOT NULL AND status = ?
                ORDER BY id ASC"]
     (terra-workflows-from-records
-      executor
-      (jdbc/query tx [(format query details) status]))))
+     executor
+     (jdbc/query tx [(format query details) status]))))
 
 (defn ^:private terra-executor-done? [executor]
   (zero? (stage/queue-length executor)))
