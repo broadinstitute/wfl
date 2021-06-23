@@ -16,7 +16,8 @@
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [org.apache.commons.io FilenameUtils])
+  (:gen-class))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."

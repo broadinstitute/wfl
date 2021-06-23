@@ -49,7 +49,7 @@
  
  {:wfl {:main-opts ["-m" "wfl.main"]}
 
-  :lint
+  :check-format
   {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}}
 
   :format
