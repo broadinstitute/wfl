@@ -2,7 +2,8 @@
   (:require [clojure.spec.alpha  :as s]
             [clojure.test        :refer [deftest testing is]]
             [wfl.api.spec        :as spec]
-            [wfl.tools.workloads :as workloads])
+            [wfl.tools.workloads :as workloads]
+            [wfl.module.all      :as all])
   (:import [java.util UUID]))
 
 (deftest request-spec-test

@@ -16,7 +16,10 @@
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [org.apache.commons.io FilenameUtils]
+           [java.time OffsetDateTime]
+           [java.util UUID]
+           [javax.mail.internet InternetAddress]))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -587,3 +590,11 @@
   [s]
   (let [[name value & rest] (str/split s #":" 3)]
     (and (label-name? name) (label-value? value) (nil? rest))))
+
+(defn uuid-string? [s] (uuid? (do-or-nil (UUID/fromString s))))
+(defn datetime-string? [s] (do-or-nil (OffsetDateTime/parse s)))
+
+(defn email-address?
+  "True if `s` is an email address."
+  [s]
+  (do-or-nil (or (.validate (InternetAddress. s)) true)))

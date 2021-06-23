@@ -16,6 +16,7 @@
             [wfl.api.workloads                  :as workloads]
             [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
+            [wfl.module.all                     :as all]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -55,7 +56,7 @@
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path {:uuid ::spec/uuid}}
+           :parameters {:path {:uuid ::all/uuid}}
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/create"
@@ -65,12 +66,12 @@
             :handler    handlers/post-create}}]
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
     {:post {:summary    "Stop managing the workload specified by 'request'."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
    ["/api/v1/exec"

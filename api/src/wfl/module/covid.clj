@@ -1,6 +1,7 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [clojure.data :as data]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.data :as data]
             [clojure.edn :as edn]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -13,13 +14,42 @@
             [wfl.service.rawls :as rawls]
             [wfl.stage :as stage]
             [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.module.all :as all-modules])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [java.util UUID]
            [wfl.util UserException]))
+
+;; specs
+(s/def ::executor (s/keys :req-un [::all-modules/name
+                                   ::all-modules/fromSource
+                                   ::all-modules/methodConfiguration
+                                   ::all-modules/methodConfigurationVersion
+                                   ::all-modules/workspace]))
+(s/def ::creator util/email-address?)
+(s/def ::workload-request (s/keys :req-un [::executor
+                                           ::all-modules/project
+                                           ::all-modules/sink
+                                           ::all-modules/source]
+                                  :opt-un [::all-modules/labels
+                                           ::all-modules/watchers]))
+
+(s/def ::workload-response (s/keys :req-un [::all-modules/created
+                                            ::creator
+                                            ::executor
+                                            ::all-modules/labels
+                                            ::all-modules/sink
+                                            ::all-modules/source
+                                            ::all-modules/uuid
+                                            ::all-modules/version
+                                            ::all-modules/watchers]
+                                   :opt-un [::all-modules/finished
+                                            ::all-modules/started
+                                            ::all-modules/stopped
+                                            ::all-modules/updated]))
 
 (def pipeline nil)
 
