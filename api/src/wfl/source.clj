@@ -9,6 +9,7 @@
             [wfl.stage                      :as stage]
             [wfl.util                       :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
+           [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [wfl.util UserException]))
@@ -19,7 +20,7 @@
    processing stage. This operation should not perform any long-running
    external effects other than database operations via the `transaction`. This
    function is called at most once during a workload's operation."
-  (fn [transaction source] (:type source)))
+  (fn [_transaction source] (:type source)))
 
 (defmulti stop-source!
   "Stop enqueuing inputs onto the `source`'s queue to be consumed by a later
@@ -28,7 +29,7 @@
    function is called at most once during a workload's operation and will only
    be called after `start-source!`. Any outstanding items on the `source`
    queue may still be consumed by a later processing stage."
-  (fn [transaction source] (:type source)))
+  (fn [_transaction source] (:type source)))
 
 (defmulti update-source!
   "Enqueue items onto the `source` queue to be consumed by a later processing
@@ -37,7 +38,7 @@
    running external calls, favouring internal queues to manage such tasks
    asynchronously between invocations. This function is called one or more
    times after `start-source!` and may be called after `stop-source!`"
-  (fn [source] (:type source)))
+  :type)
 
 ;; source load/save operations
 (defmulti create-source!
@@ -50,15 +51,14 @@
      database schema.
    - This multimethod is type-dispatched on the `:name` association in the
      `request`."
-  (fn [transaction id source-request] (:name source-request)))
+  (fn [_transaction _id source-request] (:name source-request)))
 
 (defmulti load-source!
   "Return the `Source` implementation associated with the `source_type` and
    `source_items` fields of the `workload` row in the database. Note that this
    multimethod is type-dispatched on the `:source_type` association in the
    `workload`."
-  (fn [transaction workload] (:source_type workload)))
-
+  (fn [_transaction workload] (:source_type workload)))
 
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")

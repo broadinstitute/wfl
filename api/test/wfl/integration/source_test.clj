@@ -1,12 +1,13 @@
 (ns wfl.integration.source-test
-  (:require [wfl.source :as source]
-            [clojure.test :refer :all]
-            [wfl.stage :as stage]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc    :as jdbc]
+            [clojure.spec.alpha   :as s]
+            [clojure.test         :refer :all]
+            [wfl.api.spec         :as spec]
             [wfl.service.postgres :as postgres]
-            [wfl.util :as util]
-            [clojure.spec.alpha :as s]
-            [wfl.tools.fixtures :as fixtures])
+            [wfl.stage            :as stage]
+            [wfl.source           :as source]
+            [wfl.tools.fixtures   :as fixtures]
+            [wfl.util             :as util])
   (:import [java.time LocalDateTime]
            [java.util UUID]))
 
@@ -18,7 +19,7 @@
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
-      (map-indexed f))))
+         (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id]
@@ -42,9 +43,9 @@
           :table          "is"
           :column         "fun"
           :skipValidation true}
-      (source/create-source! tx (rand-int 1000000))
-      (zipmap [:source_type :source_items])
-      (source/load-source! tx))))
+         (source/create-source! tx (rand-int 1000000))
+         (zipmap [:source_type :source_items])
+         (source/load-source! tx))))
 
 (defn ^:private reload-source [tx {:keys [type id] :as _source}]
   (source/load-source! tx {:source_type type :source_items (str id)}))
@@ -55,7 +56,7 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (source/start-source! tx source)
       (is (:last_checked (reload-source tx source))
-        ":last_checked was not updated"))))
+          ":last_checked was not updated"))))
 
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
@@ -66,27 +67,27 @@
        #'source/check-tdr-job    mock-check-tdr-job}
       (fn []
         (source/update-source!
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (source/start-source! tx source)
-            (reload-source tx source)))
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (source/start-source! tx source)
+           (reload-source tx source)))
         (is (== expected-num-records (stage/queue-length source))
-          "snapshots should be enqueued")
+            "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
           (let [records (->> source :details (postgres/get-table tx))]
             (letfn [(record-updated? [record]
                       (and (= "succeeded" (:snapshot_creation_job_status record))
-                        (not (nil? (:snapshot_creation_job_id record)))
-                        (not (nil? (:snapshot_id record)))))]
+                           (not (nil? (:snapshot_creation_job_id record)))
+                           (not (nil? (:snapshot_id record)))))]
               (testing "source details got updated with correct number of snapshot jobs"
                 (is (= expected-num-records (count records))))
               (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
                 (is (every? record-updated? records))))))
         (source/update-source!
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (source/stop-source! tx source)
-            (reload-source tx source)))
+         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (source/stop-source! tx source)
+           (reload-source tx source)))
         (is (== expected-num-records (stage/queue-length source))
-          "no more snapshots should be enqueued")
+            "no more snapshots should be enqueued")
         (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
 
 (deftest test-stop-tdr-sourced
@@ -102,9 +103,9 @@
     (->> {:name           "TDR Snapshots"
           :snapshots      snapshots
           :skipValidation true}
-      (source/create-source! tx (rand-int 1000000))
-      (zipmap [:source_type :source_items])
-      (source/load-source! tx))))
+         (source/create-source! tx (rand-int 1000000))
+         (zipmap [:source_type :source_items])
+         (source/load-source! tx))))
 
 (deftest test-tdr-snapshot-list-to-edn
   (let [snapshot {:name "test-snapshot-name" :id (str (UUID/randomUUID))}

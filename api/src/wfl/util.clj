@@ -543,7 +543,7 @@
 
 (defmulti to-edn
   "Return an EDN representation of the `object` that will be shown to users."
-  (fn [object] (:type object)))
+  :type)
 
 (defmethod to-edn :default [x] x)
 
