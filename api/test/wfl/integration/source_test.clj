@@ -27,10 +27,6 @@
    :job_status  "succeeded"
    :id          job-id})
 
-(def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
-(def ^:private testing-namespace "wfl-dev")
-(def ^:private testing-table-name "flowcells")
-
 ;; Queue mocks
 (use-fixtures :once
   (fixtures/temporary-environment {"WFL_TDR_URL" "https://data.terra.bio"})
