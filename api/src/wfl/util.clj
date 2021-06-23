@@ -35,8 +35,9 @@
   [^String object]
   (json/read-str object :key-fn keyword))
 
-(defn response-body-json [response]
+(defn response-body-json
   "Return the :body of the http `response` as JSON"
+  [response]
   (-> response :body (or "null") parse-json))
 
 (defn slurp-json
@@ -77,7 +78,7 @@
 (defn extension
   "Return the (last) file extension from `filename`, if one exists."
   [filename]
-  (if-let [idx (str/last-index-of filename ".")]
+  (when-let [idx (str/last-index-of filename ".")]
     (subs filename (inc idx) (count filename))))
 
 (defn basename
@@ -93,7 +94,7 @@
   (if (= "/" filename)
     filename
     (if-let [idx (str/last-index-of filename "/" (- (count filename) 2))]
-      (if (= idx 0) "/" (subs filename 0 idx))
+      (if (zero? idx) "/" (subs filename 0 idx))
       "")))
 
 (defn deep-merge
@@ -382,11 +383,11 @@
    ----------
    acquire - thunk returning newly acquired resource
    release - function to clean up resource, called before this function returns
-   use     - function that uses the resource"
-  [acquire release use]
+   utilize - function that uses the resource"
+  [acquire release utilize]
   (let [resource (acquire)]
     (try
-      (use resource)
+      (utilize resource)
       (finally
         (release resource)))))
 
@@ -399,7 +400,7 @@
 (defn randomize
   "Append a random suffix to `string`."
   [string]
-  (->> (str/replace (UUID/randomUUID) "-" "") (str string)))
+  (str string (str/replace (UUID/randomUUID) "-" "")))
 
 (defn curry
   "Curry the function `f` such that its arguments may be supplied across two
@@ -434,19 +435,25 @@
 
 (defn terra-id
   "
-  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+  Generate a Terra-compatible primary key column name for the
+  specified TSV-TYPE and base COL.
 
   The first column of the table must be its primary key, and named accordingly:
     entity:[entity-type]_id
     membership:[entity-type]_set_id
 
-  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data into a `sample` table
-  in the workspace (or create one if it does not exist).
+  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data
+  into a `sample` table in the workspace (or create one if it does not
+  exist).
+
   If the table already contains a sample with that id, it will get overwritten.
 
-  For tsv-type :membership, 'membership:sample_set_id' will append sample names to a `sample_set` table
-  in the workspace (or create one if it does not exist).
-  If the table already contains a sample set with that id, it will be appended to and not overwritten.
+  For tsv-type :membership, 'membership:sample_set_id' will append
+  sample names to a `sample_set` table in the workspace (or create one
+  if it does not exist).
+
+  If the table already contains a sample set with that id, it will be
+  appended to and not overwritten.
 
   Parameters
   ----------
@@ -460,8 +467,11 @@
   "
   [tsv-type col]
   {:pre [(s/valid? ::tsv-type tsv-type)]}
-  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
-    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+  (str/join [(name tsv-type)
+             ":"
+             (-> col (unsuffix "_id") (unsuffix "_set"))
+             (when (= :membership tsv-type) "_set")
+             "_id"]))
 
 (defn columns-rows->tsv
   "

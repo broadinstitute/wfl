@@ -39,8 +39,8 @@
 (defn post-create
   "Create the workload described in REQUEST."
   [request]
-  (let [workload-request (-> (:body-params request)
-                             (rename-keys {:cromwell :executor}))
+  (let [workload-request (rename-keys (:body-params request)
+                                      {:cromwell :executor})
         {:keys [email]}  (gcs/userinfo request)]
     (logr/info "POST /api/v1/create with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -98,8 +98,8 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (let [workload-request (-> (:body-params request)
-                             (rename-keys {:cromwell :executor}))]
+  (let [workload-request (rename-keys (:body-params request)
+                                      {:cromwell :executor})]
     (logr/info "POST /api/v1/exec with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (gcs/userinfo request)

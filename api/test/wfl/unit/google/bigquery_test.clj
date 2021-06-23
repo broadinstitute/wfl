@@ -1,6 +1,6 @@
 (ns wfl.unit.google.bigquery-test
-  (:require [clojure.test :refer :all]
-            [clojure.data.csv :as csv]
+  (:require [clojure.test                :refer [deftest is]]
+            [clojure.data.csv            :as csv]
             [wfl.service.google.bigquery :as bigquery]))
 
 ;; mock output from bigquery/query-sync

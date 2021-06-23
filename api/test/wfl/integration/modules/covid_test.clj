@@ -1,13 +1,13 @@
 (ns wfl.integration.modules.covid-test
   "Test the Sarscov2IlluminaFull COVID pipeline."
-  (:require [clojure.test                   :refer :all]
+  (:require [clojure.test                   :refer [deftest is testing
+                                                    use-fixtures]]
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
             [reitit.coercion.spec]
             [reitit.ring                    :as ring]
             [reitit.ring.coercion           :as coercion]
-            [wfl.api.spec                   :as spec]
             [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
@@ -43,10 +43,11 @@
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
-(def ^:private testing-workspace "wfl-dev/CDC_Viral_Sequencing")
+(def ^:private testing-namespace "wfl-dev")
+(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
 (def ^:private testing-method-name "sarscov2_illumina_full")
-(def ^:private testing-method-configuration (str "cdc-covid-surveillance/" testing-method-name))
-(def ^:private testing-method-configuration-version 2)
+(def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
+(def ^:private testing-method-configuration-version 1)
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
@@ -114,22 +115,22 @@
   (let [request  (workloads/covid-workload-request
                   {:skipValidation true}
                   {:skipValidation true}
-                  {:skipValidation true})
-        _        (is (s/valid? ::spec/workload-request request)
-                     (s/explain-str ::spec/workload-request request))
-        workload (util/to-edn (workloads/create-workload! request))]
-    (is (not-any? workload [:id
-                            :items
-                            :source_type
-                            :source_items
-                            :executor_type
-                            :executor_items
-                            :sink_type
-                            :sink_items
-                            :type]))
-    (is (not-any? (:source workload) [:id :details :type :last_checked]))
-    (is (not-any? (:executor workload) [:id :details :type]))
-    (is (not-any? (:sink workload) [:id :details :type]))))
+                  {:skipValidation true})]
+    (is (s/valid? :wfl.api.spec/workload-request request)
+        (s/explain-str :wfl.api.spec/workload-request request))
+    (let [workload (util/to-edn (workloads/create-workload! request))]
+      (is (not-any? workload [:id
+                              :items
+                              :source_type
+                              :source_items
+                              :executor_type
+                              :executor_items
+                              :sink_type
+                              :sink_items
+                              :type]))
+      (is (not-any? (:source workload) [:id :details :type :last_checked]))
+      (is (not-any? (:executor workload) [:id :details :type]))
+      (is (not-any? (:sink workload) [:id :details :type])))))
 
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown-with-msg?
@@ -216,7 +217,7 @@
          {:name "bad name"}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-valid-executor-request
+(deftest test-create-covid-workload-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
        (workloads/create-workload!
@@ -228,9 +229,9 @@
           :fromSource                 "frobnicate"}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-wrong-method-configuration
+(deftest test-create-covid-workload-with-wrong-method-configuration-1
   (is (thrown-with-msg?
-       UserException #"Method configuration version mismatch"
+       UserException #"Unexpected method configuration version"
        (workloads/create-workload!
         (workloads/covid-workload-request
          {:skipValidation true}
@@ -363,9 +364,10 @@
 
 ;; when we create submissions, workflows have been queued for execution
 (defn ^:private mock-firecloud-create-submission [& _]
-  (let [enqueue #(-> % (dissoc :id) (assoc :staus "Queued"))]
+  (let [enqueue #(-> % (dissoc :id) (assoc :status "Queued"))]
     {:submissionId submission-id-mock
-     :workflows    (map enqueue [running-workflow-mock succeeded-workflow-mock])}))
+     :workflows    (map enqueue [running-workflow-mock
+                                 succeeded-workflow-mock])}))
 
 ;; when we get the submission later, the workflows may have a uuid assigned
 (defn ^:private mock-firecloud-get-submission [& _]
@@ -375,16 +377,8 @@
                 (assoc :workflowEntity {:entityType "test" :entityName entityName})
                 (dissoc :entityName)))]
     {:submissionId submission-id-mock
-     :workflows   (map add-workflow-entity [running-workflow-mock succeeded-workflow-mock])}))
-
-(defn ^:private mock-firecloud-create-failed-submission [& _]
-  {:submissionId submission-id-mock
-   :workflows    [{:status     "Failed"
-                   :uuid       (str (UUID/randomUUID))
-                   :entityName "failed"}
-                  {:status     "Aborted"
-                   :uuid       (str (UUID/randomUUID))
-                   :entityName "aborted"}]})
+     :workflows    (map add-workflow-entity [running-workflow-mock
+                                             succeeded-workflow-mock])}))
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 (defn ^:private mock-workflow-update-status [_ _ workflow-id]
@@ -742,11 +736,11 @@
                    :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
                   (assoc request :source)
                   app)]
-        (is (== 200 status) body)))
+        (is (== 200 status) (pr-str body))))
     (testing "Workload with a TDR Snapshots Source"
       (let [{:keys [status body]}
             (->> {:name      "TDR Snapshots"
                   :snapshots [testing-snapshot]}
                  (assoc request :source)
                  app)]
-        (is (== 200 status) body)))))
+        (is (== 200 status) (pr-str body))))))
