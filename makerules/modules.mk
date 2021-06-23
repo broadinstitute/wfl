@@ -38,7 +38,7 @@ all: $(MAKE_TARGETS)
 # Configure `make` dependencies via their timestamp.
 $(PREBUILD):    $(shell eval $(MKDIR) $(DERIVED_MODULE_DIR))
 $(LINT):        $(PREBUILD)
-$(BUILD):       $(LINT)
+$(BUILD):       $(PREBUILD)
 $(UNIT):        $(BUILD)
 $(INTEGRATION): $(BUILD)
 $(IMAGES):      $(BUILD)

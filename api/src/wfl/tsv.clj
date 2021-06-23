@@ -77,7 +77,7 @@
   [table]
   (let [writer (StringWriter.)]
     (write table writer)
-    (.toString writer)))
+    (str writer)))
 
 (defn write-file
   "Write TABLE, a sequence of .tsv field sequences, to FILE."
