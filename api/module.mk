@@ -53,11 +53,12 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
+LIKELY_FIX := 'Run `clojure -M:format` in this directory'
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	$(CLOJURE) -M:check-format
-	$(CLOJURE) -M:eastwood
-	$(CLOJURE) -M:kibit
-	-$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
+	@$(CLOJURE) -M:check-format || (c=$$?; $(ECHO) $(LIKELY_FIX); $(EXIT) $$c)
+	@$(CLOJURE) -M:eastwood
+	@$(CLOJURE) -M:kibit
+	-@$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC)
