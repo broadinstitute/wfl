@@ -9,7 +9,13 @@
             [wfl.tools.fixtures   :as fixtures]
             [wfl.util             :as util])
   (:import [java.time LocalDateTime]
-           [java.util UUID]))
+           [java.util UUID]
+           [wfl.util  UserException]))
+
+(def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
+(def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
+(def ^:private testing-table-name "flowcells")
+(def ^:private testing-column-name "run_date")
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
@@ -28,9 +34,7 @@
    :id          job-id})
 
 ;; Queue mocks
-(use-fixtures :once
-  (fixtures/temporary-environment {"WFL_TDR_URL" "https://data.terra.bio"})
-  fixtures/temporary-postgresql-database)
+(use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -45,6 +49,37 @@
 
 (defn ^:private reload-source [tx {:keys [type id] :as _source}]
   (source/load-source! tx {:source_type type :source_items (str id)}))
+
+(deftest test-create-tdr-source-from-valid-request
+  (is (stage/validate-or-throw
+       {:name    "Terra DataRepo"
+        :dataset testing-dataset
+        :table   testing-table-name
+        :column  testing-column-name})))
+
+(deftest test-create-tdr-source-with-non-existent-dataset
+  (is (thrown-with-msg?
+       UserException #"Cannot access dataset"
+       (stage/validate-or-throw
+        {:name    "Terra DataRepo"
+         :dataset util/uuid-nil}))))
+
+(deftest test-create-tdr-source-with-invalid-dataset-table
+  (is (thrown-with-msg?
+       UserException #"Table not found"
+       (stage/validate-or-throw
+        {:name    "Terra DataRepo"
+         :dataset testing-dataset
+         :table   "no_such_table"}))))
+
+(deftest test-create-tdr-source-with-invalid-dataset-column
+  (is (thrown-with-msg?
+       UserException #"Column not found"
+       (stage/validate-or-throw
+        {:name    "Terra DataRepo"
+         :dataset testing-dataset
+         :table   testing-table-name
+         :column  "no_such_column"}))))
 
 (deftest test-start-tdr-source
   (let [source (create-tdr-source)]
@@ -109,3 +144,15 @@
     (is (not-any? source [:id :type]))
     (is (= (:snapshots source) [(:id snapshot)]))
     (is (s/valid? ::spec/snapshot-list-source source))))
+
+(deftest test-create-covid-workload-with-empty-snapshot-list
+  (is (stage/validate-or-throw
+       {:name      "TDR Snapshots"
+        :snapshots [testing-snapshot]})))
+
+(deftest test-create-covid-workload-with-invalid-snapshot
+  (is (thrown-with-msg?
+       UserException #"Cannot access snapshot"
+       (stage/validate-or-throw
+        {:name     "TDR Snapshots"
+         :snapshots [util/uuid-nil]}))))

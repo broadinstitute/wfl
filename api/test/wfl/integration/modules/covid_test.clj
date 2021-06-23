@@ -141,63 +141,6 @@
          {:skipValidation true}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-valid-source-request
-  (is (workloads/create-workload!
-       (workloads/covid-workload-request
-        {:dataset testing-dataset
-         :table   testing-table-name
-         :column  testing-column-name}
-        {:skipValidation true}
-        {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-non-existent-dataset
-  (is (thrown-with-msg?
-       UserException #"Cannot access dataset"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset util/uuid-nil}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-invalid-dataset-table
-  (is (thrown-with-msg?
-       UserException #"Table not found"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset testing-dataset
-          :table   "no_such_table"}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-invalid-dataset-column
-  (is (thrown-with-msg?
-       UserException #"Column not found"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset testing-dataset
-          :table   testing-table-name
-          :column  "no_such_column"}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-empty-snapshot-list
-  (is (workloads/create-workload!
-       (workloads/covid-workload-request
-        {:name      "TDR Snapshots"
-         :snapshots [testing-snapshot]}
-        {:skipValidation true}
-        {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-invalid-snapshot
-  (is (thrown-with-msg?
-       UserException #"Cannot access snapshot"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:name     "TDR Snapshots"
-          :snapshots [util/uuid-nil]}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
 (deftest test-create-covid-workload-with-valid-executor-request
   (is (workloads/create-workload!
        (workloads/covid-workload-request
