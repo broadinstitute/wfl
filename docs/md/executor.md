@@ -122,7 +122,7 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      are parameterised types and the `Queue`'s parameterisation must be
      convertible to the `Executor`s.")
   (executor-workflows
-    ^WhatAmI?                 ;; TODO: type hint for workflow list
+    ^IPersistentVector
     [^Connection transaction  ;; JDBC Connection
      ^Executor   executor     ;; This executor instance
      ]
