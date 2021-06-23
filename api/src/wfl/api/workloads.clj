@@ -32,9 +32,12 @@
 (defmulti workflows
   "Use db `transaction` to return the workflows managed by the `workload`,
    optionally filtering by status."
-  (fn
-    ([_transaction workload]         (:pipeline workload))
-    ([_transaction workload _status] (:pipeline workload))))
+  (fn [_transaction workload]         (:pipeline workload)))
+
+(defmulti workflows-by-status
+  "Use db `transaction` to return the workflows managed by the `workload` that
+   match `status`."
+  (fn [_transaction workload _status] (:pipeline workload)))
 
 (defmulti retry
   "Retry/resubmit the `workflows` managed by the `workload` and return the

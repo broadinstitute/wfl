@@ -268,13 +268,15 @@
       submitted-samples)))
 
 (defn ^:private aou-workflows
-  ([tx {:keys [items] :as _workload}]
-   (batch/tag-workflows
-    (batch/pre-v0_4_0-deserialize-workflows (postgres/get-table tx items))))
-  ([tx {:keys [items] :as _workload} status]
-   (batch/tag-workflows
-    (batch/pre-v0_4_0-deserialize-workflows
-     (batch/query-workflows-with-status tx items status)))))
+  [tx {:keys [items] :as _workload}]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows (postgres/get-table tx items))))
+
+(defn ^:private aou-wokflows-by-status
+  [tx {:keys [items] :as _workload} status]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows
+    (batch/query-workflows-with-status tx items status))))
 
 (defmethod workloads/create-workload!
   pipeline
@@ -294,7 +296,8 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/workflows          pipeline aou-workflows)
-(defoverload workloads/retry              pipeline batch/retry-unsupported)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/workflows           pipeline aou-workflows)
+(defoverload workloads/workflows-by-status pipeline aou-wokflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

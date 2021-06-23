@@ -267,12 +267,13 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (apply operation (cons tx parameters)))))
 
-(def create-workload!  (transacted wfl.api.workloads/create-workload!))
-(def start-workload!   (transacted wfl.api.workloads/start-workload!))
-(def stop-workload!    (transacted wfl.api.workloads/stop-workload!))
-(def execute-workload! (transacted wfl.api.workloads/execute-workload!))
-(def update-workload!  (transacted wfl.api.workloads/update-workload!))
-(def workflows         (transacted wfl.api.workloads/workflows))
+(def create-workload!    (transacted wfl.api.workloads/create-workload!))
+(def start-workload!     (transacted wfl.api.workloads/start-workload!))
+(def stop-workload!      (transacted wfl.api.workloads/stop-workload!))
+(def execute-workload!   (transacted wfl.api.workloads/execute-workload!))
+(def update-workload!    (transacted wfl.api.workloads/update-workload!))
+(def workflows           (transacted wfl.api.workloads/workflows))
+(def workflows-by-status (transacted wfl.api.workloads/workflows-by-status))
 
 (defn retry [& params] (apply wfl.api.workloads/retry params))
 

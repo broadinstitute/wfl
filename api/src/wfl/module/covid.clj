@@ -57,8 +57,13 @@
   (fn [_source executor] (:type executor)))
 
 (defmulti executor-workflows
-  "Use `tx` to return the workflows created by the `executor"
+  "Use `tx` to return the workflows created by the `executor`"
   (fn [_tx executor] (:type executor)))
+
+(defmulti executor-workflows-by-status
+  "Use db `transaction` to return the workflows created by the `executor`
+   matching `status`"
+  (fn [_transaction executor _status] (:type executor)))
 
 (defmulti load-executor!
   "Use `tx` to load the `workload` executor with `executor_type`."
@@ -209,16 +214,19 @@
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))
 
-(defoverload workloads/create-workload!   pipeline create-covid-workload)
-(defoverload workloads/start-workload!    pipeline start-covid-workload)
-(defoverload workloads/update-workload!   pipeline update-covid-workload)
-(defoverload workloads/stop-workload!     pipeline stop-covid-workload)
-(defoverload workloads/retry              pipeline batch/retry-unsupported)
-(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-(defmethod   workloads/workflows          pipeline
+(defoverload workloads/create-workload!    pipeline create-covid-workload)
+(defoverload workloads/start-workload!     pipeline start-covid-workload)
+(defoverload workloads/update-workload!    pipeline update-covid-workload)
+(defoverload workloads/stop-workload!      pipeline stop-covid-workload)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl  pipeline load-covid-workload-impl)
+(defmethod   workloads/workflows           pipeline
   [tx {:keys [executor] :as _workload}]
   (executor-workflows tx executor))
-(defoverload workloads/to-edn             pipeline workload-to-edn)
+(defmethod   workloads/workflows-by-status pipeline
+  [tx {:keys [executor] :as _workload} status]
+  (executor-workflows-by-status tx executor status))
+(defoverload workloads/to-edn              pipeline workload-to-edn)
 
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
@@ -861,18 +869,33 @@
            first
            :count))))
 
-(defn ^:private terra-executor-workflows
-  [tx {:keys [workspace details] :as _executor}]
-  (when-not (postgres/table-exists? tx details)
-    (throw (ex-info "Missing executor details table" {:table details})))
+(defn ^:private terra-workflows-from-records
+  [{:keys [workspace] :as _executor} records]
   (letfn [(from-record [{:keys [workflow submission status] :as record}]
             (combine-record-workflow-and-outputs
              record
              (firecloud/get-workflow workspace submission workflow)
              (when (= "Succeeded" status)
                (firecloud/get-workflow-outputs workspace submission workflow))))]
-    (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
-      (map from-record (jdbc/query tx (format query details))))))
+    (map from-record records)))
+
+(defn ^:private terra-executor-workflows
+  [tx {:keys [details] :as executor}]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
+    (->> (jdbc/query tx (format query details))
+         (terra-workflows-from-records executor))))
+
+(defn ^:private terra-executor-workflows-by-status
+  [tx {:keys [details] :as executor} status]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (let [query "SELECT * FROM %s
+               WHERE workflow IS NOT NULL AND status = ?
+               ORDER BY id ASC"]
+    (->> (jdbc/query tx [(format query details) status])
+         (terra-workflows-from-records executor))))
 
 (defn ^:private terra-executor-done? [executor]
   (zero? (stage/queue-length executor)))
@@ -884,10 +907,11 @@
 
 (defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
 
-(defoverload create-executor!   terra-executor-name create-terra-executor)
-(defoverload update-executor!   terra-executor-type update-terra-executor)
-(defoverload load-executor!     terra-executor-type load-terra-executor)
-(defoverload executor-workflows terra-executor-type terra-executor-workflows)
+(defoverload create-executor!             terra-executor-name create-terra-executor)
+(defoverload update-executor!             terra-executor-type update-terra-executor)
+(defoverload load-executor!               terra-executor-type load-terra-executor)
+(defoverload executor-workflows           terra-executor-type terra-executor-workflows)
+(defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
 
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
 (defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)

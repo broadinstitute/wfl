@@ -80,7 +80,7 @@
         status (get-in request [:body-params :status])]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (let [w (workloads/load-workload-for-uuid tx uuid)]
-             [w (workloads/workflows tx w status)]))
+             [w (workloads/workflows-by-status tx w status)]))
          (apply workloads/retry)
          util/to-edn
          succeed)))

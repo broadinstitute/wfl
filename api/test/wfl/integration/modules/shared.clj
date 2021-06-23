@@ -50,7 +50,7 @@
 
 (defn run-retry-is-not-supported-test! [workload-request]
   (let [workload (workloads/execute-workload! workload-request)
-        failed   (workloads/workflows workload "Failed")]
+        failed   (workloads/workflows-by-status workload "Failed")]
     (is (thrown-with-msg?
          UserException #"Cannot retry workflows"
          (workloads/retry workload failed)))))

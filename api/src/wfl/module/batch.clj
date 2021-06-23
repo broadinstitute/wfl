@@ -190,14 +190,17 @@
 
 (defn workflows
   "Return the workflows managed by the `workload`."
-  ([tx {:keys [items] :as workload}]
-   (tag-workflows
-    (deserialize-workflows workload (postgres/get-table tx items))))
-  ([tx {:keys [items] :as workload} status]
-   (tag-workflows
-    (deserialize-workflows
-     workload
-     (query-workflows-with-status tx items status)))))
+  [tx {:keys [items] :as workload}]
+  (tag-workflows
+   (deserialize-workflows workload (postgres/get-table tx items))))
+
+(defn workflows-by-status
+  "Return the workflows managed by the `workload` matching `status`."
+  [tx {:keys [items] :as workload} status]
+  (tag-workflows
+   (deserialize-workflows
+    workload
+    (query-workflows-with-status tx items status))))
 
 (defn retry-unsupported
   [workload _]
