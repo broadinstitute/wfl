@@ -24,9 +24,8 @@ MAKE_TARGETS := prebuild format build unit integration check lint images system
 # 	$(PYTHON) -m pylint $(PYLINT_OPTIONS)
 # 	@$(TOUCH) $@
 
-LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)    
 PREBUILD    := $(DERIVED_MODULE_DIR)/prebuild.$(TIMESTAMP)
-FORMAT      := $(DERIVED_MODULE_DIR)/format.$(TIMESTAMP)    
+LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)
 BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
 UNIT        := $(DERIVED_MODULE_DIR)/unit.$(TIMESTAMP)  
 INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
@@ -38,11 +37,10 @@ all: $(MAKE_TARGETS)
 
 # Configure `make` dependencies via their timestamp.
 $(PREBUILD):    $(shell eval $(MKDIR) $(DERIVED_MODULE_DIR))
-$(FORMAT):      $(PREBUILD)
-$(BUILD):       $(FORMAT)
+$(LINT):        $(PREBUILD)
+$(BUILD):       $(PREBUILD)
 $(UNIT):        $(BUILD)
 $(INTEGRATION): $(BUILD)
-$(LINT):        $(BUILD)
 $(IMAGES):      $(BUILD)
 $(SYSTEM):      $(BUILD)
 

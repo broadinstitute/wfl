@@ -16,7 +16,8 @@
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [org.apache.commons.io FilenameUtils])
+  (:gen-class))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -177,16 +178,18 @@
 (defn minutes-between
   "The number of minutes from START to END."
   [start end]
-  (. ChronoUnit/MINUTES between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn seconds-between
   "The number of seconds from START to END."
   [start end]
-  (. ChronoUnit/SECONDS between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."

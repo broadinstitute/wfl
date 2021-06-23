@@ -33,7 +33,8 @@ JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD): $(MODULE_DIR)/build/build.$(CLJ)
 $(PREBUILD): $(SCM_RESOURCES) $(TEST_SCM_RESOURCES)
-	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR) $(DERIVED_TEST_DIR)
+	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR) $(DERIVED_TEST_DIR) $(CLASSES_DIR)
+	$(CLOJURE) -M -e "(compile 'wfl.util)"
 	$(CLOJURE) -X:prebuild
 	@$(TOUCH) $@
 
@@ -53,13 +54,10 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 	@$(TOUCH) $@
 
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	-$(CLOJURE) -M:eastwood
-	-$(CLOJURE) -M:kibit
+	$(CLOJURE) -M:check-format
+	$(CLOJURE) -M:eastwood
+	$(CLOJURE) -M:kibit
 	-$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
-	@$(TOUCH) $@
-
-$(FORMAT): $(SCM_SRC) $(SCM_RESOURCES)
-	$(CLOJURE) -M:format
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC)
