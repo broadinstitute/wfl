@@ -62,11 +62,10 @@ in the Terra UI.
 Prerequisites:
 
 - The workspace must exist prior to workload creation.
-- `workflow-launcher@firecloud.org` must be a workspace "Writer" in order to
+- `workflow-launcher@firecloud.org` must be a workspace "Owner" in order to
   import snapshots to the workspace.
 - The workspace must be compatible with any downstream processing stage that
   consumes its workflows.
-  For example, we cannot sink a workflow's outputs to an outside workspace.
 
 #### `methodConfiguration`
 A `{method-configuration-namespace}/{method-configuration-name}` string as it
@@ -111,8 +110,9 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
 (defprotocol Executor
   (update-executor!
     ^Executor
-    [^Queue    upstream ;; The queue from which to pull items to execute
-     ^Executor executor ;; This executor instance]
+    [^Queue    upstream  ;; The queue from which to pull items to execute
+     ^Executor executor  ;; This executor instance
+    ]
     "Consume items from the `upstream` queue and enqueue
      to the `executor` queue for consumption by a later processing stage,
      performing any external effects as necessary.
@@ -120,7 +120,13 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      running external calls, favouring internal queues to manage such tasks
      asynchronously between invocations.  Note that the `Executor` and `Queue`
      are parameterised types and the `Queue`'s parameterisation must be
-     convertible to the `Executor`s."))
+     convertible to the `Executor`s.")
+  (executor-workflows
+    ^WhatAmI?                 ;; TODO: type hint for workflow list
+    [^Connection transaction  ;; JDBC Connection
+     ^Executor   executor     ;; This executor instance
+     ]
+    "Use database `transaction` to return workflows created by the `executor`."))
 ```
 
 !!! note
