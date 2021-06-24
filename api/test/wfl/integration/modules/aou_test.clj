@@ -70,6 +70,9 @@
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (make-aou-workload-request)))
 
+(deftest test-retry-workflows-unsupported
+  (shared/run-retry-is-not-supported-test! (make-aou-workload-request)))
+
 (deftest test-aou-workload-not-finished-until-stopped
   (with-redefs-fn {#'aou/submit-aou-workflow         mock-submit-workload
                    #'batch/update-workflow-statuses! mock-update-statuses!}

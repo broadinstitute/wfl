@@ -9,6 +9,7 @@
             [wfl.references             :as references]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres       :as postgres]
             [wfl.util                   :as util]
             [wfl.wfl                    :as wfl]
             [wfl.module.all             :as all])
@@ -280,6 +281,17 @@
       (jdbc/insert-multi! tx items submitted-samples)
       submitted-samples)))
 
+(defn ^:private aou-workflows
+  [tx {:keys [items] :as _workload}]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows (postgres/get-table tx items))))
+
+(defn ^:private aou-workflows-by-status
+  [tx {:keys [items] :as _workload} status]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows
+    (batch/query-workflows-with-status tx items status))))
+
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
@@ -298,6 +310,8 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/workflows          pipeline batch/pre-v0_4_0-load-workflows)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/workflows           pipeline aou-workflows)
+(defoverload workloads/workflows-by-status pipeline aou-workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

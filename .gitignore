@@ -392,3 +392,4 @@ dmypy.json
 ### Module-Specific Ignores
 /api/wfl
 /api/project.clj
+api/.eastwood

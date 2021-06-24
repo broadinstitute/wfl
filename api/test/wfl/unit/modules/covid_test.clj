@@ -4,6 +4,7 @@
             [wfl.module.covid     :as covid]
             [wfl.module.all       :as all]
             [wfl.service.datarepo :as datarepo]
+            [wfl.source           :as source]
             [wfl.tools.resources  :as resources]
             [wfl.tools.workloads  :as workloads])
   (:import [java.time OffsetDateTime ZoneId]
@@ -44,7 +45,7 @@
         shards->snapshot-requests
         (with-redefs-fn
           {#'datarepo/create-snapshot-job mock-create-snapshot-job}
-          #(vec (#'covid/create-snapshots source now-obj row-ids)))]
+          #(vec (#'source/create-snapshots source now-obj row-ids)))]
     (testing "snapshot requests are properly partitioned and made unique"
       (is (= expected-num-shards (count shards->snapshot-requests))
           "requests are not partitioned correctly!")
