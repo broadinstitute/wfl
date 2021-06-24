@@ -60,3 +60,10 @@
       first
       :max
       (or 0)))
+
+(defn load-record-by-id! [tx table id]
+  (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
+        [record & _] (jdbc/query tx [(format query table) id])]
+    (when-not record
+      (throw (ex-info (str "No such record") {:id id :table table})))
+    record))
