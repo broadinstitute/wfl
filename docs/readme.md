@@ -7,11 +7,19 @@
 You may wish to launch a local version of our documentation website
 to test changes for formatting, link resolution, etc.
 
-Python 3 is required:
+Python 3 is required. It is also good practice to use virtualenv:
 ```
 cd /path/to/wfl/docs
+virtualenv <<name>>
+source <<name>>/bin/activate
 python3 -m pip install -r requirements.txt
 mkdocs serve
+```
+
+Alternatively, you can use make:
+```
+make docs
+. derived/.venv/docs/bin/activate && (  cd derived/docs; python3 -m mkdocs serve  )
 ```
 
 Logging output will indicate that changes are being detected,
