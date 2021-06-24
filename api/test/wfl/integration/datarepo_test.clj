@@ -7,6 +7,7 @@
             [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]
             [wfl.service.google.bigquery :as bigquery]
+            [wfl.sink                    :as sink]
             [wfl.tools.datasets          :as datasets]
             [wfl.tools.fixtures          :as fixtures]
             [wfl.tools.snapshots         :as snapshots]
@@ -76,7 +77,7 @@
           (-> (->> (workflows/get-files outputs-type outputs)
                    (datasets/ingest-files tdr-profile dataset workflow-id))
               (replace-urls-with-file-ids outputs-type outputs)
-              (covid/rename-gather from-outputs)
+              (sink/rename-gather from-outputs)
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
@@ -125,7 +126,7 @@
 
 (defn ^:private make-entity-import-request-tsv
   [from-dataset columns maps]
-  (-> (map #(covid/rename-gather % from-dataset) maps)
+  (-> (map #(sink/rename-gather % from-dataset) maps)
       (maps->table columns)
       bigquery/dump-table->tsv))
 
