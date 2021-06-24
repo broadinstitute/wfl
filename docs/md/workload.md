@@ -39,11 +39,11 @@ The specific values below are from the COVID-19 Surveillance in Terra project. W
         ]
     },
     "executor": {
+        "name": "Terra",
         "workspace": "wfl-dev/CDC_Viral_Sequencing",
         "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
         "methodConfigurationVersion": 1,
-        "fromSource": "importSnapshot",
-        "name": "Terra"
+        "fromSource": "importSnapshot"
     },
     "sink": {
         "name": "Terra Workspace",

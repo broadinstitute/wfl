@@ -81,11 +81,11 @@ To give more information, here are some example inputs to the above endpoints:
                     ]
                 },
                 "executor": {
+                    "name": "Terra",
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
                     "methodConfigurationVersion": 2,
-                    "fromSource": "importSnapshot",
-                    "name": "Terra"
+                    "fromSource": "importSnapshot"
                 },
                 "sink": {
                     "name": "Terra Workspace",
