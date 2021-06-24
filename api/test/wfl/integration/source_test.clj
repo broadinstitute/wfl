@@ -2,7 +2,6 @@
   (:require [clojure.java.jdbc    :as jdbc]
             [clojure.spec.alpha   :as s]
             [clojure.test         :refer [deftest is testing use-fixtures]]
-            [wfl.module.all         :as all]
             [wfl.service.postgres :as postgres]
             [wfl.stage            :as stage]
             [wfl.source           :as source]
@@ -143,7 +142,7 @@
         source   (util/to-edn (create-tdr-snapshot-list [snapshot]))]
     (is (not-any? source [:id :type]))
     (is (= (:snapshots source) [(:id snapshot)]))
-    (is (s/valid? ::all/snapshot-list-source source))))
+    (is (s/valid? ::source/snapshot-list-source source))))
 
 (deftest test-create-covid-workload-with-empty-snapshot-list
   (is (stage/validate-or-throw

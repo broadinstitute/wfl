@@ -34,7 +34,7 @@
 (s/def ::workload-request (s/keys :req-un [::executor
                                            ::all/project
                                            ::all/sink
-                                           ::all/source]
+                                           ::source/source]
                                   :opt-un [::all/labels
                                            ::all/watchers]))
 
@@ -43,7 +43,7 @@
                                             ::executor
                                             ::all/labels
                                             ::all/sink
-                                            ::all/source
+                                            ::source/source
                                             ::all/uuid
                                             ::all/version
                                             ::all/watchers]

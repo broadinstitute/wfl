@@ -53,8 +53,8 @@
           "requests are not made unique!"))))
 
 (deftest test-tdr-source-spec
-  (let [valid?           (partial s/valid? ::all/tdr-source)
+  (let [valid?           (partial s/valid? ::source/tdr-source)
         {:keys [source]} (workloads/covid-workload-request)]
-    (is (valid? source) (s/explain-str ::all/tdr-source source))
+    (is (valid? source) (s/explain-str ::source/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))

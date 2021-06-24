@@ -10,7 +10,8 @@
             [wfl.service.postgres :as postgres]
             [wfl.util             :as util]
             [wfl.wfl              :as wfl]
-            [wfl.module.all       :as all])
+            [wfl.module.all       :as all]
+            [wfl.source           :as source])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            [wfl.util UserException]))
@@ -31,7 +32,7 @@
                    ::all/labels
                    ::all/output
                    ::all/sink
-                   ::all/source
+                   ::source/source
                    ::all/watchers]
           :req-un [(or ::all/cromwell ::executor)
                    ::all/pipeline

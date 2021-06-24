@@ -128,8 +128,6 @@
                                ::identifier
                                ::workspace]))
 
-(s/def ::column string?)
-(s/def ::dataset string?)
 (s/def ::entityType string?)
 (s/def ::identifier string?)
 (s/def ::fromOutputs map?)
@@ -138,22 +136,5 @@
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
-(s/def ::table string?)
-(s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::watchers (s/* util/email-address?))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
-(s/def ::snapshots (s/* ::uuid))
-
-(s/def ::tdr-source
-  (s/keys :req-un [::name
-                   ::column
-                   ::dataset
-                   ::table
-                   ::snapshotReaders]
-          :opt-un [::snapshots]))
-
-(s/def ::snapshot-list-source
-  (s/keys :req-un [::name ::snapshots]))
-
-(s/def ::source (s/or :dataset   ::tdr-source
-                      :snapshots ::snapshot-list-source))
