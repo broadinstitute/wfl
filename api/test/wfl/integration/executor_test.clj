@@ -249,3 +249,24 @@
          (is (nil? (stage/peek-queue executor)))
          (is (== 1 (stage/queue-length executor)))
          (is (not (stage/done? executor)))))))
+
+(deftest test-terra-executor-get-retried-workflows
+  (with-redefs-fn
+    {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'firecloud/submit-method               mock-firecloud-create-submission
+     #'firecloud/get-submission              mock-firecloud-get-submission
+     #'firecloud/get-workflow                mock-workflow-keep-status
+     #'firecloud/get-workflow-outputs        mock-firecloud-get-workflow-outputs}
+    #(let [source   (make-queue-from-list [snapshot])
+           executor (create-terra-executor (rand-int 1000000))]
+       (executor/update-executor! source executor)
+       (is (== 2 (stage/queue-length executor)))
+       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+         (jdbc/update! tx (:details executor) {:retry 2} ["id = ?" 1]))
+       (is (== 2 (stage/queue-length executor))
+           "The retried workflow should remain visible downstream")
+       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+         (is (== 1 (count (executor/executor-workflows tx executor)))
+             "The retried workflow should not be returned")))))

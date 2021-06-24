@@ -332,7 +332,10 @@
   [tx {:keys [details] :as executor}]
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
-  (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
+  (let [query "SELECT * FROM %s
+               WHERE workflow IS NOT NULL
+               AND   retry    IS NULL
+               ORDER BY id ASC"]
     (terra-workflows-from-records
      executor
      (jdbc/query tx (format query details)))))
@@ -342,7 +345,9 @@
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
   (let [query "SELECT * FROM %s
-               WHERE workflow IS NOT NULL AND status = ?
+               WHERE workflow IS NOT NULL
+               AND retry      IS NULL
+               AND status     = ?
                ORDER BY id ASC"]
     (terra-workflows-from-records
      executor
