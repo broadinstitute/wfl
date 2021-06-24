@@ -8,9 +8,9 @@
 ## Overview
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
-is a workload manager.
+is a [workload](./workload.md) manager.
 
-For example, a workload could be a set of Whole Genome samples to be reprocessed in a
+For example, a [workload](./workload.md) could be a set of Whole Genome samples to be reprocessed in a
 given project/bucket, the workflow is the processing of an individual sample
 in that workload running WGS reprocessing; a workload could also be a queue of
 incoming notifications that describe all of the required inputs to launch Arrays

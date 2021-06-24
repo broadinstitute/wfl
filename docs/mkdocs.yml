@@ -38,9 +38,10 @@ nav:
   - Module-Specific Usage:
     - Overview: modules-general.md
     - Arrays: modules-aou-arrays.md
-    - Whole Genome: modules-wgs.md
+    - Covid: modules-covid.md
     - External Exome: modules-external-exome-reprocessing.md
     - Somatic Genomes: modules-sg.md
+    - Whole Genome: modules-wgs.md
   - General Usage:
     - Workflow Options: usage-workflow-options.md
     - Usage Across a Directory: usage-across-directory.md
