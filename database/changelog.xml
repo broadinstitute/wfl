@@ -39,4 +39,5 @@
     <include file="changesets/20210510_TerraWorkspaceSinkDetailsTable.xml"            relativeToChangelogFile="true"/>
     <include file="changesets/20210519_ListSourceType.xml"                            relativeToChangelogFile="true"/>
     <include file="changesets/20210519_TDRSnapshotListSourceEnum.xml"                 relativeToChangelogFile="true"/>
+    <include file="changesets/20210624_AddRetryToTerraExecutorDetails.xml"            relativeToChangelogFile="true"/>
 </databaseChangeLog>
