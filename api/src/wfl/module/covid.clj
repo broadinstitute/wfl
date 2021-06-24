@@ -9,6 +9,7 @@
             [wfl.api.workloads :as workloads :refer [defoverload]]
             [wfl.executor :as executor]
             [wfl.jdbc :as jdbc]
+            [wfl.module.batch :as batch]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres :as postgres]
             [wfl.service.rawls :as rawls]

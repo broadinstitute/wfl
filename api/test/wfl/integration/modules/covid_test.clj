@@ -486,9 +486,9 @@
 
 (deftest test-retry-workload-is-not-supported
   (with-redefs-fn
-    {#'covid/find-new-rows                   mock-find-new-rows
-     #'covid/create-snapshots                mock-create-snapshots
-     #'covid/check-tdr-job                   mock-check-tdr-job
+    {#'source/find-new-rows                  mock-find-new-rows
+     #'source/create-snapshots               mock-create-snapshots
+     #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
