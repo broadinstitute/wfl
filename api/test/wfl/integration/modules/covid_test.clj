@@ -482,3 +482,19 @@
                  (assoc request :source)
                  app)]
         (is (== 200 status) (pr-str body))))))
+
+(deftest test-retry-workload-is-not-supported
+  (with-redefs-fn
+    {#'covid/find-new-rows                   mock-find-new-rows
+     #'covid/create-snapshots                mock-create-snapshots
+     #'covid/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'firecloud/submit-method               mock-firecloud-create-submission
+     #'firecloud/get-workflow                (constantly {:status "Failed"})}
+    #(shared/run-retry-is-not-supported-test!
+      (workloads/covid-workload-request
+       {:skipValidation true}
+       {:skipValidation true}
+       {:skipValidation true}))))

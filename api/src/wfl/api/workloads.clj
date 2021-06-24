@@ -11,27 +11,38 @@
 ;; creating and dispatching workloads to cromwell
 (defmulti create-workload!
   "(transaction workload-request) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction request] (:pipeline request)))
 
 (defmulti start-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti stop-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti execute-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti update-workload!
   "(transaction workload) -> workload"
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti workflows
-  "Use `tx` to return the workflows managed by the `workload`."
-  (fn [_tx workload] (:pipeline workload)))
+  "Use db `transaction` to return the workflows managed by the `workload`,
+   optionally filtering by status."
+  (fn [_transaction workload]         (:pipeline workload)))
+
+(defmulti workflows-by-status
+  "Use db `transaction` to return the workflows managed by the `workload` that
+   match `status`."
+  (fn [_transaction workload _status] (:pipeline workload)))
+
+(defmulti retry
+  "Retry/resubmit the `workflows` managed by the `workload` and return the
+   workload that manages the new workflows."
+  (fn [workload _workflows] (:pipeline workload)))
 
 (defmulti to-edn
   "Return an EDN representation of the `workload` that will be shown to users."
@@ -42,7 +53,7 @@
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.
   NOTE: do NOT call directly in product code - this is only meant to be called
   within this namespace."
-  (fn [_ body] (:pipeline body)))
+  (fn [_transaction body] (:pipeline body)))
 
 (defn ^:private try-load-workload-impl [tx workload]
   (try
@@ -78,16 +89,15 @@
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
   (log/debugf "Loading workloads with project=\"%s\"" project)
-  (let [do-load   (partial load-workload-impl tx)]
-    (mapv do-load
-          (jdbc/query tx ["SELECT * FROM workload WHERE project = ?" project]))))
+  (let [query-str "SELECT * FROM workload WHERE project = ? ORDER BY id ASC"]
+    (mapv (partial load-workload-impl tx) (jdbc/query tx [query-str project]))))
 
 (defn load-workloads
   "Use transaction `tx` to load all known `workloads`."
   [tx]
   (log/debug "Loading all workloads")
-  (let [do-load (partial load-workload-impl tx)]
-    (mapv do-load (jdbc/query tx ["SELECT * FROM workload"]))))
+  (let [query-str "SELECT * FROM workload ORDER BY id ASC"]
+    (mapv (partial load-workload-impl tx) (jdbc/query tx query-str))))
 
 ;; helper utility for point-free multi-method implementation registration.
 (defmacro defoverload
@@ -133,6 +143,15 @@
   [_ {:keys [pipeline] :as workload}]
   (throw
    (ex-info "Failed to update workload - no such pipeline"
+            {:workload workload
+             :pipeline pipeline
+             :type     ::invalid-pipeline})))
+
+(defmethod retry
+  :default
+  [{:keys [pipeline] :as workload} _]
+  (throw
+   (ex-info "Failed to retry workflows - no such pipeline"
             {:workload workload
              :pipeline pipeline
              :type     ::invalid-pipeline})))

@@ -201,18 +201,24 @@
                   workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [items] :as workload}]
+  [status tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
-                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
     (run! update! (api/workflows tx workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
     {#'cromwell/submit-workflows             mock-submit-workflows
-     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")}
     #(shared/run-workload-state-transition-test! (make-wgs-workload-request))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (make-wgs-workload-request)))
+
+(deftest test-retry-failed-workflows
+  (with-redefs-fn
+    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
+    #(shared/run-retry-is-not-supported-test! (make-wgs-workload-request))))

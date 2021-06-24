@@ -101,25 +101,6 @@
   [_ workload]
   (into {:type :workload} (filter second workload)))
 
-(defn pre-v0_4_0-load-workflows
-  [tx workload]
-  (letfn [(split-inputs [m]
-            (let [keep [:id :finished :status :updated :uuid :options]]
-              (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
-          (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (->> (:items workload)
-         (postgres/get-table tx)
-         (mapv (comp util/unnilify split-inputs load-options)))))
-
-(defn ^:private load-batch-workflows
-  "Use transaction `tx` to load the workflows in the `_workload` stored in a
-   CromwellWorkflow table."
-  [tx {:keys [items] :as _workload}]
-  (letfn [(load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
-          (load-options [m] (update m :options (fnil util/parse-json "null")))]
-    (mapv (comp util/unnilify load-options load-inputs)
-          (postgres/get-table tx items))))
-
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
   [{:keys [uuid labels] :as _workload}
@@ -174,14 +155,58 @@
                              {:workload workload})))
     (if-not (or stopped finished) (stop! workload) workload)))
 
+(defn pre-v0_4_0-deserialize-workflows
+  [workflows]
+  (letfn [(split-inputs [m]
+            (let [keep [:id :finished :status :updated :uuid :options]]
+              (assoc (select-keys m keep) :inputs (apply dissoc m keep))))
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
+    (mapv (comp util/unnilify split-inputs load-options) workflows)))
+
+(defn ^:private post-v0_4_0-deserialize-workflows
+  [workflows]
+  (letfn [(load-inputs [m] (update m :inputs (fnil util/parse-json "null")))
+          (load-options [m] (update m :options (fnil util/parse-json "null")))]
+    (mapv (comp util/unnilify load-options load-inputs) workflows)))
+
+(defn ^:private deserialize-workflows
+  [workload records]
+  (if (workloads/saved-before? "0.4.0" workload)
+    (pre-v0_4_0-deserialize-workflows records)
+    (post-v0_4_0-deserialize-workflows records)))
+
+(defn tag-workflows
+  "Associate the :batch-workflow :type in all `workflows`."
+  [workflows]
+  (map #(assoc % :type :batch-workflow) workflows))
+
+(defn query-workflows-with-status
+  "Return the workflows in the items `table` that match `status`."
+  [tx table status]
+  (when-not (and table (postgres/table-exists? tx table))
+    (throw (ex-info "Table not found" {:table table})))
+  (let [query-str "SELECT * FROM %s WHERE status = ? ORDER BY id ASC"]
+    (jdbc/query tx [(format query-str table) status])))
+
 (defn workflows
   "Return the workflows managed by the `workload`."
-  [tx workload]
-  (map
-   #(assoc % :type :batch-workflow)
-   (if (workloads/saved-before? "0.4.0" workload)
-     (pre-v0_4_0-load-workflows tx workload)
-     (load-batch-workflows tx workload))))
+  [tx {:keys [items] :as workload}]
+  (tag-workflows
+   (deserialize-workflows workload (postgres/get-table tx items))))
+
+(defn workflows-by-status
+  "Return the workflows managed by the `workload` matching `status`."
+  [tx {:keys [items] :as workload} status]
+  (tag-workflows
+   (deserialize-workflows
+    workload
+    (query-workflows-with-status tx items status))))
+
+(defn retry-unsupported
+  [workload _]
+  (throw (UserException. "Cannot retry workflows - operation unsupported."
+                         {:workload (util/to-edn workload)
+                          :status   501})))
 
 (defmethod util/to-edn :batch-workflow [workflow] (dissoc workflow :id :type))
 

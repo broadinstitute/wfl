@@ -26,6 +26,11 @@
   "Return the workflows managed by the `executor"
   (fn [_transaction executor] (:type executor)))
 
+(defmulti executor-workflows-by-status
+  "Use db `transaction` to return the workflows created by the `executor`
+   matching `status`"
+  (fn [_transaction executor _status] (:type executor)))
+
 ;; load/save operations
 (defmulti create-executor!
   "Create an `Executor` instance using the database `transaction` and
@@ -313,18 +318,35 @@
            first
            :count))))
 
-(defn ^:private terra-executor-workflows
-  [tx {:keys [workspace details] :as _executor}]
-  (when-not (postgres/table-exists? tx details)
-    (throw (ex-info "Missing executor details table" {:table details})))
+(defn ^:private terra-workflows-from-records
+  [{:keys [workspace] :as _executor} records]
   (letfn [(from-record [{:keys [workflow submission status] :as record}]
             (combine-record-workflow-and-outputs
-             record
-             (firecloud/get-workflow workspace submission workflow)
-             (when (= "Succeeded" status)
-               (firecloud/get-workflow-outputs workspace submission workflow))))]
-    (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
-      (map from-record (jdbc/query tx (format query details))))))
+              record
+              (firecloud/get-workflow workspace submission workflow)
+              (when (= "Succeeded" status)
+                (firecloud/get-workflow-outputs workspace submission workflow))))]
+    (map from-record records)))
+
+(defn ^:private terra-executor-workflows
+  [tx {:keys [details] :as executor}]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (let [query "SELECT * FROM %s WHERE workflow IS NOT NULL ORDER BY id ASC"]
+    (terra-workflows-from-records
+      executor
+      (jdbc/query tx (format query details)))))
+
+(defn ^:private terra-executor-workflows-by-status
+  [tx {:keys [details] :as executor} status]
+  (when-not (postgres/table-exists? tx details)
+    (throw (ex-info "Missing executor details table" {:table details})))
+  (let [query "SELECT * FROM %s
+               WHERE workflow IS NOT NULL AND status = ?
+               ORDER BY id ASC"]
+    (terra-workflows-from-records
+      executor
+      (jdbc/query tx [(format query details) status]))))
 
 (defn ^:private terra-executor-done? [executor]
   (zero? (stage/queue-length executor)))
@@ -337,13 +359,15 @@
 (defoverload create-executor! terra-executor-name create-terra-executor)
 (defoverload load-executor!   terra-executor-type load-terra-executor)
 
-(defoverload update-executor!   terra-executor-type update-terra-executor)
-(defoverload executor-workflows terra-executor-type terra-executor-workflows)
+(defoverload update-executor!             terra-executor-type update-terra-executor)
+(defoverload executor-workflows           terra-executor-type terra-executor-workflows)
+(defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
 
 (defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
-(defoverload stage/peek-queue        terra-executor-type peek-terra-executor-queue)
-(defoverload stage/pop-queue!        terra-executor-type pop-terra-executor-queue)
-(defoverload stage/queue-length      terra-executor-type terra-executor-queue-length)
 (defoverload stage/done?             terra-executor-type terra-executor-done?)
+
+(defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
+(defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
+(defoverload stage/queue-length terra-executor-type terra-executor-queue-length)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)

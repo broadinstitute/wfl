@@ -152,20 +152,21 @@
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))
 
-(defoverload workloads/create-workload!   pipeline create-covid-workload)
-(defoverload workloads/start-workload!    pipeline start-covid-workload)
-(defoverload workloads/update-workload!   pipeline update-covid-workload)
-(defoverload workloads/stop-workload!     pipeline stop-covid-workload)
-(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
-(defmethod   workloads/workflows          pipeline
+(defoverload workloads/create-workload!    pipeline create-covid-workload)
+(defoverload workloads/start-workload!     pipeline start-covid-workload)
+(defoverload workloads/update-workload!    pipeline update-covid-workload)
+(defoverload workloads/stop-workload!      pipeline stop-covid-workload)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl  pipeline load-covid-workload-impl)
+(defmethod   workloads/workflows           pipeline
   [tx {:keys [executor] :as _workload}]
   (executor/executor-workflows tx executor))
+(defmethod   workloads/workflows-by-status pipeline
+  [tx {:keys [executor] :as _workload} status]
+  (executor/executor-workflows-by-status tx executor status))
 (defoverload workloads/to-edn             pipeline workload-to-edn)
 
-
 ;; Terra Workspace Sink
-
-
 (def ^:private terra-workspace-sink-name  "Terra Workspace")
 (def ^:private terra-workspace-sink-type  "TerraWorkspaceSink")
 (def ^:private terra-workspace-sink-table "TerraWorkspaceSink")
