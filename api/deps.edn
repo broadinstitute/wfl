@@ -49,8 +49,9 @@
  
  {:wfl {:main-opts ["-m" "wfl.main"]}
 
-  :lint
-  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}}
+  :check-format
+  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
+   :main-opts  ["-m" "cljfmt.main" "check"]}
 
   :format
   {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}

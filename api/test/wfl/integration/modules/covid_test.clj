@@ -16,19 +16,19 @@
             [wfl.service.postgres           :as postgres]
             [wfl.service.rawls              :as rawls]
             [wfl.stage                      :as stage]
+            [wfl.source                     :as source]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.tools.resources            :as resources]
             [wfl.util                       :as util])
-  (:import [java.lang Math]
-           [java.time LocalDateTime]
+  (:import [java.time LocalDateTime]
            [java.util ArrayDeque UUID]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
 (defn ^:private mock-find-new-rows [_ interval]
-  (is (every? #(LocalDateTime/parse % @#'covid/bigquery-datetime-format) interval))
+  (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
   (take mock-new-rows-size (range)))
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
@@ -141,63 +141,6 @@
          {:skipValidation true}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-valid-source-request
-  (is (workloads/create-workload!
-       (workloads/covid-workload-request
-        {:dataset testing-dataset
-         :table   testing-table-name
-         :column  testing-column-name}
-        {:skipValidation true}
-        {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-non-existent-dataset
-  (is (thrown-with-msg?
-       UserException #"Cannot access dataset"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset util/uuid-nil}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-invalid-dataset-table
-  (is (thrown-with-msg?
-       UserException #"Table not found"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset testing-dataset
-          :table   "no_such_table"}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-invalid-dataset-column
-  (is (thrown-with-msg?
-       UserException #"Column not found"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:dataset testing-dataset
-          :table   testing-table-name
-          :column  "no_such_column"}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-empty-snapshot-list
-  (is (workloads/create-workload!
-       (workloads/covid-workload-request
-        {:name      "TDR Snapshots"
-         :snapshots [testing-snapshot]}
-        {:skipValidation true}
-        {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-invalid-snapshot
-  (is (thrown-with-msg?
-       UserException #"Cannot access snapshot"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:name     "TDR Snapshots"
-          :snapshots [util/uuid-nil]}
-         {:skipValidation true}
-         {:skipValidation true})))))
-
 (deftest test-create-covid-workload-with-valid-executor-request
   (is (workloads/create-workload!
        (workloads/covid-workload-request
@@ -215,41 +158,6 @@
         (workloads/covid-workload-request
          {:skipValidation true}
          {:name "bad name"}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-invalid-executor-request
-  (is (thrown-with-msg?
-       UserException #"Unsupported coercion"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:workspace                  testing-workspace
-          :methodConfiguration        testing-method-configuration
-          :methodConfigurationVersion testing-method-configuration-version
-          :fromSource                 "frobnicate"}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-wrong-method-configuration-1
-  (is (thrown-with-msg?
-       UserException #"Unexpected method configuration version"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:workspace                  testing-workspace
-          :methodConfiguration        testing-method-configuration
-          :methodConfigurationVersion -1
-          :fromSource                 "importSnapshot"}
-         {:skipValidation true})))))
-
-(deftest test-create-covid-workload-with-wrong-method-configuration
-  (is (thrown-with-msg?
-       UserException #"Cannot access method configuration"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:workspace                  testing-workspace
-          :methodConfiguration        "no_such/method_configuration"
-          :fromSource                 "importSnapshot"}
          {:skipValidation true})))))
 
 (deftest test-create-covid-workload-with-valid-sink-request
@@ -320,9 +228,7 @@
     (is (:started (workloads/start-workload! workload)))))
 
 ;; Mocks
-
 (def ^:private fake-method-name "method-name")
-(def ^:private fake-method-config (str "method-namespace/" fake-method-name))
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
   {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
@@ -381,173 +287,11 @@
                                              succeeded-workflow-mock])}))
 
 ;; Workflow fetch mocks within update-workflow-statuses!
-(defn ^:private mock-workflow-update-status [_ _ workflow-id]
-  (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
-      "Successful workflow records should be filtered out before firecloud fetch")
-  {:status "Succeeded" :id workflow-id :workflowName fake-method-name})
 
 (defn ^:private mock-workflow-keep-status [_ _ workflow-id]
   (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
       "Successful workflow records should be filtered out before firecloud fetch")
   running-workflow-mock)
-
-(defn ^:private mock-firecloud-get-workflow-outputs [_ _ workflow]
-  (is (= (:id succeeded-workflow-mock) workflow))
-  {:tasks
-   {:noise
-    {}
-    (keyword fake-method-name)
-    {:outputs
-     (util/prefix-keys {:output "value"} (str fake-method-name "."))}}})
-
-(defn ^:private create-tdr-source []
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "Terra DataRepo",
-          :dataset        "this"
-          :table          "is"
-          :column         "fun"
-          :skipValidation true}
-         (covid/create-source! tx (rand-int 1000000))
-         (zipmap [:source_type :source_items])
-         (covid/load-source! tx))))
-
-(defn ^:private reload-source [tx {:keys [type id] :as _source}]
-  (covid/load-source! tx {:source_type type :source_items (str id)}))
-
-(deftest test-start-tdr-source
-  (let [source (create-tdr-source)]
-    (is (-> source :last_checked nil?))
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (covid/start-source! tx source)
-      (is (:last_checked (reload-source tx source))
-          ":last_checked was not updated"))))
-
-(deftest test-update-tdr-source
-  (let [source               (create-tdr-source)
-        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
-    (with-redefs-fn
-      {#'covid/create-snapshots mock-create-snapshots
-       #'covid/find-new-rows    mock-find-new-rows
-       #'covid/check-tdr-job    mock-check-tdr-job}
-      (fn []
-        (covid/update-source!
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (covid/start-source! tx source)
-           (reload-source tx source)))
-        (is (== expected-num-records (stage/queue-length source))
-            "snapshots should be enqueued")
-        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-          (let [records (->> source :details (postgres/get-table tx))]
-            (letfn [(record-updated? [record]
-                      (and (= "succeeded" (:snapshot_creation_job_status record))
-                           (not (nil? (:snapshot_creation_job_id record)))
-                           (not (nil? (:snapshot_id record)))))]
-              (testing "source details got updated with correct number of snapshot jobs"
-                (is (= expected-num-records (count records))))
-              (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
-                (is (every? record-updated? records))))))
-        (covid/update-source!
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (covid/stop-source! tx source)
-           (reload-source tx source)))
-        (is (== expected-num-records (stage/queue-length source))
-            "no more snapshots should be enqueued")
-        (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
-
-(deftest test-stop-tdr-sourced
-  (let [source (create-tdr-source)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (covid/start-source! tx source)
-      (covid/stop-source! tx source)
-      (let [source (reload-source tx source)]
-        (is (:stopped (reload-source tx source)) ":stopped was not written")))))
-
-(defn ^:private create-tdr-snapshot-list [snapshots]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "TDR Snapshots"
-          :snapshots      snapshots
-          :skipValidation true}
-         (covid/create-source! tx (rand-int 1000000))
-         (zipmap [:source_type :source_items])
-         (covid/load-source! tx))))
-
-(defn ^:private create-terra-executor [id]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name                       "Terra"
-          :workspace                  "workspace-ns/workspace-name"
-          :methodConfiguration        fake-method-config
-          :methodConfigurationVersion method-config-version-mock
-          :fromSource                 "importSnapshot"
-          :skipValidation             true}
-         (covid/create-executor! tx id)
-         (zipmap [:executor_type :executor_items])
-         (covid/load-executor! tx))))
-
-(deftest test-update-terra-executor
-  (let [source   (create-tdr-snapshot-list [snapshot])
-        executor (create-terra-executor (rand-int 1000000))]
-    (letfn [(verify-record-against-workflow [record workflow idx]
-              (is (= idx (:id record))
-                  "The record ID was incorrect given the workflow order in mocked submission")
-              (is (= (:id workflow) (:workflow record))
-                  "The workflow ID was incorrect and should match corresponding record"))]
-      (with-redefs-fn
-        {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-         #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
-         #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-         #'firecloud/submit-method               mock-firecloud-create-submission
-         #'firecloud/get-submission              mock-firecloud-get-submission
-         #'firecloud/get-workflow                mock-workflow-update-status}
-        #(covid/update-executor! source executor))
-      (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
-      (is (== 2 (stage/queue-length executor)) "Two workflows should be enqueued")
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (let [[running-record succeeded-record & _ :as records]
-              (->> executor :details (postgres/get-table tx) (sort-by :id))
-              executor-record
-              (#'covid/load-record-by-id! tx "TerraExecutor" (:id executor))]
-          (is (== 2 (count records))
-              "Exactly 2 workflows should have been written to the database")
-          (is (every? #(= snapshot-reference-id (:reference %)) records)
-              "The snapshot reference ID was incorrect and should match all records")
-          (is (every? #(= submission-id-mock (:submission %)) records)
-              "The submission ID was incorrect and should match all records")
-          (is (every? #(= "Succeeded" (:status %)) records)
-              "Status update mock should have marked running workflow as succeeded")
-          (is (every? #(nil? (:consumed %)) records)
-              "All records should be unconsumed")
-          (is (not (stage/done? executor)) "executor should not have finished processing")
-          (verify-record-against-workflow running-record running-workflow-mock 1)
-          (verify-record-against-workflow succeeded-record succeeded-workflow-mock 2)
-          (is (== (inc method-config-version-mock) (:method_configuration_version executor-record))
-              "Method configuration version was not incremented."))))))
-
-(deftest test-peek-terra-executor-queue
-  (let [succeeded? #{"Succeeded"}
-        source     (create-tdr-snapshot-list [snapshot])
-        executor   (create-terra-executor (rand-int 1000000))]
-    (with-redefs-fn
-      {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-       #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
-       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-       #'firecloud/submit-method               mock-firecloud-create-submission
-       #'firecloud/get-submission              mock-firecloud-get-submission
-       #'firecloud/get-workflow                mock-workflow-keep-status}
-      #(covid/update-executor! source executor))
-    (with-redefs-fn
-      {#'firecloud/get-workflow         (constantly succeeded-workflow-mock)
-       #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
-      #(let [workflow (stage/peek-queue executor)]
-         (is (succeeded? (:status workflow)))
-         (is (= (:id succeeded-workflow-mock) (:uuid workflow)))
-         (is (contains? workflow :updated))
-         (is (= "value" (-> workflow :inputs :input)))
-         (is (= "value" (-> workflow :outputs :output)))
-         (is (not (-> workflow :outputs :noise)))
-         (stage/pop-queue! executor)
-         (is (nil? (stage/peek-queue executor)))
-         (is (== 1 (stage/queue-length executor)))
-         (is (not (stage/done? executor)))))))
 
 (def ^:private fake-entity-type "flowcell")
 (def ^:private fake-entity-name "test")
@@ -639,12 +383,6 @@
                  (first attributes))
               "attributes should have been overwritten"))))))
 
-(deftest test-tdr-snapshot-list-to-edn
-  (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
-    (is (not-any? source [:id :type]))
-    (is (= (:snapshots source) [(:id snapshot)]))
-    (is (s/valid? ::spec/snapshot-list-source source))))
-
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
                   (workloads/covid-workload-request
@@ -655,9 +393,9 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'covid/find-new-rows                   mock-find-new-rows
-     #'covid/create-snapshots                mock-create-snapshots
-     #'covid/check-tdr-job                   mock-check-tdr-job
+    {#'source/find-new-rows                  mock-find-new-rows
+     #'source/create-snapshots               mock-create-snapshots
+     #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
@@ -687,9 +425,9 @@
 
 (deftest test-workload-state-transition-with-failed-workflow
   (with-redefs-fn
-    {#'covid/find-new-rows                   mock-find-new-rows
-     #'covid/create-snapshots                mock-create-snapshots
-     #'covid/check-tdr-job                   mock-check-tdr-job
+    {#'source/find-new-rows                  mock-find-new-rows
+     #'source/create-snapshots               mock-create-snapshots
+     #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
      #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
@@ -744,3 +482,19 @@
                  (assoc request :source)
                  app)]
         (is (== 200 status) (pr-str body))))))
+
+(deftest test-retry-workload-is-not-supported
+  (with-redefs-fn
+    {#'covid/find-new-rows                   mock-find-new-rows
+     #'covid/create-snapshots                mock-create-snapshots
+     #'covid/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
+     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
+     #'firecloud/submit-method               mock-firecloud-create-submission
+     #'firecloud/get-workflow                (constantly {:status "Failed"})}
+    #(shared/run-retry-is-not-supported-test!
+      (workloads/covid-workload-request
+       {:skipValidation true}
+       {:skipValidation true}
+       {:skipValidation true}))))

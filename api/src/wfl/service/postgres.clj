@@ -34,11 +34,11 @@
        (not= 0)))
 
 (defn get-table
-  "Return TABLE using transaction TX."
+  "Return TABLE using transaction TX sorted by row id."
   [tx table]
-  (if (and table (table-exists? tx table))
-    (jdbc/query tx (format "SELECT * FROM %s" table))
-    (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
+  (when-not (and table (table-exists? tx table))
+    (throw (ex-info "Table not found" {:table table})))
+  (jdbc/query tx (format "SELECT * FROM %s ORDER BY id ASC" table)))
 
 (defn table-length
   "Use `tx` to return the number of records in `table-name`."
@@ -60,3 +60,10 @@
       first
       :max
       (or 0)))
+
+(defn load-record-by-id! [tx table id]
+  (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
+        [record & _] (jdbc/query tx [(format query table) id])]
+    (when-not record
+      (throw (ex-info (str "No such record") {:id id :table table})))
+    record))

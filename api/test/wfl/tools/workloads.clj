@@ -260,45 +260,27 @@
               (recur (+ elapsed interval)
                      (endpoints/get-workload-status uuid)))))))))
 
-(defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/create-workload! tx workload-request)))
+(defn ^:private transacted
+  "Lift `operation` into the context of a database transaction."
+  [operation]
+  (fn [& parameters]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (apply operation (cons tx parameters)))))
 
-(defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/start-workload! tx workload)))
+(def create-workload!    (transacted wfl.api.workloads/create-workload!))
+(def start-workload!     (transacted wfl.api.workloads/start-workload!))
+(def stop-workload!      (transacted wfl.api.workloads/stop-workload!))
+(def execute-workload!   (transacted wfl.api.workloads/execute-workload!))
+(def update-workload!    (transacted wfl.api.workloads/update-workload!))
+(def workflows           (transacted wfl.api.workloads/workflows))
+(def workflows-by-status (transacted wfl.api.workloads/workflows-by-status))
 
-(defn stop-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/stop-workload! tx workload)))
+(defn retry [& params] (apply wfl.api.workloads/retry params))
 
-(defn execute-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/execute-workload! tx workload-request)))
-
-(defn update-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/update-workload! tx workload)))
-
-(defn workflows [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/workflows tx workload)))
-
-(defn load-workload-for-uuid [uuid]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workload-for-uuid tx uuid)))
-
-(defn load-workload-for-id [id]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workload-for-id tx id)))
-
-(defn load-workloads-with-project [project]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workloads-with-project tx project)))
-
-(defn append-to-workload! [samples workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (aou/append-to-workload! tx samples workload)))
+(def load-workload-for-uuid      (transacted wfl.api.workloads/load-workload-for-uuid))
+(def load-workload-for-id        (transacted wfl.api.workloads/load-workload-for-id))
+(def load-workloads-with-project (transacted wfl.api.workloads/load-workloads-with-project))
+(def append-to-workload!         (transacted aou/append-to-workload!))
 
 (defmulti postcheck
   "Implement this to validate `workload` after all workflows complete."
