@@ -6,7 +6,9 @@
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.util          :as util])
-  (:import [java.util UUID]))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
+           [wfl.util UserException]))
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
@@ -20,9 +22,18 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn workspace [workspace]
+(defn workspace-or-throw
+  "Return the `workspace` or throw a UserException."
+  [workspace]
   {:pre [(some? workspace)]}
-  (get-workspace-json workspace))
+  (try
+    (get-workspace-json workspace)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access workspace"
+              {:workspace workspace
+               :status    (-> cause ex-data :status)}
+              cause)))))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
