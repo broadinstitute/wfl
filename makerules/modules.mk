@@ -44,7 +44,7 @@ $(INTEGRATION): $(BUILD)
 $(IMAGES):      $(BUILD)
 $(SYSTEM):      $(BUILD)
 
-check: unit integration
+check: lint unit integration
 
 # Top level `make` targets depend on their corresponding time stamp.
 $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TIMESTAMP)
