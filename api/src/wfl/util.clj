@@ -11,12 +11,13 @@
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime]
+           [java.time OffsetDateTime ZoneId]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [org.apache.commons.io FilenameUtils])
+  (:gen-class))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
@@ -177,16 +178,18 @@
 (defn minutes-between
   "The number of minutes from START to END."
   [start end]
-  (. ChronoUnit/MINUTES between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn seconds-between
   "The number of seconds from START to END."
   [start end]
-  (. ChronoUnit/SECONDS between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."
@@ -543,7 +546,7 @@
 
 (defmulti to-edn
   "Return an EDN representation of the `object` that will be shown to users."
-  (fn [object] (:type object)))
+  :type)
 
 (defmethod to-edn :default [x] x)
 
@@ -587,3 +590,8 @@
   [s]
   (let [[name value & rest] (str/split s #":" 3)]
     (and (label-name? name) (label-value? value) (nil? rest))))
+
+(defn utc-now
+  "Return OffsetDateTime/now in UTC."
+  []
+  (OffsetDateTime/now (ZoneId/of "UTC")))

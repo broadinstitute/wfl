@@ -97,3 +97,12 @@
                     :content-type :application/json
                     :body         payload})
         util/response-body-json)))
+
+(defn retry-workflows
+  "Retry the workflows in `_workload` by `status`."
+  [{:keys [uuid] :as _workload} status]
+  (-> (wfl-url "/api/v1/workload/" uuid "/retry")
+      (http/post {:headers      (auth/get-auth-header)
+                  :content-type :application/json
+                  :body         (json/write-str {:status status})})
+      util/response-body-json))

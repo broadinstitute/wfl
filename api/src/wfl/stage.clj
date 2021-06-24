@@ -6,7 +6,7 @@
 
 (defmulti validate-or-throw
   "Validate the `request` request."
-  (fn [request] (:name request)))
+  :name)
 
 (defmethod validate-or-throw :default
   [{:keys [name] :as request}]
@@ -15,16 +15,16 @@
 
 (defmulti peek-queue
   "Peek the first object from the `queue`, if one exists."
-  (fn [queue] (:type queue)))
+  :type)
 
 (defmulti pop-queue!
   "Pop the first object from the `queue`. Throws if none exists."
-  (fn [queue] (:type queue)))
+  :type)
 
 (defmulti queue-length
   "Return the number of objects in the `queue`."
-  (fn [queue] (:type queue)))
+  :type)
 
 (defmulti done?
   "Test if the processing `stage` is complete and will not process any more data."
-  (fn [stage] (:type stage)))
+  :type)

@@ -14,6 +14,7 @@ DATE    := date
 DOCKER  := docker
 DIRNAME := dirname
 ECHO    := echo
+EXIT    := exit
 EXPORT  := export
 FIND    := find
 GIT     := git
