@@ -102,7 +102,7 @@
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
-      (workloads/when-done verify-succeeded-workload workload))))
+      (workloads/when-all-workflows verify-succeeded-workload workload))))
 
 (deftest ^:parallel test-start-wgs-workload
   (test-start-workload (create-wgs-workload)))
@@ -160,7 +160,7 @@
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
-      (workloads/when-done verify-succeeded-workload workload))))
+      (workloads/when-all-workflows verify-succeeded-workload workload))))
 
 (deftest ^:parallel test-exec-wgs-workload
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -211,7 +211,7 @@
                (map (comp await :uuid))
                (every? #{"Succeeded"})))
       (->> (endpoints/get-workload-status (:uuid workload))
-           (workloads/when-done verify-succeeded-workload)))))
+           (workloads/when-all-workflows verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
   (let [request (-> (workloads/copyfile-workload-request
