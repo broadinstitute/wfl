@@ -44,7 +44,7 @@
              [invalid? ":label"]
              [invalid? "label"]
              [invalid? "test:label:bad"]]]
-      (is (test? ::spec/labels [label]) (format "failed: %s" label)))))
+      (is (test? ::all/labels [label]) (format "failed: %s" label)))))
 
 (deftest test-watchers-spec
   (let [valid?   s/valid?
@@ -54,4 +54,4 @@
              ;; From tbl: https://www.netmeister.org/blog/email.html
              [valid?   "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]
              [invalid? "foo"]]]
-      (is (test? ::spec/watchers [email]) (format "failed: %s" email)))))
+      (is (test? ::all/watchers [email]) (format "failed: %s" email)))))

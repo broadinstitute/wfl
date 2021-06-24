@@ -1,8 +1,8 @@
 (ns wfl.unit.modules.covid-test
   (:require [clojure.spec.alpha   :as s]
             [clojure.test         :refer [deftest is testing]]
-            [wfl.api.spec         :as spec]
             [wfl.module.covid     :as covid]
+            [wfl.module.all       :as all]
             [wfl.service.datarepo :as datarepo]
             [wfl.tools.resources  :as resources]
             [wfl.tools.workloads  :as workloads])
@@ -52,8 +52,8 @@
           "requests are not made unique!"))))
 
 (deftest test-tdr-source-spec
-  (let [valid?           (partial s/valid? ::spec/tdr-source)
+  (let [valid?           (partial s/valid? ::all/tdr-source)
         {:keys [source]} (workloads/covid-workload-request)]
-    (is (valid? source) (s/explain-str ::spec/tdr-source source))
+    (is (valid? source) (s/explain-str ::all/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))

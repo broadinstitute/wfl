@@ -15,7 +15,7 @@
             [wfl.stage :as stage]
             [wfl.util :as util]
             [wfl.wfl :as wfl]
-            [wfl.module.all :as all-modules])
+            [wfl.module.all :as all])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
@@ -23,35 +23,35 @@
            [java.util UUID]
            [wfl.util UserException]))
 
+(def pipeline nil)
+
 ;; specs
-(s/def ::executor (s/keys :req-un [::all-modules/name
-                                   ::all-modules/fromSource
-                                   ::all-modules/methodConfiguration
-                                   ::all-modules/methodConfigurationVersion
-                                   ::all-modules/workspace]))
+(s/def ::executor (s/keys :req-un [::all/name
+                                   ::all/fromSource
+                                   ::all/methodConfiguration
+                                   ::all/methodConfigurationVersion
+                                   ::all/workspace]))
 (s/def ::creator util/email-address?)
 (s/def ::workload-request (s/keys :req-un [::executor
-                                           ::all-modules/project
-                                           ::all-modules/sink
-                                           ::all-modules/source]
-                                  :opt-un [::all-modules/labels
-                                           ::all-modules/watchers]))
+                                           ::all/project
+                                           ::all/sink
+                                           ::all/source]
+                                  :opt-un [::all/labels
+                                           ::all/watchers]))
 
-(s/def ::workload-response (s/keys :req-un [::all-modules/created
+(s/def ::workload-response (s/keys :req-un [::all/created
                                             ::creator
                                             ::executor
-                                            ::all-modules/labels
-                                            ::all-modules/sink
-                                            ::all-modules/source
-                                            ::all-modules/uuid
-                                            ::all-modules/version
-                                            ::all-modules/watchers]
-                                   :opt-un [::all-modules/finished
-                                            ::all-modules/started
-                                            ::all-modules/stopped
-                                            ::all-modules/updated]))
-
-(def pipeline nil)
+                                            ::all/labels
+                                            ::all/sink
+                                            ::all/source
+                                            ::all/uuid
+                                            ::all/version
+                                            ::all/watchers]
+                                   :opt-un [::all/finished
+                                            ::all/started
+                                            ::all/stopped
+                                            ::all/updated]))
 
 ;; source operations
 (defmulti create-source!

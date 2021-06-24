@@ -1,6 +1,7 @@
 (ns wfl.module.wgs
   "Reprocess (External) Whole Genomes."
   (:require [clojure.data.json          :as json]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
@@ -8,10 +9,14 @@
             [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+            [wfl.wfl                    :as wfl]
+            [wfl.module.all             :as all])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [(or ::all/input_bam ::all/input_cram)]))
 
 (def workflow-wdl
   "The top-level WDL file and its version."

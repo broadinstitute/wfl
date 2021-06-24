@@ -17,6 +17,7 @@
             [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
             [wfl.module.all                     :as all]
+            [wfl.module.aou                     :as aou]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -46,8 +47,8 @@
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body ::spec/append-to-aou-request}
-            :responses  {200 {:body ::spec/append-to-aou-response}}
+            :parameters {:body ::aou/append-to-aou-request}
+            :responses  {200 {:body ::aou/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get {:summary    "Get the workloads."

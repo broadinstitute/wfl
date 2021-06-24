@@ -1,6 +1,7 @@
 (ns wfl.module.batch
   "Some utilities shared between batch workloads in cromwell."
   (:require [clj-http.client      :as http]
+            [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
             [wfl.api.workloads    :as workloads]
             [wfl.auth             :as auth]
@@ -8,10 +9,49 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util             :as util]
-            [wfl.wfl              :as wfl])
+            [wfl.wfl              :as wfl]
+            [wfl.module.all       :as all])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            [wfl.util UserException]))
+
+;;specs
+(s/def ::executor string?)
+(s/def ::creator string?)
+
+;; This is the wrong thing to do. See [1] for more information.
+;; As a consequence, I've included the keys for a covid pipeline as optional
+;; inputs for batch workloads so that these keys are not removed during
+;; coercion.
+;; [1]: https://github.com/metosin/reitit/issues/494
+(s/def ::workload-request
+  (s/keys :opt-un [::all/common
+                   ::all/input
+                   ::all/items
+                   ::all/labels
+                   ::all/output
+                   ::all/sink
+                   ::all/source
+                   ::all/watchers]
+          :req-un [(or ::all/cromwell ::executor)
+                   ::all/pipeline
+                   ::all/project]))
+
+(s/def ::workload-response (s/keys :opt-un [::all/finished
+                                            ::all/input
+                                            ::all/started
+                                            ::all/stopped
+                                            ::all/wdl]
+                                   :req-un [::all/commit
+                                            ::all/created
+                                            ::creator
+                                            ::executor
+                                            ::all/output
+                                            ::all/pipeline
+                                            ::all/project
+                                            ::all/release
+                                            ::all/uuid
+                                            ::all/version]))
 
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."

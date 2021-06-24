@@ -99,7 +99,6 @@
 (s/def ::cram_ref_fasta_index string?)
 (s/def ::timestamp (s/or :instant inst? :datetime util/datetime-string?))
 (s/def ::created ::timestamp)
-(s/def :batch/creator string?)
 (s/def ::cromwell string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
@@ -122,3 +121,39 @@
 (s/def ::wdl string?)
 (s/def ::options map?)
 (s/def ::common map?)
+
+(s/def ::sink (s/keys :req-un [::name
+                               ::entityType
+                               ::fromOutputs
+                               ::identifier
+                               ::workspace]))
+
+(s/def ::column string?)
+(s/def ::dataset string?)
+(s/def ::entityType string?)
+(s/def ::identifier string?)
+(s/def ::fromOutputs map?)
+(s/def ::fromSource string?)
+(s/def ::labels (s/* util/label?))
+(s/def ::name string?)
+(s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
+(s/def ::methodConfigurationVersion integer?)
+(s/def ::table string?)
+(s/def ::snapshotReaders (s/* util/email-address?))
+(s/def ::watchers (s/* util/email-address?))
+(s/def ::workspace (s/and string? util/terra-namespaced-name?))
+(s/def ::snapshots (s/* ::uuid))
+
+(s/def ::tdr-source
+  (s/keys :req-un [::name
+                   ::column
+                   ::dataset
+                   ::table
+                   ::snapshotReaders]
+          :opt-un [::snapshots]))
+
+(s/def ::snapshot-list-source
+  (s/keys :req-un [::name ::snapshots]))
+
+(s/def ::source (s/or :dataset   ::tdr-source
+                      :snapshots ::snapshot-list-source))

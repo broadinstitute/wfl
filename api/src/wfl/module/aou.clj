@@ -1,6 +1,7 @@
 (ns wfl.module.aou
   "Process Arrays for the All Of Us project."
   (:require [clojure.string             :as str]
+            [clojure.spec.alpha         :as s]
             [clojure.tools.logging      :as log]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
@@ -9,12 +10,25 @@
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+            [wfl.wfl                    :as wfl]
+            [wfl.module.all             :as all])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]
            [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
+
+;; specs
+(s/def ::analysis_version_number integer?)
+(s/def ::chip_well_barcode string?)
+(s/def ::append-to-aou-request (s/keys :req-un [::notifications ::all/uuid]))
+(s/def ::append-to-aou-response (s/* ::workflow-inputs))
+(s/def ::workflow-inputs (s/keys :req-un [::analysis_version_number
+                                          ::chip_well_barcode]))
+
+(s/def ::notifications (s/* ::sample))
+(s/def ::sample (s/keys :req-un [::analysis_version_number
+                                 ::chip_well_barcode]))
 
 (def workflow-wdl
   "The top-level WDL file and its version."

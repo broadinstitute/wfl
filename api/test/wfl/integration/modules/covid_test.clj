@@ -12,6 +12,7 @@
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.covid               :as covid]
+            [wfl.module.all                 :as all]
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.postgres           :as postgres]
             [wfl.service.rawls              :as rawls]
@@ -643,7 +644,7 @@
   (let [source (util/to-edn (create-tdr-snapshot-list [snapshot]))]
     (is (not-any? source [:id :type]))
     (is (= (:snapshots source) [(:id snapshot)]))
-    (is (s/valid? ::spec/snapshot-list-source source))))
+    (is (s/valid? ::all/snapshot-list-source source))))
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
