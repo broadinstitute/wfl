@@ -35,7 +35,7 @@
 
 (defmulti to-edn
   "Return an EDN representation of the `workload` that will be shown to users."
-  (fn [workload] (:pipeline workload)))
+  :pipeline)
 
 ;; loading utilities
 (defmulti load-workload-impl
