@@ -1,4 +1,4 @@
-# Covid namespace
+# COVID namespace
 
 WorkFlow Launcher (WFL) runs within the `covid` namespace to process workflows using the `Sarscov2IlluminaFull` pipeline. 
 
@@ -16,13 +16,21 @@ The `covid` module supports the following API endpoints:
 | POST | `/api/v1/stop`                      | Stop a running workload                                                  |
 | POST | `/api/v1/exec`                      | Create and start (execute) a workload                                    |
 
-Although it is possible to be run differently, the typical life-cycle of a workload is a multi-stage process:
+The life-cycle of a workload is a multi-stage process:
 
-1. The caller needs to create a workload and specify the source, sink and executor. The source must be either a snapshot or a list of snapshots. If the former, then the type is `TDR Snapshots`. If the latter, than it is of type `TDRSnapshotListSource`. The executor must be of type `TerraExecutor`, and the sink must be of type `TerraWorkspaceSink`. If everything else passes verification, then the caller will receive a response which will contain the `uuid` of the workload.
+1. The caller needs to create a workload and specify the source, sink and executor.
+
+    - The [Source](./source.md) must be either a snapshot or a list of snapshots. If the former, then the type is `TDR Snapshots`. If the latter, it is of type `TDRSnapshotListSource`.
+     
+    - The [Executor](./executor.md) must be of type `TerraExecutor`
+     
+    - The [Sink](./sink.md) must be of type `TerraWorkspaceSink`. 
+      
+    If everything passes verification, then the caller will receive a response which will contain the `uuid` of the workload.
    
-2. Next, the caller needs to "start" the newly created workload, which will begin the analysis. 
+2. Next, the caller needs to "start" the newly created workload, which will begin the analysis. Once started, Workflow Launcher will continue to poll for new inputs to the source until it is stopped (see #3 below).
    
-3. WFL can, in addition, stop watching a workflow using the `stop` endpoint. This will not cancel analysis, but WFL will stop managing the workload.
+3. WFL can, in addition, stop watching a workflow using the `stop` endpoint. This will not cancel analysis, but WFL will stop managing the workload, which means that it will no longer poll for new inputs to that workload.
 
 To give more information, here are some example inputs to the above endpoints:
 
@@ -88,54 +96,7 @@ To give more information, here are some example inputs to the above endpoints:
                         "submission_xml" : "submission_xml",
                         "assembled_ids" : "assembled_ids",
                         "num_failed_assembly" : "num_failed_assembly",
-                        "ivar_trim_stats_png" : "ivar_trim_stats_png",
-                        "read_counts_raw" : "read_counts_raw",
-                        "num_samples" : "num_samples",
-                        "vadr_outputs" : "vadr_outputs",
-                        "cleaned_reads_unaligned_bams" : "cleaned_reads_unaligned_bams",
-                        "demux_commonBarcodes" : "demux_commonBarcodes",
-                        "submission_zip" : "submission_zip",
-                        "cleaned_bams_tiny" : "cleaned_bams_tiny",
-                        "data_tables_out" : "data_tables_out",
-                        "ntc_rejected_batches" : "ntc_rejected_batches",
-                        "picard_metrics_alignment" : "picard_metrics_alignment",
-                        "failed_assembly_ids" : "failed_assembly_ids",
-                        "ivar_trim_stats_html" : "ivar_trim_stats_html",
-                        "assembly_stats_tsv" : "assembly_stats_tsv",
-                        "failed_annotation_ids" : "failed_annotation_ids",
-                        "run_date" : "run_date",
-                        "genbank_source_table" : "genbank_source_table",
-                        "num_read_files" : "num_read_files",
-                        "ntc_rejected_lanes" : "ntc_rejected_lanes",
-                        "primer_trimmed_read_count" : "primer_trimmed_read_count",
-                        "gisaid_fasta" : "gisaid_fasta",
-                        "num_submittable" : "num_submittable",
-                        "submit_ready" : "submit_ready",
-                        "passing_fasta" : "passing_fasta",
-                        "nextclade_auspice_json" : "nextclade_auspice_json",
-                        "read_counts_depleted" : "read_counts_depleted",
-                        "cleaned_bam_uris" : "cleaned_bam_uris",
-                        "num_assembled" : "num_assembled",
-                        "max_ntc_bases" : "max_ntc_bases",
-                        "genbank_fasta" : "genbank_fasta",
-                        "multiqc_report_cleaned" : "multiqc_report_cleaned",
-                        "num_failed_annotation" : "num_failed_annotation",
-                        "meta_by_filename_json" : "meta_by_filename_json",
-                        "primer_trimmed_read_percent" : "primer_trimmed_read_percent",
-                        "assembly_stats_final_tsv" : "assembly_stats_final_tsv",
-                        "demux_metrics" : "demux_metrics",
-                        "submittable_ids" : "submittable_ids",
-                        "sra_metadata" : "sra_metadata",
-                        "spikein_counts" : "spikein_counts",
-                        "raw_reads_unaligned_bams" : "raw_reads_unaligned_bams",
-                        "ivar_trim_stats_tsv" : "ivar_trim_stats_tsv",
-                        "picard_metrics_wgs" : "picard_metrics_wgs",
-                        "nextclade_all_json" : "nextclade_all_json",
-                        "multiqc_report_raw" : "multiqc_report_raw",
-                        "sequencing_reports" : "sequencing_reports",
-                        "demux_outlierBarcodes" : "demux_outlierBarcodes",
-                        "nextmeta_tsv" : "nextmeta_tsv",
-                        "assemblies_fasta" : "assemblies_fasta"
+                        ...
                     }
                 }
             }'

@@ -20,7 +20,7 @@ typical workload configuration, a `Sink` can be used to write workflow outputs
 to a desired location in the cloud.
 
 ## Example workload 
-The specific values below are from the COVID-19 Surveillance in Terra project. Workloads for other projects may have different fields available in the source, executor and sink.
+The specific values below are from the COVID-19 Surveillance in Terra project. Workloads for other projects may leverage different implementations for source, executor or sink.
 
 ```
 {
@@ -50,7 +50,12 @@ The specific values below are from the COVID-19 Surveillance in Terra project. W
         "workspace": "wfl-dev/CDC_Viral_Sequencing",
         "entityType": "flowcell",
         "identifier": "run_id",
-        "fromOutputs": { }
+        "fromOutputs": { 
+            "submission_xml" : "submission_xml",
+            "assembled_ids" : "assembled_ids",
+            "num_failed_assembly" : "num_failed_assembly",
+            ...
+        }
     }
 }
 ```
