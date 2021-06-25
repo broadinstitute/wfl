@@ -328,7 +328,50 @@
                (firecloud/get-workflow-outputs workspace submission workflow))))]
     (map from-record records)))
 
+;; terra-executor-workflows and terra-executor-workflows-by-status do not return
+;; workflows that are being or have been retied. Why?
+;;
+;; TL/DR: It's simpler.
+;;
+;; The truth is I'm not sure of a *good* reason to do this.
+;;
+;; Some context/terminology:
+;; Workflows are be serialised to the DB as a kind of flattened list of lists,
+;; where there `HEAD` of each inner list is the most recent workflow attempt and
+;; the `TAIL` of each inner list are all those previous attempts.
+;;
+;; In the DB, this is implemented such that each `HEAD` element does not have a
+;; "pointer" to a another attempt and each retried workflow has a "pointer" to
+;; the workflow that retied it (a linked list with the pointers reversed - think
+;; git commit trees):
+;;
+;;     Attempt0 -> Attempt1 -> ... -> HEAD
+;;
+;; My initial thought was that when getting workflows, you'd only want to see
+;; the workflows at the `HEAD` (i.e. the most recent attempts at converting
+;; inputs -> outputs). This would also make it harder to retry a workflow that
+;; had already been retried*. This also drove the implementation making it
+;; easier to find the HEAD of each list.
+;;
+;; Two alternatives come to mind:
+;; - return the list of lists (though this would break hOps's retry code).
+;; - include a {"retried": uuid} attribute in each workflow such that clients
+;;   could reconstruct the graph of retries.
+;;
+;; I lean towards 2 because it might expose a richer API for clients to gather
+;; information from. The difficulty is that when workflows are initially
+;; retried, they're not assigned a workflow UUID yet so users might see that
+;; a workflow does not have a {"retried": uuid} immediately after they've tried
+;; to retry it.**
+;;
+;; * It would still be possible and we'd have to come up with a strategy for
+;; handling this - perhaps traverse the list and retry the workflow if there's
+;; not already an active workflow at the `HEAD`.
+;;
+;; ** Admittedly, this is still a problem with this design.
+
 (defn ^:private terra-executor-workflows
+  "Return all the non-retried workflows executed by the `executor`."
   [tx {:keys [details] :as executor}]
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
@@ -341,6 +384,8 @@
      (jdbc/query tx (format query details)))))
 
 (defn ^:private terra-executor-workflows-by-status
+  "Return all the non-retried workflows matching `status` executed by the
+  `executor`."
   [tx {:keys [details] :as executor} status]
   (when-not (postgres/table-exists? tx details)
     (throw (ex-info "Missing executor details table" {:table details})))
