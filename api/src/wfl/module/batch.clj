@@ -20,6 +20,24 @@
 (s/def ::executor string?)
 (s/def ::creator string?)
 
+;; This is the wrong thing to do. See [1] for more information.
+;; As a consequence, I've included the keys for a covid pipeline as optional
+;; inputs for batch workloads so that these keys are not removed during
+;; coercion.
+;; [1]: https://github.com/metosin/reitit/issues/494
+(s/def ::workload-request
+  (s/keys :opt-un [::all/common
+                   ::all/input
+                   ::items
+                   ::all/labels
+                   ::all/output
+                   ::all/sink
+                   ::source/source
+                   ::all/watchers]
+          :req-un [(or ::all/cromwell ::executor)
+                   ::all/pipeline
+                   ::all/project]))
+
 (s/def ::workload-response (s/keys :opt-un [::all/finished
                                             ::all/input
                                             ::all/started
