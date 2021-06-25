@@ -4,7 +4,7 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [wfl.api.spec               :as spec]
+            [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.tools.endpoints        :as endpoints]
@@ -102,7 +102,7 @@
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
-      (workloads/when-done verify-succeeded-workload workload))))
+      (workloads/when-all-workflows-finish verify-succeeded-workload workload))))
 
 (deftest ^:parallel test-start-wgs-workload
   (test-start-workload (create-wgs-workload)))
@@ -160,7 +160,7 @@
         (is (every? :updated workflows))
         (is (every? :uuid workflows)))
       (verify-internal-properties-removed workload)
-      (workloads/when-done verify-succeeded-workload workload))))
+      (workloads/when-all-workflows-finish verify-succeeded-workload workload))))
 
 (deftest ^:parallel test-exec-wgs-workload
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -211,7 +211,7 @@
                (map (comp await :uuid))
                (every? #{"Succeeded"})))
       (->> (endpoints/get-workload-status (:uuid workload))
-           (workloads/when-done verify-succeeded-workload)))))
+           (workloads/when-all-workflows-finish verify-succeeded-workload)))))
 
 (deftest test-bad-pipeline
   (let [request (-> (workloads/copyfile-workload-request
@@ -260,8 +260,8 @@
           (-> workload-request
               endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
-      (is (s/valid? ::spec/covid-workload-request  workload-request))
-      (is (s/valid? ::spec/covid-workload-response workload))
+      (is (s/valid? ::module/workload-request  workload-request))
+      (is (s/valid? ::module/workload-response workload))
       (verify-internal-properties-removed workload)
       (is (not started))
       (is (= @workloads/email creator))
@@ -271,7 +271,7 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::spec/covid-workload-response response))))
+          (is (s/valid? ::module/workload-response response))))
       (testing "/workload all"
         (let [{:keys [started] :as response}
               (-> (endpoints/get-workloads)
@@ -280,19 +280,19 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::spec/covid-workload-response response))))
+          (is (s/valid? ::module/workload-response response))))
       (testing "/start covid workload"
         (let [{:keys [created started] :as response}
               (-> workload endpoints/start-workload
                   (instantify-timestamps :created :started))]
-          (is (s/valid? ::spec/covid-workload-response response))
+          (is (s/valid? ::module/workload-response response))
           (is (inst? created))
           (is (inst? started))))
       (testing "/stop covid workload"
         (let [{:keys [created started stopped] :as response}
               (-> workload endpoints/stop-workload
                   (instantify-timestamps :created :started :stopped))]
-          (is (s/valid? ::spec/covid-workload-response response))
+          (is (s/valid? ::module/workload-response response))
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))

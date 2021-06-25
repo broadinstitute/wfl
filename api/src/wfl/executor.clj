@@ -43,7 +43,7 @@
      in the database schema.
    - This multimethod is type-dispatched on the `:name` association in the
      `request`."
-  (fn [_transaction _id request] (:name request)))
+  (fn [_transaction _workload-id request] (:name request)))
 
 (defmulti load-executor!
   "Return the `Executor` implementation associated with the `executor_type` and

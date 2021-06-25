@@ -83,7 +83,7 @@
          :methodConfigurationVersion -1
          :fromSource                 "importSnapshot"}))))
 
-(deftest test-validate-terra-executor--with-wrong-method-configuration
+(deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
        UserException #"Cannot access method configuration"
        (stage/validate-or-throw

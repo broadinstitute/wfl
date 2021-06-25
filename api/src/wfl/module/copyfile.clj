@@ -1,6 +1,7 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
   (:require [clojure.data.json    :as json]
+            [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
             [wfl.api.workloads    :as workloads :refer [defoverload]]
             [wfl.jdbc             :as jdbc]
@@ -10,6 +11,11 @@
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [::dst ::src]))
+(s/def ::dst string?)
+(s/def ::src string?)
 
 (def workflow-wdl
   {:repo    "wfl"
