@@ -1,8 +1,8 @@
 (ns wfl.system.automation-test
-  (:require [clojure.pprint        :as pprint]
-            [clojure.test          :refer [deftest]]
+  (:require [clojure.test          :refer [deftest is]]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
+            [wfl.service.cromwell  :refer [final-statuses]]
             [wfl.service.firecloud :as firecloud]
             [wfl.util              :as util]
             [wfl.tools.endpoints   :as endpoints]
@@ -13,7 +13,6 @@
 (def snapshot-column        "run_date")
 (def snapshot-readers       ["cdc-covid-surveillance@firecloud.org"])
 (def source-dataset         "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
-(def source-dataset-profile "395f5921-d2d9-480d-b302-f856d787c9d9")
 (def source-table           "flowcells")
 (def workspace-table        "flowcell")
 (def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
@@ -54,9 +53,10 @@
   (fixtures/with-fixtures
     [(util/bracket clone-workspace delete-workspace)]
     (fn [[workspace]]
-      (let [workload (endpoints/create-workload
-                      (covid-workload-request workspace))]
+      (let [finished? (comp (set final-statuses) :status)
+            workload  (endpoints/create-workload
+                       (covid-workload-request workspace))]
         (endpoints/start-workload workload)
-        (workloads/when-done
-         (comp pprint/pprint endpoints/get-workflows)
+        (workloads/when-finished
+         #(is (every? finished? (endpoints/get-workflows %)))
          workload)))))

@@ -238,27 +238,33 @@
                   :dbsnp_vcf_index         (str dbsnp ".tbi")
                   :input_cram              cram_path}}]}))
 
-(defn when-done
+(def ^:private polling-interval-seconds 60)
+(def ^:private max-polling-attempts 120)
+
+(defn when-finished
+  "Call `done!` when the `workload` is `:finished`."
+  [done! {:keys [uuid] :as _workload}]
+  (done!
+   (util/poll
+    #(let [workload (endpoints/get-workload-status uuid)]
+       (when (:finished workload)
+         workload))
+    polling-interval-seconds
+    max-polling-attempts)))
+
+(defn when-all-workflows-finish
   "Call `done!` when all workflows in the `workload` have finished processing."
   [done! {:keys [uuid] :as workload}]
-  (letfn [(finished? [{:keys [status] :as workflow}]
-            (let [skipped? #(-> % :uuid util/uuid-nil?)]
-              (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
-    (let [interval 60
-          timeout  4800]                ; 80 minutes
-      (loop [elapsed 0 wl workload]
-        (when (> elapsed timeout)
-          (throw (TimeoutException.
-                  (format "Timed out waiting for workload %s" uuid))))
-        (let [workflows (endpoints/get-workflows wl)]
-          (if (or (:finished wl)
-                  (and (not-empty workflows) (every? finished? workflows)))
-            (done! wl)
-            (do
-              (log/infof "Waiting for workload %s to complete" uuid)
-              (util/sleep-seconds interval)
-              (recur (+ elapsed interval)
-                     (endpoints/get-workload-status uuid)))))))))
+  (let [finished? (let [skipped?    #(-> % :uuid util/uuid-nil?)
+                        terminated? (set cromwell/final-statuses)]
+                    (fn [{:keys [status] :as workflow}]
+                      (or (skipped? workflow) (terminated? status))))]
+    (done!
+     (util/poll
+      #(when (every? finished? (endpoints/get-workflows workload))
+         (endpoints/get-workload-status uuid))
+      polling-interval-seconds
+      max-polling-attempts))))
 
 (defn ^:private transacted
   "Lift `operation` into the context of a database transaction."
