@@ -28,7 +28,7 @@
 (s/def ::workload-request
   (s/keys :opt-un [::all/common
                    ::all/input
-                   ::items
+                   :wfl.api.spec/items
                    ::all/labels
                    ::all/output
                    ::all/sink
