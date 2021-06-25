@@ -1,6 +1,7 @@
 (ns wfl.module.xx
   "Reprocess eXternal eXomes."
   (:require [clojure.data.json          :as json]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
@@ -8,10 +9,14 @@
             [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+            [wfl.wfl                    :as wfl]
+            [wfl.module.all             :as all])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalExomeReprocessing")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [(or ::all/input_bam ::all/input_cram)]))
 
 (def ^:private cromwell-label
   "The WDL label applied to Cromwell metadata."

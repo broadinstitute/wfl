@@ -1,7 +1,6 @@
 (ns wfl.integration.modules.aou-test
   (:require [clojure.spec.alpha             :as s]
             [clojure.test                   :refer [testing is deftest use-fixtures]]
-            [wfl.api.spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
@@ -34,7 +33,7 @@
            append-to-workload! (fn [xs] (workloads/append-to-workload! xs workload))]
        (testing "appending a sample to the workload"
          (let [response (append-to-workload! [workloads/aou-sample])]
-           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (s/valid? ::aou/append-to-aou-response response))
            (is (count=1? response))))
        (testing "appending the same sample to the workload does nothing"
          (is (= () (append-to-workload! [workloads/aou-sample]))))
@@ -46,7 +45,7 @@
                (repeat 5 (inc-version (inc-version workloads/aou-sample)))))))
        (testing "appending empty workload"
          (let [response (append-to-workload! [])]
-           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (s/valid? ::aou/append-to-aou-response response))
            (is (empty? response)))))))
 
 (deftest test-append-to-aou-not-started

@@ -1,5 +1,6 @@
 (ns wfl.source
   (:require [clojure.edn                    :as edn]
+            [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.tools.logging.readable :as log]
             [wfl.api.workloads              :refer [defoverload]]
@@ -7,12 +8,33 @@
             [wfl.service.datarepo           :as datarepo]
             [wfl.service.postgres           :as postgres]
             [wfl.stage                      :as stage]
-            [wfl.util                       :as util :refer [utc-now]])
+            [wfl.util                       :as util :refer [utc-now]]
+            [wfl.module.all                 :as all])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [wfl.util UserException]))
+
+;; specs
+(s/def ::dataset string?)
+(s/def ::column string?)
+(s/def ::table string?)
+(s/def ::snapshotReaders (s/* util/email-address?))
+(s/def ::snapshots (s/* ::all/uuid))
+(s/def ::tdr-source
+  (s/keys :req-un [::all/name
+                   ::column
+                   ::dataset
+                   ::table
+                   ::snapshotReaders]
+          :opt-un [::snapshots]))
+
+(s/def ::snapshot-list-source
+  (s/keys :req-un [::name ::snapshots]))
+
+(s/def ::source (s/or :dataset   ::tdr-source
+                      :snapshots ::snapshot-list-source))
 
 ;; `source` "interface"
 (defmulti start-source!
