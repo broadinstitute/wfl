@@ -1,28 +1,11 @@
 (ns wfl.unit.modules.covid-test
   (:require [clojure.spec.alpha   :as s]
             [clojure.test         :refer [deftest is testing]]
-            [wfl.module.covid     :as covid]
-            [wfl.module.all       :as all]
             [wfl.service.datarepo :as datarepo]
             [wfl.source           :as source]
-            [wfl.tools.resources  :as resources]
             [wfl.tools.workloads  :as workloads])
   (:import [java.time OffsetDateTime ZoneId]
            [java.lang Math]))
-
-(deftest test-rename-gather
-  (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
-    (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
-           (covid/rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
-    (is (= {:instrument_model "Illumina NovaSeq 6000"}
-           (covid/rename-gather inputs {:instrument_model "instrument_model"})))
-    (is (= {:extra ["broad_gcid-srv"]}
-           (covid/rename-gather inputs {:extra ["package_genbank_ftp_submission.account_name"]})))
-    (is (= {:extra {:account_name "broad_gcid-srv" :workspace_name "SARSCoV2-Illumina-Full"}}
-           (covid/rename-gather
-            inputs
-            {:extra {:account_name   "package_genbank_ftp_submission.account_name"
-                     :workspace_name "$SARSCoV2-Illumina-Full"}})))))
 
 (def ^:private readers-list ["hornet@firecloud.org"])
 
