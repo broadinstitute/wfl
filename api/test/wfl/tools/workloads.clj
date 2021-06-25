@@ -252,7 +252,7 @@
     polling-interval-seconds
     max-polling-attempts)))
 
-(defn when-all-workflows
+(defn when-all-workflows-finish
   "Call `done!` when all workflows in the `workload` have finished processing."
   [done! {:keys [uuid] :as workload}]
   (let [finished? (let [skipped?    #(-> % :uuid util/uuid-nil?)
