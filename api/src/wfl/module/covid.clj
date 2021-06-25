@@ -1,6 +1,7 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
   (:require [wfl.api.workloads :as workloads :refer [defoverload]]
+            [clojure.spec.alpha :as s]
             [wfl.executor :as executor]
             [wfl.jdbc :as jdbc]
             [wfl.module.batch :as batch]
@@ -8,12 +9,40 @@
             [wfl.source :as source]
             [wfl.stage :as stage]
             [wfl.util :as util :refer [utc-now]]
-            [wfl.wfl :as wfl])
+            [wfl.wfl :as wfl]
+            [wfl.module.all :as all])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
 (def pipeline nil)
 
+;; specs
+(s/def ::executor (s/keys :req-un [::all/name
+                                   ::all/fromSource
+                                   ::all/methodConfiguration
+                                   ::all/methodConfigurationVersion
+                                   ::all/workspace]))
+(s/def ::creator util/email-address?)
+(s/def ::workload-request (s/keys :req-un [::executor
+                                           ::all/project
+                                           ::all/sink
+                                           ::source/source]
+                                  :opt-un [::all/labels
+                                           ::all/watchers]))
+
+(s/def ::workload-response (s/keys :req-un [::all/created
+                                            ::creator
+                                            ::executor
+                                            ::all/labels
+                                            ::all/sink
+                                            ::source/source
+                                            ::all/uuid
+                                            ::all/version
+                                            ::all/watchers]
+                                   :opt-un [::all/finished
+                                            ::all/started
+                                            ::all/stopped
+                                            ::all/updated]))
 ;; Workload
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))

@@ -16,6 +16,8 @@
             [wfl.api.workloads                  :as workloads]
             [wfl.environment                    :as env]
             [wfl.api.spec                       :as spec]
+            [wfl.module.all                     :as all]
+            [wfl.module.aou                     :as aou]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -45,8 +47,8 @@
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body ::spec/append-to-aou-request}
-            :responses  {200 {:body ::spec/append-to-aou-response}}
+            :parameters {:body ::aou/append-to-aou-request}
+            :responses  {200 {:body ::aou/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get {:summary    "Get the workloads."
@@ -55,13 +57,13 @@
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path {:uuid ::spec/uuid}}
+           :parameters {:path {:uuid ::all/uuid}}
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/workload/:uuid/retry"
     {:post {:summary    "Resubmit workflows in workload by status."
-            :parameters {:path {:uuid   ::spec/uuid}
-                         :body {:status ::spec/status}}
+            :parameters {:path {:uuid   ::all/uuid}
+                         :body {:status ::all/status}}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-retry}}]
    ["/api/v1/create"
@@ -71,12 +73,12 @@
             :handler    handlers/post-create}}]
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
     {:post {:summary    "Stop managing the workload specified by 'request'."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
    ["/api/v1/exec"

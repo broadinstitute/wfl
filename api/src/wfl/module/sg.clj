@@ -1,6 +1,7 @@
 (ns wfl.module.sg
   "Handle Somatic Genomes."
   (:require [clojure.data.json              :as json]
+            [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.string                 :as str]
             [clojure.tools.logging.readable :as log]
@@ -12,11 +13,21 @@
             [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.util                       :as util]
-            [wfl.wfl                        :as wfl])
+            [wfl.wfl                        :as wfl]
+            [wfl.module.all                 :as all])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
 
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [::all/base_file_name
+                                          ::all/contamination_vcf
+                                          ::all/contamination_vcf_index
+                                          ::all/cram_ref_fasta
+                                          ::all/cram_ref_fasta_index
+                                          ::all/dbsnp_vcf
+                                          ::all/dbsnp_vcf_index
+                                          ::all/input_cram]))
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "GDCWholeGenomeSomaticSingleSample_v1.1.0"
