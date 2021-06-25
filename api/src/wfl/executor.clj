@@ -331,7 +331,7 @@
 ;; terra-executor-workflows and terra-executor-workflows-by-status do not return
 ;; workflows that are being or have been retied. Why?
 ;;
-;; TL/DR: It's simpler.
+;; TL/DR: It's simpler maybe?
 ;;
 ;; The truth is I'm not sure of a *good* reason to do this.
 ;;
