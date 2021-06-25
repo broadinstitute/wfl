@@ -112,7 +112,7 @@
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (set (concat cromwell/statuses rawls/statuses ["skipped"])))
+(s/def ::status cromwell/status?)
 (s/def ::started ::timestamp)
 (s/def ::stopped ::timestamp)
 (s/def ::updated ::timestamp)
