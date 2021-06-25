@@ -31,7 +31,7 @@
           :opt-un [::snapshots]))
 
 (s/def ::snapshot-list-source
-  (s/keys :req-un [::name ::snapshots]))
+  (s/keys :req-un [::all/name ::snapshots]))
 
 (s/def ::source (s/or :dataset   ::tdr-source
                       :snapshots ::snapshot-list-source))

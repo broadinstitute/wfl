@@ -8,8 +8,9 @@
             [wfl.module.aou       :as aou]
             [wfl.module.copyfile  :as copyfile]
             [wfl.module.sg        :as sg]
-            [wfl.module.wgs       :as wgs]
             [wfl.module.xx        :as xx]
+            [wfl.module.wgs       :as wgs]
+            [wfl.source           :as source]
             [wfl.module.all       :as all]))
 
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
@@ -26,7 +27,6 @@
                                            :version/user
                                            ::all/version]))
 
-;; compound
 (s/def ::items (s/* ::workload-inputs))
 (s/def ::workload-inputs (s/keys :req-un [::inputs]
                                  :opt-un [::all/options]))
@@ -39,9 +39,28 @@
 
 (s/def ::workflow  (s/keys :req-un [::inputs]
                            :opt-un [::all/status ::all/updated ::all/uuid ::all/options]))
+
+;; This is the wrong thing to do. See [1] for more information.
+;; As a consequence, I've included the keys for a covid pipeline as optional
+;; inputs for batch workloads so that these keys are not removed during
+;; coercion.
+;; [1]: https://github.com/metosin/reitit/issues/494
+(s/def :batch/workload-request
+  (s/keys :opt-un [::all/common
+                   ::all/input
+                   ::items
+                   ::all/labels
+                   ::all/output
+                   ::all/sink
+                   ::source/source
+                   ::all/watchers]
+          :req-un [(or ::all/cromwell ::batch/executor)
+                   ::all/pipeline
+                   ::all/project]))
+
 (s/def ::workflows (s/* ::workflow))
 
-(s/def ::workload-request (s/or :batch ::batch/workload-request
+(s/def ::workload-request (s/or :batch :batch/workload-request
                                 :covid ::covid/workload-request))
 
 (s/def ::workload-response (s/or :batch ::batch/workload-response
