@@ -18,9 +18,11 @@
 (def active-statuses
   "The statuses an active Cromwell workflow can have."
   ["Aborting"
-   "On Hold"
    "Running"
-   "Submitted"])
+   "Submitted"
+   "Queued",
+   "Launching",
+   "Unknown"])
 
 (def statuses
   "All the statuses a Cromwell workflow can have."
