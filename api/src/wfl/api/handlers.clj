@@ -65,10 +65,12 @@
   "Return the workflows managed by the workload."
   [request]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid (get-in request [:path-params :uuid])]
+  (let [uuid (get-in request [:path-params :uuid])
+        {:keys [status]} (get-in request [:parameters :query])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (workloads/load-workload-for-uuid tx uuid)
-           (workloads/workflows tx)
+      (->> (let [w (workloads/load-workload-for-uuid tx uuid)]
+             (cond status (workloads/workflows-by-status tx w status)
+                   :else  (workloads/workflows tx w)))
            (mapv util/to-edn)
            succeed))))
 

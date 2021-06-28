@@ -46,6 +46,13 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+(defn get-workflows-by-status
+  "Query v1 api for all workflows managed by `_workload` with a specific status."
+  [{:keys [uuid] :as _workload} status]
+  (-> (wfl-url "/api/v1/workload/" uuid "/workflows?status=" status)
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
 (defn create-workload
   "Create workload defined by WORKLOAD"
   [workload]
