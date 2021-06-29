@@ -6,9 +6,6 @@
             [wfl.environment :as env]
             [wfl.util :as util]))
 
-(def api-url
-  "https://slack.com/api/chat.postMessage")
-
 (defn ^:private api-url
   "API URL for Slack."
   [& parts]
