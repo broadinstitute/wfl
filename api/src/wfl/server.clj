@@ -14,6 +14,7 @@
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.service.postgres           :as postgres]
+            [wfl.service.slack              :as slack]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
   (:import (java.util.concurrent Future TimeUnit)
@@ -76,9 +77,22 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers _uuid _exception]
+(defn notify-watchers [watchers uuid exception]
+  "Notify `watchers` with available approaches."
+  ;; FIXME: add permission checks for slack-channel-watchers
   {:pre [(some? watchers)]}
-  (log/info "notifying: " watchers))
+  (let [slack-msg              (format
+                                 (str/join " "
+                                   ["NOTE: WorkFlow Launcher failed to update"
+                                    "a workload %s you are watching! Details"
+                                    "shown below: \n %s"]) uuid exception)
+        notify-with-slack      (fn [slack-channel-watcher]
+                                  (slack/post-message slack-channel-watcher slack-msg))
+        slack-channel-watcher? (fn [watcher]
+                                 (not (util/email-address? watcher)))
+        slack-channel-watchers (filter slack-channel-watcher? watchers)]
+    (log/info "notifying: " slack-channel-watchers)
+    (map notify-with-slack slack-channel-watchers)))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
