@@ -304,7 +304,7 @@
 (deftest ^:parallel test-workflows-by-status
   (testing "Get workflows by status"
     (let [workload (first (endpoints/get-workloads))
-        workflows (endpoints/get-workflows workload)]
-    (->> (map #(get % :status) workflows)
-         (distinct)
-         (run! #(verify-workflows-by-status workload %))))))
+          workflows (endpoints/get-workflows workload)]
+      (->> (map #(get % :status) workflows)
+           (distinct)
+           (run! #(verify-workflows-by-status workload %))))))

@@ -57,8 +57,7 @@
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path {:uuid ::all/uuid} 
-                        :query ::spec/workflow-query}
+           :parameters {:path {:uuid ::all/uuid} :query ::spec/workflow-query}
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/workload/:uuid/retry"
