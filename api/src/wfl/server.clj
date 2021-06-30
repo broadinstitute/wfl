@@ -86,13 +86,12 @@
                                    ["NOTE: WorkFlow Launcher failed to update"
                                     "a workload %s you are watching! Details"
                                     "shown below: \n %s"]) uuid exception)
-        notify-with-slack      (fn [slack-channel-watcher]
-                                  (slack/post-message slack-channel-watcher slack-msg))
         slack-channel-watcher? (fn [watcher]
                                  (not (util/email-address? watcher)))
         slack-channel-watchers (filter slack-channel-watcher? watchers)]
     (log/info "notifying: " slack-channel-watchers)
-    (map notify-with-slack slack-channel-watchers)))
+    ;; TODO: use an agent to throttle https://api.slack.com/docs/rate-limits
+    (run! #(slack/post-message % slack-msg) slack-channel-watchers)))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
@@ -108,6 +107,7 @@
                   (catch UserException e
                     (log/warnf "Error updating workload %s" uuid)
                     (log/warn e)
+                    ;; TODO: slack queue producer using agent here
                     (notify-watchers watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
@@ -131,6 +131,7 @@
     (future
       (while true
         (update-workloads)
+        ;; TODO: slack queue consumer using agent here
         (.sleep TimeUnit/SECONDS 20)))))
 
 (defn ^:private start-webserver
