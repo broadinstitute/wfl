@@ -38,6 +38,10 @@
   (run! verify-succeeded-workflow (endpoints/get-workflows workload))
   (workloads/postcheck workload))
 
+(defn ^:private verify-workflows-by-status
+  [workload status]
+  (run! #(is (= (:status %) status)) (endpoints/get-workflows-by-status workload status)))
+
 (defn ^:private verify-internal-properties-removed [workload]
   (let [workflows (endpoints/get-workflows workload)]
     (letfn [(go! [key]
@@ -296,3 +300,11 @@
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))
+
+(deftest ^:parallel test-workflows-by-status
+  (testing "Get workflows by status"
+    (let [workload (first (endpoints/get-workloads))
+        workflows (endpoints/get-workflows workload)]
+    (->> (map #(get % :status) workflows)
+         (distinct)
+         (run! #(verify-workflows-by-status workload %))))))
