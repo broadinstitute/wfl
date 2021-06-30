@@ -10,7 +10,7 @@
   "The WFL server URL to test."
   [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_WFL_URL"))]
-    (str/join "/" (cons url parts))))
+    (str/join "/" (cons url (map #(util/trim-slashes %) parts)))))
 
 (defn get-oauth2-id
   "Query oauth2 ID that the server is currently using"
@@ -41,16 +41,9 @@
 
 (defn get-workflows
   "Query v1 api for all workflows managed by `_workload`."
-  [{:keys [uuid] :as _workload}]
+  [{:keys [uuid] :as _workload} & [status]]
   (-> (wfl-url "/api/v1/workload/" uuid "/workflows")
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
-
-(defn get-workflows-by-status
-  "Query v1 api for all workflows managed by `_workload` with a specific status."
-  [{:keys [uuid] :as _workload} status]
-  (-> (wfl-url "/api/v1/workload/" uuid "/workflows")
-      (http/get {:headers (auth/get-auth-header) :query-params {:status status}})
+      (http/get (merge {:headers (auth/get-auth-header)} (when status {:query-params {:status status}})))
       util/response-body-json))
 
 (defn create-workload

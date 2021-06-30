@@ -40,7 +40,7 @@
 
 (defn ^:private verify-workflows-by-status
   [workload status]
-  (run! #(is (= (:status %) status)) (endpoints/get-workflows-by-status workload status)))
+  (run! #(is (= (:status %) status)) (endpoints/get-workflows workload status)))
 
 (defn ^:private verify-internal-properties-removed [workload]
   (let [workflows (endpoints/get-workflows workload)]

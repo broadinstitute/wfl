@@ -66,11 +66,11 @@
   [request]
   (log/info (select-keys request [:request-method :uri :parameters]))
   (let [uuid (get-in request [:path-params :uuid])
-        {:keys [status]} (get-in request [:parameters :query])]
+        status (get-in request [:parameters :query :status])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (let [w (workloads/load-workload-for-uuid tx uuid)]
-             (cond status (workloads/workflows-by-status tx w status)
-                   :else  (workloads/workflows tx w)))
+      (->> (let [workload (workloads/load-workload-for-uuid tx uuid)]
+             (if status (workloads/workflows-by-status tx workload status)
+                 (workloads/workflows tx workload)))
            (mapv util/to-edn)
            succeed))))
 

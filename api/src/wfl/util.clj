@@ -384,6 +384,15 @@
     (recur (subs url 0 (dec (count url))))
     url))
 
+(defn trim-slashes
+  "Trim the slashes from start and end of url part"
+  [part]
+  (let [new-start (if (and (str/starts-with? part "/") (not (= part "/"))) 1 0)
+        new-end (if (str/ends-with? part "/") (dec (count part)) (count part))]
+    (if (or (= new-start 1) (< new-end (count part)))
+      (recur (subs part new-start new-end))
+      part)))
+
 (defn bracket
   "`acquire`, `use` and `release` a resource in an exception-safe manner.
    Parameters
