@@ -9,8 +9,8 @@
             [wfl.util             :as util])
   (:import [clojure.lang ExceptionInfo]))
 
-(def final-statuses 
-  "The final statuses the Rawls workflow can have."
+(def final-statuses
+  "The final statuses a Rawls workflow can have."
   ["Aborted"
    "Failed"
    "Succeeded"])
