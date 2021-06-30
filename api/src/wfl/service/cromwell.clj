@@ -20,10 +20,7 @@
   ["Aborting"
    "On Hold"
    "Running"
-   "Submitted"
-   "Queued",
-   "Launching",
-   "Unknown"])
+   "Submitted"])
 
 (def statuses
   "All the statuses a Cromwell workflow can have."

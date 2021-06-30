@@ -9,6 +9,25 @@
             [wfl.util             :as util])
   (:import [clojure.lang ExceptionInfo]))
 
+(def final-statuses 
+  "The final statuses the Rawls workflow can have."
+  ["Aborted"
+   "Failed"
+   "Succeeded"])
+
+(def active-statuses
+  "The active statuses the Rawls workflow can have."
+  ["Queued"
+   "Launching"
+   "Submitted"
+   "Running"
+   "Aborting"
+   "Unknown"])
+
+(def statuses
+  "All the statuses the Rawls workflow can have."
+  (into final-statuses active-statuses))
+
 (defn ^:private rawls-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_RAWLS_URL"))]
     (str/join "/" (cons url parts))))
