@@ -16,6 +16,8 @@
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
                                #(not (and (:uuid %) (:project %)))))
 
+(s/def ::workflow-query (s/keys :opt-un [::all/status]))
+
 (s/def :version/built     util/datetime-string?)
 (s/def :version/commit    (s/and string? (comp not str/blank?)))
 (s/def :version/committed util/datetime-string?)
