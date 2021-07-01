@@ -17,11 +17,11 @@
 
 (def active-statuses
   "The active statuses the Rawls workflow can have."
-  ["Queued"
+  ["Aborting"
    "Launching"
-   "Submitted"
+   "Queued"
    "Running"
-   "Aborting"
+   "Submitted"
    "Unknown"])
 
 (def statuses

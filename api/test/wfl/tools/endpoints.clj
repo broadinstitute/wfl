@@ -43,7 +43,8 @@
   "Query v1 api for all workflows managed by `_workload`."
   [{:keys [uuid] :as _workload} & [status]]
   (-> (wfl-url "/api/v1/workload/" uuid "/workflows")
-      (http/get (merge {:headers (auth/get-auth-header)} (when status {:query-params {:status status}})))
+      (http/get (merge {:headers (auth/get-auth-header)}
+                       (when status {:query-params {:status status}})))
       util/response-body-json))
 
 (defn create-workload

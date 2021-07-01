@@ -69,8 +69,7 @@
         status (get-in request [:parameters :query :status])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (let [workload (workloads/load-workload-for-uuid tx uuid)]
-             (if status (workloads/workflows-by-status tx workload status)
-                 (workloads/workflows tx workload)))
+             (if status (workloads/workflows-by-status tx workload status) (workloads/workflows tx workload)))
            (mapv util/to-edn)
            succeed))))
 
