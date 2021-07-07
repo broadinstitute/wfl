@@ -293,8 +293,7 @@
            first))))
 
 (defn ^:private method-content-url
-  "Return a raw.githubusercontent.com URL to the WDL associated with this
-  `method`."
+  "Return the URL of the WDL contents associated with this `method`."
   [{:keys [methodPath methodVersion] :as method}]
   (throw-unless-dockstore-method method)
   (let [id  (url-encode (str "#workflow/" methodPath))
