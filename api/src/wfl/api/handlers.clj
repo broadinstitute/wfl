@@ -1,8 +1,7 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
-            [clojure.tools.logging          :as log]
-            [clojure.tools.logging.readable :as logr]
+            [wfl.log                        :as log]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.jdbc                       :as jdbc]

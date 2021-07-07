@@ -2,7 +2,7 @@
   (:require [clojure.edn                    :as edn]
             [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
-            [clojure.tools.logging.readable :as log]
+            [wfl.log                        :as log]
             [wfl.api.workloads              :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
             [wfl.service.datarepo           :as datarepo]

@@ -1,7 +1,7 @@
 (ns wfl.server
   "An HTTP API server."
   (:require [clojure.string                 :as str]
-            [clojure.tools.logging          :as log]
+            [wfl.log                        :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
@@ -99,7 +99,7 @@
             (try
               (do-update! workload)
               (catch Throwable t
-                (log/error "Failed to update workload %s" uuid)
+                (log/errorf "Failed to update workload %s" uuid)
                 (log/error t))))
           (update-workloads []
             (try

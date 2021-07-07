@@ -2,7 +2,7 @@
   "clojure.tools.logging wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc              :as jdbc]
             [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log])
+            [wfl.log :as log])
   (:import (clojure.lang IPersistentVector)
            (java.sql PreparedStatement Array)))
 

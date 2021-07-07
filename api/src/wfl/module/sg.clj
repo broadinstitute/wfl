@@ -4,7 +4,7 @@
             [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log]
+            [wfl.log                        :as log]
             [wfl.api.workloads              :as workloads :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]

@@ -1,8 +1,7 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
-            [clojure.tools.logging              :as log]
-            [clojure.tools.logging.readable     :as logr]
+            [wfl.log                            :as log]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -138,7 +137,7 @@
   [status message exception {:keys [uri] :as request}]
   (let [response (exception-handler status message exception request)]
     (log/errorf "Server %s error at occurred at %s :" (:status response) uri)
-    (logr/error exception (:body response))
+    (log/error exception (:body response))
     response))
 
 (def exception-middleware

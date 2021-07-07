@@ -4,7 +4,7 @@
             [clojure.edn           :as edn]
             [clojure.set           :as set]
             [clojure.string        :as str]
-            [clojure.tools.logging :as log]
+            [wfl.log               :as log]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]

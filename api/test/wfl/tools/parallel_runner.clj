@@ -1,6 +1,6 @@
 (ns wfl.tools.parallel-runner
   (:require [clojure.test :as test]
-            [clojure.tools.logging :as log]
+            [wfl.log :as log]
             [clojure.tools.logging.impl :refer [disabled-logger-factory]])
   (:import (java.io StringWriter)))
 

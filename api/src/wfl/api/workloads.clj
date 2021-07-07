@@ -1,6 +1,6 @@
 (ns wfl.api.workloads
   (:require [clojure.string        :as str]
-            [clojure.tools.logging :as log]
+            [wfl.log               :as log]
             [wfl.jdbc              :as jdbc]
             [wfl.util              :as util]))
 
