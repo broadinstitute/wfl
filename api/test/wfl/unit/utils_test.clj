@@ -74,11 +74,3 @@
                       [:membership "flowcell_set" membership]
                       [:membership "flowcell_set_id" membership]]]
       (run! go parameters))))
-
-(deftest test-trim-slashes
-  (is (= "wfl" (util/trim-slashes "/wfl")))
-  (is (= "wfl" (util/trim-slashes "/wfl/")))
-  (is (= "wfl" (util/trim-slashes "wfl/")))
-  (is (= "wfl" (util/trim-slashes "wfl")))
-  (is (= "" (util/trim-slashes "/")))
-  (is (= "" (util/trim-slashes "///"))))
