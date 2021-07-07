@@ -1,15 +1,14 @@
 (ns wfl.integration.sink-test
   "Test validation and operations on Sink stage implementations."
-  (:require [clojure.test :refer [deftest is use-fixtures]]
-            [wfl.jdbc :as jdbc]
+  (:require [clojure.test          :refer [deftest is use-fixtures]]
+            [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres :as postgres]
-            [wfl.service.rawls :as rawls]
-            [wfl.sink :as sink]
-            [wfl.stage :as stage]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.resources :as resources]
-            [wfl.tools.workflows :as workflows])
+            [wfl.service.postgres  :as postgres]
+            [wfl.service.rawls     :as rawls]
+            [wfl.sink              :as sink]
+            [wfl.stage             :as stage]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.resources   :as resources])
   (:import [java.util ArrayDeque]
            [wfl.util UserException]))
 
