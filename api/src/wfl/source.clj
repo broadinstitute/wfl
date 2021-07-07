@@ -136,24 +136,13 @@
                               :dataset (id-and-name dataset)})))
     table))
 
-(defn ^:private get-dataset-or-throw
-  "Return the dataset with `dataset-id` or throw"
-  [dataset-id]
-  (try
-    (datarepo/dataset dataset-id)
-    (catch ExceptionInfo e
-      (throw
-       (UserException. "Cannot access dataset"
-                       {:dataset dataset-id :status (-> e ex-data :status)}
-                       e)))))
-
 (defn verify-data-repo-source!
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
     source
-    (let [dataset (get-dataset-or-throw dataset)]
+    (let [dataset (datarepo/dataset dataset)]
       (throw-unless-column-exists (get-table-or-throw table dataset)
                                   column dataset)
       (assoc source :dataset dataset))))
@@ -311,7 +300,7 @@
   "Get first unconsumed snapshot from `source` queue."
   [source]
   (when-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
-    (datarepo/snapshot snapshot_id)))
+    ["snapshot" (datarepo/snapshot snapshot_id)]))
 
 (defn ^:private tdr-source-queue-length
   "Return the number of unconsumed snapshot records from `details` table."

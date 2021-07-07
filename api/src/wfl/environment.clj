@@ -47,6 +47,8 @@
    #(-> "https://api.firecloud.org")
    "WFL_RAWLS_URL"
    #(-> "https://rawls.dsde-dev.broadinstitute.org")
+   "WFL_DOCKSTORE_URL"
+   #(-> "https://dockstore.org")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"

@@ -1,15 +1,16 @@
 (ns wfl.executor
   (:require [clojure.edn              :as edn]
             [clojure.set              :as set]
+            [ring.util.codec          :refer [url-encode]]
             [wfl.api.workloads        :refer [defoverload]]
             [wfl.jdbc                 :as jdbc]
+            [wfl.service.dockstore    :as dockstore]
             [wfl.service.firecloud    :as firecloud]
             [wfl.service.postgres     :as postgres]
             [wfl.service.rawls        :as rawls]
             [wfl.stage                :as stage]
             [wfl.util                 :as util :refer [utc-now]])
-  (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 ;; executor operations
 (defmulti update-executor!
@@ -60,7 +61,8 @@
   {:workspace                  :workspace
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
-   :fromSource                 :from_source})
+   :fromSource                 :from_source
+   :description                :description})
 
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
@@ -70,6 +72,7 @@
     [terra-executor-type
      (-> (select-keys request (keys terra-executor-serialized-fields))
          (update :fromSource pr-str)
+         (update :description pr-str)
          (set/rename-keys terra-executor-serialized-fields)
          (assoc :details details)
          (->> (jdbc/insert! tx terra-executor-table) first :id str))]))
@@ -79,19 +82,9 @@
     (-> (postgres/load-record-by-id! tx terra-executor-table id)
         (assoc :type terra-executor-type)
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
-        (update :fromSource edn/read-string))
+        (update :fromSource edn/read-string)
+        (update :description edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
-
-(defn ^:private method-config-or-throw [workspace methodconfig]
-  (try
-    (firecloud/get-method-configuration workspace methodconfig)
-    (catch ExceptionInfo cause
-      (throw (UserException.
-              "Cannot access method configuration in workspace"
-              {:workspace           workspace
-               :methodConfiguration methodconfig
-               :status              (-> cause ex-data :status)}
-              cause)))))
 
 (defn ^:private throw-on-method-config-version-mismatch
   [{:keys [methodConfigVersion] :as methodconfig} expected]
@@ -102,6 +95,23 @@
              :expected            expected
              :actual              methodConfigVersion}))))
 
+(defn ^:private method-raw-content-url
+  "Return a raw.githubusercontent.com URL to the WDL associated with this
+  `method`."
+  [{:keys [sourceRepo methodPath methodVersion] :as method}]
+  (when-not (= "dockstore" sourceRepo)
+    (throw (UserException. "Only Dockstore methods are supported."
+                           {:status 400 :method method})))
+  (-> (str "#workflow/" methodPath)
+      url-encode
+      (dockstore/ga4gh-tool-descriptor methodVersion "WDL")
+      :url))
+
+(defn describe-workflow
+  "Describe the workflow associated with the `method-configuration`."
+  [{:keys [methodRepoMethod]}]
+  (firecloud/describe-workflow (method-raw-content-url methodRepoMethod)))
+
 (defn verify-terra-executor
   "Verify the method-configuration exists."
   [{:keys [skipValidation
@@ -109,24 +119,32 @@
            methodConfiguration
            methodConfigurationVersion
            fromSource] :as executor}]
-  (when-not skipValidation
-    (firecloud/workspace-or-throw workspace)
-    (when-not (= "importSnapshot" fromSource)
-      (throw
-       (UserException. "Unsupported coercion" (util/make-map fromSource))))
-    (throw-on-method-config-version-mismatch
-     (method-config-or-throw workspace methodConfiguration)
-     methodConfigurationVersion))
-  executor)
+  (if skipValidation
+    executor
+    (do (firecloud/workspace-or-throw workspace)
+        (when-not (= "importSnapshot" fromSource)
+          (throw
+           (UserException. "Unsupported coercion" (util/make-map fromSource))))
+        (let [m (firecloud/method-configuration workspace methodConfiguration)]
+          (throw-on-method-config-version-mismatch m methodConfigurationVersion)
+          (assoc executor :description (describe-workflow m))))))
+
+(defn ^:private entity-from-snapshot
+  "Coerce the `snapshot` into a workspace entity via `fromSource`."
+  [{:keys [workspace fromSource] :as executor} {:keys [id name] :as snapshot}]
+  (when-not (= "importSnapshot" fromSource)
+    (throw (ex-info "Unknown conversion from snapshot to workspace entity."
+                    {:executor executor
+                     :snapshot snapshot})))
+  (rawls/create-snapshot-reference workspace id name))
 
 (defn ^:private from-source
-  "Coerce `source-item` to form understood by `executor` via `fromSource`."
-  [{:keys [workspace fromSource] :as executor}
-   {:keys [name id]              :as _source-item}]
-  (cond (= "importSnapshot" fromSource)
-        (rawls/create-or-get-snapshot-reference workspace id name)
-        :else
-        (throw (ex-info "Unknown fromSource" {:executor executor}))))
+  "Coerce `object` to form understood by `executor``."
+  [executor [description item :as object]]
+  (cond (= "snapshot" description) (entity-from-snapshot executor item)
+        :else                      (throw (ex-info "No method to coerce object into workspace entity"
+                                                   {:executor executor
+                                                    :object   object}))))
 
 (defn ^:private update-method-configuration!
   "Update `methodConfiguration` in `workspace` with snapshot reference `name`
@@ -137,7 +155,7 @@
            methodConfiguration
            methodConfigurationVersion] :as _executor}
    {:keys [name]                       :as _reference}]
-  (let [current (method-config-or-throw workspace methodConfiguration)
+  (let [current (firecloud/method-configuration workspace methodConfiguration)
         _       (throw-on-method-config-version-mismatch
                  current methodConfigurationVersion)
         inc'd   (inc methodConfigurationVersion)]
@@ -250,10 +268,10 @@
   Update statuses for active or failed workflows in `details` table.
   Return `executor`."
   [source executor]
-  (when-let [snapshot (stage/peek-queue source)]
-    (let [reference  (from-source executor snapshot)
-          submission (create-submission! executor reference)]
-      (allocate-submission executor reference submission)
+  (when-let [object (stage/peek-queue source)]
+    (let [entity     (from-source executor object)
+          submission (create-submission! executor entity)]
+      (allocate-submission executor entity submission)
       (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
@@ -287,13 +305,14 @@
 
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
-  [{:keys [workspace] :as executor}]
+  [{:keys [description workspace] :as executor}]
   (when-let [{:keys [submission workflow] :as record}
              (peek-terra-executor-details executor)]
-    (combine-record-workflow-and-outputs
-     record
-     (firecloud/get-workflow workspace submission workflow)
-     (firecloud/get-workflow-outputs workspace submission workflow))))
+    [description
+     (combine-record-workflow-and-outputs
+      record
+      (firecloud/get-workflow workspace submission workflow)
+      (firecloud/get-workflow-outputs workspace submission workflow))]))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,
@@ -404,6 +423,7 @@
 (defn ^:private terra-executor-to-edn [executor]
   (-> executor
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
+      (dissoc :description)
       (assoc :name terra-executor-name)))
 
 (defoverload create-executor! terra-executor-name create-terra-executor)

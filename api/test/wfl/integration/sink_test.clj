@@ -1,14 +1,15 @@
 (ns wfl.integration.sink-test
   "Test validation and operations on Sink stage implementations."
-  (:require [clojure.test          :refer [deftest is use-fixtures]]
-            [wfl.jdbc              :as jdbc]
+  (:require [clojure.test :refer [deftest is use-fixtures]]
+            [wfl.jdbc :as jdbc]
             [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres  :as postgres]
-            [wfl.service.rawls     :as rawls]
-            [wfl.sink              :as sink]
-            [wfl.stage             :as stage]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.resources   :as resources])
+            [wfl.service.postgres :as postgres]
+            [wfl.service.rawls :as rawls]
+            [wfl.sink :as sink]
+            [wfl.stage :as stage]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.resources :as resources]
+            [wfl.tools.workflows :as workflows])
   (:import [java.util ArrayDeque]
            [wfl.util UserException]))
 
@@ -109,7 +110,7 @@
                      :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                   resources/read-resource
                                   (assoc :flowcell_id testing-entity-name))}
-        executor    (make-queue-from-list [workflow])
+        executor    (make-queue-from-list [[nil workflow]])
         sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (->> {:name           "Terra Workspace"
                             :workspace      "workspace-ns/workspace-name"
@@ -154,7 +155,7 @@
                        :status  "Succeeded"
                        :outputs {:run_id  testing-entity-name
                                  :results ["another-aligned-thing.cram"]}}
-            executor  (make-queue-from-list [workflow1 workflow2])
+            executor  (make-queue-from-list [[nil workflow1] [nil workflow2]])
             sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                         (->> {:name           "Terra Workspace"
                               :workspace      workspace
