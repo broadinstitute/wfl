@@ -1,5 +1,5 @@
 (ns wfl.service.dockstore
-  "Analyze data in Terra using the Firecloud/Terra API."
+  "Wrappers for Dockstore HTTP APIs."
   (:require [clj-http.client   :as http]
             [clojure.string    :as str]
             [wfl.environment   :as env]

@@ -236,7 +236,8 @@
        #'firecloud/get-workflow                mock-workflow-keep-status}
       #(executor/update-executor! source executor))
     (with-redefs-fn
-      {#'firecloud/get-workflow         (constantly succeeded-workflow-mock)
+      {#'executor/describe-method       (constantly nil)
+       #'firecloud/get-workflow         (constantly succeeded-workflow-mock)
        #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
       #(let [[_ workflow] (stage/peek-queue executor)]
          (is (succeeded? (:status workflow)))
@@ -270,3 +271,10 @@
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
          (is (== 1 (count (executor/executor-workflows tx executor)))
              "The retried workflow should not be returned")))))
+
+(deftest test-tdr-executor-describe-method
+  (let [description (executor/describe-method
+                     testing-workspace
+                     testing-method-configuration)]
+    (is (every? description [:validWorkflow :inputs :outputs]))
+    (is (= "sarscov2_illumina_full" (:name description)))))

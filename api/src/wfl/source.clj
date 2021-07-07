@@ -387,7 +387,7 @@
 (defn ^:private stop-tdr-snapshot-list  [_ source] source)
 (defn ^:private update-tdr-snapshot-list [source]  source)
 
-(defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
+(defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s
                WHERE  consumed IS NULL
                ORDER BY id ASC
@@ -396,6 +396,10 @@
       (->> (format query items)
            (jdbc/query tx)
            first))))
+
+(defn ^:private peek-tdr-snapshot-list [source]
+  (when-let [{:keys [item]} (peek-tdr-snapshot-details-table source)]
+    ["snapshot" (edn/read-string item)]))
 
 (defn ^:private tdr-snapshot-list-queue-length [{:keys [items] :as _source}]
   (let [query "SELECT COUNT (*) FROM %s WHERE consumed IS NULL"]
@@ -406,13 +410,13 @@
            :count))))
 
 (defn ^:private pop-tdr-snapshot-list [{:keys [items] :as source}]
-  (if-let [{:keys [id]} (peek-tdr-snapshot-list source)]
+  (if-let [{:keys [id]} (peek-tdr-snapshot-details-table source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
 (defn ^:private tdr-snapshot-list-done? [source]
-  (zero? (stage/queue-length source)))
+  (zero? (tdr-snapshot-list-queue-length source)))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
   (let [read-snapshot-id (comp :id edn/read-string :item)]
@@ -420,18 +424,18 @@
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
-(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
-
-(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
 (defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
+
+(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 
-(defoverload stage/peek-queue
-  tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload stage/peek-queue tdr-snapshot-list-type peek-tdr-snapshot-list)
 (defoverload stage/pop-queue! tdr-snapshot-list-type pop-tdr-snapshot-list)
 (defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
+
+(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
 (defoverload stage/done? tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)

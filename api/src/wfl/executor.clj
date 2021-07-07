@@ -1,15 +1,16 @@
 (ns wfl.executor
-  (:require [clojure.edn              :as edn]
-            [clojure.set              :as set]
-            [ring.util.codec          :refer [url-encode]]
-            [wfl.api.workloads        :refer [defoverload]]
-            [wfl.jdbc                 :as jdbc]
-            [wfl.service.dockstore    :as dockstore]
-            [wfl.service.firecloud    :as firecloud]
-            [wfl.service.postgres     :as postgres]
-            [wfl.service.rawls        :as rawls]
-            [wfl.stage                :as stage]
-            [wfl.util                 :as util :refer [utc-now]])
+  (:require [clojure.edn :as edn]
+            [clojure.set :as set]
+            [ring.util.codec :refer [url-encode]]
+            [wfl.api.workloads :refer [defoverload]]
+            [wfl.jdbc :as jdbc]
+            [wfl.service.dockstore :as dockstore]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.postgres :as postgres]
+            [wfl.service.rawls :as rawls]
+            [wfl.stage :as stage]
+            [wfl.util :as util :refer [utc-now]]
+            [clojure.string :as str])
   (:import [wfl.util UserException]))
 
 ;; executor operations
@@ -61,8 +62,7 @@
   {:workspace                  :workspace
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
-   :fromSource                 :from_source
-   :description                :description})
+   :fromSource                 :from_source})
 
 (defn ^:private create-terra-executor [tx id request]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
@@ -72,7 +72,6 @@
     [terra-executor-type
      (-> (select-keys request (keys terra-executor-serialized-fields))
          (update :fromSource pr-str)
-         (update :description pr-str)
          (set/rename-keys terra-executor-serialized-fields)
          (assoc :details details)
          (->> (jdbc/insert! tx terra-executor-table) first :id str))]))
@@ -82,8 +81,7 @@
     (-> (postgres/load-record-by-id! tx terra-executor-table id)
         (assoc :type terra-executor-type)
         (set/rename-keys (set/map-invert terra-executor-serialized-fields))
-        (update :fromSource edn/read-string)
-        (update :description edn/read-string))
+        (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
 (defn ^:private throw-on-method-config-version-mismatch
@@ -95,22 +93,13 @@
              :expected            expected
              :actual              methodConfigVersion}))))
 
-(defn ^:private method-raw-content-url
-  "Return a raw.githubusercontent.com URL to the WDL associated with this
-  `method`."
-  [{:keys [sourceRepo methodPath methodVersion] :as method}]
+(defn ^:private throw-unless-dockstore-method
+  "Throw unless the method associated with the `methodRepoMethod` is a dockstore
+   method."
+  [{:keys [sourceRepo] :as methodRepoMethod}]
   (when-not (= "dockstore" sourceRepo)
     (throw (UserException. "Only Dockstore methods are supported."
-                           {:status 400 :method method})))
-  (-> (str "#workflow/" methodPath)
-      url-encode
-      (dockstore/ga4gh-tool-descriptor methodVersion "WDL")
-      :url))
-
-(defn describe-workflow
-  "Describe the workflow associated with the `method-configuration`."
-  [{:keys [methodRepoMethod]}]
-  (firecloud/describe-workflow (method-raw-content-url methodRepoMethod)))
+                           {:status 400 :methodRepoMethod methodRepoMethod}))))
 
 (defn verify-terra-executor
   "Verify the method-configuration exists."
@@ -119,15 +108,15 @@
            methodConfiguration
            methodConfigurationVersion
            fromSource] :as executor}]
-  (if skipValidation
-    executor
-    (do (firecloud/workspace-or-throw workspace)
-        (when-not (= "importSnapshot" fromSource)
-          (throw
-           (UserException. "Unsupported coercion" (util/make-map fromSource))))
-        (let [m (firecloud/method-configuration workspace methodConfiguration)]
-          (throw-on-method-config-version-mismatch m methodConfigurationVersion)
-          (assoc executor :description (describe-workflow m))))))
+  (when-not skipValidation
+    (firecloud/workspace-or-throw workspace)
+    (when-not (= "importSnapshot" fromSource)
+      (throw
+       (UserException. "Unsupported coercion" (util/make-map fromSource))))
+    (let [m (firecloud/method-configuration workspace methodConfiguration)]
+      (throw-on-method-config-version-mismatch m methodConfigurationVersion)
+      (throw-unless-dockstore-method (:methodRepoMethod m))))
+  executor)
 
 (defn ^:private entity-from-snapshot
   "Coerce the `snapshot` into a workspace entity via `fromSource`."
@@ -303,12 +292,34 @@
            (jdbc/query tx)
            first))))
 
+(defn ^:private method-content-url
+  "Return a raw.githubusercontent.com URL to the WDL associated with this
+  `method`."
+  [{:keys [methodPath methodVersion] :as method}]
+  (throw-unless-dockstore-method method)
+  (let [id  (url-encode (str "#workflow/" methodPath))
+        url (:url (dockstore/ga4gh-tool-descriptor id methodVersion "WDL"))]
+    (if-let [groups (re-find #"^https://raw.githubusercontent.com/(.*)$" url)]
+      ;; use jsdelivr to avoid GitHub rate-limits
+      (let [[author repo version path] (str/split (second groups) #"/" 4)]
+        (str/join "/" ["https://cdn.jsdelivr.net/gh" author (str repo "@" version) path]))
+      url)))
+
+;; visible for testing
+(defn describe-method
+  "Describe the method associated with the `methodconfig`."
+  [workspace methodconfig]
+  (-> (firecloud/method-configuration workspace methodconfig)
+      :methodRepoMethod
+      method-content-url
+      firecloud/describe-workflow))
+
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
-  [{:keys [description workspace] :as executor}]
+  [{:keys [workspace methodConfiguration] :as executor}]
   (when-let [{:keys [submission workflow] :as record}
              (peek-terra-executor-details executor)]
-    [description
+    [(describe-method workspace methodConfiguration)
      (combine-record-workflow-and-outputs
       record
       (firecloud/get-workflow workspace submission workflow)
@@ -423,7 +434,6 @@
 (defn ^:private terra-executor-to-edn [executor]
   (-> executor
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
-      (dissoc :description)
       (assoc :name terra-executor-name)))
 
 (defoverload create-executor! terra-executor-name create-terra-executor)
