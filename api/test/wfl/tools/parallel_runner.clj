@@ -1,7 +1,6 @@
 (ns wfl.tools.parallel-runner
   (:require [clojure.test :as test]
-            [wfl.log :as log]
-            [clojure.tools.logging.impl :refer [disabled-logger-factory]])
+            [wfl.log :as log])
   (:import (java.io StringWriter)))
 
 (defn -main
@@ -15,7 +14,7 @@
               (binding [*out*                  (StringWriter.)
                         test/*test-out*        (StringWriter.)
                         test/*report-counters* counters
-                        log/*logger-factory*   disabled-logger-factory]
+                        log/*logger*           log/disabled-logger]
                 (a-test)
                 (str test/*test-out*)))]
       (run! use symbols)

@@ -11,20 +11,37 @@
   [field]
   (let [field-name (name field)]
     (if (#{"labels" "insertId" "operation" "sourceLocation" "spanId" "trace"} field-name)
-      (str "logging.googleapis.com/" (name field-name))
+      (str "logging.googleapis.com/" field-name)
       field-name)))
+
+(defprotocol Logger
+  ""
+  (write! [logger json] "Writes the log using the given logger."))
+
+(def disabled-logger
+  "A logger that does not log."
+  (reify Logger
+    (write! [_ _])))
+
+(def working-logger
+  "A logger to write to standard output"
+  (reify Logger
+    (write! [logger json]
+      (-> (write-str json :key-fn googleize-field :escape-slash false)
+          (.toString)
+          (println)))))
+
+(def ^:dynamic *logger*
+  ""
+  working-logger)
 
 (defn log
   "Write a log entry to standard output."
   [severity message & {:as additional-fields}]
-  (let [severity-upper (-> severity name upper-case)]
-    (-> (merge {:severity severity-upper
-                :message message
-                :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
-               additional-fields)
-        (write-str :key-fn googleize-field :escape-slash false)
-        (.toString)
-        (println))))
+  (write! *logger* (merge {:severity (-> severity name upper-case)
+                           :message message
+                           :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
+                          additional-fields)))
 
 (defmacro info
   "Log as Information"
