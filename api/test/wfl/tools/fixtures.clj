@@ -1,5 +1,6 @@
 (ns wfl.tools.fixtures
   (:require [clojure.java.jdbc]
+            [clojure.pprint             :as pprint]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
@@ -236,3 +237,11 @@
   "Adapter for clojure.test/use-fixtures"
   [env]
   (partial with-temporary-environment env))
+
+(defn pprint-tap
+  "Pretty-print the `tap>` stream."
+  [f]
+  (let [pprint (bound-fn* pprint/pprint)]
+    (try (add-tap pprint)
+         (f)
+         (finally (remove-tap pprint)))))
