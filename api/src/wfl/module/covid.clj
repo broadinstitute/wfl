@@ -10,7 +10,8 @@
             [wfl.stage :as stage]
             [wfl.util :as util :refer [utc-now]]
             [wfl.wfl :as wfl]
-            [wfl.module.all :as all])
+            [wfl.module.all :as all]
+            [wfl.service.postgres :as postgres])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
@@ -77,10 +78,10 @@
         (select-keys [:creator :watchers :labels :project])
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor ""
-               :output   ""
-               :release  ""
-               :wdl      ""
-               :uuid     (UUID/randomUUID))
+               :output ""
+               :release ""
+               :wdl ""
+               :uuid (UUID/randomUUID))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 (def ^:private update-workload-query
@@ -96,14 +97,14 @@
 (defn ^:private create-covid-workload
   [tx {:keys [source executor sink] :as request}]
   (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
-        id                     (add-workload-metadata tx request)]
+        id (add-workload-metadata tx request)]
     (jdbc/execute!
-     tx
-     (concat [update-workload-query]
-             (source/create-source! tx id source)
-             (executor/create-executor! tx id executor)
-             (sink/create-sink! tx id sink)
-             [id]))
+      tx
+      (concat [update-workload-query]
+              (source/create-source! tx id source)
+              (executor/create-executor! tx id executor)
+              (sink/create-sink! tx id sink)
+              [id]))
     (workloads/load-workload-for-id tx id)))
 
 (defn ^:private load-covid-workload-impl [tx {:keys [id] :as workload}]
@@ -111,10 +112,10 @@
                       :executor (executor/load-executor! tx workload)
                       :sink     (sink/load-sink! tx workload)}]
     (as-> workload $
-      (select-keys $ workload-metadata-keys)
-      (merge $ src-exc-sink)
-      (filter second $)
-      (into {:type :workload :id id} $))))
+          (select-keys $ workload-metadata-keys)
+          (merge $ src-exc-sink)
+          (filter second $)
+          (into {:type :workload :id id} $))))
 
 (defn ^:private start-covid-workload
   "Start creating and managing workflows from the source."
@@ -156,20 +157,77 @@
   (-> workload
       (util/select-non-nil-keys workload-metadata-keys)
       (dissoc :pipeline)
-      (update :source   util/to-edn)
+      (update :source util/to-edn)
       (update :executor util/to-edn)
-      (update :sink     util/to-edn)))
+      (update :sink util/to-edn)))
 
-(defoverload workloads/create-workload!    pipeline create-covid-workload)
-(defoverload workloads/start-workload!     pipeline start-covid-workload)
-(defoverload workloads/update-workload!    pipeline update-covid-workload)
-(defoverload workloads/stop-workload!      pipeline stop-covid-workload)
-(defoverload workloads/retry               pipeline batch/retry-unsupported)
-(defoverload workloads/load-workload-impl  pipeline load-covid-workload-impl)
-(defmethod   workloads/workflows           pipeline
+(defn retry-workflows
+  [{:keys [executor] :as source} status]
+
+  ; 1. Get the workflows of status X and null retry field
+  (println (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                     (executor/executor-workflows-by-status tx source status)))
+  ; 2. Get the distinct list of snapshots for these workflows
+
+  ; 3. Submit the snapshots. Hold onto the new workflow ids
+
+  ; 4. Update the retry field of the executor details table inserting the new workflow id for the old workflow.
+
+  )
+
+(comment
+  (letfn [(covid-workload-request
+    "Make a COVID Sarscov2IlluminaFull workload creation request."
+    ([source executor sink]
+     {:source   (merge
+                  {:name            "Terra DataRepo"
+                   :dataset         (str util/uuid-nil)
+                   :table           "table"
+                   :column          "column"
+                   :snapshotReaders []}
+                  source)
+      :executor (merge
+                  {:name                       "Terra"
+                   :workspace                  "namespace/name"
+                   :methodConfiguration        "namespace/name"
+                   :methodConfigurationVersion 0
+                   :fromSource                 "importSnapshot"}
+                  executor)
+      :sink     (merge
+                  {:name        "Terra Workspace"
+                   :workspace   "namespace/name"
+                   :entityType  "entity"
+                   :identifier  "foo"
+                   :fromOutputs {}}
+                  sink)
+      :project  @project
+      :creator  @email
+      :labels   ["hornet:test"]})
+    ([]
+     (covid-workload-request {} {} {})))
+
+  (retry-workflows (covid-workload-request
+                                                 {:skipValidation true}
+                                                 {:details       "terraexecutor_000000001"
+                                                  :executor_type "TerraExecutor"}
+                                                 {:skipValidation true})
+                                               "Failed")])
+  )
+
+
+
+
+
+(defoverload workloads/create-workload! pipeline create-covid-workload)
+(defoverload workloads/start-workload! pipeline start-covid-workload)
+(defoverload workloads/update-workload! pipeline update-covid-workload)
+(defoverload workloads/stop-workload! pipeline stop-covid-workload)
+(defoverload workloads/retry pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
+(defmethod workloads/workflows pipeline
   [tx {:keys [executor] :as _workload}]
   (executor/executor-workflows tx executor))
-(defmethod   workloads/workflows-by-status pipeline
+(defmethod workloads/workflows-by-status pipeline
   [tx {:keys [executor] :as _workload} status]
   (executor/executor-workflows-by-status tx executor status))
-(defoverload workloads/to-edn             pipeline workload-to-edn)
+(defoverload workloads/to-edn pipeline workload-to-edn)

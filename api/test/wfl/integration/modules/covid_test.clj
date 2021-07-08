@@ -346,3 +346,11 @@
        {:skipValidation true}
        {:skipValidation true}
        {:skipValidation true}))))
+
+(deftest test-etry-workflows
+  (wfl.module.covid/retry-workflows (workloads/covid-workload-request
+                                {:skipValidation true}
+                                {:details "terraexecutor_000000001"
+                                 :executor_type "TerraExecutor"}
+                                {:skipValidation true})
+                              "Failed"))
