@@ -182,10 +182,10 @@
 )
 
 (comment
-  (let [tx (jdbc/with-db-transaction [tx (postgres/wfl-db-config)])
-        w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
-    (pprint w)
-    (pprint (util/to-edn w)))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (let [w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
+      (pprint w)
+      (pprint (util/to-edn w))))
 
 
   (let
