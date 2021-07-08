@@ -13,7 +13,8 @@
             [wfl.module.all :as all]
             [wfl.service.postgres :as postgres])
   (:import [java.util UUID]
-           [wfl.util UserException]))
+           [wfl.util UserException])
+  (:use [clojure.pprint :as pprint]))
 
 (def pipeline nil)
 
@@ -162,12 +163,15 @@
       (update :sink util/to-edn)))
 
 (defn retry-workflows
-  [{:keys [executor] :as _workload} status]
+  [workflow workloads]
+
+  ; 1. load the workload
+
 
   ; 1. Get the workflows of status X and null retry field
-  (let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                            (executor/executor-workflows-by-status tx executor status))]
-    (println workflows))
+  ;(let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  ;                                          (executor/executor-workflows-by-status tx {:executor workload} workflow status))]
+  ;  (println workflows))
 
   ; 2. Get the distinct list of snapshots for these workflows
 
@@ -178,21 +182,96 @@
 )
 
 (comment
+  (let [tx (jdbc/with-db-transaction [tx (postgres/wfl-db-config)])
+        w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
+    (pprint w)
+    (pprint (util/to-edn w)))
+
+
   (let
-    [workload {:executor
-                {:name                       "Terra"
-                 :workspace                  "namespace/name"
-                 :methodConfiguration        "namespace/name"
-                 :methodConfigurationVersion 0
-                 :fromSource                 "importSnapshot"
-                 :details                    "terraexecutor_000000001"
-                 :executor_type              "TerraExecutor"}}]
+    [workload {
+               :started "2021-07-06T20:22:04Z"
+               :watchers [ "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com" ]
+               :labels [ "hornet:test"
+                        "project:wfl-dev/CDC_Viral_Sequencing_ranthony_20210701" ]
+               :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
+               :updated "2021-07-07T00:28:00Z"
+               :created "2021-07-06T20:16:21Z"
+               :source {
+                        :snapshots [ "a95f31f7-553e-4e60-9d94-6c594c7e3709" ]
+                        :name "TDR Snapshots"}
+               :finished "2021-07-07T00:28:00Z"
+               :commit "3848aad49ca9201b57deca37a4f797901bb775c5"
+               :uuid "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b"
+               :executor {
+                          :workspace "wfl-dev/CDC_Viral_Sequencing_ranthony_20210701"
+                          :methodConfiguration "wfl-dev/sarscov2_illumina_full"
+                          :methodConfigurationVersion 2
+                          :fromSource "importSnapshot"
+                          :name "Terra"}
+               :version "0.8.0"
+               :sink {
+                         :workspace "wfl-dev/CDC_Viral_Sequencing_ranthony_20210701"
+                         :entityType "flowcell",
+                         :fromOutputs {
+                                          :submission_xml "submission_xml"
+                                          :assembled_ids "assembled_ids"
+                                          :num_failed_assembly "num_failed_assembly"
+                                          :ivar_trim_stats_png "ivar_trim_stats_png"
+                                          :read_counts_raw "read_counts_raw"
+                                          :num_samples "num_samples"
+                                          :vadr_outputs "vadr_outputs"
+                                          :cleaned_reads_unaligned_bams "cleaned_reads_unaligned_bams",
+                                          :demux_commonBarcodes "demux_commonBarcodes"
+                                          :submission_zip "submission_zip"
+                                          :cleaned_bams_tiny "cleaned_bams_tiny"
+                                          :data_tables_out "data_tables_out"
+                                          :ntc_rejected_batches "ntc_rejected_batches"
+                                          :picard_metrics_alignment "picard_metrics_alignment"
+                                          :failed_assembly_ids "failed_assembly_ids"
+                                          :ivar_trim_stats_html "ivar_trim_stats_html"
+                                          :assembly_stats_tsv "assembly_stats_tsv"
+                                          :failed_annotation_ids "failed_annotation_ids"
+                                          :run_date "run_date"
+                                          :genbank_source_table "genbank_source_table"
+                                          :num_read_files "num_read_files"
+                                          :ntc_rejected_lanes "ntc_rejected_lanes"
+                                          :primer_trimmed_read_count "primer_trimmed_read_count"
+                                          :gisaid_fasta "gisaid_fasta"
+                                          :num_submittable "num_submittable"
+                                          :submit_ready "submit_ready"
+                                          :passing_fasta "passing_fasta"
+                                          :nextclade_auspice_json "nextclade_auspice_json"
+                                          :read_counts_depleted "read_counts_depleted"
+                                          :cleaned_bam_uris "cleaned_bam_uris"
+                                          :num_assembled "num_assembled"
+                                          :max_ntc_bases "max_ntc_bases"
+                                          :genbank_fasta "genbank_fasta"
+                                          :multiqc_report_cleaned "multiqc_report_cleaned"
+                                          :num_failed_annotation "num_failed_annotation"
+                                          :meta_by_filename_json "meta_by_filename_json"
+                                          :primer_trimmed_read_percent "primer_trimmed_read_percent",
+                                          :assembly_stats_final_tsv "assembly_stats_final_tsv"
+                                          :demux_metrics "demux_metrics"
+                                          :submittable_ids "submittable_ids"
+                                          :sra_metadata "sra_metadata"
+                                          :spikein_counts "spikein_counts"
+                                          :raw_reads_unaligned_bams "raw_reads_unaligned_bams"
+                                          :ivar_trim_stats_tsv "ivar_trim_stats_tsv"
+                                          :picard_metrics_wgs "picard_metrics_wgs"
+                                          :nextclade_all_json "nextclade_all_json"
+                                          :multiqc_report_raw "multiqc_report_raw"
+                                          :sequencing_reports "sequencing_reports"
+                                          :demux_outlierBarcodes "demux_outlierBarcodes"
+                                          :nextmeta_tsv "nextmeta_tsv"
+                                          :assemblies_fasta "assemblies_fasta"
+                                          }
+                      :identifier "run_id"
+                      :name "Terra Workspace"
+                         }
+               } ]
     (retry-workflows workload "Failed"))
 )
-
-
-
-
 
 (defoverload workloads/create-workload! pipeline create-covid-workload)
 (defoverload workloads/start-workload! pipeline start-covid-workload)
