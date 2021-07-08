@@ -94,8 +94,7 @@
              :actual              methodConfigVersion}))))
 
 (defn ^:private throw-unless-dockstore-method
-  "Throw unless the method associated with the `methodRepoMethod` is a dockstore
-   method."
+  "Throw unless the `sourceRepo` of `methodRepoMethod` is \"dockstore\"."
   [{:keys [sourceRepo] :as methodRepoMethod}]
   (when-not (= "dockstore" sourceRepo)
     (throw (UserException. "Only Dockstore methods are supported."
