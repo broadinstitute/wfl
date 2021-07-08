@@ -165,8 +165,9 @@
   [{:keys [executor] :as _workload} status]
 
   ; 1. Get the workflows of status X and null retry field
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                              (executor/executor-workflows-by-status tx executor status))
+  (let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                            (executor/executor-workflows-by-status tx executor status))]
+    (println workflows))
 
   ; 2. Get the distinct list of snapshots for these workflows
 
@@ -174,7 +175,7 @@
 
   ; 4. Update the retry field of the executor details table inserting the new workflow id for the old workflow.
 
-  )
+)
 
 (comment
   (let
