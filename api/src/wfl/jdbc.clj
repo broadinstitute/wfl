@@ -26,13 +26,13 @@
   ([db sql-params]
    `(let [db#         ~db
           sql-params# ~sql-params]
-      (log/trace "jdbc/query:" (format-db db#) sql-params#)
+      (log/debug "jdbc/query:" (format-db db#) sql-params#)
       (jdbc/query db# sql-params#)))
   ([db sql-params opts]
    `(let [db#         ~db
           sql-params# ~sql-params
           opts#       ~opts]
-      (log/trace "jdbc/query:" (format-db db#) sql-params# opts#)
+      (log/debug "jdbc/query:" (format-db db#) sql-params# opts#)
       (jdbc/query db# sql-params# opts#))))
 
 (defmacro update!

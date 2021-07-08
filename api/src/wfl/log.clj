@@ -65,8 +65,3 @@
   "Log as Error with formatting"
   [message & more]
   `(log :error (format ~message ~@more)))
-
-(defmacro trace
-  "Log as Trace. Because there isn't a TRACE Severity in GCP Logging, this will just add an entry as DEBUG"
-  [message & more]
-  `(log :debug (print-str ~message ~@more)))

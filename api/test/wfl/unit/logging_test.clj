@@ -17,9 +17,7 @@
       (log/error "and this is an error")
       (is (logged? 'wfl.unit.logging-test :error "and this is an error"))
       (log/debug "This is just a debugging message")
-      (is (logged? 'wfl.unit.logging-test :debug "This is just a debugging message"))
-      (log/trace "This is a trace")
-      (is (logged? 'wfl.unit.logging-test :trace "This is a trace")))))
+      (is (logged? 'wfl.unit.logging-test :debug "This is just a debugging message")))))
 
 (deftest format-test
   (testing "formatting (more for demonstration than assurance)"
