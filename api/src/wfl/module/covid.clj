@@ -167,6 +167,7 @@
   ; 1. Get the workflows of status X and null retry field
   (println (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                      (executor/executor-workflows-by-status tx source status)))
+
   ; 2. Get the distinct list of snapshots for these workflows
 
   ; 3. Submit the snapshots. Hold onto the new workflow ids
@@ -176,43 +177,33 @@
   )
 
 (comment
-  (letfn [(covid-workload-request
-    "Make a COVID Sarscov2IlluminaFull workload creation request."
-    ([source executor sink]
-     {:source   (merge
-                  {:name            "Terra DataRepo"
-                   :dataset         (str util/uuid-nil)
-                   :table           "table"
-                   :column          "column"
-                   :snapshotReaders []}
-                  source)
-      :executor (merge
-                  {:name                       "Terra"
-                   :workspace                  "namespace/name"
-                   :methodConfiguration        "namespace/name"
-                   :methodConfigurationVersion 0
-                   :fromSource                 "importSnapshot"}
-                  executor)
-      :sink     (merge
-                  {:name        "Terra Workspace"
-                   :workspace   "namespace/name"
-                   :entityType  "entity"
-                   :identifier  "foo"
-                   :fromOutputs {}}
-                  sink)
-      :project  @project
-      :creator  @email
-      :labels   ["hornet:test"]})
-    ([]
-     (covid-workload-request {} {} {})))
+  (let
+    [workload {:source
+                {:name            "Terra DataRepo"
+                 :dataset         (str util/uuid-nil)
+                 :table           "table"
+                 :column          "column"
+                 :snapshotReaders []}
+              :executor
+                {:name                       "Terra"
+                 :workspace                  "namespace/name"
+                 :methodConfiguration        "namespace/name"
+                 :methodConfigurationVersion 0
+                 :fromSource                 "importSnapshot"
+                 :details                    "terraexecutor_000000001"
+                 :executor_type              "TerraExecutor"}
+              :sink
+                {:name        "Terra Workspace"
+                 :workspace   "namespace/name"
+                 :entityType  "entity"
+                 :identifier  "foo"
+                 :fromOutputs {}}
+              :project  "wfl-dev/CDC_Viral_Sequencing_ranthony_20210701"
+              :creator  "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
+              :labels   ["hornet:test"]}]
 
-  (retry-workflows (covid-workload-request
-                                                 {:skipValidation true}
-                                                 {:details       "terraexecutor_000000001"
-                                                  :executor_type "TerraExecutor"}
-                                                 {:skipValidation true})
-                                               "Failed")])
-  )
+  (retry-workflows workload "Failed"))
+)
 
 
 
