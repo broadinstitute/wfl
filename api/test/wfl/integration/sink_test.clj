@@ -109,7 +109,7 @@
                      :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                   resources/read-resource
                                   (assoc :flowcell_id testing-entity-name))}
-        executor    (make-queue-from-list [workflow])
+        executor    (make-queue-from-list [[nil workflow]])
         sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (->> {:name           "Terra Workspace"
                             :workspace      "workspace-ns/workspace-name"
@@ -154,7 +154,7 @@
                        :status  "Succeeded"
                        :outputs {:run_id  testing-entity-name
                                  :results ["another-aligned-thing.cram"]}}
-            executor  (make-queue-from-list [workflow1 workflow2])
+            executor  (make-queue-from-list [[nil workflow1] [nil workflow2]])
             sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                         (->> {:name           "Terra Workspace"
                               :workspace      workspace
