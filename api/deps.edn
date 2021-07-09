@@ -23,11 +23,7 @@
   ojdbc14/ojdbc14                           {:mvn/version "10.2.0.1.0"}
   org.apache.commons/commons-lang3          {:mvn/version "3.8.1"}
   org.apache.tika/tika-core                 {:mvn/version "1.26"}
-  org.apache.logging.log4j/log4j-api        {:mvn/version "2.14.1"}
-  org.apache.logging.log4j/log4j-core       {:mvn/version "2.14.1"}
-  org.apache.logging.log4j/log4j-slf4j-impl {:mvn/version "2.14.1"}
   org.postgresql/postgresql                 {:mvn/version "42.2.20"}
-  org.slf4j/slf4j-api                       {:mvn/version "1.7.30"}
   ring-oauth2/ring-oauth2                   {:mvn/version "0.1.5"}
   ring/ring-core                            {:mvn/version "1.9.3"}
   ring/ring-defaults                        {:mvn/version "0.3.2"}
