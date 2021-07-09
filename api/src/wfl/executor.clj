@@ -128,11 +128,12 @@
 
 (defn ^:private from-source
   "Coerce `object` to form understood by `executor``."
-  [executor [description item :as object]]
-  (cond (= "snapshot" description) (entity-from-snapshot executor item)
-        :else                      (throw (ex-info "No method to coerce object into workspace entity"
-                                                   {:executor executor
-                                                    :object   object}))))
+  [executor [type value :as object]]
+  (case type
+    "snapshot" (entity-from-snapshot executor value)
+    (throw (ex-info "No method to coerce object into workspace entity"
+                    {:executor executor
+                     :object   object}))))
 
 (defn ^:private update-method-configuration!
   "Update `methodConfiguration` in `workspace` with snapshot reference `name`
