@@ -58,7 +58,7 @@
                 dataset_table TEXT NOT NULL,                                     -- the name of the dataset table
                 from_outputs  TEXT NOT NULL,                                     -- mapping of how to coerce the output of executor to whatever the sink understands in serialized EDN
                 details       TEXT NOT NULL,                                     -- the name of the sink details table
-                CONSTRAINT TerraDataRepoSink_PKEY PRIMARY KEY (id)
+                CONSTRAINT TERRADATAREPOSINK_PKEY PRIMARY KEY (id)
             )
         </sql>
         <comment>
