@@ -1,18 +1,23 @@
 (ns wfl.log
   "Logging for WFL"
-  (:require [clojure.core]
-            [clojure.data.json :refer [write-str]]
-            [clojure.string :refer [upper-case]])
+  (:require [clojure.data.json :as json]
+            [clojure.string    :as str])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]))
 
-(defn ^:private googleize-field
-  "Prepends the google logging domain to the fields that require it for Google Logging."
-  [field]
-  (let [field-name (name field)]
-    (if (#{"labels" "insertId" "operation" "sourceLocation" "spanId" "trace"} field-name)
-      (str "logging.googleapis.com/" field-name)
-      field-name)))
+(def ^:private default-key-fn (:key-fn json/default-write-options))
+
+(def ^:private googleize-key?
+  "Prepend the Google Logging domain to these keys."
+  #{"insertId" "labels" "operation" "sourceLocation" "spanId" "trace"})
+
+(defn ^:private key-fn
+  "Preserve the namespace of `key` when qualified."
+  [key]
+  (default-key-fn
+   (cond (qualified-keyword? key) (str (namespace key) \/ (name key))
+         (googleize-key? key)     (str "logging.googleapis.com" \/ key)
+         :else                    key)))
 
 (defprotocol Logger
   ""
@@ -23,22 +28,20 @@
   (reify Logger
     (write [_ _])))
 
-(def working-logger
+(def stdout-logger
   "A logger to write to standard output"
   (reify Logger
-    (write [logger json]
-      (-> (write-str json :key-fn googleize-field :escape-slash false)
-          (.toString)
-          (println)))))
+    (write [logger edn]
+      (println (json/write-str edn :key-fn key-fn :escape-slash false)))))
 
 (def ^:dynamic *logger*
   ""
-  working-logger)
+  stdout-logger)
 
 (defn log
-  "Write a log entry to standard output."
+  "Write a log entry."
   [severity message & {:as additional-fields}]
-  (write *logger* (merge {:severity (-> severity name upper-case)
+  (write *logger* (merge {:severity (-> severity name str/upper-case)
                           :message message
                           :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
                          additional-fields)))
@@ -46,22 +49,22 @@
 (defmacro info
   "Log as Information"
   [message & more]
-  `(log :info (print-str ~message ~@more)))
+  `(log "INFO" (print-str ~message ~@more)))
 
 (defmacro infof
   "Log as information with formatting"
   [message & more]
-  `(log :info (format ~message ~@more)))
+  `(log "INFO" (format ~message ~@more)))
 
 (defmacro warn
   "Log as a Warning"
   [message & more]
-  `(log :warning (print-str ~message ~@more)))
+  `(log "WARNING" (print-str ~message ~@more)))
 
 (defmacro warnf
   "Log as a Warning with formatting"
   [message & more]
-  `(log :warning (format ~message ~@more)))
+  `(log "WARNING" (format ~message ~@more)))
 
 (defmacro debug
   "Log as Debug"
@@ -76,9 +79,9 @@
 (defmacro error
   "Log as Error"
   [message & more]
-  `(log :error (print-str ~message ~@more)))
+  `(log "ERROR" (print-str ~message ~@more)))
 
 (defmacro errorf
   "Log as Error with formatting"
   [message & more]
-  `(log :error (format ~message ~@more)))
+  `(log "ERROR" (format ~message ~@more)))
