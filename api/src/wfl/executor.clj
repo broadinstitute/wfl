@@ -292,13 +292,13 @@
            first))))
 
 (defn ^:private method-content-url
-  "Return the URL of the WDL contents associated with this `method`."
-  [{:keys [methodPath methodVersion] :as method}]
-  (throw-unless-dockstore-method method)
+  "Return the URL to the WDL content used by this `methodRepoMethod`. If the WDL
+   is hosted on GitHub, returns a jsdelivr URL to avoid GitHub rate limits."
+  [{:keys [methodPath methodVersion] :as methodRepoMethod}]
+  (throw-unless-dockstore-method methodRepoMethod)
   (let [id  (url-encode (str "#workflow/" methodPath))
         url (:url (dockstore/ga4gh-tool-descriptor id methodVersion "WDL"))]
     (if-let [groups (re-find #"^https://raw.githubusercontent.com/(.*)$" url)]
-      ;; use jsdelivr to avoid GitHub rate-limits
       (let [[author repo version path] (str/split (second groups) #"/" 4)]
         (str/join "/" ["https://cdn.jsdelivr.net/gh" author (str repo "@" version) path]))
       url)))
