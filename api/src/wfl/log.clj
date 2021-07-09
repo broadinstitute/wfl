@@ -39,9 +39,9 @@
   "Write a log entry to standard output."
   [severity message & {:as additional-fields}]
   (write *logger* (merge {:severity (-> severity name upper-case)
-                           :message message
-                           :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
-                          additional-fields)))
+                          :message message
+                          :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
+                         additional-fields)))
 
 (defmacro info
   "Log as Information"
