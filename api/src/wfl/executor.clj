@@ -130,7 +130,7 @@
   "Coerce `object` to form understood by `executor``."
   [executor [type value :as object]]
   (case type
-    "snapshot" (entity-from-snapshot executor value)
+    :datarepo/snapshot (entity-from-snapshot executor value)
     (throw (ex-info "No method to coerce object into workspace entity"
                     {:executor executor
                      :object   object}))))

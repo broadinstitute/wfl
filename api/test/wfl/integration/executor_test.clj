@@ -185,7 +185,7 @@
          (executor/load-executor! tx))))
 
 (deftest test-update-terra-executor
-  (let [source   (make-queue-from-list [["snapshot" snapshot]])
+  (let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
         executor (create-terra-executor (rand-int 1000000))]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -225,7 +225,7 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
-        source     (make-queue-from-list [["snapshot" snapshot]])
+        source     (make-queue-from-list [[:datarepo/snapshot snapshot]])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
       {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
@@ -260,7 +260,7 @@
      #'firecloud/get-submission              mock-firecloud-get-submission
      #'firecloud/get-workflow                mock-workflow-keep-status
      #'firecloud/get-workflow-outputs        mock-firecloud-get-workflow-outputs}
-    #(let [source   (make-queue-from-list [["snapshot" snapshot]])
+    #(let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
            executor (create-terra-executor (rand-int 1000000))]
        (executor/update-executor! source executor)
        (is (== 2 (stage/queue-length executor)))

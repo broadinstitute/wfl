@@ -300,7 +300,7 @@
   "Get first unconsumed snapshot from `source` queue."
   [source]
   (when-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
-    ["snapshot" (datarepo/snapshot snapshot_id)]))
+    [:datarepo/snapshot (datarepo/snapshot snapshot_id)]))
 
 (defn ^:private tdr-source-queue-length
   "Return the number of unconsumed snapshot records from `details` table."
@@ -399,7 +399,7 @@
 
 (defn ^:private peek-tdr-snapshot-list [source]
   (when-let [{:keys [item]} (peek-tdr-snapshot-details-table source)]
-    ["snapshot" (edn/read-string item)]))
+    [:datarepo/snapshot (edn/read-string item)]))
 
 (defn ^:private tdr-snapshot-list-queue-length [{:keys [items] :as _source}]
   (let [query "SELECT COUNT (*) FROM %s WHERE consumed IS NULL"]
