@@ -145,7 +145,7 @@
           (recur)))))
 
 (defn run
-  "Run child server in ENVIRONMENT on PORT."
+  "Run server in ENVIRONMENT on PORT."
   [& args]
   (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
