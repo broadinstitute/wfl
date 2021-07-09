@@ -1,5 +1,5 @@
 (ns wfl.jdbc
-  "clojure.tools.logging wrapping for clojure.java.jdbc"
+  "wfl.log wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc              :as jdbc]
             [clojure.string                 :as str]
             [wfl.log :as log])

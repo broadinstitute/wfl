@@ -16,17 +16,17 @@
 
 (defprotocol Logger
   ""
-  (write! [logger json] "Writes the log using the given logger."))
+  (write [logger json] "Writes the log using the given logger."))
 
 (def disabled-logger
   "A logger that does not log."
   (reify Logger
-    (write! [_ _])))
+    (write [_ _])))
 
 (def working-logger
   "A logger to write to standard output"
   (reify Logger
-    (write! [logger json]
+    (write [logger json]
       (-> (write-str json :key-fn googleize-field :escape-slash false)
           (.toString)
           (println)))))
@@ -38,7 +38,7 @@
 (defn log
   "Write a log entry to standard output."
   [severity message & {:as additional-fields}]
-  (write! *logger* (merge {:severity (-> severity name upper-case)
+  (write *logger* (merge {:severity (-> severity name upper-case)
                            :message message
                            :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
                           additional-fields)))
