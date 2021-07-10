@@ -157,8 +157,7 @@
   [clio bam]
   (try (clio/add-bam clio bam)
        (catch Throwable x
-         (log/error x "Add BAM to Clio failed" {:bam bam
-                                                :x   x}))))
+         (log/error {:bam bam :x x}))))
 
 (defn maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."

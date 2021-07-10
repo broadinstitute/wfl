@@ -212,7 +212,7 @@
     (case job_status
       "running"   result
       "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warnf "Snapshot creation job %s failed!" job-id)
+      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
           result))))
 
 (defn ^:private write-snapshot-id

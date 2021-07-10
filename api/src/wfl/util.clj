@@ -28,7 +28,7 @@
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn x# "from wfl.util/do-or-nil"))))
+          (log/warn (str x# " from wfl.util/do-or-nil")))))
 
 ;; Parsers that will not throw.
 ;;
@@ -429,7 +429,8 @@
        result
        (do (when (<= max-attempts attempt)
              (throw (TimeoutException. "Max number of attempts exceeded")))
-           (log/debugf "Sleeping - attempt #%s of %s" attempt max-attempts)
+           (log/debug
+            (format "Sleeping - attempt #%s of %s" attempt max-attempts))
            (.sleep TimeUnit/SECONDS seconds)
            (recur (inc attempt))))))
   ([task seconds]
