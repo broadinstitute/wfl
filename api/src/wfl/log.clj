@@ -2,86 +2,62 @@
   "Logging for WFL"
   (:require [clojure.data.json :as json]
             [clojure.string    :as str])
-  (:import [java.sql Timestamp]
-           [java.time OffsetDateTime]))
-
-(def ^:private default-key-fn (:key-fn json/default-write-options))
-
-(def ^:private googleize-key?
-  "Prepend the Google Logging domain to these keys."
-  #{"insertId" "labels" "operation" "sourceLocation" "spanId" "trace"})
+  (:import [java.time Instant]))
 
 (defn ^:private key-fn
   "Preserve the namespace of `key` when qualified."
   [key]
-  (default-key-fn
-   (cond (qualified-keyword? key) (str (namespace key) \/ (name key))
-         (googleize-key? key)     (str "logging.googleapis.com" \/ key)
-         :else                    key)))
+  ((:key-fn json/default-write-options)
+   (if (qualified-keyword? key)
+     (str (namespace key) \/ (name key))
+     key)))
 
 (defprotocol Logger
-  ""
-  (write [logger json] "Writes the log using the given logger."))
+  "Log `edn` to `logger` as JSON."
+  (-write [logger edn]))
 
 (def disabled-logger
   "A logger that does not log."
   (reify Logger
-    (write [_ _])))
+    (-write [_ _])))
 
 (def stdout-logger
   "A logger to write to standard output"
   (reify Logger
-    (write [logger edn]
-      (println (json/write-str edn :key-fn key-fn :escape-slash false)))))
+    (-write [logger edn]
+      (-> edn
+          (json/write-str :key-fn key-fn :escape-slash false)
+          println))))
 
 (def ^:dynamic *logger*
   ""
   stdout-logger)
 
-(defn log
-  "Write a log entry."
-  [severity message & {:as additional-fields}]
-  (write *logger* (merge {:severity (-> severity name str/upper-case)
-                          :message message
-                          :timestamp (Timestamp/from (.toInstant (OffsetDateTime/now)))}
-                         additional-fields)))
-
-(defmacro info
-  "Log as Information"
-  [message & more]
-  `(log "INFO" (print-str ~message ~@more)))
-
-(defmacro infof
-  "Log as information with formatting"
-  [message & more]
-  `(log "INFO" (format ~message ~@more)))
-
-(defmacro warn
-  "Log as a Warning"
-  [message & more]
-  `(log "WARNING" (print-str ~message ~@more)))
-
-(defmacro warnf
-  "Log as a Warning with formatting"
-  [message & more]
-  `(log "WARNING" (format ~message ~@more)))
+(defmacro log
+  [severity expression]
+  (let [{:keys [line]} (meta &form)]
+    `(let [x# ~expression]
+       (-write *logger*
+               {:timestamp (Instant/now)
+                :severity ~(-> severity name str/upper-case)
+                :logging.googleapis.com/jsonPayload
+                {'~expression x#}
+                :logging.googleapis.com/sourceLocation
+                {:file ~*file* :line ~line}})
+       x#)))
 
 (defmacro debug
-  "Log as Debug"
-  [message & more]
-  `(log :debug (print-str ~message ~@more)))
-
-(defmacro debugf
-  "Log as Debug with formatting"
-  [message & more]
-  `(log :debug (format ~message ~@more)))
+  [expression]
+  `(log :debug ~expression))
 
 (defmacro error
-  "Log as Error"
-  [message & more]
-  `(log "ERROR" (print-str ~message ~@more)))
+  [expression]
+  `(log :error ~expression))
 
-(defmacro errorf
-  "Log as Error with formatting"
-  [message & more]
-  `(log "ERROR" (format ~message ~@more)))
+(defmacro info
+  [expression]
+  `(log :info ~expression))
+
+(defmacro warn
+  [expression]
+  `(log :warning ~expression))
