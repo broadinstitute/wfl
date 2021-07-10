@@ -30,10 +30,11 @@
           println))))
 
 (def ^:dynamic *logger*
-  ""
+  "The logger now."
   stdout-logger)
 
 (defmacro log
+  "Log `expression` with `severity`."
   [severity expression]
   (let [{:keys [line]} (meta &form)]
     `(let [x# ~expression]
@@ -47,17 +48,21 @@
        x#)))
 
 (defmacro debug
+  "Log `expression` for debugging."
   [expression]
   `(log :debug ~expression))
 
 (defmacro error
+  "Log `expression` as an error."
   [expression]
   `(log :error ~expression))
 
 (defmacro info
+  "Log `expression` as information."
   [expression]
   `(log :info ~expression))
 
 (defmacro warn
+  "Log `expression` as a warning."
   [expression]
   `(log :warning ~expression))
