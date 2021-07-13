@@ -69,5 +69,5 @@
 (defn getenv
   "Lookup the value of the environment variable specified by `name`."
   [name]
-  (log/debugf "Reading environment variable %s" name)
+  (log/tracef "Reading environment variable %s" name)
   (or (@testing name) (__getenv name)))
