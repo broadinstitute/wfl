@@ -10,6 +10,7 @@
             [wfl.tools.datasets    :as datasets]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
+            [wfl.tools.workloads   :refer [liftT]]
             [wfl.util              :as util])
   (:import [java.util ArrayDeque]
            [wfl.util UserException]))
@@ -51,52 +52,70 @@
 
 ;; Validation tests
 
+;; Must be a function to capture value of *dataset* after setting up test
+;; fixtures.
+(defn ^:private datarepo-sink-request
+  "Return a valid Tera DataRepo sink request."
+  []
+  {:name        @#'sink/datarepo-sink-name
+   :dataset     *dataset*
+   :table       "parameters"
+   :fromOutputs {:fileref "some_output_file"}})
+
 (deftest test-validate-datarepo-sink-with-valid-sink-request
-  (is (stage/validate-or-throw
-        {:name        @#'sink/datarepo-sink-name
-         :dataset     *dataset*
-         :table       "parameters"
-         :fromOutputs {:fileref "some_output_file"}})))
+  (is (stage/validate-or-throw (datarepo-sink-request))))
 
 (deftest test-validate-datarepo-sink-throws-on-invalid-dataset
   (is (thrown-with-msg?
-        UserException #"Cannot access dataset"
-        (stage/validate-or-throw
-          {:name        @#'sink/datarepo-sink-name
-           :dataset     util/uuid-nil
-           :table       "parameters"
-           :fromOutputs {:fileref "some_output_file"}}))))
+       UserException #"Cannot access dataset"
+       (stage/validate-or-throw
+        {:name        @#'sink/datarepo-sink-name
+         :dataset     util/uuid-nil
+         :table       "parameters"
+         :fromOutputs {:fileref "some_output_file"}}))))
 
 (deftest test-validate-datarepo-sink-throws-on-invalid-table
   (is (thrown-with-msg?
-        UserException #"Table not found"
-        (stage/validate-or-throw
-          {:name        @#'sink/datarepo-sink-name
-           :dataset     *dataset*
-           :table       "not-a-table"
-           :fromOutputs {:fileref "some_output_file"}}))))
+       UserException #"Table not found"
+       (stage/validate-or-throw
+        {:name        @#'sink/datarepo-sink-name
+         :dataset     *dataset*
+         :table       "not-a-table"
+         :fromOutputs {:fileref "some_output_file"}}))))
 
 (deftest test-validate-datarepo-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
-        UserException (re-pattern sink/datarepo-malformed-from-outputs-message)
-        (stage/validate-or-throw
-          {:name        @#'sink/datarepo-sink-name
-           :dataset     *dataset*
-           :table       "parameters"
-           :fromOutputs "bad"}))))
+       UserException (re-pattern sink/datarepo-malformed-from-outputs-message)
+       (stage/validate-or-throw
+        {:name        @#'sink/datarepo-sink-name
+         :dataset     *dataset*
+         :table       "parameters"
+         :fromOutputs "bad"}))))
 
 (deftest test-validate-datarepo-sink-throws-on-unknown-column-name
   (is (thrown-with-msg?
-        UserException (re-pattern sink/unknown-columns-error-message)
-        (stage/validate-or-throw
-          {:name        @#'sink/datarepo-sink-name
-           :dataset     *dataset*
-           :table       "parameters"
-           :fromOutputs {:not-a-column "some_output_file"}}))))
+       UserException (re-pattern sink/unknown-columns-error-message)
+       (stage/validate-or-throw
+        {:name        @#'sink/datarepo-sink-name
+         :dataset     *dataset*
+         :table       "parameters"
+         :fromOutputs {:not-a-column "some_output_file"}}))))
 
-;
-;;; Operation tests
-;
+;; Operation tests
+(def ^:private random (partial rand-int 1000000))
+
+(def datarepo-sink-config (comp stage/validate-or-throw datarepo-sink-request))
+
+(deftest test-create-datarepo-sink
+  (let [[type items] (liftT sink/create-sink! (random) (datarepo-sink-config))]
+    (is (= @#'sink/datarepo-sink-type type))
+    (is (-> items Integer/parseInt pos?))
+    (let [sink (liftT sink/load-sink! {:sink_type type :sink_items items})]
+      (is (= @#'sink/datarepo-sink-type (:type sink)))
+      (is (every? sink [:dataset :table :fromOutputs :details]))
+      (is (get-in sink [:dataset :defaultProfileId]))
+      (is (liftT postgres/table-exists? (:details sink))))))
+
 ;(deftest test-update-datarepo-sink
 ;  (let [workflow    {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
 ;                     :status  "Succeeded"

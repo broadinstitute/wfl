@@ -96,13 +96,13 @@
   ([db sql-commands]
    `(let [db#           ~db
           sql-commands# ~sql-commands]
-      (log/info "jbs/db-do-commands" (format-db db#) sql-commands#)
+      (log/info "jdbc/db-do-commands" (format-db db#) sql-commands#)
       (jdbc/db-do-commands db# sql-commands#)))
   ([db transaction? sql-commands]
    `(let [db#           ~db
           transaction?# ~transaction?
           sql-commands# ~sql-commands]
-      (log/info "jbs/db-do-commands" (format-db db#) transaction?# sql-commands#)
+      (log/info "jdbc/db-do-commands" (format-db db#) transaction?# sql-commands#)
       (jdbc/db-do-commands db# transaction?# sql-commands#))))
 
 (defmacro insert!

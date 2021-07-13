@@ -196,7 +196,7 @@
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" datarepo-sink-type id)]
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
-    [terra-workspace-sink-type
+    [datarepo-sink-type
      (-> (select-keys request (keys datarepo-sink-serialized-fields))
          (update :dataset pr-str)
          (update :fromOutputs pr-str)

@@ -244,9 +244,9 @@
    `arguments`."
   [var with-fixture & arguments]
   `(fn [f#]
-     (log/infof "Setting up %s...\n" '~with-fixture)
+     (log/infof "Setting up %s..." '~with-fixture)
      (~with-fixture
-       ~@arguments
-       #(binding [~var %]
-          (try (f#)
-               (finally (log/infof "Tearing down %s...\n" '~with-fixture)))))))
+      ~@arguments
+      #(binding [~var %]
+         (try (f#)
+              (finally (log/infof "Tearing down %s..." '~with-fixture)))))))
