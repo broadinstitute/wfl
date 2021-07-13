@@ -89,6 +89,7 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)]
+                (log/info (format "Updating workload %s" uuid))
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
@@ -103,7 +104,7 @@
                 (log/error t))))
           (update-workloads []
             (try
-              (log/info "updating workloads")
+              (log/info "Finding workloads to update...")
               (run! try-update
                     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (jdbc/query tx "SELECT id,uuid FROM workload
