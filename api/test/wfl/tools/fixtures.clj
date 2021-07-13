@@ -1,5 +1,6 @@
 (ns wfl.tools.fixtures
   (:require [clojure.java.jdbc]
+            [clojure.tools.logging      :as log]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
@@ -236,3 +237,16 @@
   "Adapter for clojure.test/use-fixtures"
   [env]
   (partial with-temporary-environment env))
+
+(defmacro bind-fixture
+  "Returns a closure that can be used with clojure.test/use-fixtures in which
+   `var` is bound to the resource created by applying `fixture` to its
+   `arguments`."
+  [var with-fixture & arguments]
+  `(fn [f#]
+     (log/infof "Setting up %s...\n" '~with-fixture)
+     (~with-fixture
+       ~@arguments
+       #(binding [~var %]
+          (try (f#)
+               (finally (log/infof "Tearing down %s...\n" '~with-fixture)))))))

@@ -1,13 +1,16 @@
 (ns wfl.integration.sinks.datarepo-sink-test
   "Test validation and operations on Sink stage implementations."
   (:require [clojure.test          :refer [deftest is use-fixtures]]
+            [wfl.environment       :as env]
             [wfl.jdbc              :as jdbc]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.sink              :as sink]
             [wfl.stage             :as stage]
+            [wfl.tools.datasets    :as datasets]
             [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.resources   :as resources])
+            [wfl.tools.resources   :as resources]
+            [wfl.util              :as util])
   (:import [java.util ArrayDeque]
            [wfl.util UserException]))
 
@@ -39,57 +42,58 @@
   (fixtures/method-overload-fixture
    stage/queue-length testing-queue-type testing-queue-length)
   (fixtures/method-overload-fixture
-   stage/done? testing-queue-type testing-queue-done?))
+   stage/done? testing-queue-type testing-queue-done?)
+  (fixtures/bind-fixture
+   *dataset*
+   fixtures/with-temporary-dataset
+   (datasets/unique-dataset-request
+    (env/getenv "WFL_TDR_DEFAULT_PROFILE") "testing-dataset.json")))
 
 ;; Validation tests
-;
-;(deftest test-validate-datarepo-sink-with-valid-sink-request
-;  (is (stage/validate-or-throw
-;        {:name        @#'sink/datarepo-sink-name
-;         :dataset     testing-dataset
-;         :entityType  "assemblies"
-;         :identity    "Who cares?"
-;         :fromOutputs {:assemblies_id "foo"}})))
-;
-;(deftest test-validate-datarepo-sink-throws-on-invalid-sink-entity-type
-;  (is (thrown-with-msg?
-;        UserException (re-pattern sink/unknown-entity-type-error-message)
-;        (stage/validate-or-throw
-;          {:name        @#'sink/datarepo-sink-name
-;           :workspace   testing-workspace
-;           :entityType  "does_not_exist"
-;           :identity    "Who cares?"
-;           :fromOutputs {}}))))
-;
-;(deftest test-validate-datarepo-sink-throws-on-malformed-fromOutputs
-;  (is (thrown-with-msg?
-;        UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
-;        (stage/validate-or-throw
-;          {:name        @#'sink/datarepo-sink-name
-;           :workspace   testing-workspace
-;           :entityType  "assemblies"
-;           :identity    "Who cares?"
-;           :fromOutputs "geoff"}))))
-;
-;(deftest test-validate-datarepo-sink-throws-on-unknown-fromOutputs-attributes
-;  (is (thrown-with-msg?
-;        UserException (re-pattern sink/unknown-attributes-error-message)
-;        (stage/validate-or-throw
-;          {:name        @#'sink/datarepo-sink-name
-;           :workspace   testing-workspace
-;           :entityType  "assemblies"
-;           :identity    "Who cares?"
-;           :fromOutputs {:does_not_exist "genbank_source_table"}}))))
-;
-;(deftest test-validate-datarepo-sink-throws-on-invalid-sink-workspace
-;  (is (thrown-with-msg?
-;        UserException #"Cannot access workspace"
-;        (stage/validate-or-throw
-;          {:name        @#'sink/datarepo-sink-name
-;           :workspace   "moo/moo"
-;           :entityType  "moo"
-;           :identity    "reads_id"
-;           :fromOutputs {:submission_xml "submission_xml"}}))))
+
+(deftest test-validate-datarepo-sink-with-valid-sink-request
+  (is (stage/validate-or-throw
+        {:name        @#'sink/datarepo-sink-name
+         :dataset     *dataset*
+         :table       "parameters"
+         :fromOutputs {:fileref "some_output_file"}})))
+
+(deftest test-validate-datarepo-sink-throws-on-invalid-dataset
+  (is (thrown-with-msg?
+        UserException #"Cannot access dataset"
+        (stage/validate-or-throw
+          {:name        @#'sink/datarepo-sink-name
+           :dataset     util/uuid-nil
+           :table       "parameters"
+           :fromOutputs {:fileref "some_output_file"}}))))
+
+(deftest test-validate-datarepo-sink-throws-on-invalid-table
+  (is (thrown-with-msg?
+        UserException #"Table not found"
+        (stage/validate-or-throw
+          {:name        @#'sink/datarepo-sink-name
+           :dataset     *dataset*
+           :table       "not-a-table"
+           :fromOutputs {:fileref "some_output_file"}}))))
+
+(deftest test-validate-datarepo-sink-throws-on-malformed-fromOutputs
+  (is (thrown-with-msg?
+        UserException (re-pattern sink/datarepo-malformed-from-outputs-message)
+        (stage/validate-or-throw
+          {:name        @#'sink/datarepo-sink-name
+           :dataset     *dataset*
+           :table       "parameters"
+           :fromOutputs "bad"}))))
+
+(deftest test-validate-datarepo-sink-throws-on-unknown-column-name
+  (is (thrown-with-msg?
+        UserException (re-pattern sink/unknown-columns-error-message)
+        (stage/validate-or-throw
+          {:name        @#'sink/datarepo-sink-name
+           :dataset     *dataset*
+           :table       "parameters"
+           :fromOutputs {:not-a-column "some_output_file"}}))))
+
 ;
 ;;; Operation tests
 ;
