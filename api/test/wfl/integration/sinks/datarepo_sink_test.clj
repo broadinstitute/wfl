@@ -126,7 +126,7 @@
 
 (deftest test-update-datarepo-sink-is-not-yet-implemented
   (is (thrown?
-        NotImplementedException
-        (sink/update-sink!
-          (make-queue-from-list [])
-          (create-and-load-datarepo-sink)))))
+       NotImplementedException
+       (sink/update-sink!
+        (make-queue-from-list [])
+        (create-and-load-datarepo-sink)))))
