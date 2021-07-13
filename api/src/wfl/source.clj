@@ -259,10 +259,11 @@
   [{:keys [dataset table last_checked] :as source}
    utc-now]
   (let [[start end :as interval]
-        (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
-             (mapv #(.format % bigquery-datetime-format)))
-        shards->jobs (->> (find-new-rows source interval)
-                          (create-snapshots source utc-now))]
+        (mapv
+         #(.format % bigquery-datetime-format)
+         [(timestamp-to-offsetdatetime last_checked) utc-now])
+        shards->jobs
+        (create-snapshots source utc-now (find-new-rows source interval))]
     (if (seq shards->jobs)
       (do (log/infof "%s Snapshots created from new rows in %s.%s."
                      (log-prefix source) (:name dataset) table)
