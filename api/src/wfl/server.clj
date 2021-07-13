@@ -78,7 +78,7 @@
 
 (defn notify-watchers [watchers _uuid _exception]
   {:pre [(some? watchers)]}
-  (log/info "notifying: " watchers))
+  (log/info (str "notifying: " watchers)))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
@@ -92,14 +92,14 @@
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
-                    (log/warnf "Error updating workload %s" uuid)
+                    (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
                     (notify-watchers watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
               (do-update! workload)
               (catch Throwable t
-                (log/errorf "Failed to update workload %s" uuid)
+                (log/error (format "Failed to update workload %s" uuid))
                 (log/error t))))
           (update-workloads []
             (try
@@ -124,7 +124,7 @@
   specified port. Returns a java.util.concurrent.Future that, when de-
   referenced, blocks until the server ends."
   [port]
-  (log/infof "starting jetty webserver on port %s" port)
+  (log/info (format "starting jetty webserver on port %s" port))
   (let [server (jetty/run-jetty (app) {:port port :join? false})]
     (reify Future
       (cancel [_ _] (throw (UnsupportedOperationException.)))
@@ -146,7 +146,7 @@
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
-  (log/info "Run:" wfl/the-name "server" args)
+  (log/info (str "Run:" wfl/the-name "server" args))
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)]
     (await-some manager (start-webserver port))))

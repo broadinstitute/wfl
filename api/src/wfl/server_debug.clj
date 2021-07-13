@@ -2,7 +2,7 @@
   "Debug the HTTP server (wfl.server)."
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [wfl.log :as log]))
+            [wfl.log        :as log]))
 
 (def ignored-keys
   "Ignore these keys when tracing a request or response map."

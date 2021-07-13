@@ -2,6 +2,7 @@
   (:require [clojure.edn                    :as edn]
             [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
+            [wfl.debug]
             [wfl.log                        :as log]
             [wfl.api.workloads              :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
@@ -200,7 +201,7 @@
     (case job_status
       "running"   result
       "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warnf "Snapshot creation job %s failed!" job-id)
+      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
           result))))
 
 (defn ^:private write-snapshot-id
@@ -419,7 +420,13 @@
   (zero? (tdr-snapshot-list-queue-length source)))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
-  (let [read-snapshot-id (comp :id edn/read-string :item)]
+  (letfn [(read-snapshot-id [ss]
+            (-> ss
+                :item
+                wfl.debug/trace
+                edn/read-string
+                wfl.debug/trace
+                :id))]
     (-> (select-keys source [:snapshots])
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))

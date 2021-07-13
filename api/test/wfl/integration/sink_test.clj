@@ -169,11 +169,13 @@
         (is (== 1 (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity workspace [testing-entity-type testing-entity-name])]
+              (firecloud/get-entity
+               workspace [testing-entity-type testing-entity-name])]
           (is (= testing-entity-type entityType))
           (is (= testing-entity-name name))
           (is (== 1 (count attributes)))
-          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["aligned-thing.cram"]}]
+          (is (= [:aligned_crams {:itemsType "AttributeValue"
+                                  :items ["aligned-thing.cram"]}]
                  (first attributes))))
         (sink/update-sink! executor sink)
         (is (zero? (stage/queue-length executor))
@@ -182,10 +184,12 @@
           (is (== 1 (count entites))
               "No new entities should have been added"))
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity workspace [testing-entity-type testing-entity-name])]
+              (firecloud/get-entity
+               workspace [testing-entity-type testing-entity-name])]
           (is (= testing-entity-type entityType))
           (is (= testing-entity-name name))
           (is (== 1 (count attributes)))
-          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["another-aligned-thing.cram"]}]
+          (is (= [:aligned_crams {:itemsType "AttributeValue"
+                                  :items ["another-aligned-thing.cram"]}]
                  (first attributes))
               "attributes should have been overwritten"))))))

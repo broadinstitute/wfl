@@ -148,17 +148,17 @@
 
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
-  (when-let [[_ {:keys [uuid outputs] :as workflow}] (stage/peek-queue executor)]
-    (log/debug "coercing workflow" uuid "outputs to" entityType)
+  (when-let [{:keys [uuid outputs] :as workflow} (stage/peek-queue executor)]
+    (log/debug (str "coercing workflow" uuid "outputs to" entityType))
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           [_ name :as entity] [entityType (outputs (keyword identifier))]]
       (when (entity-exists? workspace entity)
-        (log/debug "entity" name "already exists - deleting previous entity.")
+        (log/debug (str "entity" name "exists - deleting previous entity."))
         (firecloud/delete-entities workspace [entity]))
-      (log/debug "upserting workflow" uuid "outputs as" name)
+      (log/debug (str "upserting workflow" uuid "outputs as" name))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
-      (log/info "sunk workflow" uuid "to" workspace "as" name)
+      (log/info (str "sunk workflow" uuid "to" workspace "as" name))
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/insert! tx details {:entity   name
                                   :updated  (utc-now)
