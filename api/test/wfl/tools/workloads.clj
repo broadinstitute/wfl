@@ -266,28 +266,28 @@
       polling-interval-seconds
       max-polling-attempts))))
 
-(defn liftT
-  "Lift `operation` into the context of a database transaction."
+(defn evalT
+  "Evaluate `operation` in the context of a database transaction."
   ([operation first & rest]
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (apply operation (conj rest first tx))))
   ([operation]
-   (partial liftT operation)))
+   (partial evalT operation)))
 
-(def create-workload!    (liftT wfl.api.workloads/create-workload!))
-(def start-workload!     (liftT wfl.api.workloads/start-workload!))
-(def stop-workload!      (liftT wfl.api.workloads/stop-workload!))
-(def execute-workload!   (liftT wfl.api.workloads/execute-workload!))
-(def update-workload!    (liftT wfl.api.workloads/update-workload!))
-(def workflows           (liftT wfl.api.workloads/workflows))
-(def workflows-by-status (liftT wfl.api.workloads/workflows-by-status))
+(def create-workload!    (evalT wfl.api.workloads/create-workload!))
+(def start-workload!     (evalT wfl.api.workloads/start-workload!))
+(def stop-workload!      (evalT wfl.api.workloads/stop-workload!))
+(def execute-workload!   (evalT wfl.api.workloads/execute-workload!))
+(def update-workload!    (evalT wfl.api.workloads/update-workload!))
+(def workflows           (evalT wfl.api.workloads/workflows))
+(def workflows-by-status (evalT wfl.api.workloads/workflows-by-status))
 
 (defn retry [& params] (apply wfl.api.workloads/retry params))
 
-(def load-workload-for-uuid      (liftT wfl.api.workloads/load-workload-for-uuid))
-(def load-workload-for-id        (liftT wfl.api.workloads/load-workload-for-id))
-(def load-workloads-with-project (liftT wfl.api.workloads/load-workloads-with-project))
-(def append-to-workload!         (liftT aou/append-to-workload!))
+(def load-workload-for-uuid      (evalT wfl.api.workloads/load-workload-for-uuid))
+(def load-workload-for-id        (evalT wfl.api.workloads/load-workload-for-id))
+(def load-workloads-with-project (evalT wfl.api.workloads/load-workloads-with-project))
+(def append-to-workload!         (evalT aou/append-to-workload!))
 
 (defmulti postcheck
   "Implement this to validate `workload` after all workflows complete."

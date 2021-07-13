@@ -10,9 +10,10 @@
             [wfl.tools.datasets    :as datasets]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
-            [wfl.tools.workloads   :refer [liftT]]
+            [wfl.tools.workloads   :refer [evalT]]
             [wfl.util              :as util])
   (:import [java.util ArrayDeque]
+           [org.apache.commons.lang3 NotImplementedException]
            [wfl.util UserException]))
 
 ;; Queue mocks
@@ -107,98 +108,25 @@
 (def datarepo-sink-config (comp stage/validate-or-throw datarepo-sink-request))
 
 (deftest test-create-datarepo-sink
-  (let [[type items] (liftT sink/create-sink! (random) (datarepo-sink-config))]
+  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
     (is (= @#'sink/datarepo-sink-type type))
     (is (-> items Integer/parseInt pos?))
-    (let [sink (liftT sink/load-sink! {:sink_type type :sink_items items})]
+    (let [sink (evalT sink/load-sink! {:sink_type type :sink_items items})]
       (is (= @#'sink/datarepo-sink-type (:type sink)))
       (is (every? sink [:dataset :table :fromOutputs :details]))
       (is (get-in sink [:dataset :defaultProfileId]))
-      (is (liftT postgres/table-exists? (:details sink))))))
+      (is (evalT postgres/table-exists? (:details sink))))))
 
-;(deftest test-update-datarepo-sink
-;  (let [workflow    {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
-;                     :status  "Succeeded"
-;                     :outputs (-> "sarscov2_illumina_full/outputs.edn"
-;                                resources/read-resource
-;                                (assoc :flowcell_id testing-entity-name))}
-;        executor    (make-queue-from-list [[nil workflow]])
-;        sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-;                      (->> {:name           "Terra Workspace"
-;                            :workspace      "workspace-ns/workspace-name"
-;                            :entityType     testing-entity-type
-;                            :fromOutputs    (resources/read-resource
-;                                              "sarscov2_illumina_full/entity-from-outputs.edn")
-;                            :identifier     "flowcell_id"
-;                            :skipValidation true}
-;                        (sink/create-sink! tx (rand-int 1000000))
-;                        (zipmap [:sink_type :sink_items])
-;                        (sink/load-sink! tx)))]
-;    (letfn [(verify-upsert-request [workspace [[type name _]]]
-;              (is (= "workspace-ns/workspace-name" workspace))
-;              (is (= type testing-entity-type))
-;              (is (= name testing-entity-name)))
-;            (throw-if-called [fname & args]
-;              (throw (ex-info (str fname " should not have been called")
-;                       {:called-with args})))]
-;      (with-redefs-fn
-;        {#'rawls/batch-upsert        verify-upsert-request
-;         #'sink/entity-exists?       (constantly false)
-;         #'firecloud/delete-entities (partial throw-if-called "delete-entities")}
-;        #(sink/update-sink! executor sink))
-;      (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
-;      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-;        (let [[record & rest] (->> sink :details (postgres/get-table tx))]
-;          (is record "The record was not written to the database")
-;          (is (empty? rest) "More than one record was written")
-;          (is (= (:uuid workflow) (:workflow record))
-;            "The workflow UUID was not written")
-;          (is (= testing-entity-name (:entity record))
-;            "The entity was not correct"))))))
-;
-;(deftest test-sinking-resubmitted-workflow
-;  (fixtures/with-temporary-workspace
-;    (fn [workspace]
-;      (let [workflow1 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
-;                       :status  "Succeeded"
-;                       :outputs {:run_id  testing-entity-name
-;                                 :results ["aligned-thing.cram"]}}
-;            workflow2 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67ab"
-;                       :status  "Succeeded"
-;                       :outputs {:run_id  testing-entity-name
-;                                 :results ["another-aligned-thing.cram"]}}
-;            executor  (make-queue-from-list [[nil workflow1] [nil workflow2]])
-;            sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-;                        (->> {:name           "Terra Workspace"
-;                              :workspace      workspace
-;                              :entityType     testing-entity-type
-;                              :fromOutputs    {:aligned_crams "results"}
-;                              :identifier     "run_id"
-;                              :skipValidation true}
-;                          (sink/create-sink! tx (rand-int 1000000))
-;                          (zipmap [:sink_type :sink_items])
-;                          (sink/load-sink! tx)))]
-;        (sink/update-sink! executor sink)
-;        (is (== 1 (stage/queue-length executor))
-;          "one workflow should have been consumed")
-;        (let [{:keys [entityType name attributes]}
-;              (firecloud/get-entity workspace [testing-entity-type testing-entity-name])]
-;          (is (= testing-entity-type entityType))
-;          (is (= testing-entity-name name))
-;          (is (== 1 (count attributes)))
-;          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["aligned-thing.cram"]}]
-;                (first attributes))))
-;        (sink/update-sink! executor sink)
-;        (is (zero? (stage/queue-length executor))
-;          "one workflow should have been consumed")
-;        (let [entites (firecloud/list-entities workspace testing-entity-type)]
-;          (is (== 1 (count entites))
-;            "No new entities should have been added"))
-;        (let [{:keys [entityType name attributes]}
-;              (firecloud/get-entity workspace [testing-entity-type testing-entity-name])]
-;          (is (= testing-entity-type entityType))
-;          (is (= testing-entity-name name))
-;          (is (== 1 (count attributes)))
-;          (is (= [:aligned_crams {:itemsType "AttributeValue" :items ["another-aligned-thing.cram"]}]
-;                (first attributes))
-;            "attributes should have been overwritten"))))))
+(defn create-and-load-datarepo-sink []
+  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
+    (evalT sink/load-sink! {:sink_type type :sink_items items})))
+
+(deftest test-datarepo-sink-initially-done
+  (is (stage/done? (create-and-load-datarepo-sink))))
+
+(deftest test-update-datarepo-sink-is-not-yet-implemented
+  (is (thrown?
+        NotImplementedException
+        (sink/update-sink!
+          (make-queue-from-list [])
+          (create-and-load-datarepo-sink)))))

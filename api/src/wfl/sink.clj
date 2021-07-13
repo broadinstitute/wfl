@@ -14,8 +14,8 @@
             [wfl.stage             :as stage]
             [wfl.util              :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]
-           [org.apache.commons.lang3 NotImplementedException]))
+           [org.apache.commons.lang3 NotImplementedException]
+           [wfl.util UserException]))
 
 ;; Interface
 (defmulti create-sink!
@@ -247,10 +247,10 @@
   (throw (NotImplementedException. "update-datarepo-sink")))
 
 (defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
-  (let [query "SELECT COUNT(*) FROM %s WHERE consumed NOT NULL"]
+  (let [query "SELECT COUNT(*) FROM %s WHERE consumed IS NOT NULL"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
-      (-> (jdbc/query tx (format query details)) :count pos?))))
+      (-> (jdbc/query tx (format query details)) first :count zero?))))
 
 (defn ^:private datarepo-sink-to-edn [sink]
   (-> sink
