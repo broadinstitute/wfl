@@ -28,7 +28,8 @@
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn (str x# " from wfl.util/do-or-nil")))))
+          (log/warn (str x# " from wfl.util/do-or-nil"))
+          nil)))
 
 ;; Parsers that will not throw.
 ;;
