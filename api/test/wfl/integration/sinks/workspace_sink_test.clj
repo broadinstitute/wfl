@@ -1,4 +1,4 @@
-(ns wfl.integration.sink-test
+(ns wfl.integration.sinks.workspace-sink-test
   "Test validation and operations on Sink stage implementations."
   (:require [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.jdbc              :as jdbc]
@@ -73,7 +73,7 @@
 
 (deftest test-validate-terra-workspace-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
-       UserException (re-pattern sink/malformed-from-outputs-error-message)
+       UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
        (stage/validate-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace

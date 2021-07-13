@@ -112,30 +112,6 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
-(defn ^:private id-and-name [dataset]
-  (select-keys dataset [:id :name]))
-
-(defn ^:private throw-unless-column-exists
-  "Throw if `table` does not have `column` in `dataset`."
-  [table column dataset]
-  (when (->> table :columns (filter (comp #{column} :name)) empty?)
-    (throw (UserException. "Column not found"
-                           {:column  column
-                            :table   table
-                            :dataset (id-and-name dataset)}))))
-
-(defn ^:private get-table-or-throw
-  "Throw or return the table from `dataset`"
-  [table-name dataset]
-  (let [[table & _] (->> [:schema :tables]
-                         (get-in dataset)
-                         (filter (comp #{table-name} :name)))]
-    (when-not table
-      (throw (UserException. "Table not found"
-                             {:table   table-name
-                              :dataset (id-and-name dataset)})))
-    table))
-
 (defn verify-data-repo-source!
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
@@ -143,8 +119,8 @@
   (if skipValidation
     source
     (let [dataset (datarepo/dataset dataset)]
-      (throw-unless-column-exists (get-table-or-throw table dataset)
-                                  column dataset)
+      (doto (datarepo/table-or-throw table dataset)
+        (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
@@ -376,9 +352,6 @@
 
 (defn ^:private load-tdr-snapshot-list
   [tx {:keys [source_items] :as _workload}]
-  (when-not (postgres/table-exists? tx source_items)
-    (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
-                    {:table source_items})))
   {:type      tdr-snapshot-list-type
    :items     source_items
    :snapshots (postgres/get-table tx source_items)})

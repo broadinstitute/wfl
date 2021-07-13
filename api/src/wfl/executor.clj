@@ -402,8 +402,7 @@
 (defn ^:private terra-executor-workflows
   "Return all the non-retried workflows executed by the `executor`."
   [tx {:keys [details] :as executor}]
-  (when-not (postgres/table-exists? tx details)
-    (throw (ex-info "Missing executor details table" {:table details})))
+  (postgres/throw-unless-table-exists tx details)
   (let [query "SELECT * FROM %s
                WHERE workflow IS NOT NULL
                AND   retry    IS NULL
@@ -416,8 +415,7 @@
   "Return all the non-retried workflows matching `status` executed by the
   `executor`."
   [tx {:keys [details] :as executor} status]
-  (when-not (postgres/table-exists? tx details)
-    (throw (ex-info "Missing executor details table" {:table details})))
+  (postgres/throw-unless-table-exists tx details)
   (let [query "SELECT * FROM %s
                WHERE workflow IS NOT NULL
                AND retry      IS NULL
