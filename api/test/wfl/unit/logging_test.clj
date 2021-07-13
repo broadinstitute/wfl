@@ -33,15 +33,3 @@
     (is (logged? (with-out-str (log/warn "This is a warning")) :warning "This is a warning"))
     (is (logged? (with-out-str (log/error "This is an error")) :error "This is an error"))
     (is (logged? (with-out-str (log/debug "This is just a debugging message")) :debug "This is just a debugging message"))))
-
-(deftest format-test
-  (testing "formatting (more for demonstration than assurance)"
-    (is (logged? (with-out-str (log/info "abc" 6 "abcd")) :info "abc 6 abcd"))
-    (is (logged? (with-out-str (log/infof "%s %s" "abc" 123)) :info "abc 123"))))
-
-(deftest exception-test
-  (testing "exception output"
-    (try
-      (int "not an int")
-      (catch Exception e
-        (is (logged? (with-out-str (log/error e "Oops!")) :error #"Oops!"))))))

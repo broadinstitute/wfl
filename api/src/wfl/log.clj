@@ -41,8 +41,7 @@
        (-write *logger*
                {:timestamp (Instant/now)
                 :severity ~(-> severity name str/upper-case)
-                :logging.googleapis.com/jsonPayload
-                {'~expression x#}
+                :message x#
                 :logging.googleapis.com/sourceLocation
                 {:file ~*file* :line ~line}})
        x#)))
