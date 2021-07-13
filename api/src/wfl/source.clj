@@ -1,15 +1,15 @@
 (ns wfl.source
-  (:require [clojure.edn                    :as edn]
-            [clojure.spec.alpha             :as s]
-            [clojure.set                    :as set]
-            [clojure.tools.logging.readable :as log]
-            [wfl.api.workloads              :refer [defoverload]]
-            [wfl.jdbc                       :as jdbc]
-            [wfl.service.datarepo           :as datarepo]
-            [wfl.service.postgres           :as postgres]
-            [wfl.stage                      :as stage]
-            [wfl.util                       :as util :refer [utc-now]]
-            [wfl.module.all                 :as all])
+  (:require [clojure.edn           :as edn]
+            [clojure.spec.alpha    :as s]
+            [clojure.set           :as set]
+            [clojure.tools.logging :as log]
+            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.service.datarepo  :as datarepo]
+            [wfl.service.postgres  :as postgres]
+            [wfl.stage             :as stage :refer [log-prefix]]
+            [wfl.util              :as util :refer [utc-now]]
+            [wfl.module.all        :as all])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
@@ -149,11 +149,14 @@
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying the dataset between the `interval`."
-  [{:keys [dataset table column] :as _source} interval]
-  (-> dataset
-      (datarepo/query-table-between table column interval [:datarepo_row_id])
-      :rows
-      flatten))
+  [{:keys [dataset table column] :as source}
+   [start end                    :as interval]]
+  (do (log/debugf "%s Looking for rows in %s.%s between [%s, %s]..."
+                  (log-prefix source) (:name dataset) table start end)
+      (-> dataset
+          (datarepo/query-table-between table column interval [:datarepo_row_id])
+          :rows
+          flatten)))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -218,7 +221,9 @@
   "Write the shards and corresponding snapshot creation jobs from
    `shards->snapshot-jobs` into source `details` table, with the frozen `now`.
    Also initialize all jobs statuses to running."
-  [{:keys [last_checked details] :as _source} now shards->snapshot-jobs]
+  [{:keys [last_checked details] :as source}
+   now
+   shards->snapshot-jobs]
   (letfn [(make-record [[shard id]]
             {:snapshot_creation_job_id     id
              :snapshot_creation_job_status "running"
@@ -228,7 +233,9 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> shards->snapshot-jobs
            (map make-record)
-           (jdbc/insert-multi! tx details)))))
+           (jdbc/insert-multi! tx details)))
+    (log/debugf "%s Snapshot creation jobs written."
+                (log-prefix source))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
@@ -249,21 +256,35 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [last_checked] :as source} utc-now]
-  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
-                          (mapv #(.format % bigquery-datetime-format))
-                          (find-new-rows source)
+  [{:keys [dataset table last_checked] :as source}
+   utc-now]
+  (let [[start end :as interval]
+        (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+             (mapv #(.format % bigquery-datetime-format)))
+        shards->jobs (->> (find-new-rows source interval)
                           (create-snapshots source utc-now))]
-    (when (seq shards->jobs)
-      (write-snapshots-creation-jobs source utc-now shards->jobs)
-      (update-last-checked source utc-now))))
+    (if (seq shards->jobs)
+      (do (log/infof "%s Snapshots created from new rows in %s.%s."
+                     (log-prefix source) (:name dataset) table)
+          (write-snapshots-creation-jobs source utc-now shards->jobs)
+          (update-last-checked source utc-now))
+      (log/debugf "%s No rows in %s.%s between [%s, %s]."
+                  (log-prefix source) (:name dataset) table start end))))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
   [source]
-  (->> (get-pending-tdr-jobs source)
-       (map #(update % 1 check-tdr-job))
-       (run! #(write-snapshot-id source %))))
+  (log/debugf "%s Looking for running snapshot jobs to update..."
+              (log-prefix source))
+  (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
+    (if (seq pending-tdr-jobs)
+      (do (->> pending-tdr-jobs
+               (map #(update % 1 check-tdr-job))
+               (run! #(write-snapshot-id source %)))
+          (log/debugf "%s Running snapshot jobs updated."
+                      (log-prefix source)))
+      (log/debugf "%s No running snapshot jobs to update."
+                  (log-prefix source)))))
 
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,
