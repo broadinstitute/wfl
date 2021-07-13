@@ -151,12 +151,12 @@
   "Find new rows in TDR by querying the dataset between the `interval`."
   [{:keys [dataset table column] :as source}
    [start end                    :as interval]]
-  (do (log/debugf "%s Looking for rows in %s.%s between [%s, %s]..."
-                  (log-prefix source) (:name dataset) table start end)
-      (-> dataset
-          (datarepo/query-table-between table column interval [:datarepo_row_id])
-          :rows
-          flatten)))
+  (log/debugf "%s Looking for rows in %s.%s between [%s, %s]..."
+              (log-prefix source) (:name dataset) table start end)
+  (-> dataset
+      (datarepo/query-table-between table column interval [:datarepo_row_id])
+      :rows
+      flatten))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -221,9 +221,7 @@
   "Write the shards and corresponding snapshot creation jobs from
    `shards->snapshot-jobs` into source `details` table, with the frozen `now`.
    Also initialize all jobs statuses to running."
-  [{:keys [last_checked details] :as source}
-   now
-   shards->snapshot-jobs]
+  [{:keys [last_checked details] :as source} now shards->snapshot-jobs]
   (letfn [(make-record [[shard id]]
             {:snapshot_creation_job_id     id
              :snapshot_creation_job_status "running"
@@ -234,8 +232,7 @@
       (->> shards->snapshot-jobs
            (map make-record)
            (jdbc/insert-multi! tx details)))
-    (log/debugf "%s Snapshot creation jobs written."
-                (log-prefix source))))
+    (log/debugf "%s Snapshot creation jobs written." (log-prefix source))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
@@ -256,36 +253,27 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [dataset table last_checked] :as source}
-   utc-now]
-  (let [[start end :as interval]
-        (mapv
-         #(.format % bigquery-datetime-format)
-         [(timestamp-to-offsetdatetime last_checked) utc-now])
-        shards->jobs
-        (create-snapshots source utc-now (find-new-rows source interval))]
-    (if (seq shards->jobs)
-      (do (log/infof "%s Snapshots created from new rows in %s.%s."
-                     (log-prefix source) (:name dataset) table)
-          (write-snapshots-creation-jobs source utc-now shards->jobs)
-          (update-last-checked source utc-now))
-      (log/debugf "%s No rows in %s.%s between [%s, %s]."
-                  (log-prefix source) (:name dataset) table start end))))
+  [{:keys [dataset table last_checked] :as source} utc-now]
+  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+                          (mapv #(.format % bigquery-datetime-format))
+                          (find-new-rows source)
+                          (create-snapshots source utc-now))]
+    (when (seq shards->jobs)
+      (log/infof "%s Snapshots created from new rows in %s.%s."
+                 (log-prefix source) (:name dataset) table)
+      (write-snapshots-creation-jobs source utc-now shards->jobs)
+      (update-last-checked source utc-now))))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
   [source]
-  (log/debugf "%s Looking for running snapshot jobs to update..."
-              (log-prefix source))
+  (log/debugf "%s Looking for running snapshot jobs..." (log-prefix source))
   (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
-    (if (seq pending-tdr-jobs)
-      (do (->> pending-tdr-jobs
-               (map #(update % 1 check-tdr-job))
-               (run! #(write-snapshot-id source %)))
-          (log/debugf "%s Running snapshot jobs updated."
-                      (log-prefix source)))
-      (log/debugf "%s No running snapshot jobs to update."
-                  (log-prefix source)))))
+    (when (seq pending-tdr-jobs)
+      (->> pending-tdr-jobs
+           (map #(update % 1 check-tdr-job))
+           (run! #(write-snapshot-id source %)))
+      (log/debugf "%s Running snapshot jobs updated." (log-prefix source)))))
 
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,
