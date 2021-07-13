@@ -148,7 +148,7 @@
 
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
-  (when-let [{:keys [uuid outputs] :as workflow} (stage/peek-queue executor)]
+  (when-let [[_ {:keys [uuid outputs] :as workflow}] (stage/peek-queue executor)]
     (log/debug "coercing workflow" uuid "outputs to" entityType)
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           [_ name :as entity] [entityType (outputs (keyword identifier))]]

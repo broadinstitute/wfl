@@ -8,8 +8,10 @@
             [wfl.mime-type               :as mime-type]
             [wfl.service.google.bigquery :as bigquery]
             [wfl.util                    :as util])
-  (:import (java.time Instant)
-           (java.util.concurrent TimeUnit)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.time Instant]
+           [java.util.concurrent TimeUnit]
+           [wfl.util UserException]))
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_TDR_URL"))]
@@ -28,7 +30,13 @@
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
   {:pre [(some? dataset-id)]}
-  (get-repository-json "datasets" dataset-id))
+  (try
+    (get-repository-json "datasets" dataset-id)
+    (catch ExceptionInfo e
+      (throw
+       (UserException. "Cannot access dataset"
+                       {:dataset dataset-id :status (-> e ex-data :status)}
+                       e)))))
 
 (defn ^:private ingest
   "Ingest THING to DATASET-ID according to BODY."

@@ -71,19 +71,7 @@
                {:add-linters    #{#_:keyword-typos :unused-fn-args}
                 :config-files   #{"resources/eastwood.clj"}
                 :source-paths   ["src" "test"]
-                :ignored-faults {:keyword-typos {wfl.api.routes [true]}
-                                 :suspicious-expression
-                                 {wfl.environment [{:line 33 :column 5}
-                                                   {:line 37 :column 5}
-                                                   {:line 41 :column 5}
-                                                   {:line 43 :column 5}
-                                                   {:line 45 :column 5}
-                                                   {:line 47 :column 5}
-                                                   {:line 49 :column 5}
-                                                   {:line 53 :column 5}
-                                                   {:line 55 :column 5}
-                                                   {:line 57 :column 5}
-                                                   {:line 59 :column 5}]}}}]}
+                :ignored-faults {:keyword-typos {wfl.api.routes [true]}}}]}
   
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
