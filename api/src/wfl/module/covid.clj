@@ -163,115 +163,42 @@
       (update :sink util/to-edn)))
 
 (defn retry-workflows
-  [workflow workloads]
+  [workload workflows]
+  ; Get the workflows from the terra executor details table
+  ;(->> workload :executor :details
+  ;     (format "SELECT * FROM %s")
+  ;     (jdbc/query (postgres/wfl-db-config))
+  ;     (wfl.debug/trace)
+  ;     )
 
-  ; 1. load the workload
-
-
-  ; 1. Get the workflows of status X and null retry field
-  ;(let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-  ;                                          (executor/executor-workflows-by-status tx {:executor workload} workflow status))]
-  ;  (println workflows))
-
-  ; 2. Get the distinct list of snapshots for these workflows
-
-  ; 3. Submit the snapshots. Hold onto the new workflow ids
-
-  ; 4. Update the retry field of the executor details table inserting the new workflow id for the old workflow.
-
-)
+  ; Get the rows from the terra details table for the workflows
+  ; iterate through the results and get the distinct reference values
+  ; resubmit the reference values
+  ; write back to the table, putting the new workflow id into the retry field of the failed one
+  (let [wfl_ids (util/to-quoted-comma-separated-list(map :uuid workflows))
+        wkl (get-in workload [:executor :details])
+        query (format "SELECT * FROM %s WHERE workflow IN (%s)" wkl wfl_ids)
+        results (jdbc/query (postgres/wfl-db-config) [query])
+        distinct_results (map :reference results)
+        ]
+    (pprint distinct_results)
+    )
+  )
 
 (comment
+  ;(jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+  ;  (let [w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
+  ;    (pprint w)
+  ;    (pprint (util/to-edn w))))
+
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
-      (pprint w)
-      (pprint (util/to-edn w))))
+                            (let [uuid "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b"
+                                  workload (workloads/load-workload-for-uuid tx uuid)
+                                  status "Failed"
+                                  workflows (workloads/workflows-by-status tx workload status)]
+                              (retry-workflows workload workflows)))
 
-
-  (let
-    [workload {
-               :started "2021-07-06T20:22:04Z"
-               :watchers [ "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com" ]
-               :labels [ "hornet:test"
-                        "project:wfl-dev/CDC_Viral_Sequencing_ranthony_20210701" ]
-               :creator "wfl-non-prod@broad-gotc-dev.iam.gserviceaccount.com"
-               :updated "2021-07-07T00:28:00Z"
-               :created "2021-07-06T20:16:21Z"
-               :source {
-                        :snapshots [ "a95f31f7-553e-4e60-9d94-6c594c7e3709" ]
-                        :name "TDR Snapshots"}
-               :finished "2021-07-07T00:28:00Z"
-               :commit "3848aad49ca9201b57deca37a4f797901bb775c5"
-               :uuid "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b"
-               :executor {
-                          :workspace "wfl-dev/CDC_Viral_Sequencing_ranthony_20210701"
-                          :methodConfiguration "wfl-dev/sarscov2_illumina_full"
-                          :methodConfigurationVersion 2
-                          :fromSource "importSnapshot"
-                          :name "Terra"}
-               :version "0.8.0"
-               :sink {
-                         :workspace "wfl-dev/CDC_Viral_Sequencing_ranthony_20210701"
-                         :entityType "flowcell",
-                         :fromOutputs {
-                                          :submission_xml "submission_xml"
-                                          :assembled_ids "assembled_ids"
-                                          :num_failed_assembly "num_failed_assembly"
-                                          :ivar_trim_stats_png "ivar_trim_stats_png"
-                                          :read_counts_raw "read_counts_raw"
-                                          :num_samples "num_samples"
-                                          :vadr_outputs "vadr_outputs"
-                                          :cleaned_reads_unaligned_bams "cleaned_reads_unaligned_bams",
-                                          :demux_commonBarcodes "demux_commonBarcodes"
-                                          :submission_zip "submission_zip"
-                                          :cleaned_bams_tiny "cleaned_bams_tiny"
-                                          :data_tables_out "data_tables_out"
-                                          :ntc_rejected_batches "ntc_rejected_batches"
-                                          :picard_metrics_alignment "picard_metrics_alignment"
-                                          :failed_assembly_ids "failed_assembly_ids"
-                                          :ivar_trim_stats_html "ivar_trim_stats_html"
-                                          :assembly_stats_tsv "assembly_stats_tsv"
-                                          :failed_annotation_ids "failed_annotation_ids"
-                                          :run_date "run_date"
-                                          :genbank_source_table "genbank_source_table"
-                                          :num_read_files "num_read_files"
-                                          :ntc_rejected_lanes "ntc_rejected_lanes"
-                                          :primer_trimmed_read_count "primer_trimmed_read_count"
-                                          :gisaid_fasta "gisaid_fasta"
-                                          :num_submittable "num_submittable"
-                                          :submit_ready "submit_ready"
-                                          :passing_fasta "passing_fasta"
-                                          :nextclade_auspice_json "nextclade_auspice_json"
-                                          :read_counts_depleted "read_counts_depleted"
-                                          :cleaned_bam_uris "cleaned_bam_uris"
-                                          :num_assembled "num_assembled"
-                                          :max_ntc_bases "max_ntc_bases"
-                                          :genbank_fasta "genbank_fasta"
-                                          :multiqc_report_cleaned "multiqc_report_cleaned"
-                                          :num_failed_annotation "num_failed_annotation"
-                                          :meta_by_filename_json "meta_by_filename_json"
-                                          :primer_trimmed_read_percent "primer_trimmed_read_percent",
-                                          :assembly_stats_final_tsv "assembly_stats_final_tsv"
-                                          :demux_metrics "demux_metrics"
-                                          :submittable_ids "submittable_ids"
-                                          :sra_metadata "sra_metadata"
-                                          :spikein_counts "spikein_counts"
-                                          :raw_reads_unaligned_bams "raw_reads_unaligned_bams"
-                                          :ivar_trim_stats_tsv "ivar_trim_stats_tsv"
-                                          :picard_metrics_wgs "picard_metrics_wgs"
-                                          :nextclade_all_json "nextclade_all_json"
-                                          :multiqc_report_raw "multiqc_report_raw"
-                                          :sequencing_reports "sequencing_reports"
-                                          :demux_outlierBarcodes "demux_outlierBarcodes"
-                                          :nextmeta_tsv "nextmeta_tsv"
-                                          :assemblies_fasta "assemblies_fasta"
-                                          }
-                      :identifier "run_id"
-                      :name "Terra Workspace"
-                         }
-               } ]
-    (retry-workflows workload "Failed"))
-)
+  )
 
 (defoverload workloads/create-workload! pipeline create-covid-workload)
 (defoverload workloads/start-workload! pipeline start-covid-workload)
