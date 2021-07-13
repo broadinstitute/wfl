@@ -88,7 +88,7 @@
   (str/join " " ["Found additional attributes in fromOutputs that are not"
                  "present in the entityType."]))
 
-(defn ^:private verify-terra-workspace-sink!
+(defn ^:private terra-workspace-validate-request-or-throw
   "Verify that the WFL has access the `workspace`."
   [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
   (when-not skipValidation
@@ -173,7 +173,7 @@
       (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
       (assoc :name terra-workspace-sink-name)))
 
-(defoverload stage/validate-or-throw terra-workspace-sink-name verify-terra-workspace-sink!)
+(defoverload stage/validate-or-throw terra-workspace-sink-name terra-workspace-validate-request-or-throw)
 (defoverload create-sink!            terra-workspace-sink-name create-terra-workspace-sink)
 
 (defoverload load-sink!    terra-workspace-sink-type load-terra-workspace-sink)
@@ -198,6 +198,7 @@
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
     [terra-workspace-sink-type
      (-> (select-keys request (keys datarepo-sink-serialized-fields))
+         (update :dataset pr-str)
          (update :fromOutputs pr-str)
          (set/rename-keys datarepo-sink-serialized-fields)
          (assoc :details details)
@@ -207,6 +208,7 @@
   (if-let [id (util/parse-int sink_items)]
     (-> (postgres/load-record-by-id! tx datarepo-sink-table id)
         (set/rename-keys (set/map-invert datarepo-sink-serialized-fields))
+        (update :dataset edn/read-string)
         (update :fromOutputs edn/read-string)
         (assoc :type datarepo-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
@@ -219,16 +221,17 @@
   (str/join " " ["Found column names in fromOutputs that are not columns of"
                  "the table in the dataset."]))
 
-(defn ^:private verify-datarepo-sink!
-  "Verify that the WFL has access the `workspace`."
-  [{:keys [dataset table fromOutputs] :as sink}]
+(defn ^:private datarepo-sink-validate-request-or-throw
+  "Throw unless the user's sink `request` yields a valid configuration for a
+   TerraDataRepoSink by ensuring all resources specified in the request exist."
+  [{:keys [dataset table fromOutputs] :as request}]
   (let [dataset' (datarepo/dataset dataset)
         ;; eagerly evaluate for effects
         table'   (datarepo/table-or-throw table dataset')]
     (when-not (map? fromOutputs)
       (throw (UserException. datarepo-malformed-from-outputs-message
                              (util/make-map dataset fromOutputs))))
-    (let [columns (map (comp keyword :name) (:columns table'))
+    (let [columns       (map (comp keyword :name) (:columns table'))
           [missing _ _] (data/diff (set (keys fromOutputs)) (set columns))]
       (when (seq missing)
         (throw (UserException. unknown-columns-error-message
@@ -237,7 +240,7 @@
                                 :columns     (sort columns)
                                 :missing     (sort missing)
                                 :fromOutputs fromOutputs}))))
-    (assoc sink :dataset dataset')))
+    (assoc request :dataset dataset')))
 
 (defn ^:private update-datarepo-sink
   [_executor _sink]
@@ -254,7 +257,7 @@
       (util/select-non-nil-keys (keys datarepo-sink-serialized-fields))
       (assoc :name datarepo-sink-name)))
 
-(defoverload stage/validate-or-throw datarepo-sink-name verify-datarepo-sink!)
+(defoverload stage/validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)
 (defoverload create-sink!            datarepo-sink-name create-datarepo-sink)
 
 (defoverload load-sink!   datarepo-sink-type load-datarepo-sink)
