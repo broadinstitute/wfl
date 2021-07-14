@@ -152,7 +152,7 @@
   [{:keys [dataset table column] :as source}
    [start end                    :as interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
-              (log-prefix source) (:name dataset) table start end))
+                     (log-prefix source) (:name dataset) table start end))
   (-> dataset
       (datarepo/query-table-between table column interval [:datarepo_row_id])
       :rows
@@ -428,11 +428,7 @@
   (zero? (tdr-snapshot-list-queue-length source)))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
-  (letfn [(read-snapshot-id [ss]
-            (-> ss
-                :item
-                edn/read-string
-                :id))]
+  (let [read-snapshot-id (comp :id edn/read-string :item)]
     (-> (select-keys source [:snapshots])
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
