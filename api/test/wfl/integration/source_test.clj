@@ -46,6 +46,23 @@
    :job_status  "succeeded"
    :id          job-id})
 
+;; Queue mocks
+(use-fixtures :once fixtures/temporary-postgresql-database)
+
+(defn ^:private create-tdr-source []
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> {:name           "Terra DataRepo",
+          :dataset        "this"
+          :table          "is"
+          :column         "fun"
+          :skipValidation true}
+         (source/create-source! tx (rand-int 1000000))
+         (zipmap [:source_type :source_items])
+         (source/load-source! tx))))
+
+(defn ^:private reload-source [tx {:keys [type id] :as _source}]
+  (source/load-source! tx {:source_type type :source_items (str id)}))
+
 (defn count-rows-in-source
   "Count the row IDs in `source`."
   [source]
@@ -84,22 +101,6 @@
         (is (== (inc record-count) (stage/queue-length source)))
         (is (== row-count (count-rows-in-source source)))))))
 
-;; Queue mocks
-(use-fixtures :once fixtures/temporary-postgresql-database)
-
-(defn ^:private create-tdr-source []
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "Terra DataRepo",
-          :dataset        "this"
-          :table          "is"
-          :column         "fun"
-          :skipValidation true}
-         (source/create-source! tx (rand-int 1000000))
-         (zipmap [:source_type :source_items])
-         (source/load-source! tx))))
-
-(defn ^:private reload-source [tx {:keys [type id] :as _source}]
-  (source/load-source! tx {:source_type type :source_items (str id)}))
 
 (deftest test-create-tdr-source-from-valid-request
   (is (stage/validate-or-throw
