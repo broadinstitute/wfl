@@ -245,7 +245,7 @@
 
 (defn ^:private peek-datarepo-sink-job-queue [{:keys [details] :as _sink}]
   (let [query "SELECT * FROM %s
-               WHERE status <> 'failed' AND consumed IS NOT NULL
+               WHERE status = 'succeeded' AND consumed IS NOT NULL
                ORDER BY id ASC
                LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -288,7 +288,28 @@
                               :status  "running"
                               :payload (pr-str state)})))
 
-(defn ^:private update-datarepo-job-statuses [sink])
+(defn ^:private update-datarepo-job-statuses
+  [{:keys [details] :as sink}]
+  (letfn [(read-active-jobs []
+            (let [query "SELECT id,job FROM %s
+                         WHERE status = 'running'
+                         ORDER BY id ASC"]
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (postgres/throw-unless-table-exists tx details)
+                (map (juxt :id :job) (jdbc/query tx (format query details))))))
+          (write-job-status [job-id status]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (jdbc/update! tx details
+                           {:status status :updated (utc-now)}
+                           ["id = ?" job-id])))]
+    (doseq [[id job-id] (read-active-jobs)]
+      (let [{:keys [job_status] :as job} (datarepo/job-metadata job-id)]
+        (write-job-status id job_status)
+        (when (= "failed" job_status)
+          (throw (UserException. "A Terra DataRepo ingest job failed"
+                                {:dataset (get-in sink [:dataset :id])
+                                 :job     job})))))))
+
 (defn ^:private create-metadata-ingest-job [sink [description workflow job-id]])
 
 (defn ^:private start-ingesting-output-files [executor sink]

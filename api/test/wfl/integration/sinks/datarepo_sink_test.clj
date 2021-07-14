@@ -150,4 +150,5 @@
         upstream    (make-queue-from-list [[description workflow]])
         sink        (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
-    (is (stage/done? upstream))))
+    (is (stage/done? upstream))
+    (is (stage/done? sink))))
