@@ -1,20 +1,21 @@
 (ns wfl.sink
   "Workload sink interface and its implementations."
-  (:require [clojure.data          :as data]
-            [clojure.edn           :as edn]
-            [clojure.set           :as set]
-            [clojure.string        :as str]
-            [clojure.tools.logging :as log]
-            [wfl.api.workloads     :refer [defoverload]]
-            [wfl.jdbc              :as jdbc]
-            [wfl.service.datarepo  :as datarepo]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres  :as postgres]
-            [wfl.service.rawls     :as rawls]
-            [wfl.stage             :as stage]
-            [wfl.util              :as util :refer [utc-now]])
+  (:require [clojure.data               :as data]
+            [clojure.edn                :as edn]
+            [clojure.set                :as set]
+            [clojure.string             :as str]
+            [clojure.tools.logging      :as log]
+            [wfl.api.workloads          :refer [defoverload]]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.service.datarepo       :as datarepo]
+            [wfl.service.firecloud      :as firecloud]
+            [wfl.service.google.storage :as storage]
+            [wfl.service.postgres       :as postgres]
+            [wfl.service.rawls          :as rawls]
+            [wfl.stage                  :as stage]
+            [wfl.util                   :as util :refer [utc-now]]
+            [wfl.workflows              :as workflows])
   (:import [clojure.lang ExceptionInfo]
-           [org.apache.commons.lang3 NotImplementedException]
            [wfl.util UserException]))
 
 ;; Interface
@@ -242,14 +243,78 @@
                                 :fromOutputs fromOutputs}))))
     (assoc request :dataset dataset')))
 
+(defn ^:private peek-datarepo-sink-job-queue [{:keys [details] :as _sink}]
+  (let [query "SELECT * FROM %s
+               WHERE status <> 'failed' AND consumed IS NOT NULL
+               ORDER BY id ASC
+               LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (postgres/throw-unless-table-exists tx details)
+      (->> (jdbc/query tx (format query details))
+           (map #(update % :type keyword))
+           first))))
+
+(defn ^:private pop-datarepo-sink-job-queue! [{:keys [details] :as sink}]
+  (if-let [{:keys [id]} (peek-datarepo-sink-job-queue sink)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id]))
+    (throw (ex-info "TerraDataRepoSink job queue is empty" {:sink sink}))))
+
+(defn ^:private create-file-load-job
+  "Create a bulk FileLoad job to load `files` into the TDR dataset with
+   `dataset-id` under `prefix` using billing profile `tdr-profile`."
+  [tdr-profile dataset-id prefix files]
+  (letfn [(target-name [url]
+            (let [[_ obj] (storage/parse-gs-url url)]
+              (str/join "/" ["" prefix obj])))]
+    (datarepo/bulk-ingest dataset-id tdr-profile
+                          (for [url files] [url (target-name url)]))))
+
+(defn ^:private create-file-ingest-jobs
+  [{:keys [dataset] :as _sink}
+   [description {:keys [outputs uuid] :as _workflow}]]
+  (let [[profile id] (mapv dataset [:defaultProfileId :id])
+        type         (-> description :outputs workflows/make-object-type)]
+    (->> (workflows/get-files [type outputs])
+         (partition-all 1000)
+         (map #(create-file-load-job profile id uuid %)))))
+
+(defn ^:private push-job
+  [job-type {:keys [details] :as _sink} state job]
+  {:pre [(#{:FileLoad :MetadataIngest} job-type)]}
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/insert! tx details {:job     job
+                              :type    (name job-type)
+                              :status  "running"
+                              :payload (pr-str state)})))
+
+(defn ^:private update-datarepo-job-statuses [sink])
+(defn ^:private create-metadata-ingest-job [sink [description workflow job-id]])
+
+(defn ^:private start-ingesting-output-files [executor sink]
+  (when-let [item (stage/peek-queue executor)]
+    (doseq [job (create-file-ingest-jobs sink item)]
+      (push-job :FileLoad sink item job))
+    (stage/pop-queue! executor)))
+
+(defn ^:private start-ingesting-output-metadata [sink]
+  (when-let [{:keys [type payload]} (peek-datarepo-sink-job-queue sink)]
+    (case type
+      :FileLoad       (->> (util/parse-json payload)
+                           (create-metadata-ingest-job sink)
+                           (push-job :MetadataIngest sink nil))
+      :MetadataIngest (log/info "Sunk outputs!"))
+    (pop-datarepo-sink-job-queue! sink)))
+
 (defn ^:private update-datarepo-sink
-  [_executor _sink]
-  (throw (NotImplementedException. "update-datarepo-sink")))
+  [executor sink]
+  (start-ingesting-output-files executor sink)
+  (update-datarepo-job-statuses sink)
+  (start-ingesting-output-metadata sink))
 
 (defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
-               WHERE status   <> 'failed'
-               AND   consumed IS NOT NULL"]
+               WHERE status <> 'failed' AND consumed IS NOT NULL"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
       (-> (jdbc/query tx (format query details)) first :count zero?))))
@@ -257,6 +322,7 @@
 (defn ^:private datarepo-sink-to-edn [sink]
   (-> sink
       (util/select-non-nil-keys (keys datarepo-sink-serialized-fields))
+      (update :dataset :id)
       (assoc :name datarepo-sink-name)))
 
 (defoverload stage/validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)

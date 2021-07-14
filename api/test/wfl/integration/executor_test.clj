@@ -33,7 +33,7 @@
   (-> this :queue .size))
 
 (defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
+  (-> this :queue .isEmpty))
 
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]

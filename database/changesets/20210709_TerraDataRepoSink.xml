@@ -13,36 +13,14 @@
                logicalFilePath="20210709_TerraDataRepoSink.xml"
                runInTransaction="false">
         <comment>
-            A descriptor for the type of TDR job wfl started while ingesting
-            outputs
-        </comment>
-        <sql>
-            CREATE TYPE TDRJobType AS ENUM (
-                'FileLoad',
-                'MetadataIngest'
-            )
-        </sql>
-        <comment>
-            The status of the TDR job wfl started, as reported by TDR. See
-            https://data.terra.bio/swagger-ui.html#/repository/retrieveJob
-            for details.
-        </comment>
-        <sql>
-            CREATE TYPE TDRJobStatus AS ENUM (
-                'running',
-                'succeeded',
-                'failed'
-            )
-        </sql>
-        <comment>
             The TDR Job Queue used by the `TerraDataRepo` Sink
         </comment>
         <sql>
             CREATE TYPE TerraDataRepoSinkDetails AS (
                 id        BIGINT,       -- ALTER ADD GENERATED ALWAYS AS IDENTITY
-                type      TDRJobType,   -- For dispatching to right handler
+                type      TEXT,         -- For dispatching to right handler
                 job       TEXT,         -- UUID of the job created in TDR
-                status    TDRJobStatus, -- As reported by TDR
+                status    TEXT,         -- As reported by TDR
                 updated   TIMESTAMPTZ,  -- When this record was last updated
                 payload   TEXT,         -- generic JSON payload for the handler
                 consumed  TIMESTAMPTZ   -- when this job was "evicted" from the queue

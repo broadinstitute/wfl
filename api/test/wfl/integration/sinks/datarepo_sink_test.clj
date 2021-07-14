@@ -12,8 +12,8 @@
             [wfl.tools.resources   :as resources]
             [wfl.tools.workloads   :refer [evalT]]
             [wfl.util              :as util])
-  (:import [java.util ArrayDeque]
-           [org.apache.commons.lang3 NotImplementedException]
+  (:import [clojure.lang ExceptionInfo]
+           [java.util ArrayDeque UUID]
            [wfl.util UserException]))
 
 ;; Queue mocks
@@ -31,7 +31,7 @@
   (-> this :queue .size))
 
 (defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
+  (-> this :queue .isEmpty))
 
 (def ^:private ^:dynamic *dataset*)
 
@@ -125,9 +125,29 @@
 (deftest test-datarepo-sink-initially-done
   (is (stage/done? (create-and-load-datarepo-sink))))
 
-(deftest test-update-datarepo-sink-is-not-yet-implemented
-  (is (thrown?
-       NotImplementedException
-       (sink/update-sink!
-        (make-queue-from-list [])
-        (create-and-load-datarepo-sink)))))
+(deftest test-data-repo-job-queue-operations
+  (let [sink (create-and-load-datarepo-sink)]
+    (is (nil? (#'sink/peek-datarepo-sink-job-queue sink)))
+    (is (thrown-with-msg?
+         ExceptionInfo #"TerraDataRepoSink job queue is empty"
+         (#'sink/pop-datarepo-sink-job-queue! sink)))))
+
+(deftest test-datarepo-sink-to-edn
+  (let [response (util/to-edn (create-and-load-datarepo-sink))]
+    (is (= *dataset* (:dataset response)))
+    (is (not-any? response [:id :details]))))
+
+(def ^:private outputs
+  {:outbool   true
+   :outfile   "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
+   :outfloat  (* 4 (Math/atan 1))
+   :outint    27
+   :outstring "Hello, World!"})
+
+(deftest test-update-datarepo-sink
+  (let [description (resources/read-resource "primitive.edn")
+        workflow    {:uuid (UUID/randomUUID) :outputs outputs}
+        upstream    (make-queue-from-list [[description workflow]])
+        sink        (create-and-load-datarepo-sink)]
+    (sink/update-sink! upstream sink)
+    (is (stage/done? upstream))))
