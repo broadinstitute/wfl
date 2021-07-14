@@ -93,7 +93,7 @@
       (is (= {:outpair '(9 3.14)}
              (workflows/traverse
               (fn [[type v]] (if (= type "Int") (* v v) v))
-             object))))))
+              object))))))
 
 (deftest test-struct-types
   (let [object [(make-output-type "compound.edn") {:outstruct {:value 3}}]]
