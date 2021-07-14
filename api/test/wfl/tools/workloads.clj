@@ -267,7 +267,11 @@
       max-polling-attempts))))
 
 (defn evalT
-  "Evaluate `operation` in the context of a database transaction."
+  "Evaluate `operation` in the context of a database transaction where
+   `operation` is a function that takes a database transaction as its first
+   argument followed by at least one additional argument. When no additional
+   arguments are supplied, returns a closure that evaluates `operation` with its
+   arguments in the context of a database transaction."
   ([operation first & rest]
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (apply operation (conj rest first tx))))

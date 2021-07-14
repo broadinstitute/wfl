@@ -105,7 +105,8 @@
 ;; Operation tests
 (def ^:private random (partial rand-int 1000000))
 
-(def datarepo-sink-config (comp stage/validate-or-throw datarepo-sink-request))
+(def ^:private datarepo-sink-config
+  (comp stage/validate-or-throw datarepo-sink-request))
 
 (deftest test-create-datarepo-sink
   (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
@@ -117,7 +118,7 @@
       (is (get-in sink [:dataset :defaultProfileId]))
       (is (evalT postgres/table-exists? (:details sink))))))
 
-(defn create-and-load-datarepo-sink []
+(defn ^:private create-and-load-datarepo-sink []
   (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
     (evalT sink/load-sink! {:sink_type type :sink_items items})))
 
