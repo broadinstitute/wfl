@@ -1,15 +1,15 @@
 (ns wfl.integration.source-test
-  (:require [clojure.java.jdbc    :as jdbc]
+  (:require [clojure.test         :refer [deftest is testing use-fixtures]]
+            [clojure.java.jdbc    :as jdbc]
             [clojure.spec.alpha   :as s]
-            [clojure.test         :refer [deftest is testing use-fixtures]]
             [wfl.service.postgres :as postgres]
-            [wfl.stage            :as stage]
             [wfl.source           :as source]
+            [wfl.stage            :as stage]
             [wfl.tools.fixtures   :as fixtures]
             [wfl.util             :as util])
-  (:import [java.time LocalDateTime]
+  (:import [java.time Instant LocalDateTime]
            [java.util UUID]
-           [wfl.util  UserException]))
+           [wfl.util UserException]))
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
@@ -17,11 +17,23 @@
 (def ^:private testing-column-name "run_date")
 
 ;; Snapshot creation mock
-(def ^:private mock-new-rows-size 2021)
+(def ^:private mock-new-rows-size 1234)
 
 (defn ^:private mock-find-new-rows [_ interval]
-  (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
+  (letfn [(parse [ts]
+            (LocalDateTime/parse ts @#'source/bigquery-datetime-format))]
+    (is (every? parse interval)))
   (range mock-new-rows-size))
+
+(def fibonacci
+  "The Fibonacci sequence."
+  (lazy-cat [0 1] (map + fibonacci (rest fibonacci))))
+
+(defn ^:private mock-miss-some-rows
+  "Skip some rows in this `interval` to be discovered later."
+  [source interval]
+  (let [skip (take-while (partial > mock-new-rows-size) fibonacci)]
+    (remove (set skip) (mock-find-new-rows source interval))))
 
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
@@ -33,6 +45,44 @@
   {:snapshot_id (str (UUID/randomUUID))
    :job_status  "succeeded"
    :id          job-id})
+
+(defn count-rows-in-source
+  "Count the row IDs in `source`."
+  [source]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (->> source :details
+         (postgres/get-table tx)
+         (map (comp count :datarepo_row_ids))
+         (apply +))))
+
+(comment
+  (clojure.test/test-vars  [#'test-backfill-tdr-source])
+  )
+
+(deftest test-backfill-tdr-source
+  (letfn [(make-bigquery-timestamp []
+            (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
+          (update-source [source mock-source-find-new-rows]
+            (with-redefs [source/create-snapshots mock-create-snapshots
+                          source/check-tdr-job    mock-check-tdr-job
+                          source/find-new-rows    mock-source-find-new-rows]
+              (source/update-source!
+               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                 (source/start-source! tx source)
+                 (reload-source tx source)))))]
+    (let [an-interval  [(make-bigquery-timestamp) (make-bigquery-timestamp)]
+          record-count (int (Math/ceil (/ mock-new-rows-size 500)))
+          row-count    (count (mock-find-new-rows {} an-interval))
+          miss-count   (count (mock-miss-some-rows {} an-interval))
+          source       (create-tdr-source)]
+      (testing "update-source! loads snapshots"
+        (update-source source mock-miss-some-rows)
+        (is (== record-count (stage/queue-length source)))
+        (is (== miss-count (count-rows-in-source source))))
+      (testing "update-source! adds a snaphot of rows missed in prior interval"
+        (update-source source mock-find-new-rows)
+        (is (== (inc record-count) (stage/queue-length source)))
+        (is (== row-count (count-rows-in-source source)))))))
 
 ;; Queue mocks
 (use-fixtures :once fixtures/temporary-postgresql-database)
@@ -89,6 +139,10 @@
       (source/start-source! tx source)
       (is (:last_checked (reload-source tx source))
           ":last_checked was not updated"))))
+
+(comment
+  (clojure.test/test-vars  [#'test-update-tdr-source])
+  )
 
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
