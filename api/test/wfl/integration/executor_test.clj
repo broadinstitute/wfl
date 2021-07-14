@@ -104,6 +104,7 @@
 (defn ^:private mock-rawls-snapshot-reference [& _]
   {:referenceId snapshot-reference-id
    :name        snapshot-reference-name})
+()
 
 (def ^:private method-config-version-mock 1)
 
@@ -272,9 +273,22 @@
          (is (== 1 (count (executor/executor-workflows tx executor)))
              "The retried workflow should not be returned")))))
 
-(deftest test-tdr-executor-describe-method
+(deftest test-terra-executor-describe-method
   (let [description (executor/describe-method
                      testing-workspace
                      testing-method-configuration)]
     (is (every? description [:validWorkflow :inputs :outputs]))
     (is (= "sarscov2_illumina_full" (:name description)))))
+
+(deftest test-terra-executor-entity-from-snapshot
+  (letfn [(throw-if-called [& args]
+            (throw (ex-info (str "rawls/create-snapshot-reference"
+                                 "should not have been called directly")
+                            {:called-with args})))]
+    (with-redefs-fn
+      {#'rawls/create-snapshot-reference        throw-if-called
+       #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
+      #(let [executor  (create-terra-executor (rand-int 1000000))
+             reference (#'executor/entity-from-snapshot executor snapshot)]
+         (is (and (= snapshot-reference-id (:referenceId reference))
+                  (= snapshot-reference-name (:name reference))))))))
