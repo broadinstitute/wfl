@@ -240,8 +240,8 @@
 
 (defmacro bind-fixture
   "Returns a closure that can be used with clojure.test/use-fixtures in which
-   `var` is bound to the resource created by applying `with-fixture` to its
-   `arguments`."
+   the ^:dynamic `var` is bound to the resource created by applying
+   `with-fixture` to its `arguments`."
   [var with-fixture & arguments]
   `(fn [f#]
      (log/infof "Setting up %s..." '~with-fixture)
