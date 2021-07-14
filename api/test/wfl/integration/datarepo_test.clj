@@ -2,7 +2,6 @@
   (:require [clojure.data.json           :as json]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
-            [wfl.module.covid            :as covid]
             [wfl.service.datarepo        :as datarepo]
             [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]
@@ -12,8 +11,8 @@
             [wfl.tools.fixtures          :as fixtures]
             [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.resources         :as resources]
-            [wfl.tools.workflows         :as workflows]
-            [wfl.util                    :as util :refer [>>>]])
+            [wfl.util                    :as util :refer [>>>]]
+            [wfl.workflows               :as workflows])
   (:import [java.util UUID]))
 
 (def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
@@ -36,13 +35,12 @@
                  (is (= % (:id dataset))))))))))
 
 (defn ^:private replace-urls-with-file-ids
-  [file->fileid type value]
-  (-> (fn [type value]
-        (case type
-          ("Boolean" "Float" "Int" "Number" "String") value
-          "File"                                      (file->fileid value)
-          (throw (ex-info "Unknown type" {:type type :value value}))))
-      (workflows/traverse type value)))
+  [file->fileid object]
+  (letfn [(f [[type value]]
+            (case type
+              "File" (file->fileid value)
+              value))]
+    (workflows/traverse f object)))
 
 (def ^:private pi (* 4 (Math/atan 1)))
 
@@ -74,7 +72,7 @@
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp dataset]]
         (let [table-url (str temp workflow-id "/table.json")]
-          (-> (->> (workflows/get-files outputs-type outputs)
+          (-> (->> (workflows/get-files [outputs-type outputs])
                    (datasets/ingest-files tdr-profile dataset workflow-id))
               (replace-urls-with-file-ids outputs-type outputs)
               (sink/rename-gather from-outputs)

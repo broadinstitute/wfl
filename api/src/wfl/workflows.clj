@@ -1,17 +1,17 @@
-(ns wfl.tools.workflows
+(ns wfl.workflows
   (:require [clojure.set :as set]))
 
 (defn make-object-type
-  "Collect `parameters` description into an \"Object\" type."
-  [parameters]
-  (->> parameters
-       (map #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
+  "Transform WDL inputs or outputs `description` into a `type` for use with
+   `transform` and `foldl`."
+  [description]
+  (->> description
+       (mapv #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
        (assoc {:typeName "Object"} :objectFieldTypes)))
 
-(defn ^:private make-type-environment [{:keys [objectFieldTypes] :as _object}]
-  (let [name->type (into {}
-                         (for [{:keys [fieldName fieldType]} objectFieldTypes]
-                           [(keyword fieldName) fieldType]))]
+(defn ^:private make-type-environment [{:keys [objectFieldTypes] :as _type}]
+  (let [collect    (juxt (comp keyword :fieldName) :fieldType)
+        name->type (into {} (map collect objectFieldTypes))]
     (fn [varname]
       (or (name->type varname)
           (throw (ex-info "No type definition found for name."
@@ -19,9 +19,9 @@
                            :environment name->type}))))))
 
 (defn traverse
-  "Use the workflow `type` to traverse the `object`, calling `f` on the values
-   with primitive types."
-  [f type object]
+  "Use the WDL `type` to traverse the `object`, calling `f` on the
+   primitive objects in the object."
+  [f [type object]]
   ((fn go [type value]
      (case (:typeName type)
        "Array"
@@ -38,13 +38,13 @@
        "Pair"
        (let [ts (mapv (:pairType type) [:leftType :rightType])]
          (map go ts value))
-       (f (:typeName type) value)))
+       (f [(:typeName type) value])))
    type object))
 
 (defn foldl
-  "Use ternary function `f` to reduce `object` tree of `type` starting
-  from `init` while preserving the types of intermediate reductions."
-  [f init type object]
+  "Reduce the WDL [type value] `_object` starting from `init` while preserving
+   the types of intermediate reductions."
+  [f init [type value :as _object]]
   ((fn go [state type value]
      (case (:typeName type)
        "Array"
@@ -63,11 +63,13 @@
          (-> state
              (go leftType  (first value))
              (go rightType (second value))))
-       (f state (:typeName type) value)))
-   init type object))
+       (f state [(:typeName type) value])))
+   init type value))
 
 (defn get-files
   "Return the unique set of objects in `value` of WDL type `File`."
-  [type value]
-  (letfn [(f [files type object] (if (= "File" type) (conj files object) files))]
-    (foldl f #{} type value)))
+  [[_type _value :as object]]
+  (letfn [(f [files [type value]] (case type
+                                    "File" (conj files value)
+                                    files))]
+    (foldl f #{} object)))
