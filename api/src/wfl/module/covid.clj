@@ -177,19 +177,18 @@
   ; write back to the table, putting the new workflow id into the retry field of the failed one
   (let [wfl_ids (util/to-quoted-comma-separated-list(map :uuid workflows))
         wkl (get-in workload [:executor :details])
+        executor (get-in workload [:executor])
         query (format "SELECT * FROM %s WHERE workflow IN (%s)" wkl wfl_ids)
         results (jdbc/query (postgres/wfl-db-config) [query])
-        distinct_results (map :reference results)
+        distinct_references (set(map :reference results))
+
+        ;submission (create-submission! executor reference)
         ]
-    (pprint distinct_results)
+    ;(allocate-submission executor reference submission)
     )
   )
 
 (comment
-  ;(jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-  ;  (let [w (workloads/load-workload-for-uuid tx "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b")]
-  ;    (pprint w)
-  ;    (pprint (util/to-edn w))))
 
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                             (let [uuid "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b"
