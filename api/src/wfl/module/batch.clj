@@ -6,12 +6,11 @@
             [wfl.api.workloads    :as workloads]
             [wfl.auth             :as auth]
             [wfl.jdbc             :as jdbc]
+            [wfl.module.all       :as all]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.postgres :as postgres]
             [wfl.util             :as util]
-            [wfl.wfl              :as wfl]
-            [wfl.module.all       :as all]
-            [wfl.source           :as source])
+            [wfl.wfl              :as wfl])
   (:import [java.time OffsetDateTime]
            [java.util UUID]
            [wfl.util UserException]))
@@ -206,8 +205,7 @@
 (defn query-workflows-with-status
   "Return the workflows in the items `table` that match `status`."
   [tx table status]
-  (when-not (and table (postgres/table-exists? tx table))
-    (throw (ex-info "Table not found" {:table table})))
+  (postgres/throw-unless-table-exists tx table)
   (let [query-str "SELECT * FROM %s WHERE status = ? ORDER BY id ASC"]
     (jdbc/query tx [(format query-str table) status])))
 

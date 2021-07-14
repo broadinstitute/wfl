@@ -274,3 +274,29 @@
    (->> (map name columns)
         util/to-comma-separated-list
         (query-table-between-impl dataset table between interval))))
+
+
+;; utilities
+
+
+(defn ^:private id-and-name [{:keys [id name] :as _dataset}]
+  (util/make-map id name))
+
+(defn throw-unless-column-exists
+  "Throw if `table` does not have `column` in `dataset`."
+  [table column dataset]
+  (when (->> table :columns (filter (comp #{column} :name)) empty?)
+    (throw (UserException. "Column not found"
+                           {:column  column
+                            :table   table
+                            :dataset (id-and-name dataset)}))))
+
+(defn table-or-throw
+  "Throw or return the table with `table-name` in `dataset`."
+  [table-name {:keys [schema] :as dataset}]
+  (let [[table & _] (filter (comp #{table-name} :name) (:tables schema))]
+    (when-not table
+      (throw (UserException. "Table not found"
+                             {:table   table-name
+                              :dataset (id-and-name dataset)})))
+    table))
