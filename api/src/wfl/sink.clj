@@ -243,7 +243,7 @@
                                 :fromOutputs fromOutputs}))))
     (assoc request :dataset dataset')))
 
-(defn ^:private peek-datarepo-sink-job-queue [{:keys [details] :as _sink}]
+(defn ^:private peek-job-queue [{:keys [details] :as _sink}]
   (let [query "SELECT * FROM %s
                WHERE status = 'succeeded' AND consumed IS NOT NULL
                ORDER BY id ASC
@@ -254,8 +254,8 @@
            (map #(update % :type keyword))
            first))))
 
-(defn ^:private pop-datarepo-sink-job-queue! [{:keys [details] :as sink}]
-  (if-let [{:keys [id]} (peek-datarepo-sink-job-queue sink)]
+(defn ^:private pop-job-queue! [{:keys [details] :as sink}]
+  (if-let [{:keys [id]} (peek-job-queue sink)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "TerraDataRepoSink job queue is empty" {:sink sink}))))
@@ -300,15 +300,15 @@
           (write-job-status [job-id status]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (jdbc/update! tx details
-                           {:status status :updated (utc-now)}
-                           ["id = ?" job-id])))]
+                            {:status status :updated (utc-now)}
+                            ["id = ?" job-id])))]
     (doseq [[id job-id] (read-active-jobs)]
       (let [{:keys [job_status] :as job} (datarepo/job-metadata job-id)]
         (write-job-status id job_status)
         (when (= "failed" job_status)
           (throw (UserException. "A Terra DataRepo ingest job failed"
-                                {:dataset (get-in sink [:dataset :id])
-                                 :job     job})))))))
+                                 {:dataset (get-in sink [:dataset :id])
+                                  :job     job})))))))
 
 (defn ^:private create-metadata-ingest-job [sink [description workflow job-id]])
 
@@ -318,24 +318,24 @@
       (push-job :FileLoad sink item job))
     (stage/pop-queue! executor)))
 
-(defn ^:private start-ingesting-output-metadata [sink]
-  (when-let [{:keys [type payload]} (peek-datarepo-sink-job-queue sink)]
-    (case type
-      :FileLoad       (->> (util/parse-json payload)
-                           (create-metadata-ingest-job sink)
-                           (push-job :MetadataIngest sink nil))
-      :MetadataIngest (log/info "Sunk outputs!"))
-    (pop-datarepo-sink-job-queue! sink)))
+(defn ^:private start-ingesting-output-metadata [sink payload]
+  (->> (util/parse-json payload)
+       (create-metadata-ingest-job sink)
+       (push-job :MetadataIngest sink nil)))
 
 (defn ^:private update-datarepo-sink
   [executor sink]
   (start-ingesting-output-files executor sink)
   (update-datarepo-job-statuses sink)
-  (start-ingesting-output-metadata sink))
+  (when-let [{:keys [type payload]} (peek-job-queue sink)]
+    (case type
+      :FileLoad       (start-ingesting-output-metadata sink payload)
+      :MetadataIngest (log/info "Sunk outputs!"))
+    (pop-job-queue! sink)))
 
 (defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
-               WHERE status <> 'failed' AND consumed IS NOT NULL"]
+               WHERE status <> 'failed' AND consumed IS NULL"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
       (-> (jdbc/query tx (format query details)) first :count zero?))))

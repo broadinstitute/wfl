@@ -127,10 +127,10 @@
 
 (deftest test-data-repo-job-queue-operations
   (let [sink (create-and-load-datarepo-sink)]
-    (is (nil? (#'sink/peek-datarepo-sink-job-queue sink)))
+    (is (nil? (#'sink/peek-job-queue sink)))
     (is (thrown-with-msg?
          ExceptionInfo #"TerraDataRepoSink job queue is empty"
-         (#'sink/pop-datarepo-sink-job-queue! sink)))))
+         (#'sink/pop-job-queue! sink)))))
 
 (deftest test-datarepo-sink-to-edn
   (let [response (util/to-edn (create-and-load-datarepo-sink))]
@@ -151,4 +151,4 @@
         sink        (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (is (stage/done? sink))))
+    (is (not (stage/done? sink)))))
