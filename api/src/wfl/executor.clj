@@ -149,14 +149,14 @@
                     {:method_configuration_version inc'd}
                     ["id = ?" id]))))
 
-(defn ^:private create-submission!
+(defn ^:public create-submission!
   "Update `methodConfiguration` to use `reference`.
   Create and return submission in `workspace` for `methodConfiguration` via Firecloud."
   [{:keys [workspace methodConfiguration] :as executor} reference]
   (update-method-configuration! executor reference)
   (firecloud/submit-method workspace methodConfiguration))
 
-(defn ^:private allocate-submission
+(defn ^:public allocate-submission
   "Write or allocate workflow records for `submission` in `details` table."
   [{:keys [details]                :as _executor}
    {:keys [referenceId]            :as _reference}

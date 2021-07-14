@@ -1,20 +1,20 @@
 (ns wfl.module.covid
-  "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [wfl.api.workloads :as workloads :refer [defoverload]]
-            [clojure.spec.alpha :as s]
-            [wfl.executor :as executor]
-            [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
-            [wfl.sink :as sink]
-            [wfl.source :as source]
-            [wfl.stage :as stage]
-            [wfl.util :as util :refer [utc-now]]
-            [wfl.wfl :as wfl]
-            [wfl.module.all :as all]
-            [wfl.service.postgres :as postgres])
-  (:import [java.util UUID]
-           [wfl.util UserException])
-  (:use [clojure.pprint :as pprint]))
+    "Manage the Sarscov2IlluminaFull pipeline."
+    (:require [wfl.api.workloads :as workloads :refer [defoverload]]
+      [clojure.spec.alpha :as s]
+      [wfl.executor :as executor]
+      [wfl.jdbc :as jdbc]
+      [wfl.module.batch :as batch]
+      [wfl.sink :as sink]
+      [wfl.source :as source]
+      [wfl.stage :as stage]
+      [wfl.util :as util :refer [utc-now]]
+      [wfl.wfl :as wfl]
+      [wfl.module.all :as all]
+      [wfl.service.postgres :as postgres])
+    (:import [java.util UUID]
+      [wfl.util UserException])
+    (:use [clojure.pprint :as pprint]))
 
 (def pipeline nil)
 
@@ -47,7 +47,7 @@
                                             ::all/updated]))
 ;; Workload
 (defn ^:private patch-workload [tx {:keys [id]} colls]
-  (jdbc/update! tx :workload colls ["id = ?" id]))
+      (jdbc/update! tx :workload colls ["id = ?" id]))
 
 (def ^:private workload-metadata-keys
   [:commit
@@ -66,24 +66,24 @@
    :watchers])
 
 (defn ^:private add-workload-metadata
-  "Use `tx` to record the workload metadata in `request` in the workload table
-   and return the ID the of the new row."
-  [tx {:keys [project] :as request}]
-  (letfn [(combine-labels [labels]
-            (->> (str "project:" project)
-                 (conj labels)
-                 set
-                 sort
-                 vec))]
-    (-> (update request :labels combine-labels)
-        (select-keys [:creator :watchers :labels :project])
-        (merge (select-keys (wfl/get-the-version) [:commit :version]))
-        (assoc :executor ""
-               :output ""
-               :release ""
-               :wdl ""
-               :uuid (UUID/randomUUID))
-        (->> (jdbc/insert! tx :workload) first :id))))
+      "Use `tx` to record the workload metadata in `request` in the workload table
+       and return the ID the of the new row."
+      [tx {:keys [project] :as request}]
+      (letfn [(combine-labels [labels]
+                              (->> (str "project:" project)
+                                   (conj labels)
+                                   set
+                                   sort
+                                   vec))]
+             (-> (update request :labels combine-labels)
+                 (select-keys [:creator :watchers :labels :project])
+                 (merge (select-keys (wfl/get-the-version) [:commit :version]))
+                 (assoc :executor ""
+                        :output ""
+                        :release ""
+                        :wdl ""
+                        :uuid (UUID/randomUUID))
+                 (->> (jdbc/insert! tx :workload) first :id))))
 
 (def ^:private update-workload-query
   "UPDATE workload
@@ -96,98 +96,100 @@
    WHERE  id = ?")
 
 (defn ^:private create-covid-workload
-  [tx {:keys [source executor sink] :as request}]
-  (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
-        id (add-workload-metadata tx request)]
-    (jdbc/execute!
-      tx
-      (concat [update-workload-query]
-              (source/create-source! tx id source)
-              (executor/create-executor! tx id executor)
-              (sink/create-sink! tx id sink)
-              [id]))
-    (workloads/load-workload-for-id tx id)))
+      [tx {:keys [source executor sink] :as request}]
+      (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
+            id (add-workload-metadata tx request)]
+           (jdbc/execute!
+             tx
+             (concat [update-workload-query]
+                     (source/create-source! tx id source)
+                     (executor/create-executor! tx id executor)
+                     (sink/create-sink! tx id sink)
+                     [id]))
+           (workloads/load-workload-for-id tx id)))
 
 (defn ^:private load-covid-workload-impl [tx {:keys [id] :as workload}]
-  (let [src-exc-sink {:source   (source/load-source! tx workload)
-                      :executor (executor/load-executor! tx workload)
-                      :sink     (sink/load-sink! tx workload)}]
-    (as-> workload $
-          (select-keys $ workload-metadata-keys)
-          (merge $ src-exc-sink)
-          (filter second $)
-          (into {:type :workload :id id} $))))
+      (let [src-exc-sink {:source   (source/load-source! tx workload)
+                          :executor (executor/load-executor! tx workload)
+                          :sink     (sink/load-sink! tx workload)}]
+           (as-> workload $
+                 (select-keys $ workload-metadata-keys)
+                 (merge $ src-exc-sink)
+                 (filter second $)
+                 (into {:type :workload :id id} $))))
 
 (defn ^:private start-covid-workload
-  "Start creating and managing workflows from the source."
-  [tx {:keys [started] :as workload}]
-  (letfn [(start [{:keys [id source] :as workload} now]
-            (source/start-source! tx source)
-            (patch-workload tx workload {:started now :updated now})
-            (workloads/load-workload-for-id tx id))]
-    (if-not started (start workload (utc-now)) workload)))
+      "Start creating and managing workflows from the source."
+      [tx {:keys [started] :as workload}]
+      (letfn [(start [{:keys [id source] :as workload} now]
+                     (source/start-source! tx source)
+                     (patch-workload tx workload {:started now :updated now})
+                     (workloads/load-workload-for-id tx id))]
+             (if-not started (start workload (utc-now)) workload)))
 
 (defn ^:private update-covid-workload
-  "Use transaction `tx` to update `workload` statuses."
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id source executor sink] :as workload} now]
-            (-> (source/update-source! source)
-                (executor/update-executor! executor)
-                (sink/update-sink! sink))
-            (patch-workload tx workload {:updated now})
-            (when (every? stage/done? [source executor sink])
-              (patch-workload tx workload {:finished now}))
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload (utc-now)) workload)))
+      "Use transaction `tx` to update `workload` statuses."
+      [tx {:keys [started finished] :as workload}]
+      (letfn [(update! [{:keys [id source executor sink] :as workload} now]
+                       (-> (source/update-source! source)
+                           (executor/update-executor! executor)
+                           (sink/update-sink! sink))
+                       (patch-workload tx workload {:updated now})
+                       (when (every? stage/done? [source executor sink])
+                             (patch-workload tx workload {:finished now}))
+                       (workloads/load-workload-for-id tx id))]
+             (if (and started (not finished)) (update! workload (utc-now)) workload)))
 
 (defn ^:private stop-covid-workload
-  "Use transaction `tx` to stop the `workload` looking for new data."
-  [tx {:keys [started stopped finished] :as workload}]
-  (letfn [(stop! [{:keys [id source] :as workload} now]
-            (source/stop-source! tx source)
-            (patch-workload tx workload {:stopped now :updated now})
-            (when-not (:started workload)
-              (patch-workload tx workload {:finished now}))
-            (workloads/load-workload-for-id tx id))]
-    (when-not started
-      (throw (UserException. "Cannot stop workload before it's been started."
-                             {:workload workload})))
-    (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
+      "Use transaction `tx` to stop the `workload` looking for new data."
+      [tx {:keys [started stopped finished] :as workload}]
+      (letfn [(stop! [{:keys [id source] :as workload} now]
+                     (source/stop-source! tx source)
+                     (patch-workload tx workload {:stopped now :updated now})
+                     (when-not (:started workload)
+                               (patch-workload tx workload {:finished now}))
+                     (workloads/load-workload-for-id tx id))]
+             (when-not started
+                       (throw (UserException. "Cannot stop workload before it's been started."
+                                              {:workload workload})))
+             (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
 (defn ^:private workload-to-edn [workload]
-  (-> workload
-      (util/select-non-nil-keys workload-metadata-keys)
-      (dissoc :pipeline)
-      (update :source util/to-edn)
-      (update :executor util/to-edn)
-      (update :sink util/to-edn)))
+      (-> workload
+          (util/select-non-nil-keys workload-metadata-keys)
+          (dissoc :pipeline)
+          (update :source util/to-edn)
+          (update :executor util/to-edn)
+          (update :sink util/to-edn)))
 
 (defn retry-workflows
-  [workload workflows]
-  ; Get the workflows from the terra executor details table
-  ;(->> workload :executor :details
-  ;     (format "SELECT * FROM %s")
-  ;     (jdbc/query (postgres/wfl-db-config))
-  ;     (wfl.debug/trace)
-  ;     )
+      [workload workflows]
+      ; Get the workflows from the terra executor details table
+      ;(->> workload :executor :details
+      ;     (format "SELECT * FROM %s")
+      ;     (jdbc/query (postgres/wfl-db-config))
+      ;     (wfl.debug/trace)
+      ;     )
 
-  ; Get the rows from the terra details table for the workflows
-  ; iterate through the results and get the distinct reference values
-  ; resubmit the reference values
-  ; write back to the table, putting the new workflow id into the retry field of the failed one
-  (let [workflow_ids (util/to-quoted-comma-separated-list(map :uuid workflows))
-        executor (get-in workload [:executor])
-        executor_details (get-in workload [:executor :details])
-        query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
-        results (jdbc/query (postgres/wfl-db-config) [query])
-        distinct_references (set(map :reference results))]
-    (for [ref distinct_references]
-      (let [submission (executor/create-submission! executor ref)]
-        (executor/allocate-submission executor ref submission)
-        )
+      ; Get the rows from the terra details table for the workflows
+      ; iterate through the results and get the distinct reference values
+      ; resubmit the reference values
+      ; write back to the table, putting the new workflow id into the retry field of the failed one
+      (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
+            executor (get-in workload [:executor])
+            executor_details (get-in workload [:executor :details])
+            query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
+            results (jdbc/query (postgres/wfl-db-config) [query])
+            distinct_references (set (map :reference results))]
+           (for [ref distinct_references]
+                (let [submission (executor/create-submission! executor ref)]
+                     (pprint submission)
+                      ; test (executor/allocate-submission executor ref submission)]
+
+                )
+           )
       )
-    )
-  )
+)
 
 (comment
 
@@ -196,7 +198,7 @@
                                   workload (workloads/load-workload-for-uuid tx uuid)
                                   status "Failed"
                                   workflows (workloads/workflows-by-status tx workload status)]
-                              (retry-workflows workload workflows)))
+                                 (retry-workflows workload workflows)))
 
   )
 
@@ -207,9 +209,9 @@
 (defoverload workloads/retry pipeline batch/retry-unsupported)
 (defoverload workloads/load-workload-impl pipeline load-covid-workload-impl)
 (defmethod workloads/workflows pipeline
-  [tx {:keys [executor] :as _workload}]
-  (executor/executor-workflows tx executor))
+           [tx {:keys [executor] :as _workload}]
+           (executor/executor-workflows tx executor))
 (defmethod workloads/workflows-by-status pipeline
-  [tx {:keys [executor] :as _workload} status]
-  (executor/executor-workflows-by-status tx executor status))
+           [tx {:keys [executor] :as _workload} status]
+           (executor/executor-workflows-by-status tx executor status))
 (defoverload workloads/to-edn pipeline workload-to-edn)
