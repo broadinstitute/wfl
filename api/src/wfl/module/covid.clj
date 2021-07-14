@@ -175,16 +175,17 @@
   ; iterate through the results and get the distinct reference values
   ; resubmit the reference values
   ; write back to the table, putting the new workflow id into the retry field of the failed one
-  (let [wfl_ids (util/to-quoted-comma-separated-list(map :uuid workflows))
-        wkl (get-in workload [:executor :details])
+  (let [workflow_ids (util/to-quoted-comma-separated-list(map :uuid workflows))
         executor (get-in workload [:executor])
-        query (format "SELECT * FROM %s WHERE workflow IN (%s)" wkl wfl_ids)
+        executor_details (get-in workload [:executor :details])
+        query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
         results (jdbc/query (postgres/wfl-db-config) [query])
-        distinct_references (set(map :reference results))
-
-        ;submission (create-submission! executor reference)
-        ]
-    ;(allocate-submission executor reference submission)
+        distinct_references (set(map :reference results))]
+    (for [ref distinct_references]
+      (let [submission (executor/create-submission! executor ref)]
+        (executor/allocate-submission executor ref submission)
+        )
+      )
     )
   )
 
