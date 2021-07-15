@@ -26,7 +26,7 @@ Require it like any other dependency:
 (log/info "Hello!")
 ```
 
-There are currently 4 macros for creating simple json logs for `INFO, WARN, DEBUG, ERROR`. There is also
+There are currently 5 macros for creating simple json logs for `INFO, WARN, DEBUG, ERROR, NOTICE`. There is also
 a public method `log` that can be called with additional fields you may want to provide in the log, such as
 labels.
 
