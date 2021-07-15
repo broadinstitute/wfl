@@ -1,6 +1,7 @@
 (ns wfl.integration.source-test
   (:require [clojure.test          :refer [deftest is testing use-fixtures]]
             [clojure.java.jdbc     :as jdbc]
+            [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
@@ -99,12 +100,11 @@
   :fnord)
 
 (deftest test-backfill-tdr-source
-  (letfn [(count-rows-in-source [source]
+  (letfn [(rows-from [source]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> source :details
                    (postgres/get-table tx)
-                   (map (comp count :datarepo_row_ids))
-                   (apply +))))
+                   (mapcat :datarepo_row_ids))))
           (make-bigquery-timestamp []
             (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
           (total-rows [query args]
@@ -117,21 +117,31 @@
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (source/start-source! tx source)
                  (reload-source tx source)))))]
-    (let [the-args     [testing-dataset testing-table-name testing-column-name
+    (let [args         [testing-dataset testing-table-name testing-column-name
                         [(make-bigquery-timestamp) (make-bigquery-timestamp)]
                         [:datarepo_row_id]]
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
-          row-count    (total-rows datarepo-query-table-between-all  the-args)
-          miss-count   (total-rows datarepo-query-table-between-miss the-args)
           source       (create-tdr-source)]
       (testing "update-source! loads snapshots"
         (update-source source datarepo-query-table-between-miss)
-        (is (== record-count (stage/queue-length source)))
-        (is (== miss-count (count-rows-in-source source))))
-      (testing "update-source! adds a snaphot of rows missed in prior interval"
-        (update-source source datarepo-query-table-between-all)
-        (is (== (inc record-count) (stage/queue-length source)))
-        (is (== row-count (count-rows-in-source source)))))))
+        (let [miss-rows  (rows-from source)
+              miss-count (count miss-rows)
+              miss-set   (set miss-rows)]
+          (is (== record-count   (stage/queue-length source)))
+          (is (== miss-count (total-rows datarepo-query-table-between-miss args)))
+          (is (== miss-count (count miss-set)))
+          (testing "update-source! adds a snaphot of rows missed in prior interval"
+            (update-source source datarepo-query-table-between-all)
+            (let [all-rows  (rows-from source)
+                  all-count (count all-rows)
+                  all-set   (set all-rows)]
+              (is (== (inc record-count) (stage/queue-length source)))
+              (is (== all-count (total-rows datarepo-query-table-between-all args)))
+              (is (== all-count (count all-set)))
+              (is (== (-> (partial > mock-new-rows-size)
+                          (take-while fibonacci)
+                          set count)
+                      (count (set/difference all-set miss-set)))))))))))
 
 (deftest test-create-tdr-source-from-valid-request
   (is (stage/validate-or-throw
