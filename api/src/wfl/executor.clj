@@ -124,7 +124,7 @@
     (throw (ex-info "Unknown conversion from snapshot to workspace entity."
                     {:executor executor
                      :snapshot snapshot})))
-  (rawls/create-snapshot-reference workspace id name))
+  (rawls/create-or-get-snapshot-reference workspace id name))
 
 (defn ^:private from-source
   "Coerce `object` to form understood by `executor``."
