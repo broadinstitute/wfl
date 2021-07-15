@@ -1,12 +1,13 @@
 (ns wfl.integration.source-test
-  (:require [clojure.test         :refer [deftest is testing use-fixtures]]
-            [clojure.java.jdbc    :as jdbc]
-            [clojure.spec.alpha   :as s]
-            [wfl.service.postgres :as postgres]
-            [wfl.source           :as source]
-            [wfl.stage            :as stage]
-            [wfl.tools.fixtures   :as fixtures]
-            [wfl.util             :as util])
+  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
+            [clojure.java.jdbc     :as jdbc]
+            [clojure.spec.alpha    :as s]
+            [wfl.service.datarepo  :as datarepo]
+            [wfl.service.postgres  :as postgres]
+            [wfl.source            :as source]
+            [wfl.stage             :as stage]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.util              :as util])
   (:import [java.time Instant LocalDateTime]
            [java.util UUID]
            [wfl.util UserException]))
@@ -19,21 +20,15 @@
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 1234)
 
-(defn ^:private mock-find-new-rows [_ interval]
-  (letfn [(parse [ts]
-            (LocalDateTime/parse ts @#'source/bigquery-datetime-format))]
-    (is (every? parse interval)))
+(defn ^:private parse-timestamp
+  "Parse `timestamp` string in BigQuery format."
+  [timestamp]
+  (LocalDateTime/parse timestamp @#'source/bigquery-datetime-format))
+
+(defn ^:private mock-find-new-rows
+  [_source interval]
+  (is (every? parse-timestamp interval))
   (range mock-new-rows-size))
-
-(def fibonacci
-  "The Fibonacci sequence."
-  (lazy-cat [0 1] (map + fibonacci (rest fibonacci))))
-
-(defn ^:private mock-miss-some-rows
-  "Skip some rows in this `interval` to be discovered later."
-  [source interval]
-  (let [skip (take-while (partial > mock-new-rows-size) fibonacci)]
-    (remove (set skip) (mock-find-new-rows source interval))))
 
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
@@ -51,11 +46,13 @@
 
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "Terra DataRepo",
-          :dataset        "this"
-          :table          "is"
-          :column         "fun"
-          :skipValidation true}
+    (->> {:column         "a-column"
+          :dataset        {:name "a-dataset"}
+          :id             "an-id"
+          :name           "Terra DataRepo"
+          :skipValidation true
+          :table          "a-table"
+          :type           "a-type"}
          (source/create-source! tx (rand-int 1000000))
          (zipmap [:source_type :source_items])
          (source/load-source! tx))))
@@ -63,44 +60,78 @@
 (defn ^:private reload-source [tx {:keys [type id] :as _source}]
   (source/load-source! tx {:source_type type :source_items (str id)}))
 
-(defn count-rows-in-source
-  "Count the row IDs in `source`."
-  [source]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> source :details
-         (postgres/get-table tx)
-         (map (comp count :datarepo_row_ids))
-         (apply +))))
+;; A stable vector of TDR row IDs.
+;;
+(defonce all-rows
+  (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
+
+(def fibonacci
+  "The Fibonacci sequence."
+  (lazy-cat [0 1] (map + fibonacci (rest fibonacci))))
+
+(defn ^:private datarepo-query-table-between-all
+  "Mock datarepo/query-table-between to find all rows."
+  [_dataset _table _between interval columns]
+  (is (every? parse-timestamp interval))
+  (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
+          (fields [columns] (mapv field columns))]
+    (-> {:jobComplete true
+         :kind "bigquery#queryResponse"
+         :rows [@all-rows]
+         :totalRows (str (count @all-rows))}
+        (assoc-in [:schema :fields] (fields columns)))))
+
+(defn ^:private datarepo-query-table-between-miss
+  "Mock datarepo/query-table-between to miss some rows."
+  [dataset table between interval columns]
+  (let [miss (take-while (partial > mock-new-rows-size) fibonacci)
+        keys (remove (set miss) (range mock-new-rows-size))]
+    (-> (datarepo-query-table-between-all dataset table between interval columns)
+        (update-in [:rows 0] replace keys)
+        (assoc :totalRows (str (count keys)))))  )
 
 (comment
+  (clojure.string/join
+   \space ["clojure" "-M:test" "--no-capture-output"
+           "--reporter" "documentation"
+           "--focus" "wfl.integration.source-test/test-backfill-tdr-source"])
   (clojure.test/test-vars  [#'test-backfill-tdr-source])
-  )
+  :fnord)
 
 (deftest test-backfill-tdr-source
-  (letfn [(make-bigquery-timestamp []
+  (letfn [(count-rows-in-source [source]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (->> source :details
+                   (postgres/get-table tx)
+                   (map (comp count :datarepo_row_ids))
+                   (apply +))))
+          (make-bigquery-timestamp []
             (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
-          (update-source [source mock-source-find-new-rows]
-            (with-redefs [source/create-snapshots mock-create-snapshots
-                          source/check-tdr-job    mock-check-tdr-job
-                          source/find-new-rows    mock-source-find-new-rows]
+          (total-rows [query args]
+            (-> query (apply args) :totalRows Integer.))
+          (update-source [source mock-query-table-between]
+            (with-redefs [datarepo/query-table-between mock-query-table-between
+                          source/check-tdr-job         mock-check-tdr-job        
+                          source/create-snapshots      mock-create-snapshots]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (source/start-source! tx source)
                  (reload-source tx source)))))]
-    (let [an-interval  [(make-bigquery-timestamp) (make-bigquery-timestamp)]
+    (let [the-args     [testing-dataset testing-table-name testing-column-name
+                        [(make-bigquery-timestamp) (make-bigquery-timestamp)]
+                        [:datarepo_row_id]]
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
-          row-count    (count (mock-find-new-rows {} an-interval))
-          miss-count   (count (mock-miss-some-rows {} an-interval))
+          row-count    (total-rows datarepo-query-table-between-all  the-args)
+          miss-count   (total-rows datarepo-query-table-between-miss the-args)
           source       (create-tdr-source)]
       (testing "update-source! loads snapshots"
-        (update-source source mock-miss-some-rows)
+        (update-source source datarepo-query-table-between-miss)
         (is (== record-count (stage/queue-length source)))
         (is (== miss-count (count-rows-in-source source))))
       (testing "update-source! adds a snaphot of rows missed in prior interval"
-        (update-source source mock-find-new-rows)
+        (update-source source datarepo-query-table-between-all)
         (is (== (inc record-count) (stage/queue-length source)))
         (is (== row-count (count-rows-in-source source)))))))
-
 
 (deftest test-create-tdr-source-from-valid-request
   (is (stage/validate-or-throw
