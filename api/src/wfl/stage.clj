@@ -1,6 +1,6 @@
 (ns wfl.stage
-  "An interface for operations on a queue-based pipeline processing stage,
-  e.g. source, executor, or sink."
+  "Interface and methods for operations on a queue-based
+  pipeline processing stage, e.g. source, executor, or sink."
   (:require [wfl.util :as util])
   (:import [wfl.util UserException]))
 
@@ -28,3 +28,8 @@
 (defmulti done?
   "Test if the processing `stage` is complete and will not process any more data."
   :type)
+
+(defn log-prefix
+  "Prefix string for `stage` logs indicating the `type` (table) and row `id`."
+  [{:keys [type id] :as _stage}]
+  (format "[%s id=%s]" type id))

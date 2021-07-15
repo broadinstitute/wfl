@@ -296,3 +296,15 @@
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))
+
+(defn ^:private verify-workflows-by-status
+  [workload status]
+  (run! #(is (= (:status %) status)) (endpoints/get-workflows workload status)))
+
+(deftest ^:parallel test-workflows-by-status
+  (testing "Get workflows by status"
+    (let [workload (first (endpoints/get-workloads))
+          workflows (endpoints/get-workflows workload)]
+      (->> (map :status workflows)
+           (distinct)
+           (run! #(verify-workflows-by-status workload %))))))

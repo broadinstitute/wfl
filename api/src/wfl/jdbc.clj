@@ -134,9 +134,9 @@
   [binding & body]
   `(let [id#    (rand-int 10000)
          init# ~(second binding)]
-     (log/info "JDBC transaction" id# "started to" (format-db init#))
+     (log/trace "JDBC transaction" id# "started to" (format-db init#))
      (let [exe# (jdbc/with-db-transaction [~(first binding) init#] ~@body)]
-       (log/info "JDBC SQL transaction" id# "ended")
+       (log/trace "JDBC SQL transaction" id# "ended")
        exe#)))
 
 (defmacro prepare-statement

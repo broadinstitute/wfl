@@ -1,15 +1,17 @@
 (ns wfl.executor
-  (:require [clojure.edn              :as edn]
-            [clojure.set              :as set]
-            [wfl.api.workloads        :refer [defoverload]]
-            [wfl.jdbc                 :as jdbc]
-            [wfl.service.firecloud    :as firecloud]
-            [wfl.service.postgres     :as postgres]
-            [wfl.service.rawls        :as rawls]
-            [wfl.stage                :as stage]
-            [wfl.util                 :as util :refer [utc-now]])
-  (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+  (:require [clojure.edn           :as edn]
+            [clojure.set           :as set]
+            [clojure.string        :as str]
+            [ring.util.codec       :refer [url-encode]]
+            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.service.dockstore :as dockstore]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.postgres  :as postgres]
+            [wfl.service.rawls     :as rawls]
+            [wfl.stage             :as stage]
+            [wfl.util              :as util :refer [utc-now]])
+  (:import [wfl.util UserException]))
 
 ;; executor operations
 (defmulti update-executor!
@@ -82,17 +84,6 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(defn ^:private method-config-or-throw [workspace methodconfig]
-  (try
-    (firecloud/get-method-configuration workspace methodconfig)
-    (catch ExceptionInfo cause
-      (throw (UserException.
-              "Cannot access method configuration in workspace"
-              {:workspace           workspace
-               :methodConfiguration methodconfig
-               :status              (-> cause ex-data :status)}
-              cause)))))
-
 (defn ^:private throw-on-method-config-version-mismatch
   [{:keys [methodConfigVersion] :as methodconfig} expected]
   (when-not (== expected methodConfigVersion)
@@ -101,6 +92,13 @@
             {:methodConfiguration methodconfig
              :expected            expected
              :actual              methodConfigVersion}))))
+
+(defn ^:private throw-unless-dockstore-method
+  "Throw unless the `sourceRepo` of `methodRepoMethod` is \"dockstore\"."
+  [{:keys [sourceRepo] :as methodRepoMethod}]
+  (when-not (= "dockstore" sourceRepo)
+    (throw (UserException. "Only Dockstore methods are supported."
+                           {:status 400 :methodRepoMethod methodRepoMethod}))))
 
 (defn verify-terra-executor
   "Verify the method-configuration exists."
@@ -114,19 +112,28 @@
     (when-not (= "importSnapshot" fromSource)
       (throw
        (UserException. "Unsupported coercion" (util/make-map fromSource))))
-    (throw-on-method-config-version-mismatch
-     (method-config-or-throw workspace methodConfiguration)
-     methodConfigurationVersion))
+    (let [m (firecloud/method-configuration workspace methodConfiguration)]
+      (throw-on-method-config-version-mismatch m methodConfigurationVersion)
+      (throw-unless-dockstore-method (:methodRepoMethod m))))
   executor)
 
+(defn ^:private entity-from-snapshot
+  "Coerce the `snapshot` into a workspace entity via `fromSource`."
+  [{:keys [workspace fromSource] :as executor} {:keys [id name] :as snapshot}]
+  (when-not (= "importSnapshot" fromSource)
+    (throw (ex-info "Unknown conversion from snapshot to workspace entity."
+                    {:executor executor
+                     :snapshot snapshot})))
+  (rawls/create-snapshot-reference workspace id name))
+
 (defn ^:private from-source
-  "Coerce `source-item` to form understood by `executor` via `fromSource`."
-  [{:keys [workspace fromSource] :as executor}
-   {:keys [name id]              :as _source-item}]
-  (cond (= "importSnapshot" fromSource)
-        (rawls/create-or-get-snapshot-reference workspace id name)
-        :else
-        (throw (ex-info "Unknown fromSource" {:executor executor}))))
+  "Coerce `object` to form understood by `executor``."
+  [executor [type value :as object]]
+  (case type
+    :datarepo/snapshot (entity-from-snapshot executor value)
+    (throw (ex-info "No method to coerce object into workspace entity"
+                    {:executor executor
+                     :object   object}))))
 
 (defn ^:private update-method-configuration!
   "Update `methodConfiguration` in `workspace` with snapshot reference `name`
@@ -137,7 +144,7 @@
            methodConfiguration
            methodConfigurationVersion] :as _executor}
    {:keys [name]                       :as _reference}]
-  (let [current (method-config-or-throw workspace methodConfiguration)
+  (let [current (firecloud/method-configuration workspace methodConfiguration)
         _       (throw-on-method-config-version-mismatch
                  current methodConfigurationVersion)
         inc'd   (inc methodConfigurationVersion)]
@@ -250,10 +257,10 @@
   Update statuses for active or failed workflows in `details` table.
   Return `executor`."
   [source executor]
-  (when-let [snapshot (stage/peek-queue source)]
-    (let [reference  (from-source executor snapshot)
-          submission (create-submission! executor reference)]
-      (allocate-submission executor reference submission)
+  (when-let [object (stage/peek-queue source)]
+    (let [entity     (from-source executor object)
+          submission (create-submission! executor entity)]
+      (allocate-submission executor entity submission)
       (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
@@ -285,15 +292,37 @@
            (jdbc/query tx)
            first))))
 
+(defn ^:private method-content-url
+  "Return the URL to the WDL content used by this `methodRepoMethod`. If the WDL
+   is hosted on GitHub, returns a jsdelivr URL to avoid GitHub rate limits."
+  [{:keys [methodPath methodVersion] :as methodRepoMethod}]
+  (throw-unless-dockstore-method methodRepoMethod)
+  (let [id  (url-encode (str "#workflow/" methodPath))
+        url (:url (dockstore/ga4gh-tool-descriptor id methodVersion "WDL"))]
+    (if-let [groups (re-find #"^https://raw.githubusercontent.com/(.*)$" url)]
+      (let [[author repo version path] (str/split (second groups) #"/" 4)]
+        (str/join "/" ["https://cdn.jsdelivr.net/gh" author (str repo "@" version) path]))
+      url)))
+
+;; visible for testing
+(defn describe-method
+  "Describe the method associated with the `methodconfig`."
+  [workspace methodconfig]
+  (-> (firecloud/method-configuration workspace methodconfig)
+      :methodRepoMethod
+      method-content-url
+      firecloud/describe-workflow))
+
 (defn ^:private peek-terra-executor-queue
   "Get first unconsumed successful workflow from `executor` queue."
-  [{:keys [workspace] :as executor}]
+  [{:keys [workspace methodConfiguration] :as executor}]
   (when-let [{:keys [submission workflow] :as record}
              (peek-terra-executor-details executor)]
-    (combine-record-workflow-and-outputs
-     record
-     (firecloud/get-workflow workspace submission workflow)
-     (firecloud/get-workflow-outputs workspace submission workflow))))
+    [(describe-method workspace methodConfiguration)
+     (combine-record-workflow-and-outputs
+      record
+      (firecloud/get-workflow workspace submission workflow)
+      (firecloud/get-workflow-outputs workspace submission workflow))]))
 
 (defn ^:private pop-terra-executor-queue
   "Consume first unconsumed successful workflow record in `details` table,

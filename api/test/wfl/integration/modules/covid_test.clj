@@ -245,7 +245,7 @@
      #'source/create-snapshots               mock-create-snapshots
      #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
      #'firecloud/submit-method               mock-firecloud-create-submission
      #'firecloud/get-submission              mock-firecloud-get-submission
@@ -277,7 +277,7 @@
      #'source/create-snapshots               mock-create-snapshots
      #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
      #'firecloud/submit-method               mock-firecloud-create-submission
      #'firecloud/get-workflow                (constantly {:status "Failed"})}
@@ -337,7 +337,7 @@
      #'source/create-snapshots               mock-create-snapshots
      #'source/check-tdr-job                  mock-check-tdr-job
      #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/get-method-configuration    mock-firecloud-get-method-configuration
+     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
      #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
      #'firecloud/submit-method               mock-firecloud-create-submission
      #'firecloud/get-workflow                (constantly {:status "Failed"})}
