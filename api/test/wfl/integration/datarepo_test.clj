@@ -74,7 +74,7 @@
         (let [table-url (str temp workflow-id "/table.json")]
           (-> (->> (workflows/get-files [outputs-type outputs])
                    (datasets/ingest-files tdr-profile dataset workflow-id))
-              (replace-urls-with-file-ids outputs-type outputs)
+              (replace-urls-with-file-ids [outputs-type outputs])
               (sink/rename-gather from-outputs)
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
