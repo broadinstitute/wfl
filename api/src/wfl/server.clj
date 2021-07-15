@@ -78,7 +78,7 @@
 
 (defn notify-watchers [watchers _uuid _exception]
   {:pre [(some? watchers)]}
-  (log/info (str "notifying: " watchers)))
+  (log/info (str/join " " ["notifying: " watchers])))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
@@ -147,7 +147,7 @@
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
-  (log/info (str "Run:" wfl/the-name "server" args))
+  (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)]
     (await-some manager (start-webserver port))))

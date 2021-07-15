@@ -9,6 +9,8 @@
 > `{"severity": "INFO", "message": "This is an information logging message.", "timestamp": "2021-07-08T22:02:58.079938Z"}`
 >
 > These logs are eventually sent to Google Cloud Logging and can be queried from there.
+> More information about Google Logging and what some of the fields provided mean can be found here:
+> https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
 >
 > Below is more detailed information for those interested.
 
@@ -38,7 +40,7 @@ An example call to log:
     ...
     [wfl.log :as log]
     ...))
-(log/log :info "This is an information message with a label" :labels {:my-label "label value"})
+(log/log :info "This is an information message with a label" :logging.googleapis.com/labels {:my-label "label value"})
 ```
 This example produces the following json log:
 ```json
