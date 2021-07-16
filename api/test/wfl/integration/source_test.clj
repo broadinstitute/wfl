@@ -140,7 +140,7 @@
               (is (== all-count (count all-set)))
               (is (== (-> (partial > mock-new-rows-size)
                           (take-while fibonacci)
-                          set count)
+                          distinct count)
                       (count (set/difference all-set miss-set)))))))))))
 
 (deftest test-create-tdr-source-from-valid-request

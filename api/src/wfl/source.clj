@@ -14,6 +14,7 @@
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
+           [java.time.temporal ChronoUnit]
            [wfl.util UserException]))
 
 ;; specs
@@ -148,15 +149,18 @@
       (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
-  "Find new rows in TDR by querying the dataset between the `interval`."
-  [{:keys [dataset table column] :as source}
-   [start end                    :as interval]]
+  "Query TDR for rows within `interval` that are new to `source`."
+  [{:keys [dataset details table column] :as source}
+   [       start   end                   :as interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
                      (log-prefix source) (:name dataset) table start end))
-  (-> dataset
-      (datarepo/query-table-between table column interval [:datarepo_row_id])
-      :rows
-      flatten))
+  (let [tdr (-> dataset
+                (datarepo/query-table-between table column interval [:datarepo_row_id])
+                :rows flatten)]
+    (when (seq tdr)
+      (let [old (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (mapcat :datarepo_row_ids (postgres/get-table tx details)))]
+        (remove (set old) tdr)))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -254,7 +258,10 @@
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [dataset table last_checked] :as source} utc-now]
-  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+  (let [checked      (timestamp-to-offsetdatetime last_checked)
+        hours-ago    (* 2 (max 1 (. ChronoUnit/HOURS between checked utc-now)))
+        then         (.minusHours utc-now hours-ago)
+        shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
