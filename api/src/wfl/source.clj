@@ -259,7 +259,7 @@
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [dataset table last_checked] :as source} utc-now]
   (let [checked      (timestamp-to-offsetdatetime last_checked)
-        hours-ago    (* 2 (max 1 (. ChronoUnit/HOURS between checked utc-now)))
+        hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked utc-now)))
         then         (.minusHours utc-now hours-ago)
         shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
