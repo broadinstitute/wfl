@@ -11,7 +11,7 @@
             [wfl.util              :as util])
   (:import [java.time Instant LocalDateTime]
            [java.util UUID]
-           [wfl.util UserException]))
+           [wfl.util  UserException]))
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
