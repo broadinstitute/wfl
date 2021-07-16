@@ -89,7 +89,7 @@
         keys (remove (set miss) (range mock-new-rows-size))]
     (-> (datarepo-query-table-between-all dataset table between interval columns)
         (update-in [:rows 0] replace keys)
-        (assoc :totalRows (str (count keys)))))  )
+        (assoc :totalRows (str (count keys))))))
 
 (comment
   (clojure.string/join
@@ -111,7 +111,7 @@
             (-> query (apply args) :totalRows Integer.))
           (update-source [source mock-query-table-between]
             (with-redefs [datarepo/query-table-between mock-query-table-between
-                          source/check-tdr-job         mock-check-tdr-job        
+                          source/check-tdr-job         mock-check-tdr-job
                           source/create-snapshots      mock-create-snapshots]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -181,10 +181,6 @@
       (source/start-source! tx source)
       (is (:last_checked (reload-source tx source))
           ":last_checked was not updated"))))
-
-(comment
-  (clojure.test/test-vars  [#'test-update-tdr-source])
-  )
 
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
