@@ -91,14 +91,6 @@
         (update-in [:rows 0] replace keys)
         (assoc :totalRows (str (count keys))))))
 
-(comment
-  (clojure.string/join
-   \space ["clojure" "-M:test" "--no-capture-output"
-           "--reporter" "documentation"
-           "--focus" "wfl.integration.source-test/test-backfill-tdr-source"])
-  (clojure.test/test-vars  [#'test-backfill-tdr-source])
-  :fnord)
-
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
