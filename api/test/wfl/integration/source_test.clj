@@ -108,7 +108,7 @@
           (make-bigquery-timestamp []
             (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
           (total-rows [query args]
-            (-> query (apply args) :totalRows Integer.))
+            (-> query (apply args) :totalRows Integer/parseInt))
           (update-source [source mock-query-table-between]
             (with-redefs [datarepo/query-table-between mock-query-table-between
                           source/check-tdr-job         mock-check-tdr-job
