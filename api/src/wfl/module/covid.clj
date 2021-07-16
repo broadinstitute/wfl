@@ -5,6 +5,7 @@
       [wfl.executor :as executor]
       [wfl.jdbc :as jdbc]
       [wfl.module.batch :as batch]
+      [wfl.service.rawls        :as rawls]
       [wfl.sink :as sink]
       [wfl.source :as source]
       [wfl.stage :as stage]
@@ -162,34 +163,23 @@
           (update :executor util/to-edn)
           (update :sink util/to-edn)))
 
-(defn retry-workflows
-      [workload workflows]
-      ; Get the workflows from the terra executor details table
-      ;(->> workload :executor :details
-      ;     (format "SELECT * FROM %s")
-      ;     (jdbc/query (postgres/wfl-db-config))
-      ;     (wfl.debug/trace)
-      ;     )
-
-      ; Get the rows from the terra details table for the workflows
-      ; iterate through the results and get the distinct reference values
-      ; resubmit the reference values
-      ; write back to the table, putting the new workflow id into the retry field of the failed one
-      (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
-            executor (get-in workload [:executor])
-            executor_details (get-in workload [:executor :details])
-            query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
-            results (jdbc/query (postgres/wfl-db-config) [query])
-            distinct_references (set (map :reference results))]
-           (for [ref distinct_references]
-                (let [submission (executor/create-submission! executor ref)]
-                     (pprint submission)
-                      ; test (executor/allocate-submission executor ref submission)]
-
-                )
-           )
-      )
-)
+;(let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
+;      executor (get-in workload [:executor])
+;      executor_details (get-in workload [:executor :details])
+;      {keys [workspace details] :as executor} (:executor workload)
+;      query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
+;      results (jdbc/query (postgres/wfl-db-config) [query])
+;      distinct_references (->> (map :reference results)
+;                               set
+;                               (map (partial rawls/get-snapshot-reference workspace)))
+;      (for [ref distinct_references]
+;           (let [submission (executor/create-submission! executor ref)]
+;                (pprint submission)
+;                ; test (executor/allocate-submission executor ref submission)]
+;
+;                )
+;           )
+;     )
 
 (comment
 
@@ -198,7 +188,7 @@
                                   workload (workloads/load-workload-for-uuid tx uuid)
                                   status "Failed"
                                   workflows (workloads/workflows-by-status tx workload status)]
-                                 (retry-workflows workload workflows)))
+                                 (executor/retry-workflows workload workflows)))
 
   )
 
