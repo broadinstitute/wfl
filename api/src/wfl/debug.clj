@@ -18,12 +18,3 @@
        (do
          (pprint {:column ~column :file ~*file* :line ~line '~expression x#})
          x#))))
-
-(defmacro tap
-  "Like `trace` but use `clojure.core/tap>`."
-  [expression]
-  (let [{:keys [line column]} (meta &form)]
-    `(let [x# ~expression]
-       (do
-         (tap> {:column ~column :file ~*file* :line ~line '~expression x#})
-         x#))))

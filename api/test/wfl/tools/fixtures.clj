@@ -1,15 +1,14 @@
 (ns wfl.tools.fixtures
   (:require [clojure.java.jdbc]
-            [clojure.pprint             :as pprint]
+            [wfl.environment            :as env]
+            [wfl.jdbc                   :as jdbc]
             [wfl.service.datarepo       :as datarepo]
+            [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres       :as postgres]
             [wfl.tools.liquibase        :as liquibase]
-            [wfl.jdbc                   :as jdbc]
-            [wfl.util                   :as util]
-            [wfl.environment            :as env]
-            [wfl.service.firecloud      :as firecloud])
+            [wfl.util                   :as util])
   (:import [java.nio.file.attribute FileAttribute]
            [java.nio.file Files]
            [java.util UUID]
@@ -237,11 +236,3 @@
   "Adapter for clojure.test/use-fixtures"
   [env]
   (partial with-temporary-environment env))
-
-(defn pprint-tap
-  "Pretty-print the `tap>` stream."
-  [f]
-  (let [pprint (bound-fn* pprint/pprint)]
-    (try (add-tap pprint)
-         (f)
-         (finally (remove-tap pprint)))))
