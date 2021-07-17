@@ -163,28 +163,10 @@
           (update :executor util/to-edn)
           (update :sink util/to-edn)))
 
-;(let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
-;      executor (get-in workload [:executor])
-;      executor_details (get-in workload [:executor :details])
-;      {keys [workspace details] :as executor} (:executor workload)
-;      query (format "SELECT * FROM %s WHERE workflow IN (%s)" executor_details workflow_ids)
-;      results (jdbc/query (postgres/wfl-db-config) [query])
-;      distinct_references (->> (map :reference results)
-;                               set
-;                               (map (partial rawls/get-snapshot-reference workspace)))
-;      (for [ref distinct_references]
-;           (let [submission (executor/create-submission! executor ref)]
-;                (pprint submission)
-;                ; test (executor/allocate-submission executor ref submission)]
-;
-;                )
-;           )
-;     )
-
 (comment
 
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                            (let [uuid "b8b5bbe6-faad-4d03-ad45-a68f6c860c7b"
+                            (let [uuid "6b633dbe-658f-4eec-bb98-13b0b6cdc5c6"
                                   workload (workloads/load-workload-for-uuid tx uuid)
                                   status "Failed"
                                   workflows (workloads/workflows-by-status tx workload status)]

@@ -416,7 +416,7 @@
       (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
             {:keys [workspace details] :as executor} (:executor workload)
             get_query (format "SELECT * FROM %s WHERE workflow IN (%s)" details workflow_ids)
-            update_query (format "UPDATE %s SET retry = %s WHERE workflow IN (%s)")
+            ;update_query (format "UPDATE %s SET retry = %s WHERE workflow IN (%s)")
             results (jdbc/query (postgres/wfl-db-config) [get_query])
             distinct_references (->> (map :reference results)
                                      set
