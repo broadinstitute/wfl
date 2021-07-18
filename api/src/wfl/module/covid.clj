@@ -166,7 +166,7 @@
 (comment
 
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                            (let [uuid "6b633dbe-658f-4eec-bb98-13b0b6cdc5c6"
+                            (let [uuid "18fe29bf-5a2c-4f03-be17-bf247616c440"
                                   workload (workloads/load-workload-for-uuid tx uuid)
                                   status "Failed"
                                   workflows (workloads/workflows-by-status tx workload status)]

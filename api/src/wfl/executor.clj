@@ -9,7 +9,8 @@
             [wfl.stage                :as stage]
             [wfl.util                 :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+           [wfl.util UserException])
+  (:use [clojure.pprint :as pprint]))
 
 ;; executor operations
 (defmulti update-executor!
@@ -416,19 +417,33 @@
       (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
             {:keys [workspace details] :as executor} (:executor workload)
             get_query (format "SELECT * FROM %s WHERE workflow IN (%s)" details workflow_ids)
-            ;update_query (format "UPDATE %s SET retry = %s WHERE workflow IN (%s)")
             results (jdbc/query (postgres/wfl-db-config) [get_query])
             distinct_references (->> (map :reference results)
                                      set
                                      (map (partial rawls/get-snapshot-reference workspace)))
+
             ]
-           (for [ref distinct_references]
-                (let [submission (create-submission! executor ref)
-                      result (allocate-submission executor ref submission)]
-                     (update-unassigned-workflow-uuids! executor)
-                     (update-terra-workflow-statuses! executor)
-                     )
-                )
+           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                     (for [ref distinct_references]
+                                       (let [submission (create-submission! executor ref)
+                                             result (allocate-submission executor ref submission)
+                                             new_workflow_id (:id result)
+                                             entity_id (:entity result)
+                                             update_query (format "UPDATE %s
+                                                                   SET retry=%s
+                                                                   WHERE entity = '%s'
+                                                                   AND workflow IS NOT NULL;"
+                                                                   details
+                                                                   new_workflow_id
+                                                                   entity_id)
+                                             ]
+                                            (pprint result)
+                                            ;(update-unassigned-workflow-uuids! executor)
+                                            ;(update-terra-workflow-statuses! executor)
+                                            ;(jdbc/execute! tx update_query)
+                                            )
+                                          )
+                                     )
            )
       )
 
