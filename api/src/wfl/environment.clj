@@ -1,7 +1,7 @@
 (ns wfl.environment
   "Map environment to various values here."
   (:require [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
+            [wfl.log :as log]
             [clojure.string :as str]
             [vault.client.http] ; vault.core needs this
             [vault.core :as vault]))
@@ -30,31 +30,33 @@
         (json/write-str :escape-slash false)
         .getBytes)
    "WFL_CLIO_URL"
-   #(-> "https://clio.gotc-dev.broadinstitute.org")
+   (fn [] "https://clio.gotc-dev.broadinstitute.org")
    "WFL_COOKIE_SECRET"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_TDR_URL"
-   #(-> "https://data.terra.bio")
+   (fn [] "https://data.terra.bio")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"
-   #(-> "password")
+   (fn [] "password")
    "WFL_POSTGRES_URL"
-   #(-> "jdbc:postgresql:wfl")
+   (fn [] "jdbc:postgresql:wfl")
    "WFL_POSTGRES_USERNAME"
-   #(-> nil)
+   (fn [] nil)
    "WFL_FIRECLOUD_URL"
-   #(-> "https://api.firecloud.org")
+   (fn [] "https://api.firecloud.org")
    "WFL_RAWLS_URL"
-   #(-> "https://rawls.dsde-dev.broadinstitute.org")
+   (fn [] "https://rawls.dsde-dev.broadinstitute.org")
+   "WFL_DOCKSTORE_URL"
+   (fn [] "https://dockstore.org")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"
-   #(-> "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
+   (fn [] "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_TDR_DEFAULT_PROFILE"
-   #(-> "6370f5a1-d777-4991-8200-ceab83521d43")
+   (fn [] "6370f5a1-d777-4991-8200-ceab83521d43")
    "WFL_WFL_URL"
-   #(-> "https://dev-wfl.gotc-dev.broadinstitute.org")})
+   (fn [] "https://dev-wfl.gotc-dev.broadinstitute.org")})
 
 (def ^:private __getenv
   (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))
@@ -67,5 +69,5 @@
 (defn getenv
   "Lookup the value of the environment variable specified by `name`."
   [name]
-  (log/debugf "Reading environment variable %s" name)
+  (log/debug (format "Reading environment variable %s" name))
   (or (@testing name) (__getenv name)))

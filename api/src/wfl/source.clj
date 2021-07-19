@@ -1,15 +1,15 @@
 (ns wfl.source
-  (:require [clojure.edn                    :as edn]
-            [clojure.spec.alpha             :as s]
-            [clojure.set                    :as set]
-            [clojure.tools.logging.readable :as log]
-            [wfl.api.workloads              :refer [defoverload]]
-            [wfl.jdbc                       :as jdbc]
-            [wfl.service.datarepo           :as datarepo]
-            [wfl.service.postgres           :as postgres]
-            [wfl.stage                      :as stage]
-            [wfl.util                       :as util :refer [utc-now]]
-            [wfl.module.all                 :as all])
+  (:require [clojure.edn           :as edn]
+            [clojure.spec.alpha    :as s]
+            [clojure.set           :as set]
+            [clojure.tools.logging :as log]
+            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.service.datarepo  :as datarepo]
+            [wfl.service.postgres  :as postgres]
+            [wfl.stage             :as stage :refer [log-prefix]]
+            [wfl.util              :as util :refer [utc-now]]
+            [wfl.module.all        :as all])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
@@ -136,31 +136,23 @@
                               :dataset (id-and-name dataset)})))
     table))
 
-(defn ^:private get-dataset-or-throw
-  "Return the dataset with `dataset-id` or throw"
-  [dataset-id]
-  (try
-    (datarepo/dataset dataset-id)
-    (catch ExceptionInfo e
-      (throw
-       (UserException. "Cannot access dataset"
-                       {:dataset dataset-id :status (-> e ex-data :status)}
-                       e)))))
-
 (defn verify-data-repo-source!
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
     source
-    (let [dataset (get-dataset-or-throw dataset)]
+    (let [dataset (datarepo/dataset dataset)]
       (throw-unless-column-exists (get-table-or-throw table dataset)
                                   column dataset)
       (assoc source :dataset dataset))))
 
 (defn ^:private find-new-rows
   "Find new rows in TDR by querying the dataset between the `interval`."
-  [{:keys [dataset table column] :as _source} interval]
+  [{:keys [dataset table column] :as source}
+   [start end                    :as interval]]
+  (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
+                     (log-prefix source) (:name dataset) table start end))
   (-> dataset
       (datarepo/query-table-between table column interval [:datarepo_row_id])
       :rows
@@ -211,7 +203,7 @@
     (case job_status
       "running"   result
       "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warnf "Snapshot creation job %s failed!" job-id)
+      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
           result))))
 
 (defn ^:private write-snapshot-id
@@ -229,7 +221,7 @@
   "Write the shards and corresponding snapshot creation jobs from
    `shards->snapshot-jobs` into source `details` table, with the frozen `now`.
    Also initialize all jobs statuses to running."
-  [{:keys [last_checked details] :as _source} now shards->snapshot-jobs]
+  [{:keys [last_checked details] :as source} now shards->snapshot-jobs]
   (letfn [(make-record [[shard id]]
             {:snapshot_creation_job_id     id
              :snapshot_creation_job_status "running"
@@ -239,7 +231,8 @@
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> shards->snapshot-jobs
            (map make-record)
-           (jdbc/insert-multi! tx details)))))
+           (jdbc/insert-multi! tx details)))
+    (log/debug (format "%s Snapshot creation jobs written." (log-prefix source)))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
@@ -260,21 +253,26 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [last_checked] :as source} utc-now]
+  [{:keys [dataset table last_checked] :as source} utc-now]
   (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
                           (mapv #(.format % bigquery-datetime-format))
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
     (when (seq shards->jobs)
+      (log/info (format "%s Snapshots created from new rows in %s.%s." (log-prefix source) (:name dataset) table))
       (write-snapshots-creation-jobs source utc-now shards->jobs)
       (update-last-checked source utc-now))))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
   [source]
-  (->> (get-pending-tdr-jobs source)
-       (map #(update % 1 check-tdr-job))
-       (run! #(write-snapshot-id source %))))
+  (log/debug (format "%s Looking for running snapshot jobs..." (log-prefix source)))
+  (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
+    (when (seq pending-tdr-jobs)
+      (->> pending-tdr-jobs
+           (map #(update % 1 check-tdr-job))
+           (run! #(write-snapshot-id source %)))
+      (log/debug (format "%s Running snapshot jobs updated." (log-prefix source))))))
 
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,
@@ -311,7 +309,7 @@
   "Get first unconsumed snapshot from `source` queue."
   [source]
   (when-let [{:keys [snapshot_id] :as _record} (peek-tdr-source-details source)]
-    (datarepo/snapshot snapshot_id)))
+    [:datarepo/snapshot (datarepo/snapshot snapshot_id)]))
 
 (defn ^:private tdr-source-queue-length
   "Return the number of unconsumed snapshot records from `details` table."
@@ -398,7 +396,7 @@
 (defn ^:private stop-tdr-snapshot-list  [_ source] source)
 (defn ^:private update-tdr-snapshot-list [source]  source)
 
-(defn ^:private peek-tdr-snapshot-list [{:keys [items] :as _source}]
+(defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s
                WHERE  consumed IS NULL
                ORDER BY id ASC
@@ -407,6 +405,10 @@
       (->> (format query items)
            (jdbc/query tx)
            first))))
+
+(defn ^:private peek-tdr-snapshot-list [source]
+  (when-let [{:keys [item]} (peek-tdr-snapshot-details-table source)]
+    [:datarepo/snapshot (edn/read-string item)]))
 
 (defn ^:private tdr-snapshot-list-queue-length [{:keys [items] :as _source}]
   (let [query "SELECT COUNT (*) FROM %s WHERE consumed IS NULL"]
@@ -417,13 +419,13 @@
            :count))))
 
 (defn ^:private pop-tdr-snapshot-list [{:keys [items] :as source}]
-  (if-let [{:keys [id]} (peek-tdr-snapshot-list source)]
+  (if-let [{:keys [id]} (peek-tdr-snapshot-details-table source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx items {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "Attempt to pop empty queue" {:source source}))))
 
 (defn ^:private tdr-snapshot-list-done? [source]
-  (zero? (stage/queue-length source)))
+  (zero? (tdr-snapshot-list-queue-length source)))
 
 (defn ^:private tdr-snapshot-list-to-edn [source]
   (let [read-snapshot-id (comp :id edn/read-string :item)]
@@ -431,18 +433,18 @@
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
-(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
-
-(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
 (defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
+
+(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 
-(defoverload stage/peek-queue
-  tdr-snapshot-list-type (comp edn/read-string :item peek-tdr-snapshot-list))
+(defoverload stage/peek-queue tdr-snapshot-list-type peek-tdr-snapshot-list)
 (defoverload stage/pop-queue! tdr-snapshot-list-type pop-tdr-snapshot-list)
 (defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
+
+(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
 (defoverload stage/done? tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)

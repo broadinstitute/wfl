@@ -238,11 +238,19 @@
   [workspace]
   (get-workspace-json workspace "methodconfigs?allRepos=true"))
 
-(defn get-method-configuration
+(defn method-configuration
   "Return the `methodconfig` in the `workspace`."
   [workspace methodconfig]
   {:pre [(every? some? [workspace methodconfig])]}
-  (get-workspace-json workspace "method_configs" methodconfig))
+  (try
+    (get-workspace-json workspace "method_configs" methodconfig)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access method configuration in workspace"
+              {:workspace           workspace
+               :methodConfiguration methodconfig
+               :status              (-> cause ex-data :status)}
+              cause)))))
 
 (defn update-method-configuration
   "Update the method-configuration `method-config-name` to be `methodconfig` in
