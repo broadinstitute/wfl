@@ -1,16 +1,18 @@
 (ns wfl.executor
-  (:require [clojure.edn              :as edn]
-            [clojure.pprint           :refer [pprint]]
-            [clojure.set              :as set]
-            [wfl.api.workloads        :refer [defoverload]]
-            [wfl.jdbc                 :as jdbc]
-            [wfl.service.firecloud    :as firecloud]
-            [wfl.service.postgres     :as postgres]
-            [wfl.service.rawls        :as rawls]
-            [wfl.stage                :as stage]
-            [wfl.util                 :as util :refer [utc-now]])
-  (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+  (:require [clojure.edn           :as edn]
+            [clojure.pprint        :refer [pprint]]
+            [clojure.set           :as set]
+            [clojure.string        :as str]
+            [ring.util.codec       :refer [url-encode]]
+            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.jdbc              :as jdbc]
+            [wfl.service.dockstore :as dockstore]
+            [wfl.service.firecloud :as firecloud]
+            [wfl.service.postgres  :as postgres]
+            [wfl.service.rawls     :as rawls]
+            [wfl.stage             :as stage]
+            [wfl.util              :as util :refer [utc-now]])
+  (:import [wfl.util UserException]))
 
 ;; executor operations
 (defmulti update-executor!
