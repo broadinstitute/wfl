@@ -56,3 +56,11 @@ Example:
 ## Testing
 Test for this can be found in `test/wfl/unit/logging_test.clj`. Currently, the tests check whether the logging methods
 produce json that includes the correct severity and message.
+
+## Usage in Debugging
+In order to be able to search for specific logs locally that could be useful in your debugging you will want to follow these steps:
+
+1. Make sure you have `jq` installed for your terminal.
+2. Run the server with `./ops/server.sh >> path/to/wfl/log 2>&1`
+3. Look up logs by severity and only show the message: `tail -f path/to/wfl/log | grep --line-buffered -w '"severity":"[YOUR_SEVERITY_HERE]"' | jq '.message'`
+4. Look up logs by a label and print the message: `tail -f path/to/wfl/log | grep --line-buffered -w 'my-label' | jq '.message'`
