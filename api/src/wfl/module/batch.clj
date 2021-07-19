@@ -63,7 +63,9 @@
       util/parse-json
       :status))
 
-(defn make-update-workflows [get-status!]
+(defn make-update-workflows
+  "Call `get-status!` under `tx` to update workflow statuses in `workload`."
+  [get-status!]
   (fn [tx {:keys [items] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
               (jdbc/update! tx items
@@ -77,8 +79,9 @@
            (run! #(update! % (get-status! workload %)))))))
 
 (def update-workflow-statuses!
-  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
+  "Update the status of `_workflow` in `workload`."
+  (letfn [(get-cromwell-status [{:keys [executor] :as _workload}
+                                {:keys [uuid]     :as _workflow}]
             (cromwell-status executor uuid))]
     (make-update-workflows get-cromwell-status)))
 
