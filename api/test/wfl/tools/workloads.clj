@@ -1,6 +1,5 @@
 (ns wfl.tools.workloads
   (:require [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log]
             [wfl.api.workloads]
             [wfl.auth                       :as auth]
             [wfl.environment                :as env]

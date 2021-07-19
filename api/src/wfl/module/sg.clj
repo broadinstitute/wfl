@@ -4,7 +4,7 @@
             [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log]
+            [wfl.log                        :as log]
             [wfl.api.workloads              :as workloads :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -157,8 +157,7 @@
   [clio bam]
   (try (clio/add-bam clio bam)
        (catch Throwable x
-         (log/error x "Add BAM to Clio failed" {:bam bam
-                                                :x   x}))))
+         (log/error {:bam bam :x x}))))
 
 (defn maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."

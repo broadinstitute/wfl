@@ -1,67 +1,66 @@
 # WFL Logging
 
 ## TL;DR
-> Import `clojure.tools.logging :as log` and use `log/error` / `log/info` etc.
+> Import `wfl.log :as log` and use `log/error` / `log/info` etc.
+> The logger will write the logs with a message, severity and timestamp by default.
 >
-> `clojure.tools.logging` uses SLF4J under the hood which in turn uses Log4j2 as its implementation.
+> Example:
+>
+> `{"severity": "INFO", "message": "This is an information logging message.", "timestamp": "2021-07-08T22:02:58.079938Z"}`
+>
+> These logs are eventually sent to Google Cloud Logging and can be queried from there.
+> More information about Google Logging and what some of the fields provided mean can be found here:
+> https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
 >
 > Below is more detailed information for those interested.
 
 ## Usage
-We use `clojure.tools.logging` aliased to `log`.
-
 Require it like any other dependency:
 ```clojure
 (ns "..."
   (:require
     ...
-    [clojure.tools.logging :as log]
+    [wfl.log :as log]
     ...))
 
 (log/info "Hello!")
 ```
 
-Full documentation is available [here](http://clojure.github.io/tools.logging/#clojure.tools.logging).
+There are currently 5 macros for creating simple json logs for `INFO, WARN, DEBUG, ERROR, NOTICE`. There is also
+a public method `log` that can be called with additional fields you may want to provide in the log, such as
+labels.
 
-## Behavior
-Currently, all error-level messages are routed to STDERR, and everything else is routed to STDOUT.
+A list of the Google Cloud supported logging fields and severities can be found here:
+https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry
 
-Thus, to have WFL log everything to a file you'd want to use something like
-```bash
-my-command >output.log 2>&1
+An example call to log:
+```clojure
+(ns "..."
+  (:require
+    ...
+    [wfl.log :as log]
+    ...))
+(log/log :info "This is an information message with a label" :logging.googleapis.com/labels {:my-label "label value"})
 ```
-That'll capture both STDOUT and STDERR to the same file.
-Note that this specific syntax is more universal than just `&>output.log`.
+This example produces the following json log:
+```json
+{"severity":"INFO","message":"This is an information message with a label","timestamp":"2021-07-09T14:57:22.437485Z","logging.googleapis.com/labels":{"my-label":"label value"}}
+```
+The logging can also be disabled if you see fit for whatever reason by binding the `*logger*` instance to `disabled-logger`.
 
-
+Example:
+```clojure
+(binding [log/*logger* log/disabled-logger]
+  (log/info "This message will not be written"))
+```
 ## Testing
-clojure.tools.logging provides a [test namespace](http://clojure.github.io/tools.logging/#clojure.tools.logging.test).
+Test for this can be found in `test/wfl/unit/logging_test.clj`. Currently, the tests check whether the logging methods
+produce json that includes the correct severity and message.
 
-An example of usage is in `test/wfl/unit/logging_test.clj`, which exists to test that the service loaders are correctly resolving our dependencies.
+## Usage in Debugging
+In order to be able to search for specific logs locally that could be useful in your debugging you will want to follow these steps:
 
-## Under the Hood
-> This section might be a bit verbose but hopefully it won't be too out-of-date since logging setup
-> doesn't change all that much.
->
-> The key takeaway here is that JVM logging libraries use service loaders
-> and other runtime configuration to find each other.
-
-WFL's logging works as follows:
-
-1. clojure.tools.logging is imported and used directly
-   - Why clojure.tools.logging? It is Clojure-native so it has intuitive syntax
-   - Why not wrap or delegate to it? It already works just as a wrapper to any
-     other logging implementation so wrapping it would duplicate its purpose
-2. clojure.tools.logging delegates to SLF4J
-   - Why SLF4J? Jetty already uses it, so configuring it ourselves helps keep
-     it quiet
-3. SLF4J delegates to Log4j 2
-   - Why delegate? SLF4J is a facade that still needs an implementation to
-     actually log things
-   - Why Log4j 2? It is a fair default implementation: highly configurable,
-     well-tested, well-supported
-
-Even without making our own wrapper around clojure.tools.logging, we have
-a lot of flexibility. Suppose Jetty removes their dependency on SLF4J: we
-could remove our own dependency on SLF4J and clojure.tools.logging would
-immediately begin interacting directly with Log4j 2.
+1. Make sure you have `jq` installed for your terminal.
+2. Run the server with `./ops/server.sh >> path/to/wfl/log 2>&1`
+3. Look up logs by severity and only show the message: `tail -f path/to/wfl/log | grep --line-buffered -w '"severity":"[YOUR_SEVERITY_HERE]"' | jq '.message'`
+4. Look up logs by a label and print the message: `tail -f path/to/wfl/log | grep --line-buffered -w 'my-label' | jq '.message'`

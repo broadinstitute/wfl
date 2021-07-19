@@ -65,14 +65,14 @@
 
 (defn import-snapshot-into-workspace [workspace {:keys [name id] :as _snapshot}]
   (println "Importing snapshot" name "into" workspace)
-  (let [{:keys [name] :as ref} (rawls/create-snapshot-reference workspace id name)]
+  (let [{:keys [name] :as ref} (rawls/create-or-get-snapshot-reference workspace id name)]
     (println "Created snapshot reference" name)
     ref))
 
 (defn update-method-configuration
   [workspace {:keys [name] :as _snapshot-reference}]
   (println "Updating" method-configuration "to use" name)
-  (-> (firecloud/get-method-configuration workspace method-configuration)
+  (-> (firecloud/method-configuration workspace method-configuration)
       (assoc :dataReferenceName name)
       (->> (firecloud/update-method-configuration workspace method-configuration))))
 
@@ -93,7 +93,7 @@
 (defn write-known-outputs-to-workspace [workspace]
   (println "Writing outputs to flowcell table in" workspace)
   (let [from-outputs (resources/read-resource "sarscov2_illumina_full/entity-from-outputs.edn")
-        pipeline     (:name (firecloud/get-method-configuration workspace method-configuration))
+        pipeline     (:name (firecloud/method-configuration workspace method-configuration))
         outputs      (-> workspace-to-clone
                          (firecloud/get-workflow-outputs well-known-submission well-known-workflow)
                          (get-in [:tasks (keyword pipeline) :outputs])
