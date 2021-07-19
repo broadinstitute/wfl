@@ -465,9 +465,6 @@
                      ;                      details
                      ;                      new_workflow_row_id
                      ;                      entity_id)
-                     ]
-                       (allocate-submission executor ref submission)
-
           (pprint "GOT HERE 3!")
                       ;(pprint result)
                       ;(update-unassigned-workflow-uuids! executor)
