@@ -407,7 +407,7 @@
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
       (assoc :name terra-executor-name)))
 
-(defn retry-workflows
+(defn ^:public retry-workflows
       [workload workflows]
 
       ; Get the rows from the terra details table for the workflows
@@ -423,29 +423,31 @@
                                      (map (partial rawls/get-snapshot-reference workspace)))
 
             ]
-           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                     (for [ref distinct_references]
-                                       (let [submission (create-submission! executor ref)
-                                             result (allocate-submission executor ref submission)
-                                             new_workflow_id (:id result)
-                                             entity_id (:entity result)
-                                             update_query (format "UPDATE %s
-                                                                   SET retry=%s
-                                                                   WHERE entity = '%s'
-                                                                   AND workflow IS NOT NULL;"
-                                                                   details
-                                                                   new_workflow_id
-                                                                   entity_id)
-                                             ]
-                                            (pprint result)
-                                            ;(update-unassigned-workflow-uuids! executor)
-                                            ;(update-terra-workflow-statuses! executor)
-                                            ;(jdbc/execute! tx update_query)
-                                            )
-                                          )
-                                     )
+           (for [ref distinct_references]
+                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (let [submission (create-submission! executor ref)]
+                     (allocate-submission executor ref submission)
+                     ;new_workflow_id (:id result)
+                     ;entity_id (:entity result)
+                     ;update_query (format "UPDATE %s
+                     ;                      SET retry=%s
+                     ;                      WHERE entity = '%s'
+                     ;                      AND workflow IS NOT NULL;"
+                     ;                      details
+                     ;                      new_workflow_id
+                     ;                      entity_id)
+                     ;]
+
+                      (pprint "GOT HERE 3!")
+                      ;(pprint result)
+                      ;(update-unassigned-workflow-uuids! executor)
+                      ;(update-terra-workflow-statuses! executor)
+                      ;(jdbc/execute! tx update_query)
+                   )
+              )
            )
       )
+)
 
 
 (defoverload create-executor! terra-executor-name create-terra-executor)
