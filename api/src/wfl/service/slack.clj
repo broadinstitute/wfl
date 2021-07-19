@@ -51,6 +51,35 @@
         :body
         slack-api-raise-for-status)))
 
+;; Create the agent queue
+(def notifier (agent []))
+
+(add-watch notifier :watcher
+  (fn [key atom old-state new-state]
+    (clojure.pprint/pprint {:ref atom :old old-state :new new-state})))
+
+;; queue producer
+(let [notifications [["C026PTM4XPA" "Hi! :crazysmiley: 1"]
+                     ["C026PTM4XPA" "Hi! :crazysmiley: 2"]]]
+  (send notifier #(into % notifications)))
+
+;; one-off queue consumer
+(defn consume [queue]
+  (if (seq queue)
+    (let [[channel msg] (first queue)]
+      (post-message channel msg)
+      (vec (rest queue)))
+    queue))
+
+(def my-future
+  (future (while true
+            (send-off notifier consume)
+            (util/sleep-seconds 1))))
+
+;; queue producer
+(let [notifications [["C026PTM4XPA" "Hi! :crazysmiley: 3"]
+                     ["C026PTM4XPA" "Hi! :crazysmiley: 4"]]]
+  (send notifier #(into % notifications)))
 (comment
   ;; Implementation 1 - not working yet!
   (defn queue
@@ -73,6 +102,10 @@
 
   ;; Implementation 2
   (def notifier (agent []))
+  (add-watch notifier :watcher
+    (fn [key atom old-state new-state]
+      (prn "-- Atom Changed --")
+      (prn (format "Key %s | %s ---> %s" key old-state new-state))))
 
   ;; enqueue
   (let [notifications [["C026PTM4XPA" "Hi! :crazysmiley: 1"]
@@ -82,10 +115,52 @@
 
   ;; dequeue
   (letfn [(send-notification-every-1-second [queue]
-            (when (seq queue)
-              (let [[channel msg] (first queue)]
-                (util/sleep-seconds 1)
-                (post-message channel msg))
-              (recur (rest queue))))]
-    (send-off notifier send-notification-every-1-second))
+            (loop [queue queue]
+              (util/sleep-seconds 1)
+              (if (seq queue)
+                (let [[channel msg] (first queue)]
+                  (post-message channel msg)
+                  (send *agent* rest)
+                  (recur @*agent*))
+                (recur @*agent*)))
+            )]
+    (send-off notifier send-notification-every-1-second)
+    (let [notifications [["C026PTM4XPA" "Hi! :facepalm: 4"]
+                         ["C026PTM4XPA" "Hi! :facepalm: 5"]
+                         ["C026PTM4XPA" "Hi! :facepalm: 6"]]]
+      (send notifier #(into % notifications))))
+
+  (send notifier #(into % ["C026PTM4XPA" "Hi! :facepalm: 42"]))
+
+
+
+  ;; Implementation 3
+  (def notifier (agent [["C026PTM4XPA" "Hi! :crazysmiley: 1"]
+                        ["C026PTM4XPA" "Hi! :crazysmiley: 2"]
+                        ["C026PTM4XPA" "Hi! :crazysmiley: 3"]]))
+
+  (defn notify [queue]
+    (send *agent* #(conj % ["C026PTM4XPA" "Hi! :facepalm: 99"]))
+    #_(. Thread (sleep 1))
+    (when queue
+      (let [[channel msg] (first queue)]
+        (post-message channel msg)
+        (send *agent* (rest queue))))
+
+    (send-off *agent* #'notify)
+    (util/sleep-seconds 1))
+
+  (send-off notifier notify)
+  @notifier
+
+
+
+
+  ;; Implementation WIP
+
+
+
+  @notifier
+  @my-future
+
   )

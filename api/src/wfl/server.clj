@@ -88,10 +88,10 @@
                                     "shown below: \n %s"]) uuid exception)
         slack-channel-watcher? (fn [watcher]
                                  (not (util/email-address? watcher)))
-        slack-channel-watchers (filter slack-channel-watcher? watchers)]
-    (log/info (str/join " " ["notifying: " slack-channel-watchers]))
+        [channels _]           (split-with slack-channel-watcher? watchers)]
+    (log/info (str/join " " ["notifying: " channels]))
     ;; TODO: use an agent to throttle https://api.slack.com/docs/rate-limits
-    (run! #(slack/post-message % slack-msg) slack-channel-watchers)))
+    (run! #(slack/post-message % slack-msg) channels)))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
