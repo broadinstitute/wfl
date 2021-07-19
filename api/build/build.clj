@@ -74,18 +74,21 @@
   (let [workflow (util/remove-extension (util/basename wdl))
         file     (io/file resources "workflows" (str workflow ".edn"))]
     (when-not (.exists file)
-      (println "generating description for" (util/basename wdl))
+      (println "describing" (util/basename wdl) "to" (.getPath file))
       (io/make-parents file)
-      (with-open [out (io/writer file)]
-        (binding [*out* out]
-          (-> (slurp wdl) firecloud/describe-workflow pprint))))))
+      (let [edn (-> wdl slurp firecloud/describe-workflow)]
+        (spit file (with-out-str
+                     (println (str/join [";; (write-workflow-description"
+                                         \space resources \space wdl ")"]))
+                     (println ";;")
+                     (pprint edn)))))))
 
 (defn ^:private find-wdls []
   (letfn [(list-wdls [folder]
             (->> (file-seq (io/file folder))
                  (map #(.getCanonicalPath %))
                  (filter #(= (util/extension %) "wdl"))))]
-  (mapcat list-wdls ["resources" "test/resources"])))
+    (mapcat list-wdls ["resources" "test/resources"])))
 
 (defn prebuild
   "Stage any needed resources on the class path."

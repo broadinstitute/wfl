@@ -1,8 +1,8 @@
 (ns wfl.api.workloads
-  (:require [clojure.string        :as str]
-            [clojure.tools.logging :as log]
-            [wfl.jdbc              :as jdbc]
-            [wfl.util              :as util]))
+  (:require [clojure.string :as str]
+            [wfl.log        :as log]
+            [wfl.jdbc       :as jdbc]
+            [wfl.util       :as util]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -66,7 +66,7 @@
 (defn load-workload-for-uuid
   "Use transaction `tx` to load `workload` with `uuid`."
   [tx uuid]
-  (log/debugf "Loading workload uuid=%s" uuid)
+  (log/debug (format "Loading workload uuid=%s" uuid))
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE uuid = ?" uuid])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching uuid"
@@ -77,7 +77,7 @@
 (defn load-workload-for-id
   "Use transaction `tx` to load `workload` with `id`."
   [tx id]
-  (log/debugf "Loading workload id=%s" id)
+  (log/debug (format "Loading workload id=%s" id))
   (let [workloads (jdbc/query tx ["SELECT * FROM workload WHERE id = ?" id])]
     (when (empty? workloads)
       (throw (ex-info "No workload found matching id"
@@ -88,7 +88,7 @@
 (defn load-workloads-with-project
   "Use transaction `tx` to load `workload`(s) with `project`."
   [tx project]
-  (log/debugf "Loading workloads with project=\"%s\"" project)
+  (log/debug (format "Loading workloads with project=\"%s\"" project))
   (let [query-str "SELECT * FROM workload WHERE project = ? ORDER BY id ASC"]
     (mapv (partial load-workload-impl tx) (jdbc/query tx [query-str project]))))
 
