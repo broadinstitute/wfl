@@ -15,6 +15,7 @@ The `covid` module supports the following API endpoints:
 | POST | `/api/v1/start`                     | Start a workload                                                         |
 | POST | `/api/v1/stop`                      | Stop a running workload                                                  |
 | POST | `/api/v1/exec`                      | Create and start (execute) a workload                                    |
+| POST | `/api/v1/retry`                      | Retry a workload, given by status                                    |
 
 The life-cycle of a workload is a multi-stage process:
 
@@ -124,4 +125,16 @@ To give more information, here are some example inputs to the above endpoints:
          -H 'Accept: application/json' \
          -H 'Content-Type: application/json' \
          -d $'{ "uuid": "fb06bcf3-bc10-471b-a309-b2f99e4f5a67" }'
+    ```
+
+**POST /api/v1/retry**
+
+=== "Sample Request"
+
+    ```
+    curl -X POST 'http://localhost:8080/api/v1/workload/d6e62b45-f72d-4e57-9781-17584f800bad/retry' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json' \
+         -H 'Content-Type: application/json' \
+         -d $'{ "status": "Failed" }'
     ```

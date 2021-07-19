@@ -425,18 +425,19 @@
             ]
            (for [ref distinct_references]
                 (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                  (let [submission (create-submission! executor ref)]
-                     (allocate-submission executor ref submission)
-                     ;new_workflow_id (:id result)
+                  (let [submission (create-submission! executor ref)
+
+                     ;new_workflow_row_id (:id result)
                      ;entity_id (:entity result)
                      ;update_query (format "UPDATE %s
                      ;                      SET retry=%s
                      ;                      WHERE entity = '%s'
                      ;                      AND workflow IS NOT NULL;"
                      ;                      details
-                     ;                      new_workflow_id
+                     ;                      new_workflow_row_id
                      ;                      entity_id)
-                     ;]
+                     ]
+                       (allocate-submission executor ref submission)
 
                       (pprint "GOT HERE 3!")
                       ;(pprint result)
