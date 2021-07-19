@@ -199,26 +199,6 @@
   [url id]
   (:status (get-thing "status" url id)))
 
-;; HACK: (into (array-map) ...) is egregious.
-;;
-(defn status-counts
-  "Map status to workflow counts on Cromwell given URL with PARAMS
-  map and AUTH-HEADER."
-  [url params]
-  (letfn [(each [status]
-            (let [form-params (-> {:pagesize 1 :status status}
-                                  (merge params)
-                                  cromwellify-json-form)]
-              [status (-> {:method       :post ;; :debug true :debug-body true
-                           :url          (str (api url) "/query")
-                           :form-params  form-params
-                           :content-type :application/json
-                           :headers      (auth/get-auth-header)}
-                          request-json :body :totalResultsCount)]))]
-    (let [counts (into (array-map) (map each status?))
-          total  (apply + (map counts status?))]
-      (into counts [[:total total]]))))
-
 (defn submit-workflow
   "Submit a workflow to run WDL with INPUTS, OPTIONS, and LABELS
   on the Cromwell URL and return its ID.  INPUTS,
