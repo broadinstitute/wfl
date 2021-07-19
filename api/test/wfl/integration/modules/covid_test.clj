@@ -173,7 +173,7 @@
 
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
-(defn ^:private mock-rawls-create-snapshot-reference [& _]
+(defn ^:private mock-rawls-snapshot-reference [& _]
   {:referenceId snapshot-reference-id
    :name        snapshot-reference-name})
 
@@ -241,15 +241,15 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'source/find-new-rows                  mock-find-new-rows
-     #'source/create-snapshots               mock-create-snapshots
-     #'source/check-tdr-job                  mock-check-tdr-job
-     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-     #'firecloud/submit-method               mock-firecloud-create-submission
-     #'firecloud/get-submission              mock-firecloud-get-submission
-     #'firecloud/get-workflow                mock-workflow-keep-status}
+    {#'source/find-new-rows                   mock-find-new-rows
+     #'source/create-snapshots                mock-create-snapshots
+     #'source/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+     #'firecloud/submit-method                mock-firecloud-create-submission
+     #'firecloud/get-submission               mock-firecloud-get-submission
+     #'firecloud/get-workflow                 mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
       (workloads/covid-workload-request
        {:skipValidation true}
@@ -273,14 +273,14 @@
 
 (deftest test-workload-state-transition-with-failed-workflow
   (with-redefs-fn
-    {#'source/find-new-rows                  mock-find-new-rows
-     #'source/create-snapshots               mock-create-snapshots
-     #'source/check-tdr-job                  mock-check-tdr-job
-     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-     #'firecloud/submit-method               mock-firecloud-create-submission
-     #'firecloud/get-workflow                (constantly {:status "Failed"})}
+    {#'source/find-new-rows                   mock-find-new-rows
+     #'source/create-snapshots                mock-create-snapshots
+     #'source/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+     #'firecloud/submit-method                mock-firecloud-create-submission
+     #'firecloud/get-workflow                 (constantly {:status "Failed"})}
     #(shared/run-workload-state-transition-test!
       (workloads/covid-workload-request
        {:skipValidation true}
@@ -333,14 +333,14 @@
 
 (deftest test-retry-workload-is-not-supported
   (with-redefs-fn
-    {#'source/find-new-rows                  mock-find-new-rows
-     #'source/create-snapshots               mock-create-snapshots
-     #'source/check-tdr-job                  mock-check-tdr-job
-     #'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-     #'firecloud/submit-method               mock-firecloud-create-submission
-     #'firecloud/get-workflow                (constantly {:status "Failed"})}
+    {#'source/find-new-rows                   mock-find-new-rows
+     #'source/create-snapshots                mock-create-snapshots
+     #'source/check-tdr-job                   mock-check-tdr-job
+     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+     #'firecloud/submit-method                mock-firecloud-create-submission
+     #'firecloud/get-workflow                 (constantly {:status "Failed"})}
     #(shared/run-retry-is-not-supported-test!
       (workloads/covid-workload-request
        {:skipValidation true}

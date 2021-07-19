@@ -101,9 +101,10 @@
 
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
-(defn ^:private mock-rawls-create-snapshot-reference [& _]
+(defn ^:private mock-rawls-snapshot-reference [& _]
   {:referenceId snapshot-reference-id
    :name        snapshot-reference-name})
+()
 
 (def ^:private method-config-version-mock 1)
 
@@ -193,12 +194,12 @@
               (is (= (:id workflow) (:workflow record))
                   "The workflow ID was incorrect and should match corresponding record"))]
       (with-redefs-fn
-        {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-         #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-         #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-         #'firecloud/submit-method               mock-firecloud-create-submission
-         #'firecloud/get-submission              mock-firecloud-get-submission
-         #'firecloud/get-workflow                mock-workflow-update-status}
+        {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+         #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+         #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+         #'firecloud/submit-method                mock-firecloud-create-submission
+         #'firecloud/get-submission               mock-firecloud-get-submission
+         #'firecloud/get-workflow                 mock-workflow-update-status}
         #(executor/update-executor! source executor))
       (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
       (is (== 2 (stage/queue-length executor)) "Two workflows should be enqueued")
@@ -228,12 +229,12 @@
         source     (make-queue-from-list [[:datarepo/snapshot snapshot]])
         executor   (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
-      {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-       #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-       #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-       #'firecloud/submit-method               mock-firecloud-create-submission
-       #'firecloud/get-submission              mock-firecloud-get-submission
-       #'firecloud/get-workflow                mock-workflow-keep-status}
+      {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+       #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+       #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+       #'firecloud/submit-method                mock-firecloud-create-submission
+       #'firecloud/get-submission               mock-firecloud-get-submission
+       #'firecloud/get-workflow                 mock-workflow-keep-status}
       #(executor/update-executor! source executor))
     (with-redefs-fn
       {#'executor/describe-method       (constantly nil)
@@ -253,13 +254,13 @@
 
 (deftest test-terra-executor-get-retried-workflows
   (with-redefs-fn
-    {#'rawls/create-snapshot-reference       mock-rawls-create-snapshot-reference
-     #'firecloud/method-configuration        mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration mock-firecloud-update-method-configuration
-     #'firecloud/submit-method               mock-firecloud-create-submission
-     #'firecloud/get-submission              mock-firecloud-get-submission
-     #'firecloud/get-workflow                mock-workflow-keep-status
-     #'firecloud/get-workflow-outputs        mock-firecloud-get-workflow-outputs}
+    {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
+     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
+     #'firecloud/submit-method                mock-firecloud-create-submission
+     #'firecloud/get-submission               mock-firecloud-get-submission
+     #'firecloud/get-workflow                 mock-workflow-keep-status
+     #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
     #(let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
            executor (create-terra-executor (rand-int 1000000))]
        (executor/update-executor! source executor)
@@ -272,9 +273,22 @@
          (is (== 1 (count (executor/executor-workflows tx executor)))
              "The retried workflow should not be returned")))))
 
-(deftest test-tdr-executor-describe-method
+(deftest test-terra-executor-describe-method
   (let [description (executor/describe-method
                      testing-workspace
                      testing-method-configuration)]
     (is (every? description [:validWorkflow :inputs :outputs]))
     (is (= "sarscov2_illumina_full" (:name description)))))
+
+(deftest test-terra-executor-entity-from-snapshot
+  (letfn [(throw-if-called [& args]
+            (throw (ex-info (str "rawls/create-snapshot-reference"
+                                 "should not have been called directly")
+                            {:called-with args})))]
+    (with-redefs-fn
+      {#'rawls/create-snapshot-reference        throw-if-called
+       #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
+      #(let [executor  (create-terra-executor (rand-int 1000000))
+             reference (#'executor/entity-from-snapshot executor snapshot)]
+         (is (and (= snapshot-reference-id (:referenceId reference))
+                  (= snapshot-reference-name (:name reference))))))))

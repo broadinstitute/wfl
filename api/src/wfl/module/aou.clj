@@ -2,7 +2,7 @@
   "Process Arrays for the All Of Us project."
   (:require [clojure.string             :as str]
             [clojure.spec.alpha         :as s]
-            [clojure.tools.logging      :as log]
+            [wfl.log                    :as log]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
             [wfl.module.batch           :as batch]

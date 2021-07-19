@@ -1,8 +1,7 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
-            [clojure.tools.logging              :as log]
-            [clojure.tools.logging.readable     :as logr]
+            [wfl.log                            :as log]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -18,6 +17,7 @@
             [wfl.api.spec                       :as spec]
             [wfl.module.all                     :as all]
             [wfl.module.aou                     :as aou]
+            [wfl.util                           :as util]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -136,10 +136,11 @@
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
   [status message exception {:keys [uri] :as request}]
-  (let [response (exception-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :" (:status response) uri)
-    (logr/error exception (:body response))
-    response))
+  (let [{:keys [body status] :as result}
+        (exception-handler status message exception request)]
+    (log/error (format "Server %s error at occurred at %s :" status uri))
+    (log/error (util/make-map exception body))
+    result))
 
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."

@@ -1,7 +1,7 @@
 (ns wfl.server
   "An HTTP API server."
   (:require [clojure.string                 :as str]
-            [clojure.tools.logging          :as log]
+            [wfl.log                        :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
@@ -89,7 +89,7 @@
         slack-channel-watcher? (fn [watcher]
                                  (not (util/email-address? watcher)))
         slack-channel-watchers (filter slack-channel-watcher? watchers)]
-    (log/info "notifying: " slack-channel-watchers)
+    (log/info (str/join " " ["notifying: " slack-channel-watchers]))
     ;; TODO: use an agent to throttle https://api.slack.com/docs/rate-limits
     (run! #(slack/post-message % slack-msg) slack-channel-watchers)))
 
@@ -102,11 +102,11 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)]
-                (log/infof "Updating workload %s" uuid)
+                (log/info (format "Updating workload %s" uuid))
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
-                    (log/warnf "Error updating workload %s" uuid)
+                    (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
                     ;; TODO: slack queue producer using agent here
                     (notify-watchers watchers uuid e))))))
@@ -114,7 +114,7 @@
             (try
               (do-update! workload)
               (catch Throwable t
-                (log/errorf "Failed to update workload %s" uuid)
+                (log/error (format "Failed to update workload %s" uuid))
                 (log/error t))))
           (update-workloads []
             (try
@@ -140,7 +140,7 @@
   specified port. Returns a java.util.concurrent.Future that, when de-
   referenced, blocks until the server ends."
   [port]
-  (log/infof "starting jetty webserver on port %s" port)
+  (log/info (format "starting jetty webserver on port %s" port))
   (let [server (jetty/run-jetty (app) {:port port :join? false})]
     (reify Future
       (cancel [_ _] (throw (UnsupportedOperationException.)))
@@ -162,7 +162,7 @@
 (defn run
   "Run child server in ENVIRONMENT on PORT."
   [& args]
-  (log/info "Run:" wfl/the-name "server" args)
+  (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)]
     (await-some manager (start-webserver port))))

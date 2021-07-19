@@ -1,7 +1,7 @@
 (ns wfl.environment
   "Map environment to various values here."
   (:require [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
+            [wfl.log :as log]
             [clojure.string :as str]
             [vault.client.http] ; vault.core needs this
             [vault.core :as vault]))
@@ -69,5 +69,5 @@
 (defn getenv
   "Lookup the value of the environment variable specified by `name`."
   [name]
-  (log/tracef "Reading environment variable %s" name)
+  (log/debug (format "Reading environment variable %s" name))
   (or (@testing name) (__getenv name)))
