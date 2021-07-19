@@ -1,5 +1,6 @@
 (ns wfl.executor
   (:require [clojure.edn              :as edn]
+            [clojure.pprint           :refer [pprint]]
             [clojure.set              :as set]
             [wfl.api.workloads        :refer [defoverload]]
             [wfl.jdbc                 :as jdbc]
@@ -9,8 +10,7 @@
             [wfl.stage                :as stage]
             [wfl.util                 :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException])
-  (:use [clojure.pprint :as pprint]))
+           [wfl.util UserException]))
 
 ;; executor operations
 (defmulti update-executor!
@@ -408,25 +408,24 @@
       (assoc :name terra-executor-name)))
 
 (defn ^:public retry-workflows
-      [workload workflows]
+  [workload workflows]
 
       ; Get the rows from the terra details table for the workflows
       ; iterate through the results and get the distinct reference values
       ; resubmit the reference values
       ; write back to the table, putting the new workflow id into the retry field of the failed one
-      (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
-            {:keys [workspace details] :as executor} (:executor workload)
-            get_query (format "SELECT * FROM %s WHERE workflow IN (%s)" details workflow_ids)
-            results (jdbc/query (postgres/wfl-db-config) [get_query])
-            distinct_references (->> (map :reference results)
-                                     set
-                                     (map (partial rawls/get-snapshot-reference workspace)))
+  (let [workflow_ids (util/to-quoted-comma-separated-list (map :uuid workflows))
+        {:keys [workspace details] :as executor} (:executor workload)
+        get_query (format "SELECT * FROM %s WHERE workflow IN (%s)" details workflow_ids)
+        results (jdbc/query (postgres/wfl-db-config) [get_query])
+        distinct_references (->> (map :reference results)
+                                 set
+                                 (map (partial rawls/get-snapshot-reference workspace)))]
 
-            ]
-           (for [ref distinct_references]
-                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                  (let [submission (create-submission! executor ref)]
-                     (allocate-submission executor ref submission)
+    (for [ref distinct_references]
+      (jdbc/with-db-transaction [_tx (postgres/wfl-db-config)]
+        (let [submission (create-submission! executor ref)]
+          (allocate-submission executor ref submission)
                      ;new_workflow_id (:id result)
                      ;entity_id (:entity result)
                      ;update_query (format "UPDATE %s
@@ -438,17 +437,12 @@
                      ;                      entity_id)
                      ;]
 
-                      (pprint "GOT HERE 3!")
+          (pprint "GOT HERE 3!")
                       ;(pprint result)
                       ;(update-unassigned-workflow-uuids! executor)
                       ;(update-terra-workflow-statuses! executor)
                       ;(jdbc/execute! tx update_query)
-                   )
-              )
-           )
-      )
-)
-
+          )))))
 
 (defoverload create-executor! terra-executor-name create-terra-executor)
 (defoverload load-executor!   terra-executor-type load-terra-executor)
