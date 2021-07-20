@@ -2,16 +2,15 @@
   "Define specs used in routes"
   (:require [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
-            [wfl.util             :as util]
-            [wfl.module.covid     :as covid]
-            [wfl.module.batch     :as batch]
+            [wfl.module.all       :as all]
             [wfl.module.aou       :as aou]
+            [wfl.module.batch     :as batch]
             [wfl.module.copyfile  :as copyfile]
+            [wfl.module.covid     :as covid]
             [wfl.module.sg        :as sg]
-            [wfl.module.xx        :as xx]
             [wfl.module.wgs       :as wgs]
-            [wfl.source           :as source]
-            [wfl.module.all       :as all]))
+            [wfl.module.xx        :as xx]
+            [wfl.util             :as util]))
 
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
                                #(not (and (:uuid %) (:project %)))))

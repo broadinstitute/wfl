@@ -3,11 +3,10 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
+            [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.rawls :as rawls])
+            [wfl.wfl :as wfl])
   (:import [java.util UUID]))
 
 (defn throw-when-output-exists-already!

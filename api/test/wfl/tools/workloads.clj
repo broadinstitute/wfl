@@ -16,7 +16,6 @@
             [wfl.tools.endpoints            :as endpoints]
             [wfl.util                       :as util])
   (:import [java.time OffsetDateTime]
-           [java.util.concurrent TimeoutException]
            [java.util UUID]))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))

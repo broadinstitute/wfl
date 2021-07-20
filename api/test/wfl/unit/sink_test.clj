@@ -1,5 +1,5 @@
 (ns wfl.unit.sink-test
-  (:require [clojure.test         :refer [deftest is testing]]
+  (:require [clojure.test         :refer [deftest is]]
             [wfl.sink             :as sink]
             [wfl.tools.resources  :as resources]))
 
