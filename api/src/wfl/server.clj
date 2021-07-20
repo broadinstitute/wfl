@@ -82,16 +82,16 @@
   ;; FIXME: add permission checks for slack-channel-watchers
   {:pre [(some? watchers)]}
   (let [slack-msg              (format
-                                 (str/join " "
-                                   ["NOTE: WorkFlow Launcher failed to update"
-                                    "a workload %s you are watching! Details"
-                                    "shown below: \n %s"]) uuid exception)
+                                (str/join " "
+                                          ["NOTE: WorkFlow Launcher failed to update"
+                                           "a workload %s you are watching! Details"
+                                           "shown below: \n %s"]) uuid exception)
         slack-channel-watcher? (fn [watcher]
                                  (not (util/email-address? watcher)))
         [channels _]           (split-with slack-channel-watcher? watchers)]
     (log/info (str/join " " ["notifying: " channels]))
     ;; TODO: use an agent to throttle https://api.slack.com/docs/rate-limits
-    (run! #(slack/post-message % slack-msg) channels)))
+    (run! #(slack/add-notification slack/notifier {:channel % :message slack-msg}) channels)))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
@@ -133,7 +133,8 @@
       (while true
         (update-workloads)
         ;; TODO: slack queue consumer using agent here
-        (.sleep TimeUnit/SECONDS 20)))))
+        (.sleep TimeUnit/SECONDS 20)))
+    (slack/start-notification-loop slack/notifier)))
 
 (defn ^:private start-webserver
   "Start the jetty webserver asynchronously to serve http requests on the

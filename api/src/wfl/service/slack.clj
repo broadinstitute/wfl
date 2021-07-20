@@ -5,7 +5,8 @@
             [clj-http.client :as http]
             [wfl.environment :as env]
             [wfl.log :as log]
-            [wfl.util :as util]))
+            [wfl.util :as util])
+  (:import [clojure.lang PersistentQueue]))
 
 (defn ^:private api-url
   "API URL for Slack."
@@ -37,14 +38,14 @@
     (prn (get response "error"))
     (when-not (get response "ok")
       (throw (ex-info "failed to notify via Slack"
-               {:error (get response "error")})))))
+                      {:error (get response "error")})))))
 
 (defn post-message
   "Post Slack `message` to `channel-id`."
-  [channel-id message]
-  {:pre [(valid-channel-id? channel-id)]}
+  [channel message]
+  {:pre [(valid-channel-id? channel)]}
   (let [url (api-url "chat.postMessage")
-        data {:channel channel-id
+        data {:channel channel
               :text message}]
     (-> (http/post url {:headers      (header @token)
                         :content-type :application/json
@@ -53,29 +54,25 @@
         slack-api-raise-for-status)))
 
 ;; Create the agent queue and attach a watcher
-;; TODO: turn vec into a queue
 ;; FIXME: make the queue persistent
-(def notifier (agent []))
+(def notifier (agent (PersistentQueue/EMPTY)))
 (add-watch notifier :watcher
-  (fn [_key _ref _old-state new-state]
-    (log/debug (format "the current notification queue is: %s" new-state))))
+           (fn [_key _ref _old-state new-state]
+             (log/debug (format "the current notification queue is: %s" (seq new-state)))))
 
 (defn add-notification
-  "Send notification defined by `channel-id` and
-   `message` to `agent`."
-  [agent channel-id message]
-  {:pre [(valid-channel-id? channel-id)]}
-  (send agent #(into % [[channel-id message]])))
-
-(comment
-  (add-notification notifier "C026PTM4XPA" "Hi! :crazysmiley: 1"))
+  "Add notification defined by a map of
+   `channel` and `message` to `agent` queue."
+  [agent {:keys [channel message]}]
+  {:pre [(valid-channel-id? channel)]}
+  (send agent #(conj % {:channel channel :message message})))
 
 (defn ^:private send-notification
   [queue]
   (if (seq queue)
-    (let [[channel msg] (first queue)]
-      (post-message channel msg)
-      (vec (rest queue)))
+    (let [{:keys [channel message]} (peek queue)]
+      (post-message channel message)
+      (pop queue))
     queue))
 
 (defn start-notification-loop
@@ -85,3 +82,8 @@
   (future (while true
             (send-off agent send-notification)
             (util/sleep-seconds 1))))
+
+(comment
+  (start-notification-loop notifier)
+  (add-notification notifier {:channel "C026PTM4XPA" :message "Hi! :crazysmiley: 1"})
+  (add-notification notifier {:channel "C026PTM4XPA" :message "Hi! :crazysmiley: 2"}))
