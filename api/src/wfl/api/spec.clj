@@ -44,7 +44,7 @@
 
 (s/def ::workflows (s/* ::workflow))
 
-(s/def ::workload-request (s/or :batch :batch/workload-request
+(s/def ::workload-request (s/or :batch ::batch/workload-request
                                 :covid ::covid/workload-request))
 
 (s/def ::workload-response (s/or :batch ::batch/workload-response
