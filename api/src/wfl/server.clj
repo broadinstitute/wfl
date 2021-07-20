@@ -77,8 +77,9 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers uuid exception]
+(defn notify-watchers
   "Notify `watchers` with available approaches."
+  [watchers uuid exception]
   ;; FIXME: add permission checks for slack-channel-watchers
   {:pre [(some? watchers)]}
   (let [slack-msg              (format
