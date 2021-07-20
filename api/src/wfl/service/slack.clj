@@ -53,18 +53,22 @@
         slack-api-raise-for-status)))
 
 ;; Create the agent queue and attach a watcher
+;; TODO: turn vec into a queue
+;; FIXME: make the queue persistent
 (def notifier (agent []))
 (add-watch notifier :watcher
   (fn [_key _ref _old-state new-state]
     (log/debug (format "the current notification queue is: %s" new-state))))
 
 (defn add-notification
-  [channel-id message]
+  "Send notification defined by `channel-id` and
+   `message` to `agent`."
+  [agent channel-id message]
   {:pre [(valid-channel-id? channel-id)]}
-  (send notifier #(into % [[channel-id message]])))
+  (send agent #(into % [[channel-id message]])))
 
 (comment
-  (add-notification "C026PTM4XPA" "Hi! :crazysmiley: 1"))
+  (add-notification notifier "C026PTM4XPA" "Hi! :crazysmiley: 1"))
 
 (defn ^:private send-notification
   [queue]
