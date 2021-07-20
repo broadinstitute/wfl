@@ -101,13 +101,20 @@
             (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))
-          (update-source [source mock-query-table-between]
-            (with-redefs [datarepo/query-table-between mock-query-table-between
+          (start-then-update-source [source]
+            (with-redefs [datarepo/query-table-between datarepo-query-table-between-miss
                           source/check-tdr-job         mock-check-tdr-job
                           source/create-snapshots      mock-create-snapshots]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (source/start-source! tx source)
+                 (reload-source tx source)))))
+          (update-source [source]
+            (with-redefs [datarepo/query-table-between datarepo-query-table-between-all
+                          source/check-tdr-job         mock-check-tdr-job
+                          source/create-snapshots      mock-create-snapshots]
+              (source/update-source!
+               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (reload-source tx source)))))]
     (let [args         [testing-dataset testing-table-name testing-column-name
                         [(make-bigquery-timestamp) (make-bigquery-timestamp)]
@@ -115,7 +122,7 @@
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
           source       (create-tdr-source)]
       (testing "update-source! loads snapshots"
-        (update-source source datarepo-query-table-between-miss)
+        (start-then-update-source source)
         (let [miss-rows  (rows-from source)
               miss-count (count miss-rows)
               miss-set   (set miss-rows)]
@@ -123,7 +130,7 @@
           (is (== miss-count (total-rows datarepo-query-table-between-miss args)))
           (is (== miss-count (count miss-set)))
           (testing "update-source! adds a snaphot of rows missed in prior interval"
-            (update-source source datarepo-query-table-between-all)
+            (update-source source)
             (let [all-rows  (rows-from source)
                   all-count (count all-rows)
                   all-set   (set all-rows)]
