@@ -66,7 +66,7 @@
 (defonce all-rows
   (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
 
-(defn ^:private datarepo-query-table-between-all
+(defn ^:private mock-query-table-between-all
   "Mock datarepo/query-table-between to find all rows."
   [_dataset _table _between interval columns]
   (is (every? parse-timestamp interval))
@@ -78,12 +78,14 @@
          :totalRows (str (count @all-rows))}
         (assoc-in [:schema :fields] (fields columns)))))
 
-(defn ^:private datarepo-query-table-between-miss
+(defn ^:private mock-query-table-between-miss
   "Mock datarepo/query-table-between to miss some rows."
   [dataset table between interval columns]
-  (-> (datarepo-query-table-between-all dataset table between interval columns)
+  (-> (mock-query-table-between-all dataset table between interval columns)
       (update-in [:rows 0] butlast)
       (assoc :totalRows (str (dec mock-new-rows-size)))))
+
+;;234567890123456789012345678901234567890123456789012345678901234567890123456789
 
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
@@ -94,42 +96,38 @@
           (make-bigquery-timestamp []
             (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
           (total-rows [query args]
-            (-> query (apply args) :totalRows Integer/parseInt))
-          (start-then-update-source [source]
-            (with-redefs [datarepo/query-table-between datarepo-query-table-between-miss
-                          source/check-tdr-job         mock-check-tdr-job
-                          source/create-snapshots      mock-create-snapshots]
-              (source/update-source!
-               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (source/start-source! tx source)
-                 (reload-source tx source)))))
-          (update-source [source]
-            (with-redefs [datarepo/query-table-between datarepo-query-table-between-all
-                          source/check-tdr-job         mock-check-tdr-job
-                          source/create-snapshots      mock-create-snapshots]
-              (source/update-source!
-               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (reload-source tx source)))))]
+            (-> query (apply args) :totalRows Integer/parseInt))]
     (let [args         [testing-dataset testing-table-name testing-column-name
                         [(make-bigquery-timestamp) (make-bigquery-timestamp)]
                         [:datarepo_row_id]]
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
           source       (create-tdr-source)]
       (testing "update-source! loads snapshots"
-        (start-then-update-source source)
+        (with-redefs [datarepo/query-table-between mock-query-table-between-miss
+                      source/check-tdr-job         mock-check-tdr-job
+                      source/create-snapshots      mock-create-snapshots]
+          (source/update-source!
+           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+             (source/start-source! tx source)
+             (reload-source tx source))))
         (let [miss-rows  (rows-from source)
               miss-count (dec mock-new-rows-size)
               miss-set   (set miss-rows)]
           (is (== record-count (stage/queue-length source)))
-          (is (== miss-count   (total-rows datarepo-query-table-between-miss args)))
+          (is (== miss-count   (total-rows mock-query-table-between-miss args)))
           (is (== miss-count   (count miss-set)))
           (testing "update-source! adds a snaphot of rows missed in prior interval"
-            (update-source source)
+            (with-redefs [datarepo/query-table-between mock-query-table-between-all
+                          source/check-tdr-job         mock-check-tdr-job
+                          source/create-snapshots      mock-create-snapshots]
+              (source/update-source!
+               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                 (reload-source tx source))))
             (let [all-rows (rows-from source)
                   all-set  (set all-rows)
                   missing  (set/difference all-set miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
-              (is (== mock-new-rows-size (total-rows datarepo-query-table-between-all args)))
+              (is (== mock-new-rows-size (total-rows mock-query-table-between-all args)))
               (is (=  (first missing) (last all-rows)))
               (is (== 1 (count missing))))))))))
 
