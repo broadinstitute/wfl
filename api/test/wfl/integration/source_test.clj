@@ -3,7 +3,6 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
-            [wfl.debug]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.source            :as source]
@@ -70,7 +69,6 @@
 (defn ^:private mock-query-table-between-all
   "Mock datarepo/query-table-between to find all rows."
   [_dataset _table _between interval columns]
-  (wfl.debug/trace interval)
   (is (every? parse-timestamp interval))
   (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
           (fields [columns] (mapv field columns))]
