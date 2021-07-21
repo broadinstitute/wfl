@@ -3,7 +3,6 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
-            [wfl.debug]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.source            :as source]
@@ -129,12 +128,9 @@
             (let [all-rows (rows-from source)
                   all-set  (set all-rows)
                   missing  (set/difference all-set miss-set)]
-              (wfl.debug/trace missing)
               (is (== (inc record-count) (stage/queue-length source)))
               (is (== mock-new-rows-size (total-rows datarepo-query-table-between-all args)))
               (is (=  (first missing) (last all-rows)))
-              (wfl.debug/trace (first missing))
-              (wfl.debug/trace (last all-rows))
               (is (== 1 (count missing))))))))))
 
 (deftest test-create-tdr-source-from-valid-request
