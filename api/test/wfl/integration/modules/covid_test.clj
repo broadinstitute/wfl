@@ -49,8 +49,6 @@
 
 ;; Queue mocks
 (def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
 
 (defn ^:private testing-queue-peek [this]
   (-> this :queue .getFirst))
