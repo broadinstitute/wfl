@@ -3,6 +3,7 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
+            [wfl.debug]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.source            :as source]
@@ -69,6 +70,7 @@
 (defn ^:private mock-query-table-between-all
   "Mock datarepo/query-table-between to find all rows."
   [_dataset _table _between interval columns]
+  (wfl.debug/trace interval)
   (is (every? parse-timestamp interval))
   (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
           (fields [columns] (mapv field columns))]
@@ -86,19 +88,17 @@
       (assoc :totalRows (str (dec mock-new-rows-size)))))
 
 ;;234567890123456789012345678901234567890123456789012345678901234567890123456789
-
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> source :details
                    (postgres/get-table tx)
                    (mapcat :datarepo_row_ids))))
-          (make-bigquery-timestamp []
-            (-> (Instant/now) str (subs 0 (count "2021-07-14T15:47:02"))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))]
     (let [args         [testing-dataset testing-table-name testing-column-name
-                        [(make-bigquery-timestamp) (make-bigquery-timestamp)]
+                        (repeatedly 2 #(-> (Instant/now) str
+                                           (subs 0 (count "2021-07-14T15:47:02"))))
                         [:datarepo_row_id]]
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
           source       (create-tdr-source)]
@@ -110,9 +110,8 @@
            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
              (source/start-source! tx source)
              (reload-source tx source))))
-        (let [miss-rows  (rows-from source)
-              miss-count (dec mock-new-rows-size)
-              miss-set   (set miss-rows)]
+        (let [miss-count (dec mock-new-rows-size)
+              miss-set   (set (rows-from source))]
           (is (== record-count (stage/queue-length source)))
           (is (== miss-count   (total-rows mock-query-table-between-miss args)))
           (is (== miss-count   (count miss-set)))
@@ -124,11 +123,10 @@
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (reload-source tx source))))
             (let [all-rows (rows-from source)
-                  all-set  (set all-rows)
-                  missing  (set/difference all-set miss-set)]
+                  missing  (set/difference (set all-rows) miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
               (is (== mock-new-rows-size (total-rows mock-query-table-between-all args)))
-              (is (=  (first missing) (last all-rows)))
+              (is (=  (last all-rows) (first missing)))
               (is (== 1 (count missing))))))))))
 
 (deftest test-create-tdr-source-from-valid-request
