@@ -3,6 +3,7 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
+            [wfl.debug]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.source            :as source]
@@ -66,10 +67,6 @@
 (defonce all-rows
   (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
 
-(def fibonacci
-  "The Fibonacci sequence."
-  (lazy-cat [0 1] (map + fibonacci (rest fibonacci))))
-
 (defn ^:private datarepo-query-table-between-all
   "Mock datarepo/query-table-between to find all rows."
   [_dataset _table _between interval columns]
@@ -85,11 +82,9 @@
 (defn ^:private datarepo-query-table-between-miss
   "Mock datarepo/query-table-between to miss some rows."
   [dataset table between interval columns]
-  (let [miss (take-while (partial > mock-new-rows-size) fibonacci)
-        keys (remove (set miss) (range mock-new-rows-size))]
-    (-> (datarepo-query-table-between-all dataset table between interval columns)
-        (update-in [:rows 0] replace keys)
-        (assoc :totalRows (str (count keys))))))
+  (-> (datarepo-query-table-between-all dataset table between interval columns)
+      (update-in [:rows 0] butlast)
+      (assoc :totalRows (str (dec mock-new-rows-size)))))
 
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
@@ -124,23 +119,23 @@
       (testing "update-source! loads snapshots"
         (start-then-update-source source)
         (let [miss-rows  (rows-from source)
-              miss-count (count miss-rows)
+              miss-count (dec mock-new-rows-size)
               miss-set   (set miss-rows)]
-          (is (== record-count   (stage/queue-length source)))
-          (is (== miss-count (total-rows datarepo-query-table-between-miss args)))
-          (is (== miss-count (count miss-set)))
+          (is (== record-count (stage/queue-length source)))
+          (is (== miss-count   (total-rows datarepo-query-table-between-miss args)))
+          (is (== miss-count   (count miss-set)))
           (testing "update-source! adds a snaphot of rows missed in prior interval"
             (update-source source)
-            (let [all-rows  (rows-from source)
-                  all-count (count all-rows)
-                  all-set   (set all-rows)]
+            (let [all-rows (rows-from source)
+                  all-set  (set all-rows)
+                  missing  (set/difference all-set miss-set)]
+              (wfl.debug/trace missing)
               (is (== (inc record-count) (stage/queue-length source)))
-              (is (== all-count (total-rows datarepo-query-table-between-all args)))
-              (is (== all-count (count all-set)))
-              (is (== (-> (partial > mock-new-rows-size)
-                          (take-while fibonacci)
-                          distinct count)
-                      (count (set/difference all-set miss-set)))))))))))
+              (is (== mock-new-rows-size (total-rows datarepo-query-table-between-all args)))
+              (is (=  (first missing) (last all-rows)))
+              (wfl.debug/trace (first missing))
+              (wfl.debug/trace (last all-rows))
+              (is (== 1 (count missing))))))))))
 
 (deftest test-create-tdr-source-from-valid-request
   (is (stage/validate-or-throw
