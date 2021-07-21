@@ -151,7 +151,7 @@
 (defn ^:private find-new-rows
   "Query TDR for rows within `interval` that are new to `source`."
   [{:keys [dataset details table column] :as source}
-   [       start   end                   :as interval]]
+   [start   end                   :as interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
                      (log-prefix source) (:name dataset) table start end))
   (let [tdr (-> dataset
