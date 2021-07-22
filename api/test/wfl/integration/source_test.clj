@@ -85,7 +85,6 @@
       (update-in [:rows 0] butlast)
       (assoc :totalRows (str (dec mock-new-rows-size)))))
 
-;;234567890123456789012345678901234567890123456789012345678901234567890123456789
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
