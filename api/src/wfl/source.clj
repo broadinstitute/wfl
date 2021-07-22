@@ -511,5 +511,4 @@
                  :end_time #inst "2021-07-21T18:12:58.077575000-00:00",
                  :id 3,
                  :consumed nil,
-                 :snapshot_creation_job_id "mock_job_id_2"}])
-  )
+                 :snapshot_creation_job_id "mock_job_id_2"}]))
