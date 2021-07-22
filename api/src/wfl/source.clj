@@ -13,7 +13,7 @@
             [wfl.module.all        :as all])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
-           [java.time Instant OffsetDateTime ZoneId]
+           [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
            [java.time.temporal ChronoUnit]
            [wfl.util UserException]))
@@ -158,9 +158,9 @@
       (assoc source :dataset dataset))))
 
 (defn combine-tdr-source-details
-  "Reduce to `result` by combining the Terra Data Repo source `detail`."
+  "Reduce to `result` by combining the Terra Data Repo source `_detail`."
   [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
-                  start_time] :as detail}]
+                  start_time] :as _detail}]
   (if (= "succeeded" snapshot_creation_job_status)
     (-> result
         (update :datarepo_row_ids into          datarepo_row_ids)
@@ -169,9 +169,9 @@
     result))
 
 (defn ^:private find-new-rows
-  "Query TDR for rows within `interval` that are new to `source`."
+  "Query TDR for rows within `_interval` that are new to `source`."
   [{:keys [dataset details table column] :as source}
-   [begin end                            :as interval]]
+   [begin end                            :as _interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
                      (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
