@@ -1,9 +1,9 @@
 (ns wfl.source
   (:require [clojure.edn           :as edn]
+            [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
             [clojure.tools.logging :as log]
-            [wfl.debug]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
             [wfl.service.datarepo  :as datarepo]
@@ -94,6 +94,14 @@
    :column          :table_column_name
    :snapshotReaders :snapshot_readers})
 
+(def ^:private bigquery-datetime-format
+  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+
+(defn ^:private timestamp-to-offsetdatetime
+  "Parse the Timestamp `t` into an `OffsetDateTime`."
+  [^Timestamp t]
+  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
+
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
@@ -149,52 +157,37 @@
                                   column dataset)
       (assoc source :dataset dataset))))
 
-(defn ^:private combine-details
-  "Combine the details from `source` to find new rows easily."
-  [{:keys [details] :as source}]
-  (letfn [(earlier [inst tsni] (first  (sort [inst tsni])))
-          (later   [inst tsni] (second (sort [inst tsni])))
-          (combine [result {:keys [datarepo_row_ids
-                                   end_time
-                                   snapshot_creation_job_status
-                                   start_time] :as detail}]
-            (if (= "succeeded" snapshot_creation_job_status)
-              (-> result
-                  (update :datarepo_row_ids into    datarepo_row_ids)
-                  (update :end_time         later   end_time)
-                  (update :start_time       earlier start_time))
-              result))]
-    (reduce combine details)))
+(defn combine-tdr-source-details
+  "Reduce to `result` by combining the Terra Data Repo source `detail`."
+  [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
+                  start_time] :as detail}]
+  (if (= "succeeded" snapshot_creation_job_status)
+    (-> result
+        (update :datarepo_row_ids into          datarepo_row_ids)
+        (update :end_time         util/latest   end_time)
+        (update :start_time       util/earliest start_time))
+    result))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `interval` that are new to `source`."
   [{:keys [dataset details table column] :as source}
-   [start   end                   :as interval]]
-  (wfl.debug/trace interval)
+   [begin end                            :as interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                     (log-prefix source) (:name dataset) table start end))
-  (letfn [(earlier [inst tsni] (first  (sort [inst tsni])))
-          (later   [inst tsni] (second (sort [inst tsni])))
-          (combine [result {:keys [datarepo_row_ids
-                                   end_time
-                                   snapshot_creation_job_status
-                                   start_time] :as detail}]
-            (if (= "succeeded" snapshot_creation_job_status)
-              (-> result
-                  (update :datarepo_row_ids into    datarepo_row_ids)
-                  (update :end_time         later   end_time)
-                  (update :start_time       earlier start_time))
-              result))]
-    (let [old (->> (postgres/get-table tx details)
-                   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)])
-                   (reduce combine))
-          tdr (-> dataset
-                  (datarepo/query-table-between table column interval [:datarepo_row_id])
+                     (log-prefix source) (:name dataset) table begin end))
+  (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (postgres/get-table tx details))
+        old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
+        start (if-let [start_time (:start_time old)]
+                (-> start_time
+                    (util/latest (instant/read-instant-timestamp begin))
+                    timestamp-to-offsetdatetime
+                    (.format bigquery-datetime-format))
+                begin)
+        tdr   (-> dataset
+                  (datarepo/query-table-between
+                   table column [start end] [:datarepo_row_id])
                   :rows flatten)]
-      (when (seq tdr)
-        (let [old (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                    (combine-details (postgres/get-table tx details)))]
-          (remove (set old) tdr))))))
+    (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -280,14 +273,6 @@
   ([source now]
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
-
-(defn ^:private timestamp-to-offsetdatetime
-  "Parse the Timestamp `t` into an `OffsetDateTime`."
-  [^Timestamp t]
-  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
-
-(def ^:private bigquery-datetime-format
-  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
