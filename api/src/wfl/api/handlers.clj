@@ -2,6 +2,7 @@
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
             [wfl.log                        :as log]
+            [wfl.configuration              :as config]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.jdbc                       :as jdbc]
@@ -24,6 +25,29 @@
   "Respond successfully with BODY."
   [body]
   (constantly (succeed body)))
+
+(defn get-logging-level
+  "Gets the current logging level of the API"
+  [request]
+  (log/info (select-keys request [:request-method :uri :body-params]))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (letfn [(to-result [s] {:level s})]
+      (-> (config/load-logging-level tx)
+          to-result
+          succeed))))
+
+(defn update-logging-level
+  "Updates the current logging level of the API."
+  [request]
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [{:keys [level]} (get-in request [:parameters :query])]
+    (letfn [(to-result [s] {:level s})]
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (-> (config/upsert-config tx "LOGGING_LEVEL" level)
+            first
+            (get :value)
+            to-result
+            succeed)))))
 
 (defn append-to-aou-workload
   "Append workflows described in BODY of REQUEST to a started AoU workload."
