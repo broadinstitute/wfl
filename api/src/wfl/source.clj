@@ -161,7 +161,7 @@
   "Reduce to `result` by combining the Terra Data Repo source `_detail`."
   [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
                   start_time] :as _detail}]
-  (if (= "succeeded" snapshot_creation_job_status)
+  (if (#{"running" "succeeded"} snapshot_creation_job_status)
     (-> result
         (update :datarepo_row_ids into          datarepo_row_ids)
         (update :end_time         util/latest   end_time)
