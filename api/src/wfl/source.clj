@@ -158,7 +158,9 @@
       (assoc source :dataset dataset))))
 
 (defn combine-tdr-source-details
-  "Reduce to `result` by combining the Terra Data Repo source `_detail`."
+  "Reduce to `result` by combining the Terra Data Repo source `_detail`.
+  Collect `datarepo_row_ids` already seen while preserving the latest
+  `end_time` and the earliest `start_time`."
   [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
                   start_time] :as _detail}]
   (if (#{"running" "succeeded"} snapshot_creation_job_status)
@@ -474,41 +476,3 @@
 (defoverload stage/done? tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)
-
-(comment
-  (def details [{:updated #inst "2021-07-21T18:12:58.578753000-00:00",
-                 :start_time #inst "2021-07-21T18:12:58.068140000-00:00",
-                 :snapshot_id "47cd816d-5c9f-4468-bc2a-cee00cfffe89",
-                 :datarepo_row_ids
-                 ["e60f8156-c35c-4f10-b8cf-21fb5905d68b"
-                  ,,,
-                  "8730e957-8e55-4f8a-9c27-eb6816098e5c"],
-                 :snapshot_creation_job_status "succeeded",
-                 :end_time #inst "2021-07-21T18:12:58.077575000-00:00",
-                 :id 1,
-                 :consumed nil,
-                 :snapshot_creation_job_id "mock_job_id_0"}
-                {:updated #inst "2021-07-21T18:12:58.709609000-00:00",
-                 :start_time #inst "2021-07-21T18:12:58.068140000-00:00",
-                 :snapshot_id "17c00f44-3404-4401-aa11-c6f1c84b7192",
-                 :datarepo_row_ids
-                 ["4eab02fb-4d63-4fc1-b487-22db54a90d2f"
-                  ,,,
-                  "5f5862ae-f579-4083-9b25-b039780e1b6d"],
-                 :snapshot_creation_job_status "succeeded",
-                 :end_time #inst "2021-07-21T18:12:58.077575000-00:00",
-                 :id 2,
-                 :consumed nil,
-                 :snapshot_creation_job_id "mock_job_id_1"}
-                {:updated #inst "2021-07-21T18:12:58.775861000-00:00",
-                 :start_time #inst "2021-07-21T18:12:58.068140000-00:00",
-                 :snapshot_id "dac97a4d-ef77-46da-8956-8d2354d68bcd",
-                 :datarepo_row_ids
-                 ["f25f0764-5fcc-4376-b9dc-6e78f5d8e6cf"
-                  ,,,
-                  "6ce89f55-6d27-4146-9ff7-bd47226818b9"],
-                 :snapshot_creation_job_status "succeeded",
-                 :end_time #inst "2021-07-21T18:12:58.077575000-00:00",
-                 :id 3,
-                 :consumed nil,
-                 :snapshot_creation_job_id "mock_job_id_2"}]))
