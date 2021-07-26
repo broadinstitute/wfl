@@ -131,7 +131,6 @@ For the release process, please refer to the [release guide](./dev-release.md).
 11. Merge the PR.
 
 
-
 ## Development Tips
 
 Here are some tips for WFL development.
@@ -224,6 +223,44 @@ If an API references an undefined spec, HTTP requests and responses might
 silently fail or the Swagger page will fail to render. Check the
 `clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
 hair out.
+
+You can quickly check that the Swagger page renders
+by first starting a local WFL server.
+
+``` shell
+./ops/server.sh
+```
+
+Then open this URL in a browser.
+
+``` shell
+open http://localhost:3000/swagger/swagger.json
+```
+
+You should see a page of valid Swagger JSON
+describing the API.
+
+You need to start the UI server too
+if you want to see the swagger page rendered.
+With the local WFL server running on port 3000 as above,
+start the UI this way.
+
+``` shell
+cd ./ui
+npm run serve
+```
+
+With the UI running,
+open this URL in the browser.
+
+``` shell
+open http://localhost:8080/
+```
+
+Click the `LOGIN WITH GOOGLE` button if necessary,
+Then the `SWAGGER API` button at the upper right.
+You should see an interactive Swagger API page.
+
 
 ### debugging Liquibase locally
 

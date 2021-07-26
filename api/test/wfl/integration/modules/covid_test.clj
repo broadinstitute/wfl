@@ -18,8 +18,8 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
-           [java.util ArrayDeque UUID]
-           [wfl.util UserException]))
+           [java.util UUID]
+           [wfl.util  UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)

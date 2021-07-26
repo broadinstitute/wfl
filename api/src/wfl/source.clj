@@ -1,5 +1,6 @@
 (ns wfl.source
   (:require [clojure.edn           :as edn]
+            [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
             [clojure.tools.logging :as log]
@@ -14,6 +15,7 @@
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
+           [java.time.temporal ChronoUnit]
            [wfl.util UserException]))
 
 ;; specs
@@ -92,6 +94,14 @@
    :column          :table_column_name
    :snapshotReaders :snapshot_readers})
 
+(def ^:private bigquery-datetime-format
+  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+
+(defn ^:private timestamp-to-offsetdatetime
+  "Parse the Timestamp `t` into an `OffsetDateTime`."
+  [^Timestamp t]
+  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
+
 (defn ^:private create-tdr-source [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
@@ -147,16 +157,39 @@
                                   column dataset)
       (assoc source :dataset dataset))))
 
+(defn combine-tdr-source-details
+  "Reduce to `result` by combining the Terra Data Repo source `_detail`.
+  Collect `datarepo_row_ids` already seen while preserving the latest
+  `end_time` and the earliest `start_time`."
+  [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
+                  start_time] :as _detail}]
+  (if (#{"running" "succeeded"} snapshot_creation_job_status)
+    (-> result
+        (update :datarepo_row_ids into          datarepo_row_ids)
+        (update :end_time         util/latest   end_time)
+        (update :start_time       util/earliest start_time))
+    result))
+
 (defn ^:private find-new-rows
-  "Find new rows in TDR by querying the dataset between the `interval`."
-  [{:keys [dataset table column] :as source}
-   [start end                    :as interval]]
+  "Query TDR for rows within `_interval` that are new to `source`."
+  [{:keys [dataset details table column] :as source}
+   [begin end                            :as _interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                     (log-prefix source) (:name dataset) table start end))
-  (-> dataset
-      (datarepo/query-table-between table column interval [:datarepo_row_id])
-      :rows
-      flatten))
+                     (log-prefix source) (:name dataset) table begin end))
+  (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (postgres/get-table tx details))
+        old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
+        start (if-let [start_time (:start_time old)]
+                (-> start_time
+                    (util/latest (instant/read-instant-timestamp begin))
+                    timestamp-to-offsetdatetime
+                    (.format bigquery-datetime-format))
+                begin)
+        tdr   (-> dataset
+                  (datarepo/query-table-between
+                   table column [start end] [:datarepo_row_id])
+                  :rows flatten)]
+    (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -243,18 +276,13 @@
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
 
-(defn ^:private timestamp-to-offsetdatetime
-  "Parse the Timestamp `t` into an `OffsetDateTime`."
-  [^Timestamp t]
-  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
-
-(def ^:private bigquery-datetime-format
-  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
-
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [dataset table last_checked] :as source} utc-now]
-  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+  (let [checked      (timestamp-to-offsetdatetime last_checked)
+        hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked utc-now)))
+        then         (.minusHours utc-now hours-ago)
+        shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
