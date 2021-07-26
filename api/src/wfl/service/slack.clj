@@ -34,7 +34,7 @@
    statuses, so we need to parse the `body`
    to raise for status."
   [body]
-  (let [response (-> body json/read-str)]
+  (let [response (json/read-str body)]
     (prn (get response "error"))
     (when-not (get response "ok")
       (throw (ex-info "failed to notify via Slack"
