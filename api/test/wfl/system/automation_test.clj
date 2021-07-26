@@ -2,7 +2,7 @@
   (:require [clojure.test          :refer [deftest is]]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
-            [wfl.service.cromwell  :refer [final-statuses]]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.firecloud :as firecloud]
             [wfl.util              :as util]
             [wfl.tools.endpoints   :as endpoints]
@@ -53,7 +53,7 @@
   (fixtures/with-fixtures
     [(util/bracket clone-workspace delete-workspace)]
     (fn [[workspace]]
-      (let [finished? (comp (set final-statuses) :status)
+      (let [finished? (comp cromwell/final? :status)
             workload  (endpoints/create-workload
                        (covid-workload-request workspace))]
         (endpoints/start-workload workload)
