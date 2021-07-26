@@ -20,7 +20,7 @@
     (with-redefs-fn
       {#'slack/start-notification-loop
        #(future (send-off % #'slack/send-notification)
-          (util/sleep-seconds 1))
+                (util/sleep-seconds 1))
        #'slack/post-message
        post-message-assertion-wrapper}
       #(slack/start-notification-loop testing-agent))))
