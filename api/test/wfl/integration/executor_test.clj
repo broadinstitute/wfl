@@ -144,7 +144,7 @@
 
 ;; When we create submissions, workflows have no uuid or status.
 (defn ^:private mock-firecloud-create-submission [& _]
-  (let [enqueue #(-> % (dissoc :workflowId :status))]
+  (let [enqueue #(dissoc % :workflowId :status)]
     {:submissionId submission-id-mock
      :workflows    (map enqueue [running-workflow-from-submission
                                  succeeded-workflow-from-submission])}))
@@ -166,14 +166,15 @@
   (mock-firecloud-get-workflow workflow-id "Succeeded"))
 
 (defn ^:private mock-firecloud-get-known-workflow [_ _ workflow-id]
-  (let [status
-        (cond (= running-workflow-id-mock workflow-id)   "Running"
-              (= succeeded-workflow-id-mock workflow-id) "Succeeded"
-              :else (throw (ex-info "Workflow ID does not match known workflow"
-                                    {:running-workflow-id-mock   running-workflow-id-mock
-                                     :succeeded-workflow-id-mock succeeded-workflow-id-mock
-                                     :actual                     workflow-id})))]
-    (mock-firecloud-get-workflow workflow-id status)))
+  (mock-firecloud-get-workflow
+   workflow-id
+   (cond (= workflow-id running-workflow-id-mock)   "Running"
+         (= workflow-id succeeded-workflow-id-mock) "Succeeded"
+         :else (throw
+                (ex-info "Workflow ID does not match known workflow"
+                         {:running-workflow-id-mock   running-workflow-id-mock
+                          :succeeded-workflow-id-mock succeeded-workflow-id-mock
+                          :actual                     workflow-id})))))
 
 (defn ^:private mock-firecloud-get-workflow-outputs [_ _ workflow-id]
   (is (= succeeded-workflow-id-mock workflow-id)
@@ -300,9 +301,10 @@
            executor (create-terra-executor (rand-int 1000000))
            _        (executor/update-executor! source executor)
            record   (#'executor/peek-terra-executor-details executor)]
-       (is (and (= succeeded-workflow-id-mock (:workflow record))
-                (= "Succeeded" (:status record)))
-           "Peeked record should match succeeded workflow")
+       (is (= succeeded-workflow-id-mock (:workflow record))
+           "Peeked record's workflow uuid should match succeeded workflow's")
+       (is (= "Succeeded" (:status record))
+           "Peeked record's status should match succeeded workflow's")
        (is (== 2 (stage/queue-length executor))
            "Both running and succeeded workflows in submission should be counted in queue length")
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
