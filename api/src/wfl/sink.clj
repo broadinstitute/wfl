@@ -11,7 +11,7 @@
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
             [wfl.stage             :as stage]
-            [wfl.util              :as util :refer [do-or-nil utc-now]])
+            [wfl.util              :as util])
   (:import [clojure.lang ExceptionInfo]
            [wfl.util UserException]))
 
@@ -161,7 +161,7 @@
       (log/info (str/join " " ["sunk workflow" uuid "to" workspace "as" name]))
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/insert! tx details {:entity   name
-                                  :updated  (utc-now)
+                                  :updated  (util/utc-now)
                                   :workflow uuid})))))
 
 (defn ^:private terra-workspace-sink-done? [_sink] true)

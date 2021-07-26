@@ -2,7 +2,6 @@
   (:require [clojure.data.json           :as json]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
-            [wfl.module.covid            :as covid]
             [wfl.service.datarepo        :as datarepo]
             [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]

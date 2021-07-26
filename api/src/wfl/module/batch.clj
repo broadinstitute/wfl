@@ -20,6 +20,24 @@
 (s/def ::executor string?)
 (s/def ::creator string?)
 
+;; This is the wrong thing to do. See [1] for more information.
+;; As a consequence, I've included the keys for a covid pipeline as optional
+;; inputs for batch workloads so that these keys are not removed during
+;; coercion.
+;; [1]: https://github.com/metosin/reitit/issues/494
+(s/def ::workload-request
+  (s/keys :opt-un [::all/common
+                   ::all/input
+                   :wfl.api.spec/items
+                   ::all/labels
+                   ::all/output
+                   ::all/sink
+                   ::source/source
+                   ::all/watchers]
+          :req-un [(or ::all/cromwell ::executor)
+                   ::all/pipeline
+                   ::all/project]))
+
 (s/def ::workload-response (s/keys :opt-un [::all/finished
                                             ::all/input
                                             ::all/started
@@ -45,11 +63,9 @@
       util/parse-json
       :status))
 
-(def ^:private finished?
-  "Test if a workflow `:status` is in a terminal state."
-  (set (conj cromwell/final-statuses "skipped")))
-
-(defn make-update-workflows [get-status!]
+(defn make-update-workflows
+  "Call `get-status!` under `tx` to update workflow statuses in `workload`."
+  [get-status!]
   (fn [tx {:keys [items] :as workload}]
     (letfn [(update! [{:keys [id uuid]} status]
               (jdbc/update! tx items
@@ -59,15 +75,14 @@
                             ["id = ?" id]))]
       (->> (workloads/workflows tx workload)
            (remove (comp nil? :uuid))
-           (remove (comp finished? :status))
+           (remove (comp cromwell/final? :status))
            (run! #(update! % (get-status! workload %)))))))
 
 (def update-workflow-statuses!
-  "Use `tx` to update `status` of Cromwell `workflows` in a `workload`."
-  (letfn [(get-cromwell-status [{:keys [executor]} {:keys [uuid]}]
-            (if (util/uuid-nil? uuid)
-              "skipped"
-              (cromwell-status executor uuid)))]
+  "Update the status of `_workflow` in `workload`."
+  (letfn [(get-cromwell-status [{:keys [executor] :as _workload}
+                                {:keys [uuid]     :as _workflow}]
+            (cromwell-status executor uuid))]
     (make-update-workflows get-cromwell-status)))
 
 (defn batch-update-workflow-statuses!
@@ -85,10 +100,10 @@
 
 (defn active-workflows
   "Use `tx` to query all the workflows in `_workload` whose :status is not in
-  `finished?`"
+  `final?`"
   [tx {:keys [items] :as _workload}]
   (let [query "SELECT id FROM %s WHERE status IS NULL OR status NOT IN %s"]
-    (->> (util/to-quoted-comma-separated-list finished?)
+    (->> (util/to-quoted-comma-separated-list cromwell/final?)
          (format query items)
          (jdbc/query tx))))
 
