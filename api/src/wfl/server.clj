@@ -91,7 +91,6 @@
                                  (not (util/email-address? watcher)))
         [channels _]           (split-with slack-channel-watcher? watchers)]
     (log/info (str/join " " ["notifying: " channels]))
-    ;; TODO: use an agent to throttle https://api.slack.com/docs/rate-limits
     (run! #(slack/add-notification slack/notifier {:channel % :message slack-msg}) channels)))
 
 (defn ^:private start-workload-manager
@@ -133,7 +132,6 @@
     (future
       (while true
         (update-workloads)
-        ;; TODO: slack queue consumer using agent here
         (.sleep TimeUnit/SECONDS 20)))
     (slack/start-notification-loop slack/notifier)))
 

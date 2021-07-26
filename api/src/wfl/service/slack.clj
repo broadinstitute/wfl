@@ -82,8 +82,3 @@
   (future (while true
             (send-off agent send-notification)
             (util/sleep-seconds 1))))
-
-(comment
-  (start-notification-loop notifier)
-  (add-notification notifier {:channel "C026PTM4XPA" :message "Hi! :crazysmiley: 1"})
-  (add-notification notifier {:channel "C026PTM4XPA" :message "Hi! :crazysmiley: 2"}))
