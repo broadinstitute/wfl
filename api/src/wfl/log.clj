@@ -51,25 +51,7 @@
 
 (def logging-level
   "The current logging level of the application."
-  (atom {:debug false
-         :info true
-         :notice true
-         :warning true
-         :error true
-         :alert true
-         :critical true
-         :emergency true}))
-
-(defn to-logging-level-edn
-  "Takes a root logging level and converts into an edn."
-  [level]
-  (let [enabler (atom false)
-        edn     (atom {})]
-    (doseq [l levels]
-      (if (= l level)
-        (swap! edn assoc l (reset! enabler true))
-        (swap! edn assoc l @enabler)))
-    @edn))
+  (atom :info))
 
 (defmacro log
   "Log `expression` with `severity` and a optional set of special
@@ -91,8 +73,9 @@
    :logging.googleapis.com/spanId    The span ID within the trace associated with the log entry."
   [severity expression & {:as additional-fields}]
   (let [{:keys [line]} (meta &form)]
-    `(let [x# ~expression]
-       (when (get @logging-level ~severity)
+    `(let [x# ~expression
+           [excl# incl#] (split-with (complement #{@logging-level}) levels)]
+       (when (contains? (set incl#) ~severity)
          (-write *logger*
                  (merge {:timestamp (Instant/now)
                          :severity ~(-> severity name str/upper-case)

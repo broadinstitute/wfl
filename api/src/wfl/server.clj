@@ -125,12 +125,11 @@
   "Start polling for changes to the log level."
   []
   (letfn [(get-logging-level [] (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                  (let [config (config/load-logging-level tx)]
-                                    (->> (if (empty? config)
-                                           :info
-                                           (-> config str/lower-case keyword))
-                                         (log/to-logging-level-edn)
-                                         (reset! log/logging-level)))))]
+                                  (let [config (config/get-config tx "LOGGING_LEVEL")]
+                                    (reset! log/logging-level
+                                            (if (empty? config)
+                                              :info
+                                              (-> config str/lower-case keyword))))))]
     (get-logging-level)
     (future
       (while true

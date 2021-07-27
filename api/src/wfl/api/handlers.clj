@@ -32,7 +32,7 @@
   (log/info (select-keys request [:request-method :uri :body-params]))
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (letfn [(to-result [s] {:level s})]
-      (-> (config/load-logging-level tx)
+      (-> (config/get-config tx "LOGGING_LEVEL")
           to-result
           succeed))))
 

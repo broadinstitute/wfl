@@ -6,22 +6,20 @@
 
 (def ^:private configuration-table "configuration")
 
-(defn load-logging-level
+(defn get-config
   "Use transaction `tx` to load the current logging level of the application."
-  [tx]
-  (let [levels (jdbc/query tx ["SELECT value FROM configuration WHERE key = 'LOGGING_LEVEL' LIMIT 1"])]
-    (if (empty? levels)
+  [tx key]
+  (let [configs (jdbc/query tx ["SELECT value FROM configuration WHERE key = ?" key])]
+    (if (empty? configs)
       (-> :info name str/upper-case)
-      (str/upper-case (get (first levels) :value)))))
+      (str/upper-case (get (first configs) :value)))))
 
 (defn upsert-config
   "Use transaction `tx` to insert or update a configuration row."
   [tx key value]
   (letfn [(get-row [] (jdbc/query tx [(str "SELECT * FROM configuration WHERE key = '" key "' LIMIT 1")]))]
     (if (empty? (get-row))
-      (if (empty? (jdbc/insert! tx configuration-table {:key key :value value}))
-        (throw (ex-info "Unable to insert " key))
-        (get-row))
+      (jdbc/insert! tx configuration-table {:key key :value value})
       (if (empty? (jdbc/update! tx configuration-table {:value value} ["key = ?" key]))
         (throw (ex-info "Unable to update " key))
         (get-row)))))
