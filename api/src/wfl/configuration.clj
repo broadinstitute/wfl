@@ -17,7 +17,7 @@
 (defn upsert-config
   "Use transaction `tx` to insert or update a configuration row."
   [tx key value]
-  (letfn [(get-row [] (jdbc/query tx [(str "SELECT * FROM configuration WHERE key = '" key "' LIMIT 1")]))]
+  (letfn [(get-row [] (jdbc/query tx ["SELECT * FROM configuration WHERE key = ?" key]))]
     (if (empty? (get-row))
       (jdbc/insert! tx configuration-table {:key key :value value})
       (if (empty? (jdbc/update! tx configuration-table {:value value} ["key = ?" key]))
