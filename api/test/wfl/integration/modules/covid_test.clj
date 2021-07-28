@@ -329,7 +329,7 @@
                  app)]
         (is (== 200 status) (pr-str body))))))
 
-(deftest test-retry-workload-is-not-supported
+(deftest test-retry-workload-throws-if-workload-unfinished
   (with-redefs-fn
     {#'source/find-new-rows                   mock-find-new-rows
      #'source/create-snapshots                mock-create-snapshots
@@ -339,8 +339,13 @@
      #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
      #'firecloud/submit-method                mock-firecloud-create-submission
      #'firecloud/get-workflow                 (constantly {:status "Failed"})}
-    #(shared/run-retry-is-not-supported-test!
-      (workloads/covid-workload-request
-       {:skipValidation true}
-       {:skipValidation true}
-       {:skipValidation true}))))
+    #(let [workload-request (workloads/covid-workload-request
+                              {:skipValidation true}
+                              {:skipValidation true}
+                              {:skipValidation true})
+           workload         (workloads/execute-workload! workload-request)
+           failed           (workloads/workflows-by-status workload "Failed")]
+       (is (not (:finished workload)))
+       (is (thrown-with-msg?
+             UserException #"Cannot retry workload before it's finished."
+              (workloads/retry workload failed))))))
