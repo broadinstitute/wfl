@@ -2,9 +2,23 @@
   "Logging for WFL. The severity levels provided here are based off of
    the severity levels supported by GCP's Stackdriver. A list of the supported
    levels can be found here: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
-  (:require [clojure.data.json :as json]
-            [clojure.string    :as str])
+  (:require [clojure.data.json              :as json]
+            [clojure.string                 :as str]
+            [clojure.spec.alpha             :as s])
   (:import [java.time Instant]))
+
+(def levels
+  "A list of the available logging levels the application can use."
+  [:debug :info :notice :warning :error :alert :critical :emergency])
+
+(defn levels-contains?
+  "Validate that the provided label exists."
+  [s]
+  (let [level (-> s str/lower-case keyword)]
+    (some #(= level %) levels)))
+(s/def ::level (s/and string? levels-contains?))
+(s/def ::logging-level-request (s/keys :req-un [::level]))
+(s/def ::logging-level-response (s/keys :req-un [::level]))
 
 (defn ^:private key-fn
   "Preserve the namespace of `key` when qualified."
@@ -35,6 +49,10 @@
   "The logger now."
   stdout-logger)
 
+(def logging-level
+  "The current logging level of the application."
+  (atom :info))
+
 (defmacro log
   "Log `expression` with `severity` and a optional set of special
    fields to provide more information about a logging message.
@@ -55,14 +73,16 @@
    :logging.googleapis.com/spanId    The span ID within the trace associated with the log entry."
   [severity expression & {:as additional-fields}]
   (let [{:keys [line]} (meta &form)]
-    `(let [x# ~expression]
-       (-write *logger*
-               (merge {:timestamp (Instant/now)
-                       :severity ~(-> severity name str/upper-case)
-                       :message x#
-                       :logging.googleapis.com/sourceLocation
-                       {:file ~*file* :line ~line}}
-                      ~additional-fields))
+    `(let [x# ~expression
+           [excl# incl#] (split-with (complement #{@logging-level}) levels)]
+       (when (contains? (set incl#) ~severity)
+         (-write *logger*
+                 (merge {:timestamp (Instant/now)
+                         :severity ~(-> severity name str/upper-case)
+                         :message x#
+                         :logging.googleapis.com/sourceLocation
+                         {:file ~*file* :line ~line}}
+                        ~additional-fields)))
        nil)))
 
 (defmacro debug

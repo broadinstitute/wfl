@@ -45,6 +45,16 @@
                                 (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
+   ["/api/v1/logging_level"
+    {:get  {:no-doc true
+            :summary "Get the current logging level"
+            :handler handlers/get-logging-level
+            :responses {200 {:body ::log/logging-level-response}}
+            :swagger {:tags ["Informational"]}}
+     :post {:summary    "Post a new logging level."
+            :parameters {:query ::log/logging-level-request}
+            :responses  {200 {:body ::log/logging-level-response}}
+            :handler    handlers/update-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::aou/append-to-aou-request}
