@@ -2,8 +2,6 @@
   "Test validation and operations on Sink stage implementations."
   (:require [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.environment       :as env]
-            [wfl.jdbc              :as jdbc]
-            [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.sink              :as sink]
             [wfl.stage             :as stage]
@@ -22,7 +20,7 @@
   {:type testing-queue-type :queue (ArrayDeque. items)})
 
 (defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
+  (-> this :queue .peekFirst))
 
 (defn ^:private testing-queue-pop [this]
   (-> this :queue .removeFirst))
@@ -51,7 +49,12 @@
    (datasets/unique-dataset-request
     (env/getenv "WFL_TDR_DEFAULT_PROFILE") "testing-dataset.json")))
 
-;; Validation tests
+(def ^:private outputs
+  {:outbool   true
+   :outfile   "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
+   :outfloat  (* 4 (Math/atan 1))
+   :outint    27
+   :outstring "Hello, World!"})
 
 ;; Must be a function to capture value of *dataset* after setting up test
 ;; fixtures.
@@ -61,7 +64,7 @@
   {:name        @#'sink/datarepo-sink-name
    :dataset     *dataset*
    :table       "parameters"
-   :fromOutputs {:fileref "some_output_file"}})
+   :fromOutputs {:fileref "outfile"}})
 
 (deftest test-validate-datarepo-sink-with-valid-sink-request
   (is (stage/validate-or-throw (datarepo-sink-request))))
@@ -137,13 +140,6 @@
     (is (= *dataset* (:dataset response)))
     (is (not-any? response [:id :details]))))
 
-(def ^:private outputs
-  {:outbool   true
-   :outfile   "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
-   :outfloat  (* 4 (Math/atan 1))
-   :outint    27
-   :outstring "Hello, World!"})
-
 (deftest test-update-datarepo-sink
   (let [description (resources/read-resource "primitive.edn")
         workflow    {:uuid (UUID/randomUUID) :outputs outputs}
@@ -151,4 +147,10 @@
         sink        (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (is (not (stage/done? sink)))))
+    (while (not (stage/done? sink))
+      (try
+        (sink/update-sink! upstream sink)
+        (util/sleep-seconds 2)
+        (catch UserException _)))
+    (is (stage/done? sink) "failed jobs are no longer considered")
+    (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")))

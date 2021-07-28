@@ -1,4 +1,4 @@
-(ns wfl.workflows
+(ns wfl.tools.workflows
   (:require [clojure.set :as set]))
 
 (defn make-object-type
@@ -52,17 +52,16 @@
          (reduce #(go %1 array-type %2) state value))
        "Map"
        (let [{:keys [keyType valueType]} (:mapType type)]
-         (reduce-kv #(-> (go %1 keyType %2) (go valueType %3)) state value))
+         (reduce-kv #(-> %1 (go keyType %2) (go valueType %3)) state value))
        "Object"
        (let [name->type (make-type-environment type)]
          (reduce-kv #(go %1 (name->type %2) %3) state value))
        "Optional"
        (if value (go state (:optionalType type) value) state)
        "Pair"
-       (let [{:keys [leftType rightType]} (:pairType type)]
-         (-> state
-             (go leftType  (first value))
-             (go rightType (second value))))
+       (let [{:keys [leftType rightType]} (:pairType type)
+             [leftValue rightValue]       value]
+         (-> state (go leftType leftValue) (go rightType rightValue)))
        (f state [(:typeName type) value])))
    init type value))
 

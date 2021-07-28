@@ -1,7 +1,7 @@
 (ns wfl.unit.workflows-test
   (:require [clojure.test        :refer [deftest is testing]]
             [wfl.tools.resources :as resources]
-            [wfl.workflows       :as workflows]
+            [wfl.tools.workflows :as workflows]
             [wfl.util            :as util])
   (:import (clojure.lang ExceptionInfo)))
 

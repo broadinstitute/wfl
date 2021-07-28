@@ -26,7 +26,7 @@
   {:type testing-queue-type :queue (ArrayDeque. items)})
 
 (defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
+  (-> this :queue .peekFirst))
 
 (defn ^:private testing-queue-pop [this]
   (-> this :queue .removeFirst))

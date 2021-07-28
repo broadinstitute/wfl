@@ -2,7 +2,7 @@
   (:require [clojure.test        :refer [deftest is]]
             [wfl.mime-type       :as mime-type]
             [wfl.tools.resources :as resources]
-            [wfl.workflows       :as workflows]))
+            [wfl.tools.workflows :as workflows]))
 
 (deftest test-mime-types
   (let [cases [[".bam"   "application/octet-stream"]

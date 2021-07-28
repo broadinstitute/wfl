@@ -1,6 +1,7 @@
 (ns wfl.sink
   "Workload sink interface and its implementations."
   (:require [clojure.data               :as data]
+            [clojure.data.json          :as json]
             [clojure.edn                :as edn]
             [clojure.set                :as set]
             [clojure.string             :as str]
@@ -13,8 +14,7 @@
             [wfl.service.postgres       :as postgres]
             [wfl.service.rawls          :as rawls]
             [wfl.stage                  :as stage]
-            [wfl.util                   :as util :refer [utc-now]]
-            [wfl.workflows              :as workflows])
+            [wfl.util                   :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
            [wfl.util UserException]))
 
@@ -245,14 +245,11 @@
 
 (defn ^:private peek-job-queue [{:keys [details] :as _sink}]
   (let [query "SELECT * FROM %s
-               WHERE status = 'succeeded' AND consumed IS NOT NULL
-               ORDER BY id ASC
-               LIMIT 1"]
+               WHERE status = 'succeeded' AND consumed IS NULL
+               ORDER BY id LIMIT 1"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
-      (->> (jdbc/query tx (format query details))
-           (map #(update % :type keyword))
-           first))))
+      (first (jdbc/query tx (format query details))))))
 
 (defn ^:private pop-job-queue! [{:keys [details] :as sink}]
   (if-let [{:keys [id]} (peek-job-queue sink)]
@@ -260,78 +257,64 @@
       (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id]))
     (throw (ex-info "TerraDataRepoSink job queue is empty" {:sink sink}))))
 
-(defn ^:private create-file-load-job
-  "Create a bulk FileLoad job to load `files` into the TDR dataset with
-   `dataset-id` under `prefix` using billing profile `tdr-profile`."
-  [tdr-profile dataset-id prefix files]
-  (letfn [(target-name [url]
-            (let [[_ obj] (storage/parse-gs-url url)]
-              (str/join "/" ["" prefix obj])))]
-    (datarepo/bulk-ingest dataset-id tdr-profile
-                          (for [url files] [url (target-name url)]))))
-
-(defn ^:private create-file-ingest-jobs
-  [{:keys [dataset] :as _sink}
-   [description {:keys [outputs uuid] :as _workflow}]]
-  (let [[profile id] (mapv dataset [:defaultProfileId :id])
-        type         (-> description :outputs workflows/make-object-type)]
-    (->> (workflows/get-files [type outputs])
-         (partition-all 1000)
-         (map #(create-file-load-job profile id uuid %)))))
-
-(defn ^:private push-job
-  [job-type {:keys [details] :as _sink} state job]
-  {:pre [(#{:FileLoad :MetadataIngest} job-type)]}
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (jdbc/insert! tx details {:job     job
-                              :type    (name job-type)
-                              :status  "running"
-                              :payload (pr-str state)})))
-
 (defn ^:private update-datarepo-job-statuses
-  [{:keys [details] :as sink}]
+  [{:keys [details] :as _sink}]
   (letfn [(read-active-jobs []
-            (let [query "SELECT id,job FROM %s
+            (let [query "SELECT id, job, workflow FROM %s
                          WHERE status = 'running'
                          ORDER BY id ASC"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (postgres/throw-unless-table-exists tx details)
-                (map (juxt :id :job) (jdbc/query tx (format query details))))))
+                (map (juxt :id :job :workflow)
+                     (jdbc/query tx (format query details))))))
           (write-job-status [job-id status]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (jdbc/update! tx details
                             {:status status :updated (utc-now)}
                             ["id = ?" job-id])))]
-    (doseq [[id job-id] (read-active-jobs)]
+    (doseq [[id job-id workflow] (read-active-jobs)]
       (let [{:keys [job_status] :as job} (datarepo/job-metadata job-id)]
         (write-job-status id job_status)
         (when (= "failed" job_status)
-          (throw (UserException. "A Terra DataRepo ingest job failed"
-                                 {:dataset (get-in sink [:dataset :id])
-                                  :job     job})))))))
+          (throw (UserException. "A DataRepo ingest job failed"
+                                 {:job      job
+                                  :workflow workflow})))))))
 
-(defn ^:private create-metadata-ingest-job [sink [description workflow job-id]])
+(defn ^:private to-dataset-row
+  [fromOutputs {:keys [outputs] :as workflow}]
+  (when-not (map? fromOutputs)
+    (throw (IllegalStateException. "fromOutputs is malformed")))
+  (try
+    (rename-gather outputs fromOutputs)
+    (catch Exception cause
+      (throw (ex-info "Failed to coerce workflow outputs to dataset columns"
+                      {:fromOutputs fromOutputs :workflow workflow}
+                      cause)))))
 
-(defn ^:private start-ingesting-output-files [executor sink]
-  (when-let [item (stage/peek-queue executor)]
-    (doseq [job (create-file-ingest-jobs sink item)]
-      (push-job :FileLoad sink item job))
-    (stage/pop-queue! executor)))
-
-(defn ^:private start-ingesting-output-metadata [sink payload]
-  (->> (util/parse-json payload)
-       (create-metadata-ingest-job sink)
-       (push-job :MetadataIngest sink nil)))
+(defn ^:private start-ingesting-outputs
+  [{:keys [dataset table details fromOutputs]} {:keys [uuid] :as workflow}]
+  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))
+        _    (-> (to-dataset-row fromOutputs workflow)
+                 (json/write-str :escape-slash false)
+                 (storage/upload-content file))
+        job  (datarepo/ingest-table (:id dataset) file table)]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (jdbc/insert! tx details {:job      job
+                                :status   "running"
+                                :workflow uuid}))))
 
 (defn ^:private update-datarepo-sink
   [executor sink]
-  (start-ingesting-output-files executor sink)
+  (when-let [[_ workflow] (stage/peek-queue executor)]
+    (start-ingesting-outputs sink workflow)
+    (stage/pop-queue! executor))
   (update-datarepo-job-statuses sink)
-  (when-let [{:keys [type payload]} (peek-job-queue sink)]
-    (case type
-      :FileLoad       (start-ingesting-output-metadata sink payload)
-      :MetadataIngest (log/info "Sunk outputs!"))
-    (pop-job-queue! sink)))
+  (when-let [{:keys [workflow job]} (peek-job-queue sink)]
+    (try
+      (let [res (datarepo/get-job-result job)]
+        (log/info "Sunk workflow outputs to dataset"
+                  {:dataset (get-in sink [:dataset :id]) :workflow workflow}))
+      (finally
+        (pop-job-queue! sink)))))
 
 (defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s

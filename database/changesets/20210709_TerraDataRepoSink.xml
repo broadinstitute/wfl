@@ -13,17 +13,16 @@
                logicalFilePath="20210709_TerraDataRepoSink.xml"
                runInTransaction="false">
         <comment>
-            The TDR Job Queue used by the `TerraDataRepo` Sink
+            The TDR Job list used by the `TerraDataRepo` Sink
         </comment>
         <sql>
             CREATE TYPE TerraDataRepoSinkDetails AS (
-                id        BIGINT,       -- ALTER ADD GENERATED ALWAYS AS IDENTITY
-                type      TEXT,         -- For dispatching to right handler
-                job       TEXT,         -- UUID of the job created in TDR
-                status    TEXT,         -- As reported by TDR
-                updated   TIMESTAMPTZ,  -- When this record was last updated
-                payload   TEXT,         -- generic JSON payload for the handler
-                consumed  TIMESTAMPTZ   -- when this job was "evicted" from the queue
+                id        BIGINT,      -- ALTER ADD GENERATED ALWAYS AS IDENTITY
+                job       TEXT,        -- ID of the job created in TDR
+                status    TEXT,        -- As reported by TDR
+                workflow  TEXT,        -- The UUID of the workflow this job relates to
+                updated   TIMESTAMPTZ, -- When this record was last updated
+                consumed  TIMESTAMPTZ  -- When this job was "popped"
             )
         </sql>
         <comment>
@@ -35,7 +34,7 @@
                 dataset       TEXT NOT NULL,                                     -- the serialized EDN of the TDR dataset schema
                 dataset_table TEXT NOT NULL,                                     -- the name of the dataset table
                 from_outputs  TEXT NOT NULL,                                     -- mapping of how to coerce the output of executor to whatever the sink understands in serialized EDN
-                details       TEXT NOT NULL,                                     -- the name of the sink details table
+                details       TEXT NOT NULL,                                     -- name of the job queue
                 CONSTRAINT TERRADATAREPOSINK_PKEY PRIMARY KEY (id)
             )
         </sql>

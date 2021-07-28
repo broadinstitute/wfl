@@ -11,8 +11,8 @@
             [wfl.tools.fixtures          :as fixtures]
             [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.resources         :as resources]
-            [wfl.util                    :as util :refer [>>>]]
-            [wfl.workflows               :as workflows])
+            [wfl.tools.workflows         :as workflows]
+            [wfl.util                    :as util :refer [>>>]])
   (:import [java.util UUID]))
 
 (def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
