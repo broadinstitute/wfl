@@ -18,8 +18,8 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
-           [java.util ArrayDeque UUID]
-           [wfl.util UserException]))
+           [java.util UUID]
+           [wfl.util  UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
@@ -49,8 +49,6 @@
 
 ;; Queue mocks
 (def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
 
 (defn ^:private testing-queue-peek [this]
   (-> this :queue .getFirst))

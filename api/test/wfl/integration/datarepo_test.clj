@@ -2,7 +2,6 @@
   (:require [clojure.data.json           :as json]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
-            [wfl.module.covid            :as covid]
             [wfl.service.datarepo        :as datarepo]
             [wfl.service.firecloud       :as firecloud]
             [wfl.service.google.storage  :as gcs]
@@ -18,8 +17,9 @@
 
 (def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
                                 :name "workflow_launcher_testing_dataset"})
-(def ^:private testing-snapshot {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
-                                 :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
+(def ^:private testing-snapshot
+  {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
+   :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
 
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
@@ -151,9 +151,8 @@
   (let [dataset-table "flowcells"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
-        columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
-                          :flowcell
-                          entity-columns)]
+        columns       (-> "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev"
+                          firecloud/list-entity-types :flowcell entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
         (let [entities (-> (datarepo/snapshot (:id testing-snapshot))

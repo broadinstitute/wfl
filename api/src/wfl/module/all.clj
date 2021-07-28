@@ -3,11 +3,10 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [wfl.jdbc :as jdbc]
+            [wfl.service.cromwell :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.util :as util]
-            [wfl.wfl :as wfl]
-            [wfl.service.cromwell :as cromwell]
-            [wfl.service.rawls :as rawls])
+            [wfl.wfl :as wfl])
   (:import [java.util UUID]))
 
 (defn throw-when-output-exists-already!
@@ -112,7 +111,7 @@
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (set (concat cromwell/statuses rawls/statuses ["skipped"])))
+(s/def ::status cromwell/status?)
 (s/def ::started ::timestamp)
 (s/def ::stopped ::timestamp)
 (s/def ::updated ::timestamp)

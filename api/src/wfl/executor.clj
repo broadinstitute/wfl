@@ -340,7 +340,8 @@
   [{:keys [details] :as _executor}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE consumed IS NULL
-               AND   status   NOT IN ('Failed', 'Aborted')"]
+               AND  (status   IS NULL OR
+                     status   NOT IN ('Failed', 'Aborted'))"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -358,7 +359,7 @@
     (map from-record records)))
 
 ;; terra-executor-workflows and terra-executor-workflows-by-status do not return
-;; workflows that are being or have been retied. Why?
+;; workflows that are being or have been retried. Why?
 ;;
 ;; TL/DR: It's simpler maybe?
 ;;
