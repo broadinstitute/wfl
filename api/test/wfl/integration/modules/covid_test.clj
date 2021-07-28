@@ -340,12 +340,12 @@
      #'firecloud/submit-method                mock-firecloud-create-submission
      #'firecloud/get-workflow                 (constantly {:status "Failed"})}
     #(let [workload-request (workloads/covid-workload-request
-                              {:skipValidation true}
-                              {:skipValidation true}
-                              {:skipValidation true})
+                             {:skipValidation true}
+                             {:skipValidation true}
+                             {:skipValidation true})
            workload         (workloads/execute-workload! workload-request)
            failed           (workloads/workflows-by-status workload "Failed")]
        (is (not (:finished workload)))
        (is (thrown-with-msg?
-             UserException #"Cannot retry workload before it's finished."
-              (workloads/retry workload failed))))))
+            UserException #"Cannot retry workload before it's finished."
+            (workloads/retry workload failed))))))
