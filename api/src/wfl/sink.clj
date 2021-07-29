@@ -251,11 +251,11 @@
       (postgres/throw-unless-table-exists tx details)
       (first (jdbc/query tx (format query details))))))
 
-(defn ^:private pop-job-queue! [{:keys [details] :as sink}]
-  (if-let [{:keys [id]} (peek-job-queue sink)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id]))
-    (throw (ex-info "TerraDataRepoSink job queue is empty" {:sink sink}))))
+(defn ^:private pop-job-queue!
+  [{:keys [details] :as _sink} {:keys [id] :as _job}]
+  {:pre [(some? id) (integer? id)]}
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id])))
 
 (defn ^:private update-datarepo-job-statuses
   [{:keys [details] :as _sink}]
@@ -308,13 +308,13 @@
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
   (update-datarepo-job-statuses sink)
-  (when-let [{:keys [workflow job]} (peek-job-queue sink)]
+  (when-let [{:keys [workflow job] :as record} (peek-job-queue sink)]
     (try
       (let [res (datarepo/get-job-result job)]
         (log/info "Sunk workflow outputs to dataset"
                   {:dataset (get-in sink [:dataset :id]) :workflow workflow}))
       (finally
-        (pop-job-queue! sink)))))
+        (pop-job-queue! sink record)))))
 
 (defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s

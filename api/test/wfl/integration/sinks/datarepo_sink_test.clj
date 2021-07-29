@@ -1,17 +1,16 @@
 (ns wfl.integration.sinks.datarepo-sink-test
   "Test validation and operations on Sink stage implementations."
-  (:require [clojure.test          :refer [deftest is use-fixtures]]
-            [wfl.environment       :as env]
-            [wfl.service.postgres  :as postgres]
-            [wfl.sink              :as sink]
-            [wfl.stage             :as stage]
-            [wfl.tools.datasets    :as datasets]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.tools.resources   :as resources]
-            [wfl.tools.workloads   :refer [evalT]]
-            [wfl.util              :as util])
-  (:import [clojure.lang ExceptionInfo]
-           [java.util ArrayDeque UUID]
+  (:require [clojure.test :refer [deftest is use-fixtures]]
+            [wfl.environment :as env]
+            [wfl.service.postgres :as postgres]
+            [wfl.sink :as sink]
+            [wfl.stage :as stage]
+            [wfl.tools.datasets :as datasets]
+            [wfl.tools.fixtures :as fixtures]
+            [wfl.tools.resources :as resources]
+            [wfl.tools.workloads :refer [evalT]]
+            [wfl.util :as util])
+  (:import [java.util ArrayDeque UUID]
            [wfl.util UserException]))
 
 ;; Queue mocks
@@ -131,14 +130,20 @@
 (deftest test-data-repo-job-queue-operations
   (let [sink (create-and-load-datarepo-sink)]
     (is (nil? (#'sink/peek-job-queue sink)))
-    (is (thrown-with-msg?
-         ExceptionInfo #"TerraDataRepoSink job queue is empty"
-         (#'sink/pop-job-queue! sink)))))
+    (is (thrown? AssertionError (#'sink/pop-job-queue! sink {})))))
 
 (deftest test-datarepo-sink-to-edn
   (let [response (util/to-edn (create-and-load-datarepo-sink))]
     (is (= *dataset* (:dataset response)))
     (is (not-any? response [:id :details]))))
+
+(defmacro throws? [exception-type]
+  (let [task (gensym)]
+    `(fn [~task] (is ~(list 'thrown? exception-type (list task))))))
+
+(defn eventually [assert task & opts]
+  (let [{:keys [interval times]} (apply hash-map opts)]
+    (assert #(util/poll task (or interval 1) (or times 5)))))
 
 (deftest test-update-datarepo-sink
   (let [description (resources/read-resource "primitive.edn")
@@ -147,10 +152,7 @@
         sink        (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (while (not (stage/done? sink))
-      (try
-        (sink/update-sink! upstream sink)
-        (util/sleep-seconds 2)
-        (catch UserException _)))
+    (eventually (throws? UserException) #(sink/update-sink! upstream sink)
+                :interval 5)
     (is (stage/done? sink) "failed jobs are no longer considered")
     (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")))
