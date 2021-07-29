@@ -141,9 +141,9 @@
   (let [task (gensym)]
     `(fn [~task] (is ~(list 'thrown? exception-type (list task))))))
 
-(defn eventually [assert task & opts]
+(defn eventually [assertion task & opts]
   (let [{:keys [interval times]} (apply hash-map opts)]
-    (assert #(util/poll task (or interval 1) (or times 5)))))
+    (assertion #(util/poll task (or interval 1) (or times 5)))))
 
 (deftest test-update-datarepo-sink
   (let [description (resources/read-resource "primitive.edn")
