@@ -102,6 +102,8 @@
   (log/info (select-keys request [:request-method :uri :parameters]))
   (let [uuid   (get-in request [:path-params :uuid])
         status (get-in request [:body-params :status])]
+    ;; TODO: if status='Succeeded', no op / error?
+    ;; TODO: if no workflows found, no op / error?
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (let [w (workloads/load-workload-for-uuid tx uuid)]
              [w (workloads/workflows-by-status tx w status)]))
