@@ -10,8 +10,7 @@
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
-            [wfl.stage             :as stage :refer [log-prefix
-                                                     throw-if-no-details-table]]
+            [wfl.stage             :as stage :refer [log-prefix]]
             [wfl.util              :as util :refer [map-keys utc-now]])
   (:import [wfl.util UserException]))
 
@@ -423,7 +422,7 @@
 (defn ^:private terra-executor-workflows
   "Return all the non-retried workflows executed by the `executor`."
   [tx {:keys [details] :as executor}]
-  (throw-if-no-details-table tx executor)
+  (postgres/throw-unless-table-exists tx details)
   (let [query "SELECT * FROM %s
                WHERE workflow IS NOT NULL
                AND   retry    IS NULL
@@ -436,7 +435,7 @@
   "Return all the non-retried workflows matching `status` executed by the
   `executor`."
   [tx {:keys [details] :as executor} status]
-  (throw-if-no-details-table tx executor)
+  (postgres/throw-unless-table-exists tx details)
   (let [query "SELECT * FROM %s
                WHERE workflow IS NOT NULL
                AND retry      IS NULL
@@ -451,7 +450,7 @@
   Return a mapping of the submission reference (ex. snapshot reference id)
   to their associated workflow records."
   [tx {:keys [details] :as executor} workflows]
-  (throw-if-no-details-table tx executor)
+  (postgres/throw-unless-table-exists tx details)
   (let [workflow-ids (util/to-quoted-comma-separated-list (map :uuid workflows))
         _            (-> "%s Fetching submission IDs linked to workflows %s"
                          (format (log-prefix executor) workflow-ids)
