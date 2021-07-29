@@ -446,9 +446,9 @@
      executor
      (jdbc/query tx [(format query details) status]))))
 
-(defn ^:private reference-id-to-workflow-records
+(defn ^:private reference-to-workflow-records
   "Find all submission IDs associated with `workflows`.
-  Return a mapping of the submissions' snapshot reference IDs
+  Return a mapping of the submission reference (ex. snapshot reference id)
   to their associated workflow records."
   [tx {:keys [details] :as executor} workflows]
   (throw-if-no-details-table tx executor)
@@ -466,6 +466,19 @@
     (->> (format query details details workflow-ids)
          (jdbc/query tx)
          (group-by :reference))))
+
+(defn ^:private entity-from-id
+  "Use `fromSource` to direct fetch of existing `workspace` entity
+  identified by `entity-id`."
+  [{:keys [workspace fromSource] :as executor} entity-id]
+  (when-not (= "importSnapshot" fromSource)
+    (throw (ex-info (str "Unknown workspace entity type, "
+                         "expected fromSource=\"importSnapshot\".")
+                    {:executor  executor
+                     :entity-id entity-id})))
+  (log/debug (format "%s Getting snapshot reference with id %s in %s..."
+                     (log-prefix executor) entity-id workspace))
+  (rawls/get-snapshot-reference workspace entity-id))
 
 (defn update-retried-workflows
   "Match `original-records` with `retry-records` on entity uuid,
@@ -505,18 +518,16 @@
          (write-retries (utc-now)))))
 
 (defn ^:private retry-terra-executor
-  "Resubmit the entities associated with `workflows` in `workspace`
+  "Resubmit the entities associated with `workflows` in `executor` workspace
   and update each original workflow with the row ID of its retry."
-  [{:keys [workspace] :as executor} workflows]
-  ;; TODO: need some sort of fromSource check/coercion:
-  ;; may not always be dealing with references, should handle generic entity.
-  (letfn [(retried-workflow-records [reference-id]
-            (let [reference (rawls/get-snapshot-reference workspace reference-id)]
-              (->> reference
+  [executor workflows]
+  (letfn [(retried-workflow-records [entity-id]
+            (let [entity (entity-from-id executor entity-id)]
+              (->> entity
                    (create-submission! executor)
-                   (allocate-submission executor reference))))]
+                   (allocate-submission executor entity))))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (reference-id-to-workflow-records tx executor workflows))
+           (reference-to-workflow-records tx executor workflows))
          (map-keys retried-workflow-records)
          (run! (partial update-retried-workflows executor)))))
 
