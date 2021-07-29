@@ -33,6 +33,11 @@
        (count)
        (not= 0)))
 
+(defn throw-unless-table-exists
+  [tx table-name]
+  (when-not (and table-name (table-exists? tx table-name))
+    (throw (ex-info "Table not found" {:table table-name}))))
+
 (defn get-table
   "Return TABLE using transaction TX sorted by row id."
   [tx table]
