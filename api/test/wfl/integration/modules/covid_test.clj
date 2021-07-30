@@ -12,13 +12,13 @@
             [wfl.integration.modules.shared :as shared]
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.rawls              :as rawls]
-            [wfl.stage                      :as stage]
             [wfl.source                     :as source]
             [wfl.tools.fixtures             :as fixtures]
+            [wfl.tools.queues               :refer [make-queue-from-list]]
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
-           [java.util ArrayDeque UUID]
+           [java.util UUID]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
@@ -47,38 +47,13 @@
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
-
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_TDR_URL"       "https://data.terra.bio"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
 
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database
-    (fixtures/method-overload-fixture
-     stage/peek-queue testing-queue-type testing-queue-peek)
-    (fixtures/method-overload-fixture
-     stage/pop-queue! testing-queue-type testing-queue-pop)
-    (fixtures/method-overload-fixture
-     stage/queue-length testing-queue-type testing-queue-length)
-    (fixtures/method-overload-fixture
-     stage/done? testing-queue-type testing-queue-done?)))
+    fixtures/temporary-postgresql-database))
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]

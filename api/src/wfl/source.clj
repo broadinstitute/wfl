@@ -172,7 +172,7 @@
   "Check TDR job status for `job-id`, return a map with job-id,
    snapshot_id and job_status if job has failed or succeeded, otherwise nil."
   [job-id]
-  (let [{:keys [job_status] :as result} (datarepo/get-job-metadata job-id)]
+  (let [{:keys [job_status] :as result} (datarepo/job-metadata job-id)]
     (case job_status
       "running"   result
       "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))

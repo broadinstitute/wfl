@@ -1,20 +1,21 @@
 (ns wfl.sink
   "Workload sink interface and its implementations."
-  (:require [clojure.data          :as data]
-            [clojure.edn           :as edn]
-            [clojure.set           :as set]
-            [clojure.string        :as str]
-            [clojure.tools.logging :as log]
-            [wfl.api.workloads     :refer [defoverload]]
-            [wfl.jdbc              :as jdbc]
-            [wfl.service.datarepo  :as datarepo]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.service.postgres  :as postgres]
-            [wfl.service.rawls     :as rawls]
-            [wfl.stage             :as stage]
-            [wfl.util              :as util :refer [utc-now]])
+  (:require [clojure.data               :as data]
+            [clojure.data.json          :as json]
+            [clojure.edn                :as edn]
+            [clojure.set                :as set]
+            [clojure.string             :as str]
+            [clojure.tools.logging      :as log]
+            [wfl.api.workloads          :refer [defoverload]]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.service.datarepo       :as datarepo]
+            [wfl.service.firecloud      :as firecloud]
+            [wfl.service.google.storage :as storage]
+            [wfl.service.postgres       :as postgres]
+            [wfl.service.rawls          :as rawls]
+            [wfl.stage                  :as stage]
+            [wfl.util                   :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
-           [org.apache.commons.lang3 NotImplementedException]
            [wfl.util UserException]))
 
 ;; Interface
@@ -242,14 +243,97 @@
                                 :fromOutputs fromOutputs}))))
     (assoc request :dataset dataset')))
 
-(defn ^:private update-datarepo-sink
-  [_executor _sink]
-  (throw (NotImplementedException. "update-datarepo-sink")))
+(defn ^:private push-job [{:keys [details] :as _sink} job]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/insert! tx details job)))
 
-(defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
+(defn ^:private peek-job-queue [{:keys [details] :as _sink}]
+  (let [query "SELECT * FROM %s
+               WHERE status = 'succeeded' AND consumed IS NULL
+               ORDER BY id LIMIT 1"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (postgres/throw-unless-table-exists tx details)
+      (first (jdbc/query tx (format query details))))))
+
+(defn ^:private pop-job-queue!
+  [{:keys [details] :as _sink} {:keys [id] :as _job}]
+  {:pre [(some? id) (integer? id)]}
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id])))
+
+(defn ^:private update-datarepo-job-statuses
+  "Fetch and record the status of all 'running' jobs from tdr created by the
+   `sink`. Throws `UserException` when any new job status is `failed`."
+  [{:keys [details] :as _sink}]
+  (letfn [(read-active-jobs []
+            (let [query "SELECT id, job, workflow FROM %s
+                         WHERE status = 'running'
+                         ORDER BY id ASC"]
+              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (map (juxt :id :job :workflow)
+                     (jdbc/query tx (format query details))))))
+          (write-job-status [id status]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (jdbc/update! tx details
+                            {:status status :updated (utc-now)}
+                            ["id = ?" id])))]
+    (doseq [[id job-id workflow] (read-active-jobs)]
+      (let [job    (datarepo/job-metadata job-id)
+            status (-> job :job_status str/lower-case)]
+        (write-job-status id status)
+        (when (= "failed" status)
+          (throw (UserException. "A DataRepo ingest job failed"
+                                 {:job      job
+                                  :workflow workflow})))))))
+
+(defn ^:private to-dataset-row
+  "Use `fromOutputs` to coerce the `workflow` outputs into a row in the dataset
+   where `fromOutputs` describes a mapping from workflow outputs to columns in
+   the dataset table."
+  [fromOutputs {:keys [outputs] :as workflow}]
+  (when-not (map? fromOutputs)
+    (throw (IllegalStateException. "fromOutputs is malformed")))
+  (try
+    (rename-gather outputs fromOutputs)
+    (catch Exception cause
+      (throw (ex-info "Failed to coerce workflow outputs to dataset columns"
+                      {:fromOutputs fromOutputs :workflow workflow}
+                      cause)))))
+
+(defn ^:private start-ingesting-outputs
+  "Start ingesting the `workflow` outputs as a new row in the target dataset
+   and push the tdr ingest job into the `sink`'s job queue."
+  [{:keys [dataset table fromOutputs] :as sink}
+   {:keys [uuid] :as workflow}]
+  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))]
+    (-> (to-dataset-row fromOutputs workflow)
+        (json/write-str :escape-slash false)
+        (storage/upload-content file))
+    (->> (datarepo/ingest-table (:id dataset) file table)
+         (assoc {:status "running" :workflow uuid} :job)
+         (push-job sink))))
+
+(defn ^:private update-datarepo-sink
+  "Attempt to a pull a workflow off the upstream `executor` queue and write its
+   outputs as new rows in a tdr dataset table asynchronously."
+  [executor sink]
+  (when-let [[_ workflow] (stage/peek-queue executor)]
+    (start-ingesting-outputs sink workflow)
+    (stage/pop-queue! executor))
+  (update-datarepo-job-statuses sink)
+  (when-let [{:keys [workflow job] :as record} (peek-job-queue sink)]
+    (try
+      (let [res (datarepo/get-job-result job)]
+        (log/info "Sunk workflow outputs to dataset"
+                  {:dataset (get-in sink [:dataset :id]) :workflow workflow}))
+      (finally
+        (pop-job-queue! sink record)))))
+
+(defn ^:private datarepo-sink-done?
+  "True when all tdr ingest jobs created by the `_sink` have terminated."
+  [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
-               WHERE status   <> 'failed'
-               AND   consumed IS NOT NULL"]
+               WHERE status <> 'failed' AND consumed IS NULL"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
       (-> (jdbc/query tx (format query details)) first :count zero?))))
@@ -257,6 +341,7 @@
 (defn ^:private datarepo-sink-to-edn [sink]
   (-> sink
       (util/select-non-nil-keys (keys datarepo-sink-serialized-fields))
+      (update :dataset :id)
       (assoc :name datarepo-sink-name)))
 
 (defoverload stage/validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)

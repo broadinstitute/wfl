@@ -8,9 +8,9 @@
             [wfl.sink              :as sink]
             [wfl.stage             :as stage]
             [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.queues      :refer [make-queue-from-list]]
             [wfl.tools.resources   :as resources])
-  (:import [java.util ArrayDeque]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 ;; Workspace
 (def ^:private testing-namespace "wfl-dev")
@@ -20,36 +20,11 @@
 (def ^:private testing-entity-type "flowcell")
 (def ^:private testing-entity-name "test")
 
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
-
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database
-    (fixtures/method-overload-fixture
-     stage/peek-queue testing-queue-type testing-queue-peek)
-    (fixtures/method-overload-fixture
-     stage/pop-queue! testing-queue-type testing-queue-pop)
-    (fixtures/method-overload-fixture
-     stage/queue-length testing-queue-type testing-queue-length)
-    (fixtures/method-overload-fixture
-     stage/done? testing-queue-type testing-queue-done?)))
+    fixtures/temporary-postgresql-database))
 
 ;; Validation tests
 

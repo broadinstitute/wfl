@@ -105,7 +105,7 @@
   ([job-id]
    (poll-job job-id 5)))
 
-(defn get-job-metadata
+(defn job-metadata
   "Return the metadata of job with `job-id` when done."
   [job-id]
   {:pre [(some? job-id)]}
