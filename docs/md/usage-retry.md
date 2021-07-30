@@ -1,3 +1,26 @@
+# Retry Workflows in Terra
+
+WFL has `/retry` endpoint
+that selects workflows
+by their completion status
+and re-submits them.
+
+The following `curl` shell command
+finds the workflows with the status `"Failed"`
+in the workload with `$UUID`
+and resubmits them for processing.
+
+```bash
+export WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
+export AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
+export UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
+
+curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '"Failed"' | jq
+```
+
+The `/retry` endpoint is not yet implemented.
+and returns a `501` HTTP failure status.
+
 # Retrying Failures via WFL
 
 WFL remembers enough about submissions to let you quickly resubmit failed
