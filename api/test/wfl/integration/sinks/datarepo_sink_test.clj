@@ -1,47 +1,23 @@
 (ns wfl.integration.sinks.datarepo-sink-test
   "Test validation and operations on Sink stage implementations."
-  (:require [clojure.test :refer [deftest is use-fixtures]]
-            [wfl.environment :as env]
+  (:require [clojure.test         :refer [deftest is use-fixtures]]
+            [wfl.environment      :as env]
             [wfl.service.postgres :as postgres]
-            [wfl.sink :as sink]
-            [wfl.stage :as stage]
-            [wfl.tools.datasets :as datasets]
-            [wfl.tools.fixtures :as fixtures]
-            [wfl.tools.resources :as resources]
-            [wfl.tools.workloads :refer [evalT]]
-            [wfl.util :as util])
-  (:import [java.util ArrayDeque UUID]
+            [wfl.sink             :as sink]
+            [wfl.stage            :as stage]
+            [wfl.tools.datasets   :as datasets]
+            [wfl.tools.fixtures   :as fixtures]
+            [wfl.tools.queues     :refer [make-queue-from-list]]
+            [wfl.tools.resources  :as resources]
+            [wfl.tools.workloads  :refer [evalT]]
+            [wfl.util             :as util])
+  (:import [java.util UUID]
            [wfl.util UserException]))
-
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .peekFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .isEmpty))
 
 (def ^:private ^:dynamic *dataset*)
 
 (use-fixtures :once
   fixtures/temporary-postgresql-database
-  (fixtures/method-overload-fixture
-   stage/peek-queue testing-queue-type testing-queue-peek)
-  (fixtures/method-overload-fixture
-   stage/pop-queue! testing-queue-type testing-queue-pop)
-  (fixtures/method-overload-fixture
-   stage/queue-length testing-queue-type testing-queue-length)
-  (fixtures/method-overload-fixture
-   stage/done? testing-queue-type testing-queue-done?)
   (fixtures/bind-fixture
    *dataset*
    fixtures/with-temporary-dataset
