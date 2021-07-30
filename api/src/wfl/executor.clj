@@ -240,17 +240,19 @@
              (map zip-record (sort-by :entity records))
              (write-workflow-statuses (utc-now)))))))
 
+(def ^:private final-statuses (util/to-quoted-comma-separated-list rawls/final-statuses))
+
 (defn ^:private update-terra-workflow-statuses!
-  "Update statuses in `details` table for active or failed `workspace` workflows."
+  "Update statuses in `details` table for active `workspace` workflows."
   [{:keys [workspace details] :as executor}]
-  (letfn [(read-active-or-failed-workflows []
+  (letfn [(read-active-workflows []
             (let [query "SELECT * FROM %s
                          WHERE submission IS NOT NULL
                          AND   workflow   IS NOT NULL
-                         AND   status     NOT IN ('Succeeded', 'Aborted')
+                         AND   status     NOT IN %s
                          ORDER BY id ASC"]
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (jdbc/query tx (format query details)))))
+                (jdbc/query tx (format query details final-statuses)))))
           (update-status-from-firecloud
             [{:keys [submission workflow] :as record}]
             (->> (firecloud/get-workflow workspace submission workflow)
@@ -263,10 +265,9 @@
                  (jdbc/update! tx details {:status status :updated now}
                                ["id = ?" id]))
                (sort-by :entity records))))]
-    (log/debug (format "%s Updating statuses for eligible workflows..."
+    (log/debug (format "%s Updating statuses for active workflows..."
                        (log-prefix executor)))
-    ;; TODO: do we still need to update failed statuses in light of retry design?
-    (->> (read-active-or-failed-workflows)
+    (->> (read-active-workflows)
          (mapv update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))
 
@@ -445,19 +446,26 @@
      executor
      (jdbc/query tx [(format query details) status]))))
 
-(defn ^:private reference-to-workflow-records
+(defn ^:private reference-id-to-workflow-records
   "Find all submission IDs associated with `workflows`.
-  Return a mapping of the submission reference (ex. snapshot reference id)
+  Return a mapping of the submissions' snapshot reference IDs
   to their associated workflow records."
   [tx {:keys [details] :as executor} workflows]
   (postgres/throw-unless-table-exists tx details)
   (let [workflow-ids (util/to-quoted-comma-separated-list (map :uuid workflows))
-        _            (-> "%s Fetching submission IDs linked to workflows %s"
+        _            (-> (str "%s For workflows %s, "
+                              "fetching sibling workflow records by submission")
                          (format (log-prefix executor) workflow-ids)
                          log/debug)
-        ;; Presently Rawls doesn't support submitting a subset of a snapshot:
-        ;; If we wish to retry 1+ workflows stemming from a snapshot,
-        ;; we must resubmit the snapshot in its entirety.
+        ;; 1. Presently Rawls doesn't support submitting a subset of a snapshot:
+        ;;    If we wish to retry 1+ workflows stemming from a snapshot,
+        ;;    we must resubmit the snapshot in its entirety.
+        ;; 2. Though we are technically resubmitting snapshot references
+        ;;    and not submissions, this query takes a submission-based approach.
+        ;;    Why? Because there is no ambiguity when linking a submission
+        ;;    to its workflows.  With the capacity for retries, one reference
+        ;;    may map to multiple sets of workflows, and retrying the reference
+        ;;    should only update the sibling workflow records of those supplied.
         query "SELECT * FROM %s
                WHERE submission IN
                  (SELECT DISTINCT submission FROM %s
@@ -466,20 +474,7 @@
          (jdbc/query tx)
          (group-by :reference))))
 
-(defn ^:private entity-from-id
-  "Use `fromSource` to direct fetch of existing `workspace` entity
-  identified by `entity-id`."
-  [{:keys [workspace fromSource] :as executor} entity-id]
-  (when-not (= "importSnapshot" fromSource)
-    (throw (ex-info (str "Unknown workspace entity type, "
-                         "expected fromSource=\"importSnapshot\".")
-                    {:executor  executor
-                     :entity-id entity-id})))
-  (log/debug (format "%s Getting snapshot reference with id %s in %s..."
-                     (log-prefix executor) entity-id workspace))
-  (rawls/get-snapshot-reference workspace entity-id))
-
-(defn update-retried-workflows
+(defn update-retried-workflow-records
   "Match `original-records` with `retry-records` on entity uuid,
   update each original record to point to its retry record,
   and propagate all updates to `details` table."
@@ -517,18 +512,21 @@
          (write-retries (utc-now)))))
 
 (defn ^:private retry-terra-executor
-  "Resubmit the entities associated with `workflows` in `executor` workspace
-  and update each original workflow with the row ID of its retry."
-  [executor workflows]
-  (letfn [(retried-workflow-records [entity-id]
-            (let [entity (entity-from-id executor entity-id)]
-              (->> entity
+  "Resubmit the snapshot references associated with `workflows` in `workspace`
+  and update each original workflow record with the row ID of its retry."
+  [{:keys [workspace] :as executor} workflows]
+  (letfn [(retried-workflow-records [reference-id]
+            ;; Further work required to deal in generic entities
+            ;; rather than assumed snapshot references:
+            ;; https://broadinstitute.atlassian.net/browse/GH-1422
+            (let [reference (rawls/get-snapshot-reference workspace reference-id)]
+              (->> reference
                    (create-submission! executor)
-                   (allocate-submission executor entity))))]
+                   (allocate-submission executor reference))))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (reference-to-workflow-records tx executor workflows))
+           (reference-id-to-workflow-records tx executor workflows))
          (map-keys retried-workflow-records)
-         (run! (partial update-retried-workflows executor)))))
+         (run! (partial update-retried-workflow-records executor)))))
 
 (defn ^:private terra-executor-done? [executor]
   (zero? (stage/queue-length executor)))

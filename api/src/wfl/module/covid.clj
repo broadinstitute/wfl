@@ -155,13 +155,15 @@
 (defn ^:private retry-covid-workload
   "Retry/resubmit the `workflows` managed by the `workload` and return the
    workload that manages the new workflows."
-  [{:keys [finished id executor] :as workload} workflows]
-  (when-not finished
-    (throw (UserException. "Cannot retry workload before it's finished."
+  [{:keys [started id executor] :as workload} workflows]
+  (when-not started
+    (throw (UserException. "Cannot retry workload before it's been started."
                            {:workload workload})))
-  ;; TODO: validate executor and sink.
-  ;; Existing stage/validate-or-throw dispatches on :name.
-  ;; The workload's executor and sink have :type at this stage, not :name.
+  (when (empty? workflows)
+    (throw (UserException. "No workflows specified to retry in workload."
+                           {:workload workload})))
+  ;; TODO: validate workload's executor and sink objects.
+  ;; https://broadinstitute.atlassian.net/browse/GH-1421
   (executor/retry-executor! executor workflows)
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (when-not (stage/done? executor)

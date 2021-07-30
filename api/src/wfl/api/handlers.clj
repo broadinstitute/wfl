@@ -14,7 +14,8 @@
             [wfl.module.xx]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
-            [wfl.util                       :as util]))
+            [wfl.util                       :as util])
+  (:import  [wfl.util UserException]))
 
 (defn succeed
   "A successful response with BODY."
@@ -102,11 +103,15 @@
   (log/info (select-keys request [:request-method :uri :parameters]))
   (let [uuid   (get-in request [:path-params :uuid])
         status (get-in request [:body-params :status])]
-    ;; TODO: if status='Succeeded', no op / error?
-    ;; TODO: if no workflows found, no op / error?
+    ;; TODO: If status not in whitelist, throw.
+    ;; https://broadinstitute.atlassian.net/browse/GH-1424
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (let [w (workloads/load-workload-for-uuid tx uuid)]
-             [w (workloads/workflows-by-status tx w status)]))
+           (let [workload  (workloads/load-workload-for-uuid tx uuid)
+                 workflows (workloads/workflows-by-status tx workload status)]
+             ;; TODO: If no workflows, throw.
+             ;; System tests leveraging v1-endpoint-test/test-retry-workload
+             ;; will need to be updated.
+             [workload workflows]))
          (apply workloads/retry)
          util/to-edn
          succeed)))
