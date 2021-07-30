@@ -153,6 +153,6 @@
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
     (eventually (throws? UserException) #(sink/update-sink! upstream sink)
-                :interval 5)
+                :interval 5 :times 10)
     (is (stage/done? sink) "failed jobs are no longer considered")
     (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")))

@@ -272,11 +272,11 @@
               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (map (juxt :id :job :workflow)
                      (jdbc/query tx (format query details))))))
-          (write-job-status [job-id status]
+          (write-job-status [id status]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (jdbc/update! tx details
                             {:status status :updated (utc-now)}
-                            ["id = ?" job-id])))]
+                            ["id = ?" id])))]
     (doseq [[id job-id workflow] (read-active-jobs)]
       (let [job    (datarepo/job-metadata job-id)
             status (-> job :job_status str/lower-case)]
