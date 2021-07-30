@@ -347,9 +347,9 @@
        (testing "Workload not started"
          (is (not (:started workload)))
          (is (thrown-with-msg?
-               UserException #"Cannot retry workload before it's been started."
-               (workloads/retry workload []))))
+              UserException #"Cannot retry workload before it's been started."
+              (workloads/retry workload []))))
        (testing "No workflows"
          (is (thrown-with-msg?
-               UserException #"No workflows specified to retry in workload."
-               (workloads/retry (workloads/start-workload! workload) [])))))))
+              UserException #"No workflows specified to retry in workload."
+              (workloads/retry (workloads/start-workload! workload) [])))))))
