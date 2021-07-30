@@ -243,6 +243,10 @@
                                 :fromOutputs fromOutputs}))))
     (assoc request :dataset dataset')))
 
+(defn ^:private push-job [{:keys [details] :as _sink} job]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (jdbc/insert! tx details job)))
+
 (defn ^:private peek-job-queue [{:keys [details] :as _sink}]
   (let [query "SELECT * FROM %s
                WHERE status = 'succeeded' AND consumed IS NULL
@@ -258,6 +262,8 @@
     (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id])))
 
 (defn ^:private update-datarepo-job-statuses
+  "Fetch and record the status of all 'running' jobs from tdr created by the
+   `sink`. Throws `UserException` when any new job status is `failed`."
   [{:keys [details] :as _sink}]
   (letfn [(read-active-jobs []
             (let [query "SELECT id, job, workflow FROM %s
@@ -280,6 +286,9 @@
                                   :workflow workflow})))))))
 
 (defn ^:private to-dataset-row
+  "Use `fromOutputs` to coerce the `workflow` outputs into a row in the dataset
+   where `fromOutputs` describes a mapping from workflow outputs to columns in
+   the dataset table."
   [fromOutputs {:keys [outputs] :as workflow}]
   (when-not (map? fromOutputs)
     (throw (IllegalStateException. "fromOutputs is malformed")))
@@ -291,18 +300,21 @@
                       cause)))))
 
 (defn ^:private start-ingesting-outputs
-  [{:keys [dataset table details fromOutputs]} {:keys [uuid] :as workflow}]
-  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))
-        _    (-> (to-dataset-row fromOutputs workflow)
-                 (json/write-str :escape-slash false)
-                 (storage/upload-content file))
-        job  (datarepo/ingest-table (:id dataset) file table)]
-    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (jdbc/insert! tx details {:job      job
-                                :status   "running"
-                                :workflow uuid}))))
+  "Start ingesting the `workflow` outputs as a new row in the target dataset
+   and push the tdr ingest job into the `sink`'s job queue."
+  [{:keys [dataset table fromOutputs] :as sink}
+   {:keys [uuid] :as workflow}]
+  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))]
+    (-> (to-dataset-row fromOutputs workflow)
+        (json/write-str :escape-slash false)
+        (storage/upload-content file))
+    (->> (datarepo/ingest-table (:id dataset) file table)
+         (assoc {:status "running" :workflow uuid} :job)
+         (push-job sink))))
 
 (defn ^:private update-datarepo-sink
+  "Attempt to a pull a workflow off the upstream `executor` queue and write its
+   outputs as new rows in a tdr dataset table asynchronously."
   [executor sink]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
@@ -316,7 +328,9 @@
       (finally
         (pop-job-queue! sink record)))))
 
-(defn ^:private datarepo-sink-done? [{:keys [details] :as _sink}]
+(defn ^:private datarepo-sink-done?
+  "True when all tdr ingest jobs created by the `_sink` have terminated."
+  [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE status <> 'failed' AND consumed IS NULL"]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
