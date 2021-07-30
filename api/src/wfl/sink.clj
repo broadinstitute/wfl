@@ -278,9 +278,10 @@
                             {:status status :updated (utc-now)}
                             ["id = ?" job-id])))]
     (doseq [[id job-id workflow] (read-active-jobs)]
-      (let [{:keys [job_status] :as job} (datarepo/job-metadata job-id)]
-        (write-job-status id job_status)
-        (when (= "failed" job_status)
+      (let [job    (datarepo/job-metadata job-id)
+            status (-> job :job_status str/lower-case)]
+        (write-job-status id status)
+        (when (= "failed" status)
           (throw (UserException. "A DataRepo ingest job failed"
                                  {:job      job
                                   :workflow workflow})))))))
