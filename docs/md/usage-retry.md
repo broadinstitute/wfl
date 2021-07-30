@@ -20,6 +20,8 @@ curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '"Failed"' | jq
 
 The `/retry` endpoint is not yet implemented.
 and returns a `501` HTTP failure status.
+Until it is supported,
+see the method below.
 
 # Retrying Failures via WFL
 
