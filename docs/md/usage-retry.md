@@ -15,7 +15,7 @@ export WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
 export AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
 export UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
 
-curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '"Failed"' | jq
+curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
 ```
 
 The `/retry` endpoint is not yet implemented.
