@@ -40,7 +40,7 @@
   (fixtures/with-temporary-workspace-clone
     workspace-to-clone
     firecloud-group
-    (fn [[workspace]]
+    (fn [workspace]
       (let [finished? (comp (set final-statuses) :status)
             workload  (endpoints/create-workload
                        (covid-workload-request workspace))]
