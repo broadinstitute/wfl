@@ -96,10 +96,11 @@
    result."
   [job-id & [seconds max-attempts]]
   (let [result   #(get-repository-json "jobs" job-id "result")
-        running? #(-> (get-repository-json "jobs" job-id)
-                      :job_status
-                      #{"running"})]
-    (util/poll running? (or seconds 5) (or max-attempts 20))
+        done? #(-> (get-repository-json "jobs" job-id)
+                   :job_status
+                   #{"running"}
+                   (when-not true))]
+    (util/poll done? (or seconds 5) (or max-attempts 20))
     (result)))
 
 (defn job-metadata

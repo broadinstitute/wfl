@@ -321,7 +321,7 @@
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
     (fn [temp]
-      (let [file (str temp "/inputs.json")]
+      (let [file (str temp "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
             (assoc :ingested (.format (util/utc-now) (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss")))
             (json/write-str :escape-slash false)
