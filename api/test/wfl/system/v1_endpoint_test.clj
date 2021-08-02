@@ -185,20 +185,26 @@
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
 (defn ^:private test-retry-workload
-  [request]
-  (let [workload (endpoints/exec-workload request)]
-    (is (thrown-with-msg?
-         ExceptionInfo #"501"
-         (endpoints/retry-workflows workload "Failed")))))
+  [request implemented?]
+  (let [workload  (endpoints/exec-workload request)]
+    (testing "retry-workflows fails (400) with unsupported workflow status"
+      (is (thrown-with-msg?
+            ExceptionInfo #"clj-http: status 400"
+            (endpoints/retry-workflows workload "Succeeded"))))
+    (when-not implemented?
+      (testing "retry-workflows fails (501) when unimplemented for pipeline"
+        (is (thrown-with-msg?
+              ExceptionInfo #"clj-http: status 501"
+              (endpoints/retry-workflows workload "Failed")))))))
 
 (deftest ^:parallel test-retry-wgs-workload
-  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID)) false))
 (deftest ^:parallel test-retry-aou-workload
-  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID))))
+  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID)) false))
 (deftest ^:parallel test-retry-xx-workload
-  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID))))
+  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID)) false))
 (deftest ^:parallel test-retry-sg-workload
-  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID))))
+  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID)) false))
 
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete

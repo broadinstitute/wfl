@@ -103,14 +103,16 @@
   (log/info (select-keys request [:request-method :uri :parameters]))
   (let [uuid   (get-in request [:path-params :uuid])
         status (get-in request [:body-params :status])]
-    ;; TODO: If status not in whitelist, throw.
+    ;; TODO: Refactor to workflow-status whitelist
     ;; https://broadinstitute.atlassian.net/browse/GH-1424
+    (when (= "Succeeded" status)
+      (throw (UserException. "Retry unsupported for workflow status."
+                             {:uuid            uuid
+                              :workflow-status status
+                              :status          400})))
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (let [workload  (workloads/load-workload-for-uuid tx uuid)
                  workflows (workloads/workflows-by-status tx workload status)]
-             ;; TODO: If no workflows, throw.
-             ;; System tests leveraging v1-endpoint-test/test-retry-workload
-             ;; will need to be updated.
              [workload workflows]))
          (apply workloads/retry)
          util/to-edn

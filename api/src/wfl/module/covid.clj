@@ -4,7 +4,7 @@
             [clojure.spec.alpha :as s]
             [wfl.executor :as executor]
             [wfl.jdbc :as jdbc]
-            [wfl.service.postgres  :as postgres]
+            [wfl.service.postgres :as postgres]
             [wfl.sink :as sink]
             [wfl.source :as source]
             [wfl.stage :as stage]
