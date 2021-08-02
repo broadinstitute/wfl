@@ -3,8 +3,6 @@
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
             [wfl.service.cromwell  :refer [final-statuses]]
-            [wfl.service.firecloud :as firecloud]
-            [wfl.util              :as util]
             [wfl.tools.endpoints   :as endpoints]
             [wfl.tools.workloads   :as workloads]))
 
@@ -16,17 +14,6 @@
 (def source-table           "flowcells")
 (def workspace-table        "flowcell")
 (def workspace-to-clone     "wfl-dev/CDC_Viral_Sequencing")
-
-(defn clone-workspace []
-  (println "Cloning workspace" workspace-to-clone)
-  (let [clone-name (util/randomize workspace-to-clone)]
-    (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
-    (println "Cloned new workspace " clone-name)
-    clone-name))
-
-(defn delete-workspace [workspace]
-  (println "Deleting" workspace)
-  (firecloud/delete-workspace workspace))
 
 (defn ^:private covid-workload-request
   "Build a covid workload request."
@@ -50,8 +37,9 @@
    :labels   ["hornet:test"]})
 
 (deftest test-automate-sarscov2-illumina-full
-  (fixtures/with-fixtures
-    [(util/bracket clone-workspace delete-workspace)]
+  (fixtures/with-temporary-workspace-clone
+    workspace-to-clone
+    firecloud-group
     (fn [[workspace]]
       (let [finished? (comp (set final-statuses) :status)
             workload  (endpoints/create-workload

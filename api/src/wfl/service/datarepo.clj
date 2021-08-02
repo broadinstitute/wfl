@@ -10,7 +10,6 @@
             [wfl.util                    :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.time Instant]
-           [java.util.concurrent TimeUnit]
            [wfl.util UserException]))
 
 (defn ^:private datarepo-url [& parts]
@@ -95,15 +94,13 @@
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
    result."
-  ([job-id seconds]
-   (let [result   #(get-repository-json "jobs" job-id "result")
-         running? #(-> (get-repository-json "jobs" job-id)
-                       :job_status
-                       #{"running"})]
-     (while (running?) (.sleep TimeUnit/SECONDS seconds))
-     (result)))
-  ([job-id]
-   (poll-job job-id 5)))
+  [job-id & [seconds max-attempts]]
+  (let [result   #(get-repository-json "jobs" job-id "result")
+        running? #(-> (get-repository-json "jobs" job-id)
+                      :job_status
+                      #{"running"})]
+    (util/poll running? (or seconds 5) (or max-attempts 20))
+    (result)))
 
 (defn job-metadata
   "Return the metadata of job with `job-id` when done."
