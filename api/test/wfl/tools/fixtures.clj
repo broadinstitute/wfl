@@ -219,7 +219,7 @@
             (let [clone-name (util/randomize workspace-to-clone)]
               (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
               clone-name))]
-    (util/bracket #(clone-workspace) firecloud/delete-workspace use-workspace)))
+    (util/bracket clone-workspace firecloud/delete-workspace use-workspace)))
 
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
