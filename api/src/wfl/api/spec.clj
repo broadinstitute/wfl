@@ -11,6 +11,7 @@
             [wfl.module.xx        :as xx]
             [wfl.module.wgs       :as wgs]
             [wfl.source           :as source]
+            [wfl.sink             :as sink]
             [wfl.module.all       :as all]))
 
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
@@ -53,7 +54,7 @@
                    ::items
                    ::all/labels
                    ::all/output
-                   ::all/sink
+                   ::sink/sink
                    ::source/source
                    ::all/watchers]
           :req-un [(or ::all/cromwell ::batch/executor)

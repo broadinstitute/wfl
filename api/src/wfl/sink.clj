@@ -4,10 +4,13 @@
             [clojure.data.json          :as json]
             [clojure.edn                :as edn]
             [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [clojure.tools.logging      :as log]
+            [reitit.coercion            :as coercion]
             [wfl.api.workloads          :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
+            [wfl.module.all             :as all]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.storage :as storage]
@@ -49,14 +52,25 @@
   (fn [_upstream-queue sink] (:type sink)))
 
 ;; Terra Workspace Sink
-(def ^:private terra-workspace-sink-name  "Terra Workspace")
-(def ^:private terra-workspace-sink-type  "TerraWorkspaceSink")
-(def ^:private terra-workspace-sink-table "TerraWorkspaceSink")
-(def ^:private terra-workspace-sink-serialized-fields
+(def ^:private ^:const terra-workspace-sink-name  "Terra Workspace")
+(def ^:private ^:const terra-workspace-sink-type  "TerraWorkspaceSink")
+(def ^:private ^:const terra-workspace-sink-table "TerraWorkspaceSink")
+(def ^:private ^:const terra-workspace-sink-serialized-fields
   {:workspace   :workspace
    :entityType  :entity_type
    :fromOutputs :from_outputs
    :identifier  :identifier})
+
+(s/def ::identifier string?)
+(s/def ::fromOutputs map?)
+
+;; reitit coercion spec
+(s/def ::terra-workspace-sink
+  (s/and (all/has? :name #(= terra-workspace-sink-name %))
+         (s/keys :req-un [::all/workspace
+                          ::all/entityType
+                          ::identifier
+                          ::fromOutputs])))
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
@@ -184,13 +198,18 @@
 (defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)
 
 ;; TerraDataRepo Sink
-(def ^:private datarepo-sink-name  "Terra DataRepo Sink")
-(def ^:private datarepo-sink-type  "TerraDataRepoSink")
-(def ^:private datarepo-sink-table "TerraDataRepoSink")
-(def ^:private datarepo-sink-serialized-fields
+(def ^:private ^:const datarepo-sink-name  "Terra DataRepo Sink")
+(def ^:private ^:const datarepo-sink-type  "TerraDataRepoSink")
+(def ^:private ^:const datarepo-sink-table "TerraDataRepoSink")
+(def ^:private ^:const datarepo-sink-serialized-fields
   {:dataset     :dataset
    :table       :dataset_table
    :fromOutputs :from_outputs})
+
+;; reitit coercion spec
+(s/def ::terra-datarepo-sink
+  (s/and (all/has? :name #(= datarepo-sink-name %))
+         (s/keys :req-un [::all/dataset ::all/table ::fromOutputs])))
 
 (defn ^:private create-datarepo-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSinkDetails (PRIMARY KEY (id))"
@@ -352,3 +371,10 @@
 (defoverload stage/done?  datarepo-sink-type datarepo-sink-done?)
 
 (defoverload util/to-edn datarepo-sink-type datarepo-sink-to-edn)
+
+;; reitit http coercion specs for a sink
+;; Recall s/or doesn't work (https://github.com/metosin/reitit/issues/494)
+(s/def ::sink
+  #(condp = (:name %)
+     terra-workspace-sink-name (s/valid? ::terra-workspace-sink %)
+     datarepo-sink-name        (s/valid? ::terra-datarepo-sink %)))
