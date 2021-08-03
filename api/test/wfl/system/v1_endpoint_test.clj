@@ -189,13 +189,13 @@
   (let [workload  (endpoints/exec-workload request)]
     (testing "retry-workflows fails (400) with unsupported workflow status"
       (is (thrown-with-msg?
-            ExceptionInfo #"clj-http: status 400"
-            (endpoints/retry-workflows workload "Succeeded"))))
+           ExceptionInfo #"clj-http: status 400"
+           (endpoints/retry-workflows workload "Succeeded"))))
     (when-not implemented?
       (testing "retry-workflows fails (501) when unimplemented for pipeline"
         (is (thrown-with-msg?
-              ExceptionInfo #"clj-http: status 501"
-              (endpoints/retry-workflows workload "Failed")))))))
+             ExceptionInfo #"clj-http: status 501"
+             (endpoints/retry-workflows workload "Failed")))))))
 
 (deftest ^:parallel test-retry-wgs-workload
   (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID)) false))
