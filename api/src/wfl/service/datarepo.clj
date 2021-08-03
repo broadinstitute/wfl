@@ -93,7 +93,7 @@
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
-   result."
+   result with `max-attempts` [default: 20]."
   [job-id & [seconds max-attempts]]
   (let [result   #(get-repository-json "jobs" job-id "result")
         done? #(-> (get-repository-json "jobs" job-id)
