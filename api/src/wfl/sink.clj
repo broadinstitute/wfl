@@ -7,7 +7,6 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [clojure.tools.logging      :as log]
-            [reitit.coercion            :as coercion]
             [wfl.api.workloads          :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
             [wfl.module.all             :as all]
@@ -280,17 +279,19 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id])))
 
+(def ^:private active-job-query
+  (format
+   "SELECT id, job, workflow FROM %%s WHERE status IN %s ORDER BY id ASC"
+   (util/to-quoted-comma-separated-list datarepo/active?)))
+
 (defn ^:private update-datarepo-job-statuses
   "Fetch and record the status of all 'running' jobs from tdr created by the
    `sink`. Throws `UserException` when any new job status is `failed`."
   [{:keys [details] :as _sink}]
   (letfn [(read-active-jobs []
-            (let [query "SELECT id, job, workflow FROM %s
-                         WHERE status = 'running'
-                         ORDER BY id ASC"]
-              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (map (juxt :id :job :workflow)
-                     (jdbc/query tx (format query details))))))
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (map (juxt :id :job :workflow)
+                   (jdbc/query tx (format active-job-query details)))))
           (write-job-status [id status]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (jdbc/update! tx details
