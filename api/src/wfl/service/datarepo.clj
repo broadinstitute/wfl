@@ -10,8 +10,15 @@
             [wfl.util                    :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.time Instant]
-           [java.util.concurrent TimeUnit]
            [wfl.util UserException]))
+
+(def final?
+  "The final statuses a data repo job can have."
+  #{"succeeded" "failed"})
+
+(def active?
+  "The statuses an active data repo job can have."
+  #{"running"})
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_TDR_URL"))]
@@ -94,16 +101,11 @@
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
-   result."
-  ([job-id seconds]
-   (let [result   #(get-repository-json "jobs" job-id "result")
-         running? #(-> (get-repository-json "jobs" job-id)
-                       :job_status
-                       #{"running"})]
-     (while (running?) (.sleep TimeUnit/SECONDS seconds))
-     (result)))
-  ([job-id]
-   (poll-job job-id 5)))
+   result with `max-attempts` [default: 20]."
+  [job-id & [seconds max-attempts]]
+  (let [done? #(-> (get-repository-json "jobs" job-id) :job_status final?)]
+    (util/poll done? (or seconds 5) (or max-attempts 20))
+    (get-repository-json "jobs" job-id "result")))
 
 (defn job-metadata
   "Return the metadata of job with `job-id` when done."

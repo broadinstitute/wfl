@@ -4,10 +4,12 @@
             [clojure.data.json          :as json]
             [clojure.edn                :as edn]
             [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [clojure.tools.logging      :as log]
             [wfl.api.workloads          :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
+            [wfl.module.all             :as all]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.storage :as storage]
@@ -49,14 +51,25 @@
   (fn [_upstream-queue sink] (:type sink)))
 
 ;; Terra Workspace Sink
-(def ^:private terra-workspace-sink-name  "Terra Workspace")
-(def ^:private terra-workspace-sink-type  "TerraWorkspaceSink")
-(def ^:private terra-workspace-sink-table "TerraWorkspaceSink")
-(def ^:private terra-workspace-sink-serialized-fields
+(def ^:private ^:const terra-workspace-sink-name  "Terra Workspace")
+(def ^:private ^:const terra-workspace-sink-type  "TerraWorkspaceSink")
+(def ^:private ^:const terra-workspace-sink-table "TerraWorkspaceSink")
+(def ^:private ^:const terra-workspace-sink-serialized-fields
   {:workspace   :workspace
    :entityType  :entity_type
    :fromOutputs :from_outputs
    :identifier  :identifier})
+
+(s/def ::identifier string?)
+(s/def ::fromOutputs map?)
+
+;; reitit coercion spec
+(s/def ::terra-workspace-sink
+  (s/and (all/has? :name #(= terra-workspace-sink-name %))
+         (s/keys :req-un [::all/workspace
+                          ::all/entityType
+                          ::identifier
+                          ::fromOutputs])))
 
 (defn ^:private create-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
@@ -184,13 +197,18 @@
 (defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)
 
 ;; TerraDataRepo Sink
-(def ^:private datarepo-sink-name  "Terra DataRepo Sink")
-(def ^:private datarepo-sink-type  "TerraDataRepoSink")
-(def ^:private datarepo-sink-table "TerraDataRepoSink")
-(def ^:private datarepo-sink-serialized-fields
+(def ^:private ^:const datarepo-sink-name  "Terra DataRepo Sink")
+(def ^:private ^:const datarepo-sink-type  "TerraDataRepoSink")
+(def ^:private ^:const datarepo-sink-table "TerraDataRepoSink")
+(def ^:private ^:const datarepo-sink-serialized-fields
   {:dataset     :dataset
    :table       :dataset_table
    :fromOutputs :from_outputs})
+
+;; reitit coercion spec
+(s/def ::terra-datarepo-sink
+  (s/and (all/has? :name #(= datarepo-sink-name %))
+         (s/keys :req-un [::all/dataset ::all/table ::fromOutputs])))
 
 (defn ^:private create-datarepo-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSinkDetails (PRIMARY KEY (id))"
@@ -261,17 +279,19 @@
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (jdbc/update! tx details {:consumed (utc-now)} ["id = ?" id])))
 
+(def ^:private active-job-query
+  (format
+   "SELECT id, job, workflow FROM %%s WHERE status IN %s ORDER BY id ASC"
+   (util/to-quoted-comma-separated-list datarepo/active?)))
+
 (defn ^:private update-datarepo-job-statuses
   "Fetch and record the status of all 'running' jobs from tdr created by the
    `sink`. Throws `UserException` when any new job status is `failed`."
   [{:keys [details] :as _sink}]
   (letfn [(read-active-jobs []
-            (let [query "SELECT id, job, workflow FROM %s
-                         WHERE status = 'running'
-                         ORDER BY id ASC"]
-              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (map (juxt :id :job :workflow)
-                     (jdbc/query tx (format query details))))))
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (map (juxt :id :job :workflow)
+                   (jdbc/query tx (format active-job-query details)))))
           (write-job-status [id status]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (jdbc/update! tx details
@@ -352,3 +372,10 @@
 (defoverload stage/done?  datarepo-sink-type datarepo-sink-done?)
 
 (defoverload util/to-edn datarepo-sink-type datarepo-sink-to-edn)
+
+;; reitit http coercion specs for a sink
+;; Recall s/or doesn't work (https://github.com/metosin/reitit/issues/494)
+(s/def ::sink
+  #(condp = (:name %)
+     terra-workspace-sink-name (s/valid? ::terra-workspace-sink %)
+     datarepo-sink-name        (s/valid? ::terra-datarepo-sink %)))

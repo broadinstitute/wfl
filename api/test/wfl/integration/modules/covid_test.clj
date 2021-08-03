@@ -5,14 +5,12 @@
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
-            [reitit.coercion.spec]
-            [reitit.ring                    :as ring]
-            [reitit.ring.coercion           :as coercion]
             [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.rawls              :as rawls]
             [wfl.source                     :as source]
+            [wfl.tools.endpoints            :refer [coercion-tester]]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.queues               :refer [make-queue-from-list]]
             [wfl.tools.workloads            :as workloads]
@@ -262,49 +260,28 @@
        {:skipValidation true}
        {:skipValidation true}))))
 
-(defn ^:private create-app [input-spec output-spec handler]
-  (let [app
-        (ring/ring-handler
-         (ring/router
-          [["/test" {:post {:parameters {:body input-spec}
-                            :responses  {200 {:body output-spec}}
-                            :handler    (fn [{:keys [body-params]}]
-                                          {:status 200
-                                           :body   (handler body-params)})}}]]
-          {:data {:coercion   reitit.coercion.spec/coercion
-                  :middleware [coercion/coerce-exceptions-middleware
-                               coercion/coerce-request-middleware
-                               coercion/coerce-response-middleware]}}))]
-    (fn [request]
-      (app {:request-method :post
-            :uri            "/test"
-            :body-params    request}))))
-
 (deftest test-create-workload-coercion
-  (let [app     (create-app ::spec/workload-request
-                            ::spec/workload-response
-                            (comp util/to-edn workloads/create-workload!))
+  (let [app     (coercion-tester
+                 ::spec/workload-request
+                 ::spec/workload-response
+                 (comp util/to-edn workloads/create-workload!))
         request (workloads/covid-workload-request
                  {}
                  {:skipValidation true}
                  {:skipValidation true})]
     (testing "Workload with a TDR Source"
-      (let [{:keys [status body]}
-            (->>  {:name            "Terra DataRepo"
-                   :dataset         testing-dataset
-                   :table           testing-table-name
-                   :column          testing-column-name
-                   :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
-                  (assoc request :source)
-                  app)]
-        (is (== 200 status) (pr-str body))))
+      (->> {:name            "Terra DataRepo"
+            :dataset         testing-dataset
+            :table           testing-table-name
+            :column          testing-column-name
+            :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
+           (assoc request :source)
+           app))
     (testing "Workload with a TDR Snapshots Source"
-      (let [{:keys [status body]}
-            (->> {:name      "TDR Snapshots"
-                  :snapshots [testing-snapshot]}
-                 (assoc request :source)
-                 app)]
-        (is (== 200 status) (pr-str body))))))
+      (->> {:name      "TDR Snapshots"
+            :snapshots [testing-snapshot]}
+           (assoc request :source)
+           app))))
 
 (deftest test-retry-workload-is-not-supported
   (with-redefs-fn

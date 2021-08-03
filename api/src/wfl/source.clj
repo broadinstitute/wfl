@@ -17,16 +17,14 @@
            [wfl.util UserException]))
 
 ;; specs
-(s/def ::dataset string?)
 (s/def ::column string?)
-(s/def ::table string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
                    ::column
-                   ::dataset
-                   ::table
+                   ::all/dataset
+                   ::all/table
                    ::snapshotReaders]
           :opt-un [::snapshots]))
 
