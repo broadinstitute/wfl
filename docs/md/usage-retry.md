@@ -22,12 +22,25 @@ curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
 The typical
 [Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c30e77450926d25b085696b08a306775cd244ea1/api/src/wfl/service/cromwell.clj#L14)
 to drive the `/retry` API are:
-- "Aborted"
-- "Failed"
+- `"Aborted"`
+- `"Failed"`
+
+`"Aborted"` and `"Failed"` are terminal,
+and likely failure,
+statuses for workflows.
+
+Specifying other Cromwell statuses
+in a `/retry` request
+might start multiple workflows
+to compete for the same output files,
+and that's probably not what you want.
 
 A successful `/retry` request
 returns the workload
 specified by `$UUID`.
+A failed `/retry` request
+will return a description
+of the failure.
 
 The `/retry` endpoint is not yet implemented.
 and returns a `501` HTTP failure status.
