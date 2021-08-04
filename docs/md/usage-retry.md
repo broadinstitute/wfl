@@ -6,17 +6,28 @@ by their completion status
 and re-submits them.
 
 The following `curl` shell command
-finds the workflows with the status `"Failed"`
+finds the workflows
+with the Cromwell status `"Failed"`
 in the workload with `$UUID`
 and resubmits them for processing.
 
 ```bash
-export WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
-export AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
-export UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
+WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
+AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
+UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
 
 curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
 ```
+
+The typical
+[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c30e77450926d25b085696b08a306775cd244ea1/api/src/wfl/service/cromwell.clj#L14)
+to drive the `/retry` API are:
+- "Aborted"
+- "Failed"
+
+A successful `/retry` request
+returns the workload
+specified by `$UUID`.
 
 The `/retry` endpoint is not yet implemented.
 and returns a `501` HTTP failure status.
