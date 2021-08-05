@@ -1,3 +1,59 @@
+# Retry Workflows in Terra
+
+WFL has `/retry` endpoint
+that selects workflows
+by their completion status
+and re-submits them.
+
+The following `curl` shell command
+finds the workflows
+with the Cromwell status `"Failed"`
+in the workload with `$UUID`
+and resubmits them for processing.
+
+```bash
+WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
+AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
+UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
+
+curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
+```
+
+The typical
+[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c30e77450926d25b085696b08a306775cd244ea1/api/src/wfl/service/cromwell.clj#L14)
+to drive the `/retry` API are:
+- `"Aborted"`
+- `"Failed"`
+
+`"Aborted"` and `"Failed"` are terminal,
+and likely failure,
+statuses for workflows.
+
+Specifying other Cromwell statuses
+in a `/retry` request
+might start multiple workflows
+to compete for the same output files,
+and that's probably not what you want.
+
+Note that WFL
+cannot submit a subset of a snapshot yet.
+So retrying any workflow
+from a workload snapshot
+will now re-submit all the workflows
+that are part of that snapshot.
+
+A successful `/retry` request
+returns the workload
+specified by `$UUID`.
+A failed `/retry` request
+will return a description
+of the failure.
+
+The `/retry` endpoint is not yet implemented.
+and returns a `501` HTTP failure status.
+Until it is supported,
+see the method below.
+
 # Retrying Failures via WFL
 
 WFL remembers enough about submissions to let you quickly resubmit failed
