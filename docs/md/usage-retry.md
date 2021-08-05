@@ -35,6 +35,13 @@ might start multiple workflows
 to compete for the same output files,
 and that's probably not what you want.
 
+Note that WFL
+cannot submit a subset of a snapshot yet.
+So retrying any workflow
+from a workload snapshot
+will now re-submit all the workflows
+that are part of that snapshot.
+
 A successful `/retry` request
 returns the workload
 specified by `$UUID`.
