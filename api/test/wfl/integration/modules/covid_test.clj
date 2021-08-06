@@ -346,5 +346,5 @@
            workload         (workloads/create-workload! workload-request)]
        (is (not (:started workload)))
        (is (thrown-with-msg?
-             UserException #"Cannot retry workload before it's been started."
-             (workloads/retry workload []))))))
+            UserException #"Cannot retry workload before it's been started."
+            (workloads/retry workload []))))))
