@@ -309,7 +309,7 @@
          (is (== 1 (stage/queue-length executor)))
          (is (not (stage/done? executor)))))))
 
-(deftest test-retry-terra-executor
+(deftest test-terra-executor-retry-workflows
   (let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
         executor (create-terra-executor (rand-int 1000000))]
     (with-redefs-fn
@@ -338,7 +338,7 @@
                  (executor/executor-workflows-by-status tx executor "Running"))]
            (is (== 1 (count workflows-to-retry))
                "Should have one running workflow to retry.")
-           (executor/retry-executor! executor workflows-to-retry)))
+           (executor/executor-retry-workflows! executor workflows-to-retry)))
       ;; We only specify 1 workflow to retry,
       ;; but must retry both workflows from its submission.
       (is (== 4 (stage/queue-length executor))

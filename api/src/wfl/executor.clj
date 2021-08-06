@@ -34,7 +34,7 @@
    matching `status`"
   (fn [_transaction executor _status] (:type executor)))
 
-(defmulti retry-executor!
+(defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
   (fn [executor _workflows] (:type executor)))
 
@@ -240,20 +240,21 @@
              (map zip-record (sort-by :entity records))
              (write-workflow-statuses (utc-now)))))))
 
-(def ^:private final-statuses (util/to-quoted-comma-separated-list rawls/final-statuses))
+(def ^:private active-workflows-query-template
+  "Query template for fetching active workflows
+  from an executor details table to be specified at runtime."
+  (let [final-statuses (util/to-quoted-comma-separated-list rawls/final-statuses)]
+    (format "SELECT * FROM %%s
+             WHERE submission IS NOT NULL
+             AND   workflow   IS NOT NULL
+             AND   status     NOT IN %s
+             ORDER BY id ASC"
+            final-statuses)))
 
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in `details` table for active `workspace` workflows."
   [{:keys [workspace details] :as executor}]
-  (letfn [(read-active-workflows []
-            (let [query "SELECT * FROM %s
-                         WHERE submission IS NOT NULL
-                         AND   workflow   IS NOT NULL
-                         AND   status     NOT IN %s
-                         ORDER BY id ASC"]
-              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (jdbc/query tx (format query details final-statuses)))))
-          (update-status-from-firecloud
+  (letfn [(update-status-from-firecloud
             [{:keys [submission workflow] :as record}]
             (->> (firecloud/get-workflow workspace submission workflow)
                  :status
@@ -267,7 +268,8 @@
                (sort-by :entity records))))]
     (log/debug (format "%s Updating statuses for active workflows..."
                        (log-prefix executor)))
-    (->> (read-active-workflows)
+    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (jdbc/query tx (format active-workflows-query-template details)))
          (mapv update-status-from-firecloud)
          (write-workflow-statuses (utc-now)))))
 
@@ -511,7 +513,7 @@
          (map link-retry-to-original (sort-by :entity original-records))
          (write-retries (utc-now)))))
 
-(defn ^:private retry-terra-executor
+(defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
   [{:keys [workspace] :as executor} workflows]
@@ -542,7 +544,7 @@
 (defoverload update-executor!             terra-executor-type update-terra-executor)
 (defoverload executor-workflows           terra-executor-type terra-executor-workflows)
 (defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
-(defoverload retry-executor!              terra-executor-type retry-terra-executor)
+(defoverload executor-retry-workflows!    terra-executor-type terra-executor-retry-workflows)
 
 (defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
 (defoverload stage/done?             terra-executor-type terra-executor-done?)

@@ -161,7 +161,7 @@
                            {:workload workload})))
   ;; TODO: validate workload's executor and sink objects.
   ;; https://broadinstitute.atlassian.net/browse/GH-1421
-  (executor/retry-executor! executor workflows)
+  (executor/executor-retry-workflows! executor workflows)
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (when-not (stage/done? executor)
       (patch-workload tx workload {:finished nil :updated (utc-now)}))
