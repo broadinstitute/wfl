@@ -12,6 +12,7 @@
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
+            [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util])
@@ -97,22 +98,33 @@
            (mapv util/to-edn)
            succeed))))
 
+;; Visible for wfl.system.v1-endpoint-test/test-retry-workload
+(def retry-unsupported-status-error-message
+  "Retry unsupported for requested status.")
+(def retry-no-workflows-error-message
+  "No workflows to retry for requested status.")
+
 (defn post-retry
   "Retry the workflows identified in `request`."
   [request]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid   (get-in request [:path-params :uuid])
-        status (get-in request [:body-params :status])]
-    ;; TODO: Refactor to workflow-status whitelist
-    ;; https://broadinstitute.atlassian.net/browse/GH-1424
-    (when (= "Succeeded" status)
-      (throw (UserException. "Retry unsupported for workflow status."
-                             {:uuid            uuid
-                              :workflow-status status
-                              :status          400})))
+  (let [uuid       (get-in request [:path-params :uuid])
+        status     (get-in request [:body-params :status])
+        supported? (cromwell/retry-status? status)]
+    (when-not supported?
+      (throw (UserException. retry-unsupported-status-error-message
+                             {:uuid               uuid
+                              :supported-statuses cromwell/retry-status?
+                              :requested-status   status
+                              :status             400})))
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (let [workload  (workloads/load-workload-for-uuid tx uuid)
                  workflows (workloads/workflows-by-status tx workload status)]
+             (when (empty? workflows)
+               (throw (UserException. retry-no-workflows-error-message
+                                      {:uuid             uuid
+                                       :requested-status status
+                                       :status           400})))
              [workload workflows]))
          (apply workloads/retry)
          util/to-edn

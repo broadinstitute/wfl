@@ -1,6 +1,5 @@
 (ns wfl.integration.executor-test
-  (:require [clojure.set           :refer [rename-keys]]
-            [clojure.test          :refer [deftest is testing use-fixtures]]
+  (:require [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.executor          :as executor]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]

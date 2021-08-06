@@ -4,6 +4,7 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
+            [wfl.api.handlers           :as handlers]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
@@ -185,26 +186,39 @@
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
 (defn ^:private test-retry-workload
-  [request implemented?]
-  (let [workload  (endpoints/exec-workload request)]
-    (testing "retry-workflows fails (400) with unsupported workflow status"
-      (is (thrown-with-msg?
-           ExceptionInfo #"clj-http: status 400"
-           (endpoints/retry-workflows workload "Succeeded"))))
-    (when-not implemented?
-      (testing "retry-workflows fails (501) when unimplemented for pipeline"
-        (is (thrown-with-msg?
-             ExceptionInfo #"clj-http: status 501"
-             (endpoints/retry-workflows workload "Failed")))))))
+  [request]
+  (let [workload (endpoints/create-workload request)
+        bad-statuses (set/difference cromwell/status? cromwell/retry-status?)]
+    (letfn [(check-message-and-throw [message status]
+              (try
+                (endpoints/retry-workflows workload status)
+                (catch Exception cause
+                  (is (= message (-> (ex-data cause) util/response-body-json :message))
+                      (str "Unexpected or missing exception message for status "
+                           status))
+                  (throw cause))))
+            (should-throw-400 [message status]
+              (is (thrown-with-msg?
+                   ExceptionInfo #"clj-http: status 400"
+                   (check-message-and-throw message status))
+                  (str "Expecting 400 error for retry with status " status)))]
+      (testing "retry-workflows fails (400) when workflow status unsupported"
+        (run! (partial should-throw-400
+                       handlers/retry-unsupported-status-error-message)
+              bad-statuses))
+      (testing "retry-workflows fails (400) when no workflows for supported status"
+        (run! (partial should-throw-400
+                       handlers/retry-no-workflows-error-message)
+              cromwell/retry-status?)))))
 
 (deftest ^:parallel test-retry-wgs-workload
-  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID)) false))
+  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-aou-workload
-  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID)) false))
+  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-xx-workload
-  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID)) false))
+  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-sg-workload
-  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID)) false))
+  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID))))
 
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete

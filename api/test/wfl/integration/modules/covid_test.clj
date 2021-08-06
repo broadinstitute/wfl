@@ -329,7 +329,7 @@
                  app)]
         (is (== 200 status) (pr-str body))))))
 
-(deftest test-retry-workload-throws-on-bad-inputs
+(deftest test-retry-workload-throws-when-not-started
   (with-redefs-fn
     {#'source/find-new-rows                   mock-find-new-rows
      #'source/create-snapshots                mock-create-snapshots
@@ -344,12 +344,7 @@
                              {:skipValidation true}
                              {:skipValidation true})
            workload         (workloads/create-workload! workload-request)]
-       (testing "Workload not started"
-         (is (not (:started workload)))
-         (is (thrown-with-msg?
-              UserException #"Cannot retry workload before it's been started."
-              (workloads/retry workload []))))
-       (testing "No workflows"
-         (is (thrown-with-msg?
-              UserException #"No workflows specified to retry in workload."
-              (workloads/retry (workloads/start-workload! workload) [])))))))
+       (is (not (:started workload)))
+       (is (thrown-with-msg?
+             UserException #"Cannot retry workload before it's been started."
+             (workloads/retry workload []))))))

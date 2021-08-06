@@ -159,9 +159,6 @@
   (when-not started
     (throw (UserException. "Cannot retry workload before it's been started."
                            {:workload workload})))
-  (when (empty? workflows)
-    (throw (UserException. "No workflows specified to retry in workload."
-                           {:workload workload})))
   ;; TODO: validate workload's executor and sink objects.
   ;; https://broadinstitute.atlassian.net/browse/GH-1421
   (executor/retry-executor! executor workflows)
