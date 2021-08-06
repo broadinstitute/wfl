@@ -448,10 +448,10 @@
      executor
      (jdbc/query tx [(format query details) status]))))
 
-(defn ^:private reference-id-to-workflow-records
-  "Find all submission IDs associated with `workflows`.
-  Return a mapping of the submissions' snapshot reference IDs
-  to their associated workflow records."
+(defn ^:private workflow-and-sibling-records
+  "Return the workflow records for all workflows in submissions
+  associated with the specified `workflows` --
+  i.e. records for `workflows` and their siblings."
   [tx {:keys [details] :as executor} workflows]
   (postgres/throw-unless-table-exists tx details)
   (let [workflow-ids (util/to-quoted-comma-separated-list (map :uuid workflows))
@@ -472,9 +472,7 @@
                WHERE submission IN
                  (SELECT DISTINCT submission FROM %s
                  WHERE workflow IN %s)"]
-    (->> (format query details details workflow-ids)
-         (jdbc/query tx)
-         (group-by :reference))))
+    (jdbc/query tx (format query details details workflow-ids))))
 
 (defn update-retried-workflow-records
   "Match `original-records` with `retry-records` on entity uuid,
@@ -517,7 +515,7 @@
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
   [{:keys [workspace] :as executor} workflows]
-  (letfn [(retried-workflow-records [reference-id]
+  (letfn [(submit-reference [reference-id]
             ;; Further work required to deal in generic entities
             ;; rather than assumed snapshot references:
             ;; https://broadinstitute.atlassian.net/browse/GH-1422
@@ -526,8 +524,9 @@
                    (create-submission! executor)
                    (allocate-submission executor reference))))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (reference-id-to-workflow-records tx executor workflows))
-         (map-keys retried-workflow-records)
+           (workflow-and-sibling-records tx executor workflows))
+         (group-by :reference)
+         (map-keys submit-reference)
          (run! (partial update-retried-workflow-records executor)))))
 
 (defn ^:private terra-executor-done? [executor]
