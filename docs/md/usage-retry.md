@@ -1,6 +1,6 @@
 # Retry Workflows in Terra
 
-WFL has `/retry` endpoint
+WFL has a `/retry` endpoint
 that selects workflows
 by their completion status
 and re-submits them.
@@ -19,28 +19,42 @@ UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
 curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
 ```
 
-The typical
-[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c30e77450926d25b085696b08a306775cd244ea1/api/src/wfl/service/cromwell.clj#L14)
-to drive the `/retry` API are:
+The only
+[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c87ce58e815c9fe73648471057c8d3cda7bc02e0/api/src/wfl/service/cromwell.clj#L12-L14)
+supported with the `/retry` API
+are the terminal and likely failure workflow statuses:
+
 - `"Aborted"`
+
 - `"Failed"`
 
-`"Aborted"` and `"Failed"` are terminal,
-and likely failure,
-statuses for workflows.
+Attempting to retry workflows of any other status
+will return a `400` HTTP failure status,
+as will specifying a status for which the
+workload has no workflows.
 
-Specifying other Cromwell statuses
-in a `/retry` request
-might start multiple workflows
-to compete for the same output files,
-and that's probably not what you want.
+!!! warning "Submission of snapshot subsets not yet supported"
+    Note that WFL is limited by Rawls functionality
+    and cannot yet submit a subset of a snapshot.
+    So retrying any workflow from a workload snapshot
+    will resubmit all entities from that snapshot.
 
-Note that WFL
-cannot submit a subset of a snapshot yet.
-So retrying any workflow
-from a workload snapshot
-will now re-submit all the workflows
-that are part of that snapshot.
+    Example - a running submission from a snapshot
+    has 500 workflows:
+
+    - 1 failed
+
+    - 249 running
+
+    - 250 succeeded
+
+    Retrying the failed workflow will create a new submission
+    where all 500 original workflows are retried.
+
+    Consider whether you should wait for all workflows
+    in the submission to complete before initiating a retry
+    to avoid multiple workflows running concurrently
+    in competition for the same output files.
 
 A successful `/retry` request
 returns the workload
@@ -49,8 +63,8 @@ A failed `/retry` request
 will return a description
 of the failure.
 
-The `/retry` endpoint is not yet implemented.
-and returns a `501` HTTP failure status.
+The `/retry` endpoint is not yet implemented for all workflows
+and in such cases returns a `501` HTTP failure status.
 Until it is supported,
 see the method below.
 
