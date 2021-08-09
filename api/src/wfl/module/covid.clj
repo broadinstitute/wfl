@@ -4,7 +4,7 @@
             [clojure.spec.alpha :as s]
             [wfl.executor :as executor]
             [wfl.jdbc :as jdbc]
-            [wfl.module.batch :as batch]
+            [wfl.service.postgres :as postgres]
             [wfl.sink :as sink]
             [wfl.source :as source]
             [wfl.stage :as stage]
@@ -152,6 +152,21 @@
                              {:workload workload})))
     (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
+(defn ^:private retry-covid-workload
+  "Retry/resubmit the `workflows` managed by the `workload` and return the
+   workload that manages the new workflows."
+  [{:keys [started id executor] :as workload} workflows]
+  (when-not started
+    (throw (UserException. "Cannot retry workload before it's been started."
+                           {:workload workload})))
+  ;; TODO: validate workload's executor and sink objects.
+  ;; https://broadinstitute.atlassian.net/browse/GH-1421
+  (executor/executor-retry-workflows! executor workflows)
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (when-not (stage/done? executor)
+      (patch-workload tx workload {:finished nil :updated (utc-now)}))
+    (workloads/load-workload-for-id tx id)))
+
 (defn ^:private workload-to-edn [workload]
   (-> workload
       (util/select-non-nil-keys workload-metadata-keys)
@@ -164,7 +179,6 @@
 (defoverload workloads/start-workload!     pipeline start-covid-workload)
 (defoverload workloads/update-workload!    pipeline update-covid-workload)
 (defoverload workloads/stop-workload!      pipeline stop-covid-workload)
-(defoverload workloads/retry               pipeline batch/retry-unsupported)
 (defoverload workloads/load-workload-impl  pipeline load-covid-workload-impl)
 (defmethod   workloads/workflows           pipeline
   [tx {:keys [executor] :as _workload}]
@@ -172,4 +186,5 @@
 (defmethod   workloads/workflows-by-status pipeline
   [tx {:keys [executor] :as _workload} status]
   (executor/executor-workflows-by-status tx executor status))
+(defoverload workloads/retry              pipeline retry-covid-workload)
 (defoverload workloads/to-edn             pipeline workload-to-edn)

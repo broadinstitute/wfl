@@ -33,3 +33,4 @@
   "Prefix string for `stage` logs indicating the `type` (table) and row `id`."
   [{:keys [type id] :as _stage}]
   (format "[%s id=%s]" type id))
+
