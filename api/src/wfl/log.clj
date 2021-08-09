@@ -89,29 +89,34 @@
   "Log `expression` for debugging.
    This is for debug or trace information."
   [expression]
-  `(log :debug ~expression))
+  (let [{:keys [line]} (meta &form)]
+    `(log :debug ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
 
 (defmacro info
   "Log `expression` as information.
    Used for routine information, such as ongoing status or performance."
   [expression]
-  `(log :info ~expression))
+  (let [{:keys [line]} (meta &form)]
+    `(log :info ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
 
 (defmacro notice
   "Log `expression` as a notice.
    Used for normal but significant events, such as start up,
    shut down, or a configuration change."
   [expression]
-  `(log :notice ~expression))
+  (let [{:keys [line]} (meta &form)]
+    `(log :notice ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
 
 (defmacro warn
   "Log `expression` as a warning.
    Used for warning events, which might cause problems."
   [expression]
-  `(log :warning ~expression))
+  (let [{:keys [line]} (meta &form)]
+    `(log :warning ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
 
 (defmacro error
   "Log `expression` as an error.
    Used for events that are likely to cause problems."
   [expression]
-  `(log :error ~expression))
+  (let [{:keys [line]} (meta &form)]
+    `(log :error ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
