@@ -98,7 +98,7 @@
            (mapv util/to-edn)
            succeed))))
 
-;; Visible for wfl.system.v1-endpoint-test/test-retry-workload
+;; Visible for testing
 (def retry-unsupported-status-error-message
   "Retry unsupported for requested status.")
 (def retry-no-workflows-error-message
