@@ -14,6 +14,16 @@
   (:import [wfl.util UserException]))
 
 ;; executor operations
+(defmulti validate-or-throw
+  "Return a validated executor request (i.e. resources exist and wfl can access
+   them) or throw."
+  :name)
+
+(defmethod validate-or-throw :default
+  [{:keys [name] :as request}]
+  (throw (UserException. "No such executor"
+                         (util/make-map name request))))
+
 (defmulti update-executor!
   "Consume items from the `upstream-queue` and enqueue to the `executor` queue
    for consumption by a later processing stage, performing any external effects
@@ -433,6 +443,7 @@
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
       (assoc :name terra-executor-name)))
 
+(defoverload validate-or-throw terra-executor-name verify-terra-executor)
 (defoverload create-executor! terra-executor-name create-terra-executor)
 (defoverload load-executor!   terra-executor-type load-terra-executor)
 
@@ -440,11 +451,9 @@
 (defoverload executor-workflows           terra-executor-type terra-executor-workflows)
 (defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
 
-(defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
-(defoverload stage/done?             terra-executor-type terra-executor-done?)
-
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
 (defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
 (defoverload stage/queue-length terra-executor-type terra-executor-queue-length)
+(defoverload stage/done?        terra-executor-type terra-executor-done?)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)

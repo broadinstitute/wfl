@@ -29,7 +29,7 @@
 ;; Validation tests
 
 (deftest test-validate-terra-workspace-sink-with-valid-sink-request
-  (is (stage/validate-or-throw
+  (is (sink/validate-or-throw
        {:name        @#'sink/terra-workspace-sink-name
         :workspace   testing-workspace
         :entityType  "assemblies"
@@ -39,7 +39,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-entity-type
   (is (thrown-with-msg?
        UserException (re-pattern sink/unknown-entity-type-error-message)
-       (stage/validate-or-throw
+       (sink/validate-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "does_not_exist"
@@ -49,7 +49,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
        UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
-       (stage/validate-or-throw
+       (sink/validate-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "assemblies"
@@ -59,7 +59,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-unknown-fromOutputs-attributes
   (is (thrown-with-msg?
        UserException (re-pattern sink/unknown-attributes-error-message)
-       (stage/validate-or-throw
+       (sink/validate-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "assemblies"
@@ -69,7 +69,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-workspace
   (is (thrown-with-msg?
        UserException #"Cannot access workspace"
-       (stage/validate-or-throw
+       (sink/validate-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   "moo/moo"
          :entityType  "moo"

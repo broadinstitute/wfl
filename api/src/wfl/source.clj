@@ -61,6 +61,16 @@
   :type)
 
 ;; source load/save operations
+(defmulti validate-or-throw
+  "Return a validated source request (i.e. resources exist and wfl can access
+   them) or throw."
+  :name)
+
+(defmethod validate-or-throw :default
+  [{:keys [name] :as request}]
+  (throw (UserException. "No such source"
+                         (util/make-map name request))))
+
 (defmulti create-source!
   "Create a `Source` instance using the database `transaction` and configuration
    in the source `request` and return a `[type items]` pair to be written to a
@@ -306,7 +316,7 @@
       (update :dataset :id)
       (assoc :name tdr-source-name)))
 
-(defoverload stage/validate-or-throw tdr-source-name verify-data-repo-source!)
+(defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
 
 (defoverload create-source! tdr-source-name create-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
@@ -399,14 +409,13 @@
 (defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
 
-(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
-(defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
+(defoverload validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
+(defoverload create-source!    tdr-snapshot-list-name  create-tdr-snapshot-list)
+(defoverload load-source!      tdr-snapshot-list-type  load-tdr-snapshot-list)
 
 (defoverload stage/peek-queue tdr-snapshot-list-type peek-tdr-snapshot-list)
 (defoverload stage/pop-queue! tdr-snapshot-list-type pop-tdr-snapshot-list)
 (defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
-
-(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
 (defoverload stage/done? tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)

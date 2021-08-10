@@ -21,6 +21,16 @@
            [wfl.util UserException]))
 
 ;; Interface
+(defmulti validate-or-throw
+  "Return a validated sink request (i.e. resources exist and wfl can access
+   them) or throw."
+  :name)
+
+(defmethod validate-or-throw :default
+  [{:keys [name] :as request}]
+  (throw (UserException. "No such sink"
+                         (util/make-map name request))))
+
 (defmulti create-sink!
   "Create a `Sink` instance using the database `transaction` and configuration
    in the sink `request` and return a `[type items]` pair to be written to a
@@ -187,8 +197,8 @@
       (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
       (assoc :name terra-workspace-sink-name)))
 
-(defoverload stage/validate-or-throw terra-workspace-sink-name terra-workspace-validate-request-or-throw)
-(defoverload create-sink!            terra-workspace-sink-name create-terra-workspace-sink)
+(defoverload validate-or-throw terra-workspace-sink-name terra-workspace-validate-request-or-throw)
+(defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
 
 (defoverload load-sink!    terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink!  terra-workspace-sink-type update-terra-workspace-sink)
@@ -364,8 +374,8 @@
       (update :dataset :id)
       (assoc :name datarepo-sink-name)))
 
-(defoverload stage/validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)
-(defoverload create-sink!            datarepo-sink-name create-datarepo-sink)
+(defoverload validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)
+(defoverload create-sink!      datarepo-sink-name create-datarepo-sink)
 
 (defoverload load-sink!   datarepo-sink-type load-datarepo-sink)
 (defoverload update-sink! datarepo-sink-type update-datarepo-sink)
