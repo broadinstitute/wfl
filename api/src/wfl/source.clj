@@ -61,16 +61,6 @@
   :type)
 
 ;; source load/save operations
-(defmulti validate-or-throw
-  "Return a validated source request (i.e. resources exist and wfl can access
-   them) or throw."
-  :name)
-
-(defmethod validate-or-throw :default
-  [{:keys [name] :as request}]
-  (throw (UserException. "No such source"
-                         (util/make-map name request))))
-
 (defmulti create-source!
   "Create a `Source` instance using the database `transaction` and configuration
    in the source `request` and return a `[type items]` pair to be written to a
@@ -100,13 +90,13 @@
    :column          :table_column_name
    :snapshotReaders :snapshot_readers})
 
-(defn ^:private create-tdr-source [tx id request]
+(defn ^:private create-tdr-source [tx id source]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-source-type id)]
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
     [tdr-source-type
-     (-> (select-keys request (keys tdr-source-serialized-fields))
+     (-> (select-keys source (keys tdr-source-serialized-fields))
          (update :dataset pr-str)
          (set/rename-keys tdr-source-serialized-fields)
          (assoc :details details)
@@ -120,7 +110,7 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
-(defn verify-data-repo-source!
+(defn validate-datarepo-source!
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
@@ -316,19 +306,19 @@
       (update :dataset :id)
       (assoc :name tdr-source-name)))
 
-(defoverload validate-or-throw tdr-source-name verify-data-repo-source!)
+(defmethod create-source! tdr-source-name
+  [tx id request]
+  (create-tdr-source tx id (validate-datarepo-source! request)))
 
-(defoverload create-source! tdr-source-name create-tdr-source)
+(defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
 (defoverload update-source! tdr-source-type update-tdr-source)
 (defoverload stop-source!   tdr-source-type stop-tdr-source)
 
-(defoverload load-source!  tdr-source-type load-tdr-source)
-
-(defoverload stage/peek-queue tdr-source-type peek-tdr-source-queue)
-(defoverload stage/pop-queue! tdr-source-type pop-tdr-source-queue)
+(defoverload stage/peek-queue   tdr-source-type peek-tdr-source-queue)
+(defoverload stage/pop-queue!   tdr-source-type pop-tdr-source-queue)
 (defoverload stage/queue-length tdr-source-type tdr-source-queue-length)
-(defoverload stage/done? tdr-source-type tdr-source-done?)
+(defoverload stage/done?        tdr-source-type tdr-source-done?)
 
 (defoverload util/to-edn tdr-source-type tdr-source-to-edn)
 
@@ -336,7 +326,7 @@
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
 (def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
 
-(defn ^:private validate-tdr-snapshot-list
+(defn validate-tdr-snapshot-list
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
             (try
@@ -405,13 +395,14 @@
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
+(defmethod create-source! tdr-snapshot-list-name
+  [tx id request]
+  (create-tdr-snapshot-list tx id (validate-tdr-snapshot-list request)))
+
+(defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
 (defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
-
-(defoverload validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
-(defoverload create-source!    tdr-snapshot-list-name  create-tdr-snapshot-list)
-(defoverload load-source!      tdr-snapshot-list-type  load-tdr-snapshot-list)
 
 (defoverload stage/peek-queue tdr-snapshot-list-type peek-tdr-snapshot-list)
 (defoverload stage/pop-queue! tdr-snapshot-list-type pop-tdr-snapshot-list)
