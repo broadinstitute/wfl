@@ -2,7 +2,7 @@
   (:require [clojure.test          :refer [deftest is]]
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.resources   :as resources]
-            [wfl.service.cromwell  :refer [final-statuses]]
+            [wfl.service.cromwell  :refer [final?]]
             [wfl.tools.endpoints   :as endpoints]
             [wfl.tools.workloads   :as workloads]))
 
@@ -41,7 +41,7 @@
     workspace-to-clone
     firecloud-group
     (fn [workspace]
-      (let [finished? (comp (set final-statuses) :status)
+      (let [finished? (comp final? :status)
             workload  (endpoints/create-workload
                        (covid-workload-request workspace))]
         (endpoints/start-workload workload)

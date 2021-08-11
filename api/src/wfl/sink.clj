@@ -6,9 +6,9 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [clojure.tools.logging      :as log]
             [wfl.api.workloads          :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
             [wfl.module.all             :as all]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.firecloud      :as firecloud]
@@ -174,19 +174,19 @@
 (defn ^:private update-terra-workspace-sink
   [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
   (when-let [[_ {:keys [uuid outputs] :as workflow}] (stage/peek-queue executor)]
-    (log/debug "coercing workflow" uuid "outputs to" entityType)
+    (log/debug (str/join " " ["coercing workflow" uuid "outputs to" entityType]))
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
           [_ name :as entity] [entityType (outputs (keyword identifier))]]
       (when (entity-exists? workspace entity)
-        (log/debug "entity" name "already exists - deleting previous entity.")
+        (log/debug (str/join " " ["entity" name "exists - deleting previous entity."]))
         (firecloud/delete-entities workspace [entity]))
-      (log/debug "upserting workflow" uuid "outputs as" name)
+      (log/debug (str/join " " ["upserting workflow" uuid "outputs as" name]))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
-      (log/info "sunk workflow" uuid "to" workspace "as" name)
+      (log/info (str/join " " ["sunk workflow" uuid "to" workspace "as" name]))
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/insert! tx details {:entity   name
-                                  :updated  (utc-now)
+                                  :updated  (util/utc-now)
                                   :workflow uuid})))))
 
 (defn ^:private terra-workspace-sink-done? [_sink] true)
@@ -355,8 +355,7 @@
   (when-let [{:keys [workflow job] :as record} (peek-job-queue sink)]
     (try
       (let [res (datarepo/get-job-result job)]
-        (log/info "Sunk workflow outputs to dataset"
-                  {:dataset (get-in sink [:dataset :id]) :workflow workflow}))
+        (log/info "Sunk workflow outputs to dataset"))
       (finally
         (pop-job-queue! sink record)))))
 

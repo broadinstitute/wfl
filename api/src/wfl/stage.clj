@@ -17,3 +17,8 @@
 (defmulti done?
   "Test if the processing `stage` is complete and will not process any more data."
   :type)
+
+(defn log-prefix
+  "Prefix string for `stage` logs indicating the `type` (table) and row `id`."
+  [{:keys [type id] :as _stage}]
+  (format "[%s id=%s]" type id))

@@ -229,7 +229,7 @@
      :items    [{:inputs
                  {:base_file_name          sample_alias
                   :contamination_vcf       vcf
-                  :contamination_vcf_index (str vcf ".tbi")
+                  :contamination_vcf_index (str vcf   ".tbi")
                   :cram_ref_fasta          fasta
                   :cram_ref_fasta_index    (str fasta ".fai")
                   :dbsnp_vcf               dbsnp
@@ -253,16 +253,12 @@
 (defn when-all-workflows-finish
   "Call `done!` when all workflows in the `workload` have finished processing."
   [done! {:keys [uuid] :as workload}]
-  (let [finished? (let [skipped?    #(-> % :uuid util/uuid-nil?)
-                        terminated? (set cromwell/final-statuses)]
-                    (fn [{:keys [status] :as workflow}]
-                      (or (skipped? workflow) (terminated? status))))]
-    (done!
-     (util/poll
-      #(when (every? finished? (endpoints/get-workflows workload))
-         (endpoints/get-workload-status uuid))
-      polling-interval-seconds
-      max-polling-attempts))))
+  (done!
+   (util/poll
+    #(when (every? cromwell/final? (endpoints/get-workflows workload))
+       (endpoints/get-workload-status uuid))
+    polling-interval-seconds
+    max-polling-attempts)))
 
 (defn evalT
   "Evaluate `operation` in the context of a database transaction where

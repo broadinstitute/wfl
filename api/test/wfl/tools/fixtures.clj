@@ -1,15 +1,15 @@
 (ns wfl.tools.fixtures
   (:require [clojure.java.jdbc]
-            [clojure.tools.logging      :as log]
+            [wfl.environment            :as env]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
             [wfl.service.datarepo       :as datarepo]
+            [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.pubsub  :as pubsub]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres       :as postgres]
             [wfl.tools.liquibase        :as liquibase]
-            [wfl.jdbc                   :as jdbc]
-            [wfl.util                   :as util]
-            [wfl.environment            :as env]
-            [wfl.service.firecloud      :as firecloud])
+            [wfl.util                   :as util])
   (:import [java.nio.file.attribute FileAttribute]
            [java.nio.file Files]
            [java.util UUID]
@@ -255,9 +255,9 @@
    `with-fixture` to its `arguments`."
   [var with-fixture & arguments]
   `(fn [f#]
-     (log/infof "Setting up %s..." '~with-fixture)
+     (log/info (format "Setting up %s..." '~with-fixture))
      (~with-fixture
       ~@arguments
       #(binding [~var %]
          (try (f#)
-              (finally (log/infof "Tearing down %s..." '~with-fixture)))))))
+              (finally (log/info (format "Tearing down %s..." '~with-fixture))))))))

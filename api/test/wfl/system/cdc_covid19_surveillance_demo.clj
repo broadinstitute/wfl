@@ -65,7 +65,7 @@
 
 (defn import-snapshot-into-workspace [workspace {:keys [name id] :as _snapshot}]
   (println "Importing snapshot" name "into" workspace)
-  (let [{:keys [name] :as ref} (rawls/create-snapshot-reference workspace id name)]
+  (let [{:keys [name] :as ref} (rawls/create-or-get-snapshot-reference workspace id name)]
     (println "Created snapshot reference" name)
     ref))
 

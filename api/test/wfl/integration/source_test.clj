@@ -1,13 +1,15 @@
 (ns wfl.integration.source-test
-  (:require [clojure.java.jdbc    :as jdbc]
-            [clojure.spec.alpha   :as s]
-            [clojure.test         :refer [deftest is testing use-fixtures]]
-            [wfl.service.postgres :as postgres]
-            [wfl.stage            :as stage]
-            [wfl.source           :as source]
-            [wfl.tools.fixtures   :as fixtures]
-            [wfl.util             :as util])
-  (:import [java.time LocalDateTime]
+  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
+            [clojure.java.jdbc     :as jdbc]
+            [clojure.set           :as set]
+            [clojure.spec.alpha    :as s]
+            [wfl.service.datarepo  :as datarepo]
+            [wfl.service.postgres  :as postgres]
+            [wfl.source            :as source]
+            [wfl.stage             :as stage]
+            [wfl.tools.fixtures    :as fixtures]
+            [wfl.util              :as util])
+  (:import [java.time Instant LocalDateTime]
            [java.util UUID]
            [wfl.util  UserException]))
 
@@ -17,10 +19,18 @@
 (def ^:private testing-column-name "run_date")
 
 ;; Snapshot creation mock
-(def ^:private mock-new-rows-size 2021)
-(defn ^:private mock-find-new-rows [_ interval]
-  (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
-  (take mock-new-rows-size (range)))
+(def ^:private mock-new-rows-size 1234)
+
+(defn ^:private parse-timestamp
+  "Parse `timestamp` string in BigQuery format."
+  [timestamp]
+  (LocalDateTime/parse timestamp @#'source/bigquery-datetime-format))
+
+(defn ^:private mock-find-new-rows
+  [_source interval]
+  (is (every? parse-timestamp interval))
+  (range mock-new-rows-size))
+
 (defn ^:private mock-create-snapshots [_ _ row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
@@ -37,17 +47,84 @@
 
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name           "Terra DataRepo",
-          :dataset        "this"
-          :table          "is"
-          :column         "fun"
-          :skipValidation true}
+    (->> {:column         "a-column"
+          :dataset        {:name "a-dataset"}
+          :id             "an-id"
+          :name           "Terra DataRepo"
+          :skipValidation true
+          :table          "a-table"
+          :type           "a-type"}
          (source/create-source! tx (rand-int 1000000))
          (zipmap [:source_type :source_items])
          (source/load-source! tx))))
 
 (defn ^:private reload-source [tx {:keys [type id] :as _source}]
   (source/load-source! tx {:source_type type :source_items (str id)}))
+
+;; A stable vector of TDR row IDs.
+;;
+(defonce all-rows
+  (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
+
+(defn ^:private mock-query-table-between-all
+  "Mock datarepo/query-table-between to find all rows."
+  [_dataset _table _between interval columns]
+  (is (every? parse-timestamp interval))
+  (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
+          (fields [columns] (mapv field columns))]
+    (-> {:jobComplete true
+         :kind "bigquery#queryResponse"
+         :rows [@all-rows]
+         :totalRows (str (count @all-rows))}
+        (assoc-in [:schema :fields] (fields columns)))))
+
+(defn ^:private mock-query-table-between-miss
+  "Mock datarepo/query-table-between to miss some rows."
+  [dataset table between interval columns]
+  (-> (mock-query-table-between-all dataset table between interval columns)
+      (update-in [:rows 0] butlast)
+      (assoc :totalRows (str (dec mock-new-rows-size)))))
+
+(deftest test-backfill-tdr-source
+  (letfn [(rows-from [source]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (->> source :details
+                   (postgres/get-table tx)
+                   (mapcat :datarepo_row_ids))))
+          (total-rows [query args]
+            (-> query (apply args) :totalRows Integer/parseInt))]
+    (let [args         [testing-dataset testing-table-name testing-column-name
+                        (repeatedly 2 #(-> (Instant/now) str
+                                           (subs 0 (count "2021-07-14T15:47:02"))))
+                        [:datarepo_row_id]]
+          record-count (int (Math/ceil (/ mock-new-rows-size 500)))
+          source       (create-tdr-source)]
+      (testing "update-source! loads snapshots"
+        (with-redefs [datarepo/query-table-between mock-query-table-between-miss
+                      source/check-tdr-job         mock-check-tdr-job
+                      source/create-snapshots      mock-create-snapshots]
+          (source/update-source!
+           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+             (source/start-source! tx source)
+             (reload-source tx source))))
+        (let [miss-count (dec mock-new-rows-size)
+              miss-set   (set (rows-from source))]
+          (is (== record-count (stage/queue-length source)))
+          (is (== miss-count   (total-rows mock-query-table-between-miss args)))
+          (is (== miss-count   (count miss-set)))
+          (testing "update-source! adds a snaphot of rows missed in prior interval"
+            (with-redefs [datarepo/query-table-between mock-query-table-between-all
+                          source/check-tdr-job         mock-check-tdr-job
+                          source/create-snapshots      mock-create-snapshots]
+              (source/update-source!
+               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                 (reload-source tx source))))
+            (let [all-rows (rows-from source)
+                  missing  (set/difference (set all-rows) miss-set)]
+              (is (== (inc record-count) (stage/queue-length source)))
+              (is (== mock-new-rows-size (total-rows mock-query-table-between-all args)))
+              (is (=  (last all-rows) (first missing)))
+              (is (== 1 (count missing))))))))))
 
 (deftest test-create-tdr-source-from-valid-request
   (is (source/datarepo-source-validate-request-or-throw

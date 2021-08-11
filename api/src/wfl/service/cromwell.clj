@@ -4,27 +4,26 @@
             [clojure.string :as str]
             [clojure.walk :as walk]
             [clj-http.client :as http]
-            [wfl.debug :as debug]
             [wfl.auth :as auth]
+            [wfl.debug :as debug]
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
 
-(def final-statuses
+(def retry-status?
+  "Cromwell workflow statuses eligible for retry."
+  #{"Aborted" "Failed"})
+
+(def final?
   "The final statuses a Cromwell workflow can have."
-  ["Aborted"
-   "Failed"
-   "Succeeded"])
+  (conj retry-status? "Succeeded"))
 
-(def active-statuses
+(def active?
   "The statuses an active Cromwell workflow can have."
-  ["Aborting"
-   "On Hold"
-   "Running"
-   "Submitted"])
+  #{"Aborting" "On Hold" "Running" "Submitted"})
 
-(def statuses
+(def status?
   "All the statuses a Cromwell workflow can have."
-  (into active-statuses final-statuses))
+  (into active? final?))
 
 (defn ^:private api
   "Get the api url given Cromwell URL."
@@ -204,26 +203,6 @@
   [url id]
   (:status (get-thing "status" url id)))
 
-;; HACK: (into (array-map) ...) is egregious.
-;;
-(defn status-counts
-  "Map status to workflow counts on Cromwell given URL with PARAMS
-  map and AUTH-HEADER."
-  [url params]
-  (letfn [(each [status]
-            (let [form-params (-> {:pagesize 1 :status status}
-                                  (merge params)
-                                  cromwellify-json-form)]
-              [status (-> {:method       :post ;; :debug true :debug-body true
-                           :url          (str (api url) "/query")
-                           :form-params  form-params
-                           :content-type :application/json
-                           :headers      (auth/get-auth-header)}
-                          request-json :body :totalResultsCount)]))]
-    (let [counts (into (array-map) (map each statuses))
-          total  (apply + (map counts statuses))]
-      (into counts [[:total total]]))))
-
 (defn submit-workflow
   "Submit a workflow to run WDL with INPUTS, OPTIONS, and LABELS
   on the Cromwell URL and return its ID.  INPUTS,
@@ -259,8 +238,8 @@
        (mapv :id)))
 
 (defn wait-for-workflow-complete
-  "Return status of workflow named by ID when it completes, given Cromwell URL."
+  "Return status of workflow ID from URL when it completes."
   [url id]
-  (let [finished? (comp (set final-statuses) #(status url id))]
+  (let [finished? (comp final? #(status url id))]
     (work-around-cromwell-fail-bug 9 url id)
     (util/poll finished? 15 (Integer/MAX_VALUE))))

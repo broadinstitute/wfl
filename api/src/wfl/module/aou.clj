@@ -2,17 +2,17 @@
   "Process Arrays for the All Of Us project."
   (:require [clojure.string             :as str]
             [clojure.spec.alpha         :as s]
-            [clojure.tools.logging      :as log]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
+            [wfl.module.all             :as all]
             [wfl.module.batch           :as batch]
             [wfl.references             :as references]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres       :as postgres]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl]
-            [wfl.module.all             :as all])
+            [wfl.wfl                    :as wfl])
   (:import [java.sql Timestamp]
            [java.time OffsetDateTime]
            [java.util UUID]))

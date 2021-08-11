@@ -1,8 +1,6 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
-            [clojure.tools.logging              :as log]
-            [clojure.tools.logging.readable     :as logr]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -13,11 +11,13 @@
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
+            [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
             [wfl.environment                    :as env]
-            [wfl.api.spec                       :as spec]
+            [wfl.log                            :as log]
             [wfl.module.all                     :as all]
             [wfl.module.aou                     :as aou]
+            [wfl.util                           :as util]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -45,6 +45,16 @@
                                 (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
+   ["/api/v1/logging_level"
+    {:get  {:no-doc true
+            :summary "Get the current logging level"
+            :handler handlers/get-logging-level
+            :responses {200 {:body ::log/logging-level-response}}
+            :swagger {:tags ["Informational"]}}
+     :post {:summary    "Post a new logging level."
+            :parameters {:query ::log/logging-level-request}
+            :responses  {200 {:body ::log/logging-level-response}}
+            :handler    handlers/update-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::aou/append-to-aou-request}
@@ -136,10 +146,11 @@
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
   [status message exception {:keys [uri] :as request}]
-  (let [response (exception-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :" (:status response) uri)
-    (logr/error exception (:body response))
-    response))
+  (let [{:keys [body status] :as result}
+        (exception-handler status message exception request)]
+    (log/error (format "Server %s error at occurred at %s :" status uri))
+    (log/error (util/make-map exception body))
+    result))
 
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."

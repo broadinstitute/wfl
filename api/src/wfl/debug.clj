@@ -11,7 +11,7 @@
        x#)))
 
 (defmacro trace
-  "Like DUMP but include location metadata."
+  "Like `dump` but include location metadata."
   [expression]
   (let [{:keys [line column]} (meta &form)]
     `(let [x# ~expression]

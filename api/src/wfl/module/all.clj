@@ -5,7 +5,6 @@
             [wfl.jdbc                   :as jdbc]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
-            [wfl.service.rawls          :as rawls]
             [wfl.util                   :as util]
             [wfl.wfl                    :as wfl])
   (:import [java.util UUID]))
@@ -121,7 +120,7 @@
 (s/def ::pipeline string?)
 (s/def ::project string?)
 (s/def ::release string?)
-(s/def ::status (set (concat cromwell/statuses rawls/statuses ["skipped"])))
+(s/def ::status cromwell/status?)
 (s/def ::started ::timestamp)
 (s/def ::stopped ::timestamp)
 (s/def ::table string?)
