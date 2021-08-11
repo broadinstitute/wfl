@@ -95,14 +95,13 @@
 
 (defn ^:private create-covid-workload
   [tx {:keys [source executor sink] :as request}]
-  (let [sink'     (sink/validate-or-throw sink)
-        id        (add-workload-metadata tx request)]
+  (let [id (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
      (concat [update-workload-query]
              (source/create-source! tx id source)
              (executor/create-executor! tx id executor)
-             (sink/create-sink! tx id sink')
+             (sink/create-sink! tx id sink)
              [id]))
     (workloads/load-workload-for-id tx id)))
 

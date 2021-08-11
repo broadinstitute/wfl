@@ -20,17 +20,6 @@
   (:import [clojure.lang ExceptionInfo]
            [wfl.util UserException]))
 
-;; Interface
-(defmulti validate-or-throw
-  "Return a validated sink request (i.e. resources exist and wfl can access
-   them) or throw."
-  :name)
-
-(defmethod validate-or-throw :default
-  [{:keys [name] :as request}]
-  (throw (UserException. "No such sink"
-                         (util/make-map name request))))
-
 (defmulti create-sink!
   "Create a `Sink` instance using the database `transaction` and configuration
    in the sink `request` and return a `[type items]` pair to be written to a
@@ -43,6 +32,7 @@
      `request`."
   (fn [_transaction _workload-id request] (:name request)))
 
+;; Interface
 (defmulti load-sink!
   "Return the `Sink` implementation associated with the `sink_type` and
    `sink_items` fields of the `workload` row in the database.
@@ -81,7 +71,7 @@
                           ::identifier
                           ::fromOutputs])))
 
-(defn ^:private create-terra-workspace-sink [tx id request]
+(defn ^:private write-terra-workspace-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraWorkspaceSinkDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" terra-workspace-sink-type id)]
@@ -112,7 +102,7 @@
   (str/join " " ["Found additional attributes in fromOutputs that are not"
                  "present in the entityType."]))
 
-(defn ^:private terra-workspace-validate-request-or-throw
+(defn terra-workspace-validate-request-or-throw
   "Verify that the WFL has access the `workspace`."
   [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
   (when-not skipValidation
@@ -197,12 +187,14 @@
       (util/select-non-nil-keys (keys terra-workspace-sink-serialized-fields))
       (assoc :name terra-workspace-sink-name)))
 
-(defoverload validate-or-throw terra-workspace-sink-name terra-workspace-validate-request-or-throw)
-(defoverload create-sink!      terra-workspace-sink-name create-terra-workspace-sink)
+(defmethod create-sink! terra-workspace-sink-name
+  [tx id request]
+  (write-terra-workspace-sink
+   tx id (terra-workspace-validate-request-or-throw request)))
 
-(defoverload load-sink!    terra-workspace-sink-type load-terra-workspace-sink)
-(defoverload update-sink!  terra-workspace-sink-type update-terra-workspace-sink)
-(defoverload stage/done?   terra-workspace-sink-type terra-workspace-sink-done?)
+(defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
+(defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)
+(defoverload stage/done?  terra-workspace-sink-type terra-workspace-sink-done?)
 
 (defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)
 
@@ -220,7 +212,7 @@
   (s/and (all/has? :name #(= datarepo-sink-name %))
          (s/keys :req-un [::all/dataset ::all/table ::fromOutputs])))
 
-(defn ^:private create-datarepo-sink [tx id request]
+(defn ^:private write-datarepo-sink [tx id request]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSinkDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" datarepo-sink-type id)]
@@ -250,7 +242,7 @@
   (str/join " " ["Found column names in fromOutputs that are not columns of"
                  "the table in the dataset."]))
 
-(defn ^:private datarepo-sink-validate-request-or-throw
+(defn datarepo-sink-validate-request-or-throw
   "Throw unless the user's sink `request` yields a valid configuration for a
    TerraDataRepoSink by ensuring all resources specified in the request exist."
   [{:keys [dataset table fromOutputs] :as request}]
@@ -374,8 +366,10 @@
       (update :dataset :id)
       (assoc :name datarepo-sink-name)))
 
-(defoverload validate-or-throw datarepo-sink-name datarepo-sink-validate-request-or-throw)
-(defoverload create-sink!      datarepo-sink-name create-datarepo-sink)
+(defmethod create-sink! datarepo-sink-name
+  [tx id request]
+  (write-datarepo-sink
+   tx id (datarepo-sink-validate-request-or-throw request)))
 
 (defoverload load-sink!   datarepo-sink-type load-datarepo-sink)
 (defoverload update-sink! datarepo-sink-type update-datarepo-sink)
