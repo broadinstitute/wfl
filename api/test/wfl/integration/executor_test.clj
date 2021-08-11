@@ -33,12 +33,6 @@
         :methodConfigurationVersion testing-method-configuration-version
         :fromSource                 "importSnapshot"})))
 
-(deftest test-validate-terra-executor-with-misnamed-executor
-  (is (thrown-with-msg?
-       UserException #"Invalid request"
-       (executor/validate-terra-executor-request
-        {:name "bad name"}))))
-
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
