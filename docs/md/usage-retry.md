@@ -46,7 +46,7 @@ as will specifying a status for which the workload has no workflows.
 
 #### Submission of snapshot subsets not yet supported
 
-WFL is limited by Rawls functionality
+WFL is limited by [Rawls](https://github.com/broadinstitute/rawls) functionality
 and cannot yet submit a subset of a snapshot.
 So retrying any workflow from a workload snapshot
 will resubmit all entities from that snapshot.
