@@ -111,7 +111,7 @@
   (str/join " " ["Found additional attributes in fromOutputs that are not"
                  "present in the entityType."]))
 
-(defn terra-workspace-validate-request-or-throw
+(defn terra-workspace-sink-validate-request-or-throw
   "Verify that the WFL has access the `workspace`."
   [{:keys [entityType fromOutputs skipValidation workspace] :as sink}]
   (when-not skipValidation
@@ -199,7 +199,7 @@
 (defmethod create-sink! terra-workspace-sink-name
   [tx id request]
   (write-terra-workspace-sink
-   tx id (terra-workspace-validate-request-or-throw request)))
+   tx id (terra-workspace-sink-validate-request-or-throw request)))
 
 (defoverload load-sink!   terra-workspace-sink-type load-terra-workspace-sink)
 (defoverload update-sink! terra-workspace-sink-type update-terra-workspace-sink)

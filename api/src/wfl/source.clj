@@ -119,7 +119,7 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
-(defn validate-datarepo-source!
+(defn datarepo-source-validate-request-or-throw
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
@@ -317,7 +317,7 @@
 
 (defmethod create-source! tdr-source-name
   [tx id request]
-  (write-tdr-source tx id (validate-datarepo-source! request)))
+  (write-tdr-source tx id (datarepo-source-validate-request-or-throw request)))
 
 (defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
@@ -335,7 +335,7 @@
 (def ^:private tdr-snapshot-list-name "TDR Snapshots")
 (def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
 
-(defn validate-tdr-snapshot-list
+(defn tdr-snappshot-list-validate-request-or-throw
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
             (try
@@ -406,7 +406,8 @@
 
 (defmethod create-source! tdr-snapshot-list-name
   [tx id request]
-  (write-tdr-snapshot-list tx id (validate-tdr-snapshot-list request)))
+  (write-tdr-snapshot-list
+   tx id (tdr-snappshot-list-validate-request-or-throw request)))
 
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)

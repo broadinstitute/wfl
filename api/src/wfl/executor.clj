@@ -109,7 +109,7 @@
     (throw (UserException. "Only Dockstore methods are supported."
                            {:status 400 :methodRepoMethod methodRepoMethod}))))
 
-(defn validate-terra-executor-request
+(defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
   [{:keys [skipValidation
            workspace
@@ -444,7 +444,7 @@
 
 (defmethod create-executor! terra-executor-name
   [tx id request]
-  (write-terra-executor tx id (validate-terra-executor-request request)))
+  (write-terra-executor tx id (terra-executor-validate-request-or-throw request)))
 
 (defoverload load-executor!               terra-executor-type load-terra-executor)
 (defoverload update-executor!             terra-executor-type update-terra-executor)
