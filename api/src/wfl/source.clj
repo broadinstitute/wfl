@@ -90,7 +90,7 @@
    :column          :table_column_name
    :snapshotReaders :snapshot_readers})
 
-(defn ^:private create-tdr-source [tx id source]
+(defn ^:private write-tdr-source [tx id source]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-source-type id)]
@@ -308,7 +308,7 @@
 
 (defmethod create-source! tdr-source-name
   [tx id request]
-  (create-tdr-source tx id (validate-datarepo-source! request)))
+  (write-tdr-source tx id (validate-datarepo-source! request)))
 
 (defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
@@ -340,7 +340,7 @@
       source
       (update source :snapshots #(mapv snapshot-or-throw %)))))
 
-(defn ^:private create-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
+(defn ^:private write-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
   (let [create  "CREATE TABLE %s OF ListSource (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-snapshot-list-type id)]
@@ -397,7 +397,7 @@
 
 (defmethod create-source! tdr-snapshot-list-name
   [tx id request]
-  (create-tdr-snapshot-list tx id (validate-tdr-snapshot-list request)))
+  (write-tdr-snapshot-list tx id (validate-tdr-snapshot-list request)))
 
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)

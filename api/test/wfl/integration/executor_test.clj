@@ -26,7 +26,7 @@
     fixtures/temporary-postgresql-database))
 
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (is (executor/validate-or-throw
+  (is (executor/validate-terra-executor-request
        {:name                       "Terra"
         :workspace                  testing-workspace
         :methodConfiguration        testing-method-configuration
@@ -36,13 +36,13 @@
 (deftest test-validate-terra-executor-with-misnamed-executor
   (is (thrown-with-msg?
        UserException #"Invalid request"
-       (executor/validate-or-throw
+       (executor/validate-terra-executor-request
         {:name "bad name"}))))
 
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
-       (executor/validate-or-throw
+       (executor/validate-terra-executor-request
         {:name                       "Terra"
          :workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
@@ -52,7 +52,7 @@
 (deftest test-validate-terra-executor-with-wrong-method-configuration-version
   (is (thrown-with-msg?
        UserException #"Unexpected method configuration version"
-       (executor/validate-or-throw
+       (executor/validate-terra-executor-request
         {:name                       "Terra"
          :workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
@@ -62,7 +62,7 @@
 (deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
        UserException #"Cannot access method configuration"
-       (executor/validate-or-throw
+       (executor/validate-terra-executor-request
         {:name                "Terra"
          :workspace           testing-workspace
          :methodConfiguration "no_such/method_configuration"
