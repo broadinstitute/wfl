@@ -80,6 +80,15 @@
    `workload`."
   (fn [_transaction workload] (:source_type workload)))
 
+(defmethod create-source! :default
+  [_ _ {:keys [name] :as request}]
+  (throw (UserException.
+          "Invalid source name"
+          {:name    name
+           :request request
+           :status  400
+           :sources (-> create-source! methods (dissoc :default) keys)})))
+
 ;; Terra Data Repository Source
 (def ^:private tdr-source-name  "Terra DataRepo")
 (def ^:private tdr-source-type  "TerraDataRepoSource")

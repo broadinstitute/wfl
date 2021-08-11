@@ -103,12 +103,30 @@
 
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown-with-msg?
-       UserException #"Invalid request"
+       UserException #"Invalid source"
        (workloads/create-workload!
         (workloads/covid-workload-request
          {:name "bad name"}
          {:skipValidation true}
          {:skipValidation true})))))
+
+(deftest test-create-covid-workload-with-misnamed-executor
+  (is (thrown-with-msg?
+       UserException #"Invalid executor"
+       (workloads/create-workload!
+        (workloads/covid-workload-request
+         {:skipValidation true}
+         {:name "bad name"}
+         {:skipValidation true})))))
+
+(deftest test-create-covid-workload-with-misnamed-sink
+  (is (thrown-with-msg?
+       UserException #"Invalid sink"
+       (workloads/create-workload!
+        (workloads/covid-workload-request
+         {:skipValidation true}
+         {:skipValidation true}
+         {:name "bad name"})))))
 
 (deftest test-create-covid-workload-with-valid-executor-request
   (is (workloads/create-workload!
@@ -119,15 +137,6 @@
          :methodConfigurationVersion testing-method-configuration-version
          :fromSource                 "importSnapshot"}
         {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-misnamed-executor
-  (is (thrown-with-msg?
-       UserException #"Invalid request"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:name "bad name"}
-         {:skipValidation true})))))
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!

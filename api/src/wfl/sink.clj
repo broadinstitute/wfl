@@ -50,6 +50,15 @@
    and the `Queue`'s parameterisation must be convertible to the `Sink`s."
   (fn [_upstream-queue sink] (:type sink)))
 
+(defmethod create-sink! :default
+  [_ _ {:keys [name] :as request}]
+  (throw (UserException.
+          "Invalid sink name"
+          {:name    name
+           :request request
+           :status  400
+           :sources (-> create-sink! methods (dissoc :default) keys)})))
+
 ;; Terra Workspace Sink
 (def ^:private ^:const terra-workspace-sink-name  "Terra Workspace")
 (def ^:private ^:const terra-workspace-sink-type  "TerraWorkspaceSink")

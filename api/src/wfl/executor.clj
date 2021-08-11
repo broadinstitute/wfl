@@ -54,6 +54,15 @@
    association in the `workload`."
   (fn [_transaction workload] (:executor_type workload)))
 
+(defmethod create-executor! :default
+  [_ _ {:keys [name] :as request}]
+  (throw (UserException.
+          "Invalid executor name"
+          {:name      name
+           :request   request
+           :status    400
+           :executors (-> create-executor! methods (dissoc :default) keys)})))
+
 ;; Terra Executor
 (def ^:private terra-executor-name  "Terra")
 (def ^:private terra-executor-type  "TerraExecutor")
