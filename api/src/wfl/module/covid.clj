@@ -95,8 +95,7 @@
 
 (defn ^:private create-covid-workload
   [tx {:keys [source executor sink] :as request}]
-  (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
-        id                     (add-workload-metadata tx request)]
+  (let [id (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
      (concat [update-workload-query]

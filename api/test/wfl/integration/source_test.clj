@@ -50,7 +50,7 @@
   (source/load-source! tx {:source_type type :source_items (str id)}))
 
 (deftest test-create-tdr-source-from-valid-request
-  (is (stage/validate-or-throw
+  (is (source/datarepo-source-validate-request-or-throw
        {:name    "Terra DataRepo"
         :dataset testing-dataset
         :table   testing-table-name
@@ -59,14 +59,14 @@
 (deftest test-create-tdr-source-with-non-existent-dataset
   (is (thrown-with-msg?
        UserException #"Cannot access dataset"
-       (stage/validate-or-throw
+       (source/datarepo-source-validate-request-or-throw
         {:name    "Terra DataRepo"
          :dataset util/uuid-nil}))))
 
 (deftest test-create-tdr-source-with-invalid-dataset-table
   (is (thrown-with-msg?
        UserException #"Table not found"
-       (stage/validate-or-throw
+       (source/datarepo-source-validate-request-or-throw
         {:name    "Terra DataRepo"
          :dataset testing-dataset
          :table   "no_such_table"}))))
@@ -74,7 +74,7 @@
 (deftest test-create-tdr-source-with-invalid-dataset-column
   (is (thrown-with-msg?
        UserException #"Column not found"
-       (stage/validate-or-throw
+       (source/datarepo-source-validate-request-or-throw
         {:name    "Terra DataRepo"
          :dataset testing-dataset
          :table   testing-table-name
@@ -145,13 +145,13 @@
     (is (s/valid? ::source/snapshot-list-source source))))
 
 (deftest test-create-covid-workload-with-empty-snapshot-list
-  (is (stage/validate-or-throw
+  (is (source/tdr-snappshot-list-validate-request-or-throw
        {:name      "TDR Snapshots"
         :snapshots [testing-snapshot]})))
 
 (deftest test-create-covid-workload-with-invalid-snapshot
   (is (thrown-with-msg?
        UserException #"Cannot access snapshot"
-       (stage/validate-or-throw
+       (source/tdr-snappshot-list-validate-request-or-throw
         {:name     "TDR Snapshots"
          :snapshots [util/uuid-nil]}))))

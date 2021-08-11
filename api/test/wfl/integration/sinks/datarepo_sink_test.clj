@@ -42,12 +42,12 @@
    :fromOutputs {:fileref "outfile"}})
 
 (deftest test-validate-datarepo-sink-with-valid-sink-request
-  (is (stage/validate-or-throw (datarepo-sink-request))))
+  (is (sink/datarepo-sink-validate-request-or-throw (datarepo-sink-request))))
 
 (deftest test-validate-datarepo-sink-throws-on-invalid-dataset
   (is (thrown-with-msg?
        UserException #"Cannot access dataset"
-       (stage/validate-or-throw
+       (sink/datarepo-sink-validate-request-or-throw
         {:name        @#'sink/datarepo-sink-name
          :dataset     util/uuid-nil
          :table       "parameters"
@@ -56,7 +56,7 @@
 (deftest test-validate-datarepo-sink-throws-on-invalid-table
   (is (thrown-with-msg?
        UserException #"Table not found"
-       (stage/validate-or-throw
+       (sink/datarepo-sink-validate-request-or-throw
         {:name        @#'sink/datarepo-sink-name
          :dataset     *dataset*
          :table       "not-a-table"
@@ -65,7 +65,7 @@
 (deftest test-validate-datarepo-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
        UserException (re-pattern sink/datarepo-malformed-from-outputs-message)
-       (stage/validate-or-throw
+       (sink/datarepo-sink-validate-request-or-throw
         {:name        @#'sink/datarepo-sink-name
          :dataset     *dataset*
          :table       "parameters"
@@ -74,7 +74,7 @@
 (deftest test-validate-datarepo-sink-throws-on-unknown-column-name
   (is (thrown-with-msg?
        UserException (re-pattern sink/unknown-columns-error-message)
-       (stage/validate-or-throw
+       (sink/datarepo-sink-validate-request-or-throw
         {:name        @#'sink/datarepo-sink-name
          :dataset     *dataset*
          :table       "parameters"
@@ -83,11 +83,8 @@
 ;; Operation tests
 (def ^:private random (partial rand-int 1000000))
 
-(def ^:private datarepo-sink-config
-  (comp stage/validate-or-throw datarepo-sink-request))
-
 (deftest test-create-datarepo-sink
-  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
+  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-request))]
     (is (= @#'sink/datarepo-sink-type type))
     (is (-> items Integer/parseInt pos?))
     (let [sink (evalT sink/load-sink! {:sink_type type :sink_items items})]
@@ -97,7 +94,7 @@
       (is (evalT postgres/table-exists? (:details sink))))))
 
 (defn ^:private create-and-load-datarepo-sink []
-  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-config))]
+  (let [[type items] (evalT sink/create-sink! (random) (datarepo-sink-request))]
     (evalT sink/load-sink! {:sink_type type :sink_items items})))
 
 (deftest test-datarepo-sink-initially-done
