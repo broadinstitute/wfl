@@ -348,7 +348,7 @@
                       :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
                       :methodConfigurationVersion 1
                       :fromSource                 "importSnapshot"}
-            sink     {:name        "Terra DataRepo Sink"
+            sink     {:name        "Terra DataRepo"
                       :dataset     dataset
                       :table       "outputs"
                       :fromOutputs (resources/read-resource

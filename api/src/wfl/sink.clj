@@ -199,7 +199,7 @@
 (defoverload util/to-edn terra-workspace-sink-type terra-workspace-sink-to-edn)
 
 ;; TerraDataRepo Sink
-(def ^:private ^:const datarepo-sink-name  "Terra DataRepo Sink")
+(def ^:private ^:const datarepo-sink-name  "Terra DataRepo")
 (def ^:private ^:const datarepo-sink-type  "TerraDataRepoSink")
 (def ^:private ^:const datarepo-sink-table "TerraDataRepoSink")
 (def ^:private ^:const datarepo-sink-serialized-fields
