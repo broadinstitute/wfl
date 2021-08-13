@@ -41,15 +41,13 @@
 (defn get-table
   "Return TABLE using transaction TX sorted by row id."
   [tx table]
-  (when-not (and table (table-exists? tx table))
-    (throw (ex-info "Table not found" {:table table})))
+  (throw-unless-table-exists tx table)
   (jdbc/query tx (format "SELECT * FROM %s ORDER BY id ASC" table)))
 
 (defn table-length
   "Use `tx` to return the number of records in `table-name`."
   [tx table-name]
-  (when-not (table-exists? tx table-name)
-    (throw (ex-info "No such table" {:table table-name})))
+  (throw-unless-table-exists tx table-name)
   (->> (format "SELECT COUNT(*) FROM %s" table-name)
        (jdbc/query tx)
        first
@@ -58,8 +56,7 @@
 (defn table-max
   "Use `tx` to return the maximum value of `column` in `table-name`."
   [tx table-name column]
-  (when-not (table-exists? tx table-name)
-    (throw (ex-info "No such table" {:table table-name})))
+  (throw-unless-table-exists tx table-name)
   (-> (format "SELECT MAX(%s) FROM %s" (name column) (name table-name))
       (->> (jdbc/query tx))
       first

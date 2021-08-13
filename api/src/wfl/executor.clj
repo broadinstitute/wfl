@@ -59,23 +59,32 @@
    association in the `workload`."
   (fn [_transaction workload] (:executor_type workload)))
 
+(defmethod create-executor! :default
+  [_ _ {:keys [name] :as request}]
+  (throw (UserException.
+          "Invalid executor name"
+          {:name      name
+           :request   request
+           :status    400
+           :executors (-> create-executor! methods (dissoc :default) keys)})))
+
 ;; Terra Executor
-(def ^:private terra-executor-name  "Terra")
-(def ^:private terra-executor-type  "TerraExecutor")
-(def ^:private terra-executor-table "TerraExecutor")
-(def ^:private terra-executor-serialized-fields
+(def ^:private ^:const terra-executor-name  "Terra")
+(def ^:private ^:const terra-executor-type  "TerraExecutor")
+(def ^:private ^:const terra-executor-table "TerraExecutor")
+(def ^:private ^:const terra-executor-serialized-fields
   {:workspace                  :workspace
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
 
-(defn ^:private create-terra-executor [tx id request]
+(defn ^:private write-terra-executor [tx id executor]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" terra-executor-type id)]
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
     [terra-executor-type
-     (-> (select-keys request (keys terra-executor-serialized-fields))
+     (-> (select-keys executor (keys terra-executor-serialized-fields))
          (update :fromSource pr-str)
          (set/rename-keys terra-executor-serialized-fields)
          (assoc :details details)
@@ -105,7 +114,7 @@
     (throw (UserException. "Only Dockstore methods are supported."
                            {:status 400 :methodRepoMethod methodRepoMethod}))))
 
-(defn verify-terra-executor
+(defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
   [{:keys [skipValidation
            workspace
@@ -538,19 +547,19 @@
       (util/select-non-nil-keys (keys terra-executor-serialized-fields))
       (assoc :name terra-executor-name)))
 
-(defoverload create-executor! terra-executor-name create-terra-executor)
-(defoverload load-executor!   terra-executor-type load-terra-executor)
+(defmethod create-executor! terra-executor-name
+  [tx id request]
+  (write-terra-executor tx id (terra-executor-validate-request-or-throw request)))
 
+(defoverload load-executor!               terra-executor-type load-terra-executor)
 (defoverload update-executor!             terra-executor-type update-terra-executor)
 (defoverload executor-workflows           terra-executor-type terra-executor-workflows)
 (defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
 (defoverload executor-retry-workflows!    terra-executor-type terra-executor-retry-workflows)
 
-(defoverload stage/validate-or-throw terra-executor-name verify-terra-executor)
-(defoverload stage/done?             terra-executor-type terra-executor-done?)
-
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
 (defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
 (defoverload stage/queue-length terra-executor-type terra-executor-queue-length)
+(defoverload stage/done?        terra-executor-type terra-executor-done?)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)

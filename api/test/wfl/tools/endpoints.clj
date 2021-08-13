@@ -1,10 +1,15 @@
 (ns wfl.tools.endpoints
-  (:require [clojure.data.json :as json]
-            [clojure.string    :as str]
-            [clj-http.client   :as http]
-            [wfl.auth          :as auth]
-            [wfl.environment   :as env]
-            [wfl.util          :as util]))
+  (:require [clojure.data.json       :as json]
+            [clojure.string          :as str]
+            [clojure.test            :refer [is]]
+            [clj-http.client         :as http]
+            [reitit.coercion.spec]
+            [reitit.ring             :as ring]
+            [reitit.ring.coercion    :as coercion]
+            [ring.util.http-response :refer [ok]]
+            [wfl.auth                :as auth]
+            [wfl.environment         :as env]
+            [wfl.util                :as util :refer [>>>]]))
 
 (defn ^:private wfl-url
   "The WFL server URL to test."
@@ -107,3 +112,28 @@
                   :content-type :application/json
                   :body         (json/write-str {:status status})})
       util/response-body-json))
+
+(defn coercion-tester
+  "Test utility to test clojure specs with reitit coercion. Returns a function
+  that verifies its input can be coerced to `request-spec`. Optionally verifies
+  that the result of applying `transform` to its argument can be coerced to
+  `response-spec`."
+  [request-spec & [response-spec transform]]
+  (let [app
+        (ring/ring-handler
+         (ring/router
+          [["/test" {:post {:parameters {:body request-spec}
+                            :responses  {200 {:body (or response-spec nil?)}}
+                            :handler    (>>> :body-params
+                                             (or transform (constantly nil))
+                                             ok)}}]]
+          {:data {:coercion   reitit.coercion.spec/coercion
+                  :middleware [coercion/coerce-exceptions-middleware
+                               coercion/coerce-request-middleware
+                               coercion/coerce-response-middleware]}}))]
+    (fn [request]
+      (let [{:keys [status body] :as _response}
+            (app {:request-method :post
+                  :uri            "/test"
+                  :body-params    request})]
+        (is (== 200 status) (pr-str body))))))
