@@ -1,5 +1,5 @@
 (ns wfl.integration.sinks.workspace-sink-test
-  "Test validation and operations on Sink stage implementations."
+  "Test validation and operations on the Terra Workspace Sink implementation."
   (:require [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]

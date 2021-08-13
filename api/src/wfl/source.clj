@@ -92,10 +92,10 @@
            :sources (-> create-source! methods (dissoc :default) keys)})))
 
 ;; Terra Data Repository Source
-(def ^:private tdr-source-name  "Terra DataRepo")
-(def ^:private tdr-source-type  "TerraDataRepoSource")
-(def ^:private tdr-source-table "TerraDataRepoSource")
-(def ^:private tdr-source-serialized-fields
+(def ^:private ^:const tdr-source-name  "Terra DataRepo")
+(def ^:private ^:const tdr-source-type  "TerraDataRepoSource")
+(def ^:private ^:const tdr-source-table "TerraDataRepoSource")
+(def ^:private ^:const tdr-source-serialized-fields
   {:dataset         :dataset
    :table           :dataset_table
    :column          :table_column_name
@@ -369,8 +369,8 @@
 (defoverload util/to-edn tdr-source-type tdr-source-to-edn)
 
 ;; TDR Snapshot List Source
-(def ^:private tdr-snapshot-list-name "TDR Snapshots")
-(def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
+(def ^:private ^:const tdr-snapshot-list-name "TDR Snapshots")
+(def ^:private ^:const tdr-snapshot-list-type "TDRSnapshotListSource")
 
 (defn tdr-snappshot-list-validate-request-or-throw
   [{:keys [skipValidation] :as source}]

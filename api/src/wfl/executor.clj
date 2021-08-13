@@ -69,10 +69,10 @@
            :executors (-> create-executor! methods (dissoc :default) keys)})))
 
 ;; Terra Executor
-(def ^:private terra-executor-name  "Terra")
-(def ^:private terra-executor-type  "TerraExecutor")
-(def ^:private terra-executor-table "TerraExecutor")
-(def ^:private terra-executor-serialized-fields
+(def ^:private ^:const terra-executor-name  "Terra")
+(def ^:private ^:const terra-executor-type  "TerraExecutor")
+(def ^:private ^:const terra-executor-table "TerraExecutor")
+(def ^:private ^:const terra-executor-serialized-fields
   {:workspace                  :workspace
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version

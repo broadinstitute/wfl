@@ -1,5 +1,5 @@
 (ns wfl.integration.sinks.datarepo-sink-test
-  "Test validation and operations on Sink stage implementations."
+  "Test validation and operations on the DataRepo sink implementation."
   (:require [clojure.test         :refer [deftest is use-fixtures]]
             [wfl.environment      :as env]
             [wfl.service.postgres :as postgres]
