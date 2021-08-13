@@ -9,16 +9,19 @@ theme:
       primary: green
       accent: teal
       toggle:
-        icon: material/toggle-switch
+        icon: material/lightbulb
         name: Switch to light mode
     - scheme: slate
       primary: teal
       accent: teal
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/lightbulb-outline
         name: Switch to dark mode
-  feature:
-    tabs: true
+  language: en
+  features:
+    - navigation.top
+    - navigation.sections
+    - navigation.instant
 
 docs_dir: "md"
 
