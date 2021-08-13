@@ -40,8 +40,7 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(def ^:private snapshot-endpoint
-  "snapshots")
+(def ^:private snapshot-endpoint "snapshots/v2")
 
 (defn create-snapshot-reference
   "Link `snapshot-id` to `workspace` as `name` with `description`."
@@ -62,30 +61,30 @@
   [workspace reference-id]
   (get-workspace-json workspace snapshot-endpoint reference-id))
 
-(defn get-snapshot-references
-  "Lazily returns the snapshot references in `workspace`
+(defn get-snapshot-references-for-snapshot-id
+  "Lazily returns the snapshot references for `snapshot-id` in `workspace`
   with `limit` resources per page (default: 100)."
-  ([workspace limit]
+  ([workspace snapshot-id limit]
    (letfn
     [(page [offset]
-       (let [{:keys [resources] :as _response}
+       (let [{:keys [gcpDataRepoSnapshots] :as _response}
              (-> (workspace-api-url workspace snapshot-endpoint)
                  (http/get {:headers      (auth/get-auth-header)
-                            :query-params {:offset offset
-                                           :limit  limit}})
+                            :query-params {:offset               offset
+                                           :limit                limit
+                                           :referencedSnapshotId snapshot-id}})
                  (util/response-body-json))
-             total    (+ offset (count resources))]
-         (lazy-cat resources (when (seq resources) (page total)))))]
+             total    (+ offset (count gcpDataRepoSnapshots))]
+         (lazy-cat gcpDataRepoSnapshots
+                   (when (seq gcpDataRepoSnapshots) (page total)))))]
      (util/lazy-unchunk (page 0))))
-  ([workspace]
-   (get-snapshot-references workspace 100)))
+  ([workspace snapshot-id]
+   (get-snapshot-references-for-snapshot-id workspace snapshot-id 100)))
 
 (defn ^:private get-reference-for-snapshot-id
   "Return first snapshot reference for `snapshot-id` in `workspace`."
   [workspace snapshot-id]
-  (->> (get-snapshot-references workspace)
-       (filter #(= (get-in % [:reference :snapshot]) snapshot-id))
-       first))
+  (first (get-snapshot-references-for-snapshot-id workspace snapshot-id)))
 
 (def ^:private reference-creation-failed-message
   (str/join " " ["Could not create snapshot reference"
