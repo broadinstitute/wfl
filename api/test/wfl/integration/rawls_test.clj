@@ -21,33 +21,36 @@
     (fn [workspace]
       (letfn [(make-reference [snapshot-name]
                 (rawls/create-snapshot-reference workspace snapshot-id snapshot-name))
-              (verify-snapshot [[snapshot snapshot-name]]
-                (is (= "DATA_REPO_SNAPSHOT" (:referenceType snapshot)))
-                (is (= snapshot-id (get-in snapshot [:reference :snapshot])))
-                (is (= snapshot-name (:name snapshot))))
-              (verify-snapshots [snapshots snapshot-names]
-                (->> (map list snapshots snapshot-names)
-                     (run! verify-snapshot)))]
+              (verify-reference [[{:keys [attributes metadata] :as _reference}
+                                  snapshot-names]]
+                (is (= "DATA_REPO_SNAPSHOT" (:resourceType metadata)))
+                (is (= snapshot-id (:snapshot attributes)))
+                (is (= snapshot-names (:name metadata))))
+              (verify-references [references snapshot-names]
+                (->> (map list references snapshot-names)
+                     (run! verify-reference)))]
         (let [names ["snapshot1" "snapshot2"]
               reference-ids
               (testing "Create"
-                (let [snapshots (map make-reference names)]
-                  (verify-snapshots snapshots names)
-                  (map :referenceId snapshots)))]
+                (let [references (map make-reference names)]
+                  (verify-references references names)
+                  (map #(get-in % [:metadata :resourceId]) references)))]
           (testing "Get"
-            (let [snapshots
+            (let [references
                   (map #(rawls/get-snapshot-reference workspace %) reference-ids)]
-              (verify-snapshots snapshots names)))
-          (testing "Get all"
-            (let [[_first _second & rest :as snapshots]
-                  (rawls/get-snapshot-references workspace 10)]
+              (verify-references references names)))
+          (testing "Get all for snapshot id"
+            (let [[_first _second & rest :as references]
+                  (rawls/get-snapshot-references-for-snapshot-id workspace
+                                                                 snapshot-id
+                                                                 10)]
               (is (empty? rest))
-              (verify-snapshots snapshots names)))
+              (verify-references references names)))
           (testing "Create or get"
-            (let [snapshot (rawls/create-or-get-snapshot-reference workspace
-                                                                   snapshot-id
-                                                                   (first names))]
-              (verify-snapshot [snapshot (first names)])))
+            (let [reference (rawls/create-or-get-snapshot-reference workspace
+                                                                    snapshot-id
+                                                                    (first names))]
+              (verify-reference [reference (first names)])))
           (testing "Create already exists"
             (is (thrown-with-msg? ExceptionInfo #"clj-http: status 409"
                                   (make-reference (first names))))))))))

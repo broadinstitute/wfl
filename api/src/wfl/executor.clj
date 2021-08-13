@@ -159,8 +159,9 @@
            workspace
            methodConfiguration
            methodConfigurationVersion] :as executor}
-   {:keys [name]                       :as _reference}]
-  (let [current (firecloud/method-configuration workspace methodConfiguration)
+   reference]
+  (let [name    (get-in reference [:metadata :name])
+        current (firecloud/method-configuration workspace methodConfiguration)
         _       (throw-on-method-config-version-mismatch
                  current methodConfigurationVersion)
         inc'd   (inc methodConfigurationVersion)]
@@ -187,13 +188,13 @@
 (defn ^:private allocate-submission
   "Write or allocate workflow records for `submission` in `details` table,
   and return them."
-  [{:keys [details]                :as executor}
-   {:keys [referenceId]            :as _reference}
+  [{:keys [details] :as executor}
+   reference
    {:keys [submissionId workflows] :as _submission}]
   (log/debug (format "%s Allocating %s workflow records for submission %s..."
                      (log-prefix executor) (count workflows) submissionId))
   (letfn [(to-row [now {:keys [status workflowId entityName] :as _workflow}]
-            {:reference  referenceId
+            {:reference  (get-in reference [:metadata :resourceId])
              :submission submissionId
              :workflow   workflowId
              :entity     entityName

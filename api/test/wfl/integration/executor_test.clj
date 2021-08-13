@@ -70,8 +70,10 @@
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-snapshot-reference [& _]
-  {:referenceId snapshot-reference-id
-   :name        snapshot-reference-name})
+  {:metadata {:name            snapshot-reference-name
+              :resourceId      snapshot-reference-id
+              :resourceType    "DATA_REPO_SNAPSHOT"
+              :stewardshipType "REFERENCED"}})
 
 ;; Method configuration
 (def ^:private fake-method-name "method-name")
@@ -417,5 +419,5 @@
        #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
       #(let [executor  (create-terra-executor (rand-int 1000000))
              reference (#'executor/entity-from-snapshot executor snapshot)]
-         (is (and (= snapshot-reference-id (:referenceId reference))
-                  (= snapshot-reference-name (:name reference))))))))
+         (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
+                  (= snapshot-reference-name (get-in reference [:metadata :name]))))))))
