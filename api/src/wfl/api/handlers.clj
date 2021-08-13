@@ -113,7 +113,7 @@
         supported? (cromwell/retry-status? status)]
     (when-not supported?
       (throw (UserException. retry-unsupported-status-error-message
-                             {:uuid               uuid
+                             {:workload           uuid
                               :supported-statuses cromwell/retry-status?
                               :requested-status   status
                               :status             400})))
@@ -122,7 +122,7 @@
                  workflows (workloads/workflows-by-status tx workload status)]
              (when (empty? workflows)
                (throw (UserException. retry-no-workflows-error-message
-                                      {:uuid             uuid
+                                      {:workload         uuid
                                        :requested-status status
                                        :status           400})))
              [workload workflows]))
