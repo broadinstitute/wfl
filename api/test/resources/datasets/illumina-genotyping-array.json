@@ -1,0 +1,176 @@
+{
+  "name": "illumina_genotyping_array",
+  "description": "test inputs and outputs for the illumina_genotyping_array pipeline",
+  "defaultProfileId": "6370f5a1-d777-4991-8200-ceab83521d43",
+  "schema": {
+    "tables": [
+      {
+        "name": "inputs",
+        "columns": [
+          {
+            "name": "analysis_version_number",
+            "datatype": "integer"
+          },
+          {
+            "name": "chip_well_barcode",
+            "datatype": "string"
+          },
+          {
+            "name": "green_idat_cloud_path",
+            "datatype": "fileref"
+          },
+          {
+            "name": "red_idat_cloud_path",
+            "datatype": "fileref"
+          },
+          {
+            "name": "sample_alias",
+            "datatype": "string"
+          },
+          {
+            "name": "reported_gender",
+            "datatype": "string"
+          },
+          {
+            "name": "ingested",
+            "datatype": "timestamp"
+          }
+        ],
+        "primaryKey": [
+          "analysis_version_number",
+          "chip_well_barcode",
+          "green_idat_cloud_path",
+          "red_idat_cloud_path",
+          "sample_alias",
+          "reported_gender",
+          "ingested"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      },
+      {
+        "name": "outputs",
+        "columns": [
+          {
+            "name": "arrays_subset_variant_calling_control_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "arrays_subset_variant_calling_detail_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "arrays_subset_variant_calling_summary_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "arrays_variant_calling_control_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "arrays_variant_calling_detail_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "arrays_variant_calling_summary_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "check_fingerprint_lod",
+            "datatype": "float"
+          },
+          {
+            "name": "contamination_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "fingerprint_detail_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "fingerprint_summary_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "genotype_concordance_contingency_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "genotype_concordance_detail_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "genotype_concordance_failed",
+            "datatype": "boolean"
+          },
+          {
+            "name": "genotype_concordance_summary_metrics",
+            "datatype": "fileref"
+          },
+          {
+            "name": "green_idat_md5_cloud_path",
+            "datatype": "fileref"
+          },
+          {
+            "name": "gtc",
+            "datatype": "fileref"
+          },
+          {
+            "name": "output_fingerprint_vcf",
+            "datatype": "fileref"
+          },
+          {
+            "name": "output_fingerprint_vcf_index",
+            "datatype": "fileref"
+          },
+          {
+            "name": "output_vcf",
+            "datatype": "fileref"
+          },
+          {
+            "name": "output_vcf_index",
+            "datatype": "fileref"
+          },
+          {
+            "name": "output_vcf_md5_cloud_path",
+            "datatype": "fileref"
+          },
+          {
+            "name": "red_idat_md5_cloud_path",
+            "datatype": "fileref"
+          }
+        ],
+        "primaryKey": [
+          "arrays_subset_variant_calling_control_metrics",
+          "arrays_subset_variant_calling_detail_metrics",
+          "arrays_subset_variant_calling_summary_metrics",
+          "arrays_variant_calling_control_metrics",
+          "arrays_variant_calling_detail_metrics",
+          "arrays_variant_calling_summary_metrics",
+          "check_fingerprint_lod",
+          "contamination_metrics",
+          "fingerprint_detail_metrics",
+          "fingerprint_summary_metrics",
+          "genotype_concordance_contingency_metrics",
+          "genotype_concordance_detail_metrics",
+          "genotype_concordance_failed",
+          "genotype_concordance_summary_metrics",
+          "green_idat_md5_cloud_path",
+          "gtc",
+          "output_fingerprint_vcf",
+          "output_fingerprint_vcf_index",
+          "output_vcf",
+          "output_vcf_index",
+          "output_vcf_md5_cloud_path",
+          "red_idat_md5_cloud_path"
+        ],
+        "partitionMode": "date",
+        "datePartitionOptions": {
+          "column": "datarepo_ingest_date"
+        }
+      }
+    ]
+  }
+}

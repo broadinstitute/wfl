@@ -4,17 +4,17 @@
             [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.string                 :as str]
-            [wfl.log                        :as log]
             [wfl.api.workloads              :as workloads :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
+            [wfl.module.all                 :as all]
             [wfl.module.batch               :as batch]
             [wfl.references                 :as references]
             [wfl.service.clio               :as clio]
             [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.util                       :as util]
-            [wfl.wfl                        :as wfl]
-            [wfl.module.all                 :as all])
+            [wfl.wfl                        :as wfl])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")

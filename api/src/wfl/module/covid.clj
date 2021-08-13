@@ -1,16 +1,16 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
-  (:require [wfl.api.workloads :as workloads :refer [defoverload]]
-            [clojure.spec.alpha :as s]
-            [wfl.executor :as executor]
-            [wfl.jdbc :as jdbc]
+  (:require [clojure.spec.alpha   :as s]
+            [wfl.api.workloads    :as workloads :refer [defoverload]]
+            [wfl.executor         :as executor]
+            [wfl.jdbc             :as jdbc]
+            [wfl.module.all       :as all]
             [wfl.service.postgres :as postgres]
-            [wfl.sink :as sink]
-            [wfl.source :as source]
-            [wfl.stage :as stage]
-            [wfl.util :as util :refer [utc-now]]
-            [wfl.wfl :as wfl]
-            [wfl.module.all :as all])
+            [wfl.sink             :as sink]
+            [wfl.source           :as source]
+            [wfl.stage            :as stage]
+            [wfl.util             :as util :refer [utc-now]]
+            [wfl.wfl              :as wfl])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
@@ -25,7 +25,7 @@
 (s/def ::creator util/email-address?)
 (s/def ::workload-request (s/keys :req-un [::executor
                                            ::all/project
-                                           ::all/sink
+                                           ::sink/sink
                                            ::source/source]
                                   :opt-un [::all/labels
                                            ::all/watchers]))
@@ -34,7 +34,7 @@
                                             ::creator
                                             ::executor
                                             ::all/labels
-                                            ::all/sink
+                                            ::sink/sink
                                             ::source/source
                                             ::all/uuid
                                             ::all/version
@@ -95,8 +95,7 @@
 
 (defn ^:private create-covid-workload
   [tx {:keys [source executor sink] :as request}]
-  (let [[source executor sink] (mapv stage/validate-or-throw [source executor sink])
-        id                     (add-workload-metadata tx request)]
+  (let [id (add-workload-metadata tx request)]
     (jdbc/execute!
      tx
      (concat [update-workload-query]

@@ -1,7 +1,6 @@
 (ns wfl.server
   "An HTTP API server."
   (:require [clojure.string                 :as str]
-            [wfl.log                        :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
@@ -11,12 +10,13 @@
             [ring.middleware.session.cookie :as cookie]
             [wfl.api.routes                 :as routes]
             [wfl.api.workloads              :as workloads]
+            [wfl.configuration              :as config]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util]
-            [wfl.wfl                        :as wfl]
-            [wfl.configuration              :as config])
+            [wfl.wfl                        :as wfl])
   (:import (java.util.concurrent Future TimeUnit)
            (wfl.util UserException)))
 
