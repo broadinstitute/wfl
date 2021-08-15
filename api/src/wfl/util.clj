@@ -1,13 +1,13 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.csv      :as csv]
-            [clojure.data.json     :as json]
-            [clojure.java.io       :as io]
-            [clojure.java.shell    :as shell]
-            [clojure.spec.alpha    :as s]
-            [clojure.string        :as str]
-            [wfl.log               :as log]
-            [wfl.wfl               :as wfl])
+  (:require [clojure.data.csv   :as csv]
+            [clojure.data.json  :as json]
+            [clojure.java.io    :as io]
+            [clojure.java.shell :as shell]
+            [clojure.spec.alpha :as s]
+            [clojure.string     :as str]
+            [wfl.log            :as log]
+            [wfl.wfl            :as wfl])
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -15,10 +15,6 @@
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
-           [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]
-           [java.time OffsetDateTime]
-           [java.util UUID]
            [javax.mail.internet InternetAddress]
            [org.apache.commons.io FilenameUtils])
   (:gen-class))
@@ -139,17 +135,6 @@
         (let [target (io/file dest (unprefix (.getPath file) prefix))]
           (io/make-parents target)
           (io/copy file target))))))
-
-(defn zip-files
-  "Return ZIP with named FILES zipped into it."
-  [^File zip & files]
-  (with-open [out (ZipOutputStream. (io/output-stream zip))]
-    (doseq [file files]
-      (let [import (io/file file)]
-        (with-open [in (io/reader import)]
-          (.putNextEntry out (ZipEntry. (.getName import)))
-          (io/copy in out)))))
-  zip)
 
 (defn sleep-seconds
   "Sleep for N seconds."
@@ -603,3 +588,13 @@
   "Return OffsetDateTime/now in UTC."
   []
   (OffsetDateTime/now (ZoneId/of "UTC")))
+
+(defn earliest
+  "Return the earliest time of `instants`."
+  [& instants]
+  (first (sort instants)))
+
+(defn latest
+  "Return the latest time of `instants`."
+  [& instants]
+  (last (sort instants)))

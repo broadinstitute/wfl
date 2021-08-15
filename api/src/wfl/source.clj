@@ -1,32 +1,32 @@
 (ns wfl.source
   (:require [clojure.edn           :as edn]
+            [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
             [clojure.tools.logging :as log]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
+            [wfl.module.all        :as all]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.stage             :as stage :refer [log-prefix]]
-            [wfl.util              :as util :refer [utc-now]]
-            [wfl.module.all        :as all])
+            [wfl.util              :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
            [java.time.format DateTimeFormatter]
+           [java.time.temporal ChronoUnit]
            [wfl.util UserException]))
 
 ;; specs
-(s/def ::dataset string?)
 (s/def ::column string?)
-(s/def ::table string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
                    ::column
-                   ::dataset
-                   ::table
+                   ::all/dataset
+                   ::all/table
                    ::snapshotReaders]
           :opt-un [::snapshots]))
 
@@ -82,23 +82,40 @@
    `workload`."
   (fn [_transaction workload] (:source_type workload)))
 
+(defmethod create-source! :default
+  [_ _ {:keys [name] :as request}]
+  (throw (UserException.
+          "Invalid source name"
+          {:name    name
+           :request request
+           :status  400
+           :sources (-> create-source! methods (dissoc :default) keys)})))
+
 ;; Terra Data Repository Source
-(def ^:private tdr-source-name  "Terra DataRepo")
-(def ^:private tdr-source-type  "TerraDataRepoSource")
-(def ^:private tdr-source-table "TerraDataRepoSource")
-(def ^:private tdr-source-serialized-fields
+(def ^:private ^:const tdr-source-name  "Terra DataRepo")
+(def ^:private ^:const tdr-source-type  "TerraDataRepoSource")
+(def ^:private ^:const tdr-source-table "TerraDataRepoSource")
+(def ^:private ^:const tdr-source-serialized-fields
   {:dataset         :dataset
    :table           :dataset_table
    :column          :table_column_name
    :snapshotReaders :snapshot_readers})
 
-(defn ^:private create-tdr-source [tx id request]
+(def ^:private bigquery-datetime-format
+  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+
+(defn ^:private timestamp-to-offsetdatetime
+  "Parse the Timestamp `t` into an `OffsetDateTime`."
+  [^Timestamp t]
+  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
+
+(defn ^:private write-tdr-source [tx id source]
   (let [create  "CREATE TABLE %s OF TerraDataRepoSourceDetails (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-source-type id)]
     (jdbc/db-do-commands tx [(format create details) (format alter details)])
     [tdr-source-type
-     (-> (select-keys request (keys tdr-source-serialized-fields))
+     (-> (select-keys source (keys tdr-source-serialized-fields))
          (update :dataset pr-str)
          (set/rename-keys tdr-source-serialized-fields)
          (assoc :details details)
@@ -112,51 +129,50 @@
         (update :dataset edn/read-string))
     (throw (ex-info "source_items is not an integer" {:workload workload}))))
 
-(defn ^:private id-and-name [dataset]
-  (select-keys dataset [:id :name]))
-
-(defn ^:private throw-unless-column-exists
-  "Throw if `table` does not have `column` in `dataset`."
-  [table column dataset]
-  (when (->> table :columns (filter (comp #{column} :name)) empty?)
-    (throw (UserException. "Column not found"
-                           {:column  column
-                            :table   table
-                            :dataset (id-and-name dataset)}))))
-
-(defn ^:private get-table-or-throw
-  "Throw or return the table from `dataset`"
-  [table-name dataset]
-  (let [[table & _] (->> [:schema :tables]
-                         (get-in dataset)
-                         (filter (comp #{table-name} :name)))]
-    (when-not table
-      (throw (UserException. "Table not found"
-                             {:table   table-name
-                              :dataset (id-and-name dataset)})))
-    table))
-
-(defn verify-data-repo-source!
+(defn datarepo-source-validate-request-or-throw
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
     source
     (let [dataset (datarepo/dataset dataset)]
-      (throw-unless-column-exists (get-table-or-throw table dataset)
-                                  column dataset)
+      (doto (datarepo/table-or-throw table dataset)
+        (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))
 
+(defn combine-tdr-source-details
+  "Reduce to `result` by combining the Terra Data Repo source `_detail`.
+  Collect `datarepo_row_ids` already seen while preserving the latest
+  `end_time` and the earliest `start_time`."
+  [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
+                  start_time] :as _detail}]
+  (if (#{"running" "succeeded"} snapshot_creation_job_status)
+    (-> result
+        (update :datarepo_row_ids into          datarepo_row_ids)
+        (update :end_time         util/latest   end_time)
+        (update :start_time       util/earliest start_time))
+    result))
+
 (defn ^:private find-new-rows
-  "Find new rows in TDR by querying the dataset between the `interval`."
-  [{:keys [dataset table column] :as source}
-   [start end                    :as interval]]
+  "Query TDR for rows within `_interval` that are new to `source`."
+  [{:keys [dataset details table column] :as source}
+   [begin end                            :as _interval]]
   (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                     (log-prefix source) (:name dataset) table start end))
-  (-> dataset
-      (datarepo/query-table-between table column interval [:datarepo_row_id])
-      :rows
-      flatten))
+                     (log-prefix source) (:name dataset) table begin end))
+  (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                (postgres/get-table tx details))
+        old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
+        start (if-let [start_time (:start_time old)]
+                (-> start_time
+                    (util/latest (instant/read-instant-timestamp begin))
+                    timestamp-to-offsetdatetime
+                    (.format bigquery-datetime-format))
+                begin)
+        tdr   (-> dataset
+                  (datarepo/query-table-between
+                   table column [start end] [:datarepo_row_id])
+                  :rows flatten)]
+    (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -199,7 +215,7 @@
   "Check TDR job status for `job-id`, return a map with job-id,
    snapshot_id and job_status if job has failed or succeeded, otherwise nil."
   [job-id]
-  (let [{:keys [job_status] :as result} (datarepo/get-job-metadata job-id)]
+  (let [{:keys [job_status] :as result} (datarepo/job-metadata job-id)]
     (case job_status
       "running"   result
       "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
@@ -243,18 +259,13 @@
    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
      (update-last-checked tx source now))))
 
-(defn ^:private timestamp-to-offsetdatetime
-  "Parse the Timestamp `t` into an `OffsetDateTime`."
-  [^Timestamp t]
-  (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
-
-(def ^:private bigquery-datetime-format
-  (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
-
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
   [{:keys [dataset table last_checked] :as source} utc-now]
-  (let [shards->jobs (->> [(timestamp-to-offsetdatetime last_checked) utc-now]
+  (let [checked      (timestamp-to-offsetdatetime last_checked)
+        hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked utc-now)))
+        then         (.minusHours utc-now hours-ago)
+        shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
@@ -341,27 +352,27 @@
       (update :dataset :id)
       (assoc :name tdr-source-name)))
 
-(defoverload stage/validate-or-throw tdr-source-name verify-data-repo-source!)
+(defmethod create-source! tdr-source-name
+  [tx id request]
+  (write-tdr-source tx id (datarepo-source-validate-request-or-throw request)))
 
-(defoverload create-source! tdr-source-name create-tdr-source)
+(defoverload load-source!   tdr-source-type load-tdr-source)
 (defoverload start-source!  tdr-source-type start-tdr-source)
 (defoverload update-source! tdr-source-type update-tdr-source)
 (defoverload stop-source!   tdr-source-type stop-tdr-source)
 
-(defoverload load-source!  tdr-source-type load-tdr-source)
-
-(defoverload stage/peek-queue tdr-source-type peek-tdr-source-queue)
-(defoverload stage/pop-queue! tdr-source-type pop-tdr-source-queue)
+(defoverload stage/peek-queue   tdr-source-type peek-tdr-source-queue)
+(defoverload stage/pop-queue!   tdr-source-type pop-tdr-source-queue)
 (defoverload stage/queue-length tdr-source-type tdr-source-queue-length)
-(defoverload stage/done? tdr-source-type tdr-source-done?)
+(defoverload stage/done?        tdr-source-type tdr-source-done?)
 
 (defoverload util/to-edn tdr-source-type tdr-source-to-edn)
 
 ;; TDR Snapshot List Source
-(def ^:private tdr-snapshot-list-name "TDR Snapshots")
-(def ^:private tdr-snapshot-list-type "TDRSnapshotListSource")
+(def ^:private ^:const tdr-snapshot-list-name "TDR Snapshots")
+(def ^:private ^:const tdr-snapshot-list-type "TDRSnapshotListSource")
 
-(defn ^:private validate-tdr-snapshot-list
+(defn tdr-snappshot-list-validate-request-or-throw
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
             (try
@@ -375,7 +386,7 @@
       source
       (update source :snapshots #(mapv snapshot-or-throw %)))))
 
-(defn ^:private create-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
+(defn ^:private write-tdr-snapshot-list [tx id {:keys [snapshots] :as _request}]
   (let [create  "CREATE TABLE %s OF ListSource (PRIMARY KEY (id))"
         alter   "ALTER TABLE %s ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY"
         details (format "%s_%09d" tdr-snapshot-list-type id)]
@@ -385,9 +396,6 @@
 
 (defn ^:private load-tdr-snapshot-list
   [tx {:keys [source_items] :as _workload}]
-  (when-not (postgres/table-exists? tx source_items)
-    (throw (ex-info "Failed to load tdr-snapshot-list: no such table"
-                    {:table source_items})))
   {:type      tdr-snapshot-list-type
    :items     source_items
    :snapshots (postgres/get-table tx source_items)})
@@ -433,18 +441,19 @@
         (assoc :name tdr-snapshot-list-name)
         (update :snapshots #(map read-snapshot-id %)))))
 
+(defmethod create-source! tdr-snapshot-list-name
+  [tx id request]
+  (write-tdr-snapshot-list
+   tx id (tdr-snappshot-list-validate-request-or-throw request)))
+
+(defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)
 (defoverload stop-source!   tdr-snapshot-list-type  stop-tdr-snapshot-list)
 (defoverload update-source! tdr-snapshot-list-type  update-tdr-snapshot-list)
 
-(defoverload create-source! tdr-snapshot-list-name  create-tdr-snapshot-list)
-(defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
-
 (defoverload stage/peek-queue tdr-snapshot-list-type peek-tdr-snapshot-list)
 (defoverload stage/pop-queue! tdr-snapshot-list-type pop-tdr-snapshot-list)
 (defoverload stage/queue-length tdr-snapshot-list-type  tdr-snapshot-list-queue-length)
-
-(defoverload stage/validate-or-throw tdr-snapshot-list-name  validate-tdr-snapshot-list)
 (defoverload stage/done? tdr-snapshot-list-type  tdr-snapshot-list-done?)
 
 (defoverload util/to-edn tdr-snapshot-list-type tdr-snapshot-list-to-edn)

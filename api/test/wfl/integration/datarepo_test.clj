@@ -17,8 +17,9 @@
 
 (def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
                                 :name "workflow_launcher_testing_dataset"})
-(def ^:private testing-snapshot {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
-                                 :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
+(def ^:private testing-snapshot
+  {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
+   :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
 
 (deftest test-create-dataset
   ;; To test that your dataset json file is valid, add its path to the list!
@@ -35,13 +36,12 @@
                  (is (= % (:id dataset))))))))))
 
 (defn ^:private replace-urls-with-file-ids
-  [file->fileid type value]
-  (-> (fn [type value]
-        (case type
-          ("Boolean" "Float" "Int" "Number" "String") value
-          "File"                                      (file->fileid value)
-          (throw (ex-info "Unknown type" {:type type :value value}))))
-      (workflows/traverse type value)))
+  [file->fileid object]
+  (letfn [(f [[type value]]
+            (case type
+              "File" (file->fileid value)
+              value))]
+    (workflows/traverse f object)))
 
 (def ^:private pi (* 4 (Math/atan 1)))
 
@@ -73,9 +73,9 @@
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp dataset]]
         (let [table-url (str temp workflow-id "/table.json")]
-          (-> (->> (workflows/get-files outputs-type outputs)
+          (-> (->> (workflows/get-files [outputs-type outputs])
                    (datasets/ingest-files tdr-profile dataset workflow-id))
-              (replace-urls-with-file-ids outputs-type outputs)
+              (replace-urls-with-file-ids [outputs-type outputs])
               (sink/rename-gather from-outputs)
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
@@ -150,9 +150,8 @@
   (let [dataset-table "flowcells"
         entity        "flowcell"
         from-dataset  (resources/read-resource "entity-from-dataset.edn")
-        columns       (-> (firecloud/list-entity-types "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev")
-                          :flowcell
-                          entity-columns)]
+        columns       (-> "pathogen-genomic-surveillance/CDC_Viral_Sequencing_dev"
+                          firecloud/list-entity-types :flowcell entity-columns)]
     (fixtures/with-temporary-workspace
       (fn [workspace]
         (let [entities (-> (datarepo/snapshot (:id testing-snapshot))

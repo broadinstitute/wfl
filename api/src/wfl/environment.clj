@@ -1,8 +1,8 @@
 (ns wfl.environment
   "Map environment to various values here."
   (:require [clojure.data.json :as json]
-            [wfl.log :as log]
             [clojure.string :as str]
+            [wfl.log :as log]
             [vault.client.http] ; vault.core needs this
             [vault.core :as vault]))
 

@@ -4,7 +4,7 @@
    [wfl.log :as log]
    [clojure.data.json :refer [read-str]]
    [clojure.test :refer [is deftest testing]]
-   [clojure.string :refer [upper-case]])
+   [clojure.string :refer [upper-case blank?]])
   (:import java.util.regex.Pattern))
 
 (defmulti check-message?
@@ -29,7 +29,14 @@
 
 (deftest level-test
   (testing "basic logging levels"
-    (is (logged? (with-out-str (log/info "Hello World!")) :info "Hello World!"))
-    (is (logged? (with-out-str (log/warn "This is a warning")) :warning "This is a warning"))
-    (is (logged? (with-out-str (log/error "This is an error")) :error "This is an error"))
-    (is (logged? (with-out-str (log/debug "This is just a debugging message")) :debug "This is just a debugging message"))))
+    (with-redefs [log/logging-level (atom :debug)]
+      (is (logged? (with-out-str (log/info "Hello World!")) :info "Hello World!"))
+      (is (logged? (with-out-str (log/warn "This is a warning")) :warning "This is a warning"))
+      (is (logged? (with-out-str (log/error "This is an error")) :error "This is an error"))
+      (is (logged? (with-out-str (log/debug "This is just a debugging message")) :debug "This is just a debugging message")))))
+
+(deftest severity-level-filtering-test
+  (testing "test current logging level correctly ignores lesser levels"
+    (with-redefs [log/logging-level (atom :info)]
+      (is (blank? (with-out-str (log/debug "Debug Message"))))
+      (is (logged? (with-out-str (log/info "Info Message")) :info "Info Message")))))

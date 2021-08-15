@@ -1,7 +1,6 @@
 (ns wfl.server
   "An HTTP API server."
   (:require [clojure.string                 :as str]
-            [wfl.log                        :as log]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
@@ -11,8 +10,10 @@
             [ring.middleware.session.cookie :as cookie]
             [wfl.api.routes                 :as routes]
             [wfl.api.workloads              :as workloads]
+            [wfl.configuration              :as config]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
             [wfl.service.postgres           :as postgres]
             [wfl.service.slack              :as slack]
             [wfl.util                       :as util]
@@ -58,7 +59,7 @@
     (try
       (handler request)
       (catch Throwable t
-        (log/error t)))))
+        (log/error (str t))))))
 
 ;; See https://stackoverflow.com/a/43075132
 ;;
@@ -115,7 +116,7 @@
               (do-update! workload)
               (catch Throwable t
                 (log/error (format "Failed to update workload %s" uuid))
-                (log/error t))))
+                (log/error (str t)))))
           (update-workloads []
             (try
               (log/info "Finding workloads to update...")
@@ -126,7 +127,7 @@
                                       AND finished IS NULL")))
               (catch Throwable t
                 (log/error "Failed to update workloads")
-                (log/error t))))]
+                (log/error (str t)))))]
     (log/info "starting workload update loop")
     (update-workloads)
     (future
@@ -134,6 +135,21 @@
         (update-workloads)
         (.sleep TimeUnit/SECONDS 20)))
     (slack/start-notification-loop slack/notifier)))
+
+(defn ^:private start-logging-polling
+  "Start polling for changes to the log level."
+  []
+  (letfn [(get-logging-level [] (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                  (let [config (config/get-config tx "LOGGING_LEVEL")]
+                                    (reset! log/logging-level
+                                            (if (empty? config)
+                                              :info
+                                              (-> config str/lower-case keyword))))))]
+    (get-logging-level)
+    (future
+      (while true
+        (get-logging-level)
+        (.sleep TimeUnit/SECONDS 60)))))
 
 (defn ^:private start-webserver
   "Start the jetty webserver asynchronously to serve http requests on the
@@ -160,9 +176,10 @@
           (recur)))))
 
 (defn run
-  "Run child server in ENVIRONMENT on PORT."
+  "Run server in ENVIRONMENT on PORT."
   [& args]
   (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
-        manager (start-workload-manager)]
-    (await-some manager (start-webserver port))))
+        manager (start-workload-manager)
+        logger  (start-logging-polling)]
+    (await-some manager logger (start-webserver port))))
