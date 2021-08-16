@@ -71,7 +71,10 @@ An example workload response at the time of this writing is formatted thusly:
 ```
 {
     "started" : "2021-07-14T15:36:47Z",
-    "watchers" : [ "okotsopo@broadinstitute.org" ],
+    "watchers" : [
+        ["slackChannel", "C000XXX0XXX"],
+        ["emailAddress", "okotsopo@broadinstitute.org"]
+    ],
     "labels" : [ "hornet:test", "project:okotsopo testing enhanced source, executor, sink logging" ],
     "creator" : "okotsopo@broadinstitute.org",
     "updated" : "2021-08-06T21:41:28Z",
@@ -248,7 +251,8 @@ with an assigned `uuid`.
          -H 'Content-Type: application/json' \
          -d '{
                 "watchers": [
-                    "tester@123.com"
+                    ["slackChannel", "C000XXX0XXX"],
+                    ["emailAddress", "tester@broadinstitute.org"]
                 ],
                 "labels": [
                     "hornet:test"
@@ -338,7 +342,8 @@ with an assigned `uuid`.
          -H 'Content-Type: application/json' \
          -d '{
                 "watchers": [
-                    "tester@123.com"
+                    ["slackChannel", "C000XXX0XXX"],
+                    ["emailAddress", "tester@broadinstitute.org"]
                 ],
                 "labels": [
                     "hornet:test"

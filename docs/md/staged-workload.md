@@ -27,7 +27,10 @@ Workloads for other projects may leverage different implementations for source, 
 
 ```
 {
-    "watchers": [ tester@broadinstitute.org ],
+    "watchers": [
+        ["slackChannel", "C000XXX0XXX"],
+        ["emailAddress", "tester@broadinstitute.org"]
+    ],
     "labels": [
         "hornet:test"
     ],
