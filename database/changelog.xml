@@ -42,4 +42,5 @@
     <include file="changesets/20210624_AddRetryToTerraExecutorDetails.xml"            relativeToChangelogFile="true"/>
     <include file="changesets/20210709_TerraDataRepoSink.xml"                         relativeToChangelogFile="true"/>
     <include file="changesets/20210720_AddConfigurationTable.xml"                     relativeToChangelogFile="true"/>
+    <include file="changesets/20210813_UpdateWatcherSchemaToTaggedPairs.xml"          relativeToChangelogFile="true"/>
 </databaseChangeLog>
