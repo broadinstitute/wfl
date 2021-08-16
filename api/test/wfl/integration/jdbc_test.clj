@@ -7,9 +7,10 @@
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (deftest test-jdbc-protocol-extensions
-  (let [create "CREATE TABLE %s (id SERIAL, arr text[])"
+  (let [create "CREATE TABLE %s (id SERIAL, arr text[], nestarr text[][])"
         table "test_protocols"
-        rows ["dog" "cat" "panda"]]
+        rows ["dog" "cat" "panda"]
+        nested-rows [["cat" "dana"] ["dog" "bard"]]]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/db-do-commands tx [(format create table)])
 
@@ -17,7 +18,13 @@
         (let [insert-res (jdbc/insert! tx table {:id 1 :arr rows})]
           (is (= rows (:arr (first insert-res))))))
 
+      (testing "Insert supports native clojure vector and psql nested array"
+        (let [insert-res (jdbc/insert! tx table {:id 2 :nestarr nested-rows})]
+          (is (= nested-rows (map read-string (:nestarr (first insert-res)))))))
+
       (testing "Query supports native clojure vector and psql array"
-        (let [query "SELECT * FROM %s;"
-              query-res (jdbc/query tx (format query table))]
-          (is (= rows (:arr (first query-res)))))))))
+        (let [query "SELECT * FROM %s WHERE id = ?;"
+              query-res-1 (jdbc/query tx [(format query table) 1])
+              query-res-2 (jdbc/query tx [(format query table) 2])]
+          (is (= rows (:arr (first query-res-1))))
+          (is (= nested-rows (map read-string (:nestarr (first query-res-2))))))))))

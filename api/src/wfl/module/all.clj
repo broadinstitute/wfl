@@ -5,6 +5,7 @@
             [wfl.jdbc                   :as jdbc]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.slack          :as slack]
             [wfl.util                   :as util]
             [wfl.wfl                    :as wfl])
   (:import [java.util UUID]))
@@ -69,7 +70,7 @@
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
   [tx {:keys [release path] :as _workflow-wdl} body]
-  (let [{:keys [creator executor input output pipeline project]} body
+  (let [{:keys [creator executor input output pipeline project watchers]} body
         {:keys [commit version]} (wfl/get-the-version)
         [{:keys [id]}]
         (jdbc/insert! tx :workload {:commit   commit
@@ -81,6 +82,7 @@
                                     :release  release
                                     :uuid     (UUID/randomUUID)
                                     :version  version
+                                    :watchers watchers
                                     :wdl      path})
         table (format "%s_%09d" pipeline id)
         work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
@@ -138,5 +140,13 @@
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
-(s/def ::watchers (s/* util/email-address?))
+(s/def ::watcher
+  (s/or :SlackChannel slack/email-watcher?
+        :EmailAddress slack/slack-channel-watcher?))
+(s/def ::watchers (s/* ::watcher))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
+
+(comment
+  (s/valid? ::watcher [:EmailAddress, "hornet@broadinstitute.org"])
+  (s/valid? ::watcher [:SlackChannel, "CXXXXXXX"])
+  )
