@@ -124,7 +124,7 @@
         setter "UPDATE workload SET pipeline = ?::pipeline WHERE id = ?"
         [{:keys [id]}]
         (-> workload-request
-            (select-keys [:creator :executor :input :output :project :watchers :labels])
+            (select-keys [:creator :executor :input :output :project :watchers :labels :watchers])
             (update :executor util/de-slashify)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
