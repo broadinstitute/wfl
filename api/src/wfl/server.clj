@@ -78,22 +78,6 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers
-  "Notify `watchers` with available approaches."
-  [watchers uuid exception]
-  ;; FIXME: add permission checks for slack-channel-watchers
-  {:pre [(some? watchers)]}
-  (let [slack-msg              (format
-                                (str/join " "
-                                          ["NOTE: WorkFlow Launcher failed to update"
-                                           "a workload %s you are watching! Details"
-                                           "shown below: \n %s"]) uuid exception)
-        slack-channel-watcher? (fn [watcher]
-                                 (not (util/email-address? watcher)))
-        [channels _]           (split-with slack-channel-watcher? watchers)]
-    (log/info (str/join " " ["notifying: " channels]))
-    (run! #(slack/add-notification slack/notifier {:channel % :message slack-msg}) channels)))
-
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
   state of workflows in the background. Dereference the future to wait
@@ -110,7 +94,7 @@
                     (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
                     ;; TODO: slack queue producer using agent here
-                    (notify-watchers watchers uuid e))))))
+                    (slack/notify-watchers watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
               (do-update! workload)
@@ -133,7 +117,7 @@
     (future
       (while true
         (update-workloads)
-        (.sleep TimeUnit/SECONDS 20)))
+        (util/sleep-seconds 20)))
     (slack/start-notification-loop slack/notifier)))
 
 (defn ^:private start-logging-polling

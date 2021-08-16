@@ -3,16 +3,11 @@
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [clj-http.client :as http]
+            [clojure.spec.alpha :as s]
             [wfl.environment :as env]
             [wfl.log :as log]
             [wfl.util :as util])
   (:import [clojure.lang PersistentQueue]))
-
-(defn ^:private api-url
-  "API URL for Slack."
-  [& parts]
-  (let [url "https://slack.com/api"]
-    (str/join "/" (cons url parts))))
 
 ;; Slack Bot User token obtained from Vault
 (defonce ^:private token
@@ -29,6 +24,14 @@
   (and #(not (util/email-address? channel-id))
        (str/starts-with? channel-id "C")))
 
+(defn slack-channel-watcher? [s]
+  (when-let [[tag value] (seq s)]
+    (and (= :SlackChannel tag) (valid-channel-id? value))))
+
+(defn email-watcher? [s]
+  (when-let [[tag value] (seq s)]
+    (and (= :EmailAddress tag) (util/email-address? value))))
+
 (defn ^:private slack-api-raise-for-status
   "Slack API has its own way of reporting
    statuses, so we need to parse the `body`
@@ -44,14 +47,14 @@
   "Post Slack `message` to `channel-id`."
   [channel message]
   {:pre [(valid-channel-id? channel)]}
-  (let [url (api-url "chat.postMessage")
-        data {:channel channel
-              :text message}]
-    (-> (http/post url {:headers      (header @token)
-                        :content-type :application/json
-                        :body         (json/write-str data)})
-        :body
-        slack-api-raise-for-status)))
+  (let [data {:channel channel
+              :text    message}]
+    (-> "https://slack.com/api/chat.postMessage"
+      (http/post {:headers      (header @token)
+                  :content-type :application/json
+                  :body         (json/write-str data)})
+      :body
+      slack-api-raise-for-status)))
 
 ;; Create the agent queue and attach a watcher
 ;; FIXME: make the queue persistent
@@ -74,6 +77,27 @@
       (post-message channel message)
       (pop queue))
     queue))
+
+;; FIXME: add permission checks for slack-channel-watchers
+;;
+(defn notify-watchers
+  "Notify `watchers` of an `exception` in the workload with `uuid`."
+  [watchers uuid exception]
+  (let [message        (format "Workload %s update threw %s" uuid exception)
+        [_emails channels] (split-with email-watcher? watchers)]
+    (letfn [(notify [[_tag channel]]
+              (let [payload {:channel channel :message message}]
+                (log/info payload)
+                #_(add-notification notifier payload)))]
+      (run! notify channels))))
+
+(comment
+  (notify-watchers [[:EmailAddress, "hornet@broadinstitute.org"],
+                    [:EmailAddress, "hornet-dev@broadinstitute.org"],
+                    [:SlackChannel, "C026PTM4XPA"],
+                    [:SlackChannel, "C026PTM4XPB"]] "000" "Exception")
+  )
+
 
 (defn start-notification-loop
   "Return a future that listens at `agent` and
