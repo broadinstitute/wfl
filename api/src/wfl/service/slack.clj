@@ -39,7 +39,8 @@
   (let [response (json/read-str body)]
     (when-not (get response "ok")
       (throw (ex-info "failed to notify via Slack"
-                      {:error (get response "error")})))))
+                      {:error (get response "error")})))
+    response))
 
 (defn post-message
   "Post Slack `message` to `channel-id`."
