@@ -31,4 +31,5 @@
     #(do (slack/add-notification testing-agent (testing-slack-notification))
          (send-off testing-agent #'slack/send-notification)
          (testing "notification can actually be sent to slack"
-           (is (true? @notify-promise) "Slack notification promise should be fulfilled")))))
+           ;; block for at most 5000ms
+           (is (true? (deref notify-promise 5000 :timeout)) "Slack notification promise should be fulfilled")))))
