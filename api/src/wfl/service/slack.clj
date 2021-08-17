@@ -81,11 +81,10 @@
 
 ;; FIXME: add permission checks for slack-channel-watchers
 ;;
-(defn notify-watchers
+(defn notify-channels
   "Notify `watchers` of an `exception` in the workload with `uuid`."
-  [watchers uuid exception]
-  (let [message        (format "Workload %s update threw %s" uuid (.getMessage exception))
-        [_emails channels] (split-with email-watcher? watchers)]
+  [channels uuid exception]
+  (let [message        (format "Workload %s update threw %s" uuid (.getMessage exception))]
     (letfn [(notify [[_tag channel]]
               (let [payload {:channel channel :message message}]
                 (log/info payload)
