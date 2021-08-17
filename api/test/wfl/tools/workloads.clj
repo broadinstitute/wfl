@@ -23,6 +23,10 @@
 (def email
   (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
+(def watchers
+  [["EmailAddress" "hornet@broadinstitute.org"]
+   ["SlackChannel" "C026PTM4XPA"]])
+
 (def ^:private git-branch
   (delay (util/shell! "git" "branch" "--show-current")))
 
@@ -45,6 +49,7 @@
   "A whole genome sequencing workload used for testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
    :pipeline wgs/pipeline
@@ -61,6 +66,7 @@
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -108,6 +114,7 @@
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:executor @cromwell-url
+   :watchers watchers
    :output   ""
    :pipeline cp/pipeline
    :project  @project
@@ -139,6 +146,7 @@
                sink)
     :project  @project
     :creator  @email
+    :watchers watchers
     :labels   ["hornet:test"]})
   ([]
    (covid-workload-request {} {} {})))
@@ -147,6 +155,7 @@
   "A whole genome sequencing workload used for testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
    :pipeline xx/pipeline
@@ -226,6 +235,7 @@
                               identifier])
      :pipeline sg/pipeline
      :project  @project
+     :watchers watchers
      :items    [{:inputs
                  {:base_file_name          sample_alias
                   :contamination_vcf       vcf

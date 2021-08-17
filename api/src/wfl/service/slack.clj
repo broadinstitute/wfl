@@ -1,12 +1,11 @@
 (ns wfl.service.slack
   "Interact with Slack API."
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clj-http.client :as http]
-            [clojure.spec.alpha :as s]
-            [wfl.environment :as env]
-            [wfl.log :as log]
-            [wfl.util :as util])
+  (:require [clojure.data.json  :as json]
+            [clojure.string     :as str]
+            [clj-http.client    :as http]
+            [wfl.environment    :as env]
+            [wfl.log            :as log]
+            [wfl.util           :as util])
   (:import [clojure.lang PersistentQueue]))
 
 ;; Slack Bot User token obtained from Vault
@@ -26,11 +25,11 @@
 
 (defn slack-channel-watcher? [s]
   (when-let [[tag value] (seq s)]
-    (and (= :SlackChannel tag) (valid-channel-id? value))))
+    (and (= "SlackChannel" tag) (valid-channel-id? value))))
 
 (defn email-watcher? [s]
   (when-let [[tag value] (seq s)]
-    (and (= :EmailAddress tag) (util/email-address? value))))
+    (and (= "EmailAddress" tag) (util/email-address? value))))
 
 (defn ^:private slack-api-raise-for-status
   "Slack API has its own way of reporting
@@ -38,7 +37,6 @@
    to raise for status."
   [body]
   (let [response (json/read-str body)]
-    (prn (get response "error"))
     (when-not (get response "ok")
       (throw (ex-info "failed to notify via Slack"
                       {:error (get response "error")})))))
@@ -83,12 +81,12 @@
 (defn notify-watchers
   "Notify `watchers` of an `exception` in the workload with `uuid`."
   [watchers uuid exception]
-  (let [message        (format "Workload %s update threw %s" uuid exception)
+  (let [message        (format "Workload %s update threw %s" uuid (.getMessage exception))
         [_emails channels] (split-with email-watcher? watchers)]
     (letfn [(notify [[_tag channel]]
               (let [payload {:channel channel :message message}]
                 (log/info payload)
-                #_(add-notification notifier payload)))]
+                (add-notification notifier payload)))]
       (run! notify channels))))
 
 (defn start-notification-loop
