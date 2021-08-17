@@ -138,7 +138,9 @@
 (defn load-batch-workload-impl
   "Load workload metadata + trim any unused vars."
   [_ workload]
-  (into {:type :workload} (filter second workload)))
+  (-> (into {:type :workload} (filter second workload))
+      ;; need to deserialize the watchers array
+      (update :watchers #(mapv read-string %))))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."

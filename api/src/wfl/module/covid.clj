@@ -111,6 +111,8 @@
                       :sink     (sink/load-sink! tx workload)}]
     (as-> workload $
       (select-keys $ workload-metadata-keys)
+      ;; need to deserialize the watchers array
+      (update $ :watchers #(mapv read-string %))
       (merge $ src-exc-sink)
       (filter second $)
       (into {:type :workload :id id} $))))

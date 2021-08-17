@@ -93,8 +93,7 @@
                   (catch UserException e
                     (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
-                    ;; need to deserialize the watchers array
-                    (slack/notify-watchers (map read-string watchers) uuid e))))))
+                    (slack/notify-watchers watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
               (do-update! workload)
