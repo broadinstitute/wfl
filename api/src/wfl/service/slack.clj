@@ -57,7 +57,7 @@
       slack-api-raise-for-status)))
 
 ;; Create the agent queue and attach a watcher
-;; FIXME: make the queue persistent
+;;
 (def notifier (agent (PersistentQueue/EMPTY)))
 (add-watch notifier :watcher
            (fn [_key _ref _old-state new-state]
@@ -90,14 +90,6 @@
                 (log/info payload)
                 #_(add-notification notifier payload)))]
       (run! notify channels))))
-
-(comment
-  (notify-watchers [[:EmailAddress, "hornet@broadinstitute.org"],
-                    [:EmailAddress, "hornet-dev@broadinstitute.org"],
-                    [:SlackChannel, "C026PTM4XPA"],
-                    [:SlackChannel, "C026PTM4XPB"]] "000" "Exception")
-  )
-
 
 (defn start-notification-loop
   "Return a future that listens at `agent` and

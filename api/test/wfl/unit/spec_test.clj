@@ -49,9 +49,10 @@
 (deftest test-watchers-spec
   (let [valid?   s/valid?
         invalid? (comp not s/valid?)] ;; i die
-    (doseq [[test? email]
-            [[valid?   "hornet-eng@broadinstitute.org"]
+    (doseq [[test? watcher]
+            [[valid?   [:EmailAddress "hornet@broadinstitute.org"]]
              ;; From tbl: https://www.netmeister.org/blog/email.html
-             [valid?   "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]
+             [valid?   [:EmailAddress "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]]
+             [valid?   [:SlackChannel "C000XXX0XXX"]]
              [invalid? "foo"]]]
-      (is (test? ::all/watchers [email]) (format "failed: %s" email)))))
+      (is (test? ::all/watchers [watcher]) (format "failed: %s" watcher)))))

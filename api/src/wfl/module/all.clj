@@ -145,8 +145,3 @@
         :EmailAddress slack/slack-channel-watcher?))
 (s/def ::watchers (s/* ::watcher))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
-
-(comment
-  (s/valid? ::watcher [:EmailAddress, "hornet@broadinstitute.org"])
-  (s/valid? ::watcher [:SlackChannel, "CXXXXXXX"])
-  )

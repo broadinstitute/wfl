@@ -267,4 +267,5 @@
     :stopped
     :uuid
     :version
+    :watchers
     :wdl]))
