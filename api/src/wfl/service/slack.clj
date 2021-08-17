@@ -49,11 +49,11 @@
    (let [data {:channel channel
                :text    message}]
      (-> "https://slack.com/api/chat.postMessage"
-       (http/post {:headers      (header @token)
-                   :content-type :application/json
-                   :body         (json/write-str data)})
-       :body
-       slack-api-raise-for-status)))
+         (http/post {:headers      (header @token)
+                     :content-type :application/json
+                     :body         (json/write-str data)})
+         :body
+         slack-api-raise-for-status)))
   ([channel message callback]
    (callback (post-message channel message))))
 

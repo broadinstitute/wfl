@@ -14,21 +14,21 @@
   (if (seq queue)
     (let [{:keys [channel message]} (peek queue)
           callback #(if (get % "ok")
-                     (deliver notify-promise true)
-                     (deliver notify-promise false))]
+                      (deliver notify-promise true)
+                      (deliver notify-promise false))]
       (slack/post-message channel message callback)
       (pop queue))
     queue))
 
 (add-watch testing-agent :watcher
-  (fn [_key _ref _old-state new-state]
-    (when (seq new-state)
-      (testing "notification is added to agent"
-        (is (= (:channel (first (seq new-state))) testing-slack-channel))))))
+           (fn [_key _ref _old-state new-state]
+             (when (seq new-state)
+               (testing "notification is added to agent"
+                 (is (= (:channel (first (seq new-state))) testing-slack-channel))))))
 
 (deftest test-send-notification-to-a-slack-channel
   (with-redefs-fn {#'slack/send-notification mock-send-notification}
     #(do (slack/add-notification testing-agent (testing-slack-notification))
-       (send-off testing-agent #'slack/send-notification)
-       (testing "notification can actually be sent to slack"
-         (is (true? @notify-promise) "Slack notification promise should be fulfilled")))))
+         (send-off testing-agent #'slack/send-notification)
+         (testing "notification can actually be sent to slack"
+           (is (true? @notify-promise) "Slack notification promise should be fulfilled")))))
