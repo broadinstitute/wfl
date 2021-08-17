@@ -35,6 +35,7 @@ nav:
     - Release Process: dev-release.md
     - Logging: dev-logging.md
     - Frontend: dev-frontend.md
+    - Monitoring: dev-monitoring.md
   - Module-Specific Usage:
     - Overview: modules-general.md
     - Arrays: modules-aou-arrays.md

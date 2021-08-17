@@ -135,7 +135,7 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception {:keys [uri] :as _request}]
+  [status _ exception _]
   {:status (or (:status (ex-data exception)) status)
    :body   "An internal error has occurred during this request. The development team has been notified of this error."})
 
