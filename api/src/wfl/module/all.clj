@@ -1,12 +1,12 @@
 (ns wfl.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.spec.alpha :as s]
-            [clojure.string :as str]
-            [wfl.jdbc :as jdbc]
-            [wfl.service.cromwell :as cromwell]
+  (:require [clojure.spec.alpha         :as s]
+            [clojure.string             :as str]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import [java.util UUID]))
 
 (defn throw-when-output-exists-already!
@@ -90,6 +90,14 @@
     (jdbc/db-do-commands tx [work])
     [id table]))
 
+(defn has?
+  "Return a function that takes a map and returns the result of applying the
+   `predicate?` to the value at the `key` in `map`, if one exists."
+  [key predicate?]
+  (fn [map]
+    (when-let [value (get map key)]
+      (predicate? value))))
+
 ;; shared specs
 (s/def ::base_file_name string?)
 (s/def ::commit (s/and string? (comp (partial == 40) count)))
@@ -100,6 +108,7 @@
 (s/def ::timestamp (s/or :instant inst? :datetime util/datetime-string?))
 (s/def ::created ::timestamp)
 (s/def ::cromwell string?)
+(s/def ::dataset string?)
 (s/def ::dbsnp_vcf string?)
 (s/def ::dbsnp_vcf_index string?)
 (s/def ::environment string?)
@@ -114,6 +123,7 @@
 (s/def ::status cromwell/status?)
 (s/def ::started ::timestamp)
 (s/def ::stopped ::timestamp)
+(s/def ::table string?)
 (s/def ::updated ::timestamp)
 (s/def ::uuid util/uuid-string?)
 (s/def ::uuid-kv (s/keys :req-un [::uuid]))
@@ -122,15 +132,7 @@
 (s/def ::options map?)
 (s/def ::common map?)
 
-(s/def ::sink (s/keys :req-un [::name
-                               ::entityType
-                               ::fromOutputs
-                               ::identifier
-                               ::workspace]))
-
 (s/def ::entityType string?)
-(s/def ::identifier string?)
-(s/def ::fromOutputs map?)
 (s/def ::fromSource string?)
 (s/def ::labels (s/* util/label?))
 (s/def ::name string?)

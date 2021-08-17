@@ -2,6 +2,7 @@
   (:require [clojure.java.jdbc]
             [wfl.environment            :as env]
             [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.firecloud      :as firecloud]
             [wfl.service.google.pubsub  :as pubsub]
@@ -209,6 +210,17 @@
   ([f]
    (with-temporary-workspace "wfl-dev/test-workspace" "workflow-launcher-dev" f)))
 
+(defn with-temporary-workspace-clone
+  "Clone a temporary copy of `workspace-to-clone`, grant access to
+  `firecloud-group` and call `use-workspace` with the clone. The workspace will
+  be destroyed when `use-workspace` returns."
+  [workspace-to-clone firecloud-group use-workspace]
+  (letfn [(clone-workspace []
+            (let [clone-name (util/randomize workspace-to-clone)]
+              (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
+              clone-name))]
+    (util/bracket clone-workspace firecloud/delete-workspace use-workspace)))
+
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
    The original environment will be restored after `f` returns. No guarantees
@@ -236,3 +248,16 @@
   "Adapter for clojure.test/use-fixtures"
   [env]
   (partial with-temporary-environment env))
+
+(defmacro bind-fixture
+  "Returns a closure that can be used with clojure.test/use-fixtures in which
+   the ^:dynamic `var` is bound to the resource created by applying
+   `with-fixture` to its `arguments`."
+  [var with-fixture & arguments]
+  `(fn [f#]
+     (log/info (format "Setting up %s..." '~with-fixture))
+     (~with-fixture
+      ~@arguments
+      #(binding [~var %]
+         (try (f#)
+              (finally (log/info (format "Tearing down %s..." '~with-fixture))))))))

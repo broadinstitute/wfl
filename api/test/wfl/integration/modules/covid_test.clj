@@ -5,21 +5,18 @@
             [clojure.set                    :as set]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
-            [reitit.coercion.spec]
-            [reitit.ring                    :as ring]
-            [reitit.ring.coercion           :as coercion]
             [wfl.api.spec                   :as spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.rawls              :as rawls]
-            [wfl.stage                      :as stage]
             [wfl.source                     :as source]
+            [wfl.tools.endpoints            :refer [coercion-tester]]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
            [java.util UUID]
-           [wfl.util  UserException]))
+           [wfl.util UserException]))
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
@@ -47,36 +44,13 @@
 (def ^:private testing-table-name "flowcells")
 (def ^:private testing-column-name "run_date")
 
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
-
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_TDR_URL"       "https://data.terra.bio"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
 
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database
-    (fixtures/method-overload-fixture
-     stage/peek-queue testing-queue-type testing-queue-peek)
-    (fixtures/method-overload-fixture
-     stage/pop-queue! testing-queue-type testing-queue-pop)
-    (fixtures/method-overload-fixture
-     stage/queue-length testing-queue-type testing-queue-length)
-    (fixtures/method-overload-fixture
-     stage/done? testing-queue-type testing-queue-done?)))
+    fixtures/temporary-postgresql-database))
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
@@ -128,12 +102,30 @@
 
 (deftest test-create-covid-workload-with-misnamed-source
   (is (thrown-with-msg?
-       UserException #"Invalid request"
+       UserException #"Invalid source"
        (workloads/create-workload!
         (workloads/covid-workload-request
          {:name "bad name"}
          {:skipValidation true}
          {:skipValidation true})))))
+
+(deftest test-create-covid-workload-with-misnamed-executor
+  (is (thrown-with-msg?
+       UserException #"Invalid executor"
+       (workloads/create-workload!
+        (workloads/covid-workload-request
+         {:skipValidation true}
+         {:name "bad name"}
+         {:skipValidation true})))))
+
+(deftest test-create-covid-workload-with-misnamed-sink
+  (is (thrown-with-msg?
+       UserException #"Invalid sink"
+       (workloads/create-workload!
+        (workloads/covid-workload-request
+         {:skipValidation true}
+         {:skipValidation true}
+         {:name "bad name"})))))
 
 (deftest test-create-covid-workload-with-valid-executor-request
   (is (workloads/create-workload!
@@ -144,15 +136,6 @@
          :methodConfigurationVersion testing-method-configuration-version
          :fromSource                 "importSnapshot"}
         {:skipValidation true}))))
-
-(deftest test-create-covid-workload-with-misnamed-executor
-  (is (thrown-with-msg?
-       UserException #"Invalid request"
-       (workloads/create-workload!
-        (workloads/covid-workload-request
-         {:skipValidation true}
-         {:name "bad name"}
-         {:skipValidation true})))))
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
@@ -285,51 +268,30 @@
        {:skipValidation true}
        {:skipValidation true}))))
 
-(defn ^:private create-app [input-spec output-spec handler]
-  (let [app
-        (ring/ring-handler
-         (ring/router
-          [["/test" {:post {:parameters {:body input-spec}
-                            :responses  {200 {:body output-spec}}
-                            :handler    (fn [{:keys [body-params]}]
-                                          {:status 200
-                                           :body   (handler body-params)})}}]]
-          {:data {:coercion   reitit.coercion.spec/coercion
-                  :middleware [coercion/coerce-exceptions-middleware
-                               coercion/coerce-request-middleware
-                               coercion/coerce-response-middleware]}}))]
-    (fn [request]
-      (app {:request-method :post
-            :uri            "/test"
-            :body-params    request}))))
-
 (deftest test-create-workload-coercion
-  (let [app     (create-app ::spec/workload-request
-                            ::spec/workload-response
-                            (comp util/to-edn workloads/create-workload!))
+  (let [app     (coercion-tester
+                 ::spec/workload-request
+                 ::spec/workload-response
+                 (comp util/to-edn workloads/create-workload!))
         request (workloads/covid-workload-request
                  {}
                  {:skipValidation true}
                  {:skipValidation true})]
     (testing "Workload with a TDR Source"
-      (let [{:keys [status body]}
-            (->>  {:name            "Terra DataRepo"
-                   :dataset         testing-dataset
-                   :table           testing-table-name
-                   :column          testing-column-name
-                   :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
-                  (assoc request :source)
-                  app)]
-        (is (== 200 status) (pr-str body))))
+      (->> {:name            "Terra DataRepo"
+            :dataset         testing-dataset
+            :table           testing-table-name
+            :column          testing-column-name
+            :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
+           (assoc request :source)
+           app))
     (testing "Workload with a TDR Snapshots Source"
-      (let [{:keys [status body]}
-            (->> {:name      "TDR Snapshots"
-                  :snapshots [testing-snapshot]}
-                 (assoc request :source)
-                 app)]
-        (is (== 200 status) (pr-str body))))))
+      (->> {:name      "TDR Snapshots"
+            :snapshots [testing-snapshot]}
+           (assoc request :source)
+           app))))
 
-(deftest test-retry-workload-is-not-supported
+(deftest test-retry-workload-throws-when-not-started
   (with-redefs-fn
     {#'source/find-new-rows                   mock-find-new-rows
      #'source/create-snapshots                mock-create-snapshots
@@ -339,8 +301,12 @@
      #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
      #'firecloud/submit-method                mock-firecloud-create-submission
      #'firecloud/get-workflow                 (constantly {:status "Failed"})}
-    #(shared/run-retry-is-not-supported-test!
-      (workloads/covid-workload-request
-       {:skipValidation true}
-       {:skipValidation true}
-       {:skipValidation true}))))
+    #(let [workload-request (workloads/covid-workload-request
+                             {:skipValidation true}
+                             {:skipValidation true}
+                             {:skipValidation true})
+           workload         (workloads/create-workload! workload-request)]
+       (is (not (:started workload)))
+       (is (thrown-with-msg?
+            UserException #"Cannot retry workload before it's been started."
+            (workloads/retry workload []))))))

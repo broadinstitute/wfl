@@ -9,9 +9,13 @@
             [wfl.util :as util]
             [wfl.wfl :as wfl]))
 
+(def retry-status?
+  "Cromwell workflow statuses eligible for retry."
+  #{"Aborted" "Failed"})
+
 (def final?
   "The final statuses a Cromwell workflow can have."
-  #{"Aborted" "Failed" "Succeeded"})
+  (conj retry-status? "Succeeded"))
 
 (def active?
   "The statuses an active Cromwell workflow can have."

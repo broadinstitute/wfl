@@ -9,16 +9,19 @@ theme:
       primary: green
       accent: teal
       toggle:
-        icon: material/toggle-switch
+        icon: material/lightbulb
         name: Switch to light mode
     - scheme: slate
       primary: teal
       accent: teal
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/lightbulb-outline
         name: Switch to dark mode
-  feature:
-    tabs: true
+  language: en
+  features:
+    - navigation.top
+    - navigation.sections
+    - navigation.instant
 
 docs_dir: "md"
 
@@ -36,6 +39,11 @@ nav:
     - Logging: dev-logging.md
     - Frontend: dev-frontend.md
     - Monitoring: dev-monitoring.md
+  - Staged Workloads:
+    - Overview: staged-workload.md
+    - Source: source.md
+    - Executor: executor.md
+    - Sink: sink.md
   - Module-Specific Usage:
     - Overview: modules-general.md
     - Arrays: modules-aou-arrays.md
@@ -46,7 +54,7 @@ nav:
   - General Usage:
     - Workflow Options: usage-workflow-options.md
     - Usage Across a Directory: usage-across-directory.md
-    - Retrying Failures: usage-retry.md
+    - Retrying Workflows: usage-retry.md
     - Aborting a Workload: usage-abort.md
   - Readings:
     - WorkFlow Launcher's Role in Terra: terra.md

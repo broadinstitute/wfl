@@ -43,3 +43,8 @@ INFO    -  Browser Connected: http://localhost:8000/dev-process/
 [Relative links in markup files](https://github.blog/2013-01-31-relative-links-in-markup-files/)
 allow intra-doc links to work within GitHub Pages website as well as the
 repository view.
+
+[Links to headers](https://stackoverflow.com/questions/27981247/github-markdown-same-page-link)
+can be determined by following these conversion rules.
+Or you can get the link directly from your local docsite instance
+by clicking on the anchor icon visible when hovering to the right of the header.
