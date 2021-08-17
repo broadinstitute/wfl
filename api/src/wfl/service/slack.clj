@@ -43,17 +43,19 @@
     response))
 
 (defn post-message
-  "Post Slack `message` to `channel-id`."
-  [channel message]
-  {:pre [(valid-channel-id? channel)]}
-  (let [data {:channel channel
-              :text    message}]
-    (-> "https://slack.com/api/chat.postMessage"
-      (http/post {:headers      (header @token)
-                  :content-type :application/json
-                  :body         (json/write-str data)})
-      :body
-      slack-api-raise-for-status)))
+  "Post Slack `message` to `channel-id`. Optionally executes a callback on response."
+  ([channel message]
+   {:pre [(valid-channel-id? channel)]}
+   (let [data {:channel channel
+               :text    message}]
+     (-> "https://slack.com/api/chat.postMessage"
+       (http/post {:headers      (header @token)
+                   :content-type :application/json
+                   :body         (json/write-str data)})
+       :body
+       slack-api-raise-for-status)))
+  ([channel message callback]
+   (callback (post-message channel message))))
 
 ;; Create the agent queue and attach a watcher
 ;;
@@ -69,7 +71,7 @@
   {:pre [(valid-channel-id? channel)]}
   (send agent #(conj % {:channel channel :message message})))
 
-(defn ^:private send-notification
+(defn send-notification
   [queue]
   (if (seq queue)
     (let [{:keys [channel message]} (peek queue)]
