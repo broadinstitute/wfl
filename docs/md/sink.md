@@ -76,6 +76,72 @@ and supports the following relations:
 - `"attribute": "$value"`
   Use the literal "value" for an attribute.
 
+### Terra Data Repository Sink
+You can write workflow outputs to a Terra Data Repository dataset using the
+`Terra DataRepo` sink. A typical `Terra DataRepo` sink configuration in the
+workload request looks like:
+```json
+{
+  "name": "Terra DataRepo",
+  "dataset": "{dataset-id}",
+  "table": "{table-name}",
+  "fromOutputs": {
+    "column0": "output0",
+    "column1": ["output1", "output2"],
+    "column3": "$literal",
+    ...
+  }
+}
+``` 
+The table below summarises the purpose of each attribute in the above request.
+
+| Attribute     | Description                                                  |
+|---------------|--------------------------------------------------------------|
+| `name`        | Selects the `Terra Workspace` sink implementation.           |
+| `dataset`     | The `UUID` of dataset to monitor and read from.              |
+| `table`       | The name of the `dataset` table to monitor and read from.    |
+| `fromOutputs` | Mapping from outputs to columns in the `table`.              |
+
+#### `dataset`
+The dataset attribute is the `UUID` that uniquely identifies the TDR dataset you
+want workflow-launcher to write workflow outputs to.
+
+#### `table`
+The `table` is the name of the table in the dataset that you want
+workflow-launcher to write workflow outputs to. Once a workflow succeeds, its
+outputs will be ingested as new rows in that table (see note). You cannot write
+to more than one table per `Terra DataRepo` sink. 
+
+!!! note 
+    workflow-launcher transforms outputs into a form conformant with the table
+    in the dataset using the transformation described by `fromOutputs`. The
+    columns in your table don't have to be an exact match for the output names.
+    See below for more details.
+
+#### `fromOutputs`
+`fromOutputs` configures how to create new rows in the `table` from pipeline
+outputs by mapping the output names to columns in the `table`.
+
+`fromOutputs` allows a small amount of flexibility in how to construct an entity
+and supports the following relations:
+
+- `"column": "output"`
+  Direct mapping from an output to a column
+
+- `"column": ["output0", "output2"]`
+  Make a column from an array of pipeline outputs.
+
+- `"column": "$value"`
+  Use the literal "value" for a column.
+
+!!! note
+    Any output not included in `fromOutputs` will not be ingested into the
+    dataset
+
+!!! note
+    Any column not included in `fromOuputs` will not have a value in the newly
+    added row.
+
 ## Developer Guide
 A sink is one satisfying the `Sink` protocol as below:
 ```clojure

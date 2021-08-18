@@ -1,5 +1,5 @@
-(ns wfl.integration.sink-test
-  "Test validation and operations on Sink stage implementations."
+(ns wfl.integration.sinks.workspace-sink-test
+  "Test validation and operations on the Terra Workspace Sink implementation."
   (:require [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]
@@ -8,9 +8,9 @@
             [wfl.sink              :as sink]
             [wfl.stage             :as stage]
             [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.queues      :refer [make-queue-from-list]]
             [wfl.tools.resources   :as resources])
-  (:import [java.util ArrayDeque]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 ;; Workspace
 (def ^:private testing-namespace "wfl-dev")
@@ -20,41 +20,16 @@
 (def ^:private testing-entity-type "flowcell")
 (def ^:private testing-entity-name "test")
 
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
-
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database
-    (fixtures/method-overload-fixture
-     stage/peek-queue testing-queue-type testing-queue-peek)
-    (fixtures/method-overload-fixture
-     stage/pop-queue! testing-queue-type testing-queue-pop)
-    (fixtures/method-overload-fixture
-     stage/queue-length testing-queue-type testing-queue-length)
-    (fixtures/method-overload-fixture
-     stage/done? testing-queue-type testing-queue-done?)))
+    fixtures/temporary-postgresql-database))
 
 ;; Validation tests
 
 (deftest test-validate-terra-workspace-sink-with-valid-sink-request
-  (is (stage/validate-or-throw
+  (is (sink/terra-workspace-sink-validate-request-or-throw
        {:name        @#'sink/terra-workspace-sink-name
         :workspace   testing-workspace
         :entityType  "assemblies"
@@ -64,7 +39,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-entity-type
   (is (thrown-with-msg?
        UserException (re-pattern sink/unknown-entity-type-error-message)
-       (stage/validate-or-throw
+       (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "does_not_exist"
@@ -73,8 +48,8 @@
 
 (deftest test-validate-terra-workspace-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
-       UserException (re-pattern sink/malformed-from-outputs-error-message)
-       (stage/validate-or-throw
+       UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
+       (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "assemblies"
@@ -84,7 +59,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-unknown-fromOutputs-attributes
   (is (thrown-with-msg?
        UserException (re-pattern sink/unknown-attributes-error-message)
-       (stage/validate-or-throw
+       (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   testing-workspace
          :entityType  "assemblies"
@@ -94,7 +69,7 @@
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-workspace
   (is (thrown-with-msg?
        UserException #"Cannot access workspace"
-       (stage/validate-or-throw
+       (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   "moo/moo"
          :entityType  "moo"

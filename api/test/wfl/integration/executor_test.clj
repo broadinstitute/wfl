@@ -7,8 +7,9 @@
             [wfl.service.rawls     :as rawls]
             [wfl.stage             :as stage]
             [wfl.tools.fixtures    :as fixtures]
+            [wfl.tools.queues      :refer [make-queue-from-list]]
             [wfl.util              :as util])
-  (:import [java.util ArrayDeque UUID]
+  (:import [java.util UUID]
            [wfl.util UserException]))
 
 (def ^:private testing-namespace "wfl-dev")
@@ -17,55 +18,24 @@
 (def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
 (def ^:private testing-method-configuration-version 1)
 
-;; Queue mocks
-(def ^:private testing-queue-type "TestQueue")
-(defn ^:private make-queue-from-list [items]
-  {:type testing-queue-type :queue (ArrayDeque. items)})
-
-(defn ^:private testing-queue-peek [this]
-  (-> this :queue .getFirst))
-
-(defn ^:private testing-queue-pop [this]
-  (-> this :queue .removeFirst))
-
-(defn ^:private testing-queue-length [this]
-  (-> this :queue .size))
-
-(defn ^:private testing-queue-done? [this]
-  (-> this :queue .empty))
-
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
   (use-fixtures :once
     (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database
-    (fixtures/method-overload-fixture
-     stage/peek-queue testing-queue-type testing-queue-peek)
-    (fixtures/method-overload-fixture
-     stage/pop-queue! testing-queue-type testing-queue-pop)
-    (fixtures/method-overload-fixture
-     stage/queue-length testing-queue-type testing-queue-length)
-    (fixtures/method-overload-fixture
-     stage/done? testing-queue-type testing-queue-done?)))
+    fixtures/temporary-postgresql-database))
 
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (is (stage/validate-or-throw
+  (is (executor/terra-executor-validate-request-or-throw
        {:name                       "Terra"
         :workspace                  testing-workspace
         :methodConfiguration        testing-method-configuration
         :methodConfigurationVersion testing-method-configuration-version
         :fromSource                 "importSnapshot"})))
 
-(deftest test-validate-terra-executor-with-misnamed-executor
-  (is (thrown-with-msg?
-       UserException #"Invalid request"
-       (stage/validate-or-throw
-        {:name "bad name"}))))
-
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
-       (stage/validate-or-throw
+       (executor/terra-executor-validate-request-or-throw
         {:name                       "Terra"
          :workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
@@ -75,7 +45,7 @@
 (deftest test-validate-terra-executor-with-wrong-method-configuration-version
   (is (thrown-with-msg?
        UserException #"Unexpected method configuration version"
-       (stage/validate-or-throw
+       (executor/terra-executor-validate-request-or-throw
         {:name                       "Terra"
          :workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
@@ -85,7 +55,7 @@
 (deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
        UserException #"Cannot access method configuration"
-       (stage/validate-or-throw
+       (executor/terra-executor-validate-request-or-throw
         {:name                "Terra"
          :workspace           testing-workspace
          :methodConfiguration "no_such/method_configuration"
@@ -100,8 +70,10 @@
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-snapshot-reference [& _]
-  {:referenceId snapshot-reference-id
-   :name        snapshot-reference-name})
+  {:metadata {:name            snapshot-reference-name
+              :resourceId      snapshot-reference-id
+              :resourceType    "DATA_REPO_SNAPSHOT"
+              :stewardshipType "REFERENCED"}})
 
 ;; Method configuration
 (def ^:private fake-method-name "method-name")
@@ -447,5 +419,5 @@
        #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
       #(let [executor  (create-terra-executor (rand-int 1000000))
              reference (#'executor/entity-from-snapshot executor snapshot)]
-         (is (and (= snapshot-reference-id (:referenceId reference))
-                  (= snapshot-reference-name (:name reference))))))))
+         (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
+                  (= snapshot-reference-name (get-in reference [:metadata :name]))))))))

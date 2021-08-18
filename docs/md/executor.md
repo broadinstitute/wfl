@@ -134,7 +134,13 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      ^String     status       ;; workflow status to match
     ]
     "Use database `transaction` to return workflows created by the `executor`
-     matching the workflow `status`."))
+     matching the workflow `status`.")
+  (executor-retry-workflows!
+    ;; Executed for side effects
+    [^Executor          executor   ;; This executor instance
+     ^IPersistentVector workflows  ;; Workflows to retry
+    ]
+    "Retry/resubmit the `workflows` managed by the `executor`."))
 ```
 
 !!! note
