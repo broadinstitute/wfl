@@ -12,23 +12,18 @@
 (defonce ^:private token
   (delay (:bot-user-token (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
 
-(defn ^:private header
-  "Auth header for interacting with Slack API from `token`."
-  [token]
-  {:Authorization (str "Bearer " token)})
-
+;; FIXME: suppress warning `javax.mail.internet.AddressException: Missing final '@domain'`
+;;
 (defn ^:private valid-channel-id?
   [channel-id]
-  ; FIXME: suppress warning `javax.mail.internet.AddressException: Missing final '@domain'`
-  (and #(not (util/email-address? channel-id))
-       (str/starts-with? channel-id "C")))
+  (not (util/email-address? channel-id)))
 
 (defn slack-channel-watcher? [s]
-  (when-let [[tag value] (seq s)]
+  (when-let [[tag value] s]
     (and (= "SlackChannel" tag) (valid-channel-id? value))))
 
 (defn email-watcher? [s]
-  (when-let [[tag value] (seq s)]
+  (when-let [[tag value] s]
     (and (= "EmailAddress" tag) (util/email-address? value))))
 
 (defn ^:private slack-api-raise-for-status
@@ -37,23 +32,22 @@
    to raise for status."
   [body]
   (let [response (json/read-str body)]
-    (when-not (get response "ok")
+    (when-not (response "ok")
       (throw (ex-info "failed to notify via Slack"
-                      {:error (get response "error")})))
+                      {:error (response "error")})))
     response))
 
 (defn post-message
-  "Post Slack `message` to `channel-id`. Optionally executes a callback on response."
+  "Post message to channel and pass response to callback."
   ([channel message]
    {:pre [(valid-channel-id? channel)]}
-   (let [data {:channel channel
-               :text    message}]
-     (-> "https://slack.com/api/chat.postMessage"
-         (http/post {:headers      (header @token)
-                     :content-type :application/json
-                     :body         (json/write-str data)})
-         :body
-         slack-api-raise-for-status)))
+   (-> "https://slack.com/api/chat.postMessage"
+     (http/post {:headers      {:Authorization (str "Bearer " @token)}
+                 :content-type :application/json
+                 :body         (json/write-str {:channel channel
+                                                :text    message})})
+     :body
+     slack-api-raise-for-status))
   ([channel message callback]
    (callback (post-message channel message))))
 

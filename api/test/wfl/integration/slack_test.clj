@@ -7,8 +7,11 @@
 (def ^:private testing-agent (agent (PersistentQueue/EMPTY)))
 (def ^:private testing-slack-channel "C026PTM4XPA")
 (defn ^:private testing-slack-notification []
-  {:channel testing-slack-channel :message (format "WFL Integration Test Message: %s" (util/utc-now))})
+  {:channel testing-slack-channel
+   :message (format "WFL Integration Test Message: %s" (util/utc-now))})
+
 (def ^:private notify-promise (promise))
+
 (defn ^:private mock-send-notification
   [queue]
   (if (seq queue)
