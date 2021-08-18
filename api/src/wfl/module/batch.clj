@@ -140,9 +140,9 @@
   [_ workload]
   ;; need to deserialize the watchers array
   (update
-    (into {:type :workload} (filter second workload))
-    :watchers
-    #(mapv read-string %)))
+   (into {:type :workload} (filter second workload))
+   :watchers
+   #(mapv read-string %)))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."

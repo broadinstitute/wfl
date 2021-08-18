@@ -42,12 +42,12 @@
   ([channel message]
    {:pre [(valid-channel-id? channel)]}
    (-> "https://slack.com/api/chat.postMessage"
-     (http/post {:headers      {:Authorization (str "Bearer " @token)}
-                 :content-type :application/json
-                 :body         (json/write-str {:channel channel
-                                                :text    message})})
-     :body
-     slack-api-raise-for-status))
+       (http/post {:headers      {:Authorization (str "Bearer " @token)}
+                   :content-type :application/json
+                   :body         (json/write-str {:channel channel
+                                                  :text    message})})
+       :body
+       slack-api-raise-for-status))
   ([channel message callback]
    (callback (post-message channel message))))
 
