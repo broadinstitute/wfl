@@ -135,13 +135,9 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception {:keys [uri] :as _request}]
+  [status _ exception _]
   {:status (or (:status (ex-data exception)) status)
-   :body   (-> (when-let [cause (.getCause exception)]
-                 {:cause (ExceptionUtils/getRootCauseMessage cause)})
-               (merge {:uri     uri
-                       :message (or (.getMessage exception) message)
-                       :details (-> exception ex-data (dissoc :status))}))})
+   :body   "An internal error has occurred during this request. The development team has been notified of this error."})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
@@ -149,7 +145,7 @@
   (let [{:keys [body status] :as result}
         (exception-handler status message exception request)]
     (log/error (format "Server %s error at occurred at %s :" status uri))
-    (log/error (util/make-map exception body))
+    (log/error (str (util/make-map exception body)))
     result))
 
 (def exception-middleware
