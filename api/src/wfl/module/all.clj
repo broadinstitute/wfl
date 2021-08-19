@@ -141,7 +141,8 @@
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::watcher
-  (s/or :EmailAddress slack/email-watcher?
-        :SlackChannel slack/slack-channel-watcher?))
+  (s/or :EmailAddress        util/email-address?
+        :EmailAddressWatcher slack/email-watcher?
+        :SlackChannelWatcher slack/slack-channel-watcher?))
 (s/def ::watchers (s/* ::watcher))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
