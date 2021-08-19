@@ -16,9 +16,10 @@
   [queue]
   (if (seq queue)
     (let [{:keys [channel message]} (peek queue)
-          callback #(if (get % "ok")
-                      (deliver notify-promise true)
-                      (deliver notify-promise false))]
+          callback #(do (prn %)
+                        (if (% "ok")
+                          (deliver notify-promise true)
+                          (deliver notify-promise false)))]
       (slack/post-message channel message callback)
       (pop queue))
     queue))
