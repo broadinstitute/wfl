@@ -16,7 +16,8 @@
 ;;
 (defn ^:private valid-channel-id?
   [channel-id]
-  (not (util/email-address? channel-id)))
+  (and (not (util/email-address? channel-id))
+       (str/starts-with? channel-id "C" )))
 
 (defn slack-channel-watcher? [s]
   (when-let [[tag value] s]

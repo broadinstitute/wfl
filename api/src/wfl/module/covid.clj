@@ -75,6 +75,7 @@
                  vec))]
     (-> (update request :labels combine-labels)
         (select-keys [:creator :watchers :labels :project])
+        (update :watchers #(mapv prn-str %))
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor ""
                :output   ""
@@ -112,7 +113,7 @@
     (as-> workload $
       (select-keys $ workload-metadata-keys)
       ;; need to deserialize the watchers array
-      (update $ :watchers #(mapv read-string %))
+      (update $ :watchers #(mapv all/parse-watcher %))
       (merge $ src-exc-sink)
       (filter second $)
       (into {:type :workload :id id} $))))

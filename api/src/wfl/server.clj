@@ -88,7 +88,7 @@
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)
                     ;; we don't support notifying emails yet
-                    [_email-watchers slack-watchers] (split-with slack/email-watcher? watchers)]
+                    slack-watchers (filter slack/slack-channel-watcher? watchers)]
                 (log/info (format "Updating workload %s" uuid))
                 (try
                   (workloads/update-workload! tx workload)
