@@ -226,6 +226,14 @@
   (let [query-str "SELECT * FROM %s WHERE status = ? ORDER BY id ASC"]
     (jdbc/query tx [(format query-str table) status])))
 
+(defn query-workflows-with-uuids
+  "Return the workflows in the items `table` that match `uuids`."
+  [tx table uuids]
+  (postgres/throw-unless-table-exists tx table)
+  (let [uuids-str (util/to-quoted-comma-separated-list uuids)
+        query-str "SELECT * FROM %s WHERE uuid in ? ORDER BY id ASC"]
+    (jdbc/query tx [(format query-str table) uuids-str])))
+
 (defn workflows
   "Return the workflows managed by the `workload`."
   [tx {:keys [items] :as workload}]

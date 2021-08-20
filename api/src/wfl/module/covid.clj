@@ -185,5 +185,8 @@
 (defmethod   workloads/workflows-by-status pipeline
   [tx {:keys [executor] :as _workload} status]
   (executor/executor-workflows-by-status tx executor status))
+(defmethod   workloads/workflows-by-uuids pipeline
+  [tx {:keys [executor] :as _workload} uuids]
+  (executor/executor-workflows-by-uuids tx executor uuids))
 (defoverload workloads/retry              pipeline retry-covid-workload)
 (defoverload workloads/to-edn             pipeline workload-to-edn)

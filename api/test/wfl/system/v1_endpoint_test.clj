@@ -209,7 +209,7 @@
                   (str "Expecting 400 error for retry with status " status)))]
       (testing "retry-workflows fails (400) when workflow status unsupported"
         (run! (partial should-throw-400
-                       handlers/retry-unsupported-status-error-message)
+                       handlers/retry-incorrect-params-error-message)
               bad-statuses))
       (testing "retry-workflows fails (400) when no workflows for supported status"
         (run! (partial should-throw-400

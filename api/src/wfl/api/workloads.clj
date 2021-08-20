@@ -39,6 +39,12 @@
    match `status`."
   (fn [_transaction workload _status] (:pipeline workload)))
 
+(defmulti workflows-by-uuids
+  ;; TODO: all non-covid modules must define this or throw UserException
+  "Use db `transaction` to return the workflows matching `uuids`
+   managed by the `workload`."
+  (fn [_transaction workload _uuids] (:pipeline workload)))
+
 (defmulti retry
   "Retry/resubmit the `workflows` managed by the `workload` and return the
    workload that manages the new workflows."

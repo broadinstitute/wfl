@@ -99,36 +99,47 @@
            succeed))))
 
 ;; Visible for testing
-(def retry-unsupported-status-error-message
-  "Retry unsupported for requested status.")
+(def retry-incorrect-params-error-message
+  (str "Missing or incorrect body params: "
+       "must specify valid workload status "
+       "or list of workflow UUIDs."))
 (def retry-no-workflows-error-message
-  "No workflows to retry for requested status.")
+  "No workflows to retry for requested status or UUIDs.")
 
 (defn post-retry
-  "Retry the workflows identified in `request`."
+  "Retry the workflows identified in `request` by status or their UUIDs."
   [request]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid       (get-in request [:path-params :uuid])
-        status     (get-in request [:body-params :status])
-        supported? (cromwell/retry-status? status)]
-    (when-not supported?
-      (throw (UserException. retry-unsupported-status-error-message
-                             {:workload           uuid
-                              :supported-statuses cromwell/retry-status?
-                              :requested-status   status
-                              :status             400})))
-    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (let [workload  (workloads/load-workload-for-uuid tx uuid)
-                 workflows (workloads/workflows-by-status tx workload status)]
-             (when (empty? workflows)
-               (throw (UserException. retry-no-workflows-error-message
-                                      {:workload         uuid
-                                       :requested-status status
-                                       :status           400})))
-             [workload workflows]))
-         (apply workloads/retry)
-         util/to-edn
-         succeed)))
+  (let [uuid            (get-in request [:path-params :uuid])
+        status          (get-in request [:body-params :status])
+        status?         (cromwell/retry-status? status)
+        workflow-uuids  (get-in request [:body-params :workflows])
+        workflow-uuids? (seq workflow-uuids)]
+    (letfn [(get-workflows [tx workload]
+              (cond status?
+                    (workloads/workflows-by-status tx workload status)
+                    workflow-uuids?
+                    (workloads/workflows-by-uuids tx workload workflow-uuids)
+                    :else
+                    (throw (UserException. retry-incorrect-params-error-message
+                                           {:workload            uuid
+                                            :supported-statuses  cromwell/retry-status?
+                                            :requested-status    status
+                                            :requested-workflows workflow-uuids
+                                            :status              400}))))]
+      (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+             (let [workload  (workloads/load-workload-for-uuid tx uuid)
+                   workflows (get-workflows tx workload)]
+               (when (empty? workflows)
+                 (throw (UserException. retry-no-workflows-error-message
+                                        {:workload            uuid
+                                         :requested-status    status
+                                         :requested-workflows workflow-uuids
+                                         :status              400})))
+               [workload workflows]))
+           (apply workloads/retry)
+           util/to-edn
+           succeed))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."

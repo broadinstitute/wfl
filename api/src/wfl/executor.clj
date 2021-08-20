@@ -34,6 +34,11 @@
    matching `status`"
   (fn [_transaction executor _status] (:type executor)))
 
+(defmulti executor-workflows-by-uuids
+  "Use db `transaction` to return the workflows matching `uuids`
+   created by the `executor`"
+  (fn [_transaction executor _uuids] (:type executor)))
+
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
   (fn [executor _workflows] (:type executor)))
@@ -390,7 +395,7 @@
                (firecloud/get-workflow-outputs workspace submission workflow))))]
     (map from-record records)))
 
-;; terra-executor-workflows and terra-executor-workflows-by-status do not return
+;; terra-executor-workflows and its callers do not return
 ;; workflows that are being or have been retried. Why?
 ;;
 ;; TL/DR: It's simpler maybe?
@@ -433,30 +438,32 @@
 ;; ** Admittedly, this is still a problem with this design.
 
 (defn ^:private terra-executor-workflows
-  "Return all the non-retried workflows executed by the `executor`."
-  [tx {:keys [details] :as executor}]
-  (postgres/throw-unless-table-exists tx details)
-  (let [query "SELECT * FROM %s
+  "Return all the non-retried workflows executed by the `executor`
+   matching `filter-pred`."
+  ([tx {:keys [details] :as executor} filter-pred]
+   (postgres/throw-unless-table-exists tx details)
+   (let [query "SELECT * FROM %s
                WHERE workflow IS NOT NULL
                AND   retry    IS NULL
                ORDER BY id ASC"]
-    (terra-workflows-from-records
-     executor
-     (jdbc/query tx (format query details)))))
+     (->> (format query details)
+          (jdbc/query tx)
+          (filter filter-pred)
+          (terra-workflows-from-records executor))))
+  ([tx executor]
+   (terra-executor-workflows tx executor (constantly true))))
 
 (defn ^:private terra-executor-workflows-by-status
   "Return all the non-retried workflows matching `status` executed by the
   `executor`."
-  [tx {:keys [details] :as executor} status]
-  (postgres/throw-unless-table-exists tx details)
-  (let [query "SELECT * FROM %s
-               WHERE workflow IS NOT NULL
-               AND retry      IS NULL
-               AND status     = ?
-               ORDER BY id ASC"]
-    (terra-workflows-from-records
-     executor
-     (jdbc/query tx [(format query details) status]))))
+  [tx executor status]
+  (terra-executor-workflows tx executor #(= (:status %) status)))
+
+(defn ^:private terra-executor-workflows-by-uuids
+  "Return all the non-retried workflows matching `uuids` executed by the
+  `executor`."
+  [tx executor uuids]
+  (terra-executor-workflows tx executor #((set uuids) (:workflow %))))
 
 (defn ^:private workflow-and-sibling-records
   "Return the workflow records for all workflows in submissions
@@ -555,6 +562,7 @@
 (defoverload update-executor!             terra-executor-type update-terra-executor)
 (defoverload executor-workflows           terra-executor-type terra-executor-workflows)
 (defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
+(defoverload executor-workflows-by-uuids  terra-executor-type terra-executor-workflows-by-uuids)
 (defoverload executor-retry-workflows!    terra-executor-type terra-executor-retry-workflows)
 
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)

@@ -73,6 +73,7 @@
    ["/api/v1/workload/:uuid/retry"
     {:post {:summary    "Resubmit workflows in workload by status."
             :parameters {:path {:uuid   ::all/uuid}
+                         ;; TODO: spec must be updated to verify status or UUIDs passed in
                          :body {:status ::all/status}}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-retry}}]
