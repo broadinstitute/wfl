@@ -139,9 +139,9 @@
   "Load workload metadata + trim any unused vars."
   [_ workload]
   (update
-    (into {:type :workload} (filter second workload))
-    :watchers
-    #(mapv all/parse-watcher %)))
+   (into {:type :workload} (filter second workload))
+   :watchers
+   #(mapv all/parse-watcher %)))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
