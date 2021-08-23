@@ -24,9 +24,8 @@
   (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
 (def watchers
-  ["hornet@broadinstitute.org"
-   ["EmailAddress" "hornet@broadinstitute.org"]
-   ["SlackChannel" "C026PTM4XPA"]])
+  [["email" "hornet@broadinstitute.org"]
+   ["slack" "C026PTM4XPA"]])
 
 (def ^:private git-branch
   (delay (util/shell! "git" "branch" "--show-current")))

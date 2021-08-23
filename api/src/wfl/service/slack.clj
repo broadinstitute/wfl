@@ -21,11 +21,11 @@
 
 (defn slack-channel-watcher? [s]
   (when-let [[tag value] s]
-    (and (= "SlackChannel" tag) (valid-channel-id? value))))
+    (and (= "slack" tag) (valid-channel-id? value))))
 
 (defn email-watcher? [s]
   (when-let [[tag value] s]
-    (and (= "EmailAddress" tag) (util/email-address? value))))
+    (and (= "email" tag) (util/email-address? value))))
 
 (defn ^:private slack-api-raise-for-status
   "Slack API has its own way of reporting

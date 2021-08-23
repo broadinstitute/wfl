@@ -2,7 +2,6 @@
   "Some utilities shared across module namespaces."
   (:require [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [clojure.edn                :as edn]
             [wfl.jdbc                   :as jdbc]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
@@ -83,7 +82,7 @@
                                     :release  release
                                     :uuid     (UUID/randomUUID)
                                     :version  version
-                                    :watchers (mapv prn-str watchers)
+                                    :watchers (pr-str watchers)
                                     :wdl      path})
         table (format "%s_%09d" pipeline id)
         work (format "CREATE TABLE %s OF %s (PRIMARY KEY (id))"
@@ -141,19 +140,8 @@
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
-(s/def ::email util/email-address?)
-(s/def ::legacyWatcher ::email)
-(s/def ::taggedWatcher (s/or :EmailAddress slack/email-watcher?
-                             :SlackChannel slack/slack-channel-watcher?))
 (s/def ::watcher
-  (s/or :legacyWatcher  ::legacyWatcher
-        :taggedWatcher  ::taggedWatcher))
+  (s/or :email slack/email-watcher?
+        :slack slack/slack-channel-watcher?))
 (s/def ::watchers (s/* ::watcher))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
-
-(defn deserialize-watcher
-  "Deserialize watchers based on specs."
-  [watcher]
-  (if (s/valid? ::legacyWatcher watcher)
-    watcher
-    (edn/read-string watcher)))

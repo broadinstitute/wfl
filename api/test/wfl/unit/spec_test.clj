@@ -50,10 +50,10 @@
   (let [valid?   s/valid?
         invalid? (comp not s/valid?)] ;; i die
     (doseq [[test? watcher]
-            [[valid?   ["EmailAddress" "hornet@broadinstitute.org"]]
+            [[valid?   ["email" "hornet@broadinstitute.org"]]
              ;; From tbl: https://www.netmeister.org/blog/email.html
-             [valid?   ["EmailAddress" "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]]
-             [valid?   ["SlackChannel" "C000XXX0XXX"]]
+             [valid?   ["email" "'*+-/=?^_`{|}~#$@[IPv6:2001:470:30:84:e276:63ff:fe72:3900]"]]
+             [valid?   ["slack" "C000XXX0XXX"]]
              [invalid? "foo"]
              [invalid? ["hornet@broadinstitute.org"]]]]
       (is (test? ::all/watchers [watcher]) (format "failed: %s" watcher)))))
