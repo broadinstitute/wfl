@@ -192,7 +192,7 @@
                                 :release  release
                                 :uuid     (UUID/randomUUID)
                                 :version  version
-                                :watchers watchers
+                                :watchers (pr-str watchers)
                                 :wdl      path}
                                (jdbc/insert! tx :workload)
                                first
