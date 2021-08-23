@@ -143,7 +143,7 @@
   (update
    (into {:type :workload} (filter second workload))
    :watchers
-    edn/read-string))
+   edn/read-string))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
