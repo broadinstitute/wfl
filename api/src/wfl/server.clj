@@ -87,9 +87,7 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)
-                    ;; we don't support notifying emails yet
                     slack-watchers (filter slack/slack-channel-watcher? watchers)]
-                (log/info (format "Updating workload %s" uuid))
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
@@ -98,6 +96,7 @@
                     (slack/notify-channels slack-watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
+              (log/info (format "Updating workload %s" uuid))
               (do-update! workload)
               (catch Throwable t
                 (log/error (format "Failed to update workload %s" uuid))

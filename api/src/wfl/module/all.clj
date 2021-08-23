@@ -143,16 +143,16 @@
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::email util/email-address?)
 (s/def ::legacyWatcher ::email)
-(s/def ::taggedWatcher (s/or :email slack/email-watcher?
-                             :slack slack/slack-channel-watcher?))
+(s/def ::taggedWatcher (s/or :EmailAddress slack/email-watcher?
+                             :SlackChannel slack/slack-channel-watcher?))
 (s/def ::watcher
-  (s/or :legacy_watcher  ::legacyWatcher
-        :tagged_watcher  ::taggedWatcher))
+  (s/or :legacyWatcher  ::legacyWatcher
+        :taggedWatcher  ::taggedWatcher))
 (s/def ::watchers (s/* ::watcher))
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
 
-(defn parse-watcher
-  "Parse watchers based on specs."
+(defn deserialize-watcher
+  "Deserialize watchers based on specs."
   [watcher]
   (if (s/valid? ::legacyWatcher watcher)
     watcher

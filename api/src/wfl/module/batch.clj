@@ -141,7 +141,7 @@
   (update
    (into {:type :workload} (filter second workload))
    :watchers
-   #(mapv all/parse-watcher %)))
+   (partial mapv all/deserialize-watcher)))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
