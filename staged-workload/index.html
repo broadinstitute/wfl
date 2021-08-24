@@ -65,7 +65,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#modules-design-principles-and-assumptions" class="md-skip">
+        <a href="#staged-workloads" class="md-skip">
           Skip to content
         </a>
       
@@ -332,14 +332,16 @@
 
   
   
+    
+  
   
     
       
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       <label class="md-nav__link" for="__nav_3">
         Staged Workloads
@@ -355,11 +357,92 @@
             
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../staged-workload/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Overview
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#staged-workload-components" class="md-nav__link">
+    Staged Workload Components
+  </a>
+  
+    <nav class="md-nav" aria-label="Staged Workload Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source" class="md-nav__link">
+    Source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executor" class="md-nav__link">
+    Executor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sink" class="md-nav__link">
+    Sink
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-staged-workload" class="md-nav__link">
+    Example Staged Workload
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#staged-workload-anatomy-high-level" class="md-nav__link">
+    Staged Workload Anatomy (High Level)
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -412,16 +495,14 @@
 
   
   
-    
-  
   
     
       
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       <label class="md-nav__link" for="__nav_4">
         Module-Specific Usage
@@ -437,51 +518,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Overview
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../modules-general/" class="md-nav__link">
         Overview
       </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#create-a-workload" class="md-nav__link">
-    Create a workload
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -702,8 +743,49 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#create-a-workload" class="md-nav__link">
-    Create a workload
+  <a href="#staged-workload-components" class="md-nav__link">
+    Staged Workload Components
+  </a>
+  
+    <nav class="md-nav" aria-label="Staged Workload Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source" class="md-nav__link">
+    Source
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executor" class="md-nav__link">
+    Executor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sink" class="md-nav__link">
+    Sink
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-staged-workload" class="md-nav__link">
+    Example Staged Workload
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#staged-workload-anatomy-high-level" class="md-nav__link">
+    Staged Workload Anatomy (High Level)
   </a>
   
 </li>
@@ -720,104 +802,122 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-general.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/staged-workload.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="modules-design-principles-and-assumptions">Modules Design Principles and Assumptions<a class="headerlink" href="#modules-design-principles-and-assumptions" title="Permanent link">⚓︎</a></h1>
-<p>WorkFlow Launcher is responsible for preparing the required
-workflow WDLs, inputs and options for Cromwell in a large scale.
-This work involves in inputs validation, pipeline WDL orchestration
-and Cromwell workflow management. Similar to other WFL modules, the
-<code>aou-arrays</code> module takes advantage of the <code>workload</code> concept in order
-to manage workflows efficiently.</p>
-<p><img alt="" src="../assets/workload.png" /></p>
-<p>In general, WFL classify all workloads into 2 categories: continuous and fixed.
-For instance, <code>aou-arrays</code> module implements arrays workload as a continuous
-workload, which means all samples are coming in like a continuous stream,
-and WFL does not make any assumption of how many samples will be in the workload
-or how to group the samples together: it hands off the workload creation and
-starting process to its caller. <code>wgs</code> module implements External Whole Genome
-workloads as a discrete workload that WFL has full knowledge about the number
-and properties of the samples it's going to process, and the samples can be grouped
-into batches (workloads) by a set of properties.</p>
-<p>To learn more about the details of each module, please check their own sections in
-this documentation.</p>
-<h2 id="create-a-workload">Create a workload<a class="headerlink" href="#create-a-workload" title="Permanent link">⚓︎</a></h2>
-<p>Defining a workload type usually requires these top-level parameters.</p>
+                <h1 id="staged-workloads">Staged Workloads<a class="headerlink" href="#staged-workloads" title="Permanent link">⚓︎</a></h1>
+<p>A staged workload is a discrete body of work, which takes data from a source,
+pushes it into a workflow executor for analysis,
+and then delivers the results of the analysis to an output location (also known as a sink).</p>
+<h2 id="staged-workload-components">Staged Workload Components<a class="headerlink" href="#staged-workload-components" title="Permanent link">⚓︎</a></h2>
+<h3 id="source">Source<a class="headerlink" href="#source" title="Permanent link">⚓︎</a></h3>
+<p>The workload <a href="../source/">Source</a> models the first stage of a processing pipeline.
+In a typical workload configuration, a <code>Source</code> can be used to read workflow inputs
+from a specified location or service in the cloud.</p>
+<h3 id="executor">Executor<a class="headerlink" href="#executor" title="Permanent link">⚓︎</a></h3>
+<p>The workload <a href="../executor/">Executor</a> models an intermediate stage of a processing pipeline.
+In a typical workload configuration, an <code>Executor</code> uses a supported
+service in the cloud to execute workflows.</p>
+<h3 id="sink">Sink<a class="headerlink" href="#sink" title="Permanent link">⚓︎</a></h3>
+<p>The workload <a href="../sink/">Sink</a> models the terminal stage of a processing pipeline.
+In a typical workload configuration, a <code>Sink</code> can be used to write workflow outputs
+to a desired location in the cloud.</p>
+<h2 id="example-staged-workload">Example Staged Workload<a class="headerlink" href="#example-staged-workload" title="Permanent link">⚓︎</a></h2>
+<p>The specific values below are from the
+<a href="../modules-covid/">COVID-19 Surveillance in Terra</a> project.
+Workloads for other projects may leverage different implementations for source, executor or sink.</p>
+<div class="admonition tip">
+<p class="admonition-title"><code>watchers</code> of a workload</p>
+<p>You may have noticed the <code>watchers</code> field in the requests. As of <code>2021/08</code> WFL
+supports registering Slack channels (Slack channel IDs that starts with a <code>C</code>)
+as watchers of the workload. Your channel needs to live in the <code>broadinstitute.slack.com</code>
+Slack organization and you also have to <code>/invite @WorkFlow Launcher Notifier</code> to invite
+the WFL notifier to your channel before the channel can receive user facing messaged from
+WFL.</p>
+</div>
+<div class="highlight"><pre><span></span><code>{
+    &quot;watchers&quot;: [
+        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+        [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
+    ],
+    &quot;labels&quot;: [
+        &quot;hornet:test&quot;
+    ],
+    &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
+    &quot;source&quot;: {
+        &quot;name&quot;: &quot;Terra DataRepo&quot;,
+        &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
+        &quot;table&quot;: &quot;flowcells&quot;,
+        &quot;column&quot;: &quot;last_modified_date&quot;,
+        &quot;snapshotReaders&quot;: [
+            &quot;workflow-launcher-dev@firecloud.org&quot;
+        ]
+    },
+    &quot;executor&quot;: {
+        &quot;name&quot;: &quot;Terra&quot;,
+        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
+        &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
+        &quot;methodConfigurationVersion&quot;: 1,
+        &quot;fromSource&quot;: &quot;importSnapshot&quot;
+    },
+    &quot;sink&quot;: {
+        &quot;name&quot;: &quot;Terra Workspace&quot;,
+        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
+        &quot;entityType&quot;: &quot;flowcell&quot;,
+        &quot;identifier&quot;: &quot;run_id&quot;,
+        &quot;fromOutputs&quot;: {
+            &quot;submission_xml&quot; : &quot;submission_xml&quot;,
+            &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
+            &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+            ...
+        }
+    }
+}
+</code></pre></div>
+<h2 id="staged-workload-anatomy-high-level">Staged Workload Anatomy (High Level)<a class="headerlink" href="#staged-workload-anatomy-high-level" title="Permanent link">⚓︎</a></h2>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Field</th>
 <th>Type</th>
-<th align="center">Required</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>executor</td>
-<td>URL</td>
-<td align="center"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M400 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zm0 400H48V80h352v352zm-35.864-241.724L191.547 361.48c-4.705 4.667-12.303 4.637-16.97-.068l-90.781-91.516c-4.667-4.705-4.637-12.303.069-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l59.792 60.277 141.352-140.216c4.705-4.667 12.303-4.637 16.97.068l22.536 22.718c4.667 4.706 4.637 12.304-.068 16.971z"/></svg></span></td>
+<td>watchers</td>
+<td>List</td>
+<td>A list of emails or Slack channels to notify</td>
 </tr>
 <tr>
-<td>output</td>
-<td>URL prefix</td>
-<td align="center"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M400 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zm0 400H48V80h352v352zm-35.864-241.724L191.547 361.48c-4.705 4.667-12.303 4.637-16.97-.068l-90.781-91.516c-4.667-4.705-4.637-12.303.069-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l59.792 60.277 141.352-140.216c4.705-4.667 12.303-4.637 16.97.068l22.536 22.718c4.667 4.706 4.637 12.304-.068 16.971z"/></svg></span></td>
-</tr>
-<tr>
-<td>pipeline</td>
-<td>pipeline</td>
-<td align="center"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M400 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zm0 400H48V80h352v352zm-35.864-241.724L191.547 361.48c-4.705 4.667-12.303 4.637-16.97-.068l-90.781-91.516c-4.667-4.705-4.637-12.303.069-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l59.792 60.277 141.352-140.216c4.705-4.667 12.303-4.637 16.97.068l22.536 22.718c4.667 4.706 4.637 12.304-.068 16.971z"/></svg></span></td>
+<td>labels</td>
+<td>List</td>
+<td>A list of user-defined labels.They must be a string of the form <code>"name":"value”</code>, where <code>name</code> must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and <code>value</code> is any non-blank string</td>
 </tr>
 <tr>
 <td>project</td>
-<td>text</td>
-<td align="center"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M400 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zm0 400H48V80h352v352zm-35.864-241.724L191.547 361.48c-4.705 4.667-12.303 4.637-16.97-.068l-90.781-91.516c-4.667-4.705-4.637-12.303.069-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l59.792 60.277 141.352-140.216c4.705-4.667 12.303-4.637 16.97.068l22.536 22.718c4.667 4.706 4.637 12.304-.068 16.971z"/></svg></span></td>
+<td>String</td>
+<td>The project is a non-null string required in the workload table. It's needed to support querying workloads by project</td>
 </tr>
 <tr>
-<td>common</td>
-<td>object</td>
-<td align="center"></td>
+<td>source</td>
+<td>Object</td>
+<td>The data source</td>
 </tr>
 <tr>
-<td>input</td>
-<td>URL prefix</td>
-<td align="center"></td>
+<td>executor</td>
+<td>Object</td>
+<td>The mechanism executing the analysis. (Most often this is Terra)</td>
 </tr>
 <tr>
-<td>items</td>
-<td>object</td>
-<td align="center"></td>
+<td>sink</td>
+<td>Object</td>
+<td>The location where data will be placed after analysis is complete</td>
 </tr>
 </tbody>
 </table>
-<p>The parameters are used this way.</p>
-<ul>
-<li>The <code>executor</code> URL specifies the Cromwell instance or 
-other execution engine to service the <em>workload</em>.</li>
-<li>The <code>output</code> URL prefix specifies the path you'd like WFL
-to dump the results to. It usually is a <em>gs</em> bucket.</li>
-<li>The <code>pipeline</code> enumeration implicitly identifies a data
-schema for the inputs to and outputs from the workload.
-You can think of it as the <em>kind</em> of workflow
-specified for the workload.
-People sometimes refer to this as <em>the tag</em>
-in that it is a well-known name
-for a Cromwell pipeline defined in WDL.
-You might also think of <code>pipeline</code>
-as the external or official name
-of a WFL processing module.</li>
-<li>The <code>project</code> is just some text
-to identify a researcher,
-billing entity,
-or cost object
-responsible for the workload.</li>
-<li>The <code>common</code> is something common for all of the samples, such as the workflow options. For more details, check the docs for the specific type of workload you are trying to submit.</li>
-<li>The <code>input</code> URL prefix specifies the path you'd like WFL
-to read (a batch of) sample(s) from. It usually is a <em>gs</em> bucket.</li>
-<li>The <code>items</code> is used to configure individual units of a workload. You can use it to tell WFL to treat arbitrary parts of the workload sepcially. For more details, check the docs for the specific type of workload you are trying to submit.</li>
-</ul>
                 
               
               
@@ -842,7 +942,7 @@ to read (a batch of) sample(s) from. It usually is a <em>gs</em> bucket.</li>
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../sink/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Sink" rel="prev">
+        <a href="../dev-monitoring/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Monitoring" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -851,20 +951,20 @@ to read (a batch of) sample(s) from. It usually is a <em>gs</em> bucket.</li>
               <span class="md-footer__direction">
                 Previous
               </span>
-              Sink
+              Monitoring
             </div>
           </div>
         </a>
       
       
         
-        <a href="../modules-aou-arrays/" class="md-footer__link md-footer__link--next" aria-label="Next: Arrays" rel="next">
+        <a href="../source/" class="md-footer__link md-footer__link--next" aria-label="Next: Source" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Arrays
+              Source
             </div>
           </div>
           <div class="md-footer__button md-icon">

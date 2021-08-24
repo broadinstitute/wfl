@@ -10,18 +10,18 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.1">
+      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.4">
     
     
       
-        <title>Retrying Failures - Workflow Launcher</title>
+        <title>Retrying Workflows - Workflow Launcher</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.9299cb39.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.f7f47774.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ef6f36e2.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
         
       
     
@@ -38,6 +38,8 @@
     
     
       
+
+
     
     
   </head>
@@ -63,7 +65,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#retrying-failures-via-wfl" class="md-skip">
+        <a href="#retrying-workflows" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +95,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Retrying Failures
+              Retrying Workflows
             
           </span>
         </div>
@@ -104,17 +106,21 @@
         
           
           
-          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_1">
-          <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
-          </label>
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
         
           
           
-          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal" type="radio" name="__palette" id="__palette_2">
-          <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2m10-3a5 5 0 0 1 5 5 5 5 0 0 1-5 5H7a5 5 0 0 1-5-5 5 5 0 0 1 5-5h10M7 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3h10a3 3 0 0 0 3-3 3 3 0 0 0-3-3H7z"/></svg>
-          </label>
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
         
       </form>
     
@@ -128,14 +134,18 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
       </label>
-      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-      </button>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
@@ -232,7 +242,9 @@
   
   
     
-    <li class="md-nav__item md-nav__item--nested">
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
         <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
@@ -277,18 +289,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-sandbox.md" class="md-nav__link">
-        Local Development SandBox
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../dev-logging/" class="md-nav__link">
         Logging
       </a>
@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-deployment.md" class="md-nav__link">
-        Deployment
+      <a href="../dev-frontend/" class="md-nav__link">
+        Frontend
       </a>
     </li>
   
@@ -313,8 +313,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend/" class="md-nav__link">
-        Frontend
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
       </a>
     </li>
   
@@ -334,17 +334,99 @@
   
   
     
-    <li class="md-nav__item md-nav__item--nested">
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
         <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
       
       <label class="md-nav__link" for="__nav_3">
+        Staged Workloads
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Staged Workloads" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Staged Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-workload/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../source/" class="md-nav__link">
+        Source
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../executor/" class="md-nav__link">
+        Executor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sink/" class="md-nav__link">
+        Sink
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      <label class="md-nav__link" for="__nav_4">
         Module-Specific Usage
         <span class="md-nav__icon md-icon"></span>
       </label>
       <nav class="md-nav" aria-label="Module-Specific Usage" data-md-level="1">
-        <label class="md-nav__title" for="__nav_3">
+        <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Module-Specific Usage
         </label>
@@ -367,7 +449,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../modules-arrays/" class="md-nav__link">
+      <a href="../modules-aou-arrays/" class="md-nav__link">
         Arrays
       </a>
     </li>
@@ -379,20 +461,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../modules-gp-arrays/" class="md-nav__link">
-        GPArrays
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../modules-wgs/" class="md-nav__link">
-        Whole Genome
+      <a href="../modules-covid/" class="md-nav__link">
+        Covid
       </a>
     </li>
   
@@ -422,6 +492,18 @@
   
 
           
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-wgs/" class="md-nav__link">
+        Whole Genome
+      </a>
+    </li>
+  
+
+          
         </ul>
       </nav>
     </li>
@@ -438,17 +520,19 @@
   
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" checked>
       
-      <label class="md-nav__link" for="__nav_4">
+      <label class="md-nav__link" for="__nav_5">
         General Usage
         <span class="md-nav__icon md-icon"></span>
       </label>
       <nav class="md-nav" aria-label="General Usage" data-md-level="1">
-        <label class="md-nav__title" for="__nav_4">
+        <label class="md-nav__title" for="__nav_5">
           <span class="md-nav__icon md-icon"></span>
           General Usage
         </label>
@@ -488,20 +572,22 @@
       
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
+      
         
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Retrying Failures
+          Retrying Workflows
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Retrying Failures
+        Retrying Workflows
       </a>
       
         
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
   
   
     
@@ -514,6 +600,61 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#retrying-terra-workflows-via-wfl-api" class="md-nav__link">
+    Retrying Terra Workflows via WFL API
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrying Terra Workflows via WFL API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-statuses" class="md-nav__link">
+    Supported Statuses
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warnings-and-caveats" class="md-nav__link">
+    Warnings and Caveats
+  </a>
+  
+    <nav class="md-nav" aria-label="Warnings and Caveats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#submission-of-snapshot-subsets-not-yet-supported" class="md-nav__link">
+    Submission of snapshot subsets not yet supported
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#race-condition-when-retrying-the-same-workload-concurrently" class="md-nav__link">
+    Race condition when retrying the same workload concurrently
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrying-failures-via-wfl-runbook" class="md-nav__link">
+    Retrying Failures via WFL Runbook
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrying Failures via WFL Runbook">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#tips" class="md-nav__link">
     Tips
   </a>
@@ -528,10 +669,8 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#simpler-retries" class="md-nav__link">
-    "Simpler" Retries
-  </a>
+      </ul>
+    </nav>
   
 </li>
         
@@ -574,17 +713,19 @@
   
   
     
-    <li class="md-nav__item md-nav__item--nested">
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
       
-      <label class="md-nav__link" for="__nav_5">
+      <label class="md-nav__link" for="__nav_6">
         Readings
         <span class="md-nav__icon md-icon"></span>
       </label>
       <nav class="md-nav" aria-label="Readings" data-md-level="1">
-        <label class="md-nav__title" for="__nav_5">
+        <label class="md-nav__title" for="__nav_6">
           <span class="md-nav__icon md-icon"></span>
           Readings
         </label>
@@ -623,6 +764,7 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
     
   
   
@@ -633,6 +775,61 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#retrying-terra-workflows-via-wfl-api" class="md-nav__link">
+    Retrying Terra Workflows via WFL API
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrying Terra Workflows via WFL API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-statuses" class="md-nav__link">
+    Supported Statuses
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warnings-and-caveats" class="md-nav__link">
+    Warnings and Caveats
+  </a>
+  
+    <nav class="md-nav" aria-label="Warnings and Caveats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#submission-of-snapshot-subsets-not-yet-supported" class="md-nav__link">
+    Submission of snapshot subsets not yet supported
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#race-condition-when-retrying-the-same-workload-concurrently" class="md-nav__link">
+    Race condition when retrying the same workload concurrently
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrying-failures-via-wfl-runbook" class="md-nav__link">
+    Retrying Failures via WFL Runbook
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrying Failures via WFL Runbook">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#tips" class="md-nav__link">
     Tips
   </a>
@@ -647,10 +844,8 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#simpler-retries" class="md-nav__link">
-    "Simpler" Retries
-  </a>
+      </ul>
+    </nav>
   
 </li>
         
@@ -676,7 +871,73 @@
                   </a>
                 
                 
-                <h1 id="retrying-failures-via-wfl">Retrying Failures via WFL<a class="headerlink" href="#retrying-failures-via-wfl" title="Permanent link">⚓︎</a></h1>
+                <h1 id="retrying-workflows">Retrying Workflows<a class="headerlink" href="#retrying-workflows" title="Permanent link">⚓︎</a></h1>
+<h2 id="retrying-terra-workflows-via-wfl-api">Retrying Terra Workflows via WFL API<a class="headerlink" href="#retrying-terra-workflows-via-wfl-api" title="Permanent link">⚓︎</a></h2>
+<p>WFL has a <code>/retry</code> endpoint that selects workflows by their completion status
+and re-submits them.</p>
+<p>The following <code>curl</code> shell command finds the workflows
+with the Cromwell status <code>"Failed"</code> in workload <code>$UUID</code>
+and resubmits them for processing.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">WFL</span><span class="o">=</span>https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
+<span class="nv">AUTH</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nv">UUID</span><span class="o">=</span>0d307eb3-2b8e-419c-b687-8c08c84e2a0c <span class="c1"># workload UUID</span>
+
+curl -X POST -H <span class="s2">&quot;</span><span class="nv">$AUTH</span><span class="s2">&quot;</span> <span class="nv">$WFL</span>/<span class="nv">$UUID</span>/retry --data <span class="s1">&#39;{&quot;status&quot;:&quot;Failed&quot;}&#39;</span> <span class="p">|</span> jq
+</code></pre></div>
+<p>A successful <code>/retry</code> request returns the workload specified by <code>$UUID</code>.
+A failed <code>/retry</code> request will return a description of the failure.</p>
+<p>The <code>/retry</code> endpoint is not yet implemented for all workloads
+and in such cases returns a <code>501</code> HTTP failure status.
+<a href="../staged-workload/">Staged workloads</a> with a <a href="../executor/#terra-executor">Terra executor</a>
+are likely to implement this endpoint.
+For confirmation, see module-specific documentation.
+For unimplemented cases, see the <a href="#retrying-failures-via-wfl-runbook">runbook</a> below.</p>
+<h3 id="supported-statuses">Supported Statuses<a class="headerlink" href="#supported-statuses" title="Permanent link">⚓︎</a></h3>
+<p>The only
+<a href="https://github.com/broadinstitute/wfl/blob/c87ce58e815c9fe73648471057c8d3cda7bc02e0/api/src/wfl/service/cromwell.clj#L12-L14">Cromwell statuses</a>
+supported with the <code>/retry</code> API
+are the terminal and likely failure workflow statuses:</p>
+<ul>
+<li>
+<p><code>"Aborted"</code></p>
+</li>
+<li>
+<p><code>"Failed"</code></p>
+</li>
+</ul>
+<p>Attempting to retry workflows of any other status
+will return a <code>400</code> HTTP failure status,
+as will specifying a status for which the workload has no workflows.</p>
+<h3 id="warnings-and-caveats">Warnings and Caveats<a class="headerlink" href="#warnings-and-caveats" title="Permanent link">⚓︎</a></h3>
+<h4 id="submission-of-snapshot-subsets-not-yet-supported">Submission of snapshot subsets not yet supported<a class="headerlink" href="#submission-of-snapshot-subsets-not-yet-supported" title="Permanent link">⚓︎</a></h4>
+<p>WFL is limited by <a href="https://github.com/broadinstitute/rawls">Rawls</a> functionality
+and cannot yet submit a subset of a snapshot.
+So retrying any workflow from a workload snapshot
+will resubmit all entities from that snapshot.</p>
+<p>Example - a running submission from a snapshot has 500 workflows:</p>
+<ul>
+<li>
+<p>1 failed</p>
+</li>
+<li>
+<p>249 running</p>
+</li>
+<li>
+<p>250 succeeded</p>
+</li>
+</ul>
+<p>Retrying the failed workflow will create a new submission
+where all 500 original workflows are retried.</p>
+<p>Consider whether you should wait for all workflows in the submission to complete
+before initiating a retry
+to avoid multiple workflows running concurrently
+in competition for the same output files.</p>
+<h4 id="race-condition-when-retrying-the-same-workload-concurrently">Race condition when retrying the same workload concurrently<a class="headerlink" href="#race-condition-when-retrying-the-same-workload-concurrently" title="Permanent link">⚓︎</a></h4>
+<p>A caller could hit this endpoint for the same workload multiple times in quick succession,
+making possible a race condition where each run retries the same set of workflows.</p>
+<p>Future improvements will make this operation threadsafe, but in the interim
+try to wait for a response from your retry request before resubmitting.</p>
+<h2 id="retrying-failures-via-wfl-runbook">Retrying Failures via WFL Runbook<a class="headerlink" href="#retrying-failures-via-wfl-runbook" title="Permanent link">⚓︎</a></h2>
 <p>WFL remembers enough about submissions to let you quickly resubmit failed
 workflows with the same inputs/options as they were originally submitted.</p>
 <p>All you need is a query string like you'd pass to the <code>/workflows</code> endpoint,
@@ -698,39 +959,86 @@ failures of individual workflows in a new workload (with the same parameters as
 the originals).</p>
 <p>Usage: <code>bash retry.sh QUERY</code></p>
 <p>Ex: <code>bash retry.sh project=PO-29619</code></p>
-<div class="highlight"><pre><span></span><code><span class="nv">WORKLOAD</span><span class="o">=</span><span class="k">$(</span>curl -X GET <span class="s2">&quot;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="se">\</span>
-    -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
-    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="p">|</span> jq<span class="k">)</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Usage: bash abort.sh QUERY [WFL_URL]</span>
+<span class="c1">#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`</span>
+<span class="c1">#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]</span>
 
-jq <span class="s1">&#39;{</span>
-<span class="s1">    executor: .[0].executor,</span>
-<span class="s1">    output: .[0].output,</span>
-<span class="s1">    input: .[0].input,</span>
-<span class="s1">    pipeline: .[0].pipeline,</span>
-<span class="s1">    project: .[0].project,</span>
-<span class="s1">    items: .[].workflows</span>
-<span class="s1">        | group_by({inputs: .inputs, options: .options}) </span>
-<span class="s1">        | map(select(all(.status==&quot;Failed&quot;)) | .[0]</span>
-<span class="s1">            | {inputs: .inputs, options: .options})</span>
+<span class="nv">WFL_URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">https</span><span class="p">://gotc-prod-wfl.gotc-prod.broadinstitute.org</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nv">AUTH_HEADER</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
+
+getWorkloads <span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># Query -&gt; [Workload]</span>
+    curl -s -X GET <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/workload?</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="se">\</span>
+         -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
+         <span class="p">|</span> jq
+<span class="o">}</span>
+
+getWorkflows<span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># Workload -&gt; [Workflow]</span>
+    <span class="nv">uuid</span><span class="o">=</span><span class="k">$(</span>jq -r .uuid <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="k">)</span>
+    curl -s -X GET <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/workload/</span><span class="si">${</span><span class="nv">uuid</span><span class="si">}</span><span class="s2">/workflows&quot;</span> <span class="se">\</span>
+         -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
+         <span class="p">|</span> jq
+<span class="o">}</span>
+
+removeSucceeded<span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># [[Workflow]] -&gt; [Workflow]</span>
+    jq <span class="s1">&#39;flatten</span>
+<span class="s1">        | group_by( {inputs: .inputs, options: .options} )</span>
+<span class="s1">        | map( select( all(.status==&quot;Succeeded&quot;) )</span>
+<span class="s1">             | .[0]</span>
+<span class="s1">             | {inputs: .inputs, options: .options} )</span>
 <span class="s1">        | del(.[][] | nulls)</span>
-<span class="s1">} | del(.[] | nulls)&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$WORKLOAD</span><span class="s2">&quot;</span> &gt; retry.json
+<span class="s1">        &#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<span class="o">}</span>
 
-curl -X POST <span class="s2">&quot;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec&quot;</span> <span class="se">\</span>
-    -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
-    -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-    -d <span class="s2">&quot;@retry.json&quot;</span>
+makeRetryRequest<span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># [Workload], [Workflow] -&gt; Request</span>
+    jq --argjson <span class="s1">&#39;workflows&#39;</span> <span class="s2">&quot;</span><span class="nv">$2</span><span class="s2">&quot;</span> <span class="se">\</span>
+        <span class="s1">&#39;.[0]</span>
+<span class="s1">         | { executor: .executor</span>
+<span class="s1">           , input: .input</span>
+<span class="s1">           , output: .output</span>
+<span class="s1">           , pipeline: .pipeline</span>
+<span class="s1">           , project: .project</span>
+<span class="s1">           , items: $workflows</span>
+<span class="s1">           }</span>
+<span class="s1">        | del(.[] | nulls)</span>
+<span class="s1">        &#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<span class="o">}</span>
+
+mapjq <span class="o">()</span> <span class="o">{</span>
+    jq -c <span class="s1">&#39;.[]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
+    <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> elem<span class="p">;</span> <span class="k">do</span> <span class="si">${</span><span class="nv">1</span><span class="si">}</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">elem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span> <span class="k">done</span> <span class="se">\</span>
+    <span class="p">|</span> jq -s <span class="s1">&#39;[ .[] ]&#39;</span>
+<span class="o">}</span>
+
+main<span class="o">()</span> <span class="o">{</span>
+    <span class="c1"># Query -&gt; ()</span>
+    <span class="nv">workloads</span><span class="o">=</span><span class="k">$(</span>getWorkloads <span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
+    <span class="nv">workflows</span><span class="o">=</span><span class="k">$(</span>mapjq getWorkflows <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workloads</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
+    <span class="nv">toSubmit</span><span class="o">=</span><span class="k">$(</span>removeSucceeded <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workflows</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
+    makeRetryRequest <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workloads</span><span class="p">[0]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">toSubmit</span><span class="si">}</span><span class="s2">&quot;</span> &gt; /tmp/retry.json
+
+    curl -X POST <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/exec&quot;</span> <span class="se">\</span>
+         -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
+         -H <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+         -d @/tmp/retry.json
+<span class="o">}</span>
+
+main <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
 </code></pre></div>
-<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">⚓︎</a></h2>
-<h3 id="customizing-inputsoptions">Customizing Inputs/Options<a class="headerlink" href="#customizing-inputsoptions" title="Permanent link">⚓︎</a></h3>
+<h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">⚓︎</a></h3>
+<h4 id="customizing-inputsoptions">Customizing Inputs/Options<a class="headerlink" href="#customizing-inputsoptions" title="Permanent link">⚓︎</a></h4>
 <p>If you want to inject a new input or option into all of the retried workflows,
 you can do that with a <code>common</code> block. For example, replace this:</p>
 <div class="highlight"><pre><span></span><code>jq &#39;{
-    executor: .[0].executor,
+    executor: .executor,
 </code></pre></div>
 <p>with this:</p>
 <div class="highlight"><pre><span></span><code>jq &#39;{
     common: { inputs: { &quot;WholeGenomeReprocessing.WholeGenomeGermlineSingleSample.BamToCram.ValidateCram.memory_multiplier&quot;: 2 } },
-    executor: .[0].executor,
+    executor: .executor,
 </code></pre></div>
 <p>That example uses WFL's arbitrary input feature to bump up the memory multiplier
 for a particular WGS task.</p>
@@ -739,22 +1047,6 @@ for a particular WGS task.</p>
 <li>You can't override inputs or options that the workflows originally had (the
 <code>common</code> block has lower precedence)</li>
 </ul>
-<h3 id="simpler-retries">"Simpler" Retries<a class="headerlink" href="#simpler-retries" title="Permanent link">⚓︎</a></h3>
-<p>The script tries to be a bit intelligent about not making multiple resubmissions
-for the same sets of inputs/options. If you don't want that logic for whatever
-reason, replace this:</p>
-<div class="highlight"><pre><span></span><code>    items: .[].workflows
-        | group_by({inputs: .inputs, options: .options}) 
-        | map(select(all(.status==&quot;Failed&quot;)) | .[0]
-            | {inputs: .inputs, options: .options})
-        | del(.[][] | nulls)
-</code></pre></div>
-<p>with this:</p>
-<div class="highlight"><pre><span></span><code>    items: .[].workflows
-        | map(select(.status==&quot;Failed&quot;)
-            | {inputs: .inputs, options: .options})
-        | del(.[][] | nulls)
-</code></pre></div>
                 
               
               
@@ -766,6 +1058,11 @@ reason, replace this:</p>
           </div>
         </div>
         
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
       </main>
       
         
@@ -773,7 +1070,8 @@ reason, replace this:</p>
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-        <a href="../usage-across-directory/" class="md-footer__link md-footer__link--prev" rel="prev">
+        
+        <a href="../usage-across-directory/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usage Across a Directory" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -788,7 +1086,8 @@ reason, replace this:</p>
         </a>
       
       
-        <a href="../usage-abort/" class="md-footer__link md-footer__link--next" rel="next">
+        
+        <a href="../usage-abort/" class="md-footer__link md-footer__link--next" aria-label="Next: Aborting a Workload" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
@@ -836,10 +1135,10 @@ reason, replace this:</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fe42c31b.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
     
     
-      <script src="../assets/javascripts/bundle.7353b375.min.js"></script>
+      <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>
       
     
   </body>
