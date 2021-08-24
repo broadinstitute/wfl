@@ -1,6 +1,7 @@
 (ns wfl.module.covid
   "Manage the Sarscov2IlluminaFull pipeline."
   (:require [clojure.spec.alpha   :as s]
+            [clojure.edn          :as edn]
             [wfl.api.workloads    :as workloads :refer [defoverload]]
             [wfl.executor         :as executor]
             [wfl.jdbc             :as jdbc]
@@ -75,6 +76,7 @@
                  vec))]
     (-> (update request :labels combine-labels)
         (select-keys [:creator :watchers :labels :project])
+        (update :watchers pr-str)
         (merge (select-keys (wfl/get-the-version) [:commit :version]))
         (assoc :executor ""
                :output   ""
@@ -111,6 +113,7 @@
                       :sink     (sink/load-sink! tx workload)}]
     (as-> workload $
       (select-keys $ workload-metadata-keys)
+      (update $ :watchers edn/read-string)
       (merge $ src-exc-sink)
       (filter second $)
       (into {:type :workload :id id} $))))
