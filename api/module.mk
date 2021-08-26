@@ -75,7 +75,6 @@ $(INTEGRATION): $(TEST_SCM_SRC)
 
 $(SYSTEM): $(TEST_SCM_SRC)
 	$(EXPORT) CPCACHE=$(CPCACHE_DIR);            \
-	$(EXPORT) WFL_WFL_URL=http://localhost:3000; \
 	$(CLOJURE) $(CLJFLAGS) -M:parallel-test wfl.system.v1-endpoint-test | \
 	$(TEE) $(DERIVED_MODULE_DIR)/system.log
 	@$(TOUCH) $@
