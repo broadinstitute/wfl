@@ -135,17 +135,16 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status _ exception _]
+  [status message exception _]
   {:status (or (:status (ex-data exception)) status)
-   :body   "An internal error has occurred during this request. The development team has been notified of this error."})
+   :body   message})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message exception {:keys [uri] :as request}]
-  (let [{:keys [body status] :as result}
+  [status message labels level exception request]
+  (let [{:keys [body] :as result}
         (exception-handler status message exception request)]
-    (log/error (format "Server %s error at occurred at %s :" status uri))
-    (log/error (str (util/make-map exception body)))
+    (log/log level (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
     result))
 
 (def exception-middleware
@@ -154,15 +153,15 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     ::workloads/invalid-pipeline          (partial exception-handler 400 "")
-     ::workloads/workload-not-found        (partial exception-handler 404 "")
-     UserException                         (partial exception-handler 400 "")
+     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Invalid Pipeline." {:exception-type "InvalidPipeline"} :warning)
+     ::workloads/workload-not-found        (partial logging-exception-handler 404 "Workload Not Found." {:exception-type "WorkloadNotFound"} :warning)
+     UserException                         (partial logging-exception-handler 400 "Request Invalid." {:exception-type "UserException"} :warning)
      ;; SQLException and all its child classes
-     SQLException                          (partial logging-exception-handler 500 "SQL Exception")
+     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error)
      ;; handle clj-http Slingshot stone exceptions
-     :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
+     :clj-http.client/unexceptional-status (partial logging-exception-handler 400 "HTTP Error on request" {:exception-type "HTTPError"} :warning)
      ;; override the default handler
-     ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
+     ::exception/default                   (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error)})))
 
 (def routes
   (ring/ring-handler
