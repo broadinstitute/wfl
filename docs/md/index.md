@@ -84,7 +84,7 @@ You can also invoke `make` on a module from the top level directory by
 $ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}
 ```
 
-where currently available `MODULE`s are {api functions/aou docs helm ui}
+where currently available `MODULE`s are {api functions/aou docs helm}
 
 For most of the time, you would want to run something like:
 
@@ -97,7 +97,7 @@ to clean up the built modules (`-j8` is also available for `make clean`).
 and then run:
 
 ```bash
-$ make ui api TARGET=images -j8
+$ make api TARGET=images -j8
 ```
 
 to **only build** the WFL and its docker images without running tests.
@@ -210,7 +210,6 @@ After cloning a new WFL repo, the top-level files are:
 ├── makerules/      - common `Makefile` functionality
 ├── ops/            - scripts to support Operations
 ├── README.md       - symbolic link to docs/md/README.md
-├── ui/             - `workflow-launcher` frontend
 └── version         - holds the current semantic version
 ```
 Tip: Run `make` at least once after cloning the repo to make sure all the

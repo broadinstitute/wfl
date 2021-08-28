@@ -11,7 +11,6 @@ jobs:
       matrix:
         context:
         - api
-        - ui
 
     steps:
       - uses: actions/checkout@v2
