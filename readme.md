@@ -4,6 +4,7 @@
 ![Docsite Build](https://github.com/broadinstitute/wfl/workflows/Publish%20docs%20via%20GitHub%20Pages/badge.svg?branch=main)
 ![Build on Main Branch](https://github.com/broadinstitute/wfl/workflows/Tests%20on%20Pull%20Requests%20and%20Main/badge.svg?branch=main)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/broadinstitute/wfl?label=Latest%20Release)](https://github.com/broadinstitute/wfl/blob/main/CHANGELOG.md)
+[![WFL Nightly Test](https://github.com/broadinstitute/wfl/actions/workflows/nightly.yml/badge.svg?event=schedule)](https://github.com/broadinstitute/wfl/actions/workflows/nightly.yml)
 
 
 **For a complete introduction to WorkFlow Launcher, please visit its [documentation website](https://broadinstitute.github.io/wfl)!**
