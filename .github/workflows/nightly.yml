@@ -109,6 +109,4 @@ jobs:
         run: make ${MODULES} TARGET=build
 
       - name: System Test
-        env:
-          WFL_WFL_URL: https://dev-wfl.gotc-dev.broadinstitute.org
-        run: make ${MODULES} TARGET=system
+        run: make ${MODULES} TARGET=nightly
