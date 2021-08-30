@@ -108,5 +108,5 @@ jobs:
       - name: Build
         run: make ${MODULES} TARGET=build
 
-      - name: System Test
+      - name: Nightly Test
         run: make ${MODULES} TARGET=nightly
