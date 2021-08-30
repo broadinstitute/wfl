@@ -20,7 +20,7 @@ MAKE_TARGETS := prebuild format build unit integration check lint images system 
 # Implementers should write module make-targets against these, ensuring that
 # the time stamp is touched as the last action.
 # Example:
-# $(LINT): $(SCM_SRC) $(TEST _SCM_SRC)
+# $(LINT): $(SCM_SRC) $(TEST_SCM_SRC)
 # 	$(PYTHON) -m pylint $(PYLINT_OPTIONS)
 # 	@$(TOUCH) $@
 
