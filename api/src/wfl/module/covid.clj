@@ -103,12 +103,7 @@
              (executor/create-executor! tx id executor)
              (sink/create-sink! tx id sink)
              [id]))
-    (if (:skipValidation source)
-      (assoc-in
-       (workloads/load-workload-for-id tx id)
-       [:source :id]
-       (:dataset source))
-      (workloads/load-workload-for-id tx id))))
+    (workloads/load-workload-for-id tx id)))
 
 (defn ^:private load-covid-workload-impl [tx {:keys [id] :as workload}]
   (let [src-exc-sink {:source   (source/load-source! tx workload)

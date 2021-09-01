@@ -134,7 +134,7 @@
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
-    source
+    (assoc source :dataset {:id (get source :dataset)})
     (let [dataset (datarepo/dataset dataset)]
       (doto (datarepo/table-or-throw table dataset)
         (datarepo/throw-unless-column-exists column dataset))
@@ -348,8 +348,8 @@
 
 (defn ^:private tdr-source-to-edn [source]
   (-> source
-      (assoc :dataset (get source :id))
       (util/select-non-nil-keys (keys tdr-source-serialized-fields))
+      (update :dataset :id)
       (assoc :name tdr-source-name)))
 
 (defmethod create-source! tdr-source-name
