@@ -135,16 +135,25 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception _]
+  [status message exception {:keys [uri] :as _request} return-trace]
   {:status (or (:status (ex-data exception)) status)
-   :body   message})
+   :body   (merge {:message message}
+                  (if return-trace
+                    (-> (when-let [cause (.getCause exception)]
+                          {:cause (ExceptionUtils/getRootCauseMessage cause)})
+                        (merge {:uri     uri
+                                :message (or (.getMessage exception) message)
+                                :details (-> exception ex-data (dissoc :status))}))
+                    {}))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message labels level exception request]
+  [status message labels severity return-trace exception request]
   (let [{:keys [body] :as result}
-        (exception-handler status message exception request)]
-    (log/log level (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
+        (exception-handler status message exception request return-trace)]
+    (case severity
+      :warning (log/log :warning (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
+      :error (log/log :error (str (util/make-map exception body)) :logging.googleapis.com/labels labels))
     result))
 
 (def exception-middleware
@@ -153,15 +162,15 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Invalid Pipeline." {:exception-type "InvalidPipeline"} :warning)
-     ::workloads/workload-not-found        (partial logging-exception-handler 404 "Workload Not Found." {:exception-type "WorkloadNotFound"} :warning)
-     UserException                         (partial logging-exception-handler 400 "Request Invalid." {:exception-type "UserException"} :warning)
+     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Invalid Pipeline." {:exception-type "InvalidPipeline"} :warning true)
+     ::workloads/workload-not-found        (partial logging-exception-handler 404 "Workload Not Found." {:exception-type "WorkloadNotFound"} :warning true)
+     UserException                         (partial logging-exception-handler 400 "Request Invalid." {:exception-type "UserException"} :warning true)
      ;; SQLException and all its child classes
-     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error)
+     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error false)
      ;; handle clj-http Slingshot stone exceptions
-     :clj-http.client/unexceptional-status (partial logging-exception-handler 400 "HTTP Error on request" {:exception-type "HTTPError"} :warning)
+     :clj-http.client/unexceptional-status (partial logging-exception-handler 400 "HTTP Error on request" {:exception-type "HTTPError"} :warning true)
      ;; override the default handler
-     ::exception/default                   (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error)})))
+     ::exception/default                   (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error false)})))
 
 (def routes
   (ring/ring-handler
