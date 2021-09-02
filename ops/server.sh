@@ -13,8 +13,6 @@ declare -r WFL=${0%/*}
 
 trap 'kill 0' EXIT
 
-npm run serve --prefix=derived/ui -- --port 8080 &
-
 pushd api
 clojure -M:liquibase
 export _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
