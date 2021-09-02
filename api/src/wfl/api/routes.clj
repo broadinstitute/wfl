@@ -10,6 +10,7 @@
             [reitit.ring.middleware.muuntaja    :as muuntaja]
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
+            [reitit.swagger-ui                  :as swagger-ui]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
@@ -96,6 +97,8 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
+   ["/swagger-ui/*"
+    {:get (swagger-ui/create-swagger-ui-handler {:url "/swagger/swagger.json"})}]
    ["/swagger/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
