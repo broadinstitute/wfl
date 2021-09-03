@@ -11,6 +11,7 @@
             [wfl.api.routes                 :as routes]
             [wfl.api.workloads              :as workloads]
             [wfl.configuration              :as config]
+            [wfl.debug]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.log                        :as log]
@@ -83,7 +84,8 @@
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
-  (letfn [(do-update! [{:keys [id uuid]}]
+  (letfn [(do-update! [{:keys [id uuid] :as _workload}]
+            (wfl.debug/trace _workload)
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)

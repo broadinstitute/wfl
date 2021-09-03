@@ -3,6 +3,7 @@
   (:require [clojure.spec.alpha   :as s]
             [clojure.edn          :as edn]
             [wfl.api.workloads    :as workloads :refer [defoverload]]
+            [wfl.debug]
             [wfl.executor         :as executor]
             [wfl.jdbc             :as jdbc]
             [wfl.module.all       :as all]
@@ -130,6 +131,7 @@
 (defn ^:private update-covid-workload
   "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
+  (wfl.debug/trace workload)
   (letfn [(update! [{:keys [id source executor sink] :as workload} now]
             (-> (source/update-source! source)
                 (executor/update-executor! executor)

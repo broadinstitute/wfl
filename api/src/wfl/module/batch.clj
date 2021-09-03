@@ -6,6 +6,7 @@
             [clojure.edn          :as edn]
             [wfl.api.workloads    :as workloads]
             [wfl.auth             :as auth]
+            [wfl.debug]
             [wfl.jdbc             :as jdbc]
             [wfl.module.all       :as all]
             [wfl.service.cromwell :as cromwell]
@@ -179,6 +180,7 @@
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [tx {:keys [started finished] :as workload}]
+  (wfl.debug/trace workload)
   (letfn [(update! [{:keys [id] :as workload}]
             (batch-update-workflow-statuses! tx workload)
             (update-workload-status! tx workload)
