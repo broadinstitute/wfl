@@ -8,6 +8,7 @@
             [reitit.ring.coercion    :as coercion]
             [ring.util.http-response :refer [ok]]
             [wfl.auth                :as auth]
+            [wfl.debug]
             [wfl.environment         :as env]
             [wfl.util                :as util :refer [>>>]]))
 
@@ -48,6 +49,7 @@
   "Query v1 api for all workflows managed by `_workload`."
   [{:keys [uuid] :as _workload} & [status]]
   (-> (wfl-url "api/v1/workload" uuid "workflows")
+      wfl.debug/trace
       (http/get (merge {:headers (auth/get-auth-header)}
                        (when status {:query-params {:status status}})))
       util/response-body-json))
