@@ -346,8 +346,7 @@
      :workflows workflows}))
 
 (comment
-  (clojure.test/test-vars [#'test-workflows-by-status])
-  )
+  (clojure.test/test-vars [#'test-workflows-by-status]))
 
 (deftest ^:parallel test-workflows-by-status
   (testing "Get workflows by status"
