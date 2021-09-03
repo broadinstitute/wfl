@@ -345,30 +345,6 @@
      :workload  workload
      :workflows workflows}))
 
-(def uuids ["290ed0e7-0d35-4544-bac8-08c6d908c9cb"
-            "320c5d0e-ebb6-4dbc-9499-e76f498e0223"
-            "3d09aa15-4da8-4506-bbf3-18797d10b801"
-            "4964de53-9917-4acb-a375-19ddf4924360"
-            "4d4b0fc2-65b6-4226-aa42-5b07a040e78f"
-            "57683ed9-dc1f-4c22-ad0a-25d5fd25ecb2"
-            "58ecd7d0-08c4-4c18-8d58-0aa1bb868254"
-            "5a4d0f8d-1d81-44d4-ac46-0c8195acfa0f"
-            "6767ac9c-8935-4d62-b7a8-3819b970a1ed"
-            "6a40bfb8-0759-47db-8f28-ad909d4364ec"
-            "72b4a0d4-b5b2-4147-bd04-f8968c7733a8"
-            "772ebb78-e4b3-4434-9689-317bcebf4084"
-            "8423405a-2a1d-47a8-8710-48ea15ed6d1d"
-            "917229c7-c870-45b6-8608-1e22417298b0"
-            "d0ef3be1-4bd7-439a-8dec-7c2c21ffbc14"
-            "daa8f078-944c-481b-a565-d96c98daf568"
-            "dfba2358-4815-4778-ac1e-65d7e2de3513"
-            "e7b11c59-6bb4-4c1b-be50-77282bda5c04"
-            "ef7624aa-2d9b-439c-80b7-c45f028ad21d"
-            "f626e9e4-0c9e-4389-a7c8-247b4dbc7952"
-            "ff44670f-34df-4baf-b02a-b271fef04d32"])
-
-(def interesting-uuid? (set uuids))
-
 (comment
   (clojure.test/test-vars [#'test-workflows-by-status])
   (clojure.test/test-vars [#'test-create-wgs-workload])
@@ -379,8 +355,6 @@
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)
-               wfl.debug/trace
-               (filter (comp interesting-uuid? :uuid))
                wfl.debug/trace
                (map summarize-workflows-in-workload)
                (filter (comp :finished :workload))
