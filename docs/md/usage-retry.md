@@ -30,13 +30,19 @@ For unimplemented cases, see the [runbook](#retrying-failures-via-wfl-runbook) b
 ### Supported Statuses
 
 The only
-[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/c87ce58e815c9fe73648471057c8d3cda7bc02e0/api/src/wfl/service/cromwell.clj#L12-L14)
+[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/6bcfde01542bfef1601eaaf4bb2657cf1520218f/api/src/wfl/service/cromwell.clj#L12-L14)
 supported with the `/retry` API
-are the terminal and likely failure workflow statuses:
+are the terminal workflow statuses:
 
 - `"Aborted"`
 
 - `"Failed"`
+
+- `"Succeeded"`
+
+???+ info "Why would you retry succeeded workflows?"
+    A workflow may have functionally succeeded, but be scientifically inaccurate
+    and need to be rerun, e.g. if the initial run contained incorrect metadata.
 
 Attempting to retry workflows of any other status
 will return a `400` HTTP failure status,
