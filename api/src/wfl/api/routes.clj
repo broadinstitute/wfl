@@ -141,13 +141,12 @@
   [status message exception {:keys [uri] :as _request} return-trace]
   {:status (or (:status (ex-data exception)) status)
    :body   (merge {:message message}
-                  (if return-trace
+                  (when return-trace
                     (-> (when-let [cause (.getCause exception)]
                           {:cause (ExceptionUtils/getRootCauseMessage cause)})
                         (merge {:uri     uri
                                 :message (or (.getMessage exception) message)
-                                :details (-> exception ex-data (dissoc :status))}))
-                    {}))})
+                                :details (-> exception ex-data (dissoc :status))}))))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
@@ -165,11 +164,11 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Invalid Pipeline." {:exception-type "InvalidPipeline"} :warning true)
+     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Request Invalid." {:exception-type "InvalidPipeline"} :warning true)
      ::workloads/workload-not-found        (partial logging-exception-handler 404 "Workload Not Found." {:exception-type "WorkloadNotFound"} :warning true)
      UserException                         (partial logging-exception-handler 400 "Request Invalid." {:exception-type "UserException"} :warning true)
      ;; SQLException and all its child classes
-     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error false)
+     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request." {} :error false)
      ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial logging-exception-handler 400 "HTTP Error on request" {:exception-type "HTTPError"} :warning true)
      ;; override the default handler
