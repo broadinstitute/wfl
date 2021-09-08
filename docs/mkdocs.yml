@@ -37,7 +37,6 @@ nav:
     - Development Process and Tips: dev-process.md
     - Release Process: dev-release.md
     - Logging: dev-logging.md
-    - Frontend: dev-frontend.md
     - Monitoring: dev-monitoring.md
   - Staged Workloads:
     - Overview: staged-workload.md
