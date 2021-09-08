@@ -180,8 +180,8 @@
 (defn update-workload!
   "Use transaction TX to batch-update WORKLOAD statuses."
   [tx {:keys [started finished] :as workload}]
-  (wfl.debug/trace workload)
   (letfn [(update! [{:keys [id] :as workload}]
+            (wfl.debug/trace workload)
             (batch-update-workflow-statuses! tx workload)
             (update-workload-status! tx workload)
             (workloads/load-workload-for-id tx id))]

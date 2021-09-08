@@ -85,7 +85,6 @@
   for the background task to finish (when an error occurs)."
   []
   (letfn [(do-update! [{:keys [id uuid] :as _workload}]
-            (wfl.debug/trace _workload)
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)
