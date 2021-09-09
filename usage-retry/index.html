@@ -301,18 +301,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend.md" class="md-nav__link">
-        Frontend
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../dev-monitoring/" class="md-nav__link">
         Monitoring
       </a>
@@ -894,9 +882,9 @@ For confirmation, see module-specific documentation.
 For unimplemented cases, see the <a href="#retrying-failures-via-wfl-runbook">runbook</a> below.</p>
 <h3 id="supported-statuses">Supported Statuses<a class="headerlink" href="#supported-statuses" title="Permanent link">⚓︎</a></h3>
 <p>The only
-<a href="https://github.com/broadinstitute/wfl/blob/c87ce58e815c9fe73648471057c8d3cda7bc02e0/api/src/wfl/service/cromwell.clj#L12-L14">Cromwell statuses</a>
+<a href="https://github.com/broadinstitute/wfl/blob/6bcfde01542bfef1601eaaf4bb2657cf1520218f/api/src/wfl/service/cromwell.clj#L12-L14">Cromwell statuses</a>
 supported with the <code>/retry</code> API
-are the terminal and likely failure workflow statuses:</p>
+are the terminal workflow statuses:</p>
 <ul>
 <li>
 <p><code>"Aborted"</code></p>
@@ -904,7 +892,13 @@ are the terminal and likely failure workflow statuses:</p>
 <li>
 <p><code>"Failed"</code></p>
 </li>
+<li>
+<p><code>"Succeeded"</code></p>
+</li>
 </ul>
+<details class="info" open="open"><summary>Why would you retry succeeded workflows?</summary><p>A workflow may have functionally succeeded, but be scientifically inaccurate
+and need to be rerun, e.g. if the initial run contained incorrect metadata.</p>
+</details>
 <p>Attempting to retry workflows of any other status
 will return a <code>400</code> HTTP failure status,
 as will specifying a status for which the workload has no workflows.</p>
