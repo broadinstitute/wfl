@@ -11,11 +11,11 @@
 
 (def retry-status?
   "Cromwell workflow statuses eligible for retry."
-  #{"Aborted" "Failed"})
+  #{"Aborted" "Failed" "Succeeded"})
 
 (def final?
   "The final statuses a Cromwell workflow can have."
-  (conj retry-status? "Succeeded"))
+  retry-status?)
 
 (def active?
   "The statuses an active Cromwell workflow can have."

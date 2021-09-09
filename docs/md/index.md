@@ -192,8 +192,6 @@ to deploy applicable versions of WFL to various available cloud projects.
 
 ## Implementation
 
-For frontend details, check [Frontend Section](./dev-frontend.md)
-
 ### Top-level files
 
 After cloning a new WFL repo, the top-level files are:
