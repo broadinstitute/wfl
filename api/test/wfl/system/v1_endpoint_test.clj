@@ -371,18 +371,39 @@
   "The Data Repo's time format."
   (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
 
+(defn ^:private ingest-illumina-genotyping-array-files
+  "Return filrefs for inputs to illumina-genotyping-array dataset."
+  [dataset gcs-folder]
+  (wfl.debug/trace ['tbl dataset gcs-folder])
+  (let [filerefs (-> "datasets/illumina-genotyping-array.json"
+                     resources/read-resource :schema :tables
+                     (->> (filter (comp (partial = "inputs") :name))
+                          first :columns
+                          (filter (comp (partial = "fileref") :datatype))
+                          (map (comp keyword :name))))
+        files (-> "illumina_genotyping_array/inputs.json"
+                  resources/read-resource
+                  (select-keys filerefs))]
+    files))
+
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
   [dataset]
+  (wfl.debug/trace dataset)
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
-    (fn [temp]
-      (let [file (str temp "inputs.json")]
+    (fn [temporary-cloud-storage-folder]
+      (wfl.debug/trace temporary-cloud-storage-folder)
+      (let [file (str temporary-cloud-storage-folder "inputs.json")]
         (-> "illumina_genotyping_array/inputs.json"
             resources/read-resource
+            wfl.debug/trace
             (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
+            wfl.debug/trace
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
+        (wfl.debug/trace dataset)
+        (wfl.debug/trace file)
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
 
 (deftest ^:parallel test-workload-sink-outputs-to-tdr
@@ -413,6 +434,7 @@
             workload (endpoints/exec-workload
                       (workloads/covid-workload-request source executor sink))]
         (try
+          (wfl.debug/trace dataset)
           (ingest-illumina-genotyping-array-inputs dataset)
           (is (util/poll #(seq (endpoints/get-workflows workload)) 20 100)
               "a workflow should have been created")
