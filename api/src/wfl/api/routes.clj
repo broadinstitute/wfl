@@ -21,6 +21,7 @@
             [wfl.util                           :as util]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
+           [org.apache.commons.lang3.exception ExceptionUtils]
            [wfl.util UserException]))
 
 (def endpoints

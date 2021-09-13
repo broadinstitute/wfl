@@ -135,7 +135,7 @@
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
     (assoc source :dataset {:id (get source :dataset)})
-    (let [dataset (datarepo/dataset dataset)]
+    (let [dataset (datarepo/datasets dataset)]
       (doto (datarepo/table-or-throw table dataset)
         (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))

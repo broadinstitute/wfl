@@ -33,9 +33,13 @@
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
 (defn parse-json
-  "Parse json `object` into keyword->object map recursively"
+  "Parse JSON `object` into keyword->object map recursively."
   [^String object]
-  (json/read-str object :key-fn keyword))
+  (try (json/read-str object :key-fn keyword)
+       (catch Throwable x
+         (wfl.debug/trace x)
+         (log/error {:exception x :object object})
+         object)))
 
 (defn response-body-json
   "Return the :body of the http `response` as JSON"

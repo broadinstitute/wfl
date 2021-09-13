@@ -358,11 +358,10 @@
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)
-               wfl.debug/trace
                (map summarize-workflows-in-workload)
                (filter (comp :finished :workload))
                (sort-by :count >)
-               first wfl.debug/trace :workflows)
+               first :workflows)
           statuses (set (map :status workflows))]
       (is (seq statuses))
       (run! (partial verify-workflows-by-status workload) statuses))))
@@ -373,37 +372,38 @@
 
 (defn ^:private ingest-illumina-genotyping-array-files
   "Return filrefs for inputs to illumina-genotyping-array dataset."
-  [dataset gcs-folder]
-  (wfl.debug/trace ['tbl dataset gcs-folder])
-  (let [filerefs (-> "datasets/illumina-genotyping-array.json"
-                     resources/read-resource :schema :tables
-                     (->> (filter (comp (partial = "inputs") :name))
-                          first :columns
-                          (filter (comp (partial = "fileref") :datatype))
-                          (map (comp keyword :name))))
-        files (-> "illumina_genotyping_array/inputs.json"
-                  resources/read-resource
-                  (select-keys filerefs))]
-    files))
+  [dataset gcs-folder inputs-json]
+  (let [profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
+    (letfn [(ingest [source]
+              (let [dest (str/join "/" [gcs-folder (util/basename source)])]
+                (datarepo/ingest-file dataset profile source dest)))]
+      (let [input-map (->> "datasets/illumina-genotyping-array.json"
+                           resources/read-resource :schema :tables
+                           (filter (comp (partial = "inputs") :name))
+                           first :columns
+                           (filter (comp (partial = "fileref") :datatype))
+                           (map (comp keyword :name))
+                           (select-keys inputs-json))]
+        (->> input-map vals
+             (map (comp :fileId datarepo/poll-job ingest))
+             (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
   [dataset]
-  (wfl.debug/trace dataset)
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
     (fn [temporary-cloud-storage-folder]
-      (wfl.debug/trace temporary-cloud-storage-folder)
-      (let [file (str temporary-cloud-storage-folder "inputs.json")]
-        (-> "illumina_genotyping_array/inputs.json"
-            resources/read-resource
-            wfl.debug/trace
+      (let [file (str temporary-cloud-storage-folder "inputs.json")
+            inputs-json (resources/read-resource
+                         "illumina_genotyping_array/inputs.json")
+            ref->id (ingest-illumina-genotyping-array-files
+                     dataset temporary-cloud-storage-folder inputs-json)]
+        (-> inputs-json
+            (merge ref->id)
             (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
-            wfl.debug/trace
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
-        (wfl.debug/trace dataset)
-        (wfl.debug/trace file)
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
 
 (deftest ^:parallel test-workload-sink-outputs-to-tdr
@@ -434,7 +434,6 @@
             workload (endpoints/exec-workload
                       (workloads/covid-workload-request source executor sink))]
         (try
-          (wfl.debug/trace dataset)
           (ingest-illumina-genotyping-array-inputs dataset)
           (is (util/poll #(seq (endpoints/get-workflows workload)) 20 100)
               "a workflow should have been created")
@@ -444,5 +443,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (-> dataset (datarepo/query-table "outputs") seq)
+        (is (seq (datarepo/query-table dataset "outputs"))
             "outputs should have been written to the dataset")))))
