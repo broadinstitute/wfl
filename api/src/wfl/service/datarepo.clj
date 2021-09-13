@@ -4,6 +4,7 @@
             [clojure.data.json           :as json]
             [clojure.string              :as str]
             [wfl.auth                    :as auth]
+            [wfl.debug]
             [wfl.environment             :as env]
             [wfl.mime-type               :as mime-type]
             [wfl.service.google.bigquery :as bigquery]
@@ -49,9 +50,10 @@
   "Ingest THING to DATASET-ID according to BODY."
   [thing dataset-id body]
   (-> (repository "datasets" dataset-id thing)
-      (http/post {:content-type :application/json
-                  :headers      (auth/get-service-account-header)
-                  :body         (json/write-str body :escape-slash false)})
+      (http/post (wfl.debug/trace
+                  {:content-type :application/json
+                   :headers      (auth/get-service-account-header)
+                   :body         (json/write-str body :escape-slash false)}))
       util/response-body-json
       :id))
 
@@ -90,14 +92,15 @@
 (defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."
   [dataset-id path table]
-  (ingest
-   "ingest"
-   dataset-id
-   {:format          "json"
-    :load_tag        (new-load-tag)
-    :max_bad_records 0
-    :path            path
-    :table           table}))
+  (wfl.debug/trace dataset-id)
+  (wfl.debug/trace path)
+  (wfl.debug/trace table)
+  (ingest "ingest" dataset-id
+          (wfl.debug/trace {:format          "json"
+                            :load_tag        (new-load-tag)
+                            :max_bad_records 0
+                            :path            path
+                            :table           table})))
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
@@ -232,18 +235,20 @@
 ;; hack - TDR adds the "datarepo_" prefix to the dataset name in BigQuery
 ;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
 ;; in a future release.
+;;
 (defn ^:private bigquery-name
   "Return the BigQuery name of the `dataset-or-snapshot`."
-  [{:keys [name] :as dataset-or-snapshot}]
-  (letfn [(snapshot? [x] (util/absent? x :defaultSnapshotId))]
-    (if (snapshot? dataset-or-snapshot) name (str "datarepo_" name))))
+  [{:keys [defaultSnapshotId name] :as dataset-or-snapshot}]
+  (wfl.debug/trace dataset-or-snapshot)
+  (str (when-not defaultSnapshotId "datarepo_") name))
 
 (defn ^:private query-table-impl
-  ([{:keys [dataProject] :as dataset} table col-spec]
-   (let [bq-name (bigquery-name dataset)]
-     (bigquery/query-sync
-      dataProject
-      (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)))))
+  [{:keys [dataProject defaultSnapshotId name] :as dataset} table col-spec]
+  (let [bq-name (bigquery-name dataset)]
+    (wfl.debug/trace bq-name)
+    (bigquery/query-sync
+     dataProject
+     (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table))))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
