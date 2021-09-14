@@ -16,7 +16,7 @@
 (def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
 (def ^:private testing-method-name "sarscov2_illumina_full")
 (def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
-(def ^:private testing-method-configuration-version 1)
+(def ^:private testing-method-configuration-version 2)
 
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
