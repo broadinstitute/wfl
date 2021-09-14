@@ -2,7 +2,6 @@
   (:require [clojure.string                 :as str]
             [wfl.api.workloads]
             [wfl.auth                       :as auth]
-            [wfl.debug]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
@@ -265,10 +264,8 @@
   "Call `done!` when all workflows in `workload` are finished."
   [done! {:keys [uuid] :as workload}]
   (letfn [(all-workflows-finished? []
-            (wfl.debug/trace workload)
             (when (every? (comp cromwell/final? :status)
-                          (wfl.debug/trace
-                           (endpoints/get-workflows workload)))
+                          (endpoints/get-workflows workload))
               (endpoints/get-workload-status uuid)))]
     (done! (util/poll all-workflows-finished?
                       polling-interval-seconds max-polling-attempts))))

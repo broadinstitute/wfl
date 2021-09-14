@@ -6,7 +6,6 @@
             [clojure.java.shell :as shell]
             [clojure.spec.alpha :as s]
             [clojure.string     :as str]
-            [wfl.debug]
             [wfl.log            :as log]
             [wfl.wfl            :as wfl])
   (:import [java.io File IOException StringWriter Writer]
@@ -38,7 +37,6 @@
   [^String object]
   (try (json/read-str object :key-fn keyword)
        (catch Throwable x
-         (wfl.debug/trace x)
          (log/error {:exception x :object object})
          object)))
 

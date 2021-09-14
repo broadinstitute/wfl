@@ -11,7 +11,6 @@
             [wfl.api.routes                 :as routes]
             [wfl.api.workloads              :as workloads]
             [wfl.configuration              :as config]
-            [wfl.debug]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.log                        :as log]
