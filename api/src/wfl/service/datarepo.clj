@@ -227,12 +227,33 @@
 
 ;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
 ;;
+(defn ^:private bq-datasetId-dataProject
+  "Return a BigQuery [datasetId dataProject] pair for `dataset-or-snapshot`."
+  [dataset-or-snapshot]
+  (wfl.debug/trace dataset-or-snapshot)
+  (cond (:defaultSnapshostId dataset-or-snapshot)
+        (let [{:keys [accessInformation dataProject name] :as _dataset}
+              dataset-or-snapshot]
+          [(or (get-in accessInformation [:bigQuery :datasetId])
+               (str "datarepo_" name))
+           dataProject])
+        (map? dataset-or-snapshot)
+        (let [{:keys [dataProject name] :as _snapshot} dataset-or-snapshot]
+          [name dataProject])
+        (string? dataset-or-snapshot)
+        (let [{:keys [accessInformation dataProject name] :as _dataset}
+              (datasets dataset-or-snapshot)]
+          [(or (get-in accessInformation [:bigQuery :datasetId])
+               (str "datarepo_" name))
+           dataProject])
+        :else
+        (throw (UserException. "Not dataset or snapshot" dataset-or-snapshot))))
+
 (defn ^:private query-table-impl
-  [dataset table col-spec]
-  (let [{:keys [accessInformation dataProject name] :as dataset}
-        (if (map? dataset) dataset (datasets dataset))
-        datasetId (or (get-in accessInformation [:bigQuery :datasetId])
-                      (str "datarepo_" name))]
+  [dataset-or-snapshot table col-spec]
+  (wfl.debug/trace dataset-or-snapshot)
+  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)]
+    (wfl.debug/trace [datasetId dataProject])
     (-> "SELECT %s FROM `%s.%s.%s`"
         (format col-spec dataProject datasetId table)
         (->> (bigquery/query-sync dataProject)))))
@@ -246,15 +267,12 @@
    (query-table-impl dataset table
                      (util/to-comma-separated-list (map name columns)))))
 
-;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
-;;
 (defn ^:private query-table-between-impl
-  [{:keys [dataProject] :as dataset} table between [start end] col-spec]
-  (let [[table between] (map name [table between])
-        {:keys [accessInformation dataProject name] :as dataset}
-        (if (map? dataset) dataset (datasets dataset))
-        datasetId (or (get-in accessInformation [:bigQuery :datasetId])
-                      (str "datarepo_" name))]
+  [dataset-or-snapshot table between [start end] col-spec]
+  (wfl.debug/trace dataset-or-snapshot)
+  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
+        [table between] (map name [table between])]
+    (wfl.debug/trace [datasetId dataProject])
     (-> (str/join \newline ["SELECT %s FROM `%s.%s.%s`"
                             "WHERE %s BETWEEN '%s' AND '%s'"])
         (format col-spec dataProject datasetId table between start end)
