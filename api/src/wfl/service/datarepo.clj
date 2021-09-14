@@ -230,8 +230,7 @@
 (defn ^:private bq-datasetId-dataProject
   "Return a BigQuery [datasetId dataProject] pair for `dataset-or-snapshot`."
   [dataset-or-snapshot]
-  (wfl.debug/trace dataset-or-snapshot)
-  (cond (:defaultSnapshostId dataset-or-snapshot)
+  (cond (not= ::snap (:defaultSnapshotId dataset-or-snapshot ::snap))
         (let [{:keys [accessInformation dataProject name] :as _dataset}
               dataset-or-snapshot]
           [(or (get-in accessInformation [:bigQuery :datasetId])
@@ -251,9 +250,7 @@
 
 (defn ^:private query-table-impl
   [dataset-or-snapshot table col-spec]
-  (wfl.debug/trace dataset-or-snapshot)
   (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)]
-    (wfl.debug/trace [datasetId dataProject])
     (-> "SELECT %s FROM `%s.%s.%s`"
         (format col-spec dataProject datasetId table)
         (->> (bigquery/query-sync dataProject)))))
@@ -269,10 +266,8 @@
 
 (defn ^:private query-table-between-impl
   [dataset-or-snapshot table between [start end] col-spec]
-  (wfl.debug/trace dataset-or-snapshot)
   (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
         [table between] (map name [table between])]
-    (wfl.debug/trace [datasetId dataProject])
     (-> (str/join \newline ["SELECT %s FROM `%s.%s.%s`"
                             "WHERE %s BETWEEN '%s' AND '%s'"])
         (format col-spec dataProject datasetId table between start end)
