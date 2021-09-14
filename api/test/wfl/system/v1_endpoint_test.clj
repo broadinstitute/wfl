@@ -263,7 +263,7 @@
         executor  {:name                       "Terra"
                    :workspace                  workspace
                    :methodConfiguration        (terra-ns "sarscov2_illumina_full")
-                   :methodConfigurationVersion 1
+                   :methodConfigurationVersion 2
                    :fromSource                 "importSnapshot"}
         sink      {:name           "Terra Workspace"
                    :workspace      workspace
