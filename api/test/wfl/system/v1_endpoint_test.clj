@@ -349,8 +349,7 @@
   (json/read-str (slurp "./spec.json") :key-fn keyword)
   (def workload? #{"5f0a2f52-732d-497d-87ac-3832348c7892"
                    "870ff0be-0322-4654-bbfe-ab5e52996c90"
-                   "f13bcf34-26b5-455c-a555-4dffb0de9151"})
-  )
+                   "f13bcf34-26b5-455c-a555-4dffb0de9151"}))
 
 (deftest ^:parallel test-workflows-by-status
   (testing "Get workflows by status"
