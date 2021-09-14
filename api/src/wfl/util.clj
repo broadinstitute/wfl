@@ -6,6 +6,7 @@
             [clojure.java.shell :as shell]
             [clojure.spec.alpha :as s]
             [clojure.string     :as str]
+            [wfl.debug]
             [wfl.log            :as log]
             [wfl.wfl            :as wfl])
   (:import [java.io File IOException StringWriter Writer]
