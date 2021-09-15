@@ -5,6 +5,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.handlers           :as handlers]
+            [wfl.debug                  :as debug]
             [wfl.environment            :as env]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
@@ -332,6 +333,7 @@
   [n workload]
   (try (endpoints/get-workflows workload)
        (catch Throwable x
+         (debug/trace x)
          (when (> n 0)
            (try-to-get-workflows (dec n) workload)))))
 

@@ -352,10 +352,10 @@
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
   (update-datarepo-job-statuses sink)
-  (when-let [{:keys [workflow job] :as record} (peek-job-queue sink)]
+  (when-let [{:keys [job] :as record} (peek-job-queue sink)]
     (try
-      (let [res (datarepo/get-job-result job)]
-        (log/info "Sunk workflow outputs to dataset"))
+      (datarepo/get-job-result job)
+      (log/info "Sunk workflow outputs to dataset")
       (finally
         (pop-job-queue! sink record)))))
 
