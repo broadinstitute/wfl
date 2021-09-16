@@ -355,7 +355,7 @@
         (if (seq statuses)
           (run! verify statuses)
           (testing "WARN: No workloads to test status query"
-            (is true)))))))
+            (is (empty? statuses))))))))
 
 (def ^:private tdr-date-time-formatter
   "The Data Repo's time format."
