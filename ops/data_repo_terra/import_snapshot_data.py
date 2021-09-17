@@ -82,7 +82,7 @@ if __name__ == '__main__':
                         default="https://firecloud-orchestration.dsde-dev.broadinstitute.org",
                         help="The Terra API URL.")
     parser.add_argument("--terra_workspace",
-                        default="general-dev-billing-account/hornet-test",
+                        default="wfl-dev/hornet-test",
                         help="The Terra workspace where the data will be imported. Follows the format {workspaceNamespace}/{workspaceName}")
     parser.add_argument("--terra_data_table",
                         default="datarepo_row",
