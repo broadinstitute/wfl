@@ -16,7 +16,7 @@
 
 (deftest test-snapshot-references
   (fixtures/with-temporary-workspace
-    "wfl-dev/test-workspace"
+    "general-dev-billing-account/test-workspace"
     "hornet-eng"
     (fn [workspace]
       (letfn [(make-reference [snapshot-name]
@@ -60,7 +60,7 @@
         entity-name   "test"
         outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
     (fixtures/with-temporary-workspace
-      "wfl-dev/test-workspace"
+      "general-dev-billing-account/test-workspace"
       "hornet-eng"
       (fn [workspace]
         (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
