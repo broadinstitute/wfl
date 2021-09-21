@@ -1,4 +1,5 @@
-# Release 0.8.0
+# Release 0.8.2
+- Updated the Changelog for the release
 - Merge branch 'main' into release/0.8.0-rc Fixing merge conflicts after a very long hiatus in deployments
 - GH-1454 Update covid and executor integration tests to reflect updated method configuration version ([#504](https://github.com/broadinstitute/wfl/pull/504))
 - Fixing documentation merge conflict
