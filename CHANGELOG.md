@@ -1,3 +1,12 @@
+# Release 0.8.0
+- Merge branch 'main' into release/0.8.0-rc Fixing merge conflicts after a very long hiatus in deployments
+- GH-1454 Update covid and executor integration tests to reflect updated method configuration version ([#504](https://github.com/broadinstitute/wfl/pull/504))
+- Fixing documentation merge conflict
+- release v0.7.1 - Bug Fixes ([#443](https://github.com/broadinstitute/wfl/pull/443))
+- release 0.7.0 - SARSCov2 Illumina Full support In Terra ([#440](https://github.com/broadinstitute/wfl/pull/440))
+- Release v0.6.1 Patch ([#365](https://github.com/broadinstitute/wfl/pull/365))
+- v0.6.0 Release ([#359](https://github.com/broadinstitute/wfl/pull/359))
+
 # Release 0.7.1
 - GH-1375: Fix AoU nightly test: GET /api/v1/workload fails with spec error from invalid creator ([#442](https://github.com/broadinstitute/wfl/pull/442))
 
