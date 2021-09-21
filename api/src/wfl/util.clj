@@ -168,22 +168,6 @@
   [f m]
   (zipmap (keys m) (map f (vals m))))
 
-(defn minutes-between
-  "The number of minutes from START to END."
-  [start end]
-  (.between
-   ChronoUnit/SECONDS
-   (OffsetDateTime/parse start)
-   (OffsetDateTime/parse end)))
-
-(defn seconds-between
-  "The number of seconds from START to END."
-  [start end]
-  (.between
-   ChronoUnit/SECONDS
-   (OffsetDateTime/parse start)
-   (OffsetDateTime/parse end)))
-
 (defn summarize
   "Summarize COMMANDS in a string vector."
   [commands]

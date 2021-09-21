@@ -285,13 +285,32 @@
            (run! #(write-snapshot-id source %)))
       (log/debug (format "%s Running snapshot jobs updated." (log-prefix source))))))
 
+;; Workloads in general may be updated more frequently,
+;; but overpolling the TDR increases the chances of:
+;; - creating many single-row / low-cardinality snapshots
+;; - locking the dataset / running into dataset locks
+(def ^:private tdr-source-polling-interval-minutes 20)
+
+(defn ^:private tdr-source-should-poll?
+  "Return true if it's been at least `tdr-source-polling-interval-minutes`
+   since we last polled the TDR for new rows.
+
+   If the workload hasn't yet snapshotted anything, `last_checked` may be
+   unset and we should use `started` as the start of our interval."
+  [{:keys [started last_checked] :as _source} utc-now]
+  (let [checked     (timestamp-to-offsetdatetime (or last_checked started))]
+    (<= tdr-source-polling-interval-minutes
+        (.between ChronoUnit/MINUTES checked utc-now))))
+
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,
   insert resulting job creation ids into database and update the
   timestamp for next time."
   [{:keys [stopped] :as source}]
-  (when-not stopped
-    (find-and-snapshot-new-rows source (utc-now)))
+  (let [now          (utc-now)
+        should-poll? (tdr-source-should-poll? source now)]
+    (when (and (not stopped) should-poll?)
+      (find-and-snapshot-new-rows source now)))
   (update-pending-snapshot-jobs source)
   ;; load and return the source table
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
