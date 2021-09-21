@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-monitoring/" class="md-nav__link">
-        Monitoring
+      <a href="../dev-frontend/" class="md-nav__link">
+        Frontend
       </a>
     </li>
   
@@ -890,10 +890,8 @@
                 
                 
                 <h1 id="sink">Sink<a class="headerlink" href="#sink" title="Permanent link">⚓︎</a></h1>
-<p>The workload <code>Sink</code> models the terminal stage
-of a processing pipeline.
-In a typical workload configuration,
-a <code>Sink</code> can be used to write workflow outputs
+<p>The workload <code>Sink</code> models the terminal stage of a processing pipeline. In a 
+typical workload configuration, a <code>Sink</code> can be used to write workflow outputs
 to a desired location in the cloud.</p>
 <h2 id="user-guide">User Guide<a class="headerlink" href="#user-guide" title="Permanent link">⚓︎</a></h2>
 <p>You can configure the type of <code>Sink</code> used in your workload by changing the
@@ -956,8 +954,8 @@ a workspace "Writer" in order to write entities to the workspace.</p>
 will be created as. The entity type must exist prior to workload creation and
 must be a table in the workspace.</p>
 <h4 id="identifier"><code>identifier</code><a class="headerlink" href="#identifier" title="Permanent link">⚓︎</a></h4>
-<p>The <code>identifier</code> is the name of a pipeline output
-that should be used as the name of each newly created entity.</p>
+<p>The <code>identifier</code> is the name of a pipeline output that should be used as the 
+name of each newly created entity. </p>
 <p>Example - Let's say the pipeline you're running has an output called
 "sample_name" that uniquely identifies the inputs and outputs to that pipeline.
 By setting <code>"identifier": "sample_name"</code> in the sink configuration, entities
@@ -968,10 +966,9 @@ will be created using the "sample_name" as the entity name.</p>
 the first set of outputs will be overwritten by the second in the workspace.</p>
 </div>
 <h4 id="fromoutputs"><code>fromOutputs</code><a class="headerlink" href="#fromoutputs" title="Permanent link">⚓︎</a></h4>
-<p><code>fromOutputs</code> configures how to create new entities from pipeline outputs
-by mapping the output names to attributes in the <code>entityType</code>.
-Note that all attribute names must exist
-in the entityType before the workload  creation.</p>
+<p><code>fromOutputs</code> configures how to create new entities from pipeline outputs by 
+mapping the output names to attributes in the <code>entityType</code>. Note that all 
+attribute names must exist in the entityType before the workload  creation.</p>
 <p><code>fromOutputs</code> allows a small amount of flexibility in how to construct an entity
 and supports the following relations:</p>
 <ul>
@@ -1035,13 +1032,10 @@ The table below summarises the purpose of each attribute in the above request.</
 <p>The dataset attribute is the <code>UUID</code> that uniquely identifies the TDR dataset you
 want workflow-launcher to write workflow outputs to.</p>
 <h4 id="table"><code>table</code><a class="headerlink" href="#table" title="Permanent link">⚓︎</a></h4>
-<p>The <code>table</code> is the name of the table in the dataset
-that you want workflow-launcher
-to write workflow outputs to.
-Once a workflow succeeds,
-its outputs will be ingested
-as new rows in that table (see note).
-You cannot write to more than one table per <code>Terra DataRepo</code> sink.</p>
+<p>The <code>table</code> is the name of the table in the dataset that you want
+workflow-launcher to write workflow outputs to. Once a workflow succeeds, its
+outputs will be ingested as new rows in that table (see note). You cannot write
+to more than one table per <code>Terra DataRepo</code> sink. </p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>workflow-launcher transforms outputs into a form conformant with the table
@@ -1096,14 +1090,12 @@ added row.</p>
 </code></pre></div></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <code>Sink</code> protocol is implemented by the <code>update-sink!</code> multimethod.
-It's documented thus as a means of differentiating the in-memory data model
-from the metadata a user sees.</p>
+<p>The <code>Sink</code> protocol is implemented by the <code>update-sink!</code> multimethod. It's 
+documented thus as a means of differentiating the in-memory data model from
+the metadata a user sees.</p>
 </div>
-<p>To be used in a workload,
-a <code>Sink</code> implementation should satisfy <code>Stage</code>,
-the <code>to-edn</code> multimethod
-and the following multimethods specific to <code>Sink</code>s:</p>
+<p>To be used in a workload, a <code>Sink</code> implementation should satisfy <code>Stage</code>, the 
+<code>to-edn</code> multimethod and the following multimethods specific to <code>Sink</code>s:
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defmulti </span><span class="nv">create-sink</span>
   <span class="s">&quot;Create a `Sink` instance using the database `transaction` and configuration</span>
 <span class="s">   in the sink `request` and return a `[type items]` pair to be written to a</span>
@@ -1111,10 +1103,10 @@ and the following multimethods specific to <code>Sink</code>s:</p>
 <span class="s">   Notes:</span>
 <span class="s">   - This is a factory method registered for workload creation.</span>
 <span class="s">   - The `Sink` type string must match a value of the `sink` enum in the</span>
-<span class="s">     database schema.</span>
+<span class="s">     database schema.   </span>
 <span class="s">   - This multimethod is type-dispatched on the `:name` association in the</span>
 <span class="s">     `request`.&quot;</span>
-  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span> 
       <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>         <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
        <span class="o">^</span><span class="nb">long </span>              <span class="nv">workload-id</span>  <span class="c1">;; ID of the workload being created</span>
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">request</span>      <span class="c1">;; Data forwarded to the handler</span>
@@ -1131,7 +1123,7 @@ and the following multimethods specific to <code>Sink</code>s:</p>
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">workload</span>     <span class="c1">;; Row from workload table</span>
       <span class="p">]</span>
       <span class="p">(</span><span class="ss">:sink_type</span> <span class="nv">workload</span><span class="p">)))</span>
-</code></pre></div>
+</code></pre></div></p>
                 
               
               
