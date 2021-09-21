@@ -130,11 +130,9 @@ getWorkflows() {
 removeSucceeded() {
     # [[Workflow]] -> [Workflow]
     jq 'flatten
-        | group_by( {inputs: .inputs, options: .options} )
-        | map( select( all(.status=="Succeeded") )
-             | .[0]
-             | {inputs: .inputs, options: .options} )
-        | del(.[][] | nulls)
+        | map ( select ( .status=="Failed" )
+                | {inputs: .inputs, options: .options}
+                | del ( .[] | nulls ) )
         ' <<< "$1"
 }
 
