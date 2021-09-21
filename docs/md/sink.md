@@ -1,6 +1,9 @@
 # Sink
-The workload `Sink` models the terminal stage of a processing pipeline. In a 
-typical workload configuration, a `Sink` can be used to write workflow outputs
+
+The workload `Sink` models the terminal stage
+of a processing pipeline.
+In a typical workload configuration,
+a `Sink` can be used to write workflow outputs
 to a desired location in the cloud.
 
 ## User Guide
@@ -24,7 +27,7 @@ looks like:
     ...
   }
 }
-``` 
+```
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute     | Description                                                  |
@@ -47,8 +50,9 @@ will be created as. The entity type must exist prior to workload creation and
 must be a table in the workspace.
 
 #### `identifier`
-The `identifier` is the name of a pipeline output that should be used as the 
-name of each newly created entity. 
+
+The `identifier` is the name of a pipeline output
+that should be used as the name of each newly created entity.
 
 Example - Let's say the pipeline you're running has an output called
 "sample_name" that uniquely identifies the inputs and outputs to that pipeline.
@@ -60,9 +64,11 @@ will be created using the "sample_name" as the entity name.
     the first set of outputs will be overwritten by the second in the workspace.
 
 #### `fromOutputs`
-`fromOutputs` configures how to create new entities from pipeline outputs by 
-mapping the output names to attributes in the `entityType`. Note that all 
-attribute names must exist in the entityType before the workload  creation.
+
+`fromOutputs` configures how to create new entities from pipeline outputs
+by mapping the output names to attributes in the `entityType`.
+Note that all attribute names must exist
+in the entityType before the workload  creation.
 
 `fromOutputs` allows a small amount of flexibility in how to construct an entity
 and supports the following relations:
@@ -92,7 +98,7 @@ workload request looks like:
     ...
   }
 }
-``` 
+```
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute     | Description                                                  |
@@ -107,12 +113,16 @@ The dataset attribute is the `UUID` that uniquely identifies the TDR dataset you
 want workflow-launcher to write workflow outputs to.
 
 #### `table`
-The `table` is the name of the table in the dataset that you want
-workflow-launcher to write workflow outputs to. Once a workflow succeeds, its
-outputs will be ingested as new rows in that table (see note). You cannot write
-to more than one table per `Terra DataRepo` sink. 
 
-!!! note 
+The `table` is the name of the table in the dataset
+that you want workflow-launcher
+to write workflow outputs to.
+Once a workflow succeeds,
+its outputs will be ingested
+as new rows in that table (see note).
+You cannot write to more than one table per `Terra DataRepo` sink.
+
+!!! note
     workflow-launcher transforms outputs into a form conformant with the table
     in the dataset using the transformation described by `fromOutputs`. The
     columns in your table don't have to be an exact match for the output names.
@@ -161,12 +171,15 @@ A sink is one satisfying the `Sink` protocol as below:
 ```
 
 !!! note
-    The `Sink` protocol is implemented by the `update-sink!` multimethod. It's 
-    documented thus as a means of differentiating the in-memory data model from
-    the metadata a user sees.
+    The `Sink` protocol is implemented by the `update-sink!` multimethod.
+    It's documented thus as a means of differentiating the in-memory data model
+    from the metadata a user sees.
 
-To be used in a workload, a `Sink` implementation should satisfy `Stage`, the 
-`to-edn` multimethod and the following multimethods specific to `Sink`s:
+To be used in a workload,
+a `Sink` implementation should satisfy `Stage`,
+the `to-edn` multimethod
+and the following multimethods specific to `Sink`s:
+
 ```clojure
 (defmulti create-sink
   "Create a `Sink` instance using the database `transaction` and configuration
@@ -175,10 +188,10 @@ To be used in a workload, a `Sink` implementation should satisfy `Stage`, the
    Notes:
    - This is a factory method registered for workload creation.
    - The `Sink` type string must match a value of the `sink` enum in the
-     database schema.   
+     database schema.
    - This multimethod is type-dispatched on the `:name` association in the
      `request`."
-  (fn ^[^String ^String] 
+  (fn ^[^String ^String]
       [^Connection         transaction  ;; JDBC Connection
        ^long               workload-id  ;; ID of the workload being created
        ^IPersistentHashMap request      ;; Data forwarded to the handler
@@ -196,4 +209,3 @@ To be used in a workload, a `Sink` implementation should satisfy `Stage`, the
       ]
       (:sink_type workload)))
 ```
-

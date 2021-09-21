@@ -17,10 +17,10 @@ The `Terra` executor will...
   (i.e. import a snapshot to the `executor` workspace as a reference)
 - Update the method configuration with the coerced object as its root entity
   type
-- Launch a submission 
+- Launch a submission
 - Periodically update the statuses of eligible workflows to enable a
   downstream `Sink` to consume their outputs
-  
+
 A typical `Terra` executor configuration in the workload request looks like:
 ```json
 {
@@ -30,7 +30,7 @@ A typical `Terra` executor configuration in the workload request looks like:
   "methodConfigurationVersion": 1,
   "fromSource": "importSnapshot"
 }
-``` 
+```
 
 And a real-life example for a known method configuration:
 ```json
@@ -84,7 +84,7 @@ Prerequisites:
 
 - The `methodConfiguration` version when fetched from Firecloud should match
   `methodConfigurationVersion`.
-  
+
 !!! warning "Implications of Version Mismatch"
     A version mismatch may indicate a possible concurrent modification of the
     method configuration used for launching submissions.  Modification is possible
@@ -148,9 +148,13 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
     name. The use of a protocol is to illustrate the difference between the
     in-memory data model of a `Executor` and the metadata seen by a user.
 
-To be used in a workload, a `Executor` implementation should satisfy the
-processing `Stage` protocol and the `to-edn` multimethod in addition to the
-following multimethods specific to executors:
+To be used in a workload,
+an `Executor` implementation
+should satisfy the processing `Stage` protocol
+and the `to-edn` multimethod
+in addition to the following multimethods
+specific to executors:
+
 ```clojure
 (defmulti create-executor
   "Create an `Executor` instance using the database `transaction` and
@@ -160,10 +164,10 @@ following multimethods specific to executors:
    Notes:
    - This is a factory method registered for workload creation.
    - The `Executor` type string must match a value of the `executor` enum
-     in the database schema.   
+     in the database schema.
    - This multimethod is type-dispatched on the `:name` association in the
      `request`."
-  (fn ^[^String ^String] 
+  (fn ^[^String ^String]
       [^Connection         transaction  ;; JDBC Connection
        ^long               workload-id  ;; ID of the workload being created
        ^IPersistentHashMap request      ;; Data forwarded to the handler

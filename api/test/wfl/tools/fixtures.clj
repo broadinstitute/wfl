@@ -189,7 +189,7 @@
   [dataset-request f]
   (util/bracket
    #(datarepo/create-dataset dataset-request)
-   datarepo/delete-dataset
+   datarepo/delete-snapshots-then-dataset
    f))
 
 (defn with-temporary-snapshot

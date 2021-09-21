@@ -1,7 +1,6 @@
 (ns wfl.integration.slack-test
   (:require [clojure.test :refer :all]
             [wfl.service.slack :as slack]
-            [wfl.log :as log]
             [wfl.util :as util])
   (:import [clojure.lang PersistentQueue]))
 

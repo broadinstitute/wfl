@@ -1,6 +1,6 @@
 (ns wfl.unit.slack-test
-  (:require [clojure.test :refer :all]
-            [wfl.service.slack   :as slack])
+  (:require [clojure.test      :refer [deftest is testing]]
+            [wfl.service.slack :as slack])
   (:import [clojure.lang PersistentQueue]))
 
 (def ^:private testing-agent (agent (PersistentQueue/EMPTY)))

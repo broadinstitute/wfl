@@ -60,7 +60,7 @@
     snapshot))
 
 (defn create-snapshot []
-  (let [dataset (datarepo/dataset source-dataset)]
+  (let [dataset (datarepo/datasets source-dataset)]
     (snapshot-new-dataset-rows dataset (look-for-new-dataset-rows dataset))))
 
 (defn import-snapshot-into-workspace [workspace {:keys [name id] :as _snapshot}]

@@ -261,14 +261,14 @@
     max-polling-attempts)))
 
 (defn when-all-workflows-finish
-  "Call `done!` when all workflows in the `workload` have finished processing."
+  "Call `done!` when all workflows in `workload` are finished."
   [done! {:keys [uuid] :as workload}]
-  (done!
-   (util/poll
-    #(when (every? cromwell/final? (endpoints/get-workflows workload))
-       (endpoints/get-workload-status uuid))
-    polling-interval-seconds
-    max-polling-attempts)))
+  (letfn [(all-workflows-finished? []
+            (when (every? (comp cromwell/final? :status)
+                          (endpoints/get-workflows workload))
+              (endpoints/get-workload-status uuid)))]
+    (done! (util/poll all-workflows-finished?
+                      polling-interval-seconds max-polling-attempts))))
 
 (defn evalT
   "Evaluate `operation` in the context of a database transaction where

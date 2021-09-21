@@ -83,7 +83,7 @@
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
-  (letfn [(do-update! [{:keys [id uuid]}]
+  (letfn [(do-update! [{:keys [id uuid] :as _workload}]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)

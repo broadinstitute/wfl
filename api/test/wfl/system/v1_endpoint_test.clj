@@ -5,6 +5,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.handlers           :as handlers]
+            [wfl.debug                  :as debug]
             [wfl.environment            :as env]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
@@ -262,7 +263,7 @@
         executor  {:name                       "Terra"
                    :workspace                  workspace
                    :methodConfiguration        (terra-ns "sarscov2_illumina_full")
-                   :methodConfigurationVersion 1
+                   :methodConfigurationVersion 2
                    :fromSource                 "importSnapshot"}
         sink      {:name           "Terra Workspace"
                    :workspace      workspace
@@ -322,28 +323,76 @@
           (is (inst? started))
           (is (inst? stopped)))))))
 
-(defn ^:private verify-workflows-by-status
-  [workload status]
-  (run! #(is (= (:status %) status)) (endpoints/get-workflows workload status)))
+(defn ^:private try-to-get-workflows
+  "Try up to `n` times to summarize the workflows in `workload`."
+  [n workload]
+  (try (endpoints/get-workflows workload)
+       (catch Throwable x
+         (debug/trace x)
+         (when (> n 0)
+           (try-to-get-workflows (dec n) workload)))))
+
+(defn ^:private summarize-workflows-in-workload
+  "Summarize the workflows in `workload`."
+  [workload]
+  (let [workflows (try-to-get-workflows 3 workload)]
+    {:count     (count workflows)
+     :workload  workload
+     :workflows workflows}))
 
 (deftest ^:parallel test-workflows-by-status
   (testing "Get workflows by status"
-    (let [workload (first (endpoints/get-workloads))
-          workflows (endpoints/get-workflows workload)]
-      (->> (map :status workflows)
-           (distinct)
-           (run! #(verify-workflows-by-status workload %))))))
+    (let [{:keys [workflows workload]}
+          (->> (endpoints/get-workloads)
+               (map summarize-workflows-in-workload)
+               (filter (comp :finished :workload))
+               (sort-by :count >)
+               first :workflows)
+          statuses (set (map :status workflows))]
+      (letfn [(verify [status]
+                (run! #(is (= status (:status %)))
+                      (endpoints/get-workflows workload status)))]
+        (if (seq statuses)
+          (run! verify statuses)
+          (testing "WARN: No workloads to test status query"
+            (is (empty? statuses))))))))
+
+(def ^:private tdr-date-time-formatter
+  "The Data Repo's time format."
+  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
+
+(defn ^:private ingest-illumina-genotyping-array-files
+  "Return filrefs for inputs to illumina-genotyping-array dataset."
+  [dataset gcs-folder inputs-json]
+  (let [profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
+    (letfn [(ingest [source]
+              (let [dest (str/join "/" [gcs-folder (util/basename source)])]
+                (datarepo/ingest-file dataset profile source dest)))]
+      (let [input-map (->> "datasets/illumina-genotyping-array.json"
+                           resources/read-resource :schema :tables
+                           (filter (comp (partial = "inputs") :name))
+                           first :columns
+                           (filter (comp (partial = "fileref") :datatype))
+                           (map (comp keyword :name))
+                           (select-keys inputs-json))]
+        (->> input-map vals
+             (map (comp :fileId datarepo/poll-job ingest))
+             (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest inputs for the illimina_genotyping_array pipeline into the
-   illimina_genotyping_array `dataset`"
+  "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
-    (fn [temp]
-      (let [file (str temp "inputs.json")]
-        (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
-            (assoc :ingested (.format (util/utc-now) (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss")))
+    (fn [temporary-cloud-storage-folder]
+      (let [file (str temporary-cloud-storage-folder "inputs.json")
+            inputs-json (resources/read-resource
+                         "illumina_genotyping_array/inputs.json")
+            ref->id (ingest-illumina-genotyping-array-files
+                     dataset temporary-cloud-storage-folder inputs-json)]
+        (-> inputs-json
+            (merge ref->id)
+            (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
@@ -385,5 +434,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (-> dataset (datarepo/query-table "outputs") seq)
+        (is (seq (datarepo/query-table dataset "outputs"))
             "outputs should have been written to the dataset")))))
