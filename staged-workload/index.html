@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend/" class="md-nav__link">
-        Frontend
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
       </a>
     </li>
   
@@ -816,8 +816,20 @@ to a desired location in the cloud.</p>
 <p>The specific values below are from the
 <a href="../modules-covid/">COVID-19 Surveillance in Terra</a> project.
 Workloads for other projects may leverage different implementations for source, executor or sink.</p>
+<div class="admonition tip">
+<p class="admonition-title"><code>watchers</code> of a workload</p>
+<p>You may have noticed the <code>watchers</code> field in the requests. As of <code>2021/08</code> WFL
+supports registering Slack channels (Slack channel IDs that starts with a <code>C</code>)
+as watchers of the workload. Your channel needs to live in the <code>broadinstitute.slack.com</code>
+Slack organization and you also have to <code>/invite @WorkFlow Launcher Notifier</code> to invite
+the WFL notifier to your channel before the channel can receive user facing messaged from
+WFL.</p>
+</div>
 <div class="highlight"><pre><span></span><code>{
-    &quot;watchers&quot;: [ tester@broadinstitute.org ],
+    &quot;watchers&quot;: [
+        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+        [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
+    ],
     &quot;labels&quot;: [
         &quot;hornet:test&quot;
     ],
@@ -843,7 +855,7 @@ Workloads for other projects may leverage different implementations for source, 
         &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
         &quot;entityType&quot;: &quot;flowcell&quot;,
         &quot;identifier&quot;: &quot;run_id&quot;,
-        &quot;fromOutputs&quot;: { 
+        &quot;fromOutputs&quot;: {
             &quot;submission_xml&quot; : &quot;submission_xml&quot;,
             &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
             &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
@@ -865,7 +877,7 @@ Workloads for other projects may leverage different implementations for source, 
 <tr>
 <td>watchers</td>
 <td>List</td>
-<td>A list of emails to notify</td>
+<td>A list of emails or Slack channels to notify</td>
 </tr>
 <tr>
 <td>labels</td>
@@ -918,7 +930,7 @@ Workloads for other projects may leverage different implementations for source, 
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../dev-frontend/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Frontend" rel="prev">
+        <a href="../dev-monitoring/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Monitoring" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -927,7 +939,7 @@ Workloads for other projects may leverage different implementations for source, 
               <span class="md-footer__direction">
                 Previous
               </span>
-              Frontend
+              Monitoring
             </div>
           </div>
         </a>

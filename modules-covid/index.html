@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend/" class="md-nav__link">
-        Frontend
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
       </a>
     </li>
   
@@ -957,7 +957,10 @@ matching a given status (ex. "Failed").</p>
 <p>An example workload response at the time of this writing is formatted thusly:</p>
 <div class="highlight"><pre><span></span><code>{
     &quot;started&quot; : &quot;2021-07-14T15:36:47Z&quot;,
-    &quot;watchers&quot; : [ &quot;okotsopo@broadinstitute.org&quot; ],
+    &quot;watchers&quot; : [
+        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+        [&quot;email&quot;, &quot;okotsopo@broadinstitute.org&quot;]
+    ],
     &quot;labels&quot; : [ &quot;hornet:test&quot;, &quot;project:okotsopo testing enhanced source, executor, sink logging&quot; ],
     &quot;creator&quot; : &quot;okotsopo@broadinstitute.org&quot;,
     &quot;updated&quot; : &quot;2021-08-06T21:41:28Z&quot;,
@@ -1101,7 +1104,8 @@ with an assigned <code>uuid</code>.</p>
      -H &#39;Content-Type: application/json&#39; \
      -d &#39;{
             &quot;watchers&quot;: [
-                &quot;tester@123.com&quot;
+                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+                [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
             ],
             &quot;labels&quot;: [
                 &quot;hornet:test&quot;
@@ -1176,7 +1180,8 @@ with an assigned <code>uuid</code>.</p>
      -H &#39;Content-Type: application/json&#39; \
      -d &#39;{
             &quot;watchers&quot;: [
-                &quot;tester@123.com&quot;
+                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+                [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
             ],
             &quot;labels&quot;: [
                 &quot;hornet:test&quot;

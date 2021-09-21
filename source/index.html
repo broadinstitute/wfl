@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend/" class="md-nav__link">
-        Frontend
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
       </a>
     </li>
   
@@ -836,8 +836,9 @@
                 
                 
                 <h1 id="source">Source<a class="headerlink" href="#source" title="Permanent link">⚓︎</a></h1>
-<p>The workload <code>Source</code> models the first stage of a processing pipeline. In a 
-typical workload configuration, a <code>Source</code> can be used to read workflow inputs
+<p>The workload <code>Source</code> models the first stage of a processing pipeline.
+In a typical workload configuration,
+a <code>Source</code> can be used to read workflow inputs
 from a specified location or service in the cloud.</p>
 <h2 id="user-guide">User Guide<a class="headerlink" href="#user-guide" title="Permanent link">⚓︎</a></h2>
 <p>You can configure the type of <code>Source</code> used in your workload by changing the
@@ -915,27 +916,29 @@ workflow-launcher to fetch inputs from. You should design this table such that
 each row contains all the inputs required to execute a workflow by the workload
 <code>Executor</code> downstream.</p>
 <h4 id="column"><code>column</code><a class="headerlink" href="#column" title="Permanent link">⚓︎</a></h4>
-<p>The <code>column</code> is the name of a column in the table specified above used to
-determine which rows are new and/or have been updated and therefore need
-reprocessing. It should be a <code>Timestamp</code>, but <code>DateTime</code> is accepted too.
-You must ensure that the <code>Timestamp</code> or <code>DateTime</code> column uses Universal 
-Coordinated Time (UTC).</p>
+<p>The <code>column</code> is the name of a column in the table specified above
+used to determine which rows are new or have been updated
+and therefore need reprocessing.
+It should be a <code>Timestamp</code>,
+but <code>DateTime</code> is accepted too.
+You must ensure that the <code>Timestamp</code> or <code>DateTime</code> column
+uses Universal Coordinated Time (UTC).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Using a <code>Timestamp</code> will increase the likelihood of workflow-launcher
 detecting and scheduling new rows in real-time due to greater precision.
-Using <code>DateTime</code> may cause workflow-launcher to miss the row at first 
+Using <code>DateTime</code> may cause workflow-launcher to miss the row at first
 (though it will be picked up later).</p>
 </div>
 <h4 id="snapshotreaders"><code>snapshotReaders</code><a class="headerlink" href="#snapshotreaders" title="Permanent link">⚓︎</a></h4>
 <p>The email addresses of those whom should be "readers" of all snapshots created
-by workflow-launcher in this workload. You can specify individual users and/or 
+by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.</p>
 <h3 id="tdr-snapshots-source"><code>TDR Snapshots</code> Source<a class="headerlink" href="#tdr-snapshots-source" title="Permanent link">⚓︎</a></h3>
-<p>You can configure workflow-launcher to use a list of TDR snapshots directly. 
+<p>You can configure workflow-launcher to use a list of TDR snapshots directly.
 This may be useful if you don't want workflow-launcher to be a custodian of your
 dataset or if you already have snapshots you want to process. In this case you
-must ensure that <code>workflow-launcher@firecloud.org</code> is a <code>reader</code> of all 
+must ensure that <code>workflow-launcher@firecloud.org</code> is a <code>reader</code> of all
 snapshots you want it to process.</p>
 <p>A typical <code>TDR Snapshots</code> source configuration in the workload request looks
 like:
@@ -974,7 +977,7 @@ downstream processing stage that consumes them.</p>
 <h2 id="developer-guide">Developer Guide<a class="headerlink" href="#developer-guide" title="Permanent link">⚓︎</a></h2>
 <p>A source is a <code>Queue</code> that satisfies the <code>Source</code> protocol below:
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defprotocol </span><span class="nv">Source</span>
-  <span class="p">(</span><span class="nf">start-source!</span> 
+  <span class="p">(</span><span class="nf">start-source!</span>
     <span class="o">^</span><span class="nv">Unit</span>
     <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span> <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
      <span class="o">^</span><span class="nv">Source</span>     <span class="nv">source</span>       <span class="c1">;; This source instance</span>
@@ -983,7 +986,7 @@ downstream processing stage that consumes them.</p>
 <span class="s">     processing stage. This operation should not perform any long-running</span>
 <span class="s">     external effects other than database operations via the `transaction`. This</span>
 <span class="s">     function is called at most once during a workload&#39;s operation.&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">stop-source!</span> 
+  <span class="p">(</span><span class="nf">stop-source!</span>
     <span class="o">^</span><span class="nv">Unit</span>
     <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span> <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
      <span class="o">^</span><span class="nv">Source</span>     <span class="nv">source</span>       <span class="c1">;; This source instance</span>
@@ -1010,9 +1013,12 @@ downstream processing stage that consumes them.</p>
 name. The use of a protocol is to illustrate the difference between the
 in-memory data model of a <code>Source</code> and the metadata seen by a user.</p>
 </div>
-<p>To be used in a workload, a <code>Source</code> implementation should satisfy the
-processing <code>Stage</code> protocol and the <code>to-edn</code> multimethod in addition to the
-following multimethods specific to sinks:
+<p>To be used in a workload,
+a <code>Source</code> implementation
+should satisfy the processing <code>Stage</code> protocol
+and the <code>to-edn</code> multimethod
+in addition to the following multimethods
+specific to sinks:</p>
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defmulti </span><span class="nv">create-source</span>
   <span class="s">&quot;Create a `Source` instance using the database `transaction` and configuration</span>
 <span class="s">   in the source `request` and return a `[type items]` pair to be written to a</span>
@@ -1020,10 +1026,10 @@ following multimethods specific to sinks:
 <span class="s">   Notes:</span>
 <span class="s">   - This is a factory method registered for workload creation.</span>
 <span class="s">   - The `Source` type string must match a value of the `source` enum in the</span>
-<span class="s">     database schema.   </span>
+<span class="s">     database schema.</span>
 <span class="s">   - This multimethod is type-dispatched on the `:name` association in the</span>
 <span class="s">     `request`.&quot;</span>
-  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span> 
+  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span>
       <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>         <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
        <span class="o">^</span><span class="nb">long </span>              <span class="nv">workload-id</span>  <span class="c1">;; ID of the workload being created</span>
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">request</span>      <span class="c1">;; Data forwarded to the handler</span>
@@ -1040,7 +1046,7 @@ following multimethods specific to sinks:
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">workload</span>     <span class="c1">;; Row from workload table</span>
       <span class="p">]</span>
       <span class="p">(</span><span class="ss">:source_type</span> <span class="nv">workload</span><span class="p">)))</span>
-</code></pre></div></p>
+</code></pre></div>
                 
               
               

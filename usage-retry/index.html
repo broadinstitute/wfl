@@ -301,8 +301,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-frontend/" class="md-nav__link">
-        Frontend
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
       </a>
     </li>
   
@@ -978,11 +978,9 @@ getWorkflows<span class="o">()</span> <span class="o">{</span>
 removeSucceeded<span class="o">()</span> <span class="o">{</span>
     <span class="c1"># [[Workflow]] -&gt; [Workflow]</span>
     jq <span class="s1">&#39;flatten</span>
-<span class="s1">        | group_by( {inputs: .inputs, options: .options} )</span>
-<span class="s1">        | map( select( all(.status==&quot;Succeeded&quot;) )</span>
-<span class="s1">             | .[0]</span>
-<span class="s1">             | {inputs: .inputs, options: .options} )</span>
-<span class="s1">        | del(.[][] | nulls)</span>
+<span class="s1">        | map ( select ( .status==&quot;Failed&quot; )</span>
+<span class="s1">                | {inputs: .inputs, options: .options}</span>
+<span class="s1">                | del ( .[] | nulls ) )</span>
 <span class="s1">        &#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
 <span class="o">}</span>
 
