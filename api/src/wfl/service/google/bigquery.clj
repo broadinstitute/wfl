@@ -12,6 +12,13 @@
   "The BigQuery REST API URL."
   (partial str "https://bigquery.googleapis.com/bigquery/v2/"))
 
+(def bigquery-v2-rest-api
+  "An EDN schema for the ReST API."
+  (-> "https://bigquery.googleapis.com/discovery/v1/apis/bigquery/v2/rest"
+      http/get
+      util/response-body-json
+      delay))
+
 (defn list-datasets
   "List all datasets under Google Cloud PROJECT.
 

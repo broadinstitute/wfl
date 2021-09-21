@@ -255,7 +255,7 @@
   "Throw unless the user's sink `request` yields a valid configuration for a
    TerraDataRepoSink by ensuring all resources specified in the request exist."
   [{:keys [dataset table fromOutputs] :as request}]
-  (let [dataset' (datarepo/dataset dataset)
+  (let [dataset' (datarepo/datasets dataset)
         ;; eagerly evaluate for effects
         table'   (datarepo/table-or-throw table dataset')]
     (when-not (map? fromOutputs)
@@ -352,10 +352,10 @@
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
   (update-datarepo-job-statuses sink)
-  (when-let [{:keys [workflow job] :as record} (peek-job-queue sink)]
+  (when-let [{:keys [job] :as record} (peek-job-queue sink)]
     (try
-      (let [res (datarepo/get-job-result job)]
-        (log/info "Sunk workflow outputs to dataset"))
+      (datarepo/get-job-result job)
+      (log/info "Sunk workflow outputs to dataset")
       (finally
         (pop-job-queue! sink record)))))
 
