@@ -863,7 +863,7 @@ service in the cloud to execute workflows.</p>
   (i.e. import a snapshot to the <code>executor</code> workspace as a reference)</li>
 <li>Update the method configuration with the coerced object as its root entity
   type</li>
-<li>Launch a submission </li>
+<li>Launch a submission</li>
 <li>Periodically update the statuses of eligible workflows to enable a
   downstream <code>Sink</code> to consume their outputs</li>
 </ul>
@@ -1005,9 +1005,12 @@ updating <code>methodConfiguration</code> with the reference as its root entity 
 name. The use of a protocol is to illustrate the difference between the
 in-memory data model of a <code>Executor</code> and the metadata seen by a user.</p>
 </div>
-<p>To be used in a workload, a <code>Executor</code> implementation should satisfy the
-processing <code>Stage</code> protocol and the <code>to-edn</code> multimethod in addition to the
-following multimethods specific to executors:
+<p>To be used in a workload,
+an <code>Executor</code> implementation
+should satisfy the processing <code>Stage</code> protocol
+and the <code>to-edn</code> multimethod
+in addition to the following multimethods
+specific to executors:</p>
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defmulti </span><span class="nv">create-executor</span>
   <span class="s">&quot;Create an `Executor` instance using the database `transaction` and</span>
 <span class="s">   configuration in the executor `request` and return a</span>
@@ -1016,10 +1019,10 @@ following multimethods specific to executors:
 <span class="s">   Notes:</span>
 <span class="s">   - This is a factory method registered for workload creation.</span>
 <span class="s">   - The `Executor` type string must match a value of the `executor` enum</span>
-<span class="s">     in the database schema.   </span>
+<span class="s">     in the database schema.</span>
 <span class="s">   - This multimethod is type-dispatched on the `:name` association in the</span>
 <span class="s">     `request`.&quot;</span>
-  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span> 
+  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span>
       <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>         <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
        <span class="o">^</span><span class="nb">long </span>              <span class="nv">workload-id</span>  <span class="c1">;; ID of the workload being created</span>
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">request</span>      <span class="c1">;; Data forwarded to the handler</span>
@@ -1036,7 +1039,7 @@ following multimethods specific to executors:
        <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">workload</span>     <span class="c1">;; Row from workload table</span>
       <span class="p">]</span>
       <span class="p">(</span><span class="ss">:executor_type</span> <span class="nv">workload</span><span class="p">)))</span>
-</code></pre></div></p>
+</code></pre></div>
                 
               
               
