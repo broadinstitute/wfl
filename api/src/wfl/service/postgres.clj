@@ -33,18 +33,21 @@
        (count)
        (not= 0)))
 
+(defn throw-unless-table-exists
+  [tx table-name]
+  (when-not (and table-name (table-exists? tx table-name))
+    (throw (ex-info "Table not found" {:table table-name}))))
+
 (defn get-table
-  "Return TABLE using transaction TX."
+  "Return TABLE using transaction TX sorted by row id."
   [tx table]
-  (if (and table (table-exists? tx table))
-    (jdbc/query tx (format "SELECT * FROM %s" table))
-    (throw (ex-info (format "Table %s does not exist" table) {:cause "no-such-table"}))))
+  (throw-unless-table-exists tx table)
+  (jdbc/query tx (format "SELECT * FROM %s ORDER BY id ASC" table)))
 
 (defn table-length
   "Use `tx` to return the number of records in `table-name`."
   [tx table-name]
-  (when-not (table-exists? tx table-name)
-    (throw (ex-info "No such table" {:table table-name})))
+  (throw-unless-table-exists tx table-name)
   (->> (format "SELECT COUNT(*) FROM %s" table-name)
        (jdbc/query tx)
        first
@@ -53,10 +56,16 @@
 (defn table-max
   "Use `tx` to return the maximum value of `column` in `table-name`."
   [tx table-name column]
-  (when-not (table-exists? tx table-name)
-    (throw (ex-info "No such table" {:table table-name})))
+  (throw-unless-table-exists tx table-name)
   (-> (format "SELECT MAX(%s) FROM %s" (name column) (name table-name))
       (->> (jdbc/query tx))
       first
       :max
       (or 0)))
+
+(defn load-record-by-id! [tx table id]
+  (let [query        "SELECT * FROM %s WHERE id = ? LIMIT 1"
+        [record & _] (jdbc/query tx [(format query table) id])]
+    (when-not record
+      (throw (ex-info (str "No such record") {:id id :table table})))
+    record))

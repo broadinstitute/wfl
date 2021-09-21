@@ -1,13 +1,16 @@
 (ns wfl.module.aou
   "Process Arrays for the All Of Us project."
   (:require [clojure.string             :as str]
-            [clojure.tools.logging      :as log]
+            [clojure.spec.alpha         :as s]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
+            [wfl.module.all             :as all]
             [wfl.module.batch           :as batch]
             [wfl.references             :as references]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres       :as postgres]
             [wfl.util                   :as util]
             [wfl.wfl                    :as wfl])
   (:import [java.sql Timestamp]
@@ -15,6 +18,18 @@
            [java.util UUID]))
 
 (def pipeline "AllOfUsArrays")
+
+;; specs
+(s/def ::analysis_version_number integer?)
+(s/def ::chip_well_barcode string?)
+(s/def ::append-to-aou-request (s/keys :req-un [::notifications ::all/uuid]))
+(s/def ::append-to-aou-response (s/* ::workflow-inputs))
+(s/def ::workflow-inputs (s/keys :req-un [::analysis_version_number
+                                          ::chip_well_barcode]))
+
+(s/def ::notifications (s/* ::sample))
+(s/def ::sample (s/keys :req-un [::analysis_version_number
+                                 ::chip_well_barcode]))
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -157,7 +172,7 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator executor pipeline project output] :as request}]
+  [tx {:keys [creator executor pipeline project output] :as _request}]
   (gcs/parse-gs-url output)
   (let [slashified-output (util/slashify output)
         {:keys [release path]} workflow-wdl
@@ -266,11 +281,21 @@
       (jdbc/insert-multi! tx items submitted-samples)
       submitted-samples)))
 
+(defn ^:private aou-workflows
+  [tx {:keys [items] :as _workload}]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows (postgres/get-table tx items))))
+
+(defn ^:private aou-workflows-by-status
+  [tx {:keys [items] :as _workload} status]
+  (batch/tag-workflows
+   (batch/pre-v0_4_0-deserialize-workflows
+    (batch/query-workflows-with-status tx items status))))
+
 (defmethod workloads/create-workload!
   pipeline
   [tx request]
-  (->> (add-aou-workload! tx request)
-       (workloads/load-workload-for-id tx)))
+  (workloads/load-workload-for-id tx (add-aou-workload! tx request)))
 
 (defoverload workloads/start-workload! pipeline start-aou-workload!)
 (defoverload workloads/stop-workload!  pipeline batch/stop-workload!)
@@ -285,6 +310,8 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload) workload)))
 
-(defoverload workloads/workflows          pipeline batch/pre-v0_4_0-load-workflows)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/workflows           pipeline aou-workflows)
+(defoverload workloads/workflows-by-status pipeline aou-workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

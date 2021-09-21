@@ -1,8 +1,6 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
   (:require [clojure.string                     :as str]
-            [clojure.tools.logging              :as log]
-            [clojure.tools.logging.readable     :as logr]
             [muuntaja.core                      :as muuntaja-core]
             [reitit.coercion.spec]
             [reitit.ring                        :as ring]
@@ -13,9 +11,13 @@
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
             [wfl.api.handlers                   :as handlers]
+            [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
             [wfl.environment                    :as env]
-            [wfl.api.spec                       :as spec]
+            [wfl.log                            :as log]
+            [wfl.module.all                     :as all]
+            [wfl.module.aou                     :as aou]
+            [wfl.util                           :as util]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [wfl.util UserException]
@@ -32,25 +34,31 @@
             :responses {200 {:body {:status string?}}}
             :swagger {:tags ["Informational"]}}}]
    ["/version"
-    {:get  {:summary "Get the versions of server and supported pipelines"
-            :handler (handlers/success (let [versions (wfl/get-the-version)
-                                             pipeline-versions-keys (keep (fn [x] (when (and (string? x)
-                                                                                             (str/ends-with? x ".wdl")) x))
-                                                                          (keys versions))]
-                                         {:pipeline-versions (select-keys versions pipeline-versions-keys)
-                                          :version (apply dissoc versions pipeline-versions-keys)}))
-            :responses {200 {:body {:version map?
-                                    :pipeline-versions map?}}}
-            :swagger {:tags ["Informational"]}}}]
+    {:get {:summary   "Get the versions of server and supported pipelines"
+           :handler   (handlers/success (wfl/get-the-version))
+           :responses {200 {:body ::spec/version-response}}
+           :swagger   {:tags ["Informational"]}}}]
    ["/oauth2id"
-    {:get {:summary   "Get the OAuth2 Client ID for this deployment of the server"
-           :handler   (fn [_] (handlers/succeed {:oauth2-client-id (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
+    {:get {:summary   "Get the OAuth2 Client ID deployed for this server"
+           :handler   (fn [_] (handlers/succeed
+                               {:oauth2-client-id
+                                (env/getenv "WFL_OAUTH2_CLIENT_ID")}))
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
+   ["/api/v1/logging_level"
+    {:get  {:no-doc true
+            :summary "Get the current logging level"
+            :handler handlers/get-logging-level
+            :responses {200 {:body ::log/logging-level-response}}
+            :swagger {:tags ["Informational"]}}
+     :post {:summary    "Post a new logging level."
+            :parameters {:query ::log/logging-level-request}
+            :responses  {200 {:body ::log/logging-level-response}}
+            :handler    handlers/update-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
-            :parameters {:body ::spec/append-to-aou-request}
-            :responses  {200 {:body ::spec/append-to-aou-response}}
+            :parameters {:body ::aou/append-to-aou-request}
+            :responses  {200 {:body ::aou/append-to-aou-response}}
             :handler    handlers/append-to-aou-workload}}]
    ["/api/v1/workload"
     {:get {:summary    "Get the workloads."
@@ -59,9 +67,15 @@
            :handler    handlers/get-workload}}]
    ["/api/v1/workload/:uuid/workflows"
     {:get {:summary    "Get workflows managed by the workload."
-           :parameters {:path {:uuid ::spec/uuid}}
+           :parameters {:path {:uuid ::all/uuid} :query ::spec/workflow-query}
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
+   ["/api/v1/workload/:uuid/retry"
+    {:post {:summary    "Resubmit workflows in workload by status."
+            :parameters {:path {:uuid   ::all/uuid}
+                         :body {:status ::all/status}}
+            :responses  {200 {:body ::spec/workload-response}}
+            :handler    handlers/post-retry}}]
    ["/api/v1/create"
     {:post {:summary    "Create a new workload."
             :parameters {:body ::spec/workload-request}
@@ -69,12 +83,12 @@
             :handler    handlers/post-create}}]
    ["/api/v1/start"
     {:post {:summary    "Start a workload."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-start}}]
    ["/api/v1/stop"
     {:post {:summary    "Stop managing the workload specified by 'request'."
-            :parameters {:body ::spec/uuid-kv}
+            :parameters {:body ::all/uuid-kv}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-stop}}]
    ["/api/v1/exec"
@@ -83,18 +97,21 @@
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
    ["/swagger/swagger.json"
-    {:get {:no-doc true ;; exclude this endpoint itself from swagger
-           :swagger {:info {:title (str wfl/the-name "-API")
-                            :version (str (:version (wfl/get-the-version)))}
-                     :securityDefinitions {:googleoauth {:type "oauth2"
-                                                         :flow "implicit"
-                                                         :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
-                                                         :scopes {:openid  "Basic OpenID authorization"
-                                                                  :email   "Read access to your email"
-                                                                  :profile "Read access to your profile"}}}
-                     :tags [{:name "Informational"}
-                            {:name "Authenticated"}]
-                     :basePath "/"} ;; prefix for all paths
+    {:get {:no-doc true    ; exclude this endpoint itself from swagger
+           :swagger
+           {:info {:title (str wfl/the-name "-API")
+                   :version (str (:version (wfl/get-the-version)))}
+            :securityDefinitions
+            {:googleoauth
+             {:type "oauth2"
+              :flow "implicit"
+              :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
+              :scopes {:openid  "Basic OpenID authorization"
+                       :email   "Read access to your email"
+                       :profile "Read access to your profile"}}}
+            :tags [{:name "Informational"}
+                   {:name "Authenticated"}]
+            :basePath "/"}              ; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]])
 
 (defn endpoint-swagger-auth-processor
@@ -128,11 +145,12 @@
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message exception request]
-  (let [response (exception-handler status message exception request)]
-    (log/errorf "Server %s error at occurred at %s :" (:status response) (:uri request))
-    (logr/error exception (:body response))
-    response))
+  [status message exception {:keys [uri] :as request}]
+  (let [{:keys [body status] :as result}
+        (exception-handler status message exception request)]
+    (log/error (format "Server %s error at occurred at %s :" status uri))
+    (log/error (util/make-map exception body))
+    result))
 
 (def exception-middleware
   "Custom exception middleware, dispatch on fully qualified exception types."
@@ -143,18 +161,18 @@
      ::workloads/invalid-pipeline          (partial exception-handler 400 "")
      ::workloads/workload-not-found        (partial exception-handler 404 "")
      UserException                         (partial exception-handler 400 "")
-       ;; SQLException and all its child classes
+     ;; SQLException and all its child classes
      SQLException                          (partial logging-exception-handler 500 "SQL Exception")
-       ;; handle clj-http Slingshot stone exceptions
+     ;; handle clj-http Slingshot stone exceptions
      :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
-       ;; override the default handler
+     ;; override the default handler
      ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
 
 (def routes
   (ring/ring-handler
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
-    {;; uncomment for easier debugging with coercion and middleware transformations
+    {;; uncomment to debug coercion and middleware transformations
      ;; :reitit.middleware/transform dev/print-request-diffs
      ;; :exception pretty/exception
      :data {:coercion   reitit.coercion.spec/coercion
@@ -175,5 +193,8 @@
                          multipart/multipart-middleware]}})
    ;; get more correct http error responses on routes
    (ring/create-default-handler
-    {:not-found          (fn [m] {:status 404 :body (format "Route %s not found" (:uri m))})
-     :method-not-allowed (fn [m] {:status 405 :body (format "Method %s not allowed" (name (:request-method m)))})})))
+    {:not-found          (fn [m] {:status 404
+                                  :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed (fn [m] {:status 405
+                                  :body (format "Method %s not allowed"
+                                                (name (:request-method m)))})})))

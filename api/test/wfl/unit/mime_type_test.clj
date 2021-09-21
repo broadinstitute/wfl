@@ -1,5 +1,5 @@
 (ns wfl.unit.mime-type-test
-  (:require [clojure.test        :refer [deftest is testing]]
+  (:require [clojure.test        :refer [deftest is]]
             [wfl.mime-type       :as mime-type]
             [wfl.tools.resources :as resources]
             [wfl.tools.workflows :as workflows]))
@@ -27,7 +27,7 @@
                 (-> "sarscov2_illumina_full.edn" resources/read-resource :outputs)]]]
     (doseq [[values description] cases]
       (let [type (workflows/make-object-type description)]
-        (doseq [filename (workflows/get-files type values)]
+        (doseq [filename (workflows/get-files [type values])]
           (let [ext (mime-type/ext-mime-type-no-default filename)]
             (is (or (some? ext) (exclude? filename))
                 (str filename " does not have a mime-type"))))))))

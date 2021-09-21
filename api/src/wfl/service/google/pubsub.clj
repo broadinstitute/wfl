@@ -187,5 +187,5 @@
   (letfn [(make-binding [[role members]] [{:role role :members members}])]
     (set-iam-policy
      resource
-     (-> (get-iam-policy resource)
-         (update :bindings #(concat % (map make-binding role->members)))))))
+     (update (get-iam-policy resource)
+             :bindings #(concat % (map make-binding role->members))))))

@@ -1,18 +1,22 @@
 (ns wfl.module.xx
   "Reprocess eXternal eXomes."
   (:require [clojure.data.json          :as json]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [wfl.api.workloads          :refer [defoverload]]
-            [wfl.api.workloads          :as workloads]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
             [wfl.module.batch           :as batch]
             [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+            [wfl.wfl                    :as wfl]
+            [wfl.module.all             :as all])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalExomeReprocessing")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [(or ::all/input_bam ::all/input_cram)]))
 
 (def ^:private cromwell-label
   "The WDL label applied to Cromwell metadata."
@@ -142,9 +146,8 @@
 
 (defn create-xx-workload!
   [tx {:keys [common items output] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
-          (merge-to-json [shared specific]
-            (json/write-str (nil-if-empty (util/deep-merge shared specific))))
+  (letfn [(merge-to-json [shared specific]
+            (json/write-str (not-empty (util/deep-merge shared specific))))
           (serialize [item id]
             (-> item
                 (assoc :id id)
@@ -174,10 +177,12 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/create-workload!   pipeline create-xx-workload!)
-(defoverload workloads/start-workload!    pipeline start-xx-workload!)
-(defoverload workloads/update-workload!   pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/workflows          pipeline batch/workflows)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/create-workload!    pipeline create-xx-workload!)
+(defoverload workloads/start-workload!     pipeline start-xx-workload!)
+(defoverload workloads/update-workload!    pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!      pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows           pipeline batch/workflows)
+(defoverload workloads/workflows-by-status pipeline batch/workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

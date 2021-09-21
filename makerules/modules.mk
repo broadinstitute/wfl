@@ -14,7 +14,7 @@ DERIVED_MODULE_DIR := $(DERIVED_DIR)/$(MODULE)
 export WFL_VERSION ?= $(shell $(CAT) $(PROJECT_DIR)/version)
 
 # Top level `make` targets for the module
-MAKE_TARGETS := prebuild lint build unit integration check images system
+MAKE_TARGETS := prebuild format build unit integration check lint images system
 
 # Timestamps for the top level make targets in a loose order of their timeings.
 # Implementers should write module make-targets against these, ensuring that
@@ -25,7 +25,7 @@ MAKE_TARGETS := prebuild lint build unit integration check images system
 # 	@$(TOUCH) $@
 
 PREBUILD    := $(DERIVED_MODULE_DIR)/prebuild.$(TIMESTAMP)
-LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)    
+LINT        := $(DERIVED_MODULE_DIR)/lint.$(TIMESTAMP)
 BUILD       := $(DERIVED_MODULE_DIR)/build.$(TIMESTAMP)   
 UNIT        := $(DERIVED_MODULE_DIR)/unit.$(TIMESTAMP)  
 INTEGRATION := $(DERIVED_MODULE_DIR)/integration.$(TIMESTAMP)
@@ -38,13 +38,13 @@ all: $(MAKE_TARGETS)
 # Configure `make` dependencies via their timestamp.
 $(PREBUILD):    $(shell eval $(MKDIR) $(DERIVED_MODULE_DIR))
 $(LINT):        $(PREBUILD)
-$(BUILD):       $(LINT)
+$(BUILD):       $(PREBUILD)
 $(UNIT):        $(BUILD)
 $(INTEGRATION): $(BUILD)
 $(IMAGES):      $(BUILD)
 $(SYSTEM):      $(BUILD)
 
-check: unit integration
+check: lint unit integration
 
 # Top level `make` targets depend on their corresponding time stamp.
 $(MAKE_TARGETS): % : $(DERIVED_MODULE_DIR)/%.$(TIMESTAMP)

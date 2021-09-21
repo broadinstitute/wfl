@@ -1,4 +1,4 @@
-# Arrays module
+# All Of Us Arrays module
 
 WorkFlow Launcher (WFL) implements `aou-arrays` module to
 support secure and efficient processing of the AllOfUs Arrays

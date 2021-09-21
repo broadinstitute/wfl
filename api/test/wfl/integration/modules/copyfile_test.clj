@@ -1,5 +1,5 @@
 (ns wfl.integration.modules.copyfile-test
-  (:require [clojure.test                   :refer [deftest testing is use-fixtures]]
+  (:require [clojure.test                   :refer [deftest is use-fixtures]]
             [clojure.string                 :as str]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
@@ -93,20 +93,27 @@
                   workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [items] :as workload}]
+  [status tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
-                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
     (run! update! (workloads/workflows workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflow                 (fn [& _] (UUID/randomUUID))
-     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")}
     #(shared/run-workload-state-transition-test!
       (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!
    (make-copyfile-workload-request "gs://b/in" "gs://b/out")))
+
+(deftest test-retry-failed-workflows
+  (with-redefs-fn
+    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
+    #(shared/run-retry-is-not-supported-test!
+      (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))

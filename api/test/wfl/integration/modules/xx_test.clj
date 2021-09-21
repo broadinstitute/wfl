@@ -40,7 +40,7 @@
   (let [common-inputs {:bait_set_name      "Geoff"
                        :bait_interval_list "gs://fake-input-bucket/interval-list"}]
     (letfn [(go! [inputs]
-              (letfn [(value-equal? [key] (= (key common-inputs) (key inputs)))]
+              (letfn [(value-equal? [k] (= (k common-inputs) (k inputs)))]
                 (is (value-equal? :bait_set_name))
                 (is (value-equal? :bait_interval_list))))]
       (run! (comp go! :inputs) (-> (make-xx-workload-request)
@@ -147,18 +147,24 @@
                   workloads/workflows))))
 
 (defn mock-batch-update-workflow-statuses!
-  [tx {:keys [items] :as workload}]
+  [status tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
-                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
     (run! update! (workloads/workflows workload))))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
     {#'cromwell/submit-workflows             mock-submit-workflows
-     #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!}
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")}
     #(shared/run-workload-state-transition-test! (make-xx-workload-request))))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (make-xx-workload-request)))
+
+(deftest test-retry-failed-workflows
+  (with-redefs-fn
+    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
+    #(shared/run-retry-is-not-supported-test! (make-xx-workload-request))))

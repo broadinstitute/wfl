@@ -1,11 +1,10 @@
 (ns wfl.tools.workloads
   (:require [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log]
+            [wfl.api.workloads]
             [wfl.auth                       :as auth]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
-            [wfl.module.arrays              :as arrays]
             [wfl.module.copyfile            :as cp]
             [wfl.module.sg                  :as sg]
             [wfl.module.wgs                 :as wgs]
@@ -15,9 +14,8 @@
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.tools.endpoints            :as endpoints]
-            [wfl.util                       :as util :refer [shell!]])
+            [wfl.util                       :as util])
   (:import [java.time OffsetDateTime]
-           [java.util.concurrent TimeoutException]
            [java.util UUID]))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))
@@ -44,8 +42,8 @@
      :input_cram           (str input-folder "NA12878_PLUMBING.cram")}))
 
 (defn wgs-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
@@ -106,15 +104,6 @@
   {:entity-name "200598830050_R07C01-1"
    :entity-type "sample"})
 
-(defn arrays-workload-request
-  [identifier]
-  {:executor (env/getenv "WFL_FIRECLOUD_URL")
-   :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/arrays-test-output/"
-                  identifier)
-   :pipeline arrays/pipeline
-   :project  "general-dev-billing-account/arrays"
-   :items   [{:inputs arrays-sample-terra}]})
-
 (defn copyfile-workload-request
   "Make a workload to copy a file from SRC to DST"
   [src dst]
@@ -155,8 +144,8 @@
    (covid-workload-request {} {} {})))
 
 (defn xx-workload-request
-  [identifier]
   "A whole genome sequencing workload used for testing."
+  [identifier]
   {:executor @cromwell-url
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
@@ -240,72 +229,63 @@
      :items    [{:inputs
                  {:base_file_name          sample_alias
                   :contamination_vcf       vcf
-                  :contamination_vcf_index (str vcf ".tbi")
+                  :contamination_vcf_index (str vcf   ".tbi")
                   :cram_ref_fasta          fasta
                   :cram_ref_fasta_index    (str fasta ".fai")
                   :dbsnp_vcf               dbsnp
                   :dbsnp_vcf_index         (str dbsnp ".tbi")
                   :input_cram              cram_path}}]}))
 
-(defn when-done
+(def ^:private polling-interval-seconds 60)
+(def ^:private max-polling-attempts 120)
+
+(defn when-finished
+  "Call `done!` when the `workload` is `:finished`."
+  [done! {:keys [uuid] :as _workload}]
+  (done!
+   (util/poll
+    #(let [workload (endpoints/get-workload-status uuid)]
+       (when (:finished workload)
+         workload))
+    polling-interval-seconds
+    max-polling-attempts)))
+
+(defn when-all-workflows-finish
   "Call `done!` when all workflows in the `workload` have finished processing."
   [done! {:keys [uuid] :as workload}]
-  (letfn [(finished? [{:keys [status] :as workflow}]
-            (let [skipped? #(-> % :uuid util/uuid-nil?)]
-              (or (skipped? workflow) ((set cromwell/final-statuses) status))))]
-    (let [interval 60
-          timeout  4800]                ; 80 minutes
-      (loop [elapsed 0 wl workload]
-        (when (> elapsed timeout)
-          (throw (TimeoutException.
-                  (format "Timed out waiting for workload %s" uuid))))
-        (if (or (:finished workload) (every? finished? (endpoints/get-workflows wl)))
-          (done! wl)
-          (do
-            (log/infof "Waiting for workload %s to complete" uuid)
-            (util/sleep-seconds interval)
-            (recur (+ elapsed interval)
-                   (endpoints/get-workload-status uuid))))))))
+  (done!
+   (util/poll
+    #(when (every? cromwell/final? (endpoints/get-workflows workload))
+       (endpoints/get-workload-status uuid))
+    polling-interval-seconds
+    max-polling-attempts)))
 
-(defn create-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/create-workload! tx workload-request)))
+(defn evalT
+  "Evaluate `operation` in the context of a database transaction where
+   `operation` is a function that takes a database transaction as its first
+   argument followed by at least one additional argument. When no additional
+   arguments are supplied, returns a closure that evaluates `operation` with its
+   arguments in the context of a database transaction."
+  ([operation first & rest]
+   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+     (apply operation (conj rest first tx))))
+  ([operation]
+   (partial evalT operation)))
 
-(defn start-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/start-workload! tx workload)))
+(def create-workload!    (evalT wfl.api.workloads/create-workload!))
+(def start-workload!     (evalT wfl.api.workloads/start-workload!))
+(def stop-workload!      (evalT wfl.api.workloads/stop-workload!))
+(def execute-workload!   (evalT wfl.api.workloads/execute-workload!))
+(def update-workload!    (evalT wfl.api.workloads/update-workload!))
+(def workflows           (evalT wfl.api.workloads/workflows))
+(def workflows-by-status (evalT wfl.api.workloads/workflows-by-status))
 
-(defn stop-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/stop-workload! tx workload)))
+(defn retry [& params] (apply wfl.api.workloads/retry params))
 
-(defn execute-workload! [workload-request]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/execute-workload! tx workload-request)))
-
-(defn update-workload! [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/update-workload! tx workload)))
-
-(defn workflows [workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/workflows tx workload)))
-
-(defn load-workload-for-uuid [uuid]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workload-for-uuid tx uuid)))
-
-(defn load-workload-for-id [id]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workload-for-id tx id)))
-
-(defn load-workloads-with-project [project]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (wfl.api.workloads/load-workloads-with-project tx project)))
-
-(defn append-to-workload! [samples workload]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (aou/append-to-workload! tx samples workload)))
+(def load-workload-for-uuid      (evalT wfl.api.workloads/load-workload-for-uuid))
+(def load-workload-for-id        (evalT wfl.api.workloads/load-workload-for-id))
+(def load-workloads-with-project (evalT wfl.api.workloads/load-workloads-with-project))
+(def append-to-workload!         (evalT aou/append-to-workload!))
 
 (defmulti postcheck
   "Implement this to validate `workload` after all workflows complete."

@@ -1,4 +1,87 @@
-# Retrying Failures via WFL
+# Retrying Workflows
+
+## Retrying Terra Workflows via WFL API
+
+WFL has a `/retry` endpoint that selects workflows by their completion status
+and re-submits them.
+
+The following `curl` shell command finds the workflows
+with the Cromwell status `"Failed"` in workload `$UUID`
+and resubmits them for processing.
+
+```bash
+WFL=https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
+AUTH="Authorization: Bearer $(gcloud auth print-access-token)"
+UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c # workload UUID
+
+curl -X POST -H "$AUTH" $WFL/$UUID/retry --data '{"status":"Failed"}' | jq
+```
+
+A successful `/retry` request returns the workload specified by `$UUID`.
+A failed `/retry` request will return a description of the failure.
+
+The `/retry` endpoint is not yet implemented for all workloads
+and in such cases returns a `501` HTTP failure status.
+[Staged workloads](./staged-workload.md) with a [Terra executor](./executor.md#terra-executor)
+are likely to implement this endpoint.
+For confirmation, see module-specific documentation.
+For unimplemented cases, see the [runbook](#retrying-failures-via-wfl-runbook) below.
+
+### Supported Statuses
+
+The only
+[Cromwell statuses](https://github.com/broadinstitute/wfl/blob/6bcfde01542bfef1601eaaf4bb2657cf1520218f/api/src/wfl/service/cromwell.clj#L12-L14)
+supported with the `/retry` API
+are the terminal workflow statuses:
+
+- `"Aborted"`
+
+- `"Failed"`
+
+- `"Succeeded"`
+
+???+ info "Why would you retry succeeded workflows?"
+    A workflow may have functionally succeeded, but be scientifically inaccurate
+    and need to be rerun, e.g. if the initial run contained incorrect metadata.
+
+Attempting to retry workflows of any other status
+will return a `400` HTTP failure status,
+as will specifying a status for which the workload has no workflows.
+
+### Warnings and Caveats
+
+#### Submission of snapshot subsets not yet supported
+
+WFL is limited by [Rawls](https://github.com/broadinstitute/rawls) functionality
+and cannot yet submit a subset of a snapshot.
+So retrying any workflow from a workload snapshot
+will resubmit all entities from that snapshot.
+
+Example - a running submission from a snapshot has 500 workflows:
+
+- 1 failed
+
+- 249 running
+
+- 250 succeeded
+
+Retrying the failed workflow will create a new submission
+where all 500 original workflows are retried.
+
+Consider whether you should wait for all workflows in the submission to complete
+before initiating a retry
+to avoid multiple workflows running concurrently
+in competition for the same output files.
+
+#### Race condition when retrying the same workload concurrently
+
+A caller could hit this endpoint for the same workload multiple times in quick succession,
+making possible a race condition where each run retries the same set of workflows.
+
+Future improvements will make this operation threadsafe, but in the interim
+try to wait for a response from your retry request before resubmitting.
+
+## Retrying Failures via WFL Runbook
 
 WFL remembers enough about submissions to let you quickly resubmit failed
 workflows with the same inputs/options as they were originally submitted.
@@ -92,9 +175,9 @@ main() {
 main "$1"
 ```
 
-## Tips
+### Tips
 
-### Customizing Inputs/Options
+#### Customizing Inputs/Options
 
 If you want to inject a new input or option into all of the retried workflows,
 you can do that with a `common` block. For example, replace this:

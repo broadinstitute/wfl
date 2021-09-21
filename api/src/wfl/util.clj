@@ -1,29 +1,31 @@
 (ns wfl.util
   "Some utilities shared across this program."
-  (:require [clojure.data.csv      :as csv]
-            [clojure.data.json     :as json]
-            [clojure.java.io       :as io]
-            [clojure.java.shell    :as shell]
-            [clojure.spec.alpha    :as s]
-            [clojure.string        :as str]
-            [clojure.tools.logging :as log]
-            [wfl.wfl               :as wfl])
+  (:require [clojure.data.csv   :as csv]
+            [clojure.data.json  :as json]
+            [clojure.java.io    :as io]
+            [clojure.java.shell :as shell]
+            [clojure.spec.alpha :as s]
+            [clojure.string     :as str]
+            [wfl.log            :as log]
+            [wfl.wfl            :as wfl])
   (:import [java.io File IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
-           [java.time OffsetDateTime]
+           [java.time OffsetDateTime ZoneId]
            [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
-           [java.util.zip ZipOutputStream ZipEntry]
-           [org.apache.commons.io FilenameUtils]))
+           [javax.mail.internet InternetAddress]
+           [org.apache.commons.io FilenameUtils])
+  (:gen-class))
 
 (defmacro do-or-nil
   "Value of `body` or `nil` if it throws."
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn x# "from wfl.util/do-or-nil"))))
+          (log/warn (str/join " " [(str x#) "from wfl.util/do-or-nil"]))
+          nil)))
 
 ;; Parsers that will not throw.
 ;;
@@ -35,8 +37,9 @@
   [^String object]
   (json/read-str object :key-fn keyword))
 
-(defn response-body-json [response]
+(defn response-body-json
   "Return the :body of the http `response` as JSON"
+  [response]
   (-> response :body (or "null") parse-json))
 
 (defn slurp-json
@@ -77,7 +80,7 @@
 (defn extension
   "Return the (last) file extension from `filename`, if one exists."
   [filename]
-  (if-let [idx (str/last-index-of filename ".")]
+  (when-let [idx (str/last-index-of filename ".")]
     (subs filename (inc idx) (count filename))))
 
 (defn basename
@@ -93,7 +96,7 @@
   (if (= "/" filename)
     filename
     (if-let [idx (str/last-index-of filename "/" (- (count filename) 2))]
-      (if (= idx 0) "/" (subs filename 0 idx))
+      (if (zero? idx) "/" (subs filename 0 idx))
       "")))
 
 (defn deep-merge
@@ -133,17 +136,6 @@
           (io/make-parents target)
           (io/copy file target))))))
 
-(defn zip-files
-  "Return ZIP with named FILES zipped into it."
-  [^File zip & files]
-  (with-open [out (ZipOutputStream. (io/output-stream zip))]
-    (doseq [file files]
-      (let [import (io/file file)]
-        (with-open [in (io/reader import)]
-          (.putNextEntry out (ZipEntry. (.getName import)))
-          (io/copy in out)))))
-  zip)
-
 (defn sleep-seconds
   "Sleep for N seconds."
   [n]
@@ -176,16 +168,18 @@
 (defn minutes-between
   "The number of minutes from START to END."
   [start end]
-  (. ChronoUnit/MINUTES between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn seconds-between
   "The number of seconds from START to END."
   [start end]
-  (. ChronoUnit/SECONDS between
-     (OffsetDateTime/parse start)
-     (OffsetDateTime/parse end)))
+  (.between
+   ChronoUnit/SECONDS
+   (OffsetDateTime/parse start)
+   (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."
@@ -324,12 +318,6 @@
   "The nil UUID."
   (UUID/fromString "00000000-0000-0000-0000-000000000000"))
 
-(defn uuid-nil?
-  "True when UUID is UUID-NIL or its string representation."
-  [uuid]
-  (or (= uuid uuid-nil)
-      (= uuid (str uuid-nil))))
-
 (defn extract-resource
   "Extract the resource given by RESOURCE-NAME to a temporary folder
     @returns  java.io.File to the extracted resource
@@ -382,11 +370,11 @@
    ----------
    acquire - thunk returning newly acquired resource
    release - function to clean up resource, called before this function returns
-   use     - function that uses the resource"
-  [acquire release use]
+   utilize - function that uses the resource"
+  [acquire release utilize]
   (let [resource (acquire)]
     (try
-      (use resource)
+      (utilize resource)
       (finally
         (release resource)))))
 
@@ -399,7 +387,7 @@
 (defn randomize
   "Append a random suffix to `string`."
   [string]
-  (->> (str/replace (UUID/randomUUID) "-" "") (str string)))
+  (str string (str/replace (UUID/randomUUID) "-" "")))
 
 (defn curry
   "Curry the function `f` such that its arguments may be supplied across two
@@ -421,7 +409,8 @@
        result
        (do (when (<= max-attempts attempt)
              (throw (TimeoutException. "Max number of attempts exceeded")))
-           (log/debugf "Sleeping - attempt #%s of %s" attempt max-attempts)
+           (log/debug
+            (format "Sleeping - attempt #%s of %s" attempt max-attempts))
            (.sleep TimeUnit/SECONDS seconds)
            (recur (inc attempt))))))
   ([task seconds]
@@ -434,19 +423,25 @@
 
 (defn terra-id
   "
-  Generate a Terra-compatible primary key column name for the specified TSV-TYPE and base COL.
+  Generate a Terra-compatible primary key column name for the
+  specified TSV-TYPE and base COL.
 
   The first column of the table must be its primary key, and named accordingly:
     entity:[entity-type]_id
     membership:[entity-type]_set_id
 
-  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data into a `sample` table
-  in the workspace (or create one if it does not exist).
+  For tsv-type :entity, 'entity:sample_id' will upload the .tsv data
+  into a `sample` table in the workspace (or create one if it does not
+  exist).
+
   If the table already contains a sample with that id, it will get overwritten.
 
-  For tsv-type :membership, 'membership:sample_set_id' will append sample names to a `sample_set` table
-  in the workspace (or create one if it does not exist).
-  If the table already contains a sample set with that id, it will be appended to and not overwritten.
+  For tsv-type :membership, 'membership:sample_set_id' will append
+  sample names to a `sample_set` table in the workspace (or create one
+  if it does not exist).
+
+  If the table already contains a sample set with that id, it will be
+  appended to and not overwritten.
 
   Parameters
   ----------
@@ -460,8 +455,11 @@
   "
   [tsv-type col]
   {:pre [(s/valid? ::tsv-type tsv-type)]}
-  (let [stripped (-> (unsuffix col "_id") (unsuffix "_set"))]
-    (str (name tsv-type) ":" stripped (when (= :membership tsv-type) "_set") "_id")))
+  (str/join [(name tsv-type)
+             ":"
+             (-> col (unsuffix "_id") (unsuffix "_set"))
+             (when (= :membership tsv-type) "_set")
+             "_id"]))
 
 (defn columns-rows->tsv
   "
@@ -533,7 +531,7 @@
 
 (defmulti to-edn
   "Return an EDN representation of the `object` that will be shown to users."
-  (fn [object] (:type object)))
+  :type)
 
 (defmethod to-edn :default [x] x)
 
@@ -577,3 +575,26 @@
   [s]
   (let [[name value & rest] (str/split s #":" 3)]
     (and (label-name? name) (label-value? value) (nil? rest))))
+
+(defn uuid-string? [s] (uuid? (do-or-nil (UUID/fromString s))))
+(defn datetime-string? [s] (do-or-nil (OffsetDateTime/parse s)))
+
+(defn email-address?
+  "True if `s` is an email address."
+  [s]
+  (do-or-nil (or (.validate (InternetAddress. s)) true)))
+
+(defn utc-now
+  "Return OffsetDateTime/now in UTC."
+  []
+  (OffsetDateTime/now (ZoneId/of "UTC")))
+
+(defn earliest
+  "Return the earliest time of `instants`."
+  [& instants]
+  (first (sort instants)))
+
+(defn latest
+  "Return the latest time of `instants`."
+  [& instants]
+  (last (sort instants)))

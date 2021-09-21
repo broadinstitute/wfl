@@ -1,5 +1,5 @@
 (ns wfl.integration.modules.shared
-  (:require [clojure.test        :refer [deftest is]]
+  (:require [clojure.test        :refer [is]]
             [wfl.tools.workloads :as    workloads]
             [wfl.util            :refer [absent?]])
   (:import [wfl.util UserException]))
@@ -47,3 +47,10 @@
     (is (thrown-with-msg?
          UserException #"Cannot stop workload"
          (workloads/stop-workload! workload)))))
+
+(defn run-retry-is-not-supported-test! [workload-request]
+  (let [workload (workloads/execute-workload! workload-request)
+        failed   (workloads/workflows-by-status workload "Failed")]
+    (is (thrown-with-msg?
+         UserException #"Cannot retry workflows"
+         (workloads/retry workload failed)))))

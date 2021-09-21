@@ -7,11 +7,19 @@
 You may wish to launch a local version of our documentation website
 to test changes for formatting, link resolution, etc.
 
-Python 3 is required:
+Python 3 is required. It is also good practice to use virtualenv:
 ```
 cd /path/to/wfl/docs
+virtualenv <<name>>
+source <<name>>/bin/activate
 python3 -m pip install -r requirements.txt
 mkdocs serve
+```
+
+Alternatively, you can use make:
+```
+make docs
+. derived/.venv/docs/bin/activate && (  cd derived/docs; python3 -m mkdocs serve  )
 ```
 
 Logging output will indicate that changes are being detected,
@@ -35,3 +43,8 @@ INFO    -  Browser Connected: http://localhost:8000/dev-process/
 [Relative links in markup files](https://github.blog/2013-01-31-relative-links-in-markup-files/)
 allow intra-doc links to work within GitHub Pages website as well as the
 repository view.
+
+[Links to headers](https://stackoverflow.com/questions/27981247/github-markdown-same-page-link)
+can be determined by following these conversion rules.
+Or you can get the link directly from your local docsite instance
+by clicking on the anchor icon visible when hovering to the right of the header.

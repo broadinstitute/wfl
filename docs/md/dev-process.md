@@ -131,7 +131,6 @@ For the release process, please refer to the [release guide](./dev-release.md).
 11. Merge the PR.
 
 
-
 ## Development Tips
 
 Here are some tips for WFL development.
@@ -225,6 +224,44 @@ silently fail or the Swagger page will fail to render. Check the
 `clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
 hair out.
 
+You can quickly check that the Swagger page renders
+by first starting a local WFL server.
+
+``` shell
+./ops/server.sh
+```
+
+Then open this URL in a browser.
+
+``` shell
+open http://localhost:3000/swagger/swagger.json
+```
+
+You should see a page of valid Swagger JSON
+describing the API.
+
+You need to start the UI server too
+if you want to see the swagger page rendered.
+With the local WFL server running on port 3000 as above,
+start the UI this way.
+
+``` shell
+cd ./ui
+npm run serve
+```
+
+With the UI running,
+open this URL in the browser.
+
+``` shell
+open http://localhost:8080/
+```
+
+Click the `LOGIN WITH GOOGLE` button if necessary,
+Then the `SWAGGER API` button at the upper right.
+You should see an interactive Swagger API page.
+
+
 ### debugging Liquibase locally
 
 Running `liquibase update`:
@@ -282,4 +319,60 @@ It takes a vector of `var`s like this.
 
 ``` clojure
 (comment (test-vars [#'test-something]))
+```
+
+### No tests found
+
+When trying to run tests in the command line, you may see the test suite
+exit prematurely -- but successfully -- with a warning indicating that
+no tests were found, and thus no tests were run.
+
+```shell
+$ make api TARGET=check
+export CPCACHE=/Users/okotsopo/wfl/api/.cpcache;     \
+	clojure  -M:test unit | \
+	tee /Users/okotsopo/wfl/derived/api/unit.log
+...
+WARNING: No tests were found, make sure :test-paths and :ns-patterns are configured correctly in tests.edn.
+api unit finished on Thu Jun 24 15:03:33 EDT 2021
+...
+```
+
+This may indicate a compilation error in code not compiled as part of the
+build, e.g. tests.  Linting can help expose any such errors.
+
+!!! tip
+    By default, linting will halt on the first thrown exception,
+    requiring further linting after fixing until the process succeeds.
+
+```shell
+$ make api TARGET=lint
+...
+== Eastwood 0.4.2 Clojure 1.10.3 JVM 11.0.10 ==
+Directories scanned for source files:
+
+src test
+...
+== Linting wfl.system.cdc-covid19-surveillance-demo ==
+Exception thrown during phase :analyze+eval of linting namespace wfl.system.cdc-covid19-surveillance-demo
+Got exception with extra ex-data:
+    msg='No such var: covid'
+    (keys dat)=(:form :file :end-column :column :line :end-line)
+    (:form dat)=
+^{:line 101} covid/rename-gather
+
+ExceptionInfo No such var: covid
+...
+An exception was thrown while analyzing namespace wfl.system.cdc-covid19-surveillance-demo
+Lint results may be incomplete.  If there are compilation errors in
+your code, try fixing those.  If not, check above for info on the
+exception.
+
+Stopped analyzing namespaces after wfl.system.cdc-covid19-surveillance-demo
+due to exception thrown.  28 namespaces left unanalyzed.
+
+If you wish to force continuation of linting after an exception in one
+namespace, make the option map key :continue-on-exception have the
+value true.
+...
 ```

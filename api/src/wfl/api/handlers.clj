@@ -1,21 +1,22 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
-            [clojure.tools.logging          :as log]
-            [clojure.tools.logging.readable :as logr]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
+            [wfl.configuration              :as config]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
             [wfl.module.aou                 :as aou]
-            [wfl.module.arrays]
             [wfl.module.copyfile]
             [wfl.module.covid]
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
+            [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
-            [wfl.util                       :as util]))
+            [wfl.util                       :as util])
+  (:import  [wfl.util UserException]))
 
 (defn succeed
   "A successful response with BODY."
@@ -27,11 +28,34 @@
   [body]
   (constantly (succeed body)))
 
+(defn get-logging-level
+  "Gets the current logging level of the API"
+  [request]
+  (log/info (select-keys request [:request-method :uri :body-params]))
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (letfn [(to-result [s] {:level s})]
+      (-> (config/get-config tx "LOGGING_LEVEL")
+          to-result
+          succeed))))
+
+(defn update-logging-level
+  "Updates the current logging level of the API."
+  [request]
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [{:keys [level]} (get-in request [:parameters :query])]
+    (letfn [(to-result [s] {:level s})]
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (-> (config/upsert-config tx "LOGGING_LEVEL" level)
+            first
+            (get :value)
+            to-result
+            succeed)))))
+
 (defn append-to-aou-workload
   "Append workflows described in BODY of REQUEST to a started AoU workload."
   [request]
+  (log/info (select-keys request [:request-method :uri :body-params]))
   (let [{:keys [notifications uuid]} (get-in request [:parameters :body])]
-    (logr/infof "appending %s samples to workload %s" (count notifications) uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (aou/append-to-workload! tx notifications)
@@ -40,10 +64,10 @@
 (defn post-create
   "Create the workload described in REQUEST."
   [request]
-  (let [workload-request (-> (:body-params request)
-                             (rename-keys {:cromwell :executor}))
+  (log/info (select-keys request [:request-method :uri :body-params]))
+  (let [workload-request (rename-keys (:body-params request)
+                                      {:cromwell :executor})
         {:keys [email]}  (gcs/userinfo request)]
-    (logr/info "POST /api/v1/create with request: " workload-request)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (assoc workload-request :creator email)
            (workloads/create-workload! tx)
@@ -53,8 +77,8 @@
 (defn get-workload
   "List all workloads or the workload(s) with UUID or PROJECT in REQUEST."
   [request]
-  (let [{:keys [uuid project] :as query} (get-in request [:parameters :query])]
-    (logr/info "GET /api/v1/workload with query: " query)
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [{:keys [uuid project]} (get-in request [:parameters :query])]
     (succeed
      (map util/to-edn
           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -65,19 +89,52 @@
 (defn get-workflows
   "Return the workflows managed by the workload."
   [request]
-  (let [uuid (get-in request [:path-params :uuid])]
-    (log/infof "GET /api/v1/workload/%s/workflows" uuid)
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [uuid (get-in request [:path-params :uuid])
+        status (get-in request [:parameters :query :status])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (workloads/load-workload-for-uuid tx uuid)
-           (workloads/workflows tx)
+      (->> (let [workload (workloads/load-workload-for-uuid tx uuid)]
+             (if status (workloads/workflows-by-status tx workload status) (workloads/workflows tx workload)))
            (mapv util/to-edn)
            succeed))))
+
+;; Visible for testing
+(def retry-unsupported-status-error-message
+  "Retry unsupported for requested status.")
+(def retry-no-workflows-error-message
+  "No workflows to retry for requested status.")
+
+(defn post-retry
+  "Retry the workflows identified in `request`."
+  [request]
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [uuid       (get-in request [:path-params :uuid])
+        status     (get-in request [:body-params :status])
+        supported? (cromwell/retry-status? status)]
+    (when-not supported?
+      (throw (UserException. retry-unsupported-status-error-message
+                             {:workload           uuid
+                              :supported-statuses cromwell/retry-status?
+                              :requested-status   status
+                              :status             400})))
+    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+           (let [workload  (workloads/load-workload-for-uuid tx uuid)
+                 workflows (workloads/workflows-by-status tx workload status)]
+             (when (empty? workflows)
+               (throw (UserException. retry-no-workflows-error-message
+                                      {:workload         uuid
+                                       :requested-status status
+                                       :status           400})))
+             [workload workflows]))
+         (apply workloads/retry)
+         util/to-edn
+         succeed)))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
   [request]
+  (log/info (select-keys request [:request-method :uri :parameters]))
   (let [{uuid :uuid} (:body-params request)]
-    (logr/infof "POST /api/v1/start with uuid: " uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (let [{:keys [started] :as workload}
             (workloads/load-workload-for-uuid tx uuid)]
@@ -88,8 +145,8 @@
 (defn post-stop
   "Stop managing workflows for the workload specified by 'request'."
   [request]
+  (log/info (select-keys request [:request-method :uri :parameters]))
   (let [{uuid :uuid} (:body-params request)]
-    (logr/infof "POST /api/v1/stop with uuid: %s" uuid)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (workloads/load-workload-for-uuid tx uuid)
            (workloads/stop-workload! tx)
@@ -99,9 +156,9 @@
 (defn post-exec
   "Create and start workload described in BODY of REQUEST"
   [request]
-  (let [workload-request (-> (:body-params request)
-                             (rename-keys {:cromwell :executor}))]
-    (logr/info "POST /api/v1/exec with request: " workload-request)
+  (log/info (select-keys request [:request-method :uri :parameters]))
+  (let [workload-request (rename-keys (:body-params request)
+                                      {:cromwell :executor})]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (gcs/userinfo request)
            :email

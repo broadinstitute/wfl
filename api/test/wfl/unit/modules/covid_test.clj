@@ -1,27 +1,11 @@
 (ns wfl.unit.modules.covid-test
   (:require [clojure.spec.alpha   :as s]
-            [clojure.test         :refer :all]
-            [wfl.api.spec         :as spec]
-            [wfl.module.covid     :as covid]
+            [clojure.test         :refer [deftest is testing]]
             [wfl.service.datarepo :as datarepo]
-            [wfl.tools.resources  :as resources]
+            [wfl.source           :as source]
             [wfl.tools.workloads  :as workloads])
   (:import [java.time OffsetDateTime ZoneId]
            [java.lang Math]))
-
-(deftest test-rename-gather
-  (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
-    (is (= {:workspace_name "SARSCoV2-Illumina-Full"}
-           (covid/rename-gather inputs {:workspace_name "$SARSCoV2-Illumina-Full"})))
-    (is (= {:instrument_model "Illumina NovaSeq 6000"}
-           (covid/rename-gather inputs {:instrument_model "instrument_model"})))
-    (is (= {:extra ["broad_gcid-srv"]}
-           (covid/rename-gather inputs {:extra ["package_genbank_ftp_submission.account_name"]})))
-    (is (= {:extra {:account_name "broad_gcid-srv" :workspace_name "SARSCoV2-Illumina-Full"}}
-           (covid/rename-gather
-            inputs
-            {:extra {:account_name   "package_genbank_ftp_submission.account_name"
-                     :workspace_name "$SARSCoV2-Illumina-Full"}})))))
 
 (def ^:private readers-list ["hornet@firecloud.org"])
 
@@ -44,7 +28,7 @@
         shards->snapshot-requests
         (with-redefs-fn
           {#'datarepo/create-snapshot-job mock-create-snapshot-job}
-          #(vec (#'covid/create-snapshots source now-obj row-ids)))]
+          #(vec (#'source/create-snapshots source now-obj row-ids)))]
     (testing "snapshot requests are properly partitioned and made unique"
       (is (= expected-num-shards (count shards->snapshot-requests))
           "requests are not partitioned correctly!")
@@ -52,8 +36,8 @@
           "requests are not made unique!"))))
 
 (deftest test-tdr-source-spec
-  (let [valid?           (partial s/valid? ::spec/tdr-source)
+  (let [valid?           (partial s/valid? ::source/tdr-source)
         {:keys [source]} (workloads/covid-workload-request)]
-    (is (valid? source) (s/explain-str ::spec/tdr-source source))
+    (is (valid? source) (s/explain-str ::source/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))

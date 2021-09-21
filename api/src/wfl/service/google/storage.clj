@@ -8,7 +8,7 @@
             [clojure.pprint                 :refer [pprint]]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as logr]
+            [wfl.log                        :as logr]
             [wfl.auth                       :as auth]
             [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))

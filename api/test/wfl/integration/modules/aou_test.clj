@@ -1,7 +1,6 @@
 (ns wfl.integration.modules.aou-test
   (:require [clojure.spec.alpha             :as s]
             [clojure.test                   :refer [testing is deftest use-fixtures]]
-            [wfl.api.spec]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
@@ -34,7 +33,7 @@
            append-to-workload! (fn [xs] (workloads/append-to-workload! xs workload))]
        (testing "appending a sample to the workload"
          (let [response (append-to-workload! [workloads/aou-sample])]
-           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (s/valid? ::aou/append-to-aou-response response))
            (is (count=1? response))))
        (testing "appending the same sample to the workload does nothing"
          (is (= () (append-to-workload! [workloads/aou-sample]))))
@@ -46,7 +45,7 @@
                (repeat 5 (inc-version (inc-version workloads/aou-sample)))))))
        (testing "appending empty workload"
          (let [response (append-to-workload! [])]
-           (is (s/valid? :wfl.api.spec/append-to-aou-response response))
+           (is (s/valid? ::aou/append-to-aou-response response))
            (is (empty? response)))))))
 
 (deftest test-append-to-aou-not-started
@@ -71,6 +70,9 @@
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (make-aou-workload-request)))
 
+(deftest test-retry-workflows-unsupported
+  (shared/run-retry-is-not-supported-test! (make-aou-workload-request)))
+
 (deftest test-aou-workload-not-finished-until-stopped
   (with-redefs-fn {#'aou/submit-aou-workflow         mock-submit-workload
                    #'batch/update-workflow-statuses! mock-update-statuses!}
@@ -87,16 +89,16 @@
 
 ;; rr: GH-1071
 (deftest test-exec-on-same-workload-request
-  "executing a workload-request twice should not create a new workload"
-  (let [request (make-aou-workload-request)]
-    (is (= (workloads/execute-workload! request)
-           (workloads/execute-workload! request)))))
+  (testing "executing a workload-request twice should not create a new workload"
+    (let [request (make-aou-workload-request)]
+      (is (= (workloads/execute-workload! request)
+             (workloads/execute-workload! request))))))
 
 (deftest test-exec-on-similar-workload-request
-  "output bucket slashes should be standardized to not create new workloads unnecessarily"
-  (let [request (make-aou-workload-request)
-        slashified (update request :output util/slashify)
-        deslashified (update request :output util/de-slashify)]
-    (is (not (= slashified deslashified)))
-    (is (= (workloads/execute-workload! slashified)
-           (workloads/execute-workload! deslashified)))))
+  (testing "output bucket slashes should be standardized to not create new workloads unnecessarily"
+    (let [request (make-aou-workload-request)
+          slashified (update request :output util/slashify)
+          deslashified (update request :output util/de-slashify)]
+      (is (not (= slashified deslashified)))
+      (is (= (workloads/execute-workload! slashified)
+             (workloads/execute-workload! deslashified))))))

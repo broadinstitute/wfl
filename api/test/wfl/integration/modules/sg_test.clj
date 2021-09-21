@@ -1,6 +1,8 @@
 (ns wfl.integration.modules.sg-test
-  (:require [clojure.string                 :as str]
-            [clojure.test                   :refer :all]
+  (:require [clojure.test                   :refer [deftest is testing
+                                                    use-fixtures]]
+            [clojure.string                 :as str]
+            [wfl.api.workloads]             ; for mocking
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -19,8 +21,8 @@
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
 (defn the-sg-workload-request
-  []
   "A request suitable when all external services are mocked."
+  []
   {:executor @workloads/cromwell-url
    :output   "gs://broad-gotc-dev-wfl-sg-test-outputs"
    :pipeline "GDCWholeGenomeSomaticSingleSample"
@@ -304,12 +306,6 @@
                 (ok? (parse (get-in edn md)))
                 :else false)))))
 
-(def ^:private bam-suffixes
-  "Map Clio BAM record fields to expected file suffixes."
-  {:bai_path                 ".bai"
-   :bam_path                 ".bam"
-   :insert_size_metrics_path ".insert_size_metrics"})
-
 (defn ^:private test-clio-updates
   []
   (let [{:keys [items] :as request} (the-sg-workload-request)]
@@ -320,7 +316,8 @@
               (let [{:keys [finished pipeline]} workload]
                 (is finished)
                 (is (= sg/pipeline pipeline))
-                (is (= (count items) (-> workload workloads/workflows count))))))))
+                (is (= (count items)
+                       (-> workload workloads/workflows count))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
@@ -370,10 +367,10 @@
   (run! (partial workflow-postcheck output) (workloads/workflows workload)))
 
 (defn ^:private mock-batch-update-workflow-statuses!
-  [tx {:keys [items] :as workload}]
+  [status tx {:keys [items] :as workload}]
   (letfn [(update! [{:keys [id]}]
             (jdbc/update! tx items
-                          {:status "Succeeded" :updated (OffsetDateTime/now)}
+                          {:status status :updated (OffsetDateTime/now)}
                           ["id = ?" id]))]
     (run! update! (wfl.api.workloads/workflows tx workload))))
 
@@ -382,10 +379,16 @@
         increment-count (fn [& _] (swap! count inc))]
     (with-redefs-fn
       {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
-       #'batch/batch-update-workflow-statuses! mock-batch-update-workflow-statuses!
+       #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")
        #'sg/register-workload-in-clio          increment-count}
       #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
     (is (== 1 @count) "Clio was updated more than once")))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))
+
+(deftest test-retry-workflows-supported
+  (with-redefs-fn
+    {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
+     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
+    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))

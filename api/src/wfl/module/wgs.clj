@@ -1,6 +1,7 @@
 (ns wfl.module.wgs
   "Reprocess (External) Whole Genomes."
   (:require [clojure.data.json          :as json]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
@@ -8,10 +9,14 @@
             [wfl.references             :as references]
             [wfl.service.google.storage :as gcs]
             [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+            [wfl.wfl                    :as wfl]
+            [wfl.module.all             :as all])
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "ExternalWholeGenomeReprocessing")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [(or ::all/input_bam ::all/input_cram)]))
 
 (def workflow-wdl
   "The top-level WDL file and its version."
@@ -103,7 +108,8 @@
 
 (defn ^:private normalize-reference-fasta [inputs]
   (if-let [prefix (:reference_fasta_prefix inputs)]
-    (-> (update-in inputs [:references :reference_fasta]
+    (-> inputs
+        (update-in [:references :reference_fasta]
                    #(util/deep-merge (references/reference_fasta prefix) %))
         (dissoc :reference_fasta_prefix))
     inputs))
@@ -127,12 +133,13 @@
 (defn ^:private make-workflow-inputs
   "Make the final pipeline inputs from Cromwell URL."
   [url {:keys [inputs]}]
-  (-> (util/deep-merge cram-ref
-                       hack-task-level-values
-                       {:references default-references}
-                       (static-inputs url)
-                       inputs)
-      (util/prefix-keys (keyword (str pipeline ".")))))
+  (util/prefix-keys
+   (util/deep-merge cram-ref
+                    hack-task-level-values
+                    {:references default-references}
+                    (static-inputs url)
+                    inputs)
+   (keyword (str pipeline "."))))
 
 ;; visible for testing
 (defn make-workflow-options
@@ -159,12 +166,11 @@
 (defn create-wgs-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items output common] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
-          (serialize [workflow id]
+  (letfn [(serialize [workflow id]
             (-> (assoc workflow :id id)
                 (update :options
                         #(json/write-str
-                          (nil-if-empty (util/deep-merge (:options common) %))))
+                          (not-empty (util/deep-merge (:options common) %))))
                 (update :inputs
                         #(json/write-str
                           (normalize-reference-fasta
@@ -198,8 +204,10 @@
       (jdbc/update! tx :workload {:started now} ["id = ?" id]))
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/update-workload!   pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/workflows          pipeline batch/workflows)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/update-workload!    pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!      pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows           pipeline batch/workflows)
+(defoverload workloads/workflows-by-status pipeline batch/workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

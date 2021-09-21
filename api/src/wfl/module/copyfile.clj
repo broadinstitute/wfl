@@ -1,6 +1,7 @@
 (ns wfl.module.copyfile
   "A dummy module for smoke testing wfl/cromwell auth."
   (:require [clojure.data.json    :as json]
+            [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
             [wfl.api.workloads    :as workloads :refer [defoverload]]
             [wfl.jdbc             :as jdbc]
@@ -10,6 +11,11 @@
   (:import [java.time OffsetDateTime]))
 
 (def pipeline "copyfile")
+
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [::dst ::src]))
+(s/def ::dst string?)
+(s/def ::src string?)
 
 (def workflow-wdl
   {:repo    "wfl"
@@ -22,7 +28,7 @@
   (cromwell/submit-workflow
    url
    workflow-wdl
-   (-> inputs (util/prefix-keys (str pipeline ".")))
+   (util/prefix-keys inputs (str pipeline "."))
    options
    labels))
 
@@ -101,9 +107,8 @@
 (defn create-copyfile-workload!
   "Use transaction TX to add the workload described by REQUEST."
   [tx {:keys [items common] :as request}]
-  (letfn [(nil-if-empty [x] (if (empty? x) nil x))
-          (merge-to-json [shared specific]
-            (json/write-str (nil-if-empty (util/deep-merge shared specific))))
+  (letfn [(merge-to-json [shared specific]
+            (json/write-str (not-empty (util/deep-merge shared specific))))
           (serialize [workflow id]
             (-> workflow
                 (assoc :id id)
@@ -141,8 +146,10 @@
     (start-copyfile-workload! tx workload)
     (workloads/load-workload-for-id tx id)))
 
-(defoverload workloads/update-workload!   pipeline batch/update-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/workflows          pipeline batch/workflows)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/update-workload!    pipeline batch/update-workload!)
+(defoverload workloads/stop-workload!      pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows           pipeline batch/workflows)
+(defoverload workloads/workflows-by-status pipeline batch/workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

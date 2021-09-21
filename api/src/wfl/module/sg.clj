@@ -1,11 +1,13 @@
 (ns wfl.module.sg
   "Handle Somatic Genomes."
   (:require [clojure.data.json              :as json]
+            [clojure.spec.alpha             :as s]
             [clojure.set                    :as set]
             [clojure.string                 :as str]
-            [clojure.tools.logging.readable :as log]
             [wfl.api.workloads              :as workloads :refer [defoverload]]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
+            [wfl.module.all                 :as all]
             [wfl.module.batch               :as batch]
             [wfl.references                 :as references]
             [wfl.service.clio               :as clio]
@@ -17,6 +19,15 @@
 
 (def pipeline "GDCWholeGenomeSomaticSingleSample")
 
+;; specs
+(s/def ::workflow-inputs (s/keys :req-un [::all/base_file_name
+                                          ::all/contamination_vcf
+                                          ::all/contamination_vcf_index
+                                          ::all/cram_ref_fasta
+                                          ::all/cram_ref_fasta_index
+                                          ::all/dbsnp_vcf
+                                          ::all/dbsnp_vcf_index
+                                          ::all/input_cram]))
 (def workflow-wdl
   "The top-level WDL file and its version."
   {:release "GDCWholeGenomeSomaticSingleSample_v1.1.0"
@@ -52,17 +63,17 @@
         repo  "broad-gotc-prod"
         image "genomes-in-the-cloud:2.4.3-1564508330"
         {:keys [google_project jes_gcs_root]} (cromwell->strings url)]
-    (-> {:backend         "PAPIv2"
-         :final_workflow_outputs_dir output
-         :google_project  google_project
-         :jes_gcs_root    jes_gcs_root
-         :read_from_cache true
-         :write_to_cache  true
-         :default_runtime_attributes
-         {:docker     (str/join "/" [gcr repo image])
-          :maxRetries 1
-          :noAddress  false
-          :zones      util/google-cloud-zones}})))
+    {:backend         "PAPIv2"
+     :final_workflow_outputs_dir output
+     :google_project  google_project
+     :jes_gcs_root    jes_gcs_root
+     :read_from_cache true
+     :write_to_cache  true
+     :default_runtime_attributes
+     {:docker     (str/join "/" [gcr repo image])
+      :maxRetries 1
+      :noAddress  false
+      :zones      util/google-cloud-zones}}))
 
 (defn create-sg-workload!
   [tx {:keys [common items] :as request}]
@@ -146,8 +157,7 @@
   [clio bam]
   (try (clio/add-bam clio bam)
        (catch Throwable x
-         (log/error x "Add BAM to Clio failed" {:bam bam
-                                                :x   x}))))
+         (log/error {:bam bam :x x}))))
 
 (defn maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."
@@ -169,7 +179,7 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [status uuid] :as workflow}]
+  [executor output {:keys [status uuid] :as _workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
           clio-url (-> executor cromwell->strings :clio-url)
@@ -204,15 +214,17 @@
     (if (and started (not finished))
       (let [workload' (update! workload)]
         (when (:finished workload')
-          (->> (workloads/workflows tx workload')
-               (register-workload-in-clio workload')))
+          (register-workload-in-clio workload'
+                                     (workloads/workflows tx workload')))
         workload')
       workload)))
 
-(defoverload workloads/create-workload!   pipeline create-sg-workload!)
-(defoverload workloads/start-workload!    pipeline start-sg-workload!)
-(defoverload workloads/update-workload!   pipeline update-sg-workload!)
-(defoverload workloads/stop-workload!     pipeline batch/stop-workload!)
-(defoverload workloads/load-workload-impl pipeline batch/load-batch-workload-impl)
-(defoverload workloads/workflows          pipeline batch/workflows)
-(defoverload workloads/to-edn             pipeline batch/workload-to-edn)
+(defoverload workloads/create-workload!    pipeline create-sg-workload!)
+(defoverload workloads/start-workload!     pipeline start-sg-workload!)
+(defoverload workloads/update-workload!    pipeline update-sg-workload!)
+(defoverload workloads/stop-workload!      pipeline batch/stop-workload!)
+(defoverload workloads/load-workload-impl  pipeline batch/load-batch-workload-impl)
+(defoverload workloads/workflows           pipeline batch/workflows)
+(defoverload workloads/workflows-by-status pipeline batch/workflows-by-status)
+(defoverload workloads/retry               pipeline batch/retry-unsupported)
+(defoverload workloads/to-edn              pipeline batch/workload-to-edn)

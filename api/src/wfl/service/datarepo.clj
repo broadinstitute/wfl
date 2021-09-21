@@ -8,8 +8,17 @@
             [wfl.mime-type               :as mime-type]
             [wfl.service.google.bigquery :as bigquery]
             [wfl.util                    :as util])
-  (:import (java.time Instant)
-           (java.util.concurrent TimeUnit)))
+  (:import [clojure.lang ExceptionInfo]
+           [java.time Instant]
+           [wfl.util UserException]))
+
+(def final?
+  "The final statuses a data repo job can have."
+  #{"succeeded" "failed"})
+
+(def active?
+  "The statuses an active data repo job can have."
+  #{"running"})
 
 (defn ^:private datarepo-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_TDR_URL"))]
@@ -28,7 +37,13 @@
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
   {:pre [(some? dataset-id)]}
-  (get-repository-json "datasets" dataset-id))
+  (try
+    (get-repository-json "datasets" dataset-id)
+    (catch ExceptionInfo e
+      (throw
+       (UserException. "Cannot access dataset"
+                       {:dataset dataset-id :status (-> e ex-data :status)}
+                       e)))))
 
 (defn ^:private ingest
   "Ingest THING to DATASET-ID according to BODY."
@@ -86,18 +101,13 @@
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
-   result."
-  ([job-id seconds]
-   (let [result   #(get-repository-json "jobs" job-id "result")
-         running? #(-> (get-repository-json "jobs" job-id)
-                       :job_status
-                       #{"running"})]
-     (while (running?) (.sleep TimeUnit/SECONDS seconds))
-     (result)))
-  ([job-id]
-   (poll-job job-id 5)))
+   result with `max-attempts` [default: 20]."
+  [job-id & [seconds max-attempts]]
+  (let [done? #(-> (get-repository-json "jobs" job-id) :job_status final?)]
+    (util/poll done? (or seconds 5) (or max-attempts 20))
+    (get-repository-json "jobs" job-id "result")))
 
-(defn get-job-metadata
+(defn job-metadata
   "Return the metadata of job with `job-id` when done."
   [job-id]
   {:pre [(some? job-id)]}
@@ -175,11 +185,11 @@
      (list-snapshots \"48a51f71-6bab-483d-a270-3f9ebfb241cd\")"
   [& dataset-ids]
   (letfn [(maybe-merge [m k v] (if (seq v) (assoc m k {:datasetIds v}) m))]
-    (-> (http/get (repository "snapshots")
-                  (maybe-merge {:headers (auth/get-service-account-header)
-                                :query-params {:limit 999}}
-                               :query-params dataset-ids))
-        util/response-body-json)))
+    (util/response-body-json
+     (http/get (repository "snapshots")
+               (maybe-merge {:headers (auth/get-service-account-header)
+                             :query-params {:limit 999}}
+                            :query-params dataset-ids)))))
 
 (defn delete-snapshot
   "Delete the Snapshot with `snapshot-id`."
@@ -231,8 +241,9 @@
 (defn ^:private query-table-impl
   ([{:keys [dataProject] :as dataset} table col-spec]
    (let [bq-name (bigquery-name dataset)]
-     (->> (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)
-          (bigquery/query-sync dataProject)))))
+     (bigquery/query-sync
+      dataProject
+      (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)))))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
@@ -240,8 +251,8 @@
   ([dataset table]
    (query-table-impl dataset table "*"))
   ([dataset table columns]
-   (->> (util/to-comma-separated-list (map name columns))
-        (query-table-impl dataset table))))
+   (query-table-impl dataset table
+                     (util/to-comma-separated-list (map name columns)))))
 
 (defn ^:private query-table-between-impl
   [{:keys [dataProject] :as dataset} table between [start end] col-spec]
@@ -265,3 +276,29 @@
    (->> (map name columns)
         util/to-comma-separated-list
         (query-table-between-impl dataset table between interval))))
+
+
+;; utilities
+
+
+(defn ^:private id-and-name [{:keys [id name] :as _dataset}]
+  (util/make-map id name))
+
+(defn throw-unless-column-exists
+  "Throw if `table` does not have `column` in `dataset`."
+  [table column dataset]
+  (when (->> table :columns (filter (comp #{column} :name)) empty?)
+    (throw (UserException. "Column not found"
+                           {:column  column
+                            :table   table
+                            :dataset (id-and-name dataset)}))))
+
+(defn table-or-throw
+  "Throw or return the table with `table-name` in `dataset`."
+  [table-name {:keys [schema] :as dataset}]
+  (let [[table & _] (filter (comp #{table-name} :name) (:tables schema))]
+    (when-not table
+      (throw (UserException. "Table not found"
+                             {:table   table-name
+                              :dataset (id-and-name dataset)})))
+    table))

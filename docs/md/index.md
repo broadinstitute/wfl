@@ -16,6 +16,13 @@ in that workload running WGS reprocessing; a workload could also be a queue of
 incoming notifications that describe all of the required inputs to launch Arrays
 scientific pipelines in Cromwell.
 
+Most recent efforts leverage the general applicability of a
+[staged workload](staged-workload.md) model
+which automates fetching data from a [source](./source.md),
+pushing it into a workflow [executor](./executor.md) for analysis,
+and delivering the results of the analysis to an output location
+(also known as a [sink](./sink.md)).
+
 WFL is designed to be deployed to run as a service in the cloud, primarily
 on Kubernetes clusters.
 
@@ -184,8 +191,6 @@ After which, the developers who have broad VPN connected can go to the
 to deploy applicable versions of WFL to various available cloud projects.
 
 ## Implementation
-
-For frontend details, check [Frontend Section](./dev-frontend.md)
 
 ### Top-level files
 

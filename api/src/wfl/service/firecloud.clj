@@ -6,7 +6,9 @@
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
             [wfl.util          :as util])
-  (:import [java.util UUID]))
+  (:import [clojure.lang ExceptionInfo]
+           [java.util UUID]
+           [wfl.util UserException]))
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
@@ -20,15 +22,25 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn workspace [workspace]
+(defn workspace-or-throw
+  "Return the `workspace` or throw a UserException."
+  [workspace]
   {:pre [(some? workspace)]}
-  (get-workspace-json workspace))
+  (try
+    (get-workspace-json workspace)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access workspace"
+              {:workspace workspace
+               :status    (-> cause ex-data :status)}
+              cause)))))
 
 (defn abort-submission
   "Abort the submission with `submission-id` in the Terra `workspace`."
   [workspace submission-id]
-  (-> (workspace-api-url workspace "submissions" submission-id)
-      (http/delete {:headers (auth/get-auth-header)})))
+  (http/delete
+   (workspace-api-url workspace "submissions" submission-id)
+   {:headers (auth/get-auth-header)}))
 
 (defn create-submission
   "Submit samples in a workspace for analysis with a method configuration in Terra."
@@ -162,11 +174,12 @@
    -------
      (import-entities \"workspace-namespace/workspace-name\" \"./samples.tsv\")"
   [workspace file]
-  (-> (workspace-api-url workspace "flexibleImportEntities")
-      (http/post {:headers   (auth/get-auth-header)
-                  :multipart (util/multipart-body
-                              {:Content/type "text/tab-separated-values"
-                               :entities     (slurp file)})})))
+  (http/post
+   (workspace-api-url workspace "flexibleImportEntities")
+   {:headers   (auth/get-auth-header)
+    :multipart (util/multipart-body
+                {:Content/type "text/tab-separated-values"
+                 :entities     (slurp file)})}))
 
 (defn import-entity-set
   "
@@ -225,11 +238,19 @@
   [workspace]
   (get-workspace-json workspace "methodconfigs?allRepos=true"))
 
-(defn get-method-configuration
+(defn method-configuration
   "Return the `methodconfig` in the `workspace`."
   [workspace methodconfig]
   {:pre [(every? some? [workspace methodconfig])]}
-  (get-workspace-json workspace "method_configs" methodconfig))
+  (try
+    (get-workspace-json workspace "method_configs" methodconfig)
+    (catch ExceptionInfo cause
+      (throw (UserException.
+              "Cannot access method configuration in workspace"
+              {:workspace           workspace
+               :methodConfiguration methodconfig
+               :status              (-> cause ex-data :status)}
+              cause)))))
 
 (defn update-method-configuration
   "Update the method-configuration `method-config-name` to be `methodconfig` in
@@ -263,17 +284,3 @@
                                                        :workflowSource)
                                                      workflow})})
         util/response-body-json)))
-
-(defn ^:private get-groups
-  "Return the groups caller is in."
-  []
-  (-> (str/join "/" [(firecloud-url) "api" "groups"])
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))
-
-(defn ^:private get-group-members
-  "Return the members of group."
-  [group]
-  (-> (str/join "/" [(firecloud-url) "api" "groups" group])
-      (http/get {:headers (auth/get-auth-header)})
-      util/response-body-json))

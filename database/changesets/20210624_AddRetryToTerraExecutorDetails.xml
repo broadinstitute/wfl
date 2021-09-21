@@ -1,0 +1,27 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="hornet@broadinstitute.org"
+               dbms="postgresql"
+               id="20210624"
+               logicalFilePath="20210624_AddRetryToTerraExecutorDetails.xml"
+               runInTransaction="false">
+        <comment>
+            Add a `retry` attribute to the `TerraExecutorDetails` type and all
+            instantiations thereof to support retries. This column holds the
+            row id of the workflow that the workflow was retied as, thus forming
+            a singly linked list tracing the retry history of a set of inputs.
+        </comment>
+        <sql>
+            ALTER TYPE TerraExecutorDetails
+            ADD ATTRIBUTE retry BIGINT
+            CASCADE;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

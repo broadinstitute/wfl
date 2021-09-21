@@ -1,9 +1,6 @@
 (ns wfl.server
   "An HTTP API server."
-  (:require [clojure.pprint                 :refer [pprint]]
-            [clojure.stacktrace             :refer [print-throwable]]
-            [clojure.string                 :as str]
-            [clojure.tools.logging          :as log]
+  (:require [clojure.string                 :as str]
             [clj-time.coerce                :as tc]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
@@ -13,8 +10,10 @@
             [ring.middleware.session.cookie :as cookie]
             [wfl.api.routes                 :as routes]
             [wfl.api.workloads              :as workloads]
+            [wfl.configuration              :as config]
             [wfl.environment                :as env]
             [wfl.jdbc                       :as jdbc]
+            [wfl.log                        :as log]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
@@ -59,7 +58,7 @@
     (try
       (handler request)
       (catch Throwable t
-        (log/error t)))))
+        (log/error (str t))))))
 
 ;; See https://stackoverflow.com/a/43075132
 ;;
@@ -78,9 +77,9 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers uuid exception]
+(defn notify-watchers [watchers _uuid _exception]
   {:pre [(some? watchers)]}
-  (log/info "notifying: " watchers))
+  (log/info (str/join " " ["notifying: " watchers])))
 
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
@@ -91,21 +90,22 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
                     (workloads/load-workload-for-id tx id)]
+                (log/info (format "Updating workload %s" uuid))
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
-                    (log/warnf "Error updating workload %s" uuid)
+                    (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
                     (notify-watchers watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
               (do-update! workload)
               (catch Throwable t
-                (log/error "Failed to update workload %s" uuid)
-                (log/error t))))
+                (log/error (format "Failed to update workload %s" uuid))
+                (log/error (str t)))))
           (update-workloads []
             (try
-              (log/info "updating workloads")
+              (log/info "Finding workloads to update...")
               (run! try-update
                     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                       (jdbc/query tx "SELECT id,uuid FROM workload
@@ -113,7 +113,7 @@
                                       AND finished IS NULL")))
               (catch Throwable t
                 (log/error "Failed to update workloads")
-                (log/error t))))]
+                (log/error (str t)))))]
     (log/info "starting workload update loop")
     (update-workloads)
     (future
@@ -121,12 +121,27 @@
         (update-workloads)
         (.sleep TimeUnit/SECONDS 20)))))
 
+(defn ^:private start-logging-polling
+  "Start polling for changes to the log level."
+  []
+  (letfn [(get-logging-level [] (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                  (let [config (config/get-config tx "LOGGING_LEVEL")]
+                                    (reset! log/logging-level
+                                            (if (empty? config)
+                                              :info
+                                              (-> config str/lower-case keyword))))))]
+    (get-logging-level)
+    (future
+      (while true
+        (get-logging-level)
+        (.sleep TimeUnit/SECONDS 60)))))
+
 (defn ^:private start-webserver
   "Start the jetty webserver asynchronously to serve http requests on the
   specified port. Returns a java.util.concurrent.Future that, when de-
   referenced, blocks until the server ends."
   [port]
-  (log/infof "starting jetty webserver on port %s" port)
+  (log/info (format "starting jetty webserver on port %s" port))
   (let [server (jetty/run-jetty (app) {:port port :join? false})]
     (reify Future
       (cancel [_ _] (throw (UnsupportedOperationException.)))
@@ -146,9 +161,10 @@
           (recur)))))
 
 (defn run
-  "Run child server in ENVIRONMENT on PORT."
+  "Run server in ENVIRONMENT on PORT."
   [& args]
-  (log/info "Run:" wfl/the-name "server" args)
+  (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
-        manager (start-workload-manager)]
-    (await-some manager (start-webserver port))))
+        manager (start-workload-manager)
+        logger  (start-logging-polling)]
+    (await-some manager logger (start-webserver port))))

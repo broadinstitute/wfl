@@ -33,7 +33,8 @@ JAR_LINK     := $(DERIVED_TARGET_DIR)/wfl.jar
 
 $(PREBUILD): $(MODULE_DIR)/build/build.$(CLJ)
 $(PREBUILD): $(SCM_RESOURCES) $(TEST_SCM_RESOURCES)
-	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR) $(DERIVED_TEST_DIR)
+	@$(MKDIR) $(DERIVED_RESOURCES_DIR) $(DERIVED_SRC_DIR) $(DERIVED_TEST_DIR) $(CLASSES_DIR)
+	$(CLOJURE) -M -e "(compile 'wfl.util)"
 	$(CLOJURE) -X:prebuild
 	@$(TOUCH) $@
 
@@ -52,9 +53,12 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 	$(LN) $(JAR) $(JAR_LINK)
 	@$(TOUCH) $@
 
-# Run `clojure -M:format` in this directory when this fails.
+LIKELY_FIX := 'Run `clojure -M:format` in this directory'
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	$(CLOJURE) -M:lint -m cljfmt.main check
+	@$(CLOJURE) -M:check-format || (c=$$?; $(ECHO) $(LIKELY_FIX); $(EXIT) $$c)
+	@$(CLOJURE) -M:eastwood
+	@$(CLOJURE) -M:kibit
+	-@$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
 	@$(TOUCH) $@
 
 $(UNIT): $(TEST_SCM_SRC)
