@@ -38,12 +38,12 @@
                                             ::sink/sink
                                             ::source/source
                                             ::all/uuid
-                                            ::all/version
-                                            ::all/watchers]
+                                            ::all/version]
                                    :opt-un [::all/finished
                                             ::all/started
                                             ::all/stopped
-                                            ::all/updated]))
+                                            ::all/updated
+                                            ::all/watchers]))
 ;; Workload
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
