@@ -26,12 +26,14 @@ The specific values below are from the
 Workloads for other projects may leverage different implementations for source, executor or sink.
 
 !!! tip "`watchers` of a workload"
-    You may have noticed the `watchers` field in the requests. As of `2021/08` WFL
-    supports registering Slack channels (Slack channel IDs that starts with a `C`)
-    as watchers of the workload. Your channel needs to live in the `broadinstitute.slack.com`
-    Slack organization and you also have to `/invite @WorkFlow Launcher Notifier` to invite
-    the WFL notifier to your channel before the channel can receive user facing messaged from
-    WFL.
+    You may have noticed the optional `watchers` field in the requests.
+    As of `2021/08` WFL supports registering Slack channels
+    (Slack channel IDs that starts with a `C`)
+    as watchers of the workload.
+    Your channel needs to live in the `broadinstitute.slack.com` Slack organization
+    and you also have to `/invite @WorkFlow Launcher Notifier`
+    to invite the WFL notifier to your channel
+    before the channel can receive user facing messaged from WFL.
 
 ```
 {
@@ -76,11 +78,11 @@ Workloads for other projects may leverage different implementations for source, 
 
 ## Staged Workload Anatomy (High Level)
 
-| Field    | Type | Description                     |
-|----------|------|---------------------------------|
-| watchers | List   | A list of emails or Slack channels to notify |
+| Field    | Type   | Description                                                                                                                                                                                                                                 |
+|----------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| watchers | List   | An optional list of emails or Slack channels to notify                                                                                                                                                                                                |
 | labels   | List   | A list of user-defined labels.They must be a string of the form `"name":"value”`, where `name` must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and `value` is any non-blank string |
-| project  | String |  The project is a non-null string required in the workload table. It's needed to support querying workloads by project |
-| source   | Object | The data source |
-| executor | Object | The mechanism executing the analysis. (Most often this is Terra)|
-| sink     | Object | The location where data will be placed after analysis is complete|
+| project  | String | The project is a non-null string required in the workload table. It's needed to support querying workloads by project                                                                                                                       |
+| source   | Object | The data source                                                                                                                                                                                                                             |
+| executor | Object | The mechanism executing the analysis. (Most often this is Terra)                                                                                                                                                                            |
+| sink     | Object | The location where data will be placed after analysis is complete                                                                                                                                                                           |
