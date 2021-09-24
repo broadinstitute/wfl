@@ -57,7 +57,8 @@
 (def notifier (agent (PersistentQueue/EMPTY)))
 (add-watch notifier :watcher
            (fn [_key _ref _old-state new-state]
-             (log/debug (format "the current notification queue is: %s" (seq new-state)))))
+             (when (seq new-state)
+               (log/debug (format "the current notification queue is: %s" (seq new-state))))))
 
 (defn add-notification
   "Add notification defined by a map of
