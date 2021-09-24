@@ -93,7 +93,7 @@
    :sample_lsid                     "broadinstitute.org:bsp.dev.sample:NOTREAL.03C17319",
    :analysis_version_number         1,
    :call_rate_threshold             0.98,
-   :genotype_concordance_threshold  0.98,
+   :genotype_concordance_threshold  0.95,
    :reported_gender                 "Male",
    :chip_well_barcode               "200598830050_R07C01",
    :green_idat_cloud_path           "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/idats/200598830050_R07C01/200598830050_R07C01_Grn.idat",
