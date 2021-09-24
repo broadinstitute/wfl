@@ -100,9 +100,10 @@
           record-count (int (Math/ceil (/ mock-new-rows-size 500)))
           source       (create-tdr-source)]
       (testing "update-source! loads snapshots"
-        (with-redefs [datarepo/query-table-between mock-query-table-between-miss
-                      source/check-tdr-job         mock-check-tdr-job
-                      source/create-snapshots      mock-create-snapshots]
+        (with-redefs [source/tdr-source-should-poll? (constantly true)
+                      datarepo/query-table-between   mock-query-table-between-miss
+                      source/check-tdr-job           mock-check-tdr-job
+                      source/create-snapshots        mock-create-snapshots]
           (source/update-source!
            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
              (source/start-source! tx source)
@@ -112,10 +113,11 @@
           (is (== record-count (stage/queue-length source)))
           (is (== miss-count   (total-rows mock-query-table-between-miss args)))
           (is (== miss-count   (count miss-set)))
-          (testing "update-source! adds a snaphot of rows missed in prior interval"
-            (with-redefs [datarepo/query-table-between mock-query-table-between-all
-                          source/check-tdr-job         mock-check-tdr-job
-                          source/create-snapshots      mock-create-snapshots]
+          (testing "update-source! adds a snapshot of rows missed in prior interval"
+            (with-redefs [source/tdr-source-should-poll? (constantly true)
+                          datarepo/query-table-between   mock-query-table-between-all
+                          source/check-tdr-job           mock-check-tdr-job
+                          source/create-snapshots        mock-create-snapshots]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                  (reload-source tx source))))
@@ -169,9 +171,10 @@
   (let [source               (create-tdr-source)
         expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
     (with-redefs-fn
-      {#'source/create-snapshots mock-create-snapshots
-       #'source/find-new-rows    mock-find-new-rows
-       #'source/check-tdr-job    mock-check-tdr-job}
+      {#'source/tdr-source-should-poll? (constantly true)
+       #'source/create-snapshots        mock-create-snapshots
+       #'source/find-new-rows           mock-find-new-rows
+       #'source/check-tdr-job           mock-check-tdr-job}
       (fn []
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -197,7 +200,7 @@
             "no more snapshots should be enqueued")
         (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
 
-(deftest test-stop-tdr-sourced
+(deftest test-stop-tdr-source
   (let [source (create-tdr-source)]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (source/start-source! tx source)

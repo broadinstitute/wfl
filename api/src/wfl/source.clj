@@ -3,9 +3,9 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
-            [clojure.tools.logging :as log]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
+            [wfl.log               :as log]
             [wfl.module.all        :as all]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
@@ -157,7 +157,7 @@
   "Query TDR for rows within `_interval` that are new to `source`."
   [{:keys [dataset details table column] :as source}
    [begin end                            :as _interval]]
-  (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
+  (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                      (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (postgres/get-table tx details))
@@ -270,9 +270,11 @@
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
     (when (seq shards->jobs)
-      (log/info (format "%s Snapshots created from new rows in %s.%s." (log-prefix source) (:name dataset) table))
-      (write-snapshots-creation-jobs source utc-now shards->jobs)
-      (update-last-checked source utc-now))))
+      (log/info (format "%s Snapshots created from new rows in %s.%s."
+                        (log-prefix source) (:name dataset) table))
+      (write-snapshots-creation-jobs source utc-now shards->jobs))
+    ;; Even if our poll did not yield new rows to snapshot, at least we tried:
+    (update-last-checked source utc-now)))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
@@ -291,16 +293,18 @@
 ;; - locking the dataset / running into dataset locks
 (def ^:private tdr-source-polling-interval-minutes 20)
 
+;; TODO: add unit tests
 (defn ^:private tdr-source-should-poll?
   "Return true if it's been at least `tdr-source-polling-interval-minutes`
-   since we last polled the TDR for new rows.
-
-   If the workload hasn't yet snapshotted anything, `last_checked` may be
-   unset and we should use `started` as the start of our interval."
-  [{:keys [started last_checked] :as _source} utc-now]
-  (let [checked     (timestamp-to-offsetdatetime (or last_checked started))]
-    (<= tdr-source-polling-interval-minutes
-        (.between ChronoUnit/MINUTES checked utc-now))))
+   since `last_checked` -- when we last checked for new rows in the TDR."
+  [{:keys [type id last_checked] :as _source} utc-now]
+  (let [checked            (timestamp-to-offsetdatetime last_checked)
+        minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)]
+    (log/debug {:type               type
+                :id                 id
+                :minutes-since-poll minutes-since-poll
+                :polling-interval   tdr-source-polling-interval-minutes})
+    (<= tdr-source-polling-interval-minutes minutes-since-poll)))
 
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,

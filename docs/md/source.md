@@ -22,6 +22,14 @@ from a single table.
 When you `start` the workload, the `Terra DataRepo` source will start looking
 for new/updated rows from that instant.
 
+!!! note
+    `Terra DataRepo` source only polls for new rows every 20 minutes
+    to reduce the chances of dataset lock collision and creating
+    many low-cardinality snapshots.
+
+    This is a longer cadence than the parent workload update loop,
+    which runs every 20 seconds.
+
 When you `stop` the workload, the `Terra DataRepo` source will stop looking
 for new/updated rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.
