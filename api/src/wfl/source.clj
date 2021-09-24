@@ -158,7 +158,7 @@
   [{:keys [dataset details table column] :as source}
    [begin end                            :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                     (log-prefix source) (:name dataset) table begin end))
+                    (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (postgres/get-table tx details))
         old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
