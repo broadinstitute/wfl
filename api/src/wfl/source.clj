@@ -293,7 +293,6 @@
 ;; - locking the dataset / running into dataset locks
 (def ^:private tdr-source-polling-interval-minutes 20)
 
-;; TODO: add unit tests
 (defn ^:private tdr-source-should-poll?
   "Return true if it's been at least `tdr-source-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
