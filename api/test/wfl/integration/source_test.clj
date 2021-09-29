@@ -192,13 +192,38 @@
                 (is (= expected-num-records (count records))))
               (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
                 (is (every? record-updated? records))))))
+        (let [stopped-source (source/update-source!
+                              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                (source/stop-source! tx source)
+                                (reload-source tx source)))]
+          (is (== expected-num-records (stage/queue-length stopped-source))
+              "no more snapshots should be enqueued")
+          (is (not (stage/done? stopped-source))
+              "the tdr source was done before snapshots were consumed"))))))
+
+(deftest test-update-tdr-source-when-ineligible-to-poll
+  (let [source          (create-tdr-source)
+        ex-message      (str "source/find-and-snapshot-new-rows "
+                             "should not be called when ineligible "
+                             "to poll TDR for new rows.")
+        throw-if-called (fn [& args] (throw (ex-info ex-message
+                                                     {:called-with args})))]
+    (with-redefs-fn
+      {#'source/tdr-source-should-poll?    (constantly false)
+       #'source/find-and-snapshot-new-rows throw-if-called
+       #'source/check-tdr-job              mock-check-tdr-job}
+      (fn []
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (source/stop-source! tx source)
+           (source/start-source! tx source)
            (reload-source tx source)))
-        (is (== expected-num-records (stage/queue-length source))
-            "no more snapshots should be enqueued")
-        (is (not (stage/done? source)) "the tdr source was done before snapshots were consumed")))))
+        (is (== 0 (stage/queue-length source)) "No snapshots should be enqueued")
+        (let [stopped-source (source/update-source!
+                              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                (source/stop-source! tx source)
+                                (reload-source tx source)))]
+          (is (stage/done? stopped-source)
+              "the tdr source should be done if no snapshots to consume"))))))
 
 (deftest test-stop-tdr-source
   (let [source (create-tdr-source)]
