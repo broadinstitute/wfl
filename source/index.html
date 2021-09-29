@@ -854,6 +854,14 @@ with a <code>Terra DataRepo</code> source. The <code>Terra DataRepo</code> sourc
 from a single table.</p>
 <p>When you <code>start</code> the workload, the <code>Terra DataRepo</code> source will start looking
 for new/updated rows from that instant.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>Terra DataRepo</code> source only polls for new rows every 20 minutes
+to reduce the chances of dataset lock collision and creating
+many low-cardinality snapshots.</p>
+<p>This is a longer cadence than the parent workload update loop,
+which runs every 20 seconds.</p>
+</div>
 <p>When you <code>stop</code> the workload, the <code>Terra DataRepo</code> source will stop looking
 for new/updated rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.</p>
