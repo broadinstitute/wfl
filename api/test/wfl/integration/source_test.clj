@@ -216,7 +216,7 @@
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
            (reload-source tx source)))
-        (is (== 0 (stage/queue-length source)) "No snapshots should be enqueued")
+        (is (zero? (stage/queue-length source)) "No snapshots should be enqueued")
         (let [stopped-source (source/update-source!
                               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                 (source/stop-source! tx source)

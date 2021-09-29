@@ -310,9 +310,8 @@
   insert resulting job creation ids into database and update the
   timestamp for next time."
   [{:keys [stopped] :as source}]
-  (let [now          (utc-now)
-        should-poll? (tdr-source-should-poll? source now)]
-    (when (and (not stopped) should-poll?)
+  (let [now (utc-now)]
+    (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
   (update-pending-snapshot-jobs source)
   ;; load and return the source table

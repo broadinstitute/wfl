@@ -6,8 +6,8 @@
            [java.time.temporal ChronoUnit]))
 
 (deftest test-tdr-source-should-poll?
-  (let [now              (utc-now)
-        source           {:last_checked (Timestamp/from (.toInstant now))}]
+  (let [now    (utc-now)
+        source {:last_checked (Timestamp/from (.toInstant now))}]
     (letfn [(end-of-interval [min-from-interval]
               (->> #'source/tdr-source-polling-interval-minutes
                    var-get
