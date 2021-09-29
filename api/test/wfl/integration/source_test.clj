@@ -210,8 +210,7 @@
                                                      {:called-with args})))]
     (with-redefs-fn
       {#'source/tdr-source-should-poll?    (constantly false)
-       #'source/find-and-snapshot-new-rows throw-if-called
-       #'source/check-tdr-job              mock-check-tdr-job}
+       #'source/find-and-snapshot-new-rows throw-if-called}
       (fn []
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
