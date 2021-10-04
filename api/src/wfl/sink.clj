@@ -354,7 +354,7 @@
   (update-datarepo-job-statuses sink)
   (when-let [{:keys [job] :as record} (peek-job-queue sink)]
     (try
-      (datarepo/get-job-result job)
+      (datarepo/job-result job)
       (log/info "Sunk workflow outputs to dataset")
       (finally
         (pop-job-queue! sink record)))))

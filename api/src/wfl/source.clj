@@ -211,16 +211,21 @@
            (jdbc/query tx)
            (map (juxt :id :snapshot_creation_job_id))))))
 
+;; TODO: unit tests.
+;; TODO: manual test (write a record in for a known snapshot creation job that failed).
 (defn ^:private check-tdr-job
-  "Check TDR job status for `job-id`, return a map with job-id,
-   snapshot_id and job_status if job has failed or succeeded, otherwise nil."
+  "Check TDR job status for `job-id` and return job metadata,
+   with snapshot_id attached if the job succeeded."
   [job-id]
-  (let [{:keys [job_status] :as result} (datarepo/job-metadata job-id)]
+  (let [{:keys [job_status] :as metadata} (datarepo/job-metadata job-id)
+        get-job-result                    #(datarepo/job-result job-id)]
     (case job_status
-      "running"   result
-      "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
-          result))))
+      "running"   metadata
+      "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
+      ;; Likely failed job, or otherwise unknown job status:
+      (do (log/warn {:metadata metadata
+                     :result   (get-job-result)})
+          metadata))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table
