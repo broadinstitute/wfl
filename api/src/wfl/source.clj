@@ -222,7 +222,6 @@
         {:status status
          :body   (util/response-body-json data)}))))
 
-;; TODO: unit tests.
 (defn ^:private check-tdr-job
   "Check TDR job status for `job-id` and return job metadata,
    with snapshot_id attached if the job succeeded."
