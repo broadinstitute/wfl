@@ -955,7 +955,7 @@ the originals).</p>
 <p>Ex: <code>bash retry.sh project=PO-29619</code></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Usage: bash abort.sh QUERY [WFL_URL]</span>
 <span class="c1">#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`</span>
-<span class="c1">#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]</span>
+<span class="c1">#   WFL_URL is the WFL instance to retry workflows from [default: gotc-prod]</span>
 
 <span class="nv">WFL_URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">https</span><span class="p">://gotc-prod-wfl.gotc-prod.broadinstitute.org</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="nv">AUTH_HEADER</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
@@ -975,7 +975,7 @@ getWorkflows<span class="o">()</span> <span class="o">{</span>
          <span class="p">|</span> jq
 <span class="o">}</span>
 
-removeSucceeded<span class="o">()</span> <span class="o">{</span>
+failedWorkflowsToSubmit<span class="o">()</span> <span class="o">{</span>
     <span class="c1"># [[Workflow]] -&gt; [Workflow]</span>
     jq <span class="s1">&#39;flatten</span>
 <span class="s1">        | map ( select ( .status==&quot;Failed&quot; )</span>
@@ -1009,7 +1009,7 @@ main<span class="o">()</span> <span class="o">{</span>
     <span class="c1"># Query -&gt; ()</span>
     <span class="nv">workloads</span><span class="o">=</span><span class="k">$(</span>getWorkloads <span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
     <span class="nv">workflows</span><span class="o">=</span><span class="k">$(</span>mapjq getWorkflows <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workloads</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
-    <span class="nv">toSubmit</span><span class="o">=</span><span class="k">$(</span>removeSucceeded <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workflows</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
+    <span class="nv">toSubmit</span><span class="o">=</span><span class="k">$(</span>failedWorkflowsToSubmit <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workflows</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
     makeRetryRequest <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workloads</span><span class="p">[0]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">toSubmit</span><span class="si">}</span><span class="s2">&quot;</span> &gt; /tmp/retry.json
 
     curl -X POST <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/exec&quot;</span> <span class="se">\</span>
