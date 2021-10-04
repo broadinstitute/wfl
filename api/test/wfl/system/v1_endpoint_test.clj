@@ -434,5 +434,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (datarepo/query-table dataset "outputs"))
+        (is (seq (:rows (datarepo/query-table dataset "outputs")))
             "outputs should have been written to the dataset")))))
