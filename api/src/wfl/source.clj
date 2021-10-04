@@ -211,8 +211,18 @@
            (jdbc/query tx)
            (map (juxt :id :snapshot_creation_job_id))))))
 
+(defn ^:private result-or-catch
+  "Return the result of `callable`,
+  or the status and parsed response body of its thrown exception."
+  [callable]
+  (try
+    (callable)
+    (catch ExceptionInfo caught
+      (let [{:keys [status :as data]} (ex-data caught)]
+        {:status status
+         :body   (util/response-body-json data)}))))
+
 ;; TODO: unit tests.
-;; TODO: manual test (write a record in for a known snapshot creation job that failed).
 (defn ^:private check-tdr-job
   "Check TDR job status for `job-id` and return job metadata,
    with snapshot_id attached if the job succeeded."
@@ -224,7 +234,7 @@
       "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
       ;; Likely failed job, or otherwise unknown job status:
       (do (log/warn {:metadata metadata
-                     :result   (get-job-result)})
+                     :result   (result-or-catch get-job-result)})
           metadata))))
 
 (defn ^:private write-snapshot-id
