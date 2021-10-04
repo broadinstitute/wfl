@@ -218,7 +218,7 @@
   (try
     (callable)
     (catch ExceptionInfo caught
-      (let [{:keys [status :as data]} (ex-data caught)]
+      (let [{:keys [status] :as data} (ex-data caught)]
         {:status status
          :body   (util/response-body-json data)}))))
 

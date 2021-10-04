@@ -29,7 +29,7 @@
           body-message "Failed to lock the dataset"
           body         (str "{\"message\":\"" body-message "\"}")
           callable     #(throw (ex-info message {:status status
-                                                 :data   {:body body}}))
+                                                 :body   body}))
           actual       (#'source/result-or-catch callable)]
       (is (= status (:status actual)))
       (is (= body-message (get-in actual [:body :message]))))))
