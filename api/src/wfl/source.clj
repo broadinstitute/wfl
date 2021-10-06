@@ -211,16 +211,30 @@
            (jdbc/query tx)
            (map (juxt :id :snapshot_creation_job_id))))))
 
+(defn ^:private result-or-catch
+  "Return the result of `callable`,
+  or the status and parsed response body of its thrown exception."
+  [callable]
+  (try
+    (callable)
+    (catch ExceptionInfo caught
+      (let [{:keys [status] :as data} (ex-data caught)]
+        {:status status
+         :body   (util/response-body-json data)}))))
+
 (defn ^:private check-tdr-job
-  "Check TDR job status for `job-id`, return a map with job-id,
-   snapshot_id and job_status if job has failed or succeeded, otherwise nil."
+  "Check TDR job status for `job-id` and return job metadata,
+   with snapshot_id attached if the job succeeded."
   [job-id]
-  (let [{:keys [job_status] :as result} (datarepo/job-metadata job-id)]
+  (let [{:keys [job_status] :as metadata} (datarepo/job-metadata job-id)
+        get-job-result                    #(datarepo/job-result job-id)]
     (case job_status
-      "running"   result
-      "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
-          result))))
+      "running"   metadata
+      "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
+      ;; Likely failed job, or otherwise unknown job status:
+      (do (log/warn {:metadata metadata
+                     :result   (result-or-catch get-job-result)})
+          metadata))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table

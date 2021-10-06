@@ -109,8 +109,8 @@
   {:pre [(some? job-id)]}
   (get-repository-json "jobs" job-id))
 
-(defn get-job-result
-  "Get the result of job with `job-id`."
+(defn job-result
+  "Return the result of job with `job-id`."
   [job-id]
   (get-repository-json "jobs" job-id "result"))
 
