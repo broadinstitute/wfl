@@ -1,3 +1,32 @@
+# Release 0.9.0
+- Fix merge conflicts around logging in server.clj.
+- Trial merge of main to develop.
+- GH-1476 Log failed snapshot creation job's metadata and result ([#518](https://github.com/broadinstitute/wfl/pull/518))
+- GH-1373 rename removeSucceeded in retry runbook ([#519](https://github.com/broadinstitute/wfl/pull/519))
+- Updating the version for the develop branch to 0.9.0 ([#517](https://github.com/broadinstitute/wfl/pull/517))
+- GH-1444 TerraDataRepoSource should not snapshot more frequently than every 20 min ([#513](https://github.com/broadinstitute/wfl/pull/513))
+- Bump AoU Arrays.wdl version to 2.4.1 to drop default ([#514](https://github.com/broadinstitute/wfl/pull/514))
+- GH-1462: Make :watchers key always optional. ([#515](https://github.com/broadinstitute/wfl/pull/515))
+- Keep non-null inputs and options from "Failed" workflows. ([#508](https://github.com/broadinstitute/wfl/pull/508))
+- GH-1446: fix system tests again ([#502](https://github.com/broadinstitute/wfl/pull/502))
+- GH-1450 Add retry attribute to TerraDataRepoSource type and instances ([#505](https://github.com/broadinstitute/wfl/pull/505))
+- GH-1454 Update covid and executor integration tests to reflect updated method configuration version ([#504](https://github.com/broadinstitute/wfl/pull/504))
+- GH-1439 Succeeded workflow status should be permissible to retry ([#503](https://github.com/broadinstitute/wfl/pull/503))
+- [GH-1441] Stop swallowing UserExceptions ([#501](https://github.com/broadinstitute/wfl/pull/501))
+- [GH-1353] Fix spec error when skipValidation sent ([#497](https://github.com/broadinstitute/wfl/pull/497))
+- Remove the UI component of WFL. ([#499](https://github.com/broadinstitute/wfl/pull/499))
+- Add a badge for WFL nightly test. ([#500](https://github.com/broadinstitute/wfl/pull/500))
+- Add a nightly system test against dev WFL ([#498](https://github.com/broadinstitute/wfl/pull/498))
+- [GH-1301] Add Slack watcher support for user exceptions. ([#467](https://github.com/broadinstitute/wfl/pull/467))
+- Github actions should build docs on develop. ([#495](https://github.com/broadinstitute/wfl/pull/495))
+- [GH-1418] sourceLocation null fix ([#487](https://github.com/broadinstitute/wfl/pull/487))
+- [GH-1303] Google Cloud Logging Alerts ([#486](https://github.com/broadinstitute/wfl/pull/486))
+- ENG-1394 Update post-retry error maps per QA feedback ([#494](https://github.com/broadinstitute/wfl/pull/494))
+- GH-1328 Migrate to new Rawls Snapshot V2 endpoints ([#493](https://github.com/broadinstitute/wfl/pull/493))
+- [GH-1402] Write Workflow Outputs to the Terra Data Repository ([#474](https://github.com/broadinstitute/wfl/pull/474))
+- Mkdocs updates that improve the doc nav and security holes. ([#492](https://github.com/broadinstitute/wfl/pull/492))
+- Bump path-parse from 1.0.6 to 1.0.7 in /ui ([#491](https://github.com/broadinstitute/wfl/pull/491))
+
 # Release 0.8.2
 * [GH-1454] Update covid and executor integration tests to reflect updated method configuration version ([#504](https://github.com/broadinstitute/wfl/pull/504))
 * [ENG-1394] Update post-retry error maps per QA feedback ([#494](https://github.com/broadinstitute/wfl/pull/494))
