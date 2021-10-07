@@ -28,6 +28,7 @@ looks like:
   }
 }
 ```
+
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute     | Description                                                  |

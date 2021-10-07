@@ -78,6 +78,10 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
+(defn notify-watchers [watchers _uuid _exception]
+  {:pre [(some? watchers)]}
+  (log/info (str/join " " ["notifying: " watchers])))
+
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
   state of workflows in the background. Dereference the future to wait
@@ -119,6 +123,21 @@
         (update-workloads)
         (util/sleep-seconds 20)))
     (slack/start-notification-loop slack/notifier)))
+
+(defn ^:private start-logging-polling
+  "Start polling for changes to the log level."
+  []
+  (letfn [(get-logging-level [] (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                  (let [config (config/get-config tx "LOGGING_LEVEL")]
+                                    (reset! log/logging-level
+                                            (if (empty? config)
+                                              :info
+                                              (-> config str/lower-case keyword))))))]
+    (get-logging-level)
+    (future
+      (while true
+        (get-logging-level)
+        (.sleep TimeUnit/SECONDS 60)))))
 
 (defn ^:private start-logging-polling
   "Start polling for changes to the log level."

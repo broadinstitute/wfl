@@ -44,6 +44,7 @@
                                             ::all/stopped
                                             ::all/updated
                                             ::all/watchers]))
+
 ;; Workload
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
