@@ -93,7 +93,6 @@ uses Universal Coordinated Time (UTC).
 
 The email addresses of those whom should be "readers" of all snapshots created
 by workflow-launcher in this workload. You can specify individual users and/or
-
 Terra/Firecloud groups.
 
 ### `TDR Snapshots` Source
