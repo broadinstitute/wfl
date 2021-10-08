@@ -42,6 +42,7 @@
          "../derived/api/resources" "resources"]
 
  :aliases
+ 
  {:wfl {:main-opts ["-m" "wfl.main"]}
 
   :check-format
@@ -71,7 +72,7 @@
                 :config-files   #{"resources/eastwood.clj"}
                 :source-paths   ["src" "test"]
                 :ignored-faults {:keyword-typos {wfl.api.routes [true]}}}]}
-  
+
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
