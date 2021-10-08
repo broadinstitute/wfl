@@ -17,7 +17,7 @@
   clj-time/clj-time                         {:mvn/version "0.15.2"}
   javax.servlet/servlet-api                 {:mvn/version "2.5"}
   javax/javaee-api                          {:mvn/version "8.0.1"}
-  metosin/reitit                            {:mvn/version "0.5.13" :exclusions [metosin/ring-swagger-ui]}
+  metosin/reitit                            {:mvn/version "0.5.15"}
   metosin/ring-http-response                {:mvn/version "0.9.2"}
   mysql/mysql-connector-java                {:mvn/version "8.0.25"}
   ojdbc14/ojdbc14                           {:mvn/version "10.2.0.1.0"}
@@ -42,7 +42,7 @@
          "../derived/api/resources" "resources"]
 
  :aliases
- 
+
  {:wfl {:main-opts ["-m" "wfl.main"]}
 
   :check-format
@@ -72,7 +72,7 @@
                 :config-files   #{"resources/eastwood.clj"}
                 :source-paths   ["src" "test"]
                 :ignored-faults {:keyword-typos {wfl.api.routes [true]}}}]}
-  
+
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
                                                 :exclusions [ch.qos.logback/logback-classic]}}
@@ -83,7 +83,7 @@
   {:main-opts   ["-m" "wfl.main"]}
 
   :test
-  {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.829"}
+  {:extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.861"}
                  org.apache.commons/commons-io {:mvn/version "1.3.2"}
                  org.liquibase/liquibase-core  {:mvn/version "4.3.5"
                                                 :exclusions [ch.qos.logback/logback-classic]}}

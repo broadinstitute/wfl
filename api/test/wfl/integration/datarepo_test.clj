@@ -32,7 +32,7 @@
           (datasets/unique-dataset-request tdr-profile definition)
           ;; wait for 3 seconds to avoid random 404 transient issues from TDR
           #(do (util/sleep-seconds 3)
-               (let [dataset (datarepo/dataset %)]
+               (let [dataset (datarepo/datasets %)]
                  (is (= % (:id dataset))))))))))
 
 (defn ^:private replace-urls-with-file-ids
@@ -87,7 +87,7 @@
 
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        dataset     (datarepo/dataset (:id testing-dataset))
+        dataset     (datarepo/datasets (:id testing-dataset))
         table       "flowcells"
         row-ids     (-> (datarepo/query-table-between
                          dataset

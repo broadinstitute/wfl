@@ -23,6 +23,10 @@
 (def email
   (delay (:email (gcs/userinfo {:headers (auth/get-auth-header)}))))
 
+(def watchers
+  [["email" "hornet@broadinstitute.org"]
+   ["slack" "C026PTM4XPA"]])
+
 (def ^:private git-branch
   (delay (util/shell! "git" "branch" "--show-current")))
 
@@ -45,6 +49,7 @@
   "A whole genome sequencing workload used for testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   (str "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/"
                   identifier)
    :pipeline wgs/pipeline
@@ -61,6 +66,7 @@
   Randomize it with IDENTIFIER for easier testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   "gs://broad-gotc-dev-wfl-ptc-test-outputs/aou-test-output/"
    :pipeline aou/pipeline
    :project  (format "(Test) %s %s" @git-branch identifier)})
@@ -87,7 +93,7 @@
    :sample_lsid                     "broadinstitute.org:bsp.dev.sample:NOTREAL.03C17319",
    :analysis_version_number         1,
    :call_rate_threshold             0.98,
-   :genotype_concordance_threshold  0.98,
+   :genotype_concordance_threshold  0.95,
    :reported_gender                 "Male",
    :chip_well_barcode               "200598830050_R07C01",
    :green_idat_cloud_path           "gs://broad-gotc-dev-wfl-ptc-test-inputs/arrays/PsychChip_v1-1_15073391_A1/idats/200598830050_R07C01/200598830050_R07C01_Grn.idat",
@@ -108,6 +114,7 @@
   "Make a workload to copy a file from SRC to DST"
   [src dst]
   {:executor @cromwell-url
+   :watchers watchers
    :output   ""
    :pipeline cp/pipeline
    :project  @project
@@ -139,6 +146,7 @@
                sink)
     :project  @project
     :creator  @email
+    :watchers watchers
     :labels   ["hornet:test"]})
   ([]
    (covid-workload-request {} {} {})))
@@ -147,6 +155,7 @@
   "A whole genome sequencing workload used for testing."
   [identifier]
   {:executor @cromwell-url
+   :watchers watchers
    :output   (str/join "/" ["gs://broad-gotc-dev-wfl-ptc-test-outputs"
                             "xx-test-output" identifier])
    :pipeline xx/pipeline
@@ -226,6 +235,7 @@
                               identifier])
      :pipeline sg/pipeline
      :project  @project
+     :watchers watchers
      :items    [{:inputs
                  {:base_file_name          sample_alias
                   :contamination_vcf       vcf
@@ -251,14 +261,14 @@
     max-polling-attempts)))
 
 (defn when-all-workflows-finish
-  "Call `done!` when all workflows in the `workload` have finished processing."
+  "Call `done!` when all workflows in `workload` are finished."
   [done! {:keys [uuid] :as workload}]
-  (done!
-   (util/poll
-    #(when (every? cromwell/final? (endpoints/get-workflows workload))
-       (endpoints/get-workload-status uuid))
-    polling-interval-seconds
-    max-polling-attempts)))
+  (letfn [(all-workflows-finished? []
+            (when (every? (comp cromwell/final? :status)
+                          (endpoints/get-workflows workload))
+              (endpoints/get-workload-status uuid)))]
+    (done! (util/poll all-workflows-finished?
+                      polling-interval-seconds max-polling-attempts))))
 
 (defn evalT
   "Evaluate `operation` in the context of a database transaction where

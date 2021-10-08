@@ -107,7 +107,7 @@ Ex: `bash retry.sh project=PO-29619`
 ```bash
 # Usage: bash abort.sh QUERY [WFL_URL]
 #   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`
-#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]
+#   WFL_URL is the WFL instance to retry workflows from [default: gotc-prod]
 
 WFL_URL="${2:-https://gotc-prod-wfl.gotc-prod.broadinstitute.org}"
 AUTH_HEADER="Authorization: Bearer $(gcloud auth print-access-token)"
@@ -127,14 +127,12 @@ getWorkflows() {
          | jq
 }
 
-removeSucceeded() {
+failedWorkflowsToSubmit() {
     # [[Workflow]] -> [Workflow]
     jq 'flatten
-        | group_by( {inputs: .inputs, options: .options} )
-        | map( select( all(.status=="Succeeded") )
-             | .[0]
-             | {inputs: .inputs, options: .options} )
-        | del(.[][] | nulls)
+        | map ( select ( .status=="Failed" )
+                | {inputs: .inputs, options: .options}
+                | del ( .[] | nulls ) )
         ' <<< "$1"
 }
 
@@ -163,7 +161,7 @@ main() {
     # Query -> ()
     workloads=$(getWorkloads "${1}")
     workflows=$(mapjq getWorkflows "${workloads}")
-    toSubmit=$(removeSucceeded "${workflows}")
+    toSubmit=$(failedWorkflowsToSubmit "${workflows}")
     makeRetryRequest "${workloads[0]}" "${toSubmit}" > /tmp/retry.json
 
     curl -X POST "${WFL_URL}/api/v1/exec" \

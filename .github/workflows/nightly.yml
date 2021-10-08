@@ -1,10 +1,10 @@
-# This workflow triggers tests on PRs
-name: Tests on Pull Requests
+# This workflow runs system tests nightly and can be triggered on demand
+name: WFL Nightly Test
 on:
-  pull_request:
-    paths:
-      - api/**
-      - database/**
+  schedule:
+    # run every day at 00:00
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -108,11 +108,5 @@ jobs:
       - name: Build
         run: make ${MODULES} TARGET=build
 
-      - name: Unit Test
-        run: make ${MODULES} TARGET=unit
-
-      - name: Integration Test
-        env:
-          WFL_POSTGRES_USERNAME: postgres
-          WFL_POSTGRES_PASSWORD: postgres
-        run: make ${MODULES} TARGET=integration
+      - name: Nightly Test
+        run: make ${MODULES} TARGET=nightly

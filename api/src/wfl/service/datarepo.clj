@@ -33,10 +33,9 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
-(defn dataset
+(defn datasets
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
-  {:pre [(some? dataset-id)]}
   (try
     (get-repository-json "datasets" dataset-id)
     (catch ExceptionInfo e
@@ -90,14 +89,11 @@
 (defn ingest-table
   "Ingest TABLE at PATH to DATASET-ID and return the job ID."
   [dataset-id path table]
-  (ingest
-   "ingest"
-   dataset-id
-   {:format          "json"
-    :load_tag        (new-load-tag)
-    :max_bad_records 0
-    :path            path
-    :table           table}))
+  (ingest "ingest" dataset-id {:format          "json"
+                               :load_tag        (new-load-tag)
+                               :max_bad_records 0
+                               :path            path
+                               :table           table}))
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
@@ -113,8 +109,8 @@
   {:pre [(some? job-id)]}
   (get-repository-json "jobs" job-id))
 
-(defn get-job-result
-  "Get the result of job with `job-id`."
+(defn job-result
+  "Return the result of job with `job-id`."
   [job-id]
   (get-repository-json "jobs" job-id "result"))
 
@@ -205,6 +201,23 @@
   [snapshot-id]
   (get-repository-json "snapshots" snapshot-id))
 
+(defn delete-dataset-snapshots
+  "Delete snapshots on dataset with `dataset-id`."
+  [dataset-id]
+  (letfn [(delete [{:keys [id] :as _snapshot}]
+            (-> (repository "snapshots" id)
+                (http/delete {:headers (auth/get-service-account-header)})
+                util/response-body-json :id))]
+    (->> dataset-id list-snapshots :items
+         (map delete)   doall
+         (map poll-job) doall)))
+
+(defn delete-snapshots-then-dataset
+  "Delete snapshots on dataset with `dataset-id` then delete it."
+  [dataset-id]
+  (delete-dataset-snapshots dataset-id)
+  (delete-dataset dataset-id))
+
 (defn all-columns
   "Helper function to parse all of the columns
    of `table` in `dataset` body."
@@ -229,21 +242,35 @@
    :name        name
    :profileId   defaultProfileId})
 
-;; hack - TDR adds the "datarepo_" prefix to the dataset name in BigQuery
-;; They plan to expose this name via `GET /api/repository/v1/datasets/{id}`
-;; in a future release.
-(defn ^:private bigquery-name
-  "Return the BigQuery name of the `dataset-or-snapshot`."
-  [{:keys [name] :as dataset-or-snapshot}]
-  (letfn [(snapshot? [x] (util/absent? x :defaultSnapshotId))]
-    (if (snapshot? dataset-or-snapshot) name (str "datarepo_" name))))
+;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
+;;
+(defn ^:private bq-datasetId-dataProject
+  "Return a BigQuery [datasetId dataProject] pair for `dataset-or-snapshot`."
+  [dataset-or-snapshot]
+  (cond (not= ::snap (:defaultSnapshotId dataset-or-snapshot ::snap))
+        (let [{:keys [accessInformation dataProject name] :as _dataset}
+              dataset-or-snapshot]
+          [(or (get-in accessInformation [:bigQuery :datasetId])
+               (str "datarepo_" name))
+           dataProject])
+        (map? dataset-or-snapshot)
+        (let [{:keys [dataProject name] :as _snapshot} dataset-or-snapshot]
+          [name dataProject])
+        (string? dataset-or-snapshot)
+        (let [{:keys [accessInformation dataProject name] :as _dataset}
+              (datasets dataset-or-snapshot)]
+          [(or (get-in accessInformation [:bigQuery :datasetId])
+               (str "datarepo_" name))
+           dataProject])
+        :else
+        (throw (UserException. "Not dataset or snapshot" dataset-or-snapshot))))
 
 (defn ^:private query-table-impl
-  ([{:keys [dataProject] :as dataset} table col-spec]
-   (let [bq-name (bigquery-name dataset)]
-     (bigquery/query-sync
-      dataProject
-      (format "SELECT %s FROM `%s.%s.%s`" col-spec dataProject bq-name table)))))
+  [dataset-or-snapshot table col-spec]
+  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)]
+    (-> "SELECT %s FROM `%s.%s.%s`"
+        (format col-spec dataProject datasetId table)
+        (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
@@ -255,14 +282,12 @@
                      (util/to-comma-separated-list (map name columns)))))
 
 (defn ^:private query-table-between-impl
-  [{:keys [dataProject] :as dataset} table between [start end] col-spec]
-  (let [[table between] (map name [table between])
-        bq-name (bigquery-name dataset)
-        query   (str/join \newline ["SELECT %s"
-                                    "FROM `%s.%s.%s`"
-                                    "WHERE %s BETWEEN '%s' AND '%s'"])]
-    (-> query
-        (format col-spec dataProject bq-name table between start end)
+  [dataset-or-snapshot table between [start end] col-spec]
+  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
+        [table between] (map name [table between])]
+    (-> (str/join \newline ["SELECT %s FROM `%s.%s.%s`"
+                            "WHERE %s BETWEEN '%s' AND '%s'"])
+        (format col-spec dataProject datasetId table between start end)
         (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table-between

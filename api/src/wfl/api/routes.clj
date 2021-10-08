@@ -10,6 +10,7 @@
             [reitit.ring.middleware.muuntaja    :as muuntaja]
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
+            [reitit.swagger-ui                  :as swagger-ui]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
@@ -20,8 +21,8 @@
             [wfl.util                           :as util]
             [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
-           [wfl.util UserException]
-           [org.apache.commons.lang3.exception ExceptionUtils]))
+           [org.apache.commons.lang3.exception ExceptionUtils]
+           [wfl.util UserException]))
 
 (def endpoints
   "Endpoints exported by the server."
@@ -96,6 +97,8 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
+   ["/swagger-ui/*"
+    {:get (swagger-ui/create-swagger-ui-handler {:url "/swagger/swagger.json"})}]
    ["/swagger/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
@@ -135,21 +138,24 @@
 (defn exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception {:keys [uri] :as _request}]
+  [status message exception {:keys [uri] :as _request} return-trace]
   {:status (or (:status (ex-data exception)) status)
-   :body   (-> (when-let [cause (.getCause exception)]
-                 {:cause (ExceptionUtils/getRootCauseMessage cause)})
-               (merge {:uri     uri
-                       :message (or (.getMessage exception) message)
-                       :details (-> exception ex-data (dissoc :status))}))})
+   :body   (merge {:message message}
+                  (when return-trace
+                    (-> (when-let [cause (.getCause exception)]
+                          {:cause (ExceptionUtils/getRootCauseMessage cause)})
+                        (merge {:uri     uri
+                                :message (or (.getMessage exception) message)
+                                :details (-> exception ex-data (dissoc :status))}))))})
 
 (defn logging-exception-handler
   "Like [[exception-handler]] but also log information about the exception."
-  [status message exception {:keys [uri] :as request}]
-  (let [{:keys [body status] :as result}
-        (exception-handler status message exception request)]
-    (log/error (format "Server %s error at occurred at %s :" status uri))
-    (log/error (util/make-map exception body))
+  [status message labels severity return-trace exception request]
+  (let [{:keys [body] :as result}
+        (exception-handler status message exception request return-trace)]
+    (case severity
+      :warning (log/log :warning (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
+      :error (log/log :error (str (util/make-map exception body)) :logging.googleapis.com/labels labels))
     result))
 
 (def exception-middleware
@@ -158,15 +164,15 @@
    (merge
     exception/default-handlers
     {;; ex-data with :type :wfl/exception
-     ::workloads/invalid-pipeline          (partial exception-handler 400 "")
-     ::workloads/workload-not-found        (partial exception-handler 404 "")
-     UserException                         (partial exception-handler 400 "")
+     ::workloads/invalid-pipeline          (partial logging-exception-handler 400 "Request Invalid." {:exception-type "InvalidPipeline"} :warning true)
+     ::workloads/workload-not-found        (partial logging-exception-handler 404 "Workload Not Found." {:exception-type "WorkloadNotFound"} :warning true)
+     UserException                         (partial logging-exception-handler 400 "Request Invalid." {:exception-type "UserException"} :warning true)
      ;; SQLException and all its child classes
-     SQLException                          (partial logging-exception-handler 500 "SQL Exception")
+     SQLException                          (partial logging-exception-handler 500 "An internal error has occurred during this request." {} :error false)
      ;; handle clj-http Slingshot stone exceptions
-     :clj-http.client/unexceptional-status (partial exception-handler 400 "HTTP Error on request")
+     :clj-http.client/unexceptional-status (partial logging-exception-handler 400 "HTTP Error on request" {:exception-type "HTTPError"} :warning true)
      ;; override the default handler
-     ::exception/default                   (partial logging-exception-handler 500 "Internal Server Error")})))
+     ::exception/default                   (partial logging-exception-handler 500 "An internal error has occurred during this request. The development team has been notified of this error." {} :error false)})))
 
 (def routes
   (ring/ring-handler

@@ -12,7 +12,6 @@
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
            [java.time OffsetDateTime ZoneId]
-           [java.time.temporal ChronoUnit]
            [java.util ArrayList Collections Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [javax.mail.internet InternetAddress]
@@ -33,9 +32,12 @@
 (defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
 (defn parse-json
-  "Parse json `object` into keyword->object map recursively"
+  "Parse JSON `object` into keyword->object map recursively."
   [^String object]
-  (json/read-str object :key-fn keyword))
+  (try (json/read-str object :key-fn keyword)
+       (catch Throwable x
+         (log/error {:exception x :object object})
+         object)))
 
 (defn response-body-json
   "Return the :body of the http `response` as JSON"
@@ -164,22 +166,6 @@
   "Map the function F over the values in map M."
   [f m]
   (zipmap (keys m) (map f (vals m))))
-
-(defn minutes-between
-  "The number of minutes from START to END."
-  [start end]
-  (.between
-   ChronoUnit/SECONDS
-   (OffsetDateTime/parse start)
-   (OffsetDateTime/parse end)))
-
-(defn seconds-between
-  "The number of seconds from START to END."
-  [start end]
-  (.between
-   ChronoUnit/SECONDS
-   (OffsetDateTime/parse start)
-   (OffsetDateTime/parse end)))
 
 (defn summarize
   "Summarize COMMANDS in a string vector."

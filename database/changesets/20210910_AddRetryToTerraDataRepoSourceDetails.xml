@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="hornet@broadinstitute.org"
+               dbms="postgresql"
+               id="20210910"
+               logicalFilePath="20210910_AddRetryToTerraDataRepoSourceDetails.xml"
+               runInTransaction="false">
+        <comment>
+            Add a `retry` attribute to the `TerraDataRepoSourceDetails` type
+            and all instantiations thereof to support automatic retry of
+            failed snapshot creation jobs.
+            When a snapshot creation job is retried, this column is set to
+            the row id of the new record corresponding to its retry.
+            From this, one can construct a singly linked list
+            tracing the retry history of a set of snapshot creation jobs.
+        </comment>
+        <sql>
+            ALTER TYPE TerraDataRepoSourceDetails
+            ADD ATTRIBUTE retry BIGINT
+            CASCADE;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

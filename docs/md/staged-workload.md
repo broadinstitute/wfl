@@ -20,14 +20,27 @@ The workload [Sink](./sink.md) models the terminal stage of a processing pipelin
 In a typical workload configuration, a `Sink` can be used to write workflow outputs
 to a desired location in the cloud.
 
-## Example Staged Workload 
+## Example Staged Workload
 The specific values below are from the
 [COVID-19 Surveillance in Terra](./modules-covid.md) project.
 Workloads for other projects may leverage different implementations for source, executor or sink.
 
+!!! tip "`watchers` of a workload"
+    You may have noticed the optional `watchers` field in the requests.
+    As of `2021/08` WFL supports registering Slack channels
+    (Slack channel IDs that starts with a `C`)
+    as watchers of the workload.
+    Your channel needs to live in the `broadinstitute.slack.com` Slack organization
+    and you also have to `/invite @WorkFlow Launcher Notifier`
+    to invite the WFL notifier to your channel
+    before the channel can receive user facing messaged from WFL.
+
 ```
 {
-    "watchers": [ tester@broadinstitute.org ],
+    "watchers": [
+        ["slack", "C000XXX0XXX"],
+        ["email", "tester@broadinstitute.org"]
+    ],
     "labels": [
         "hornet:test"
     ],
@@ -53,7 +66,7 @@ Workloads for other projects may leverage different implementations for source, 
         "workspace": "wfl-dev/CDC_Viral_Sequencing",
         "entityType": "flowcell",
         "identifier": "run_id",
-        "fromOutputs": { 
+        "fromOutputs": {
             "submission_xml" : "submission_xml",
             "assembled_ids" : "assembled_ids",
             "num_failed_assembly" : "num_failed_assembly",
@@ -65,11 +78,11 @@ Workloads for other projects may leverage different implementations for source, 
 
 ## Staged Workload Anatomy (High Level)
 
-| Field    | Type | Description                     |
-|----------|------|---------------------------------|
-| watchers | List   | A list of emails to notify |
+| Field    | Type   | Description                                                                                                                                                                                                                                 |
+|----------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| watchers | List   | An optional list of emails or Slack channels to notify                                                                                                                                                                                                |
 | labels   | List   | A list of user-defined labels.They must be a string of the form `"name":"value”`, where `name` must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and `value` is any non-blank string |
-| project  | String |  The project is a non-null string required in the workload table. It's needed to support querying workloads by project |
-| source   | Object | The data source |
-| executor | Object | The mechanism executing the analysis. (Most often this is Terra)|
-| sink     | Object | The location where data will be placed after analysis is complete|
+| project  | String | The project is a non-null string required in the workload table. It's needed to support querying workloads by project                                                                                                                       |
+| source   | Object | The data source                                                                                                                                                                                                                             |
+| executor | Object | The mechanism executing the analysis. (Most often this is Terra)                                                                                                                                                                            |
+| sink     | Object | The location where data will be placed after analysis is complete                                                                                                                                                                           |

@@ -33,7 +33,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "Arrays_v2.3.0"
+  {:release "Arrays_v2.4.1"
    :path    "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map
@@ -172,7 +172,7 @@
    Due to the continuous nature of the AoU dataflow, this function will only
    create a new workload table if it does not exist otherwise append records
    to the existing one."
-  [tx {:keys [creator executor pipeline project output] :as _request}]
+  [tx {:keys [creator executor pipeline project output watchers] :as _request}]
   (gcs/parse-gs-url output)
   (let [slashified-output (util/slashify output)
         {:keys [release path]} workflow-wdl
@@ -192,6 +192,7 @@
                                 :release  release
                                 :uuid     (UUID/randomUUID)
                                 :version  version
+                                :watchers (pr-str watchers)
                                 :wdl      path}
                                (jdbc/insert! tx :workload)
                                first

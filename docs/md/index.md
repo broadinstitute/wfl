@@ -208,7 +208,6 @@ After cloning a new WFL repo, the top-level files are:
 ├── makerules/      - common `Makefile` functionality
 ├── ops/            - scripts to support Operations
 ├── README.md       - symbolic link to docs/md/README.md
-├── ui/             - `workflow-launcher` frontend
 └── version         - holds the current semantic version
 ```
 Tip: Run `make` at least once after cloning the repo to make sure all the

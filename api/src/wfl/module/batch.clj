@@ -3,6 +3,7 @@
   (:require [clj-http.client      :as http]
             [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
+            [clojure.edn          :as edn]
             [wfl.api.workloads    :as workloads]
             [wfl.auth             :as auth]
             [wfl.jdbc             :as jdbc]
@@ -126,6 +127,7 @@
         (-> workload-request
             (select-keys [:creator :executor :input :output :project :watchers :labels])
             (update :executor util/de-slashify)
+            (update :watchers pr-str)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
             (assoc :release release :wdl path :uuid (UUID/randomUUID))
             (->> (jdbc/insert! tx :workload)))
@@ -138,7 +140,10 @@
 (defn load-batch-workload-impl
   "Load workload metadata + trim any unused vars."
   [_ workload]
-  (into {:type :workload} (filter second workload)))
+  (update
+   (into {:type :workload} (filter second workload))
+   :watchers
+   edn/read-string))
 
 (defn submit-workload!
   "Submit the `workflows` to Cromwell with `url`."
@@ -267,4 +272,5 @@
     :stopped
     :uuid
     :version
+    :watchers
     :wdl]))

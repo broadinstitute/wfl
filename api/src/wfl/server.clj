@@ -15,6 +15,7 @@
             [wfl.jdbc                       :as jdbc]
             [wfl.log                        :as log]
             [wfl.service.postgres           :as postgres]
+            [wfl.service.slack              :as slack]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
   (:import (java.util.concurrent Future TimeUnit)
@@ -77,28 +78,25 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn notify-watchers [watchers _uuid _exception]
-  {:pre [(some? watchers)]}
-  (log/info (str/join " " ["notifying: " watchers])))
-
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
-  (letfn [(do-update! [{:keys [id uuid]}]
+  (letfn [(do-update! [{:keys [id uuid] :as _workload}]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [{:keys [watchers] :as workload}
-                    (workloads/load-workload-for-id tx id)]
-                (log/info (format "Updating workload %s" uuid))
+                    (workloads/load-workload-for-id tx id)
+                    slack-watchers (filter slack/slack-channel-watcher? watchers)]
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
                     (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
-                    (notify-watchers watchers uuid e))))))
+                    (slack/notify-channels slack-watchers uuid e))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
+              (log/info (format "Updating workload %s" uuid))
               (do-update! workload)
               (catch Throwable t
                 (log/error (format "Failed to update workload %s" uuid))
@@ -119,7 +117,8 @@
     (future
       (while true
         (update-workloads)
-        (.sleep TimeUnit/SECONDS 20)))))
+        (util/sleep-seconds 20)))
+    (slack/start-notification-loop slack/notifier)))
 
 (defn ^:private start-logging-polling
   "Start polling for changes to the log level."

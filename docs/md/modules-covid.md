@@ -32,7 +32,7 @@ The life-cycle of a workload is a multi-stage process:
       In one-off processing or development, we may instead use name
       [`TDR Snapshots Source`](./source.md#tdr-snapshots-source)
       to specify a list of existing TDR snapshots.
-     
+
     - The [Executor](./executor.md) request is expected to have name
       [`Terra`](./executor.md#terra-executor) and specify the Terra workspace
       configuration for executing workflows.
@@ -40,11 +40,11 @@ The life-cycle of a workload is a multi-stage process:
     - The [Sink](./sink.md) request is expected to have name
       [`Terra Workspace`](./sink.md#terra-workspace-sink)
       and specify the Terra workspace configuration for saving workflow outputs.
-      
+
     If all stage requests pass verification,
     in response the caller will receive the newly created
     [workload object](#workload-response-format) with an assigned `uuid`.
-   
+
 2. Next, the caller needs to [start](#start-workload) the newly created workload, which will begin the analysis.
    Once started, WFL will continue to poll for new inputs to the source until it is stopped.
 
@@ -71,7 +71,10 @@ An example workload response at the time of this writing is formatted thusly:
 ```
 {
     "started" : "2021-07-14T15:36:47Z",
-    "watchers" : [ "okotsopo@broadinstitute.org" ],
+    "watchers" : [
+        ["slack", "C000XXX0XXX"],
+        ["email", "okotsopo@broadinstitute.org"]
+    ],
     "labels" : [ "hornet:test", "project:okotsopo testing enhanced source, executor, sink logging" ],
     "creator" : "okotsopo@broadinstitute.org",
     "updated" : "2021-08-06T21:41:28Z",
@@ -248,7 +251,8 @@ with an assigned `uuid`.
          -H 'Content-Type: application/json' \
          -d '{
                 "watchers": [
-                    "tester@123.com"
+                    ["slack", "C000XXX0XXX"],
+                    ["email", "tester@broadinstitute.org"]
                 ],
                 "labels": [
                     "hornet:test"
@@ -338,7 +342,8 @@ with an assigned `uuid`.
          -H 'Content-Type: application/json' \
          -d '{
                 "watchers": [
-                    "tester@123.com"
+                    ["slack", "C000XXX0XXX"],
+                    ["email", "tester@broadinstitute.org"]
                 ],
                 "labels": [
                     "hornet:test"

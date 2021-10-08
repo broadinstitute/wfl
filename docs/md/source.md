@@ -1,6 +1,8 @@
 # Source
-The workload `Source` models the first stage of a processing pipeline. In a 
-typical workload configuration, a `Source` can be used to read workflow inputs
+
+The workload `Source` models the first stage of a processing pipeline.
+In a typical workload configuration,
+a `Source` can be used to read workflow inputs
 from a specified location or service in the cloud.
 
 ## User Guide
@@ -20,6 +22,14 @@ from a single table.
 When you `start` the workload, the `Terra DataRepo` source will start looking
 for new/updated rows from that instant.
 
+!!! note
+    `Terra DataRepo` source only polls for new rows every 20 minutes
+    to reduce the chances of dataset lock collision and creating
+    many low-cardinality snapshots.
+
+    This is a longer cadence than the parent workload update loop,
+    which runs every 20 seconds.
+
 When you `stop` the workload, the `Terra DataRepo` source will stop looking
 for new/updated rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.
@@ -28,7 +38,7 @@ to be processed by a later workload stage.
     workflow-launcher creates snapshots of your data to be processed by a
     later stage of the workload. Therefore, you must ensure the account
     `workflow-launcher@firecloud.org` is a `custodian` of your dataset.
-    
+
 A typical `Terra DataRepo` source configuration in the workload request looks
 like:
 ```json
@@ -42,7 +52,7 @@ like:
     ...
   ]
 }
-``` 
+```
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute         | Description                                              |
@@ -64,29 +74,33 @@ each row contains all the inputs required to execute a workflow by the workload
 `Executor` downstream.
 
 #### `column`
-The `column` is the name of a column in the table specified above used to
-determine which rows are new and/or have been updated and therefore need
-reprocessing. It should be a `Timestamp`, but `DateTime` is accepted too.
-You must ensure that the `Timestamp` or `DateTime` column uses Universal 
-Coordinated Time (UTC).
+
+The `column` is the name of a column in the table specified above
+used to determine which rows are new or have been updated
+and therefore need reprocessing.
+It should be a `Timestamp`,
+but `DateTime` is accepted too.
+You must ensure that the `Timestamp` or `DateTime` column
+uses Universal Coordinated Time (UTC).
 
 !!! note
     Using a `Timestamp` will increase the likelihood of workflow-launcher
     detecting and scheduling new rows in real-time due to greater precision.
-    Using `DateTime` may cause workflow-launcher to miss the row at first 
+    Using `DateTime` may cause workflow-launcher to miss the row at first
     (though it will be picked up later).
 
 #### `snapshotReaders`
+
 The email addresses of those whom should be "readers" of all snapshots created
-by workflow-launcher in this workload. You can specify individual users and/or 
+by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.
 
 ### `TDR Snapshots` Source
 
-You can configure workflow-launcher to use a list of TDR snapshots directly. 
+You can configure workflow-launcher to use a list of TDR snapshots directly.
 This may be useful if you don't want workflow-launcher to be a custodian of your
 dataset or if you already have snapshots you want to process. In this case you
-must ensure that `workflow-launcher@firecloud.org` is a `reader` of all 
+must ensure that `workflow-launcher@firecloud.org` is a `reader` of all
 snapshots you want it to process.
 
 A typical `TDR Snapshots` source configuration in the workload request looks
@@ -116,7 +130,7 @@ The table below summarises the purpose of each attribute in the above request.
 A source is a `Queue` that satisfies the `Source` protocol below:
 ```clojure
 (defprotocol Source
-  (start-source! 
+  (start-source!
     ^Unit
     [^Connection transaction  ;; JDBC Connection
      ^Source     source       ;; This source instance
@@ -125,7 +139,7 @@ A source is a `Queue` that satisfies the `Source` protocol below:
      processing stage. This operation should not perform any long-running
      external effects other than database operations via the `transaction`. This
      function is called at most once during a workload's operation.")
-  (stop-source! 
+  (stop-source!
     ^Unit
     [^Connection transaction  ;; JDBC Connection
      ^Source     source       ;; This source instance
@@ -152,9 +166,13 @@ A source is a `Queue` that satisfies the `Source` protocol below:
     name. The use of a protocol is to illustrate the difference between the
     in-memory data model of a `Source` and the metadata seen by a user.
 
-To be used in a workload, a `Source` implementation should satisfy the
-processing `Stage` protocol and the `to-edn` multimethod in addition to the
-following multimethods specific to sinks:
+To be used in a workload,
+a `Source` implementation
+should satisfy the processing `Stage` protocol
+and the `to-edn` multimethod
+in addition to the following multimethods
+specific to sinks:
+
 ```clojure
 (defmulti create-source
   "Create a `Source` instance using the database `transaction` and configuration
@@ -163,10 +181,10 @@ following multimethods specific to sinks:
    Notes:
    - This is a factory method registered for workload creation.
    - The `Source` type string must match a value of the `source` enum in the
-     database schema.   
+     database schema.
    - This multimethod is type-dispatched on the `:name` association in the
      `request`."
-  (fn ^[^String ^String] 
+  (fn ^[^String ^String]
       [^Connection         transaction  ;; JDBC Connection
        ^long               workload-id  ;; ID of the workload being created
        ^IPersistentHashMap request      ;; Data forwarded to the handler
