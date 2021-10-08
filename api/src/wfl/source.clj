@@ -3,15 +3,9 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
-<<<<<<< HEAD
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
-=======
-            [clojure.tools.logging :as log]
-            [wfl.api.workloads     :refer [defoverload]]
-            [wfl.jdbc              :as jdbc]
->>>>>>> origin/main
             [wfl.module.all        :as all]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
@@ -140,13 +134,8 @@
    to read it."
   [{:keys [dataset table column skipValidation] :as source}]
   (if skipValidation
-<<<<<<< HEAD
     (assoc source :dataset {:id (get source :dataset)})
     (let [dataset (datarepo/datasets dataset)]
-=======
-    source
-    (let [dataset (datarepo/dataset dataset)]
->>>>>>> origin/main
       (doto (datarepo/table-or-throw table dataset)
         (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))
@@ -168,13 +157,8 @@
   "Query TDR for rows within `_interval` that are new to `source`."
   [{:keys [dataset details table column] :as source}
    [begin end                            :as _interval]]
-<<<<<<< HEAD
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
-=======
-  (log/debug (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                     (log-prefix source) (:name dataset) table begin end))
->>>>>>> origin/main
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (postgres/get-table tx details))
         old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
@@ -227,7 +211,6 @@
            (jdbc/query tx)
            (map (juxt :id :snapshot_creation_job_id))))))
 
-<<<<<<< HEAD
 (defn ^:private result-or-catch
   "Return the result of `callable`,
   or the status and parsed response body of its thrown exception."
@@ -252,18 +235,6 @@
       (do (log/warn {:metadata metadata
                      :result   (result-or-catch get-job-result)})
           metadata))))
-=======
-(defn ^:private check-tdr-job
-  "Check TDR job status for `job-id`, return a map with job-id,
-   snapshot_id and job_status if job has failed or succeeded, otherwise nil."
-  [job-id]
-  (let [{:keys [job_status] :as result} (datarepo/job-metadata job-id)]
-    (case job_status
-      "running"   result
-      "succeeded" (assoc result :snapshot_id (:id (datarepo/get-job-result job-id)))
-      (do (log/warn (format "Snapshot creation job %s failed!" job-id))
-          result))))
->>>>>>> origin/main
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into source `details` table
@@ -313,17 +284,11 @@
                           (find-new-rows source)
                           (create-snapshots source utc-now))]
     (when (seq shards->jobs)
-<<<<<<< HEAD
       (log/info (format "%s Snapshots created from new rows in %s.%s."
                         (log-prefix source) (:name dataset) table))
       (write-snapshots-creation-jobs source utc-now shards->jobs))
     ;; Even if our poll did not yield new rows to snapshot, at least we tried:
     (update-last-checked source utc-now)))
-=======
-      (log/info (format "%s Snapshots created from new rows in %s.%s." (log-prefix source) (:name dataset) table))
-      (write-snapshots-creation-jobs source utc-now shards->jobs)
-      (update-last-checked source utc-now))))
->>>>>>> origin/main
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
