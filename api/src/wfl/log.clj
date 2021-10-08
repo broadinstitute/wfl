@@ -56,6 +56,7 @@
 (defmacro log
   "Log `expression` with `severity` and a optional set of special
    fields to provide more information about a logging message.
+<<<<<<< HEAD
 
    A detailed explanation of the fields and their meaning can be found
    here: https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
@@ -71,6 +72,23 @@
   :logging.googleapis.com/trace    Resource name of the trace associated with the log entry if any.
 
   :logging.googleapis.com/spanId    The span ID within the trace associated with the log entry."
+=======
+   
+   A detailed explanation of the fields and their meaning can be found
+   here: https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
+   
+   :httpRequest  A structured record for the Http Request that was made
+   
+   :logging.googleapis.com/insertId    An optional unique identifier. Logs with the same identifier and timestamp will be considered duplicates in Google Logging.
+   
+   :logging.googleapis.com/labels    A map of key value pairs that can be searched on in Google Logging.
+   
+   :logging.googleapis.com/operation    Additional information about a potentially long-running operation with which a log entry is associated.
+   
+   :logging.googleapis.com/trace    Resource name of the trace associated with the log entry if any.
+   
+   :logging.googleapis.com/spanId    The span ID within the trace associated with the log entry."
+>>>>>>> origin/main
   [severity expression & {:as additional-fields}]
   (let [{:keys [line]} (meta &form)]
     `(let [x# ~expression
@@ -88,40 +106,65 @@
 (defmacro debug
   "Log `expression` for debugging.
    This is for debug or trace information."
+<<<<<<< HEAD
   ([expression]
    (let [{:keys [line]} (meta &form)] `(debug ~expression ~line)))
   ([expression line]
    `(log :debug ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
+=======
+  [expression]
+  `(log :debug ~expression))
+>>>>>>> origin/main
 
 (defmacro info
   "Log `expression` as information.
    Used for routine information, such as ongoing status or performance."
+<<<<<<< HEAD
   ([expression]
    (let [{:keys [line]} (meta &form)] `(info ~expression ~line)))
   ([expression line]
    `(log :info ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
+=======
+  [expression]
+  `(log :info ~expression))
+>>>>>>> origin/main
 
 (defmacro notice
   "Log `expression` as a notice.
    Used for normal but significant events, such as start up,
    shut down, or a configuration change."
+<<<<<<< HEAD
   ([expression]
    (let [{:keys [line]} (meta &form)] `(notice ~expression ~line)))
   ([expression line]
    `(log :notice ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
+=======
+  [expression]
+  `(log :notice ~expression))
+>>>>>>> origin/main
 
 (defmacro warn
   "Log `expression` as a warning.
    Used for warning events, which might cause problems."
+<<<<<<< HEAD
   ([expression]
    (let [{:keys [line]} (meta &form)] `(warn ~expression ~line)))
   ([expression line]
    `(log :warning ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
+=======
+  [expression]
+  `(log :warning ~expression))
+>>>>>>> origin/main
 
 (defmacro error
   "Log `expression` as an error.
    Used for events that are likely to cause problems."
+<<<<<<< HEAD
   ([expression]
    (let [{:keys [line]} (meta &form)] `(error ~expression ~line)))
   ([expression line]
    `(log :error ~expression :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})))
+=======
+  [expression]
+  `(log :error ~expression))
+>>>>>>> origin/main

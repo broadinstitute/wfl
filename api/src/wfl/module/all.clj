@@ -140,8 +140,12 @@
 (s/def ::name string?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
+<<<<<<< HEAD
 (s/def ::watcher
   (s/or :email slack/email-watcher?
         :slack slack/slack-channel-watcher?))
 (s/def ::watchers (s/* ::watcher))
+=======
+(s/def ::watchers (s/* util/email-address?))
+>>>>>>> origin/main
 (s/def ::workspace (s/and string? util/terra-namespaced-name?))
