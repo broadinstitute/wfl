@@ -340,4 +340,4 @@
 - [GH-1013] Item Nesting V2 ([#188](https://github.com/broadinstitute/wfl/pull/188))
 - [GH-1034] Fix reference_fasta function ([#194](https://github.com/broadinstitute/wfl/pull/194))
 - [GH-771] WGS updates ([#191](https://github.com/broadinstitute/wfl/pull/191))
-  [GH-819] External Exome Reprocessing ([#139](https://github.com/broadinstitute/wfl/pull/139))
+- [GH-819] External Exome Reprocessing ([#139](https://github.com/broadinstitute/wfl/pull/139))
