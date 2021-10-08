@@ -74,6 +74,7 @@ each row contains all the inputs required to execute a workflow by the workload
 `Executor` downstream.
 
 #### `column`
+
 The `column` is the name of a column in the table specified above
 used to determine which rows are new or have been updated
 and therefore need reprocessing.
@@ -96,6 +97,7 @@ by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.
 
 ### `TDR Snapshots` Source
+
 You can configure workflow-launcher to use a list of TDR snapshots directly.
 This may be useful if you don't want workflow-launcher to be a custodian of your
 dataset or if you already have snapshots you want to process. In this case you

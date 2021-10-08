@@ -1,4 +1,5 @@
 # Sink
+
 The workload `Sink` models the terminal stage
 of a processing pipeline.
 In a typical workload configuration,
@@ -27,7 +28,6 @@ looks like:
   }
 }
 ```
-
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute     | Description                                                  |
@@ -50,6 +50,7 @@ will be created as. The entity type must exist prior to workload creation and
 must be a table in the workspace.
 
 #### `identifier`
+
 The `identifier` is the name of a pipeline output
 that should be used as the name of each newly created entity.
 
@@ -63,6 +64,7 @@ will be created using the "sample_name" as the entity name.
     the first set of outputs will be overwritten by the second in the workspace.
 
 #### `fromOutputs`
+
 `fromOutputs` configures how to create new entities from pipeline outputs
 by mapping the output names to attributes in the `entityType`.
 Note that all attribute names must exist
@@ -97,7 +99,6 @@ workload request looks like:
   }
 }
 ```
-
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute     | Description                                                  |
@@ -112,6 +113,7 @@ The dataset attribute is the `UUID` that uniquely identifies the TDR dataset you
 want workflow-launcher to write workflow outputs to.
 
 #### `table`
+
 The `table` is the name of the table in the dataset
 that you want workflow-launcher
 to write workflow outputs to.
