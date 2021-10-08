@@ -1,4 +1,5 @@
 # Source
+
 The workload `Source` models the first stage of a processing pipeline.
 In a typical workload configuration,
 a `Source` can be used to read workflow inputs
@@ -52,7 +53,6 @@ like:
   ]
 }
 ```
-
 The table below summarises the purpose of each attribute in the above request.
 
 | Attribute         | Description                                              |
