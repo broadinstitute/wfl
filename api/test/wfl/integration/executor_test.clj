@@ -307,7 +307,7 @@
          #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
         #(let [workflows-to-retry
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (executor/executor-workflows-by-status tx executor "Running"))]
+                 (executor/executor-workflows-by-filters tx executor {:status "Running"}))]
            (is (== 1 (count workflows-to-retry))
                "Should have one running workflow to retry.")
            (executor/executor-retry-workflows! executor workflows-to-retry)))

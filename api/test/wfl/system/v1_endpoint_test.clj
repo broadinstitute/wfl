@@ -340,7 +340,7 @@
      :workload  workload
      :workflows workflows}))
 
-(deftest ^:parallel test-workflows-by-status
+(deftest ^:parallel test-workflows-by-filters
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)

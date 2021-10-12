@@ -18,13 +18,9 @@
 (def pipeline nil)
 
 ;; specs
-(s/def ::executor (s/keys :req-un [::all/name
-                                   ::all/fromSource
-                                   ::all/methodConfiguration
-                                   ::all/methodConfigurationVersion
-                                   ::all/workspace]))
 (s/def ::creator util/email-address?)
-(s/def ::workload-request (s/keys :req-un [::executor
+
+(s/def ::workload-request (s/keys :req-un [::executor/executor
                                            ::all/project
                                            ::sink/sink
                                            ::source/source]
@@ -44,6 +40,7 @@
                                             ::all/stopped
                                             ::all/updated
                                             ::all/watchers]))
+
 ;; Workload
 (defn ^:private patch-workload [tx {:keys [id]} colls]
   (jdbc/update! tx :workload colls ["id = ?" id]))
@@ -177,16 +174,16 @@
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))
 
-(defoverload workloads/create-workload!    pipeline create-covid-workload)
-(defoverload workloads/start-workload!     pipeline start-covid-workload)
-(defoverload workloads/update-workload!    pipeline update-covid-workload)
-(defoverload workloads/stop-workload!      pipeline stop-covid-workload)
-(defoverload workloads/load-workload-impl  pipeline load-covid-workload-impl)
-(defmethod   workloads/workflows           pipeline
+(defoverload workloads/create-workload!     pipeline create-covid-workload)
+(defoverload workloads/start-workload!      pipeline start-covid-workload)
+(defoverload workloads/update-workload!     pipeline update-covid-workload)
+(defoverload workloads/stop-workload!       pipeline stop-covid-workload)
+(defoverload workloads/load-workload-impl   pipeline load-covid-workload-impl)
+(defmethod   workloads/workflows            pipeline
   [tx {:keys [executor] :as _workload}]
   (executor/executor-workflows tx executor))
-(defmethod   workloads/workflows-by-status pipeline
-  [tx {:keys [executor] :as _workload} status]
-  (executor/executor-workflows-by-status tx executor status))
-(defoverload workloads/retry              pipeline retry-covid-workload)
-(defoverload workloads/to-edn             pipeline workload-to-edn)
+(defmethod   workloads/workflows-by-filters pipeline
+  [tx {:keys [executor] :as _workload} filters]
+  (executor/executor-workflows-by-filters tx executor filters))
+(defoverload workloads/retry               pipeline retry-covid-workload)
+(defoverload workloads/to-edn              pipeline workload-to-edn)

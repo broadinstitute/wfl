@@ -2,6 +2,7 @@
   "Define specs used in routes"
   (:require [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
+            [wfl.executor         :as executor]
             [wfl.module.all       :as all]
             [wfl.module.aou       :as aou]
             [wfl.module.batch     :as batch]
@@ -15,7 +16,9 @@
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
                                #(not (and (:uuid %) (:project %)))))
 
-(s/def ::workflow-query (s/keys :opt-un [::all/status]))
+(s/def ::workflow-query (s/keys :opt-un [::all/status ::executor/submission]))
+
+(s/def ::retry-request (s/keys :req-un [::all/status ::executor/submission]))
 
 (s/def :version/built     util/datetime-string?)
 (s/def :version/commit    (s/and string? (comp not str/blank?)))

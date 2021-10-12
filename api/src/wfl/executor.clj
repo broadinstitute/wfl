@@ -1,11 +1,13 @@
 (ns wfl.executor
   (:require [clojure.edn           :as edn]
             [clojure.set           :as set :refer [rename-keys]]
+            [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
+            [wfl.module.all        :as all]
             [wfl.service.dockstore :as dockstore]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -29,10 +31,10 @@
   "Return the workflows managed by the `executor"
   (fn [_transaction executor] (:type executor)))
 
-(defmulti executor-workflows-by-status
+(defmulti executor-workflows-by-filters
   "Use db `transaction` to return the workflows created by the `executor`
-   matching `status`"
-  (fn [_transaction executor _status] (:type executor)))
+  matching `filters` (ex. status, submission)."
+  (fn [_transaction executor _filters] (:type executor)))
 
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
@@ -77,6 +79,14 @@
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
+
+;; Specs
+(s/def ::terra-executor (s/keys :req-un [::all/name
+                                         ::all/fromSource
+                                         ::all/methodConfiguration
+                                         ::all/methodConfigurationVersion
+                                         ::all/workspace]))
+(s/def ::submission util/uuid-string?)
 
 (defn ^:private write-terra-executor [tx id executor]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
@@ -390,7 +400,7 @@
                (firecloud/get-workflow-outputs workspace submission workflow))))]
     (map from-record records)))
 
-;; terra-executor-workflows and terra-executor-workflows-by-status do not return
+;; terra-executor-workflows and terra-executor-workflows-by-filters do not return
 ;; workflows that are being or have been retried. Why?
 ;;
 ;; TL/DR: It's simpler maybe?
@@ -444,19 +454,30 @@
      executor
      (jdbc/query tx (format query details)))))
 
-(defn ^:private terra-executor-workflows-by-status
-  "Return all the non-retried workflows matching `status` executed by the
-  `executor`."
-  [tx {:keys [details] :as executor} status]
+(defn ^:private remove-nil-and-join
+  "Remove nil elements of `vec` and join with `separator`."
+  ([vec separator]
+   (->> vec (remove nil?) (str/join separator)))
+  ([vec]
+   (remove-nil-and-join vec \space)))
+
+(defn ^:private terra-executor-workflows-by-filters
+  "Return all the non-retried workflows executed by `executor`
+  optionally matching `submission` and/or `status`."
+  [tx {:keys [details] :as executor} {:keys [submission status] :as _filters}]
   (postgres/throw-unless-table-exists tx details)
-  (let [query "SELECT * FROM %s
-               WHERE workflow IS NOT NULL
-               AND retry      IS NULL
-               AND status     = ?
-               ORDER BY id ASC"]
-    (terra-workflows-from-records
-     executor
-     (jdbc/query tx [(format query details) status]))))
+  (let [optionals (remove-nil-and-join [(when submission "AND submission = ?")
+                                        (when status "AND status = ?")])
+        query     (remove-nil-and-join ["SELECT * FROM %s"
+                                        "WHERE workflow IS NOT NULL"
+                                        "AND retry IS NULL"
+                                        optionals
+                                        "ORDER BY id ASC"])
+        sql-params (->> [submission status]
+                        (concat [(format query details)])
+                        (remove nil?)
+                        vec)]
+    (terra-workflows-from-records executor (jdbc/query tx sql-params))))
 
 (defn ^:private workflow-and-sibling-records
   "Return the workflow records for all workflows in submissions
@@ -551,11 +572,11 @@
   [tx id request]
   (write-terra-executor tx id (terra-executor-validate-request-or-throw request)))
 
-(defoverload load-executor!               terra-executor-type load-terra-executor)
-(defoverload update-executor!             terra-executor-type update-terra-executor)
-(defoverload executor-workflows           terra-executor-type terra-executor-workflows)
-(defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
-(defoverload executor-retry-workflows!    terra-executor-type terra-executor-retry-workflows)
+(defoverload load-executor!                terra-executor-type load-terra-executor)
+(defoverload update-executor!              terra-executor-type update-terra-executor)
+(defoverload executor-workflows            terra-executor-type terra-executor-workflows)
+(defoverload executor-workflows-by-filters terra-executor-type terra-executor-workflows-by-filters)
+(defoverload executor-retry-workflows!     terra-executor-type terra-executor-retry-workflows)
 
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
 (defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
@@ -563,3 +584,9 @@
 (defoverload stage/done?        terra-executor-type terra-executor-done?)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)
+
+;; reitit http coercion specs for an executor
+;; Recall s/or doesn't work (https://github.com/metosin/reitit/issues/494)
+(s/def ::executor
+  #(condp = (:name %)
+     terra-executor-name (s/valid? ::terra-executor %)))

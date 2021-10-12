@@ -127,14 +127,14 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      ^Executor   executor     ;; This executor instance
      ]
     "Use database `transaction` to return workflows created by the `executor`.")
-  (executor-workflows-by-status
+  (executor-workflows-by-filters
     ^IPersistentVector
-    [^Connection transaction  ;; JDBC Connection
-     ^Executor   executor     ;; This executor instance
-     ^String     status       ;; workflow status to match
+    [^Connection     transaction  ;; JDBC Connection
+     ^Executor       executor     ;; This executor instance
+     ^IPersistentMap filters      ;; Filters to restrict workflows returned
     ]
     "Use database `transaction` to return workflows created by the `executor`
-     matching the workflow `status`.")
+     matching the workflow `filters` (ex. status).")
   (executor-retry-workflows!
     ;; Executed for side effects
     [^Executor          executor   ;; This executor instance
