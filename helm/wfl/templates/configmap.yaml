@@ -36,7 +36,7 @@ data:
         RewriteCond  %{HTTP:X-Forwarded-Proto} !https
         RewriteCond %{REQUEST_URI}  !^/(status) [NC]
 
-        # NE|noescape for special cahracters
+        # NE|noescape for special characters
         RewriteRule (.*) https://${SERVER_NAME}%{REQUEST_URI} [R,L,NE]
 
         # Perform a terminal redirect if the method is HTTP OPTIONS
