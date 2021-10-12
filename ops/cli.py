@@ -41,7 +41,7 @@ def exit_if_dry_run(config: WflInstanceConfig) -> None:
 def publish_docker_images(config: WflInstanceConfig) -> None:
     """Publish latest docker images for the stored version."""
     info(f"=>  Publishing Docker images for version {config.version}")
-    for module in ["api"]:
+    for module in ["api" "ui"]:
         image = f"broadinstitute/workflow-launcher-{module}"
         # re-tag the image in case the version is being overwritten.
         shell(f"docker tag {image}:latest {image}:{config.version}")
