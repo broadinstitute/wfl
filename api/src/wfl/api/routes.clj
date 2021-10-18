@@ -97,9 +97,11 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
-   ["/swagger-ui/*"
-    {:get (swagger-ui/create-swagger-ui-handler {:url "/swagger/swagger.json"})}]
-   ["/swagger/swagger.json"
+   ["/swagger/*"
+    {:get (swagger-ui/create-swagger-ui-handler
+           {:path "/swagger"
+            :url "/swagger-ui/swagger.json"})}]
+   ["/swagger-ui/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
            {:info {:title (str wfl/the-name "-API")
