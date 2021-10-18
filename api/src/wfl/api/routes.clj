@@ -97,11 +97,7 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
-   ["/swagger/*"
-    {:get (swagger-ui/create-swagger-ui-handler
-           {:path "/swagger"
-            :url "/swagger-ui/swagger.json"})}]
-   ["/swagger-ui/swagger.json"
+   ["/ui-swagger/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
            {:info {:title (str wfl/the-name "-API")
@@ -117,7 +113,10 @@
             :tags [{:name "Informational"}
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
-           :handler (swagger/create-swagger-handler)}}]])
+           :handler (swagger/create-swagger-handler)}}]
+   ["/swagger*"
+    {:get (swagger-ui/create-swagger-ui-handler
+           {:url "/ui-swagger/swagger.json"})}]])
 
 (defn endpoint-swagger-auth-processor
   "Use the same security-info across all /api endpoints."
