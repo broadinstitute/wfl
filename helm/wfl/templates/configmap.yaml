@@ -80,10 +80,10 @@ data:
         ProxyPassReverse        ^/(status|version|oauth2id|swagger|swagger-ui) ${PROXY_URL}/$1
 
         # reverse proxy for /swagger
-        ProxyPass               /swagger    ${PROXY_URL}/swagger/
-        ProxyPassReverse        /swagger    ${PROXY_URL}/swagger/
-        ProxyPass               /swagger-ui ${PROXY_URL}/swagger-ui/
-        ProxyPassReverse        /swagger-ui ${PROXY_URL}/swagger-ui/
+        ProxyPass               /swagger    ${SERVER_NAME}:${SERVER_PORT}/swagger/
+        ProxyPassReverse        /swagger    ${SERVER_NAME}:${SERVER_PORT}/swagger/
+        ProxyPass               /swagger-ui ${SERVER_NAME}:${SERVER_PORT}/swagger-ui/
+        ProxyPassReverse        /swagger-ui ${SERVER_NAME}:${SERVER_PORT}/swagger-ui/
 
         <LocationMatch "/(status|version|oauth2id|swagger)">
             Header unset Access-Control-Allow-Origin
