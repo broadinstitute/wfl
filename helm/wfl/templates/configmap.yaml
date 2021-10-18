@@ -130,8 +130,8 @@ data:
             ${AUTH_REQUIRE2}
 
             # reverse proxy for /api/*
-            ProxyPass          ${PROXY_URL2}
-            ProxyPassReverse   ${PROXY_URL2}
+            ProxyPass          ${PROXY_URL_API}
+            ProxyPassReverse   ${PROXY_URL_API}
 
             ${FILTER2}
         </Location>
