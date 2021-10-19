@@ -80,12 +80,18 @@ data:
         ProxyPassReverse ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
 
         # reverse proxy for /swagger
-        ProxyPass        /ui              ${PROXY_URL}/ui
-        ProxyPassReverse /ui              ${PROXY_URL}/ui
-        ProxyPass        /ui/             ${PROXY_URL}/ui/
-        ProxyPassReverse /ui/             ${PROXY_URL}/ui/
-        ProxyPass        /ui/swagger.json ${PROXY_URL}/ui/swagger.json
-        ProxyPassReverse /ui/swagger.json ${PROXY_URL}/ui/swagger.json
+        ProxyPass        /swagger            ${PROXY_URL}/swagger
+        ProxyPassReverse /swagger            ${PROXY_URL}/swagger
+        ProxyPass        /swagger/           ${PROXY_URL}/swagger/
+        ProxyPassReverse /swagger/           ${PROXY_URL}/swagger/
+        ProxyPass        /swagger/index.html ${PROXY_URL}/swagger/index.html
+        ProxyPassReverse /swagger/index.html ${PROXY_URL}/swagger/index.html
+        ProxyPass        /ui                 ${PROXY_URL}/ui
+        ProxyPassReverse /ui                 ${PROXY_URL}/ui
+        ProxyPass        /ui/                ${PROXY_URL}/ui/
+        ProxyPassReverse /ui/                ${PROXY_URL}/ui/
+        ProxyPass        /ui/swagger.json    ${PROXY_URL}/ui/swagger.json
+        ProxyPassReverse /ui/swagger.json    ${PROXY_URL}/ui/swagger.json
 
         <LocationMatch "/(status|version|oauth2id|swagger)">
             Header unset Access-Control-Allow-Origin
