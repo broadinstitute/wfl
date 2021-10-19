@@ -79,10 +79,6 @@ data:
         ProxyPassMatch   ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
         ProxyPassReverse ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
 
-        # reverse proxy for /swagger
-        ProxyPass        /ui-swagger/swagger.json ${PROXY_URL}/ui-swagger/swagger.json
-        ProxyPassReverse /ui-swagger/swagger.json ${PROXY_URL}/ui-swagger/swagger.json
-
         <LocationMatch "/(status|version|oauth2id|swagger)">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
