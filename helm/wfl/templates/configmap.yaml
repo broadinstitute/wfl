@@ -76,8 +76,8 @@ data:
         # === API ===
         # For those endpoints that do NOT require AUTH
         # reverse proxy for /status, /version, and /oauth2id
-        ProxyPassMatch   ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
-        ProxyPassReverse ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
+        ProxyPassMatch   ^/(status|version|oauth2id|swagger|ui-swagger/swagger.json) ${PROXY_URL}/$1
+        ProxyPassReverse ^/(status|version|oauth2id|swagger|ui-swagger/swagger.json) ${PROXY_URL}/$1
 
         # reverse proxy for /swagger
         ProxyPass        /ui-swagger              ${PROXY_URL}/ui-swagger
