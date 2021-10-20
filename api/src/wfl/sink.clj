@@ -389,7 +389,7 @@
   (update-datarepo-job-statuses sink)
   (when-let [{:keys [job workflow] :as record} (peek-job-queue sink)]
     (try
-      (let [result (datarepo/get-job-result job)]
+      (let [result (datarepo/job-result job)]
         (if (< (:bad_row_count result) 1)
           (log/info "Sunk workflow outputs to dataset")
           (throw (UserException. "Row failed to sink to dataset" {:job job
