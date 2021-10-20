@@ -56,7 +56,9 @@
    "WFL_TDR_DEFAULT_PROFILE"
    (fn [] "6370f5a1-d777-4991-8200-ceab83521d43")
    "WFL_WFL_URL"
-   (fn [] "https://dev-wfl.gotc-dev.broadinstitute.org")})
+   (fn [] "https://dev-wfl.gotc-dev.broadinstitute.org")
+   "WFL_TDR_SERVICE_ACCOUNT"
+   (fn [] "datarepo-jade-api@terra-datarepo-production.iam.gserviceaccount.com")})
 
 (def ^:private __getenv
   (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))

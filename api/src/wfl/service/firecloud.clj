@@ -5,7 +5,8 @@
             [clojure.string    :as str]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
-            [wfl.util          :as util])
+            [wfl.util          :as util]
+            [clojure.java.io    :as io])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
            [wfl.util UserException]))
@@ -107,6 +108,19 @@
                     :content-type :application/json
                     :body         (json/write-str payload)})
         util/response-body-json)))
+
+(defn share-workspace
+  "Share the Terra workspace `workspace-to-share` with `email`."
+  [workspace-to-share share-info]
+  (util/response-body-json
+   (http/request {:method :patch
+                  :url (workspace-api-url workspace-to-share "acl")
+                  :headers      (auth/get-auth-header)
+                  :content-type :application/json
+                  :body         (json/write-str (map #(merge % {:canShare false
+                                                                :canCompute true})
+                                                     share-info))
+                  :query-params {:inviteUsersNotFound false}})))
 
 (defn delete-workspace
   "Delete the terra `workspace` and all data within."

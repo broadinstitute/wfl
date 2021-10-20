@@ -221,6 +221,21 @@
               clone-name))]
     (util/bracket clone-workspace firecloud/delete-workspace use-workspace)))
 
+(defn with-shared-temporary-workspace-clone
+  "Clone a temporary copy of `workspace-to-clone`, grant access to
+  `firecloud-group` and call `use-workspace` with the clone. The workspace will
+  be destroyed when `use-workspace` returns."
+  [workspace-to-clone firecloud-group shared-info use-workspace]
+  (letfn [(clone-workspace []
+            (let [clone-name (util/randomize workspace-to-clone)]
+              (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
+              clone-name))
+          (share-workspace [clone-name] (firecloud/share-workspace clone-name shared-info))
+          (create-workspace [] (let [workspace (clone-workspace)]
+                                 (share-workspace workspace)
+                                 workspace))]
+    (util/bracket create-workspace firecloud/delete-workspace use-workspace)))
+
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
    The original environment will be restored after `f` returns. No guarantees

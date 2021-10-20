@@ -7,6 +7,7 @@
             [wfl.api.handlers           :as handlers]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
+            [wfl.mime-type              :as mime-type]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -379,20 +380,28 @@
              (map (comp :fileId datarepo/poll-job ingest))
              (zipmap (keys input-map)))))))
 
+(defn ^:private convert-to-bulk
+  "Convert fileref column to BulkLoadFileModel for TDR"
+  [value bucket]
+  (let [basename (util/basename value)]
+    {:description basename
+     :mimeType (mime-type/ext-mime-type value)
+     :sourcePath value
+     :targetPath (str/join "/" [bucket basename])}))
+
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
+  "Ingest inputs for the illimina_genotyping_array pipeline into the
+   illimina_genotyping_array `dataset`"
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
-    (fn [temporary-cloud-storage-folder]
-      (let [file (str temporary-cloud-storage-folder "inputs.json")
-            inputs-json (resources/read-resource
-                         "illumina_genotyping_array/inputs.json")
-            ref->id (ingest-illumina-genotyping-array-files
-                     dataset temporary-cloud-storage-folder inputs-json)]
-        (-> inputs-json
-            (merge ref->id)
+    (fn [temp]
+      (let [file (str temp "inputs.json")]
+        (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
             (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
+            (as-> inputs
+                  (assoc inputs :green_idat_cloud_path (convert-to-bulk (:green_idat_cloud_path inputs) temp))
+              (assoc inputs :red_idat_cloud_path (convert-to-bulk (:red_idat_cloud_path inputs) temp)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
@@ -403,9 +412,11 @@
        (datasets/unique-dataset-request
         (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         "illumina-genotyping-array.json"))
-     (fixtures/with-temporary-workspace-clone
+     (fixtures/with-shared-temporary-workspace-clone
        "wfl-dev/Illumina-Genotyping-Array-Template"
-       "workflow-launcher-dev")]
+       "workflow-launcher-dev"
+       [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
+         :accessLevel "OWNER"}])]
     (fn [[dataset workspace]]
       (let [source   {:name            "Terra DataRepo"
                       :dataset         dataset
