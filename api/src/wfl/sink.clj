@@ -17,8 +17,7 @@
             [wfl.service.postgres       :as postgres]
             [wfl.service.rawls          :as rawls]
             [wfl.stage                  :as stage]
-            [wfl.util                   :as util :refer [utc-now]]
-            [clojure.java.io            :as io])
+            [wfl.util                   :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
            [wfl.util UserException]
            [java.util UUID]))
