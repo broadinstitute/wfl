@@ -1,6 +1,7 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
+            [reitit.swagger-ui              :as swagger-ui]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.configuration              :as config]
@@ -166,3 +167,15 @@
            (workloads/execute-workload! tx)
            util/to-edn
            succeed))))
+
+(def handle-swagger-ui
+  "Swagger UI that returns a 302 redirect to localhost."
+  (swagger-ui/create-swagger-ui-handler {:url "/ui/swagger.json"}))
+
+(defn get-swagger-ui
+  "Bypass a redirect that Swagger generates by default for REQUEST."
+  [request]
+  (-> request
+      handle-swagger-ui
+      (assoc :status 200)
+      (dissoc :headers "Location")))

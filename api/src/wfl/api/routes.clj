@@ -10,7 +10,6 @@
             [reitit.ring.middleware.muuntaja    :as muuntaja]
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
-            [reitit.swagger-ui                  :as swagger-ui]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
@@ -114,9 +113,7 @@
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]
-   ["/swagger*"
-    {:get (swagger-ui/create-swagger-ui-handler
-           {:url "/ui/swagger.json"})}]])
+   ["/swagger*" {:get {:handler handlers/get-swagger-ui}}]])
 
 (defn endpoint-swagger-auth-processor
   "Use the same security-info across all /api endpoints."
@@ -200,8 +197,10 @@
                          multipart/multipart-middleware]}})
    ;; get more correct http error responses on routes
    (ring/create-default-handler
-    {:not-found          (fn [m] {:status 404
-                                  :body (format "Route %s not found" (:uri m))})
-     :method-not-allowed (fn [m] {:status 405
-                                  :body (format "Method %s not allowed"
-                                                (name (:request-method m)))})})))
+    {:not-found
+     (fn [m] {:status 404
+              :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed
+     (fn [m] {:status 405
+              :body (format "Method %s not allowed"
+                            (name (:request-method m)))})})))
