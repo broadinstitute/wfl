@@ -90,7 +90,7 @@ data:
             # === API ===
             # For those endpoints that do NOT require AUTH
             # reverse proxy for /status, /version, and /oauth2id
-            ProxyPassMatch   ${PROXY_URL}/%{env:MATCH_IT}
+            ProxyPass        ${PROXY_URL}/%{env:MATCH_IT}
             ProxyPassReverse ${PROXY_URL}/%{env:MATCH_IT}
 
             ${AUTH_TYPE}
