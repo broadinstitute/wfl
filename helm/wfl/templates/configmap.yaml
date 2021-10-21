@@ -46,34 +46,6 @@ data:
         DocumentRoot /app
 
         # === UI ===
-        <Directory "/app">
-            Require all granted
-
-            # Turn on directory listings for /app
-            Options -Indexes
-
-            # Order allow,deny tells the web server that
-            # the Allow rules are processed before the Deny rules.
-            # If the client does not match the Allow rule or it
-            # does match the Deny rule, then the client will be denied access.
-            Order allow,deny
-            Allow from all
-
-            # any directive which has the .htaccess
-            # Context is allowed in .htaccess files.
-            AllowOverride All
-
-            <IfModule mod_rewrite.c>
-                RewriteEngine On
-                RewriteBase /
-                RewriteRule ^index\.html$ - [L]
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteRule . /index.html [L]
-            </IfModule>
-        </Directory>
-
-        # === API ===
         # For those endpoints that do NOT require AUTH
         # reverse proxy for /status, /version, /oauth2id, /swagger, /ui
 
