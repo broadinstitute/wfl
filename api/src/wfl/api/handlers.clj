@@ -115,16 +115,10 @@
   (let [uuid       (get-in request [:path-params :uuid])
         filters    (-> request
                        :body-params
-                       (select-keys [:submission :status]))
-        supported? (cromwell/retry-status? (:status filters))]
-    (when-not supported?
-      (throw (UserException. retry-unsupported-status-error-message
-                             {:workload           uuid
-                              :supported-statuses cromwell/retry-status?
-                              :filters            filters
-                              :status             400})))
+                       (select-keys [:submission :status]))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (let [workload  (workloads/load-workload-for-uuid tx uuid)
+                 _         (workloads/throw-if-invalid-retry-filters workload filters)
                  workflows (workloads/workflows-by-filters tx workload filters)]
              (when (empty? workflows)
                (throw (UserException. retry-no-workflows-error-message

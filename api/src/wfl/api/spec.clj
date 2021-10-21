@@ -18,7 +18,7 @@
 
 (s/def ::workflow-query (s/keys :opt-un [::all/status ::executor/submission]))
 
-(s/def ::retry-request (s/keys :req-un [::all/status ::executor/submission]))
+(s/def ::retry-request (s/keys :opt-un [::all/status ::executor/submission]))
 
 (s/def :version/built     util/datetime-string?)
 (s/def :version/commit    (s/and string? (comp not str/blank?)))

@@ -8,6 +8,7 @@
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.dockstore :as dockstore]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -35,6 +36,10 @@
   "Use db `transaction` to return the workflows created by the `executor`
   matching `filters` (ex. status, submission)."
   (fn [_transaction executor _filters] (:type executor)))
+
+(defmulti executor-throw-if-invalid-retry-filters
+  "Throw if `filters` are invalid for `workload`'s retry request."
+  (fn [{:keys [executor] :as _workload} _filters] (:type executor)))
 
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
@@ -542,6 +547,49 @@
          (map link-retry-to-original (sort-by :entity original-records))
          (write-retries (utc-now)))))
 
+;; Visible for testing
+(def retry-invalid-submission-error-message
+  "Missing or invalid Terra Workspace submission ID")
+
+(defn ^:private retry-submission-validation-error
+  "Return error information to throw
+  if `submission` is an invalid retry argument."
+  [submission]
+  (when-not (s/valid? ::submission submission)
+    {:message retry-invalid-submission-error-message}))
+
+;; Visible for testing
+(def retry-unsupported-status-error-message
+  "Retry unsupported for requested workflow status")
+
+(defn ^:private retry-status-validation-error
+  "Return error information to throw
+  if `status` is an invalid retry argument."
+  [status]
+  (when-not (cromwell/retry-status? status)
+    {:message retry-unsupported-status-error-message
+     :data    {:supported-statuses cromwell/retry-status?}}))
+
+(defn ^:private terra-executor-throw-if-invalid-retry-filters
+  "Throw if `submission` or `status` are invalid filters
+  for workload `uuid`'s retry request."
+  [{:keys [uuid] :as _workload} {:keys [submission status] :as filters}]
+  (let [submission-error (retry-submission-validation-error submission)
+        status-error     (retry-status-validation-error status)
+        errors           (->> [submission-error status-error]
+                              (remove nil?)
+                              vec)
+        error-data       (->> (map :data errors)
+                              vec
+                              (into {}))]
+    (when (or submission-error status-error)
+      (throw (UserException. "Cannot retry workload: invalid workflow filters."
+                             (merge {:workload          uuid
+                                     :filters           filters
+                                     :validation-errors (map :message errors)
+                                     :status            400}
+                                    error-data))))))
+
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
@@ -576,6 +624,8 @@
 (defoverload update-executor!              terra-executor-type update-terra-executor)
 (defoverload executor-workflows            terra-executor-type terra-executor-workflows)
 (defoverload executor-workflows-by-filters terra-executor-type terra-executor-workflows-by-filters)
+(defoverload executor-throw-if-invalid-retry-filters
+  terra-executor-type terra-executor-throw-if-invalid-retry-filters)
 (defoverload executor-retry-workflows!     terra-executor-type terra-executor-retry-workflows)
 
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)

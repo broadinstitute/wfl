@@ -185,5 +185,7 @@
 (defmethod   workloads/workflows-by-filters pipeline
   [tx {:keys [executor] :as _workload} filters]
   (executor/executor-workflows-by-filters tx executor filters))
+(defoverload workloads/throw-if-invalid-retry-filters
+  pipeline executor/executor-throw-if-invalid-retry-filters)
 (defoverload workloads/retry               pipeline retry-covid-workload)
 (defoverload workloads/to-edn              pipeline workload-to-edn)
