@@ -43,10 +43,10 @@ data:
         RewriteCond %{REQUEST_METHOD} OPTIONS
         RewriteRule ^(.*)$ $1 [R=204,L]
 
-        DocumentRoot /app/dist
+        DocumentRoot /app
 
         # === UI ===
-        <Directory "/app/dist">
+        <Directory "/app">
             Require all granted
 
             # Turn on directory listings for/app/dist
