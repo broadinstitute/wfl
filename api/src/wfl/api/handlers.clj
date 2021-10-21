@@ -103,8 +103,6 @@
            succeed))))
 
 ;; Visible for testing
-(def retry-unsupported-status-error-message
-  "Retry unsupported for requested status.")
 (def retry-no-workflows-error-message
   "No workflows to retry for workload and requested filters.")
 
