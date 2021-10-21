@@ -73,27 +73,7 @@ data:
             </IfModule>
         </Directory>
 
-        # === API ===
-        # For those endpoints that do NOT require AUTH
-        # reverse proxy for /status, /version, and /oauth2id
-        ProxyPassMatch   ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
-        ProxyPassReverse ^/(status|version|oauth2id|swagger) ${PROXY_URL}/$1
-
-        # reverse proxy for /swagger
-        ProxyPass        /swagger            ${PROXY_URL}/swagger
-        ProxyPassReverse /swagger            ${PROXY_URL}/swagger
-        ProxyPass        /swagger/           ${PROXY_URL}/swagger/
-        ProxyPassReverse /swagger/           ${PROXY_URL}/swagger/
-        ProxyPass        /swagger/index.html ${PROXY_URL}/swagger/index.html
-        ProxyPassReverse /swagger/index.html ${PROXY_URL}/swagger/index.html
-        ProxyPass        /ui                 ${PROXY_URL}/ui
-        ProxyPassReverse /ui                 ${PROXY_URL}/ui
-        ProxyPass        /ui/                ${PROXY_URL}/ui/
-        ProxyPassReverse /ui/                ${PROXY_URL}/ui/
-        ProxyPass        /ui/swagger.json    ${PROXY_URL}/ui/swagger.json
-        ProxyPassReverse /ui/swagger.json    ${PROXY_URL}/ui/swagger.json
-
-        <LocationMatch "/(status|version|oauth2id|swagger)">
+        <LocationMatch "^/(?<it>status|version|oauth2id|swagger|ui)">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
@@ -106,6 +86,12 @@ data:
             <Limit OPTIONS>
                 Require all granted
             </Limit>
+
+            # === API ===
+            # For those endpoints that do NOT require AUTH
+            # reverse proxy for /status, /version, and /oauth2id
+            ProxyPassMatch   ${PROXY_URL}/%{env:MATCH_IT}
+            ProxyPassReverse ${PROXY_URL}/%{env:MATCH_IT}
 
             ${AUTH_TYPE}
             ${AUTH_LDAP_URL}
