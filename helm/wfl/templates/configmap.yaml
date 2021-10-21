@@ -73,7 +73,7 @@ data:
             </IfModule>
         </Directory>
 
-        <LocationMatch "^/(?<it>status|version|oauth2id|swagger|ui)">
+        <LocationMatch "^/(?<IT>status|version|oauth2id|swagger|ui)">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
