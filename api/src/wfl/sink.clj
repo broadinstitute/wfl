@@ -7,6 +7,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :refer [defoverload]]
+            [wfl.environment            :as env]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
             [wfl.mime-type              :as mime-type]
@@ -138,6 +139,11 @@
                                   :missing     (sort missing)
                                   :fromOutputs fromOutputs}))))))
   sink)
+
+(defn ^:private tdr-outputs-bucket
+  "Build the google storage file path for the TDR outputs bucket."
+  [path]
+  (storage/gs-url (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET") path))
 
 ;; visible for testing
 (defn rename-gather
@@ -371,7 +377,7 @@
    and push the tdr ingest job into the `sink`'s job queue."
   [{:keys [dataset table fromOutputs] :as sink}
    {:keys [uuid] :as workflow}]
-  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))]
+  (let [file (tdr-outputs-bucket (str uuid ".json"))]
     (-> (to-dataset-row dataset table fromOutputs workflow)
         (json/write-str :escape-slash false)
         (storage/upload-content file))
