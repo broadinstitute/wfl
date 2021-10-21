@@ -49,7 +49,7 @@ data:
         <Directory "/app">
             Require all granted
 
-            # Turn on directory listings for/app/dist
+            # Turn on directory listings for /app
             Options -Indexes
 
             # Order allow,deny tells the web server that
