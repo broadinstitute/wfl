@@ -104,7 +104,7 @@
 
 ;; Visible for testing
 (def retry-no-workflows-error-message
-  "No workflows to retry for workload and requested filters.")
+  "No workflows to retry for workload and requested workflow filters.")
 
 (defn post-retry
   "Retry the workflows identified in `request`."
