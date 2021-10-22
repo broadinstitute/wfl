@@ -253,23 +253,6 @@
         (update :bindings cons new-binding)
         (->> (set-iam-policy bucket)))))
 
-(defn patch-bucket!
-  "Patch BUCKET in PROJECT with METADATA."
-  [project bucket metadata]
-  (valid-bucket-name-or-throw! bucket)
-  (letfn [(mine? [b] (when (= bucket (:id b)) b))]
-    (let [buckets (keep mine? (list-buckets project bucket))]
-      (when-not (== 1 (count buckets))
-        (throw (IllegalArgumentException.
-                (format "Found %s buckets named %s in project %s."
-                        (count buckets) bucket project))))
-      (-> {:method       :patch         ; :debug true :debug-body true
-           :url          (:selfLink (first buckets))
-           :content-type :application/json
-           :headers      (auth/get-auth-header)
-           :body         (json/write-str metadata :escape-slash false)}
-          http/request :body (json/read-str :key-fn keyword)))))
-
 (defn userinfo
   "Query Google Cloud services for who made the http REQUEST"
   [request]
