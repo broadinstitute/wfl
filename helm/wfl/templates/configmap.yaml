@@ -43,15 +43,13 @@ data:
         RewriteCond %{REQUEST_METHOD} OPTIONS
         RewriteRule ^(.*)$ $1 [R=204,L]
 
-        Header edit Location ^https://localhost:3000/(.*)$ https://${SERVER_NAME}/$1
-
         DocumentRoot /app
 
         # === UI ===
         # For those endpoints that do NOT require AUTH
         # reverse proxy for /status, /version, /oauth2id, /swagger, /ui
 
-        <Location "/status">
+        <LocationMatch "^/(?<IT>(status|version|oauth2id|swagger|ui))">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
@@ -61,12 +59,14 @@ data:
             Header unset Access-Control-Max-Age
             Header always set Access-Control-Max-Age 1728000
 
+            Header edit Location ^http://localhost:3000/(.*)$ https://${SERVER_NAME}/$1
+
             <Limit OPTIONS>
                 Require all granted
             </Limit>
 
-            ProxyPass        ${PROXY_URL}/status
-            ProxyPassReverse ${PROXY_URL}/status
+            ProxyPass        ${PROXY_URL}/%{env:MATCH_IT}
+            ProxyPassReverse ${PROXY_URL}/%{env:MATCH_IT}
 
             ${AUTH_TYPE}
             ${AUTH_LDAP_URL}
@@ -76,115 +76,7 @@ data:
             ${AUTH_REQUIRE}
 
             ${FILTER}
-        </Location>
-
-        <Location "/version">
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ProxyPass        ${PROXY_URL}/version
-            ProxyPassReverse ${PROXY_URL}/version
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
-
-            ${FILTER}
-        </Location>
-
-        <Location "/oauth2id">
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ProxyPass        ${PROXY_URL}/oauth2id
-            ProxyPassReverse ${PROXY_URL}/oauth2id
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
-
-            ${FILTER}
-        </Location>
-
-        <Location "/swagger">
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ProxyPass        ${PROXY_URL}/swagger
-            ProxyPassReverse ${PROXY_URL}/swagger
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
-
-            ${FILTER}
-        </Location>
-
-        <Location "/ui">
-            Header unset Access-Control-Allow-Origin
-            Header always set Access-Control-Allow-Origin "*"
-            Header unset Access-Control-Allow-Headers
-            Header always set Access-Control-Allow-Headers "authorization,content-type,accept,origin"
-            Header unset Access-Control-Allow-Methods
-            Header always set Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
-            Header unset Access-Control-Max-Age
-            Header always set Access-Control-Max-Age 1728000
-
-            <Limit OPTIONS>
-                Require all granted
-            </Limit>
-
-            ProxyPass        ${PROXY_URL}/ui
-            ProxyPassReverse ${PROXY_URL}/ui
-
-            ${AUTH_TYPE}
-            ${AUTH_LDAP_URL}
-            ${AUTH_LDAP_GROUP_ATTR}
-            ${AUTH_LDAP_BIND_DN}
-            ${AUTH_LDAP_BIND_PASSWORD}
-            ${AUTH_REQUIRE}
-
-            ${FILTER}
-        </Location>
+        </LocationMatch>
 
         # For those endpoints that require AUTH
         <Location /api>
