@@ -130,7 +130,7 @@ data:
             ${FILTER}
         </Location>
 
-        <Location "/oauth2-redirect.html">
+        <Location "/app">
             Header unset Access-Control-Allow-Origin
             Header always set Access-Control-Allow-Origin "*"
             Header unset Access-Control-Allow-Headers
@@ -140,12 +140,14 @@ data:
             Header unset Access-Control-Max-Age
             Header always set Access-Control-Max-Age 1728000
 
+            Header edit Location ^https://localhost:3000/(.*)$ https://${SERVER_NAME}/$1
+
             <Limit OPTIONS>
                 Require all granted
             </Limit>
 
-            ProxyPass        ${PROXY_URL}/oauth2-redirect.html
-            ProxyPassReverse ${PROXY_URL}/oauth2-redirect.html
+            ProxyPass        ${PROXY_URL}/app
+            ProxyPassReverse ${PROXY_URL}/app
 
             ${AUTH_TYPE}
             ${AUTH_LDAP_URL}
