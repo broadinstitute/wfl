@@ -10,6 +10,7 @@
             [reitit.ring.middleware.muuntaja    :as muuntaja]
             [reitit.ring.middleware.parameters  :as parameters]
             [reitit.swagger                     :as swagger]
+            [reitit.swagger-ui                  :as swagger-ui]
             [wfl.api.handlers                   :as handlers]
             [wfl.api.spec                       :as spec]
             [wfl.api.workloads                  :as workloads]
@@ -113,7 +114,9 @@
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
            :handler (swagger/create-swagger-handler)}}]
-   ["/swagger*" {:get {:handler handlers/get-swagger-ui}}]])
+   ["/swagger*"
+    {:get (swagger-ui/create-swagger-ui-handler
+           {:url "/ui/swagger.json"})}]])
 
 (defn endpoint-swagger-auth-processor
   "Use the same security-info across all /api endpoints."

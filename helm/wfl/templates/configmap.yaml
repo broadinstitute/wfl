@@ -43,6 +43,8 @@ data:
         RewriteCond %{REQUEST_METHOD} OPTIONS
         RewriteRule ^(.*)$ $1 [R=204,L]
 
+        Header edit Location ^http://(.*)$ https://$1
+
         DocumentRoot /app
 
         # === UI ===
