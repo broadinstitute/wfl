@@ -4,6 +4,7 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
+            [wfl.api.workloads]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
             [wfl.module.covid           :as module]
