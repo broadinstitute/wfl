@@ -3,7 +3,8 @@
             [wfl.sink             :as sink]
             [wfl.tools.endpoints  :refer [coercion-tester]]
             [wfl.tools.resources  :as resources]
-            [wfl.util             :refer [uuid-nil]]))
+            [wfl.util             :refer [uuid-nil]])
+  (:import [java.util UUID]))
 
 (deftest test-rename-gather
   (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
@@ -22,8 +23,8 @@
 (deftest test-rename-gather-bulk
   (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")
         dataset (resources/read-resource "sarscov2-illumina-full-inputs.json")
-        result (sink/rename-gather-bulk inputs {:flowcell_tgz "flowcell_tgz"
-                                                :flowcell_id "flowcell_id"} "flowcell" dataset)]
+        result (sink/rename-gather-bulk (UUID/randomUUID) dataset "flowcell" inputs {:flowcell_tgz "flowcell_tgz"
+                                                                                     :flowcell_id "flowcell_id"})]
     (is (= (:flowcell_id inputs)
            (:flowcell_id result)))
     (is (= (:flowcell_tgz inputs)

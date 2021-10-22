@@ -395,13 +395,13 @@
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-test-bucket
-    (fn [temp]
-      (let [file (str temp "inputs.json")]
+    (fn [temporary-cloud-storage-folder]
+      (let [file (str temporary-cloud-storage-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
             (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
             (as-> inputs
-                  (assoc inputs :green_idat_cloud_path (convert-to-bulk (:green_idat_cloud_path inputs) temp))
-              (assoc inputs :red_idat_cloud_path (convert-to-bulk (:red_idat_cloud_path inputs) temp)))
+                  (assoc inputs :green_idat_cloud_path (convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
+              (assoc inputs :red_idat_cloud_path (convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
