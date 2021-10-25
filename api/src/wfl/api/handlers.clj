@@ -28,6 +28,13 @@
   [body]
   (constantly (succeed body)))
 
+(defn oauth-redirect
+  "Return the html page for the oauth redirect"
+  [_]
+  (-> (slurp "./resources/oauth2-redirect.html")
+      response/ok
+      (response/content-type "text/html")))
+
 (defn get-logging-level
   "Gets the current logging level of the API"
   [request]

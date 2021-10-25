@@ -97,6 +97,9 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
+   ["/oauth2-redirect.html"
+    {:get {:no-doc true
+           :handler handlers/oauth-redirect}}]
    ["/ui/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
@@ -109,7 +112,8 @@
               :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
               :scopes {:openid  "Basic OpenID authorization"
                        :email   "Read access to your email"
-                       :profile "Read access to your profile"}}}
+                       :profile "Read access to your profile"}
+              :clientId (env/getenv "WFL_OAUTH2_CLIENT_ID")}}
             :tags [{:name "Informational"}
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
