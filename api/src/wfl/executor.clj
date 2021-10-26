@@ -466,23 +466,29 @@
   ([vec]
    (remove-nil-and-join vec \space)))
 
-(defn ^:private terra-executor-workflows-by-filters
-  "Return all the non-retried workflows executed by `executor`
-  optionally matching `submission` and/or `status`."
-  [tx {:keys [details] :as executor} {:keys [submission status] :as _filters}]
-  (postgres/throw-unless-table-exists tx details)
+(defn ^:private terra-executor-workflows-by-filters-sql-params
+  "Return sql and params that query `details` for non-retried workflows
+  matching `submission` and/or `status` if specified."
+  [{:keys [details] :as _executor} {:keys [submission status] :as _filters}]
   (let [optionals (remove-nil-and-join [(when submission "AND submission = ?")
                                         (when status "AND status = ?")])
         query     (remove-nil-and-join ["SELECT * FROM %s"
                                         "WHERE workflow IS NOT NULL"
                                         "AND retry IS NULL"
                                         optionals
-                                        "ORDER BY id ASC"])
-        sql-params (->> [submission status]
-                        (concat [(format query details)])
-                        (remove nil?)
-                        vec)]
-    (terra-workflows-from-records executor (jdbc/query tx sql-params))))
+                                        "ORDER BY id ASC"])]
+    (->> [submission status]
+         (concat [(format query details)])
+         (remove nil?))))
+
+(defn ^:private terra-executor-workflows-by-filters
+  "Return all the non-retried workflows executed by `executor`
+  matching specified `filters`."
+  [tx {:keys [details] :as executor} filters]
+  (postgres/throw-unless-table-exists tx details)
+  (->> (terra-executor-workflows-by-filters-sql-params executor filters)
+       (jdbc/query tx)
+       (terra-workflows-from-records executor)))
 
 (defn ^:private workflow-and-sibling-records
   "Return the workflow records for all workflows in submissions
@@ -552,8 +558,8 @@
   "Missing or invalid Terra Workspace submission ID")
 
 (defn ^:private retry-submission-validation-error
-  "Return error information to throw
-  if `submission` is an invalid retry argument."
+  "Return error information to throw if Terra `submission` ID
+  is unspecified or an invalid format."
   [submission]
   (when-not (s/valid? ::submission submission)
     {:message retry-invalid-submission-error-message}))
@@ -563,12 +569,16 @@
   "Retry unsupported for requested workflow status")
 
 (defn ^:private retry-status-validation-error
-  "Return error information to throw
-  if `status` is an invalid retry argument."
+  "Return error information to throw if workflow `status`
+  is specified and unretriable."
   [status]
-  (when-not (cromwell/retry-status? status)
+  (when-not (or (nil? status) (cromwell/retry-status? status))
     {:message retry-unsupported-status-error-message
      :data    {:supported-statuses cromwell/retry-status?}}))
+
+;; Visible for testing
+(def terra-executor-retry-filters-invalid-error-message
+  "Cannot retry workload: invalid workflow filters.")
 
 (defn ^:private terra-executor-throw-if-invalid-retry-filters
   "Throw if `submission` or `status` are invalid filters
@@ -576,14 +586,10 @@
   [{:keys [uuid] :as _workload} {:keys [submission status] :as filters}]
   (let [submission-error (retry-submission-validation-error submission)
         status-error     (retry-status-validation-error status)
-        errors           (->> [submission-error status-error]
-                              (remove nil?)
-                              vec)
-        error-data       (->> (map :data errors)
-                              vec
-                              (into {}))]
+        errors           (remove nil? [submission-error status-error])
+        error-data       (into {} (map :data errors))]
     (when (or submission-error status-error)
-      (throw (UserException. "Cannot retry workload: invalid workflow filters."
+      (throw (UserException. terra-executor-retry-filters-invalid-error-message
                              (merge {:workload          uuid
                                      :filters           filters
                                      :validation-errors (map :message errors)
