@@ -112,8 +112,7 @@
               :authorizationUrl "https://accounts.google.com/o/oauth2/auth"
               :scopes {:openid  "Basic OpenID authorization"
                        :email   "Read access to your email"
-                       :profile "Read access to your profile"}
-              :clientId (env/getenv "WFL_OAUTH2_CLIENT_ID")}}
+                       :profile "Read access to your profile"}}}
             :tags [{:name "Informational"}
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
