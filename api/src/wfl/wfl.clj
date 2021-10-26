@@ -39,4 +39,4 @@
   (or (some-> (str/join "/" ["wfl" path])
               io/resource
               slurp)
-      (-> (slurp (str/join "/" ["." "resources" path])))))
+      (slurp (str/join "/" ["." "resources" path]))))
