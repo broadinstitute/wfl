@@ -1,6 +1,7 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
+            [wfl.wfl                        :as wfl]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.configuration              :as config]
@@ -31,7 +32,7 @@
 (defn oauth-redirect
   "Return the html page for the oauth redirect"
   [_]
-  (-> (slurp "./resources/oauth2-redirect.html")
+  (-> (wfl/get-wfl-resource "oauth2-redirect.html")
       response/ok
       (response/content-type "text/html")))
 

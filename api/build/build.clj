@@ -43,6 +43,13 @@
       (binding [*out* out]
         (pprint version)))))
 
+(defn ^:private copy-swagger-pages
+  "Copy the swagger pages into the RESOURCES directory."
+  [resources]
+  (let [file (io/file resources "wfl" "oauth2-redirect.html")]
+    (io/make-parents file)
+    (io/copy (io/file "resources/oauth2-redirect.html") file)))
+
 (xml/alias-uri 'pom "http://maven.apache.org/POM/4.0.0")
 
 (def the-pom
@@ -99,6 +106,7 @@
     (try
       (pprint @the-version)
       (write-the-version-file resources @the-version)
+      (copy-swagger-pages resources)
       (run! #(write-workflow-description test-resources %) (find-wdls))
       (System/exit 0)
       (catch Throwable t
