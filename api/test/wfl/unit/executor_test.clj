@@ -13,28 +13,28 @@
     (letfn [(arg-count [sql] (-> sql frequencies (get \? 0)))]
       (testing "No filters"
         (let [[sql & params] (#'executor/terra-executor-workflows-by-filters-sql-params
-                                executor {})]
+                              executor {})]
           (is (== 0 (arg-count sql))
               "No filters should yield no query arguments")
           (is (empty? params)
               "No filters should yield no parameters")))
       (testing "Submission filter only"
         (let [[sql & params] (#'executor/terra-executor-workflows-by-filters-sql-params
-                                executor (select-keys filters [:submission]))]
+                              executor (select-keys filters [:submission]))]
           (is (== 1 (arg-count sql))
               "Single filter (submission) should yield 1 query argument")
           (is (= [submission] params)
               "Submission filter should yield lone submission parameter")))
       (testing "Status filter only"
         (let [[sql & params] (#'executor/terra-executor-workflows-by-filters-sql-params
-                                executor (select-keys filters [:status]))]
+                              executor (select-keys filters [:status]))]
           (is (== 1 (arg-count sql))
               "Single filter (status) should yield 1 query argument")
           (is (= [status] params)
               "Status filter should yield lone status parameter")))
       (testing "Submission and status filters"
         (let [[sql & params] (#'executor/terra-executor-workflows-by-filters-sql-params
-                                executor (select-keys filters [:submission :status]))]
+                              executor (select-keys filters [:submission :status]))]
           (is (== 2 (arg-count sql))
               "Two filters (submission and status) should yield 2 query arguments")
           (is (= [submission status] params)
