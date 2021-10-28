@@ -98,14 +98,19 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(defn ^:private throw-on-method-config-version-mismatch
-  [{:keys [methodConfigVersion] :as methodconfig} expected]
-  (when-not (== expected methodConfigVersion)
-    (throw (UserException.
-            "Unexpected method configuration version"
-            {:methodConfiguration methodconfig
-             :expected            expected
-             :actual              methodConfigVersion}))))
+(defn ^:private error-on-method-config-version-mismatch
+  "Throw or log error if `methodConfigVersion` does not match `expected`."
+  ([{:keys [methodConfigVersion] :as methodconfig} expected throw?]
+   (when-not (== expected methodConfigVersion)
+     (let [cause "Unexpected method configuration version"
+           data  {:expected            expected
+                  :actual              methodConfigVersion
+                  :methodConfiguration methodconfig}]
+       (if throw?
+         (throw (UserException. cause data))
+         (log/error (merge {:cause cause} data))))))
+  ([methodconfig expected]
+   (error-on-method-config-version-mismatch methodconfig expected false)))
 
 (defn ^:private throw-unless-dockstore-method
   "Throw unless the `sourceRepo` of `methodRepoMethod` is \"dockstore\"."
@@ -127,7 +132,7 @@
       (throw
        (UserException. "Unsupported coercion" (util/make-map fromSource))))
     (let [m (firecloud/method-configuration workspace methodConfiguration)]
-      (throw-on-method-config-version-mismatch m methodConfigurationVersion)
+      (error-on-method-config-version-mismatch m methodConfigurationVersion true)
       (throw-unless-dockstore-method (:methodRepoMethod m))))
   executor)
 
@@ -162,9 +167,9 @@
    reference]
   (let [name    (get-in reference [:metadata :name])
         current (firecloud/method-configuration workspace methodConfiguration)
-        _       (throw-on-method-config-version-mismatch
+        _       (error-on-method-config-version-mismatch
                  current methodConfigurationVersion)
-        inc'd   (inc methodConfigurationVersion)]
+        inc'd   (inc (:methodConfigVersion current))]
     (-> "%s Updating %s in %s with {:dataReferenceName %s :methodConfigVersion %s}"
         (format (log-prefix executor) methodConfiguration workspace name inc'd)
         log/debug)
