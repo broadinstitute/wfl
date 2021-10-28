@@ -68,7 +68,7 @@
                          workflows/make-object-type)
         workflow-id  (UUID/randomUUID)]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-tdr-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp dataset]]

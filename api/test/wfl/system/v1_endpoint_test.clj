@@ -394,7 +394,7 @@
    illimina_genotyping_array `dataset`"
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
-    fixtures/gcs-test-bucket
+    fixtures/gcs-tdr-test-bucket
     (fn [temporary-cloud-storage-folder]
       (let [file (str temporary-cloud-storage-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")

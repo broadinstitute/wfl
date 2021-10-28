@@ -60,7 +60,7 @@
    "WFL_TDR_SERVICE_ACCOUNT"
    (fn [] "datarepo-jade-api@terra-datarepo-production.iam.gserviceaccount.com")
    "WFL_TDR_TEMPORARY_STORAGE_BUCKET"
-   (fn [] "broad-gotc-dev-wfl-tdr-outputs")})
+   (fn [] "broad-gotc-dev-wfl-datarepo-outputs")})
 
 (def ^:private __getenv
   (memoize #(or (System/getenv %) (when-let [init (defaults %)] (init)))))
