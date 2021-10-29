@@ -97,7 +97,7 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
-   ["/oauth2-redirect.html"
+   ["/oauth2-redirect.html" ; mostly for local swagger usage. Deployed, the file will be copied into the container.
     {:get {:no-doc true
            :handler handlers/oauth-redirect}}]
    ["/ui/swagger.json"
