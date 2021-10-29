@@ -171,9 +171,6 @@ data:
                 Require all granted
             </Limit>
 
-            ProxyPass        ${PROXY_URL}/oauth2-redirect.html
-            ProxyPassReverse ${PROXY_URL}/oauth2-redirect.html
-
             ${AUTH_TYPE}
             ${AUTH_LDAP_URL}
             ${AUTH_LDAP_GROUP_ATTR}
