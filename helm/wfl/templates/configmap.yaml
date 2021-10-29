@@ -167,8 +167,6 @@ data:
             Header unset Access-Control-Max-Age
             Header always set Access-Control-Max-Age 1728000
 
-            Header edit Location ^https://localhost:3000/(.*)$ https://${SERVER_NAME}/$1
-
             <Limit OPTIONS>
                 Require all granted
             </Limit>

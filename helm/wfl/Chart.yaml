@@ -4,7 +4,7 @@ description: A Helm chart for deploy WorkFlow Launcher on Kubernetes
 
 type: application
 
-version: 0.3.28
+version: 0.3.29
 
 home: https://github.com/broadinstitute/wfl
 appVersion: 0.5.2
