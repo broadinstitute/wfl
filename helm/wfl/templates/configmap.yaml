@@ -43,7 +43,7 @@ data:
         RewriteCond %{REQUEST_METHOD} OPTIONS
         RewriteRule ^(.*)$ $1 [R=204,L]
 
-        DocumentRoot /
+        DocumentRoot /app
 
         # === UI ===
         # For those endpoints that do NOT require AUTH
