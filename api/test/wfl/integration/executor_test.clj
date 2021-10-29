@@ -1,5 +1,6 @@
 (ns wfl.integration.executor-test
-  (:require [clojure.test          :refer [deftest is use-fixtures]]
+  (:require [clojure.string        :as str]
+            [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.executor          :as executor]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]
@@ -421,3 +422,34 @@
              reference (#'executor/entity-from-snapshot executor snapshot)]
          (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
                   (= snapshot-reference-name (get-in reference [:metadata :name]))))))))
+
+(deftest test-update-method-configuration-with-version-mismatch
+  (let [id                    (rand-int 1000000)
+        executor              (create-terra-executor id)
+        dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
+        dataReferenceNamePost "snapshotReferenceNamePostUpdate"
+        reference             {:metadata {:name dataReferenceNamePost}}
+        actualMcVersion       (+ (:methodConfigurationVersion executor) 1)
+        inc'dMcVersion        (+ actualMcVersion 1)]
+    (letfn [(firecloud-method-configuration
+              [_workspace qualifiedMcName]
+              (let [[mcNamespace mcName] (str/split qualifiedMcName #"/")]
+                {:namespace           mcNamespace
+                 :name                mcName
+                 :dataReferenceName   dataReferenceNamePre
+                 :methodConfigVersion actualMcVersion}))
+            (verify-firecloud-update-params
+              [_workspace qualifiedMcName mc]
+              (is (= qualifiedMcName (str (:namespace mc) "/" (:name mc)))
+                  "Method configuration name should not change after update")
+              (is (= dataReferenceNamePost (:dataReferenceName mc))
+                  "Method configuration data reference name should be updated")
+              (is (== inc'dMcVersion (:methodConfigVersion mc))
+                  "Method configuration's actual version should be incremented"))]
+      (with-redefs-fn
+        {#'firecloud/method-configuration        firecloud-method-configuration
+         #'firecloud/update-method-configuration verify-firecloud-update-params}
+        #(#'executor/update-method-configuration! executor reference))
+      (let [reloaded (reload-terra-executor executor)]
+        (is (== inc'dMcVersion (:methodConfigurationVersion reloaded))
+            "Method configuration's version in DB should be updated to match actual")))))
