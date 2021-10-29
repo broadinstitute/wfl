@@ -43,6 +43,8 @@ data:
         RewriteCond %{REQUEST_METHOD} OPTIONS
         RewriteRule ^(.*)$ $1 [R=204,L]
 
+        DocumentRoot /
+
         # === UI ===
         # For those endpoints that do NOT require AUTH
         # reverse proxy for /status, /version, /oauth2id, /swagger, /ui
