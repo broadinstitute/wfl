@@ -104,7 +104,8 @@
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
            {:info {:title (str wfl/the-name "-API")
-                   :version (str (:version (wfl/get-the-version)))}
+                   :version (str (:version (wfl/get-the-version)))
+                   :description "Welcome to the Workflow Launcher API. This serves as a manager of workloads.\n\nFor example, a workload could be a set of Whole Genome samples to be reprocessed in a given project/bucket, the workflow is the processing of an individual sample in that workload running WGS reprocessing; a workload could also be a queue of incoming notifications that describe all of the required inputs to launch Arrays scientific pipelines in Cromwell.\n\nProvided below are the endpoints provided by the API server. The informational endpoints can be called without Authentication, however all other endpoints require you to Authorize first. To do so, you will first need to call the /oauth2id endpoint to get the client id. Then proceed to hit the Authorize button and paste the id you received into the clientid textbox, select the scopes you wish to provide and hit Authorize. Once that is completed you can close the Authorize modal and you are prepared to test out the endpoints of the WFL API!"}
             :securityDefinitions
             {:googleoauth
              {:type "oauth2"
