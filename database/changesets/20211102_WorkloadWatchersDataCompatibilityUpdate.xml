@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="okotsopo@broadinstitute.org"
+               dbms="postgresql"
+               id="20211102"
+               logicalFilePath="20211102_WorkloadWatchersDataCompatibilityUpdate.xml"
+               runInTransaction="false">
+        <comment>
+            Ensure all existing workload records are compatible
+            with the watchers specification changes introduced in
+            https://github.com/broadinstitute/wfl/pull/467
+
+            Workloads created when watchers was stored as text[]
+            have watchers of the form '{...}' and should be unset.
+        </comment>
+        <sql>
+            UPDATE workload
+            SET watchers = null WHERE watchers LIKE '{%}';
+
+            ALTER TABLE workload
+            ALTER COLUMN watchers DROP DEFAULT;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
