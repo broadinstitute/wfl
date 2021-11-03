@@ -19,8 +19,7 @@
             [wfl.module.all                     :as all]
             [wfl.module.aou                     :as aou]
             [wfl.util                           :as util]
-            [wfl.wfl                            :as wfl]
-            [wfl.debug                          :as debug])
+            [wfl.wfl                            :as wfl])
   (:import [java.sql SQLException]
            [org.apache.commons.lang3.exception ExceptionUtils]
            [wfl.util UserException]))
