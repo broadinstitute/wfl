@@ -38,9 +38,10 @@
     (try (write key value)
          (catch Throwable x
            (write key
-                  (str/join \space
-                            ["Caught" (str x)
-                             "writing value for:" key]))))))
+                  [(str/join \space
+                             ["Caught" (str x)
+                              "writing value for:" key])
+                   (str value)])))))
 
 (defprotocol Logger
   "Log `edn` to `logger` as JSON."
