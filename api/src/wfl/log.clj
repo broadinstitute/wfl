@@ -38,10 +38,15 @@
     (try (write key value)
          (catch Throwable x
            (write key
-                  [(str/join \space
-                             ["Caught" (str x)
-                              "writing value for:" key])
+                  [(str/join \space ["Caught" (str x)
+                                     "writing value for:" key])
                    (str value)])))))
+
+(defn ^:private write-throwable
+  [x out options]
+  (.append out (str x)))
+
+(extend java.lang.Throwable json/JSONWriter {:-write write-throwable})
 
 (defprotocol Logger
   "Log `edn` to `logger` as JSON."
