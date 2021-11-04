@@ -29,7 +29,7 @@
 
 (s/def ::workload-response (s/keys :req-un [::all/created
                                             ::creator
-                                            ::executor
+                                            ::executor/executor
                                             ::all/labels
                                             ::sink/sink
                                             ::source/source
