@@ -1,10 +1,12 @@
 (ns wfl.log
   "Logging for WFL. The severity levels provided here are based off of
    the severity levels supported by GCP's Stackdriver. A list of the supported
-   levels can be found here: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
-  (:require [clojure.data.json              :as json]
-            [clojure.string                 :as str]
-            [clojure.spec.alpha             :as s])
+   levels can be found here:
+   https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
+  (:require [clojure.data.json  :as json]
+            [clojure.spec.alpha :as s]
+            [clojure.string     :as str]
+            [wfl.debug])
   (:import [java.time Instant]))
 
 (def levels
@@ -28,6 +30,18 @@
      (str (namespace key) \/ (name key))
      key)))
 
+(defn ^:private value-fn
+  "Preserve the namespace of `key` when qualified."
+  [key value]
+  (wfl.debug/trace [:value-fn key value])
+  (let [write (:value-fn json/default-write-options)]
+    (try (write key value)
+         (catch Throwable x
+           (write key
+                  (str/join \space
+                            ["Caught" (str x)
+                             "writing value for:" key]))))))
+
 (defprotocol Logger
   "Log `edn` to `logger` as JSON."
   (-write [logger edn]))
@@ -42,7 +56,9 @@
   (reify Logger
     (-write [logger edn]
       (-> edn
-          (json/write-str :key-fn key-fn :escape-slash false)
+          (json/write-str :key-fn       key-fn
+                          :value-fn     value-fn
+                          :escape-slash false)
           println))))
 
 (def ^:dynamic *logger*
