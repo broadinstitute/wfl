@@ -39,3 +39,22 @@
 (deftest test-datarepo-sink-request-coercion
   (let [test! (coercion-tester ::sink/sink)]
     (test! datarepo-sink-request)))
+
+(deftest test-entity-name-from-workspace
+  (let [inputs   {:a "aInput" :b "bInput"}
+        outputs  {:b "bOutput" :c "cOutput"}
+        workflow {:inputs inputs :outputs outputs}]
+    (is (nil? (#'sink/entity-name-from-workflow nil "a"))
+        "When nil workflow, should return nil")
+    (is (nil? (#'sink/entity-name-from-workflow (select-keys workflow [:inputs]) "c"))
+        "When no outputs, should only check inputs")
+    (is (nil? (#'sink/entity-name-from-workflow (select-keys workflow [:outputs]) "a"))
+        "When no inputs, should only check outputs")
+    (is (= "aInput" (#'sink/entity-name-from-workflow workflow "a"))
+        "Key a only present in inputs map")
+    (is (= "bOutput" (#'sink/entity-name-from-workflow workflow "b"))
+        "Key b present in both inputs and outputs maps should pull from outputs map")
+    (is (= "cOutput" (#'sink/entity-name-from-workflow workflow "c"))
+        "Key c only present in outputs map")
+    (is (nil? (#'sink/entity-name-from-workflow workflow "d"))
+        "Key d not found in inputs or outputs maps should return nil")))
