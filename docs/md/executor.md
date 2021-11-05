@@ -43,7 +43,7 @@ And a real-life example for a known method configuration:
 }
 ```
 
-![](./assets/terra-method-configuration.png)
+![](assets/executor/terra-method-configuration.png)
 
 The table below summarises the purpose of each attribute in the above request.
 
