@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
     
     
       
@@ -352,6 +352,13 @@
           <li class="md-nav__item">
   <a href="#debugging-api-specs" class="md-nav__link">
     debugging API specs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accessing-swagger-locally" class="md-nav__link">
+    accessing Swagger locally
   </a>
   
 </li>
@@ -830,6 +837,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#accessing-swagger-locally" class="md-nav__link">
+    accessing Swagger locally
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#debugging-liquibase-locally" class="md-nav__link">
     debugging Liquibase locally
   </a>
@@ -884,18 +898,12 @@
 encourage ourselves to follow in most cases.</p>
 <h2 id="the-swagger-page">The Swagger page<a class="headerlink" href="#the-swagger-page" title="Permanent link">⚓︎</a></h2>
 <p>WFL ships with a Swagger UI that documents all available endpoints. It's
-available at path <code>/swagger</code>.  At present, we cannot hit it directly
-without logging in first because it is bundled with the UI and not the API.</p>
+available at path <code>&lt;host&gt;/swagger</code>.</p>
 <ul>
-<li>Log into WFL UI, e.g. https://dev-wfl.gotc-dev.broadinstitute.org/login</li>
-<li>Navigate to <code>/swagger</code> via Swagger API button in top right</li>
+<li><a href="https://dev-wfl.gotc-dev.broadinstitute.org/swagger">Dev WFL Swagger</a></li>
+<li><a href="https://gotc-prod-wfl.gotc-prod.broadinstitute.org/swagger">Prod WFL Swagger</a></li>
 </ul>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>To access the swagger page locally, you'll need to start a development
-server and access via the UI. See the development tips below for more
-information.</p>
-</div>
+<p>For local access, see <a href="#accessing-swagger-locally">accessing Swagger Locally</a>.</p>
 <h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">⚓︎</a></h2>
 <p>Clojure development feels very different from Scala and Java development. It
 even differs markedly from development in other <em>dynamic languages</em> such as
@@ -903,7 +911,7 @@ Python or Ruby.</p>
 <p>Get a demonstration from someone familiar with Clojure development before you
 spend too much time trying to figure things out on your own.</p>
 <p>Find a local Cursive user for guidance if you like IntelliJ.
-<a href="mailto:chengche@broadinstitute.org">Rex Wang</a> knows how to use it.</p>
+<a href="mailto:okotsopo@broadinstitute.org">Olivia Kotsopoulos</a> knows how to use it.</p>
 <p>Cursive licences are available
 <a href="https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive">here</a>.
 If none are available, free
@@ -925,7 +933,7 @@ and derived resources and sources:
 <p>There is also a
 <a href="https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva">Calva</a>
 plugin for <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
-<p>I hack Clojure in Emacs using
+<p><a href="mailto:tbl@broadinstitute.org">Tom Lyons</a> hacks Clojure in Emacs using
 <a href="https://cider.readthedocs.io/">CIDER</a> and
 <a href="https://github.com/clojure/tools.nrepl">nREPL</a>. CIDER is not
 trivial to set up, but not <em>especially</em> difficult if you are
@@ -1075,29 +1083,13 @@ ensure that any exceptions show up in the server logs.</p>
 silently fail or the Swagger page will fail to render. Check the
 <code>clojure.spec.alpha/def</code>s in <code>wfl.api.routes</code> for typos before tearing your
 hair out.</p>
-<p>You can quickly check that the Swagger page renders
-by first starting a local WFL server.</p>
+<h3 id="accessing-swagger-locally">accessing Swagger locally<a class="headerlink" href="#accessing-swagger-locally" title="Permanent link">⚓︎</a></h3>
+<p>First, start a local WFL server.</p>
 <div class="highlight"><pre><span></span><code>./ops/server.sh
 </code></pre></div>
-<p>Then open this URL in a browser.</p>
-<div class="highlight"><pre><span></span><code>open http://localhost:3000/swagger/swagger.json
-</code></pre></div>
-<p>You should see a page of valid Swagger JSON
-describing the API.</p>
-<p>You need to start the UI server too
-if you want to see the swagger page rendered.
-With the local WFL server running on port 3000 as above,
-start the UI this way.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span> ./ui
-npm run serve
-</code></pre></div>
-<p>With the UI running,
-open this URL in the browser.</p>
-<div class="highlight"><pre><span></span><code>open http://localhost:8080/
-</code></pre></div>
-<p>Click the <code>LOGIN WITH GOOGLE</code> button if necessary,
-Then the <code>SWAGGER API</code> button at the upper right.
-You should see an interactive Swagger API page.</p>
+<p>To view the rendered Swagger page:
+<div class="highlight"><pre><span></span><code>open http://localhost:3000/swagger
+</code></pre></div></p>
 <h3 id="debugging-liquibase-locally">debugging Liquibase locally<a class="headerlink" href="#debugging-liquibase-locally" title="Permanent link">⚓︎</a></h3>
 <p>Running <code>liquibase update</code>:
 <div class="highlight"><pre><span></span><code>liquibase --classpath<span class="o">=</span><span class="k">$(</span>clojure -Spath<span class="k">)</span>          <span class="se">\</span>
