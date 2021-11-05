@@ -43,8 +43,11 @@
                    (str value)])))))
 
 (defn ^:private write-throwable
+  "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
-  (.append out (str x)))
+  (apply json/write
+         (assoc (Throwable->map x) :cause (ex-cause x))
+         out (flatten options)))
 
 (extend java.lang.Throwable json/JSONWriter {:-write write-throwable})
 
