@@ -1,3 +1,6 @@
+# Release 0.9.24
+- Fix WFL deployment. ([#526](https://github.com/broadinstitute/wfl/pull/526))
+
 # Release 0.9.0
 - Fix merge conflicts around logging in server.clj.
 - Trial merge of main to develop.
