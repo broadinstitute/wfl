@@ -5,8 +5,7 @@
    https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]
-            [clojure.string     :as str]
-            [wfl.debug])
+            [clojure.string     :as str])
   (:import [java.time Instant]))
 
 (def levels
@@ -30,24 +29,15 @@
      (str (namespace key) \/ (name key))
      key)))
 
-(defn ^:private value-fn
-  "Stringify VALUE for KEY when JSONifying throws."
-  [key value]
-  (wfl.debug/trace [:value-fn key value])
-  (let [write (:value-fn json/default-write-options)]
-    (try (write key value)
-         (catch Throwable x
-           (write key
-                  [(str/join \space ["Caught" (str x)
-                                     "writing value for:" key])
-                   (str value)])))))
-
+;; HACK: Override how JSONWriter handles Throwables.
+;; json/write-object is private and handles java.util.Map.
+;;
 (defn ^:private write-throwable
   "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
-  (apply json/write
-         (assoc (Throwable->map x) :cause (ex-cause x))
-         out (flatten options)))
+  (#'json/write-object (Throwable->map x) out (assoc options
+                                                     :escape-slash false
+                                                     :key-fn       key-fn)))
 
 (extend java.lang.Throwable json/JSONWriter {:-write write-throwable})
 
@@ -65,9 +55,8 @@
   (reify Logger
     (-write [logger edn]
       (-> edn
-          (json/write-str :key-fn       key-fn
-                          :value-fn     value-fn
-                          :escape-slash false)
+          (json/write-str :escape-slash false
+                          :key-fn       key-fn)
           println))))
 
 (def ^:dynamic *logger*
