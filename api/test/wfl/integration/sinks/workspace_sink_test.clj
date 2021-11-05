@@ -1,6 +1,6 @@
 (ns wfl.integration.sinks.workspace-sink-test
   "Test validation and operations on the Terra Workspace Sink implementation."
-  (:require [clojure.test          :refer [deftest is use-fixtures]]
+  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
             [wfl.jdbc              :as jdbc]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -10,7 +10,8 @@
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.queues      :refer [make-queue-from-list]]
             [wfl.tools.resources   :as resources])
-  (:import [wfl.util UserException]))
+  (:import [clojure.lang ExceptionInfo]
+           [wfl.util UserException]))
 
 ;; Workspace
 (def ^:private testing-namespace "wfl-dev")
@@ -79,44 +80,59 @@
 ;; Operation tests
 
 (deftest test-update-terra-workspace-sink
-  (let [workflow    {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
-                     :status  "Succeeded"
-                     :outputs (-> "sarscov2_illumina_full/outputs.edn"
-                                  resources/read-resource
-                                  (assoc :flowcell_id testing-entity-name))}
-        executor    (make-queue-from-list [[nil workflow]])
-        sink        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                      (->> {:name           "Terra Workspace"
-                            :workspace      "workspace-ns/workspace-name"
-                            :entityType     testing-entity-type
-                            :fromOutputs    (resources/read-resource
-                                             "sarscov2_illumina_full/entity-from-outputs.edn")
-                            :identifier     "flowcell_id"
-                            :skipValidation true}
-                           (sink/create-sink! tx (rand-int 1000000))
-                           (zipmap [:sink_type :sink_items])
-                           (sink/load-sink! tx)))]
-    (letfn [(verify-upsert-request [workspace [[type name _]]]
-              (is (= "workspace-ns/workspace-name" workspace))
-              (is (= type testing-entity-type))
-              (is (= name testing-entity-name)))
-            (throw-if-called [fname & args]
-              (throw (ex-info (str fname " should not have been called")
-                              {:called-with args})))]
-      (with-redefs-fn
-        {#'rawls/batch-upsert        verify-upsert-request
-         #'sink/entity-exists?       (constantly false)
-         #'firecloud/delete-entities (partial throw-if-called "delete-entities")}
-        #(sink/update-sink! executor sink))
-      (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
-      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (let [[record & rest] (->> sink :details (postgres/get-table tx))]
-          (is record "The record was not written to the database")
-          (is (empty? rest) "More than one record was written")
-          (is (= (:uuid workflow) (:workflow record))
-              "The workflow UUID was not written")
-          (is (= testing-entity-name (:entity record))
-              "The entity was not correct"))))))
+  (letfn [(sink [identifier]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (->> {:name           "Terra Workspace"
+                    :workspace      "workspace-ns/workspace-name"
+                    :entityType     testing-entity-type
+                    :fromOutputs    (resources/read-resource
+                                     "sarscov2_illumina_full/entity-from-outputs.edn")
+                    :identifier     identifier
+                    :skipValidation true}
+                   (sink/create-sink! tx (rand-int 1000000))
+                   (zipmap [:sink_type :sink_items])
+                   (sink/load-sink! tx))))
+          (verify-upsert-request [workspace [[type name _]]]
+            (is (= "workspace-ns/workspace-name" workspace))
+            (is (= type testing-entity-type))
+            (is (= name testing-entity-name)))
+          (throw-if-called [fname & args]
+            (throw (ex-info (str fname " should not have been called")
+                            {:called-with args})))]
+    (let [workflow     {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+                        :status  "Succeeded"
+                        :outputs (-> "sarscov2_illumina_full/outputs.edn"
+                                     resources/read-resource
+                                     (assoc :flowcell_id testing-entity-name))}
+          executor     (make-queue-from-list [[nil workflow]])
+          sink-throws  (sink "not-a-workflow-input-or-output")
+          sink-updates (sink "flowcell_id")]
+      (testing "Sink identifier matches no workflow output or input"
+        (with-redefs-fn
+          {#'rawls/batch-upsert        (partial throw-if-called "rawls/batch-upsert")
+           #'sink/entity-exists?       (partial throw-if-called "sink/entity-exists?")
+           #'firecloud/delete-entities (partial throw-if-called "firecloud/delete-entities")}
+          #(is (thrown-with-msg?
+                ExceptionInfo (re-pattern sink/entity-name-not-found-error-message)
+                (sink/update-sink! executor sink-throws))
+               "Sink update should throw if identifier not found in workflow output or input"))
+        (is (== 1 (stage/queue-length executor)) "The workflow should not have been consumed")
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (let [records (->> sink-throws :details (postgres/get-table tx))]
+            (is (empty? records) "No sink records should have been written"))))
+      (testing "Sink identifier matches workflow output"
+        (with-redefs-fn
+          {#'rawls/batch-upsert        verify-upsert-request
+           #'sink/entity-exists?       (constantly false)
+           #'firecloud/delete-entities (partial throw-if-called "firecloud/delete-entities")}
+          #(sink/update-sink! executor sink-updates))
+        (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (let [[record & rest] (->> sink-updates :details (postgres/get-table tx))]
+            (is record "The record was not written to the database")
+            (is (empty? rest) "More than one record was written")
+            (is (= (:uuid workflow) (:workflow record)) "The workflow UUID was not written")
+            (is (= testing-entity-name (:entity record)) "The entity was not correct")))))))
 
 (deftest test-sinking-resubmitted-workflow
   (fixtures/with-temporary-workspace
