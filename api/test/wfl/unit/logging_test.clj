@@ -40,7 +40,7 @@
       (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged? (with-out-str (log/info "Info Message")) :info "Info Message")))))
 
-(deftest json-test
+(deftest exception-test
   (testing "exceptions can be serialized as JSON"
     (let [x   (ex-info "Oops!" {:why "I did it again."}
                        (ex-info "I played with your heart."
