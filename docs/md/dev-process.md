@@ -6,10 +6,10 @@ encourage ourselves to follow in most cases.
 ## The Swagger page
 
 WFL ships with a Swagger UI that documents all available endpoints. It's
-available at path `<host>/swagger-ui/`.
+available at path `<host>/swagger`.
 
-- [Dev WFL Swagger](https://dev-wfl.gotc-dev.broadinstitute.org/swagger-ui/)
-- [Prod WFL Swagger](https://prod-wfl.gotc-prod.broadinstitute.org/swagger-ui/)
+- [Dev WFL Swagger](https://dev-wfl.gotc-dev.broadinstitute.org/swagger)
+- [Prod WFL Swagger](https://gotc-prod-wfl.gotc-prod.broadinstitute.org/swagger)
 
 For local access, see [accessing Swagger Locally](#accessing-swagger-locally).
 
@@ -222,25 +222,15 @@ hair out.
 
 ### accessing Swagger locally
 
-You can quickly check that the Swagger page renders
-by first starting a local WFL server.
+First, start a local WFL server.
 
 ``` shell
 ./ops/server.sh
 ```
 
-Then open this URL in a browser.
-
-``` shell
-open http://localhost:3000/swagger/swagger.json
-```
-
-You should see a page of valid Swagger JSON
-describing the API.
-
 To view the rendered Swagger page:
 ``` shell
-open http://localhost:3000/swagger-ui/
+open http://localhost:3000/swagger
 ```
 
 ### debugging Liquibase locally
