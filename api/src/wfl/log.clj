@@ -31,7 +31,7 @@
      key)))
 
 (defn ^:private value-fn
-  "Preserve the namespace of `key` when qualified."
+  "Stringify VALUE for KEY when JSONifying throws."
   [key value]
   (wfl.debug/trace [:value-fn key value])
   (let [write (:value-fn json/default-write-options)]
