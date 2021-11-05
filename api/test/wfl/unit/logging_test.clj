@@ -1,10 +1,9 @@
 (ns wfl.unit.logging-test
   "Test that logging is functional (since there's several layers of delegation)"
-  (:require
-   [wfl.log :as log]
-   [clojure.data.json :refer [read-str]]
-   [clojure.test :refer [is deftest testing]]
-   [clojure.string :refer [upper-case blank?]])
+  (:require [clojure.test      :refer [is deftest testing]]
+            [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [wfl.log           :as log])
   (:import java.util.regex.Pattern))
 
 (defmulti check-message?
@@ -21,8 +20,8 @@
 (defn logged?
   "Test that the logs worked"
   [result severity test]
-  (let [json (read-str result)]
-    (and (= (get-in json ["severity"]) (-> severity name upper-case))
+  (let [json (json/read-str result)]
+    (and (= (get-in json ["severity"]) (-> severity name str/upper-case))
          (boolean (check-message? test (get-in json ["message"]))))))
 
 ;; Useful information on this file is in docs/logging.md#Testing
@@ -38,5 +37,19 @@
 (deftest severity-level-filtering-test
   (testing "test current logging level correctly ignores lesser levels"
     (with-redefs [log/logging-level (atom :info)]
-      (is (blank? (with-out-str (log/debug "Debug Message"))))
+      (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged? (with-out-str (log/info "Info Message")) :info "Info Message")))))
+
+(deftest json-test
+  (testing "exceptions can be serialized as JSON"
+    (let [x   (ex-info "Oops!" {:why "I did it again."}
+                       (ex-info "I played with your heart."
+                                {:why "Got lost in the game."}
+                                (ex-info "Oh baby, baby."
+                                         {:oops "You think I'm in love."
+                                          :that "I'm sent from above."})))
+          log (json/read-str (with-out-str (log/info x)) :key-fn keyword)]
+      (is (= "INFO"                  (get-in log [:severity])))
+      (is (= "I did it again."       (get-in log [:message :via 0 :data :why])))
+      (is (= "Oh baby, baby."        (get-in log [:message :cause])))
+      (is (= "I'm sent from above."  (get-in log [:message :data :that]))))))
