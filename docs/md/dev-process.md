@@ -6,16 +6,12 @@ encourage ourselves to follow in most cases.
 ## The Swagger page
 
 WFL ships with a Swagger UI that documents all available endpoints. It's
-available at path `/swagger`.  At present, we cannot hit it directly
-without logging in first because it is bundled with the UI and not the API.
+available at path `<host>/swagger`.
 
-- Log into WFL UI, e.g. https://dev-wfl.gotc-dev.broadinstitute.org/login
-- Navigate to `/swagger` via Swagger API button in top right
+- [Dev WFL Swagger](https://dev-wfl.gotc-dev.broadinstitute.org/swagger)
+- [Prod WFL Swagger](https://gotc-prod-wfl.gotc-prod.broadinstitute.org/swagger)
 
-!!! tip
-    To access the swagger page locally, you'll need to start a development
-    server and access via the UI. See the development tips below for more
-    information.
+For local access, see [accessing Swagger Locally](#accessing-swagger-locally).
 
 ## Development Setup
 
@@ -27,7 +23,7 @@ Get a demonstration from someone familiar with Clojure development before you
 spend too much time trying to figure things out on your own.
 
 Find a local Cursive user for guidance if you like IntelliJ.
-[Rex Wang](mailto:chengche@broadinstitute.org) knows how to use it.
+[Olivia Kotsopoulos](mailto:okotsopo@broadinstitute.org) knows how to use it.
 
 Cursive licences are available
 [here](https://broadinstitute.atlassian.net/wiki/spaces/DSDE/pages/48234557/Software%2BLicenses%2B-%2BCursive).
@@ -54,7 +50,7 @@ There is also a
 [Calva](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.calva)
 plugin for [Visual Studio Code](https://code.visualstudio.com/).
 
-I hack Clojure in Emacs using
+[Tom Lyons](mailto:tbl@broadinstitute.org) hacks Clojure in Emacs using
 [CIDER](https://cider.readthedocs.io/) and
 [nREPL](https://github.com/clojure/tools.nrepl). CIDER is not
 trivial to set up, but not *especially* difficult if you are
@@ -224,43 +220,18 @@ silently fail or the Swagger page will fail to render. Check the
 `clojure.spec.alpha/def`s in `wfl.api.routes` for typos before tearing your
 hair out.
 
-You can quickly check that the Swagger page renders
-by first starting a local WFL server.
+### accessing Swagger locally
+
+First, start a local WFL server.
 
 ``` shell
 ./ops/server.sh
 ```
 
-Then open this URL in a browser.
-
+To view the rendered Swagger page:
 ``` shell
-open http://localhost:3000/swagger/swagger.json
+open http://localhost:3000/swagger
 ```
-
-You should see a page of valid Swagger JSON
-describing the API.
-
-You need to start the UI server too
-if you want to see the swagger page rendered.
-With the local WFL server running on port 3000 as above,
-start the UI this way.
-
-``` shell
-cd ./ui
-npm run serve
-```
-
-With the UI running,
-open this URL in the browser.
-
-``` shell
-open http://localhost:8080/
-```
-
-Click the `LOGIN WITH GOOGLE` button if necessary,
-Then the `SWAGGER API` button at the upper right.
-You should see an interactive Swagger API page.
-
 
 ### debugging Liquibase locally
 
