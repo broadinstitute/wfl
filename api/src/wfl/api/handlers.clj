@@ -1,6 +1,7 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints. Require wfl.module namespaces here."
   (:require [clojure.set                    :refer [rename-keys]]
+            [wfl.wfl                        :as wfl]
             [ring.util.http-response        :as response]
             [wfl.api.workloads              :as workloads]
             [wfl.configuration              :as config]
@@ -27,6 +28,13 @@
   "Respond successfully with BODY."
   [body]
   (constantly (succeed body)))
+
+(defn oauth-redirect
+  "Return the html page for the oauth redirect"
+  [_]
+  (-> (wfl/get-wfl-resource "oauth2-redirect.html")
+      response/ok
+      (response/content-type "text/html")))
 
 (defn get-logging-level
   "Gets the current logging level of the API"

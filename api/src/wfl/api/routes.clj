@@ -98,9 +98,10 @@
             :parameters {:body ::spec/workload-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-exec}}]
-   ["/swagger-ui/*"
-    {:get (swagger-ui/create-swagger-ui-handler {:url "/swagger/swagger.json"})}]
-   ["/swagger/swagger.json"
+   ["/oauth2-redirect.html" ; mostly for local swagger usage. Deployed, the file will be copied into the container.
+    {:get {:no-doc true
+           :handler handlers/oauth-redirect}}]
+   ["/ui/swagger.json"
     {:get {:no-doc true    ; exclude this endpoint itself from swagger
            :swagger
            {:info {:title (str wfl/the-name "-API")
@@ -116,7 +117,10 @@
             :tags [{:name "Informational"}
                    {:name "Authenticated"}]
             :basePath "/"}              ; prefix for all paths
-           :handler (swagger/create-swagger-handler)}}]])
+           :handler (swagger/create-swagger-handler)}}]
+   ["/swagger*"
+    {:get (swagger-ui/create-swagger-ui-handler
+           {:url "/ui/swagger.json"})}]])
 
 (defn endpoint-swagger-auth-processor
   "Use the same security-info across all /api endpoints."
@@ -200,8 +204,10 @@
                          multipart/multipart-middleware]}})
    ;; get more correct http error responses on routes
    (ring/create-default-handler
-    {:not-found          (fn [m] {:status 404
-                                  :body (format "Route %s not found" (:uri m))})
-     :method-not-allowed (fn [m] {:status 405
-                                  :body (format "Method %s not allowed"
-                                                (name (:request-method m)))})})))
+    {:not-found
+     (fn [m] {:status 404
+              :body (format "Route %s not found" (:uri m))})
+     :method-not-allowed
+     (fn [m] {:status 405
+              :body (format "Method %s not allowed"
+                            (name (:request-method m)))})})))
