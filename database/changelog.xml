@@ -44,4 +44,5 @@
     <include file="changesets/20210720_AddConfigurationTable.xml"                     relativeToChangelogFile="true"/>
     <include file="changesets/20210823_ConvertWatchersArrayToText.xml"                relativeToChangelogFile="true"/>
     <include file="changesets/20210910_AddRetryToTerraDataRepoSourceDetails.xml"      relativeToChangelogFile="true"/>
+    <include file="changesets/20211102_WorkloadWatchersDataCompatibilityUpdate.xml"   relativeToChangelogFile="true"/>
 </databaseChangeLog>
