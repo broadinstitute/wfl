@@ -171,21 +171,37 @@
       (when (not= (-> ex ex-data :status) 404)
         (throw ex)))))
 
+(defn ^:private entity-name-from-workflow
+  "Return entity name from `identifier`'s match in `workflow`:
+   first checking `outputs` and falling back to `inputs`."
+  [{:keys [inputs outputs] :as _workflow} identifier]
+  (let [kw-id (keyword identifier)]
+    (or (get outputs kw-id) (get inputs kw-id))))
+
+;; Visible for testing
+(def entity-name-not-found-error-message
+  "Entity name not found: sink.identifer not present in workflow outputs or inputs")
+
 (defn ^:private update-terra-workspace-sink
-  [executor {:keys [fromOutputs workspace entityType identifier details] :as _sink}]
-  (when-let [[_ {:keys [uuid outputs] :as workflow}] (stage/peek-queue executor)]
-    (log/debug (str/join " " ["coercing workflow" uuid "outputs to" entityType]))
+  [executor {:keys [fromOutputs workspace entityType identifier details] :as sink}]
+  (when-let [[_ {:keys [uuid] :as workflow}] (stage/peek-queue executor)]
     (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
-          [_ name :as entity] [entityType (outputs (keyword identifier))]]
+          entityName (entity-name-from-workflow workflow identifier)
+          entity     [entityType entityName]]
+      (when (nil? entityName)
+        (throw (ex-info entity-name-not-found-error-message
+                        {:sink     sink
+                         :workflow workflow})))
+      (log/debug (str/join " " ["coercing workflow" uuid "outputs to" entityType]))
       (when (entity-exists? workspace entity)
-        (log/debug (str/join " " ["entity" name "exists - deleting previous entity."]))
+        (log/debug (str/join " " ["entity" entityName "exists - deleting previous entity."]))
         (firecloud/delete-entities workspace [entity]))
-      (log/debug (str/join " " ["upserting workflow" uuid "outputs as" name]))
+      (log/debug (str/join " " ["upserting workflow" uuid "outputs as" entityName]))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
-      (log/info (str/join " " ["sunk workflow" uuid "to" workspace "as" name]))
+      (log/info (str/join " " ["sunk workflow" uuid "to" workspace "as" entityName]))
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-        (jdbc/insert! tx details {:entity   name
+        (jdbc/insert! tx details {:entity   entityName
                                   :updated  (util/utc-now)
                                   :workflow uuid})))))
 
