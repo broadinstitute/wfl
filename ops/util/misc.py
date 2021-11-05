@@ -59,7 +59,6 @@ def shell(command: str, quiet: bool = False, timeout: Optional[float] = None, cw
     except subprocess.CalledProcessError as err:
         error(f"Error running: {command}")
         error(err.output)
-        exit(err.returncode)
 
 
 def shell_unchecked(command: str, quiet: bool = False, timeout: Optional[float] = None) -> str:
