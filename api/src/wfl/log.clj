@@ -1,10 +1,11 @@
 (ns wfl.log
   "Logging for WFL. The severity levels provided here are based off of
    the severity levels supported by GCP's Stackdriver. A list of the supported
-   levels can be found here: https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
-  (:require [clojure.data.json              :as json]
-            [clojure.string                 :as str]
-            [clojure.spec.alpha             :as s])
+   levels can be found here:
+   https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity"
+  (:require [clojure.data.json  :as json]
+            [clojure.spec.alpha :as s]
+            [clojure.string     :as str])
   (:import [java.time Instant]))
 
 (def levels
@@ -28,6 +29,18 @@
      (str (namespace key) \/ (name key))
      key)))
 
+;; HACK: Override how JSONWriter handles Throwables.
+;; json/write-object is private and handles java.util.Map.
+;;
+(defn ^:private write-throwable
+  "Write the Throwable X to OUT as JSON with OPTIONS."
+  [x out options]
+  (#'json/write-object (Throwable->map x) out (assoc options
+                                                     :escape-slash false
+                                                     :key-fn       key-fn)))
+
+(extend java.lang.Throwable json/JSONWriter {:-write write-throwable})
+
 (defprotocol Logger
   "Log `edn` to `logger` as JSON."
   (-write [logger edn]))
@@ -42,7 +55,8 @@
   (reify Logger
     (-write [logger edn]
       (-> edn
-          (json/write-str :key-fn key-fn :escape-slash false)
+          (json/write-str :escape-slash false
+                          :key-fn       key-fn)
           println))))
 
 (def ^:dynamic *logger*
