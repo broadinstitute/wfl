@@ -41,7 +41,7 @@ def exit_if_dry_run(config: WflInstanceConfig) -> None:
 def publish_docker_images(config: WflInstanceConfig) -> None:
     """Publish latest docker images for the stored version."""
     info(f"=>  Publishing Docker images for version {config.version}")
-    for module in ["api"]:
+    for module in ["api", "ui"]:
         image = f"broadinstitute/workflow-launcher-{module}"
         # re-tag the image in case the version is being overwritten.
         shell(f"docker tag {image}:latest {image}:{config.version}")
@@ -51,7 +51,8 @@ def publish_docker_images(config: WflInstanceConfig) -> None:
 
 def make_git_tag(config: WflInstanceConfig) -> None:
     info("=>  Tagging current commit with version")
-    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'", cwd=config.wfl_root_folder)
+    shell(f"git tag -a v{config.version} -m 'Created by cli.py {config.command}'",
+          cwd=config.wfl_root_folder)
     shell(f"git push origin v{config.version}", cwd=config.wfl_root_folder)
     success(f"Tag 'v{config.version}' created and pushed")
 
