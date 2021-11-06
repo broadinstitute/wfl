@@ -7,6 +7,7 @@
             [wfl.api.workloads]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
+            [wfl.executor               :as executor]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -20,7 +21,8 @@
             [clojure.data.json          :as json])
   (:import [clojure.lang ExceptionInfo]
            [java.time.format DateTimeFormatter]
-           [java.util UUID]))
+           [java.util UUID]
+           [wfl.util UserException]))
 
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
@@ -191,23 +193,28 @@
             (gcs/upload-file src))
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
+(defn ^:private retry-check-message-and-throw
+  "Retry workflows in `workload` matching `filters`,
+  catching any exception to verify its message
+  before rethrowing."
+  [workload message filters]
+  (try
+    (endpoints/retry-workflows workload filters)
+    (catch Exception cause
+      (is (= message (-> (ex-data cause) util/response-body-json :message))
+          (str "Unexpected or missing exception message for filters "
+               filters))
+      (throw cause))))
+
 (defn ^:private test-retry-legacy-workload-fails
   "Any non-staged (legacy) workload has not had retry functionality implemented,
   and should fail with an HTTP 501 if requested."
   [request]
   (let [workload (endpoints/create-workload request)]
-    (letfn [(check-message-and-throw [message status]
-              (try
-                (endpoints/retry-workflows workload status)
-                (catch Exception cause
-                  (is (= message (-> (ex-data cause) util/response-body-json :message))
-                      (str "Unexpected or missing exception message for status "
-                           status))
-                  (throw cause))))
-            (should-throw-501 [message status]
+    (letfn [(should-throw-501 [message status]
               (is (thrown-with-msg?
                    ExceptionInfo #"clj-http: status 501"
-                   (check-message-and-throw message status))
+                   (retry-check-message-and-throw workload message {:status status}))
                   (str "Expecting 501 error for retry with status " status)))]
       (run! (partial should-throw-501
                      wfl.api.workloads/retry-unimplemented-error-message)
@@ -303,6 +310,27 @@
           (is (not started))
           (verify-internal-properties-removed response)
           (is (s/valid? ::module/workload-response response))))
+      (testing "/retry covid workload"
+        (letfn [(should-throw-400 [message filters]
+                  (is (thrown-with-msg?
+                        ExceptionInfo #"clj-http: status 400"
+                        (retry-check-message-and-throw workload message filters))
+                      (str "Expecting 400 error for retry with filters " filters)))]
+          (let [status-unretriable "Running"
+                status-retriable   "Failed"
+                submission         (str (UUID/randomUUID))
+                filters-invalid    [{}
+                                    {:status status-unretriable}
+                                    {:status status-retriable}
+                                    {:submission submission :status status-unretriable}]
+                filters-valid      [{:submission submission}
+                                    {:submission submission :status status-retriable}]]
+            (run! (partial should-throw-400
+                           executor/terra-executor-retry-filters-invalid-error-message)
+                  filters-invalid)
+            (run! (partial should-throw-400
+                           wfl.api.handlers/retry-no-workflows-error-message)
+                  filters-valid))))
       (testing "/start covid workload"
         (let [{:keys [created started] :as response}
               (-> workload endpoints/start-workload

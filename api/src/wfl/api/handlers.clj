@@ -13,7 +13,6 @@
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
-            [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util])
