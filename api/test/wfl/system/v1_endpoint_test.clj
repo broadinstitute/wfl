@@ -4,6 +4,7 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
+            [wfl.api.handlers           :as handlers]
             [wfl.api.workloads]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
@@ -313,8 +314,8 @@
       (testing "/retry covid workload"
         (letfn [(should-throw-400 [message filters]
                   (is (thrown-with-msg?
-                        ExceptionInfo #"clj-http: status 400"
-                        (retry-check-message-and-throw workload message filters))
+                       ExceptionInfo #"clj-http: status 400"
+                       (retry-check-message-and-throw workload message filters))
                       (str "Expecting 400 error for retry with filters " filters)))]
           (let [status-unretriable "Running"
                 status-retriable   "Failed"
@@ -329,7 +330,7 @@
                            executor/terra-executor-retry-filters-invalid-error-message)
                   filters-invalid)
             (run! (partial should-throw-400
-                           wfl.api.handlers/retry-no-workflows-error-message)
+                           handlers/retry-no-workflows-error-message)
                   filters-valid))))
       (testing "/start covid workload"
         (let [{:keys [created started] :as response}
