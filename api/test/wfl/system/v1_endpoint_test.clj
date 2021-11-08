@@ -7,7 +7,6 @@
             [wfl.api.handlers           :as handlers]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
-            [wfl.mime-type              :as mime-type]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -18,9 +17,9 @@
             [wfl.tools.workloads        :as workloads]
             [wfl.tools.resources        :as resources]
             [wfl.util                   :as util]
-            [clojure.data.json          :as json])
+            [clojure.data.json          :as json]
+            [wfl.tools.workflows        :as workflows])
   (:import [clojure.lang ExceptionInfo]
-           [java.time.format DateTimeFormatter]
            [java.util UUID]))
 
 (defn make-create-workload [make-request]
@@ -358,10 +357,6 @@
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
 
-(def ^:private tdr-date-time-formatter
-  "The Data Repo's time format."
-  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
-
 (defn ^:private ingest-illumina-genotyping-array-files
   "Return filrefs for inputs to illumina-genotyping-array dataset."
   [dataset gcs-folder inputs-json]
@@ -380,15 +375,6 @@
              (map (comp :fileId datarepo/poll-job ingest))
              (zipmap (keys input-map)))))))
 
-(defn ^:private convert-to-bulk
-  "Convert fileref column to BulkLoadFileModel for TDR"
-  [value bucket]
-  (let [basename (util/basename value)]
-    {:description basename
-     :mimeType (mime-type/ext-mime-type value)
-     :sourcePath value
-     :targetPath (str/join "/" [bucket basename])}))
-
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest inputs for the illimina_genotyping_array pipeline into the
    illimina_genotyping_array `dataset`"
@@ -398,10 +384,10 @@
     (fn [temporary-cloud-storage-folder]
       (let [file (str temporary-cloud-storage-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
-            (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
+            (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
             (as-> inputs
-                  (assoc inputs :green_idat_cloud_path (convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
-              (assoc inputs :red_idat_cloud_path (convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
+                  (assoc inputs :green_idat_cloud_path (workflows/convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
+              (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))

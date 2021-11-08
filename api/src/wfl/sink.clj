@@ -329,35 +329,39 @@
 (defn rename-gather-bulk
   "Transform the `values` using the transformation defined in `mapping`, building bulk
    load file models instead of strings."
-  [workflow-id {:keys [schema] :as dataset} table values mapping]
-  (letfn [(literal? [x] (str/starts-with? x "$"))
-          (datatype [k] (let [columns (->> schema
-                                           :tables
-                                           (filter #(= table (:name %)))
-                                           first
-                                           :columns)]
-                          (-> (filter #(= k (:name %)) columns)
-                              first
-                              :datatype)))
-          (fileref? [k] (= (datatype (name k)) "fileref"))
-          (boolean? [k] (= (datatype (name k)) "boolean"))
-          (get-target [url]
-            (let [[bucket obj] (storage/parse-gs-url url)]
-              (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))))
-          (go! [k v]
-            (cond (fileref? v) (let [val (values (keyword v))]
-                                 [k {:description (util/basename val)
-                                     :mimeType   (mime-type/ext-mime-type val)
-                                     :sourcePath val
-                                     :targetPath (get-target val)}])
-                  (literal? v) [k (subs v 1 (count v))]
-                  (boolean? v) [k (values (keyword v))]
-                  (string?  v) [k (values (keyword v))]
-                  (map?     v) [k (rename-gather-bulk workflow-id dataset table values v)]
-                  (coll?    v) [k (keep (go! k v))]
-                  :else        (throw (ex-info "Unknown operation"
-                                               {:operation v}))))]
-    (into {} (for [[k v] mapping] (go! k v)))))
+  ([workflow-id dataset table values mapping]
+   (rename-gather-bulk workflow-id dataset table values mapping ""))
+  ([workflow-id {:keys [schema] :as dataset} table values mapping target-bucket]
+   (letfn [(literal? [x] (str/starts-with? x "$"))
+           (datatype [k] (let [columns (->> schema
+                                            :tables
+                                            (filter #(= table (:name %)))
+                                            first
+                                            :columns)]
+                           (-> (filter #(= k (:name %)) columns)
+                               first
+                               :datatype)))
+           (fileref? [k] (= (datatype (name k)) "fileref"))
+           (boolean? [k] (= (datatype (name k)) "boolean"))
+           (get-target [url]
+             (let [[bucket obj] (storage/parse-gs-url url)]
+               (if (= target-bucket "")
+                 (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))
+                 (str target-bucket workflow-id "/" (util/basename obj)))))
+           (go! [k v]
+             (cond (fileref? k) (let [val (values (keyword v))]
+                                  [k {:description (util/basename val)
+                                      :mimeType   (mime-type/ext-mime-type val)
+                                      :sourcePath val
+                                      :targetPath (get-target val)}])
+                   (literal? v) [k (subs v 1 (count v))]
+                   (boolean? v) [k (values (keyword v))]
+                   (string?  v) [k (values (keyword v))]
+                   (map?     v) [k (rename-gather-bulk workflow-id dataset table values v)]
+                   (coll?    v) [k (keep (go! k v))]
+                   :else        (throw (ex-info "Unknown operation"
+                                                {:operation v}))))]
+     (into {} (for [[k v] mapping] (go! k v))))))
 
 (defn ^:private to-dataset-row
   "Use `fromOutputs` and the schema provided in the `table` within the `dataset` to coerce the `workflow` outputs into a row in the dataset table. The dataset table schema describes column types while `fromOutputs` provides a mapping between workflow outputs and the table."
