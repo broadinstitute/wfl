@@ -12,5 +12,6 @@ FROM us.gcr.io/broad-dsp-gcr-public/base/jre:11-distroless
 LABEL maintainer="hornet@broadinsitute.org"
 WORKDIR /wfl-api
 COPY --from=build /tmp/derived/api/target/wfl-*.jar ./wfl-api.jar
+COPY --from=build /tmp/derived/api/resources/wfl/oauth2-redirect.html /var/www/html/oauth2-redirect.html
 EXPOSE 3000
 CMD [ "wfl-api.jar", "server", "3000" ]

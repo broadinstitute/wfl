@@ -32,3 +32,11 @@
               edn/read-string)
       {:version "SOME BOGUS VERSION"
        :commit "aaaaabbbbbcccccdddddeeeeefffffggggghhhhh"}))
+
+(defn get-wfl-resource
+  "Return a wfl resource."
+  [path]
+  (or (some-> (str/join "/" ["wfl" path])
+              io/resource
+              slurp)
+      (slurp (str/join "/" ["." "resources" path]))))
