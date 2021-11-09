@@ -237,9 +237,9 @@
   (tag-workflows
    (deserialize-workflows workload (postgres/get-table tx items))))
 
-(defn workflows-by-status
+(defn workflows-by-filters
   "Return the workflows managed by the `workload` matching `status`."
-  [tx {:keys [items] :as workload} status]
+  [tx {:keys [items] :as workload} {:keys [status] :as _filters}]
   (tag-workflows
    (deserialize-workflows
     workload
