@@ -115,25 +115,23 @@
 
 (defn post-retry
   "Retry the workflows identified in `request`."
-  [request]
+  [{:keys [body-params path-params] :as request}]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid       (get-in request [:path-params :uuid])
-        filters    (-> request
-                       :body-params
-                       (select-keys [:submission :status]))]
-    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (let [workload  (workloads/load-workload-for-uuid tx uuid)
-                 _         (workloads/throw-if-invalid-retry-filters workload filters)
-                 workflows (workloads/workflows-by-filters tx workload filters)]
-             (when (empty? workflows)
-               (throw (UserException. retry-no-workflows-error-message
-                                      {:workload uuid
-                                       :filters  filters
-                                       :status   400})))
-             [workload workflows]))
-         (apply workloads/retry)
-         util/to-edn
-         succeed)))
+  (let [uuid     (:uuid path-params)
+        filters  (select-keys body-params [:submission :status])
+        workload (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                   (workloads/load-workload-for-uuid tx uuid))]
+    (workloads/throw-if-invalid-retry-filters workload filters)
+    (let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                      (workloads/workflows-by-filters tx workload filters))]
+      (when (empty? workflows)
+        (throw (UserException. retry-no-workflows-error-message
+                               {:workload uuid
+                                :filters  filters
+                                :status   400})))
+      (->> (workloads/retry workload workflows)
+           util/to-edn
+           succeed))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."

@@ -577,9 +577,10 @@
   "Return error information to throw if workflow `status`
   is specified and unretriable."
   [status]
-  (when-not (or (nil? status) (cromwell/retry-status? status))
-    {:message retry-unsupported-status-error-message
-     :data    {:supported-statuses cromwell/retry-status?}}))
+  (when status
+    (when-not (cromwell/retry-status? status)
+      {:message retry-unsupported-status-error-message
+       :data    {:supported-statuses cromwell/retry-status?}})))
 
 ;; Visible for testing
 (def terra-executor-retry-filters-invalid-error-message
@@ -591,15 +592,14 @@
   [{:keys [uuid] :as _workload} {:keys [submission status] :as filters}]
   (let [submission-error (retry-submission-validation-error submission)
         status-error     (retry-status-validation-error status)
-        errors           (remove nil? [submission-error status-error])
-        error-data       (into {} (map :data errors))]
-    (when (or submission-error status-error)
+        errors           (remove nil? [submission-error status-error])]
+    (when (seq errors)
       (throw (UserException. terra-executor-retry-filters-invalid-error-message
                              (merge {:workload          uuid
                                      :filters           filters
                                      :validation-errors (map :message errors)
                                      :status            400}
-                                    error-data))))))
+                                    (into {} (map :data errors))))))))
 
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
