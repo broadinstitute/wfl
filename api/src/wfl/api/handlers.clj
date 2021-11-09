@@ -13,7 +13,6 @@
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]
-            [wfl.service.cromwell           :as cromwell]
             [wfl.service.google.storage     :as gcs]
             [wfl.service.postgres           :as postgres]
             [wfl.util                       :as util])
@@ -98,45 +97,41 @@
   "Return the workflows managed by the workload."
   [request]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid (get-in request [:path-params :uuid])
-        status (get-in request [:parameters :query :status])]
+  (let [uuid    (get-in request [:path-params :uuid])
+        filters (-> request
+                    (get-in [:parameters :query])
+                    (select-keys [:submission :status]))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (let [workload (workloads/load-workload-for-uuid tx uuid)]
-             (if status (workloads/workflows-by-status tx workload status) (workloads/workflows tx workload)))
+             (if (empty? filters)
+               (workloads/workflows tx workload)
+               (workloads/workflows-by-filters tx workload filters)))
            (mapv util/to-edn)
            succeed))))
 
 ;; Visible for testing
-(def retry-unsupported-status-error-message
-  "Retry unsupported for requested status.")
 (def retry-no-workflows-error-message
-  "No workflows to retry for requested status.")
+  "No workflows to retry for workload and requested workflow filters.")
 
 (defn post-retry
   "Retry the workflows identified in `request`."
-  [request]
+  [{:keys [body-params path-params] :as request}]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [uuid       (get-in request [:path-params :uuid])
-        status     (get-in request [:body-params :status])
-        supported? (cromwell/retry-status? status)]
-    (when-not supported?
-      (throw (UserException. retry-unsupported-status-error-message
-                             {:workload           uuid
-                              :supported-statuses cromwell/retry-status?
-                              :requested-status   status
-                              :status             400})))
-    (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (let [workload  (workloads/load-workload-for-uuid tx uuid)
-                 workflows (workloads/workflows-by-status tx workload status)]
-             (when (empty? workflows)
-               (throw (UserException. retry-no-workflows-error-message
-                                      {:workload         uuid
-                                       :requested-status status
-                                       :status           400})))
-             [workload workflows]))
-         (apply workloads/retry)
-         util/to-edn
-         succeed)))
+  (let [uuid     (:uuid path-params)
+        filters  (select-keys body-params [:submission :status])
+        workload (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                   (workloads/load-workload-for-uuid tx uuid))]
+    (workloads/throw-if-invalid-retry-filters workload filters)
+    (let [workflows (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                      (workloads/workflows-by-filters tx workload filters))]
+      (when (empty? workflows)
+        (throw (UserException. retry-no-workflows-error-message
+                               {:workload uuid
+                                :filters  filters
+                                :status   400})))
+      (->> (workloads/retry workload workflows)
+           util/to-edn
+           succeed))))
 
 (defn post-start
   "Start the workload with UUID in REQUEST."
