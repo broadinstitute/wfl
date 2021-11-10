@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="rfricke@broadinstitute.org"
+               dbms="postgresql"
+               id="20211110"
+               logicalFilePath="20211110_AddPollingIntervalColumn.xml"
+               runInTransaction="false">
+        <comment>
+            We want to be able to allow each terra data repo source to be able to specify
+            the rate in which they poll for a new snapshot. The new column added to TerraDataRepoSource
+            will allow us to keep track of what the interval is for each workload's source.
+        </comment>
+        <sql>
+            ALTER TABLE TerraDataRepoSource
+            ADD polling_interval INTEGER;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
