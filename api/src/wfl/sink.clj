@@ -171,35 +171,41 @@
       (when (not= (-> ex ex-data :status) 404)
         (throw ex)))))
 
-(defn ^:private entity-name-from-workflow
-  "Return entity name from `identifier`'s match in `workflow`:
-   first checking `outputs` and falling back to `inputs`."
-  [{:keys [inputs outputs] :as _workflow} identifier]
-  (let [kw-id (keyword identifier)]
-    (or (get outputs kw-id) (get inputs kw-id))))
-
 ;; Visible for testing
 (def entity-name-not-found-error-message
-  "Entity name not found: sink.identifer not present in workflow outputs or inputs")
+  (str "Entity name not found: "
+       "sink.identifer not present in workflow outputs or inputs"))
+
+(defn ^:private throw-or-entity-name-from-workflow
+  "Return entity name from `identifier`'s match in `workflow`:
+   first checking `outputs` and falling back to `inputs`."
+  [{:keys [inputs outputs] :as workflow} {:keys [identifier] :as sink}]
+  (let [kw-id       (keyword identifier)
+        entity-name (or (get outputs kw-id) (get inputs kw-id))]
+    (when (nil? entity-name)
+      (throw (ex-info entity-name-not-found-error-message
+                      {:sink     sink
+                       :workflow workflow})))
+    entity-name))
 
 (defn ^:private update-terra-workspace-sink
-  [executor {:keys [fromOutputs workspace entityType identifier details] :as sink}]
+  "Write outputs from consumable `executor` workflows
+   to `entityType` table in `workspace`."
+  [executor {:keys [fromOutputs workspace entityType details] :as sink}]
   (when-let [[_ {:keys [uuid] :as workflow}] (stage/peek-queue executor)]
-    (let [attributes (terra-workspace-sink-to-attributes workflow fromOutputs)
-          entityName (entity-name-from-workflow workflow identifier)
-          entity     [entityType entityName]]
-      (when (nil? entityName)
-        (throw (ex-info entity-name-not-found-error-message
-                        {:sink     sink
-                         :workflow workflow})))
-      (log/debug (str/join " " ["coercing workflow" uuid "outputs to" entityType]))
+    (log/debug {:action     "Attempting to sink workflow outputs"
+                :workflow   uuid
+                :entityType entityType})
+    (let [entityName (throw-or-entity-name-from-workflow workflow sink)
+          entity     [entityType entityName]
+          attributes (terra-workspace-sink-to-attributes workflow fromOutputs)]
       (when (entity-exists? workspace entity)
-        (log/debug (str/join " " ["entity" entityName "exists - deleting previous entity."]))
         (firecloud/delete-entities workspace [entity]))
-      (log/debug (str/join " " ["upserting workflow" uuid "outputs as" entityName]))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
-      (log/info (str/join " " ["sunk workflow" uuid "to" workspace "as" entityName]))
+      (log/debug {:action   "Sunk workflow outputs"
+                  :workflow uuid
+                  :entity   entity})
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/insert! tx details {:entity   entityName
                                   :updated  (util/utc-now)

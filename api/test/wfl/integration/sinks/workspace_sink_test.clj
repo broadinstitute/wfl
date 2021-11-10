@@ -92,10 +92,11 @@
                    (sink/create-sink! tx (rand-int 1000000))
                    (zipmap [:sink_type :sink_items])
                    (sink/load-sink! tx))))
-          (verify-upsert-request [workspace [[type name _]]]
+          (verify-upsert-request
+            [workspace [[type name _attributes] :as _entities]]
             (is (= "workspace-ns/workspace-name" workspace))
-            (is (= type testing-entity-type))
-            (is (= name testing-entity-name)))
+            (is (= testing-entity-type type))
+            (is (= testing-entity-name name)))
           (throw-if-called [fname & args]
             (throw (ex-info (str fname " should not have been called")
                             {:called-with args})))]
