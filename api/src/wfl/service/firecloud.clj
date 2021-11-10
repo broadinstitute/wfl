@@ -5,8 +5,7 @@
             [clojure.string    :as str]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
-            [wfl.util          :as util]
-            [clojure.java.io    :as io])
+            [wfl.util          :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
            [wfl.util UserException]))
