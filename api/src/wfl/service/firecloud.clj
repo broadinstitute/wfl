@@ -5,6 +5,7 @@
             [clojure.string    :as str]
             [wfl.auth          :as auth]
             [wfl.environment   :as env]
+            [wfl.log           :as log]
             [wfl.util          :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]
@@ -154,6 +155,9 @@
      workspace - Terra Workspace to delete entities from
      entities  - list of entity `[type name]` pairs"
   [workspace entities]
+  (log/debug {:action    "Deleting entities"
+              :workspace workspace
+              :entities  entities})
   (let [make-entity (partial zipmap [:entityType :entityName])]
     (-> (workspace-api-url workspace "entities" "delete")
         (http/post {:headers      (auth/get-auth-header)
