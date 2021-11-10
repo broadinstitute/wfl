@@ -4,7 +4,8 @@
             [wfl.tools.endpoints  :refer [coercion-tester]]
             [wfl.tools.resources  :as resources]
             [wfl.util             :refer [uuid-nil]])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [clojure.lang ExceptionInfo]))
 
 (deftest test-rename-gather
   (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
@@ -50,3 +51,36 @@
 (deftest test-datarepo-sink-request-coercion
   (let [test! (coercion-tester ::sink/sink)]
     (test! datarepo-sink-request)))
+
+(deftest test-throw-or-entity-name-from-workspace
+  (let [inputs   {:a "aInput" :b "bInput"}
+        outputs  {:b "bOutput" :c "cOutput"}
+        workflow {:inputs inputs :outputs outputs}
+        msg      (re-pattern sink/entity-name-not-found-error-message)]
+    (is (thrown-with-msg?
+         ExceptionInfo msg
+         (#'sink/throw-or-entity-name-from-workflow nil {:identifier "a"}))
+        "When nil workflow, should throw")
+    (is (thrown-with-msg?
+         ExceptionInfo msg
+         (#'sink/throw-or-entity-name-from-workflow
+          (select-keys workflow [:inputs]) {:identifier "c"}))
+        "When no outputs, should only check inputs")
+    (is (thrown-with-msg?
+         ExceptionInfo msg
+         (#'sink/throw-or-entity-name-from-workflow
+          (select-keys workflow [:outputs]) {:identifier "a"}))
+        "When no inputs, should only check outputs")
+    (is (= "aInput"
+           (#'sink/throw-or-entity-name-from-workflow workflow {:identifier "a"}))
+        "Key a only present in inputs map")
+    (is (= "bOutput"
+           (#'sink/throw-or-entity-name-from-workflow workflow {:identifier "b"}))
+        "Key b present in both inputs and outputs maps should pull from outputs map")
+    (is (= "cOutput"
+           (#'sink/throw-or-entity-name-from-workflow workflow {:identifier "c"}))
+        "Key c only present in outputs map")
+    (is (thrown-with-msg?
+         ExceptionInfo msg
+         (#'sink/throw-or-entity-name-from-workflow workflow {:identifier "d"}))
+        "Key d not found in inputs or outputs maps should throw")))

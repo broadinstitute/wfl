@@ -282,13 +282,13 @@
   ([operation]
    (partial evalT operation)))
 
-(def create-workload!    (evalT wfl.api.workloads/create-workload!))
-(def start-workload!     (evalT wfl.api.workloads/start-workload!))
-(def stop-workload!      (evalT wfl.api.workloads/stop-workload!))
-(def execute-workload!   (evalT wfl.api.workloads/execute-workload!))
-(def update-workload!    (evalT wfl.api.workloads/update-workload!))
-(def workflows           (evalT wfl.api.workloads/workflows))
-(def workflows-by-status (evalT wfl.api.workloads/workflows-by-status))
+(def create-workload!     (evalT wfl.api.workloads/create-workload!))
+(def start-workload!      (evalT wfl.api.workloads/start-workload!))
+(def stop-workload!       (evalT wfl.api.workloads/stop-workload!))
+(def execute-workload!    (evalT wfl.api.workloads/execute-workload!))
+(def update-workload!     (evalT wfl.api.workloads/update-workload!))
+(def workflows            (evalT wfl.api.workloads/workflows))
+(def workflows-by-filters (evalT wfl.api.workloads/workflows-by-filters))
 
 (defn retry [& params] (apply wfl.api.workloads/retry params))
 

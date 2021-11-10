@@ -72,9 +72,10 @@
            :responses  {200 {:body ::spec/workflows}}
            :handler    handlers/get-workflows}}]
    ["/api/v1/workload/:uuid/retry"
-    {:post {:summary    "Resubmit workflows in workload by status."
-            :parameters {:path {:uuid   ::all/uuid}
-                         :body {:status ::all/status}}
+    {:post {:summary    (str "Resubmit workflows in workload matching filters "
+                             "(ex. workflow status, submission id).")
+            :parameters {:path {:uuid ::all/uuid}
+                         :body ::spec/retry-request}
             :responses  {200 {:body ::spec/workload-response}}
             :handler    handlers/post-retry}}]
    ["/api/v1/create"

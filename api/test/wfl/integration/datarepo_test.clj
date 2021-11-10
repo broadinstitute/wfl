@@ -1,5 +1,6 @@
 (ns wfl.integration.datarepo-test
   (:require [clojure.data.json           :as json]
+            [clojure.string              :as str]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
             [wfl.service.datarepo        :as datarepo]
@@ -98,7 +99,9 @@
     (fixtures/with-temporary-snapshot
       (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
       #(let [snapshot (datarepo/snapshot %)]
-         (is (= % (:id snapshot)))))))
+         (is (= % (:id snapshot)))
+         (is (str/starts-with? (:name snapshot) (str (:name dataset) "_" table))
+             "Snapshot name should start with dataset name and table name")))))
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
