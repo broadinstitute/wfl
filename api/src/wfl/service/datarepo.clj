@@ -230,7 +230,7 @@
 ;; Note TDR uses snapshot names as unique identifier so the
 ;; name must be unique among snapshots.
 (defn make-snapshot-request
-  "Return a snapshot request for `row-ids`and `columns` from `table` name
+  "Return a snapshot request for `row-ids` and `columns` from `table` name
    in `_dataset`."
   [{:keys [name defaultProfileId description] :as _dataset} columns table row-ids]
   {:contents    [{:datasetName name
@@ -239,7 +239,7 @@
                                           :rowIds    row-ids
                                           :tableName table}]}}]
    :description description
-   :name        name
+   :name        (str name "_" table)
    :profileId   defaultProfileId})
 
 ;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
