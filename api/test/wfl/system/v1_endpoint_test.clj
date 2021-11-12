@@ -19,11 +19,10 @@
             [wfl.tools.workloads        :as workloads]
             [wfl.tools.resources        :as resources]
             [wfl.util                   :as util]
-            [clojure.data.json          :as json])
+            [clojure.data.json          :as json]
+            [wfl.tools.workflows        :as workflows])
   (:import [clojure.lang ExceptionInfo]
-           [java.time.format DateTimeFormatter]
-           [java.util UUID]
-           [wfl.util UserException]))
+           [java.util UUID]))
 
 (defn make-create-workload [make-request]
   (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
@@ -382,10 +381,6 @@
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
 
-(def ^:private tdr-date-time-formatter
-  "The Data Repo's time format."
-  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
-
 (defn ^:private ingest-illumina-genotyping-array-files
   "Return filrefs for inputs to illumina-genotyping-array dataset."
   [dataset gcs-folder inputs-json]
@@ -405,19 +400,18 @@
              (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
+  "Ingest inputs for the illimina_genotyping_array pipeline into the
+   illimina_genotyping_array `dataset`"
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
-    fixtures/gcs-test-bucket
+    fixtures/gcs-tdr-test-bucket
     (fn [temporary-cloud-storage-folder]
-      (let [file (str temporary-cloud-storage-folder "inputs.json")
-            inputs-json (resources/read-resource
-                         "illumina_genotyping_array/inputs.json")
-            ref->id (ingest-illumina-genotyping-array-files
-                     dataset temporary-cloud-storage-folder inputs-json)]
-        (-> inputs-json
-            (merge ref->id)
-            (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
+      (let [file (str temporary-cloud-storage-folder "inputs.json")]
+        (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
+            (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
+            (as-> inputs
+                  (assoc inputs :green_idat_cloud_path (workflows/convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
+              (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
@@ -428,9 +422,11 @@
        (datasets/unique-dataset-request
         (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         "illumina-genotyping-array.json"))
-     (fixtures/with-temporary-workspace-clone
+     (fixtures/with-shared-temporary-workspace-clone
        "wfl-dev/Illumina-Genotyping-Array-Template"
-       "workflow-launcher-dev")]
+       "workflow-launcher-dev"
+       [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
+         :accessLevel "OWNER"}])]
     (fn [[dataset workspace]]
       (let [source   {:name            "Terra DataRepo"
                       :dataset         dataset
@@ -459,5 +455,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (datarepo/query-table dataset "outputs"))
+        (is (seq (:rows (datarepo/query-table dataset "outputs")))
             "outputs should have been written to the dataset")))))
