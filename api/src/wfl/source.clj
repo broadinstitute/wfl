@@ -22,13 +22,15 @@
 (s/def ::column string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
+(s/def ::pollingInterval int?)
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
                    ::column
                    ::all/dataset
                    ::all/table
                    ::snapshotReaders]
-          :opt-un [::snapshots]))
+          :opt-un [::snapshots
+                   ::pollingInterval]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::all/name ::snapshots]))
@@ -99,7 +101,8 @@
   {:dataset         :dataset
    :table           :dataset_table
    :column          :table_column_name
-   :snapshotReaders :snapshot_readers})
+   :snapshotReaders :snapshot_readers
+   :pollingInterval :polling_inverval})
 
 (def ^:private bigquery-datetime-format
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))

@@ -432,7 +432,8 @@
                       :dataset         dataset
                       :table           "inputs"
                       :column          "ingested"
-                      :snapshotReaders ["hornet@firecloud.org"]}
+                      :snapshotReaders ["hornet@firecloud.org"]
+                      :pollingInterval 1}
             executor {:name                       "Terra"
                       :workspace                  workspace
                       :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
