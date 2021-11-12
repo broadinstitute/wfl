@@ -54,18 +54,6 @@
         "name": "outputs",
         "columns": [
           {
-            "name": "arrays_subset_variant_calling_control_metrics",
-            "datatype": "fileref"
-          },
-          {
-            "name": "arrays_subset_variant_calling_detail_metrics",
-            "datatype": "fileref"
-          },
-          {
-            "name": "arrays_subset_variant_calling_summary_metrics",
-            "datatype": "fileref"
-          },
-          {
             "name": "arrays_variant_calling_control_metrics",
             "datatype": "fileref"
           },
@@ -78,19 +66,7 @@
             "datatype": "fileref"
           },
           {
-            "name": "check_fingerprint_lod",
-            "datatype": "float"
-          },
-          {
             "name": "contamination_metrics",
-            "datatype": "fileref"
-          },
-          {
-            "name": "fingerprint_detail_metrics",
-            "datatype": "fileref"
-          },
-          {
-            "name": "fingerprint_summary_metrics",
             "datatype": "fileref"
           },
           {
@@ -143,16 +119,10 @@
           }
         ],
         "primaryKey": [
-          "arrays_subset_variant_calling_control_metrics",
-          "arrays_subset_variant_calling_detail_metrics",
-          "arrays_subset_variant_calling_summary_metrics",
           "arrays_variant_calling_control_metrics",
           "arrays_variant_calling_detail_metrics",
           "arrays_variant_calling_summary_metrics",
-          "check_fingerprint_lod",
           "contamination_metrics",
-          "fingerprint_detail_metrics",
-          "fingerprint_summary_metrics",
           "genotype_concordance_contingency_metrics",
           "genotype_concordance_detail_metrics",
           "genotype_concordance_failed",
