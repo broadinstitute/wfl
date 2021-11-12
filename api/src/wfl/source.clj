@@ -305,19 +305,20 @@
 ;; but overpolling the TDR increases the chances of:
 ;; - creating many single-row / low-cardinality snapshots
 ;; - locking the dataset / running into dataset locks
-(def ^:private tdr-source-polling-interval-minutes 20)
+(def ^:private tdr-source-default-polling-interval-minutes 20)
 
 (defn ^:private tdr-source-should-poll?
-  "Return true if it's been at least `tdr-source-polling-interval-minutes`
+  "Return true if it's been at least the specified `polling_interval` or, if unspecified, `tdr-source-default-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
-  [{:keys [type id last_checked] :as _source} utc-now]
+  [{:keys [type id last_checked polling_interval] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
-        minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)]
+        minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
+        polling-interval (or polling_interval tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
                 :minutes-since-poll minutes-since-poll
-                :polling-interval   tdr-source-polling-interval-minutes})
-    (<= tdr-source-polling-interval-minutes minutes-since-poll)))
+                :polling-interval   polling-interval})
+    (<= polling-interval minutes-since-poll)))
 
 (defn ^:private update-tdr-source
   "Check for new data in TDR from `source`, create new snapshots,
