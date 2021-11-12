@@ -7,8 +7,10 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :refer [defoverload]]
+            [wfl.environment            :as env]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
+            [wfl.mime-type              :as mime-type]
             [wfl.module.all             :as all]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.firecloud      :as firecloud]
@@ -18,7 +20,8 @@
             [wfl.stage                  :as stage]
             [wfl.util                   :as util :refer [utc-now]])
   (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+           [wfl.util UserException]
+           [java.util UUID]))
 
 (defmulti create-sink!
   "Create a `Sink` instance using the database `transaction` and configuration
@@ -136,6 +139,11 @@
                                   :missing     (sort missing)
                                   :fromOutputs fromOutputs}))))))
   sink)
+
+(defn ^:private tdr-outputs-bucket
+  "Build the google storage file path for the TDR outputs bucket."
+  [path]
+  (storage/gs-url (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET") path))
 
 ;; visible for testing
 (defn rename-gather
@@ -339,18 +347,54 @@
                                  {:job      job
                                   :workflow workflow})))))))
 
+;; visible for testing
+(defn rename-gather-bulk
+  "Transform the `values` using the transformation defined in `mapping`, building bulk
+   load file models instead of strings."
+  ([workflow-id dataset table values mapping]
+   (rename-gather-bulk workflow-id dataset table values mapping ""))
+  ([workflow-id {:keys [schema] :as dataset} table values mapping target-bucket]
+   (letfn [(literal? [x] (str/starts-with? x "$"))
+           (datatype [k] (let [columns (->> schema
+                                            :tables
+                                            (filter #(= table (:name %)))
+                                            first
+                                            :columns)]
+                           (-> (filter #(= k (:name %)) columns)
+                               first
+                               :datatype)))
+           (fileref? [k] (= (datatype (name k)) "fileref"))
+           (boolean? [k] (= (datatype (name k)) "boolean"))
+           (get-target [url]
+             (let [[bucket obj] (storage/parse-gs-url url)]
+               (if (= target-bucket "")
+                 (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))
+                 (str target-bucket workflow-id "/" (util/basename obj)))))
+           (go! [k v]
+             (cond (fileref? k) (let [val (values (keyword v))]
+                                  [k {:description (util/basename val)
+                                      :mimeType   (mime-type/ext-mime-type val)
+                                      :sourcePath val
+                                      :targetPath (get-target val)}])
+                   (literal? v) [k (subs v 1 (count v))]
+                   (boolean? v) [k (values (keyword v))]
+                   (string?  v) [k (values (keyword v))]
+                   (map?     v) [k (rename-gather-bulk workflow-id dataset table values v)]
+                   (coll?    v) [k (keep (go! k v))]
+                   :else        (throw (ex-info "Unknown operation"
+                                                {:operation v}))))]
+     (into {} (for [[k v] mapping] (go! k v))))))
+
 (defn ^:private to-dataset-row
-  "Use `fromOutputs` to coerce the `workflow` outputs into a row in the dataset
-   where `fromOutputs` describes a mapping from workflow outputs to columns in
-   the dataset table."
-  [fromOutputs {:keys [outputs] :as workflow}]
+  "Use `fromOutputs` and the schema provided in the `table` within the `dataset` to coerce the `workflow` outputs into a row in the dataset table. The dataset table schema describes column types while `fromOutputs` provides a mapping between workflow outputs and the table."
+  [dataset table fromOutputs {:keys [outputs uuid] :as workflow}]
   (when-not (map? fromOutputs)
     (throw (IllegalStateException. "fromOutputs is malformed")))
   (try
-    (rename-gather outputs fromOutputs)
+    (rename-gather-bulk uuid dataset table outputs fromOutputs)
     (catch Exception cause
       (throw (ex-info "Failed to coerce workflow outputs to dataset columns"
-                      {:fromOutputs fromOutputs :workflow workflow}
+                      {:outputs outputs :table table :fromOutputs fromOutputs :workflow workflow :dataset dataset}
                       cause)))))
 
 (defn ^:private start-ingesting-outputs
@@ -358,8 +402,8 @@
    and push the tdr ingest job into the `sink`'s job queue."
   [{:keys [dataset table fromOutputs] :as sink}
    {:keys [uuid] :as workflow}]
-  (let [file (storage/gs-url "broad-gotc-dev-wfl-ptc-test-outputs" (str uuid ".json"))]
-    (-> (to-dataset-row fromOutputs workflow)
+  (let [file (tdr-outputs-bucket (str uuid ".json"))]
+    (-> (to-dataset-row dataset table fromOutputs workflow)
         (json/write-str :escape-slash false)
         (storage/upload-content file))
     (->> (datarepo/ingest-table (:id dataset) file table)
@@ -374,10 +418,13 @@
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
   (update-datarepo-job-statuses sink)
-  (when-let [{:keys [job] :as record} (peek-job-queue sink)]
+  (when-let [{:keys [job workflow] :as record} (peek-job-queue sink)]
     (try
-      (datarepo/job-result job)
-      (log/info "Sunk workflow outputs to dataset")
+      (let [result (datarepo/job-result job)]
+        (if (< (:bad_row_count result) 1)
+          (log/info "Sunk workflow outputs to dataset")
+          (throw (UserException. "Row failed to sink to dataset" {:job job
+                                                                  :workflow workflow}))))
       (finally
         (pop-job-queue! sink record)))))
 

@@ -4,7 +4,8 @@
             [wfl.tools.endpoints  :refer [coercion-tester]]
             [wfl.tools.resources  :as resources]
             [wfl.util             :refer [uuid-nil]])
-  (:import [clojure.lang ExceptionInfo]))
+  (:import [java.util UUID]
+           [clojure.lang ExceptionInfo]))
 
 (deftest test-rename-gather
   (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
@@ -19,6 +20,16 @@
             inputs
             {:extra {:account_name   "package_genbank_ftp_submission.account_name"
                      :workspace_name "$SARSCoV2-Illumina-Full"}})))))
+
+(deftest test-rename-gather-bulk
+  (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")
+        dataset (resources/read-resource "sarscov2-illumina-full-inputs.json")
+        result (sink/rename-gather-bulk (UUID/randomUUID) dataset "flowcell" inputs {:flowcell_tgz "flowcell_tgz"
+                                                                                     :flowcell_id "flowcell_id"})]
+    (is (= (:flowcell_id inputs)
+           (:flowcell_id result)))
+    (is (= (:flowcell_tgz inputs)
+           (-> result :flowcell_tgz :sourcePath)))))
 
 (def ^:private workspace-sink-request
   {:name        @#'sink/terra-workspace-sink-name
