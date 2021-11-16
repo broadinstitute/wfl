@@ -189,7 +189,7 @@ when available (when the workflow has succeeded).
 **GET /api/v1/workload/{uuid}/workflows?submission={submission}&status={status}**
 
 Query WFL for all unretried workflows associated with workload `uuid`,
-filtering by any **optional** workflow filters specified as query params:
+filtering by any workflow filters specified as query params:
 
 - `submission` - Terra submission ID (must be a valid UUID)
 - `status` - Workflow status (must be a valid Cromwell workflow status)
