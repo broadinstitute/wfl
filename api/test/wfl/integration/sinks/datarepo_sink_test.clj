@@ -133,15 +133,15 @@
   "Update sink until there is a truthy result or the max number of attempts is reached."
   [executor sink seconds max-attempts]
   (letfn [(update-and-check []
-                            (sink/update-sink! executor sink)
-                            (stage/done? sink))]
+            (sink/update-sink! executor sink)
+            (stage/done? sink))]
     (loop [attempt 1]
-     (if-let [result (update-and-check)]
-       result
-       (if (<= max-attempts attempt)
-         false
-         (do (.sleep TimeUnit/SECONDS seconds)
-             (recur (inc attempt))))))))
+      (if-let [result (update-and-check)]
+        result
+        (if (<= max-attempts attempt)
+          false
+          (do (.sleep TimeUnit/SECONDS seconds)
+              (recur (inc attempt))))))))
 
 (deftest test-update-datarepo-sink
   (let [description      (resources/read-resource "primitive.edn")
