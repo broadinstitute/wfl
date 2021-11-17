@@ -433,6 +433,7 @@
   [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE status <> 'failed' AND consumed IS NULL"]
+    (log/info "Checking stage/done?")
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (postgres/throw-unless-table-exists tx details)
       (-> (jdbc/query tx (format query details)) first :count zero?))))

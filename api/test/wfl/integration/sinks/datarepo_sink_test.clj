@@ -2,6 +2,7 @@
   "Test validation and operations on the DataRepo sink implementation."
   (:require [clojure.test         :refer [deftest is use-fixtures]]
             [wfl.environment      :as env]
+            [wfl.jdbc             :as jdbc]
             [wfl.service.postgres :as postgres]
             [wfl.sink             :as sink]
             [wfl.stage            :as stage]
@@ -10,7 +11,8 @@
             [wfl.tools.queues     :refer [make-queue-from-list]]
             [wfl.tools.resources  :as resources]
             [wfl.tools.workloads  :refer [evalT]]
-            [wfl.util             :as util])
+            [wfl.util             :as util]
+            [wfl.log              :as log])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
@@ -118,6 +120,18 @@
   (let [{:keys [interval times]} (apply hash-map opts)]
     (assertion #(util/poll task (or interval 1) (or times 5)))))
 
+
+
+(defn ^:private check-for-succeeded-jobs
+  "True when all tdr ingest jobs created by the `_sink` have terminated."
+  [{:keys [details] :as _sink}]
+  (let [query "SELECT COUNT(*) FROM %s
+               WHERE status = 'succeeded' AND consumed IS NOT NULL"]
+    (log/info "Checking for succeeded jobs")
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (postgres/throw-unless-table-exists tx details)
+      (-> (jdbc/query tx (format query details)) first :count))))
+
 (deftest test-update-datarepo-sink
   (let [description      (resources/read-resource "primitive.edn")
         workflow         {:uuid (UUID/randomUUID) :outputs outputs}
@@ -131,7 +145,8 @@
         sink             (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")
+    (is (= 1 (check-for-succeeded-jobs sink)) "job succeeded")
     (eventually (throws? UserException) #(sink/update-sink! failing-upstream sink)
                 :interval 5 :times 10)
-    (is (stage/done? sink) "failed jobs are no longer considered")))
+    (is (stage/done? sink) "failed jobs are no longer considered")
+    (is (or (sink/update-sink! failing-upstream sink) true) "subsequent updates do nothing")))
