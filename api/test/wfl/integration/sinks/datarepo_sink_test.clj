@@ -119,13 +119,19 @@
     (assertion #(util/poll task (or interval 1) (or times 5)))))
 
 (deftest test-update-datarepo-sink
-  (let [description (resources/read-resource "primitive.edn")
-        workflow    {:uuid (UUID/randomUUID) :outputs outputs}
-        upstream    (make-queue-from-list [[description workflow]])
-        sink        (create-and-load-datarepo-sink)]
+  (let [description      (resources/read-resource "primitive.edn")
+        workflow         {:uuid (UUID/randomUUID) :outputs outputs}
+        upstream         (make-queue-from-list [[description workflow]])
+        failing-workflow {:uuid (UUID/randomUUID) :outputs {:outbool   true
+                                                            :outfile   "gs://not-a-real-bucket/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
+                                                            :outfloat  (* 4 (Math/atan 1))
+                                                            :outint    27
+                                                            :outstring "Hello, World!"}}
+        failing-upstream (make-queue-from-list [[description failing-workflow]])
+        sink             (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (eventually (throws? UserException) #(sink/update-sink! upstream sink)
+    (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")
+    (eventually (throws? UserException) #(sink/update-sink! failing-upstream sink)
                 :interval 5 :times 10)
-    (is (stage/done? sink) "failed jobs are no longer considered")
-    (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")))
+    (is (stage/done? sink) "failed jobs are no longer considered")))
