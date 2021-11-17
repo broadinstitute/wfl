@@ -1,3 +1,16 @@
+# Release 0.10.0
+- Merge branch 'develop' into release/0.10.0-rc via git merge -s recursive -X theirs develop
+- [GH-1529] Bump WFL develop version to 0.10.0 ([#537](https://github.com/broadinstitute/wfl/pull/537))
+- [GH-1474] [GH-1475] [GH-1494] TDR Sink Changes ([#520](https://github.com/broadinstitute/wfl/pull/520))
+- [GH-1522] TerraWorkspaceSink: identifier can be a workflow input ([#534](https://github.com/broadinstitute/wfl/pull/534))
+- [GH-1515] WFL-created TDR snapshots include table in name ([#536](https://github.com/broadinstitute/wfl/pull/536))
+- [GH-1463] WFL API retry by status also requires submission id ([#525](https://github.com/broadinstitute/wfl/pull/525))
+- [GH-1473] Update GitHub Pages with new Swagger access ([#516](https://github.com/broadinstitute/wfl/pull/516))
+- [GH-1448] Exceptions fail to be logged as JSON. ([#531](https://github.com/broadinstitute/wfl/pull/531))
+- [GH-1472] Merge main into develop ([#533](https://github.com/broadinstitute/wfl/pull/533))
+- [GH-1517] Add automated test for updating method configurations with mismatched versions ([#528](https://github.com/broadinstitute/wfl/pull/528))
+- [GH-1517] Log instead of throw on TerraExecutor method config version mismatch ([#527](https://github.com/broadinstitute/wfl/pull/527))
+
 # Release 0.9.24
 - Fix WFL deployment. ([#526](https://github.com/broadinstitute/wfl/pull/526))
 
@@ -24,15 +37,10 @@
 - Github actions should build docs on develop. ([#495](https://github.com/broadinstitute/wfl/pull/495))
 - [GH-1418] sourceLocation null fix ([#487](https://github.com/broadinstitute/wfl/pull/487))
 - [GH-1303] Google Cloud Logging Alerts ([#486](https://github.com/broadinstitute/wfl/pull/486))
-- ENG-1394 Update post-retry error maps per QA feedback ([#494](https://github.com/broadinstitute/wfl/pull/494))
-- GH-1328 Migrate to new Rawls Snapshot V2 endpoints ([#493](https://github.com/broadinstitute/wfl/pull/493))
-- [GH-1402] Write Workflow Outputs to the Terra Data Repository ([#474](https://github.com/broadinstitute/wfl/pull/474))
-- Mkdocs updates that improve the doc nav and security holes. ([#492](https://github.com/broadinstitute/wfl/pull/492))
-- Bump path-parse from 1.0.6 to 1.0.7 in /ui ([#491](https://github.com/broadinstitute/wfl/pull/491))
 
 # Release 0.8.2
 * [GH-1454] Update covid and executor integration tests to reflect updated method configuration version ([#504](https://github.com/broadinstitute/wfl/pull/504))
-* [ENG-1394] Update post-retry error maps per QA feedback ([#494](https://github.com/broadinstitute/wfl/pull/494))
+* [GH-1394] Update post-retry error maps per QA feedback ([#494](https://github.com/broadinstitute/wfl/pull/494))
 * [GH-1328] Migrate to new Rawls Snapshot V2 endpoints ([#493](https://github.com/broadinstitute/wfl/pull/493))
 * Mkdocs updates that improve the doc nav and security holes. ([#492](https://github.com/broadinstitute/wfl/pull/492))
 * Bump path-parse from 1.0.6 to 1.0.7 in /ui ([#491](https://github.com/broadinstitute/wfl/pull/491))
