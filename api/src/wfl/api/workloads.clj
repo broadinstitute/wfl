@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [wfl.log        :as log]
             [wfl.jdbc       :as jdbc]
-            [wfl.util       :as util]))
+            [wfl.util       :as util])
+  (:import [wfl.util UserException]))
 
 ;; always derive from base :wfl/exception
 (derive ::invalid-pipeline :wfl/exception)
@@ -30,14 +31,17 @@
   (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti workflows
-  "Use db `transaction` to return the workflows managed by the `workload`,
-   optionally filtering by status."
-  (fn [_transaction workload]         (:pipeline workload)))
+  "Use db `transaction` to return the workflows managed by the `workload`."
+  (fn [_transaction workload] (:pipeline workload)))
 
-(defmulti workflows-by-status
-  "Use db `transaction` to return the workflows managed by the `workload` that
-   match `status`."
-  (fn [_transaction workload _status] (:pipeline workload)))
+(defmulti workflows-by-filters
+  "Use db `transaction` to return the workflows managed by the `workload`
+   matching `filters` (ex. status, submission)."
+  (fn [_transaction workload _filters] (:pipeline workload)))
+
+(defmulti throw-if-invalid-retry-filters
+  "Throw if `filters` are invalid for `workload`'s retry request."
+  (fn [workload _filters] (:pipeline workload)))
 
 (defmulti retry
   "Retry/resubmit the `workflows` managed by the `workload` and return the
@@ -146,6 +150,19 @@
             {:workload workload
              :pipeline pipeline
              :type     ::invalid-pipeline})))
+
+;; Visible for testing
+(def retry-unimplemented-error-message
+  "Retry unimplemented for pipeline")
+
+(defmethod throw-if-invalid-retry-filters
+  :default
+  [workload filters]
+  (throw
+   (UserException. retry-unimplemented-error-message
+                   {:workload (util/to-edn workload)
+                    :filters  filters
+                    :status   501})))
 
 (defmethod retry
   :default

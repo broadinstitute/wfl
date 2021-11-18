@@ -105,12 +105,14 @@
         util/response-body-json)))
 
 (defn retry-workflows
-  "Retry the workflows in `_workload` by `status`."
-  [{:keys [uuid] :as _workload} status]
+  "Retry the workflows in `_workload` by `filters`."
+  [{:keys [uuid] :as _workload} filters]
   (-> (wfl-url "api/v1/workload" uuid "retry")
       (http/post {:headers      (auth/get-auth-header)
                   :content-type :application/json
-                  :body         (json/write-str {:status status})})
+                  :body         (->> [:status :submission]
+                                     (util/select-non-nil-keys filters)
+                                     json/write-str)})
       util/response-body-json))
 
 (defn coercion-tester

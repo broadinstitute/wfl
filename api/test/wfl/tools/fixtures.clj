@@ -30,6 +30,7 @@
   (partial with-temporary-overload multifn dispatch-val overload))
 
 (def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
+(def gcs-tdr-test-bucket "broad-gotc-dev-wfl-datarepo-outputs")
 (def delete-test-object (partial gcs/delete-object gcs-test-bucket))
 
 (defn ^:private postgres-db-config []
@@ -220,6 +221,21 @@
               (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
               clone-name))]
     (util/bracket clone-workspace firecloud/delete-workspace use-workspace)))
+
+(defn with-shared-temporary-workspace-clone
+  "Clone a temporary copy of `workspace-to-clone`, grant access to
+  `firecloud-group` and call `use-workspace` with the clone. The workspace will
+  be destroyed when `use-workspace` returns."
+  [workspace-to-clone firecloud-group shared-info use-workspace]
+  (letfn [(clone-workspace []
+            (let [clone-name (util/randomize workspace-to-clone)]
+              (firecloud/clone-workspace workspace-to-clone clone-name firecloud-group)
+              clone-name))
+          (share-workspace [clone-name] (firecloud/share-workspace clone-name shared-info))
+          (create-workspace [] (let [workspace (clone-workspace)]
+                                 (share-workspace workspace)
+                                 workspace))]
+    (util/bracket create-workspace firecloud/delete-workspace use-workspace)))
 
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
