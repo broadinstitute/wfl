@@ -1,5 +1,5 @@
 # Release 0.10.0
-- Merge branch 'develop' into release/0.10.0-rc via git merge -s recursive -X theirs develop
+- [GH-1475] Update test inputs buckets ([#538](https://github.com/broadinstitute/wfl/pull/538))
 - [GH-1529] Bump WFL develop version to 0.10.0 ([#537](https://github.com/broadinstitute/wfl/pull/537))
 - [GH-1474] [GH-1475] [GH-1494] TDR Sink Changes ([#520](https://github.com/broadinstitute/wfl/pull/520))
 - [GH-1522] TerraWorkspaceSink: identifier can be a workflow input ([#534](https://github.com/broadinstitute/wfl/pull/534))
