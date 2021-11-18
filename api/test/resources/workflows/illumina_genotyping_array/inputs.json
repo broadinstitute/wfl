@@ -1,8 +1,8 @@
 {
   "analysis_version_number": 1,
   "chip_well_barcode": "7991775143_R01C01",
-  "green_idat_cloud_path": "gs://broad-gotc-dev-wfl-datarepo-outputs/test-inputs/illumina-genotyping-array_inputs_7991775143_R01C01_Grn.idat",
-  "red_idat_cloud_path": "gs://broad-gotc-dev-wfl-datarepo-outputs/test-inputs/illumina-genotyping-array_inputs_7991775143_R01C01_Red.idat",
+  "green_idat_cloud_path": "gs://broad-gotc-dev-wfl-ptc-test-inputs/illumina-genotyping-array/inputs/7991775143_R01C01_Grn.idat",
+  "red_idat_cloud_path": "gs://broad-gotc-dev-wfl-ptc-test-inputs/illumina-genotyping-array/inputs/7991775143_R01C01_Red.idat",
   "sample_alias": "NA12878",
   "reported_gender": "Female"
 }
