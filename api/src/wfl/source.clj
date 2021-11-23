@@ -102,7 +102,7 @@
    :table           :dataset_table
    :column          :table_column_name
    :snapshotReaders :snapshot_readers
-   :pollingInterval :polling_inverval})
+   :pollingInterval :polling_interval})
 
 (def ^:private bigquery-datetime-format
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
@@ -313,10 +313,10 @@
 (defn ^:private tdr-source-should-poll?
   "Return true if it's been at least the specified `polling_interval` or, if unspecified, `tdr-source-default-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
-  [{:keys [type id last_checked polling_interval] :as _source} utc-now]
+  [{:keys [type id last_checked pollingInterval] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
-        polling-interval (or polling_interval tdr-source-default-polling-interval-minutes)]
+        polling-interval (or pollingInterval tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
                 :minutes-since-poll minutes-since-poll
