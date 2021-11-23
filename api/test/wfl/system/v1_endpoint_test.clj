@@ -262,7 +262,8 @@
                    :dataset         "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
                    :table           "flowcells"
                    :column          "last_modified_date"
-                   :snapshotReaders ["hornet@firecloud.org"]}
+                   :snapshotReaders ["hornet@firecloud.org"]
+                   :pollingInterval 1}
         executor  {:name                       "Terra"
                    :workspace                  workspace
                    :methodConfiguration        (terra-ns "sarscov2_illumina_full")
