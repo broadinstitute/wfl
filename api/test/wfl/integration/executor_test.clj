@@ -308,7 +308,7 @@
          #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
         #(let [workflows-to-retry
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (executor/executor-workflows-by-filters tx executor {:status "Running"}))]
+                 (executor/executor-workflows tx executor {:status "Running"}))]
            (is (== 1 (count workflows-to-retry))
                "Should have one running workflow to retry.")
            (executor/executor-retry-workflows! executor workflows-to-retry)))
@@ -371,7 +371,7 @@
        (is (== 2 (stage/queue-length executor))
            "The retried workflow should remain visible downstream")
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (is (== 1 (count (executor/executor-workflows tx executor)))
+         (is (== 1 (count (executor/executor-workflows tx executor {})))
              "The retried workflow should not be returned")))))
 
 (deftest test-terra-executor-queue-length

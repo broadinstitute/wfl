@@ -181,10 +181,10 @@
 (defoverload workloads/load-workload-impl   pipeline load-covid-workload-impl)
 (defmethod   workloads/workflows            pipeline
   [tx {:keys [executor] :as _workload}]
-  (executor/executor-workflows tx executor))
+  (executor/executor-workflows tx executor {}))
 (defmethod   workloads/workflows-by-filters pipeline
   [tx {:keys [executor] :as _workload} filters]
-  (executor/executor-workflows-by-filters tx executor filters))
+  (executor/executor-workflows tx executor filters))
 (defoverload workloads/throw-if-invalid-retry-filters
   pipeline executor/executor-throw-if-invalid-retry-filters)
 (defoverload workloads/retry               pipeline retry-covid-workload)
