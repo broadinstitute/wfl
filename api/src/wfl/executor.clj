@@ -1,11 +1,14 @@
 (ns wfl.executor
   (:require [clojure.edn           :as edn]
             [clojure.set           :as set :refer [rename-keys]]
+            [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
             [wfl.api.workloads     :refer [defoverload]]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
+            [wfl.module.all        :as all]
+            [wfl.service.cromwell  :as cromwell]
             [wfl.service.dockstore :as dockstore]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -29,10 +32,14 @@
   "Return the workflows managed by the `executor"
   (fn [_transaction executor] (:type executor)))
 
-(defmulti executor-workflows-by-status
+(defmulti executor-workflows-by-filters
   "Use db `transaction` to return the workflows created by the `executor`
-   matching `status`"
-  (fn [_transaction executor _status] (:type executor)))
+  matching `filters` (ex. status, submission)."
+  (fn [_transaction executor _filters] (:type executor)))
+
+(defmulti executor-throw-if-invalid-retry-filters
+  "Throw if `filters` are invalid for `workload`'s retry request."
+  (fn [{:keys [executor] :as _workload} _filters] (:type executor)))
 
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
@@ -77,6 +84,14 @@
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
+
+;; Specs
+(s/def ::terra-executor (s/keys :req-un [::all/name
+                                         ::all/fromSource
+                                         ::all/methodConfiguration
+                                         ::all/methodConfigurationVersion
+                                         ::all/workspace]))
+(s/def ::submission util/uuid-string?)
 
 (defn ^:private write-terra-executor [tx id executor]
   (let [create  "CREATE TABLE %s OF TerraExecutorDetails (PRIMARY KEY (id))"
@@ -395,7 +410,7 @@
                (firecloud/get-workflow-outputs workspace submission workflow))))]
     (map from-record records)))
 
-;; terra-executor-workflows and terra-executor-workflows-by-status do not return
+;; terra-executor-workflows and terra-executor-workflows-by-filters do not return
 ;; workflows that are being or have been retried. Why?
 ;;
 ;; TL/DR: It's simpler maybe?
@@ -449,19 +464,36 @@
      executor
      (jdbc/query tx (format query details)))))
 
-(defn ^:private terra-executor-workflows-by-status
-  "Return all the non-retried workflows matching `status` executed by the
-  `executor`."
-  [tx {:keys [details] :as executor} status]
+(defn ^:private remove-nil-and-join
+  "Remove nil elements of `vec` and join with `separator`."
+  ([vec separator]
+   (->> vec (remove nil?) (str/join separator)))
+  ([vec]
+   (remove-nil-and-join vec \space)))
+
+(defn ^:private terra-executor-workflows-by-filters-sql-params
+  "Return sql and params that query `details` for non-retried workflows
+  matching `submission` and/or `status` if specified."
+  [{:keys [details] :as _executor} {:keys [submission status] :as _filters}]
+  (let [optionals (remove-nil-and-join [(when submission "AND submission = ?")
+                                        (when status "AND status = ?")])
+        query     (remove-nil-and-join ["SELECT * FROM %s"
+                                        "WHERE workflow IS NOT NULL"
+                                        "AND retry IS NULL"
+                                        optionals
+                                        "ORDER BY id ASC"])]
+    (->> [submission status]
+         (concat [(format query details)])
+         (remove nil?))))
+
+(defn ^:private terra-executor-workflows-by-filters
+  "Return all the non-retried workflows executed by `executor`
+  matching specified `filters`."
+  [tx {:keys [details] :as executor} filters]
   (postgres/throw-unless-table-exists tx details)
-  (let [query "SELECT * FROM %s
-               WHERE workflow IS NOT NULL
-               AND retry      IS NULL
-               AND status     = ?
-               ORDER BY id ASC"]
-    (terra-workflows-from-records
-     executor
-     (jdbc/query tx [(format query details) status]))))
+  (->> (terra-executor-workflows-by-filters-sql-params executor filters)
+       (jdbc/query tx)
+       (terra-workflows-from-records executor)))
 
 (defn ^:private workflow-and-sibling-records
   "Return the workflow records for all workflows in submissions
@@ -526,6 +558,49 @@
          (map link-retry-to-original (sort-by :entity original-records))
          (write-retries (utc-now)))))
 
+;; Visible for testing
+(def retry-invalid-submission-error-message
+  "Missing or invalid Terra Workspace submission ID")
+
+(defn ^:private retry-submission-validation-error
+  "Return error information to throw if Terra `submission` ID
+  is unspecified or an invalid format."
+  [submission]
+  (when-not (s/valid? ::submission submission)
+    {:message retry-invalid-submission-error-message}))
+
+;; Visible for testing
+(def retry-unsupported-status-error-message
+  "Retry unsupported for requested workflow status")
+
+(defn ^:private retry-status-validation-error
+  "Return error information to throw if workflow `status`
+  is specified and unretriable."
+  [status]
+  (when status
+    (when-not (cromwell/retry-status? status)
+      {:message retry-unsupported-status-error-message
+       :data    {:supported-statuses cromwell/retry-status?}})))
+
+;; Visible for testing
+(def terra-executor-retry-filters-invalid-error-message
+  "Cannot retry workload: invalid workflow filters.")
+
+(defn ^:private terra-executor-throw-if-invalid-retry-filters
+  "Throw if `submission` or `status` are invalid filters
+  for workload `uuid`'s retry request."
+  [{:keys [uuid] :as _workload} {:keys [submission status] :as filters}]
+  (let [submission-error (retry-submission-validation-error submission)
+        status-error     (retry-status-validation-error status)
+        errors           (remove nil? [submission-error status-error])]
+    (when (seq errors)
+      (throw (UserException. terra-executor-retry-filters-invalid-error-message
+                             (merge {:workload          uuid
+                                     :filters           filters
+                                     :validation-errors (map :message errors)
+                                     :status            400}
+                                    (into {} (map :data errors))))))))
+
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
@@ -556,11 +631,13 @@
   [tx id request]
   (write-terra-executor tx id (terra-executor-validate-request-or-throw request)))
 
-(defoverload load-executor!               terra-executor-type load-terra-executor)
-(defoverload update-executor!             terra-executor-type update-terra-executor)
-(defoverload executor-workflows           terra-executor-type terra-executor-workflows)
-(defoverload executor-workflows-by-status terra-executor-type terra-executor-workflows-by-status)
-(defoverload executor-retry-workflows!    terra-executor-type terra-executor-retry-workflows)
+(defoverload load-executor!                terra-executor-type load-terra-executor)
+(defoverload update-executor!              terra-executor-type update-terra-executor)
+(defoverload executor-workflows            terra-executor-type terra-executor-workflows)
+(defoverload executor-workflows-by-filters terra-executor-type terra-executor-workflows-by-filters)
+(defoverload executor-throw-if-invalid-retry-filters
+  terra-executor-type terra-executor-throw-if-invalid-retry-filters)
+(defoverload executor-retry-workflows!     terra-executor-type terra-executor-retry-workflows)
 
 (defoverload stage/peek-queue   terra-executor-type peek-terra-executor-queue)
 (defoverload stage/pop-queue!   terra-executor-type pop-terra-executor-queue)
@@ -568,3 +645,9 @@
 (defoverload stage/done?        terra-executor-type terra-executor-done?)
 
 (defoverload util/to-edn terra-executor-type terra-executor-to-edn)
+
+;; reitit http coercion specs for an executor
+;; Recall s/or doesn't work (https://github.com/metosin/reitit/issues/494)
+(s/def ::executor
+  #(condp = (:name %)
+     terra-executor-name (s/valid? ::terra-executor %)))

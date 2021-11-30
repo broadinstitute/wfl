@@ -6,6 +6,7 @@
             [clojure.string       :as str]
             [wfl.auth             :as auth]
             [wfl.environment      :as env]
+            [wfl.log              :as log]
             [wfl.util             :as util])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -120,6 +121,9 @@
   "Batch update and insert entities into a `workspace`."
   [workspace [[_type _name _attributes] & _ :as entities]]
   {:pre [(string? workspace) (not-empty entities)]}
+  (log/debug {:action    "Upserting entities"
+              :workspace workspace
+              :entities  (map (fn [[type name _]] [type name]) entities)})
   (letfn [(add-scalar [k v]
             [{:op                 "AddUpdateAttribute"
               :attributeName      (name k)

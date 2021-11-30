@@ -5,8 +5,10 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.handlers           :as handlers]
+            [wfl.api.workloads]
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
+            [wfl.executor               :as executor]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -17,9 +19,9 @@
             [wfl.tools.workloads        :as workloads]
             [wfl.tools.resources        :as resources]
             [wfl.util                   :as util]
-            [clojure.data.json          :as json])
+            [clojure.data.json          :as json]
+            [wfl.tools.workflows        :as workflows])
   (:import [clojure.lang ExceptionInfo]
-           [java.time.format DateTimeFormatter]
            [java.util UUID]))
 
 (defn make-create-workload [make-request]
@@ -191,40 +193,41 @@
             (gcs/upload-file src))
         (test-exec-workload (workloads/copyfile-workload-request src dst))))))
 
-(defn ^:private test-retry-workload
+(defn ^:private retry-check-message-and-throw
+  "Retry workflows in `workload` matching `filters`,
+  catching any exception to verify its message
+  before rethrowing."
+  [workload message filters]
+  (try
+    (endpoints/retry-workflows workload filters)
+    (catch Exception cause
+      (is (= message (-> (ex-data cause) util/response-body-json :message))
+          (str "Unexpected or missing exception message for filters "
+               filters))
+      (throw cause))))
+
+(defn ^:private test-retry-legacy-workload-fails
+  "Any non-staged (legacy) workload has not had retry functionality implemented,
+  and should fail with an HTTP 501 if requested."
   [request]
-  (let [workload (endpoints/create-workload request)
-        bad-statuses (set/difference cromwell/status? cromwell/retry-status?)]
-    (letfn [(check-message-and-throw [message status]
-              (try
-                (endpoints/retry-workflows workload status)
-                (catch Exception cause
-                  (is (= message (-> (ex-data cause) util/response-body-json :message))
-                      (str "Unexpected or missing exception message for status "
-                           status))
-                  (throw cause))))
-            (should-throw-400 [message status]
+  (let [workload (endpoints/create-workload request)]
+    (letfn [(should-throw-501 [message status]
               (is (thrown-with-msg?
-                   ExceptionInfo #"clj-http: status 400"
-                   (check-message-and-throw message status))
-                  (str "Expecting 400 error for retry with status " status)))]
-      (testing "retry-workflows fails (400) when workflow status unsupported"
-        (run! (partial should-throw-400
-                       handlers/retry-unsupported-status-error-message)
-              bad-statuses))
-      (testing "retry-workflows fails (400) when no workflows for supported status"
-        (run! (partial should-throw-400
-                       handlers/retry-no-workflows-error-message)
-              cromwell/retry-status?)))))
+                   ExceptionInfo #"clj-http: status 501"
+                   (retry-check-message-and-throw workload message {:status status}))
+                  (str "Expecting 501 error for retry with status " status)))]
+      (run! (partial should-throw-501
+                     wfl.api.workloads/retry-unimplemented-error-message)
+            cromwell/status?))))
 
 (deftest ^:parallel test-retry-wgs-workload
-  (test-retry-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/wgs-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-aou-workload
-  (test-retry-workload (workloads/aou-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/aou-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-xx-workload
-  (test-retry-workload (workloads/xx-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/xx-workload-request (UUID/randomUUID))))
 (deftest ^:parallel test-retry-sg-workload
-  (test-retry-workload (workloads/sg-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/sg-workload-request (UUID/randomUUID))))
 
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete
@@ -307,6 +310,27 @@
           (is (not started))
           (verify-internal-properties-removed response)
           (is (s/valid? ::module/workload-response response))))
+      (testing "/retry covid workload"
+        (letfn [(should-throw-400 [message filters]
+                  (is (thrown-with-msg?
+                       ExceptionInfo #"clj-http: status 400"
+                       (retry-check-message-and-throw workload message filters))
+                      (str "Expecting 400 error for retry with filters " filters)))]
+          (let [status-unretriable "Running"
+                status-retriable   "Failed"
+                submission         (str (UUID/randomUUID))
+                filters-invalid    [{}
+                                    {:status status-unretriable}
+                                    {:status status-retriable}
+                                    {:submission submission :status status-unretriable}]
+                filters-valid      [{:submission submission}
+                                    {:submission submission :status status-retriable}]]
+            (run! (partial should-throw-400
+                           executor/terra-executor-retry-filters-invalid-error-message)
+                  filters-invalid)
+            (run! (partial should-throw-400
+                           handlers/retry-no-workflows-error-message)
+                  filters-valid))))
       (testing "/start covid workload"
         (let [{:keys [created started] :as response}
               (-> workload endpoints/start-workload
@@ -340,7 +364,7 @@
      :workload  workload
      :workflows workflows}))
 
-(deftest ^:parallel test-workflows-by-status
+(deftest ^:parallel test-workflows-by-filters
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)
@@ -356,10 +380,6 @@
           (run! verify statuses)
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
-
-(def ^:private tdr-date-time-formatter
-  "The Data Repo's time format."
-  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
 
 (defn ^:private ingest-illumina-genotyping-array-files
   "Return filrefs for inputs to illumina-genotyping-array dataset."
@@ -380,19 +400,18 @@
              (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest illumina_genotyping_array pipeline inputs into `dataset`."
+  "Ingest inputs for the illimina_genotyping_array pipeline into the
+   illimina_genotyping_array `dataset`"
   [dataset]
   (fixtures/with-temporary-cloud-storage-folder
-    fixtures/gcs-test-bucket
+    fixtures/gcs-tdr-test-bucket
     (fn [temporary-cloud-storage-folder]
-      (let [file (str temporary-cloud-storage-folder "inputs.json")
-            inputs-json (resources/read-resource
-                         "illumina_genotyping_array/inputs.json")
-            ref->id (ingest-illumina-genotyping-array-files
-                     dataset temporary-cloud-storage-folder inputs-json)]
-        (-> inputs-json
-            (merge ref->id)
-            (assoc :ingested (.format (util/utc-now) tdr-date-time-formatter))
+      (let [file (str temporary-cloud-storage-folder "inputs.json")]
+        (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
+            (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
+            (as-> inputs
+                  (assoc inputs :green_idat_cloud_path (workflows/convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
+              (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
@@ -403,9 +422,11 @@
        (datasets/unique-dataset-request
         (env/getenv "WFL_TDR_DEFAULT_PROFILE")
         "illumina-genotyping-array.json"))
-     (fixtures/with-temporary-workspace-clone
+     (fixtures/with-shared-temporary-workspace-clone
        "wfl-dev/Illumina-Genotyping-Array-Template"
-       "workflow-launcher-dev")]
+       "workflow-launcher-dev"
+       [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
+         :accessLevel "OWNER"}])]
     (fn [[dataset workspace]]
       (let [source   {:name            "Terra DataRepo"
                       :dataset         dataset
@@ -434,5 +455,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (datarepo/query-table dataset "outputs"))
+        (is (seq (:rows (datarepo/query-table dataset "outputs")))
             "outputs should have been written to the dataset")))))

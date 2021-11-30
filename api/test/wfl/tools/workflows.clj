@@ -1,5 +1,9 @@
 (ns wfl.tools.workflows
-  (:require [clojure.set :as set]))
+  (:require [clojure.set                :as set]
+            [clojure.string             :as str]
+            [wfl.mime-type              :as mime-type]
+            [wfl.util                   :as util])
+  (:import [java.time.format DateTimeFormatter]))
 
 (defn make-object-type
   "Transform WDL inputs or outputs `description` into a `type` for use with
@@ -72,3 +76,16 @@
                                     "File" (conj files value)
                                     files))]
     (foldl f #{} object)))
+
+(defn convert-to-bulk
+  "Convert fileref column to BulkLoadFileModel for TDR"
+  [value bucket]
+  (let [basename (util/basename value)]
+    {:description basename
+     :mimeType (mime-type/ext-mime-type value)
+     :sourcePath value
+     :targetPath (str/join "/" [bucket basename])}))
+
+(def tdr-date-time-formatter
+  "The Data Repo's time format."
+  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))

@@ -1,5 +1,6 @@
 (ns wfl.integration.datarepo-test
   (:require [clojure.data.json           :as json]
+            [clojure.string              :as str]
             [clojure.test                :refer [deftest is testing]]
             [wfl.environment             :as env]
             [wfl.service.datarepo        :as datarepo]
@@ -62,28 +63,26 @@
 (deftest test-ingest-pipeline-outputs
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
-        tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        outputs-type (-> (resources/read-resource "primitive.edn")
-                         :outputs
-                         workflows/make-object-type)
-        workflow-id  (UUID/randomUUID)]
+        tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket)
+      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-tdr-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
-      (fn [[temp dataset]]
-        (let [table-url (str temp workflow-id "/table.json")]
-          (-> (->> (workflows/get-files [outputs-type outputs])
-                   (datasets/ingest-files tdr-profile dataset workflow-id))
-              (replace-urls-with-file-ids [outputs-type outputs])
-              (sink/rename-gather from-outputs)
+      (fn [[temp-bucket dataset-id]]
+        (let [table-url (str temp-bucket "table.json")
+              workflow-id (UUID/randomUUID)
+              dataset (datarepo/datasets dataset-id)]
+          (-> (sink/rename-gather-bulk workflow-id dataset table-name outputs from-outputs temp-bucket)
+              (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
                 (datarepo/poll-job
-                 (datarepo/ingest-table dataset table-url table-name))]
+                 (datarepo/ingest-table dataset-id table-url table-name))]
             (is (= 1 row_count))
-            (is (= 0 bad_row_count))))))))
+            (is (= 0 bad_row_count))
+            (is (seq (:rows (datarepo/query-table dataset table-name)))
+                "inputs should have been written to the dataset")))))))
 
 (deftest test-create-snapshot
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
@@ -100,7 +99,9 @@
     (fixtures/with-temporary-snapshot
       (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
       #(let [snapshot (datarepo/snapshot %)]
-         (is (= % (:id snapshot)))))))
+         (is (= % (:id snapshot)))
+         (is (str/starts-with? (:name snapshot) (str (:name dataset) "_" table))
+             "Snapshot name should start with dataset name and table name")))))
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
