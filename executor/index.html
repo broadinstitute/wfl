@@ -937,12 +937,21 @@ appears in the URL path in the Terra UI.</p>
   workload creation.</li>
 </ul>
 <h4 id="methodconfigurationversion"><code>methodConfigurationVersion</code><a class="headerlink" href="#methodconfigurationversion" title="Permanent link">⚓︎</a></h4>
-<p>The expected version of <code>methodConfiguration</code>, stored as an integer
-in Firecloud.</p>
+<p>The expected version of <code>methodConfiguration</code>, stored as an integer in
+<a href="https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Method%20Configurations/getWorkspaceMethodConfig">Firecloud</a>.</p>
+<p>Example fetch of a method configuration's version from the appropriate
+Firecloud instance (prod):</p>
+<div class="highlight"><pre><span></span><code>curl -X <span class="s1">&#39;GET&#39;</span> <span class="se">\</span>
+  <span class="s1">&#39;https://firecloud-orchestration.dsde-prod.broadinstitute.org/api/workspaces/emerge_prod/Arrays_test/method_configs/warp-pipelines/Arrays&#39;</span> <span class="se">\</span>
+  -H <span class="s1">&#39;accept: */*&#39;</span> <span class="se">\</span>
+  -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> jq .methodConfigVersion
+<span class="m">7</span>
+</code></pre></div>
 <p>Prerequisites:</p>
 <ul>
-<li>The <code>methodConfiguration</code> version when fetched from Firecloud should match
-  <code>methodConfigurationVersion</code>.</li>
+<li>The <code>methodConfiguration</code> version when fetched from Firecloud
+  at workload creation should match <code>methodConfigurationVersion</code>.</li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Implications of Version Mismatch</p>
@@ -984,14 +993,21 @@ updating <code>methodConfiguration</code> with the reference as its root entity 
      <span class="o">^</span><span class="nv">Executor</span>   <span class="nv">executor</span>     <span class="c1">;; This executor instance</span>
      <span class="p">]</span>
     <span class="s">&quot;Use database `transaction` to return workflows created by the `executor`.&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">executor-workflows-by-status</span>
+  <span class="p">(</span><span class="nf">executor-workflows-by-filters</span>
     <span class="o">^</span><span class="nv">IPersistentVector</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span> <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
-     <span class="o">^</span><span class="nv">Executor</span>   <span class="nv">executor</span>     <span class="c1">;; This executor instance</span>
-     <span class="o">^</span><span class="nv">String</span>     <span class="nv">status</span>       <span class="c1">;; workflow status to match</span>
+    <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>        <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
+     <span class="o">^</span><span class="nv">Executor</span>          <span class="nv">executor</span>     <span class="c1">;; This executor instance</span>
+     <span class="o">^</span><span class="nv">IPersistentVector</span> <span class="nv">filters</span>      <span class="c1">;; Workflow filters to match</span>
+                                     <span class="c1">;; (ex. status, submission)</span>
     <span class="p">]</span>
     <span class="s">&quot;Use database `transaction` to return workflows created by the `executor`</span>
-<span class="s">     matching the workflow `status`.&quot;</span><span class="p">)</span>
+<span class="s">     matching the workflow `filters` (ex. status, submission).&quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nf">executor-throw-if-invalid-retry-filters</span>
+    <span class="c1">;; Executed for side effects</span>
+    <span class="p">[</span><span class="o">^</span><span class="nv">IPersistentHashmap</span> <span class="nv">workload</span>  <span class="c1">;; Workload for which a retry is requested</span>
+     <span class="o">^</span><span class="nv">IPersistentVector</span>  <span class="nv">filters</span>   <span class="c1">;; Workflow filters</span>
+    <span class="p">]</span>
+    <span class="s">&quot;Throw if workflow `filters` are invalid for `workload`&#39;s retry request.&quot;</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">executor-retry-workflows!</span>
     <span class="c1">;; Executed for side effects</span>
     <span class="p">[</span><span class="o">^</span><span class="nv">Executor</span>          <span class="nv">executor</span>   <span class="c1">;; This executor instance</span>

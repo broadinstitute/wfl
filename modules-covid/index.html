@@ -876,12 +876,12 @@ which includes a source, executor, and sink.</p>
 <tr>
 <td>GET</td>
 <td><code>/api/v1/workload/{uuid}/workflows</code></td>
-<td>List all workflows for workload <code>uuid</code>, optionally filtering by status</td>
+<td>List all workflows for workload <code>uuid</code>, filtering by supplied filters</td>
 </tr>
 <tr>
 <td>POST</td>
 <td><code>/api/v1/workload/{uuid}/retry</code></td>
-<td>Retry workflows matching a given status in workload <code>uuid</code></td>
+<td>Retry workflows matching given filters in workload <code>uuid</code></td>
 </tr>
 <tr>
 <td>POST</td>
@@ -949,7 +949,7 @@ in response the caller will receive the newly created
 </li>
 </ol>
 <p>The caller can also <a href="#retry-workload">retry</a> workflows in a workload
-matching a given status (ex. "Failed").</p>
+matching a Terra submission ID and optional workflow status (ex. "Failed").</p>
 <h2 id="api-usage-examples">API Usage Examples<a class="headerlink" href="#api-usage-examples" title="Permanent link">⚓︎</a></h2>
 <p>Here you'll find example requests and responses for the endpoints enumerated above.</p>
 <h3 id="workload-response-format">Workload Response Format<a class="headerlink" href="#workload-response-format" title="Permanent link">⚓︎</a></h3>
@@ -1028,13 +1028,14 @@ but specifying a <code>uuid</code> will return a singleton array.</p>
 </div>
 <h3 id="get-workflows">Get Workflows<a class="headerlink" href="#get-workflows" title="Permanent link">⚓︎</a></h3>
 <p><strong>GET /api/v1/workload/{uuid}/workflows</strong></p>
-<p>Query WFL for all workflows associated with workload <code>uuid</code>.</p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>.</p>
 <p>The response is a list of Firecloud-derived
 <a href="https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowMetadata">workflows</a>
-and their <a href="https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowOutputsInSubmission">outputs</a>
+and their
+<a href="https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowOutputsInSubmission">outputs</a>
 when available (when the workflow has succeeded).</p>
 <div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/workflows&#39; \
+<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows&#39; \
      -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
      -H &#39;Accept: application/json&#39;
 </code></pre></div>
@@ -1054,24 +1055,29 @@ when available (when the workflow has succeeded).</p>
 </code></pre></div>
 </div>
 </div>
-<p><strong>GET /api/v1/workload/{uuid}/workflows?status={status}</strong></p>
-<p>Query WFL for all workflows with <code>status</code> associated with workload <code>uuid</code>.</p>
-<p>The response has the same format as when querying without the status restriction.</p>
+<p><strong>GET /api/v1/workload/{uuid}/workflows?submission={submission}&amp;status={status}</strong></p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>,
+filtering by any workflow filters specified as query params:</p>
+<ul>
+<li><code>submission</code> - Terra submission ID (must be a valid UUID)</li>
+<li><code>status</code> - Workflow status (must be a valid Cromwell workflow status)</li>
+</ul>
+<p>The response has the same format as when querying without filters.</p>
 <div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/workflows&#39; \
-    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-    -H &#39;Accept: application/json&#39; \
-    -d $&#39;{ &quot;status&quot;: &quot;Failed&quot; }&#39;
+<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows?submission=14bffc69-6ce7-4615-b318-7ef1c457c894&amp;status=Succeeded&#39; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Accept: application/json&#39;
 </code></pre></div>
 </div>
 </div>
 <h3 id="retry-workload">Retry Workload<a class="headerlink" href="#retry-workload" title="Permanent link">⚓︎</a></h3>
-<p><strong>POST /api/v1/workload/{uuid}/retry?status={status}</strong></p>
-<p>Resubmit all workflows matching <code>status</code> associated with workload <code>uuid</code>.</p>
+<p><strong>POST /api/v1/workload/{uuid}/retry</strong></p>
+<p>Resubmit all unretried workflows associated with workload <code>uuid</code>
+and request body filters.</p>
 <p>Prerequisites:</p>
 <ul>
-<li>The status is <a href="../usage-retry/#supported-statuses">supported</a></li>
-<li>Workflows must exist in the workload for the specified status</li>
+<li>The request body filters must be <a href="../usage-retry/#request-body">valid</a></li>
+<li>Workflows must exist in the workload for the specified filters</li>
 <li>The workload should be started</li>
 </ul>
 <p>With all prerequisite fulfilled, WFL will then...</p>
@@ -1087,7 +1093,7 @@ when available (when the workflow has succeeded).</p>
 <div class="highlight"><pre><span></span><code>curl -X POST &quot;http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/retry&quot; \
     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
     -H &quot;Content-Type: application/json&quot; \
-    -d &#39;{ &quot;status&quot;: &quot;Aborted&quot; }&#39;
+    -d &#39;{ &quot;submission&quot;: &quot;14bffc69-6ce7-4615-b318-7ef1c457c894&quot; }&#39;
 </code></pre></div>
 </div>
 </div>

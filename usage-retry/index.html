@@ -596,8 +596,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#supported-statuses" class="md-nav__link">
-    Supported Statuses
+  <a href="#request-body" class="md-nav__link">
+    Request Body
   </a>
   
 </li>
@@ -771,8 +771,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#supported-statuses" class="md-nav__link">
-    Supported Statuses
+  <a href="#request-body" class="md-nav__link">
+    Request Body
   </a>
   
 </li>
@@ -861,53 +861,68 @@
                 
                 <h1 id="retrying-workflows">Retrying Workflows<a class="headerlink" href="#retrying-workflows" title="Permanent link">⚓︎</a></h1>
 <h2 id="retrying-terra-workflows-via-wfl-api">Retrying Terra Workflows via WFL API<a class="headerlink" href="#retrying-terra-workflows-via-wfl-api" title="Permanent link">⚓︎</a></h2>
-<p>WFL has a <code>/retry</code> endpoint that selects workflows by their completion status
-and re-submits them.</p>
-<p>The following <code>curl</code> shell command finds the workflows
-with the Cromwell status <code>"Failed"</code> in workload <code>$UUID</code>
-and resubmits them for processing.</p>
+<p>WFL <a href="../staged-workload/">staged workloads</a> with a
+<a href="../executor/#terra-executor">Terra executor</a>
+have a <code>/retry</code> endpoint that selects unretried workflows
+by their submission ID and re-submits them.</p>
+<p>The following <code>curl</code> shell command finds the unretried workflows
+launched by submission <code>$SUBMISSION</code> in workload <code>$UUID</code>
+and resubmits the underlying snapshot for processing.</p>
 <div class="highlight"><pre><span></span><code><span class="nv">WFL</span><span class="o">=</span>https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload
-<span class="nv">AUTH</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
-<span class="nv">UUID</span><span class="o">=</span>0d307eb3-2b8e-419c-b687-8c08c84e2a0c <span class="c1"># workload UUID</span>
 
-curl -X POST -H <span class="s2">&quot;</span><span class="nv">$AUTH</span><span class="s2">&quot;</span> <span class="nv">$WFL</span>/<span class="nv">$UUID</span>/retry --data <span class="s1">&#39;{&quot;status&quot;:&quot;Failed&quot;}&#39;</span> <span class="p">|</span> jq
+<span class="nv">AUTH</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
+
+<span class="nv">UUID</span><span class="o">=</span>0d307eb3-2b8e-419c-b687-8c08c84e2a0c       <span class="c1"># workload UUID</span>
+<span class="nv">SUBMISSION</span><span class="o">=</span>14bffc69-6ce7-4615-b318-7ef1c457c894 <span class="c1"># Terra submission UUID</span>
+
+curl -X POST -H <span class="s2">&quot;</span><span class="nv">$AUTH</span><span class="s2">&quot;</span> <span class="nv">$WFL</span>/<span class="nv">$UUID</span>/retry <span class="se">\</span>
+  --data <span class="s1">&#39;{&quot;submission&quot;:&quot;$SUBMISSION&quot;}&#39;</span> <span class="se">\</span>
+  <span class="p">|</span> jq
 </code></pre></div>
 <p>A successful <code>/retry</code> request returns the workload specified by <code>$UUID</code>.
 A failed <code>/retry</code> request will return a description of the failure.</p>
-<p>The <code>/retry</code> endpoint is not yet implemented for all workloads
-and in such cases returns a <code>501</code> HTTP failure status.
-<a href="../staged-workload/">Staged workloads</a> with a <a href="../executor/#terra-executor">Terra executor</a>
-are likely to implement this endpoint.
-For confirmation, see module-specific documentation.
-For unimplemented cases, see the <a href="#retrying-failures-via-wfl-runbook">runbook</a> below.</p>
-<h3 id="supported-statuses">Supported Statuses<a class="headerlink" href="#supported-statuses" title="Permanent link">⚓︎</a></h3>
+<p>For legacy (non-staged) workloads, the <code>/retry</code> endpoint is unimplemented
+and returns a <code>501</code> HTTP failure status.
+In such cases, retries may be facilitated by the
+<a href="#retrying-failures-via-wfl-runbook">runbook</a> below.</p>
+<h3 id="request-body">Request Body<a class="headerlink" href="#request-body" title="Permanent link">⚓︎</a></h3>
+<p>The request body filters must be valid:</p>
+<ul>
+<li>Mandatory <code>submission</code> - Terra submission ID (must be a valid UUID)</li>
+<li>Optional <code>status</code> - Workflow status
+  (if specified, must be a retriable Cromwell workflow status)</li>
+</ul>
 <p>The only
 <a href="https://github.com/broadinstitute/wfl/blob/6bcfde01542bfef1601eaaf4bb2657cf1520218f/api/src/wfl/service/cromwell.clj#L12-L14">Cromwell statuses</a>
 supported with the <code>/retry</code> API
 are the terminal workflow statuses:</p>
 <ul>
-<li>
-<p><code>"Aborted"</code></p>
-</li>
-<li>
-<p><code>"Failed"</code></p>
-</li>
-<li>
-<p><code>"Succeeded"</code></p>
-</li>
+<li><code>"Aborted"</code></li>
+<li><code>"Failed"</code></li>
+<li><code>"Succeeded"</code></li>
 </ul>
-<details class="info" open="open"><summary>Why would you retry succeeded workflows?</summary><p>A workflow may have functionally succeeded, but be scientifically inaccurate
+<details class="info" open="open">
+<summary>Why would you retry succeeded workflows?</summary>
+<p>A workflow may have functionally succeeded, but be scientifically inaccurate
 and need to be rerun, e.g. if the initial run contained incorrect metadata.</p>
 </details>
 <p>Attempting to retry workflows of any other status
 will return a <code>400</code> HTTP failure status,
-as will specifying a status for which the workload has no workflows.</p>
+as will a valid combination of filters with no matching workflows in WFL's DB.
+Examples:</p>
+<ul>
+<li>A valid Terra submission ID for a different workload</li>
+<li><code>"Failed"</code> workflow status when all unretried workflows had <code>"Succeeded"</code></li>
+</ul>
 <h3 id="warnings-and-caveats">Warnings and Caveats<a class="headerlink" href="#warnings-and-caveats" title="Permanent link">⚓︎</a></h3>
 <h4 id="submission-of-snapshot-subsets-not-yet-supported">Submission of snapshot subsets not yet supported<a class="headerlink" href="#submission-of-snapshot-subsets-not-yet-supported" title="Permanent link">⚓︎</a></h4>
 <p>WFL is limited by <a href="https://github.com/broadinstitute/rawls">Rawls</a> functionality
 and cannot yet submit a subset of a snapshot.
 So retrying any workflow from a workload snapshot
 will resubmit all entities from that snapshot.</p>
+<p>(Because of this, the optional workflow status filter is purely decorative:
+all sibling workflows from the same submission will be resubmitted,
+regardless of their status.)</p>
 <p>Example - a running submission from a snapshot has 500 workflows:</p>
 <ul>
 <li>
@@ -923,16 +938,17 @@ will resubmit all entities from that snapshot.</p>
 <p>Retrying the failed workflow will create a new submission
 where all 500 original workflows are retried.</p>
 <p>Consider whether you should wait for all workflows in the submission to complete
-before initiating a retry
-to avoid multiple workflows running concurrently
+before initiating a retry to avoid multiple workflows running concurrently
 in competition for the same output files.</p>
 <h4 id="race-condition-when-retrying-the-same-workload-concurrently">Race condition when retrying the same workload concurrently<a class="headerlink" href="#race-condition-when-retrying-the-same-workload-concurrently" title="Permanent link">⚓︎</a></h4>
-<p>A caller could hit this endpoint for the same workload multiple times in quick succession,
-making possible a race condition where each run retries the same set of workflows.</p>
+<p>A caller could hit this endpoint for the same workload
+multiple times in quick succession, making possible a race condition
+where each run retries the same set of workflows.</p>
 <p>Future improvements will make this operation threadsafe, but in the interim
 try to wait for a response from your retry request before resubmitting.</p>
 <h2 id="retrying-failures-via-wfl-runbook">Retrying Failures via WFL Runbook<a class="headerlink" href="#retrying-failures-via-wfl-runbook" title="Permanent link">⚓︎</a></h2>
-<p>WFL remembers enough about submissions to let you quickly resubmit failed
+<p>For legacy (non-staged) workloads,
+WFL remembers enough about submissions to let you quickly resubmit failed
 workflows with the same inputs/options as they were originally submitted.</p>
 <p>All you need is a query string like you'd pass to the <code>/workflows</code> endpoint,
 either:</p>
