@@ -48,7 +48,7 @@
 
 (def ^:private outputs
   {:outbool   true
-   :outfile   "gs://broad-gotc-dev-wfl-datarepo-outputs/test-inputs/external-reprocessing_exome_develop_not-a-real.unmapped.bam"
+   :outfile   "gs://broad-gotc-dev-wfl-ptc-test-inputs/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
    :outfloat  pi
    :outint    27
    :outstring "Hello, World!"})

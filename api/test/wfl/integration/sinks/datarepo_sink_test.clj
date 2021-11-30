@@ -2,6 +2,7 @@
   "Test validation and operations on the DataRepo sink implementation."
   (:require [clojure.test         :refer [deftest is use-fixtures]]
             [wfl.environment      :as env]
+            [wfl.jdbc             :as jdbc]
             [wfl.service.postgres :as postgres]
             [wfl.sink             :as sink]
             [wfl.stage            :as stage]
@@ -12,7 +13,8 @@
             [wfl.tools.workloads  :refer [evalT]]
             [wfl.util             :as util])
   (:import [java.util UUID]
-           [wfl.util UserException]))
+           [wfl.util UserException]
+           [java.util.concurrent TimeUnit]))
 
 (def ^:private ^:dynamic *dataset*)
 
@@ -118,14 +120,45 @@
   (let [{:keys [interval times]} (apply hash-map opts)]
     (assertion #(util/poll task (or interval 1) (or times 5)))))
 
+(defn ^:private count-succeeded-ingest-jobs
+  "True when all tdr ingest jobs created by the `_sink` have terminated."
+  [{:keys [details] :as _sink}]
+  (let [query "SELECT COUNT(*) FROM %s
+               WHERE status = 'succeeded' AND consumed IS NOT NULL"]
+    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+      (postgres/throw-unless-table-exists tx details)
+      (-> (jdbc/query tx (format query details)) first :count))))
+
+(defn ^:private poll-for-results
+  "Update sink until there is a truthy result or the max number of attempts is reached."
+  [executor sink seconds max-attempts]
+  (letfn [(update-and-check []
+            (sink/update-sink! executor sink)
+            (stage/done? sink))]
+    (loop [attempt 1]
+      (if-let [result (update-and-check)]
+        result
+        (if (<= max-attempts attempt)
+          false
+          (do (.sleep TimeUnit/SECONDS seconds)
+              (recur (inc attempt))))))))
+
 (deftest test-update-datarepo-sink
-  (let [description (resources/read-resource "primitive.edn")
-        workflow    {:uuid (UUID/randomUUID) :outputs outputs}
-        upstream    (make-queue-from-list [[description workflow]])
-        sink        (create-and-load-datarepo-sink)]
+  (let [description      (resources/read-resource "primitive.edn")
+        workflow         {:uuid (UUID/randomUUID) :outputs outputs}
+        upstream         (make-queue-from-list [[description workflow]])
+        failing-workflow {:uuid (UUID/randomUUID) :outputs {:outbool   true
+                                                            :outfile   "gs://not-a-real-bucket/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
+                                                            :outfloat  (* 4 (Math/atan 1))
+                                                            :outint    27
+                                                            :outstring "Hello, World!"}}
+        failing-upstream (make-queue-from-list [[description failing-workflow]])
+        sink             (create-and-load-datarepo-sink)]
     (sink/update-sink! upstream sink)
     (is (stage/done? upstream))
-    (eventually (throws? UserException) #(sink/update-sink! upstream sink)
+    (is (poll-for-results upstream sink 10 20))
+    (is (== 1 (count-succeeded-ingest-jobs sink)) "has a succeeded job")
+    (eventually (throws? UserException) #(sink/update-sink! failing-upstream sink)
                 :interval 5 :times 10)
     (is (stage/done? sink) "failed jobs are no longer considered")
-    (is (or (sink/update-sink! upstream sink) true) "subsequent updates do nothing")))
+    (is (or (sink/update-sink! failing-upstream sink) true) "subsequent updates do nothing")))
