@@ -906,7 +906,7 @@ looks like:
   <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra Workspace&quot;</span><span class="p">,</span>
   <span class="nt">&quot;workspace&quot;</span><span class="p">:</span> <span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span>
   <span class="nt">&quot;entityType&quot;</span><span class="p">:</span> <span class="s2">&quot;{entity-type-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;identifier&quot;</span><span class="p">:</span> <span class="s2">&quot;{output-name}&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;identifier&quot;</span><span class="p">:</span> <span class="s2">&quot;{workflow-identifier}&quot;</span><span class="p">,</span>
   <span class="nt">&quot;fromOutputs&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;attribute0&quot;</span><span class="p">:</span> <span class="s2">&quot;output0&quot;</span><span class="p">,</span>
     <span class="nt">&quot;attribute1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;output1&quot;</span><span class="p">,</span> <span class="s2">&quot;output2&quot;</span><span class="p">],</span>
@@ -938,7 +938,7 @@ The table below summarises the purpose of each attribute in the above request.</
 </tr>
 <tr>
 <td><code>identifier</code></td>
-<td>Selects the output that will be used as the entity name.</td>
+<td>Selects the workflow attribute (output or input) to use as the entity name.</td>
 </tr>
 <tr>
 <td><code>fromOutputs</code></td>
@@ -956,17 +956,30 @@ a workspace "Writer" in order to write entities to the workspace.</p>
 will be created as. The entity type must exist prior to workload creation and
 must be a table in the workspace.</p>
 <h4 id="identifier"><code>identifier</code><a class="headerlink" href="#identifier" title="Permanent link">⚓︎</a></h4>
-<p>The <code>identifier</code> is the name of a pipeline output
-that should be used as the name of each newly created entity.</p>
-<p>Example - Let's say the pipeline you're running has an output called
-"sample_name" that uniquely identifies the inputs and outputs to that pipeline.
-By setting <code>"identifier": "sample_name"</code> in the sink configuration, entities
-will be created using the "sample_name" as the entity name.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>When two sets of pipeline outputs share the same "identifier" value,
-the first set of outputs will be overwritten by the second in the workspace.</p>
+<p>WFL tries to find a workflow output whose name matches <code>identifier</code>,
+checking workflow input names as a fallback.
+The matching value will be the name of the newly created entity.</p>
+<p>Both workflow outputs and inputs are checked for matches since
+depending on use case, the logical unique identifier may be either.</p>
+<div class="admonition warnings">
+<p class="admonition-title">Warnings</p>
+<ul>
+<li>If an <code>identifier</code> has no matching workflow output or input,
+WFL will not be able to resolve a workflow to an entity name
+and will fail to write its outputs to the workspace data table.</li>
+<li>When two workflows share the same <code>identifier</code> value,
+the first set of outputs will be overwritten by the second in the workspace.</li>
+</ul>
 </div>
+<p><strong>Example:</strong></p>
+<p>An eMerge Arrays workflow has an output called "chip_well_barcode_output"
+that uniquely identifies its inputs and outputs.</p>
+<p>By setting <code>"identifier": "chip_well_barcode_output"</code>
+in the sink configuration, entities will be created
+using the "chip_well_barcode_output" as the entity name.</p>
+<p>Below, the outputs for a successful workflow with a "chip_well_barcode_output"
+of "204126290052_R01C01" have been written to the destination data table.</p>
+<p><img alt="" src="../assets/sink/terra-identifier-in-data-table.png" /></p>
 <h4 id="fromoutputs"><code>fromOutputs</code><a class="headerlink" href="#fromoutputs" title="Permanent link">⚓︎</a></h4>
 <p><code>fromOutputs</code> configures how to create new entities from pipeline outputs
 by mapping the output names to attributes in the <code>entityType</code>.
