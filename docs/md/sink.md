@@ -19,7 +19,7 @@ looks like:
   "name": "Terra Workspace",
   "workspace": "{workspace-namespace}/{workspace-name}",
   "entityType": "{entity-type-name}",
-  "identifier": "{output-name}",
+  "identifier": "{workflow-identifier}",
   "fromOutputs": {
     "attribute0": "output0",
     "attribute1": ["output1", "output2"],
@@ -30,13 +30,13 @@ looks like:
 ```
 The table below summarises the purpose of each attribute in the above request.
 
-| Attribute     | Description                                                  |
-|---------------|--------------------------------------------------------------|
-| `name`        | Selects the `Terra Workspace` sink implementation.           |
-| `workspace`   | The Terra Workspace to write pipeline outputs to.            |
-| `entityType`  | The entity type in the `workspace` to write outputs to.      |
-| `identifier`  | Selects the output that will be used as the entity name.     |
-| `fromOutputs` | Mapping from outputs to attribute names in the `entityType`. |
+| Attribute     | Description                                                                 |
+|---------------|-----------------------------------------------------------------------------|
+| `name`        | Selects the `Terra Workspace` sink implementation.                          |
+| `workspace`   | The Terra Workspace to write pipeline outputs to.                           |
+| `entityType`  | The entity type in the `workspace` to write outputs to.                     |
+| `identifier`  | Selects the workflow attribute (output or input) to use as the entity name. |
+| `fromOutputs` | Mapping from outputs to attribute names in the `entityType`.                |
 
 #### `workspace`
 The workspace is a `"{workspace-namespace}/{workspace-name}"` string as it
@@ -51,17 +51,33 @@ must be a table in the workspace.
 
 #### `identifier`
 
-The `identifier` is the name of a pipeline output
-that should be used as the name of each newly created entity.
+WFL tries to find a workflow output whose name matches `identifier`,
+checking workflow input names as a fallback.
+The matching value will be the name of the newly created entity.
 
-Example - Let's say the pipeline you're running has an output called
-"sample_name" that uniquely identifies the inputs and outputs to that pipeline.
-By setting `"identifier": "sample_name"` in the sink configuration, entities
-will be created using the "sample_name" as the entity name.
+Both workflow outputs and inputs are checked for matches since
+depending on use case, the logical unique identifier may be either.
 
-!!! note
-    When two sets of pipeline outputs share the same "identifier" value,
+!!! warnings
+    - If an `identifier` has no matching workflow output or input,
+    WFL will not be able to resolve a workflow to an entity name
+    and will fail to write its outputs to the workspace data table.
+    - When two workflows share the same `identifier` value,
     the first set of outputs will be overwritten by the second in the workspace.
+
+**Example:**
+
+An eMerge Arrays workflow has an output called "chip_well_barcode_output"
+that uniquely identifies its inputs and outputs.
+
+By setting `"identifier": "chip_well_barcode_output"`
+in the sink configuration, entities will be created
+using the "chip_well_barcode_output" as the entity name.
+
+Below, the outputs for a successful workflow with a "chip_well_barcode_output"
+of "204126290052_R01C01" have been written to the destination data table.
+
+![](assets/sink/terra-identifier-in-data-table.png)
 
 #### `fromOutputs`
 
