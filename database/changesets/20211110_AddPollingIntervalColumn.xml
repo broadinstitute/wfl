@@ -20,7 +20,7 @@
         </comment>
         <sql>
             ALTER TABLE TerraDataRepoSource
-            ADD polling_interval INTEGER;
+            ADD polling_interval_minutes INTEGER;
         </sql>
     </changeSet>
 </databaseChangeLog>

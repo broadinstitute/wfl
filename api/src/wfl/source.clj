@@ -22,7 +22,7 @@
 (s/def ::column string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
-(s/def ::pollingInterval int?)
+(s/def ::pollingIntervalMinutes int?)
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
                    ::column
@@ -30,7 +30,7 @@
                    ::all/table
                    ::snapshotReaders]
           :opt-un [::snapshots
-                   ::pollingInterval]))
+                   ::pollingIntervalMinutes]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::all/name ::snapshots]))
@@ -98,11 +98,11 @@
 (def ^:private ^:const tdr-source-type  "TerraDataRepoSource")
 (def ^:private ^:const tdr-source-table "TerraDataRepoSource")
 (def ^:private ^:const tdr-source-serialized-fields
-  {:dataset         :dataset
-   :table           :dataset_table
-   :column          :table_column_name
-   :snapshotReaders :snapshot_readers
-   :pollingInterval :polling_interval})
+  {:dataset                :dataset
+   :table                  :dataset_table
+   :column                 :table_column_name
+   :snapshotReaders        :snapshot_readers
+   :pollingIntervalMinutes :polling_interval_minutes})
 
 (def ^:private bigquery-datetime-format
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
@@ -311,13 +311,13 @@
 (def ^:private tdr-source-default-polling-interval-minutes 20)
 
 (defn ^:private tdr-source-should-poll?
-  "Return true if it's been at least the specified `polling_interval`
+  "Return true if it's been at least the specified `polling_interval_minutes`
    or, if unspecified, `tdr-source-default-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
-  [{:keys [type id last_checked pollingInterval] :as _source} utc-now]
+  [{:keys [type id last_checked pollingIntervalMinutes] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
-        polling-interval (or pollingInterval 
+        polling-interval (or pollingIntervalMinutes
                              tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
