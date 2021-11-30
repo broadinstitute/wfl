@@ -14,8 +14,9 @@
                runInTransaction="false">
         <comment>
             We want to be able to allow each terra data repo source to be able to specify
-            the rate in which they poll for a new snapshot. The new column added to TerraDataRepoSource
-            will allow us to keep track of what the interval is for each workload's source.
+            the rate at which they poll TDR for new rows to snapshot. The new column added
+            to TerraDataRepoSource will allow us to keep track of what the interval is for
+            each workload's source.
         </comment>
         <sql>
             ALTER TABLE TerraDataRepoSource

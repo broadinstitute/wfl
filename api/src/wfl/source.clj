@@ -311,12 +311,14 @@
 (def ^:private tdr-source-default-polling-interval-minutes 20)
 
 (defn ^:private tdr-source-should-poll?
-  "Return true if it's been at least the specified `polling_interval` or, if unspecified, `tdr-source-default-polling-interval-minutes`
+  "Return true if it's been at least the specified `polling_interval`
+   or, if unspecified, `tdr-source-default-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
   [{:keys [type id last_checked pollingInterval] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
-        polling-interval (or pollingInterval tdr-source-default-polling-interval-minutes)]
+        polling-interval (or pollingInterval 
+                             tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
                 :minutes-since-poll minutes-since-poll
