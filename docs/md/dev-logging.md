@@ -53,6 +53,44 @@ Example:
 (binding [log/*logger* log/disabled-logger]
   (log/info "This message will not be written"))
 ```
+
+## Logging Levels
+The severity levels currently supported for WFL logs are, in order: DEBUG, INFO, NOTICE, ERROR, CRITICAL, ALERT, EMERGENCY.
+
+By default, all logs of severity INFO and higher are written to stdout. If you desire to change this level, i.e. write only logs ERROR and higher or DEBUG and higher, you can set this configuration with the `logging_level` endpoint.
+
+Calling `logging_level` with a GET request will return the current level in which the api is writing. Example on a local server below:
+
+```
+curl -X GET http://localhost:3000/api/v1/logging_level \
+     -H 'accept: application/json' \
+     -H "authorization: Bearer "$(gcloud auth print-access-token)
+```
+
+The result will look something like this:
+```
+{
+  "level" : "INFO"
+}
+```
+
+In order to change this level as desired would be done like so:
+```
+curl -X POST http://localhost:3000/api/v1/logging_level?level=DEBUG \
+     -H 'accept: application/json' \
+     -H "authorization: Bearer "$(gcloud auth print-access-token)
+```
+
+The result would be similar:
+```
+{
+  "level" : "DEBUG"
+}
+```
+
+The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
+WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.
+
 ## Testing
 Test for this can be found in `test/wfl/unit/logging_test.clj`. Currently, the tests check whether the logging methods
 produce json that includes the correct severity and message.
@@ -64,3 +102,9 @@ In order to be able to search for specific logs locally that could be useful in 
 2. Run the server with `./ops/server.sh >> path/to/wfl/log 2>&1`
 3. Look up logs by severity and only show the message: `tail -f path/to/wfl/log | grep --line-buffered -w '"severity":"[YOUR_SEVERITY_HERE]"' | jq '.message'`
 4. Look up logs by a label and print the message: `tail -f path/to/wfl/log | grep --line-buffered -w 'my-label' | jq '.message'`
+
+You may also wish to check the Logging Level section for changing the severity of messages being written. An example being that you want to have debug messages that WFL writes that are not always displayed when the app is deployed on a production server. You could set the logging level to DEBUG and then tail the messages like so:
+
+`tail -f path/to/wfl/log | grep --line-buffered -w '"severity":"DEBUG"' | jq '.message'`
+
+Now you can read only the debug messages in stdout as they come and filter out all other severities such as INFO.
