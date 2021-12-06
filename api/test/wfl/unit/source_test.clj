@@ -9,7 +9,7 @@
   (let [now    (utc-now)
         source {:last_checked (Timestamp/from (.toInstant now))}]
     (letfn [(end-of-interval [min-from-interval]
-              (->> #'source/tdr-source-polling-interval-minutes
+              (->> #'source/tdr-source-default-polling-interval-minutes
                    var-get
                    (+ min-from-interval)
                    (.addTo ChronoUnit/MINUTES now)))]

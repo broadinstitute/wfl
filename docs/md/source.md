@@ -22,14 +22,6 @@ from a single table.
 When you `start` the workload, the `Terra DataRepo` source will start looking
 for new/updated rows from that instant.
 
-!!! note
-    `Terra DataRepo` source only polls for new rows every 20 minutes
-    to reduce the chances of dataset lock collision and creating
-    many low-cardinality snapshots.
-
-    This is a longer cadence than the parent workload update loop,
-    which runs every 20 seconds.
-
 When you `stop` the workload, the `Terra DataRepo` source will stop looking
 for new/updated rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.
@@ -50,18 +42,20 @@ like:
   "snapshotReaders": [
     "{user}@{domain}",
     ...
-  ]
+  ],
+  "pollingIntervalMinutes": 1
 }
 ```
 The table below summarises the purpose of each attribute in the above request.
 
-| Attribute         | Description                                              |
-|-------------------|----------------------------------------------------------|
-| `name`            | Selects the `Terra DataRepo` source implementation.      |
-| `dataset`         | The `UUID` of dataset to monitor and read from.          |
-| `table`           | The name of the `dataset` table to monitor and read from.|
-| `column`          | The name of the UTC `DateTime` or `Timestamp` column in the `table` to poll.|
-| `snapshotReaders` | A list of email addresses whom should be `readers` of all snapshots created by workflow-launcher in this workload.|
+| Attribute                | Description                                              |
+|--------------------------|----------------------------------------------------------|
+| `name`                   | Selects the `Terra DataRepo` source implementation.      |
+| `dataset`                | The `UUID` of dataset to monitor and read from.          |
+| `table`                  | The name of the `dataset` table to monitor and read from.|
+| `column`                 | The name of the UTC `DateTime` or `Timestamp` column in the `table` to poll.|
+| `snapshotReaders`        | A list of email addresses whom should be `readers` of all snapshots created by workflow-launcher in this workload.|
+| `pollingIntervalMinutes` | Optional.  Rate at which WFL will poll TDR for new rows to snapshot|
 
 #### `dataset`
 The dataset attribute is the `UUID` that uniquely identifies the TDR dataset you
@@ -94,6 +88,11 @@ uses Universal Coordinated Time (UTC).
 The email addresses of those whom should be "readers" of all snapshots created
 by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.
+
+#### `pollingIntervalMinutes`
+
+Optional. The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
+If not provided, the default interval is 20 minutes.
 
 ### `TDR Snapshots` Source
 
