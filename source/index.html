@@ -435,6 +435,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pollingintervalminutes" class="md-nav__link">
+    pollingIntervalMinutes
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -794,6 +801,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pollingintervalminutes" class="md-nav__link">
+    pollingIntervalMinutes
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -854,14 +868,6 @@ with a <code>Terra DataRepo</code> source. The <code>Terra DataRepo</code> sourc
 from a single table.</p>
 <p>When you <code>start</code> the workload, the <code>Terra DataRepo</code> source will start looking
 for new/updated rows from that instant.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><code>Terra DataRepo</code> source only polls for new rows every 20 minutes
-to reduce the chances of dataset lock collision and creating
-many low-cardinality snapshots.</p>
-<p>This is a longer cadence than the parent workload update loop,
-which runs every 20 seconds.</p>
-</div>
 <p>When you <code>stop</code> the workload, the <code>Terra DataRepo</code> source will stop looking
 for new/updated rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.</p>
@@ -881,7 +887,8 @@ like:
   <span class="nt">&quot;snapshotReaders&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="s2">&quot;{user}@{domain}&quot;</span><span class="p">,</span>
     <span class="err">...</span>
-  <span class="p">]</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;pollingIntervalMinutes&quot;</span><span class="p">:</span> <span class="mi">1</span>
 <span class="p">}</span>
 </code></pre></div>
 The table below summarises the purpose of each attribute in the above request.</p>
@@ -913,6 +920,10 @@ The table below summarises the purpose of each attribute in the above request.</
 <td><code>snapshotReaders</code></td>
 <td>A list of email addresses whom should be <code>readers</code> of all snapshots created by workflow-launcher in this workload.</td>
 </tr>
+<tr>
+<td><code>pollingIntervalMinutes</code></td>
+<td>Optional.  Rate at which WFL will poll TDR for new rows to snapshot</td>
+</tr>
 </tbody>
 </table>
 <h4 id="dataset"><code>dataset</code><a class="headerlink" href="#dataset" title="Permanent link">⚓︎</a></h4>
@@ -942,6 +953,9 @@ Using <code>DateTime</code> may cause workflow-launcher to miss the row at first
 <p>The email addresses of those whom should be "readers" of all snapshots created
 by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.</p>
+<h4 id="pollingintervalminutes"><code>pollingIntervalMinutes</code><a class="headerlink" href="#pollingintervalminutes" title="Permanent link">⚓︎</a></h4>
+<p>Optional. The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
+If not provided, the default interval is 20 minutes.</p>
 <h3 id="tdr-snapshots-source"><code>TDR Snapshots</code> Source<a class="headerlink" href="#tdr-snapshots-source" title="Permanent link">⚓︎</a></h3>
 <p>You can configure workflow-launcher to use a list of TDR snapshots directly.
 This may be useful if you don't want workflow-launcher to be a custodian of your
