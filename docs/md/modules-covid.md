@@ -11,15 +11,15 @@ which includes a source, executor, and sink.
 
 The `covid` module supports the following API endpoints:
 
-| Verb | Endpoint                            | Description                                                              |
-|------|-------------------------------------|--------------------------------------------------------------------------|
-| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project              |
-| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for workload `uuid`, optionally filtering by status   |
-| POST | `/api/v1/workload/{uuid}/retry`     | Retry workflows matching a given status in workload `uuid`               |
-| POST | `/api/v1/create`                    | Create a new workload                                                    |
-| POST | `/api/v1/start`                     | Start a workload                                                         |
-| POST | `/api/v1/stop`                      | Stop a running workload                                                  |
-| POST | `/api/v1/exec`                      | Create and start (execute) a workload                                    |
+| Verb | Endpoint                            | Description                                                           |
+|------|-------------------------------------|-----------------------------------------------------------------------|
+| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project           |
+| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for workload `uuid`, filtering by supplied filters |
+| POST | `/api/v1/workload/{uuid}/retry`     | Retry workflows matching given filters in workload `uuid`             |
+| POST | `/api/v1/create`                    | Create a new workload                                                 |
+| POST | `/api/v1/start`                     | Start a workload                                                      |
+| POST | `/api/v1/stop`                      | Stop a running workload                                               |
+| POST | `/api/v1/exec`                      | Create and start (execute) a workload                                 |
 
 The life-cycle of a workload is a multi-stage process:
 
@@ -56,7 +56,7 @@ The life-cycle of a workload is a multi-stage process:
       if maintenance is required on the underlying method.
 
 The caller can also [retry](#retry-workload) workflows in a workload
-matching a given status (ex. "Failed").
+matching a Terra submission ID and optional workflow status (ex. "Failed").
 
 ## API Usage Examples
 
@@ -154,17 +154,18 @@ The response is an array of [workload objects](#workload-response-format).
 
 **GET /api/v1/workload/{uuid}/workflows**
 
-Query WFL for all workflows associated with workload `uuid`.
+Query WFL for all unretried workflows associated with workload `uuid`.
 
 The response is a list of Firecloud-derived
 [workflows](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowMetadata)
-and their [outputs](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowOutputsInSubmission)
+and their
+[outputs](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowOutputsInSubmission)
 when available (when the workflow has succeeded).
 
 === "Request"
 
     ```
-    curl -X GET 'http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/workflows' \
+    curl -X GET 'http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows' \
          -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
          -H 'Accept: application/json'
     ```
@@ -185,31 +186,35 @@ when available (when the workflow has succeeded).
     } ]
     ```
 
-**GET /api/v1/workload/{uuid}/workflows?status={status}**
+**GET /api/v1/workload/{uuid}/workflows?submission={submission}&status={status}**
 
-Query WFL for all workflows with `status` associated with workload `uuid`.
+Query WFL for all unretried workflows associated with workload `uuid`,
+filtering by any workflow filters specified as query params:
 
-The response has the same format as when querying without the status restriction.
+- `submission` - Terra submission ID (must be a valid UUID)
+- `status` - Workflow status (must be a valid Cromwell workflow status)
+
+The response has the same format as when querying without filters.
 
 === "Request"
 
     ```
-    curl -X GET 'http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/workflows' \
-        -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
-        -H 'Accept: application/json' \
-        -d $'{ "status": "Failed" }'
+    curl -X GET 'http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows?submission=14bffc69-6ce7-4615-b318-7ef1c457c894&status=Succeeded' \
+         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+         -H 'Accept: application/json'
     ```
 
 ### Retry Workload
 
-**POST /api/v1/workload/{uuid}/retry?status={status}**
+**POST /api/v1/workload/{uuid}/retry**
 
-Resubmit all workflows matching `status` associated with workload `uuid`.
+Resubmit all unretried workflows associated with workload `uuid`
+and request body filters.
 
 Prerequisites:
 
-- The status is [supported](./usage-retry.md#supported-statuses)
-- Workflows must exist in the workload for the specified status
+- The request body filters must be [valid](./usage-retry.md#request-body)
+- Workflows must exist in the workload for the specified filters
 - The workload should be started
 
 With all prerequisite fulfilled, WFL will then...
@@ -229,7 +234,7 @@ Further information found in general
     curl -X POST "http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/retry" \
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H "Content-Type: application/json" \
-        -d '{ "status": "Aborted" }'
+        -d '{ "submission": "14bffc69-6ce7-4615-b318-7ef1c457c894" }'
     ```
 
 ### Create Workload

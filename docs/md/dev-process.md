@@ -235,8 +235,6 @@ open http://localhost:3000/swagger
 
 ### debugging Liquibase locally
 
-### debugging Liquibase locally
-
 Running `liquibase update`:
 ```bash
 liquibase --classpath=$(clojure -Spath)          \
