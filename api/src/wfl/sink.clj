@@ -371,11 +371,12 @@
                  (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))
                  (str target-bucket workflow-id "/" (util/basename obj)))))
            (go! [k v]
-             (cond (fileref? k) (let [val (values (keyword v))]
+             (cond (fileref? k) (if-let [val (values (keyword v))]
                                   [k {:description (util/basename val)
                                       :mimeType   (mime-type/ext-mime-type val)
                                       :sourcePath val
-                                      :targetPath (get-target val)}])
+                                      :targetPath (get-target val)}]
+                                  [k nil])
                    (literal? v) [k (subs v 1 (count v))]
                    (boolean? v) [k (values (keyword v))]
                    (string?  v) [k (values (keyword v))]
