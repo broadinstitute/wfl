@@ -31,7 +31,7 @@
            (:flowcell_id result)))
     (is (= (:flowcell_tgz inputs)
            (-> result :flowcell_tgz :sourcePath)))
-    (is (= nil (:sample_rename_map result)))))
+    (is (nil? (:sample_rename_map result)))))
 
 (def ^:private workspace-sink-request
   {:name        @#'sink/terra-workspace-sink-name

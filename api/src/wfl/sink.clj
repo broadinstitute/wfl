@@ -382,6 +382,7 @@
                    (string?  v) [k (values (keyword v))]
                    (map?     v) [k (rename-gather-bulk workflow-id dataset table values v)]
                    (coll?    v) [k (keep (go! k v))]
+                   (nil?     v) [k nil]
                    :else        (throw (ex-info "Unknown operation"
                                                 {:operation v}))))]
      (into {} (for [[k v] mapping] (go! k v))))))
