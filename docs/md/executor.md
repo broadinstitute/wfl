@@ -43,7 +43,7 @@ And a real-life example for a known method configuration:
 }
 ```
 
-![](./assets/terra-method-configuration.png)
+![](assets/executor/terra-method-configuration.png)
 
 The table below summarises the purpose of each attribute in the above request.
 
@@ -77,13 +77,25 @@ Prerequisites:
   workload creation.
 
 #### `methodConfigurationVersion`
-The expected version of `methodConfiguration`, stored as an integer
-in Firecloud.
+The expected version of `methodConfiguration`, stored as an integer in
+[Firecloud](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Method%20Configurations/getWorkspaceMethodConfig).
+
+Example fetch of a method configuration's version from the appropriate
+Firecloud instance (prod):
+
+```shell
+curl -X 'GET' \
+  'https://firecloud-orchestration.dsde-prod.broadinstitute.org/api/workspaces/emerge_prod/Arrays_test/method_configs/warp-pipelines/Arrays' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+  | jq .methodConfigVersion
+7
+```
 
 Prerequisites:
 
-- The `methodConfiguration` version when fetched from Firecloud should match
-  `methodConfigurationVersion`.
+- The `methodConfiguration` version when fetched from Firecloud
+  at workload creation should match `methodConfigurationVersion`.
 
 !!! warning "Implications of Version Mismatch"
     A version mismatch may indicate a possible concurrent modification of the
@@ -127,14 +139,21 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      ^Executor   executor     ;; This executor instance
      ]
     "Use database `transaction` to return workflows created by the `executor`.")
-  (executor-workflows-by-status
+  (executor-workflows-by-filters
     ^IPersistentVector
-    [^Connection transaction  ;; JDBC Connection
-     ^Executor   executor     ;; This executor instance
-     ^String     status       ;; workflow status to match
+    [^Connection        transaction  ;; JDBC Connection
+     ^Executor          executor     ;; This executor instance
+     ^IPersistentVector filters      ;; Workflow filters to match
+                                     ;; (ex. status, submission)
     ]
     "Use database `transaction` to return workflows created by the `executor`
-     matching the workflow `status`.")
+     matching the workflow `filters` (ex. status, submission).")
+  (executor-throw-if-invalid-retry-filters
+    ;; Executed for side effects
+    [^IPersistentHashmap workload  ;; Workload for which a retry is requested
+     ^IPersistentVector  filters   ;; Workflow filters
+    ]
+    "Throw if workflow `filters` are invalid for `workload`'s retry request.")
   (executor-retry-workflows!
     ;; Executed for side effects
     [^Executor          executor   ;; This executor instance
