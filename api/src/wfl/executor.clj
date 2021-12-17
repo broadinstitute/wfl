@@ -43,7 +43,7 @@
 
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
-  (fn [_workload executor _workflows] (:type executor)))
+  (fn [{:keys [executor] :as _workload} _workflows] (:type executor)))
 
 ;; load/save operations
 (defmulti create-executor!
@@ -610,7 +610,7 @@
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
-  [workload {:keys [workspace] :as executor} workflows]
+  [{{:keys [workspace] :as executor} :executor :as workload} workflows]
   (letfn [(submit-reference [reference-id]
             ;; Further work required to deal in generic entities
             ;; rather than assumed snapshot references:

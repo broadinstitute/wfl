@@ -299,7 +299,8 @@
     (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
     (is (== 2 (stage/queue-length executor))
         "Two workflows should be enqueued prior to retry.")
-    (let [executor           (reload-terra-executor executor)]
+    (let [executor           (reload-terra-executor executor)
+          workload           {:uuid (UUID/randomUUID) :executor executor}]
       (is (== 2 (:methodConfigurationVersion executor))
           "Reloaded executor's method config should have version 2 post-update.")
       (with-redefs-fn
@@ -314,7 +315,7 @@
                  (executor/executor-workflows-by-filters tx executor {:status "Running"}))]
            (is (== 1 (count workflows-to-retry))
                "Should have one running workflow to retry.")
-           (executor/executor-retry-workflows! executor workflows-to-retry)))
+           (executor/executor-retry-workflows! workload workflows-to-retry)))
       ;; We only specify 1 workflow to retry,
       ;; but must retry both workflows from its submission.
       (is (== 4 (stage/queue-length executor))
