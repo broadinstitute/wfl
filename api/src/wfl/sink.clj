@@ -51,7 +51,7 @@
    asynchronously between invocations.
    Note that the `Sink` and `Queue` are parameterised types
    and the `Queue`'s parameterisation must be convertible to the `Sink`s."
-  (fn [_upstream-queue sink] (:type sink)))
+  (fn [{:keys [sink] :as _workload}] (:type sink)))
 
 (defmethod create-sink! :default
   [_ _ {:keys [name] :as request}]
@@ -199,7 +199,8 @@
 (defn ^:private update-terra-workspace-sink
   "Write outputs from consumable `executor` workflows
    to `entityType` table in `workspace`."
-  [executor {:keys [fromOutputs workspace entityType details] :as sink}]
+  [{executor :executor
+    {:keys [fromOutputs workspace entityType details] :as sink} :sink :as _workload}]
   (when-let [[_ {:keys [uuid] :as workflow}] (stage/peek-queue executor)]
     (log/debug {:action     "Attempting to sink workflow outputs"
                 :workflow   uuid
@@ -415,7 +416,7 @@
 (defn ^:private update-datarepo-sink
   "Attempt to a pull a workflow off the upstream `executor` queue and write its
    outputs as new rows in a tdr dataset table asynchronously."
-  [executor sink]
+  [{:keys [executor sink] :as _workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))

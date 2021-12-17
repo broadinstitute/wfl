@@ -213,7 +213,8 @@
 
 (deftest test-update-terra-executor
   (let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
-        executor (create-terra-executor (rand-int 1000000))]
+        executor (create-terra-executor (rand-int 1000000))
+        workload {:uuid (UUID/randomUUID) :source source :executor executor}]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
                   "The record ID was incorrect given the workflow order in mocked submission")
@@ -226,7 +227,7 @@
          #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
          #'firecloud/get-submission               mock-firecloud-get-submission
          #'firecloud/get-workflow                 mock-firecloud-get-running-workflow-update-status}
-        #(executor/update-executor! source executor))
+        #(executor/update-executor! workload))
       (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
       (is (== 2 (stage/queue-length executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -255,7 +256,8 @@
 (deftest test-peek-terra-executor-queue
   (let [succeeded? #{"Succeeded"}
         source     (make-queue-from-list [[:datarepo/snapshot snapshot]])
-        executor   (create-terra-executor (rand-int 1000000))]
+        executor   (create-terra-executor (rand-int 1000000))
+        workload   {:uuid (UUID/randomUUID) :source source :executor executor}]
     (with-redefs-fn
       {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
        #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
@@ -263,7 +265,7 @@
        #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
        #'firecloud/get-submission               mock-firecloud-get-submission
        #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
-      #(executor/update-executor! source executor))
+      #(executor/update-executor! workload))
     (with-redefs-fn
       {#'executor/describe-method       (constantly nil)
        #'firecloud/get-workflow         mock-firecloud-get-known-workflow
@@ -284,7 +286,8 @@
 
 (deftest test-terra-executor-retry-workflows
   (let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
-        executor (create-terra-executor (rand-int 1000000))]
+        executor (create-terra-executor (rand-int 1000000))
+        workload {:uuid (UUID/randomUUID) :source source :executor executor}]
     (with-redefs-fn
       {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
        #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
@@ -292,7 +295,7 @@
        #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
        #'firecloud/get-submission               mock-firecloud-get-submission
        #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
-      #(executor/update-executor! source executor))
+      #(executor/update-executor! workload))
     (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
     (is (== 2 (stage/queue-length executor))
         "Two workflows should be enqueued prior to retry.")
@@ -363,8 +366,9 @@
      #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
      #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
     #(let [source   (make-queue-from-list [[:datarepo/snapshot snapshot]])
-           executor (create-terra-executor (rand-int 1000000))]
-       (executor/update-executor! source executor)
+           executor (create-terra-executor (rand-int 1000000))
+           workload {:uuid (UUID/randomUUID) :source source :executor executor}]
+       (executor/update-executor! workload)
        (is (== 2 (stage/queue-length executor)))
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
          (jdbc/update! tx (:details executor) {:retry 2} ["id = ?" 1]))
@@ -385,7 +389,8 @@
      #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
     #(let [source                (make-queue-from-list [[:datarepo/snapshot snapshot]])
            executor              (create-terra-executor (rand-int 1000000))
-           _                     (executor/update-executor! source executor)
+           workload              {:uuid (UUID/randomUUID) :source source :executor executor}
+           _                     (executor/update-executor! workload)
            record                (#'executor/peek-terra-executor-details executor)
            succeeded-workflow-id (get-in submission-base [init-submission-id :succeeded :workflow-id])]
        (is (= succeeded-workflow-id (:workflow record))

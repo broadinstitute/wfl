@@ -107,7 +107,7 @@
           (source/update-source!
            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
              (source/start-source! tx source)
-             (reload-source tx source))))
+             {:uuid (UUID/randomUUID) :source (reload-source tx source)})))
         (let [miss-count (dec mock-new-rows-size)
               miss-set   (set (rows-from source))]
           (is (== record-count (stage/queue-length source)))
@@ -120,7 +120,7 @@
                           source/create-snapshots        mock-create-snapshots]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (reload-source tx source))))
+                 {:uuid (UUID/randomUUID) :source (reload-source tx source)})))
             (let [all-rows (rows-from source)
                   missing  (set/difference (set all-rows) miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
@@ -179,7 +179,7 @@
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           (reload-source tx source)))
+           {:uuid (UUID/randomUUID) :source (reload-source tx source)}))
         (is (== expected-num-records (stage/queue-length source))
             "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -195,7 +195,7 @@
         (let [stopped-source (source/update-source!
                               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                 (source/stop-source! tx source)
-                                (reload-source tx source)))]
+                                {:uuid (UUID/randomUUID) :source (reload-source tx source)}))]
           (is (== expected-num-records (stage/queue-length stopped-source))
               "no more snapshots should be enqueued")
           (is (not (stage/done? stopped-source))
@@ -215,12 +215,12 @@
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           (reload-source tx source)))
+           {:uuid (UUID/randomUUID) :source (reload-source tx source)}))
         (is (zero? (stage/queue-length source)) "No snapshots should be enqueued")
         (let [stopped-source (source/update-source!
                               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                 (source/stop-source! tx source)
-                                (reload-source tx source)))]
+                                {:uuid (UUID/randomUUID) :source (reload-source tx source)}))]
           (is (stage/done? stopped-source)
               "the tdr source should be done if no snapshots to consume"))))))
 

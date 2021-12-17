@@ -62,7 +62,7 @@
    running external calls, favouring internal queues to manage such tasks
    asynchronously between invocations. This function is called one or more
    times after `start-source!` and may be called after `stop-source!`"
-  :type)
+  (fn [{:keys [source] :as _workload}] (:type source)))
 
 ;; source load/save operations
 (defmulti create-source!
@@ -329,14 +329,15 @@
   "Check for new data in TDR from `source`, create new snapshots,
   insert resulting job creation ids into database and update the
   timestamp for next time."
-  [{:keys [stopped] :as source}]
+  [{{:keys [stopped] :as source} :source :as workload}]
   (let [now (utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
   (update-pending-snapshot-jobs source)
   ;; load and return the source table
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (load-tdr-source tx {:source_items (str (:id source))})))
+  (let [new-source (:source (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                   (load-tdr-source tx {:source_items (str (:id source))})))]
+    (merge workload new-source)))
 
 (defn ^:private start-tdr-source [tx source]
   (update-last-checked tx source (utc-now)))
@@ -443,7 +444,7 @@
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
 (defn ^:private stop-tdr-snapshot-list  [_ source] source)
-(defn ^:private update-tdr-snapshot-list [source]  source)
+(defn ^:private update-tdr-snapshot-list [{:keys [source] :as _workload}]  source)
 
 (defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s
