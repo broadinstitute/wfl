@@ -444,7 +444,7 @@
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
 (defn ^:private stop-tdr-snapshot-list  [_ source] source)
-(defn ^:private update-tdr-snapshot-list [{:keys [source] :as _workload}]  source)
+(defn ^:private update-tdr-snapshot-list [workload]  workload)
 
 (defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s

@@ -169,7 +169,8 @@
 
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
-        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))]
+        expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
+        workload             {:uuid (UUID/randomUUID)}]
     (with-redefs-fn
       {#'source/tdr-source-should-poll? (constantly true)
        #'source/create-snapshots        mock-create-snapshots
@@ -179,7 +180,7 @@
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           {:uuid (UUID/randomUUID) :source (reload-source tx source)}))
+           (merge workload {:source (reload-source tx source)})))
         (is (== expected-num-records (stage/queue-length source))
             "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -192,10 +193,10 @@
                 (is (= expected-num-records (count records))))
               (testing "all snapshot jobs were updated and corresponding snapshot ids were inserted"
                 (is (every? record-updated? records))))))
-        (let [stopped-source (source/update-source!
-                              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                (source/stop-source! tx source)
-                                {:uuid (UUID/randomUUID) :source (reload-source tx source)}))]
+        (let [stopped-source (:source (source/update-source!
+                                       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                         (source/stop-source! tx source)
+                                         (merge workload {:source (reload-source tx source)}))))]
           (is (== expected-num-records (stage/queue-length stopped-source))
               "no more snapshots should be enqueued")
           (is (not (stage/done? stopped-source))
@@ -206,6 +207,7 @@
         ex-message      (str "source/find-and-snapshot-new-rows "
                              "should not be called when ineligible "
                              "to poll TDR for new rows.")
+        workload        {:uuid (UUID/randomUUID)}
         throw-if-called (fn [& args] (throw (ex-info ex-message
                                                      {:called-with args})))]
     (with-redefs-fn
@@ -215,12 +217,12 @@
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           {:uuid (UUID/randomUUID) :source (reload-source tx source)}))
+           (merge workload {:source (reload-source tx source)})))
         (is (zero? (stage/queue-length source)) "No snapshots should be enqueued")
-        (let [stopped-source (source/update-source!
-                              (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                (source/stop-source! tx source)
-                                {:uuid (UUID/randomUUID) :source (reload-source tx source)}))]
+        (let [stopped-source (:source (source/update-source!
+                                       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                                         (source/stop-source! tx source)
+                                         (merge workload {:source (reload-source tx source)}))))]
           (is (stage/done? stopped-source)
               "the tdr source should be done if no snapshots to consume"))))))
 
