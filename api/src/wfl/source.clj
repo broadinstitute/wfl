@@ -336,7 +336,7 @@
   (update-pending-snapshot-jobs source)
   ;; load and return the source table
   (let [new-source (:source (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                   (load-tdr-source tx {:source_items (str (:id source))})))]
+                              (load-tdr-source tx {:source_items (str (:id source))})))]
     (merge workload new-source)))
 
 (defn ^:private start-tdr-source [tx source]
