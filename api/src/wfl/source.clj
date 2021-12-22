@@ -56,7 +56,7 @@
   (fn [_transaction source] (:type source)))
 
 (defmulti update-source!
-  "Enqueue items onto the `source` queue to be consumed by a later processing
+  "Enqueue items onto the `workload`'s source queue to be consumed by a later processing
    stage unless stopped, performing any external effects as necessary.
    Implementations should avoid maintaining in-memory state and making long-
    running external calls, favouring internal queues to manage such tasks

@@ -44,13 +44,13 @@
   (fn [_transaction workload] (:sink_type workload)))
 
 (defmulti update-sink!
-  "Update the internal state of the `sink`, consuming objects from the
-   Queue `upstream-queue`, performing any external effects as required.
+  "Update the internal state of the `Workload`'s sink, consuming objects from the
+   `Workload`'s executor queue, performing any external effects as required.
    Implementations should avoid maintaining in-memory state and making long-
    running external calls, favouring internal queues to manage such tasks
-   asynchronously between invocations.
-   Note that the `Sink` and `Queue` are parameterised types
-   and the `Queue`'s parameterisation must be convertible to the `Sink`s."
+   asynchronously between invocations. Note that the `Workload`'s Sink and its Executor Queue are
+   parameterised types and the Executor Queue's parameterisation must be convertible
+   to the Sink's."
   (fn [{:keys [sink] :as _workload}] (:type sink)))
 
 (defmethod create-sink! :default
@@ -414,7 +414,7 @@
          (push-job sink))))
 
 (defn ^:private update-datarepo-sink
-  "Attempt to a pull a workflow off the upstream `executor` queue and write its
+  "Attempt to a pull a workflow off the `Workload`'s `executor` queue and write its
    outputs as new rows in a tdr dataset table asynchronously."
   [{:keys [executor sink] :as _workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]

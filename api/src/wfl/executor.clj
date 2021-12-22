@@ -19,13 +19,14 @@
 
 ;; executor operations
 (defmulti update-executor!
-  "Consume items from the `upstream-queue` and enqueue to the `executor` queue
-   for consumption by a later processing stage, performing any external effects
-   as necessary. Implementations should avoid maintaining in-memory state and
-   making long-running external calls, favouring internal queues to manage such
-   tasks asynchronously between invocations.  Note that the `Executor` and
-   `Queue` are parameterised types and the `Queue`'s parameterisation must be
-   convertible to the `Executor`s."
+  "Consume items from the `workload`'s source queue and enqueue to its executor
+   queue for consumption by a later processing stage,
+   performing any external effects as necessary.
+   Implementations should avoid maintaining in-memory state and making long-
+   running external calls, favouring internal queues to manage such tasks
+   asynchronously between invocations.  Note that the `Workload`'s Source queue and Executor
+   are parameterised types and the Source queue's parameterisation must be
+   convertible to the Executor's."
   (fn [{:keys [executor] :as _workload}] (:type executor)))
 
 (defmulti executor-workflows
@@ -312,7 +313,7 @@
   "Create new submission from new `source` snapshot if available,
   writing its workflows to `details` table.
   Update statuses for active or failed workflows in `details` table.
-  Return `executor`."
+  Return updated `workload`."
   [{:keys [executor source] :as workload}]
   (when-let [object (stage/peek-queue source)]
     (let [entity      (from-source executor object)

@@ -150,9 +150,9 @@ A source is a `Queue` that satisfies the `Source` protocol below:
      be called after `start-source!`. Any outstanding items on the `source`
      queue may still be consumed by a later processing stage.")
   (update-source!
-    ^Source
-    [^Source source]
-    "Enqueue items onto the `source` queue to be consumed by a later processing
+    ^Workload
+    [^Workload workload]
+    "Enqueue items onto the `workload`'s source queue to be consumed by a later processing
      stage unless stopped, performing any external effects as necessary.
      Implementations should avoid maintaining in-memory state and making long-
      running external calls, favouring internal queues to manage such tasks
