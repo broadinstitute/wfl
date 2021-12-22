@@ -326,7 +326,7 @@
     (<= polling-interval minutes-since-poll)))
 
 (defn ^:private update-tdr-source
-  "Check for new data in TDR from `source`, create new snapshots,
+  "Check for new data in TDR from `Workload`'s `source`, create new snapshots,
   insert resulting job creation ids into database and update the
   timestamp for next time."
   [{{:keys [stopped] :as source} :source :as workload}]

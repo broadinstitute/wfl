@@ -5,6 +5,7 @@
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
             [wfl.api.workloads     :refer [defoverload]]
+            [wfl.environment       :as env]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
@@ -138,7 +139,7 @@
 (defn ^:private create-user-comment
   "Create a user comment to be added to an executor submission."
   [note {:keys [uuid] :as _workload}]
-  (str note "Workload: " uuid))
+  (str note " Workload: " uuid " host: " (env/getenv "WFL_WFL_URL")))
 
 (defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
