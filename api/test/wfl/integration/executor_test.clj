@@ -67,7 +67,9 @@
 
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
-  {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
+  {:name   "test-snapshot-name"
+   :id     (str (UUID/randomUUID))
+   :tables [{:name "table"}]})
 
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
