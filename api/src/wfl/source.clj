@@ -3,7 +3,7 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
-            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.api.workloads     :refer [defoverload] :as workloads]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
@@ -334,10 +334,9 @@
     (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
   (update-pending-snapshot-jobs source)
-  ;; load and return the source table
-  (let [new-source (:source (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                              (load-tdr-source tx {:source_items (str (:id source))})))]
-    (merge workload new-source)))
+  ;; load and return the workload with the updated source
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (workloads/load-workload-for-uuid tx (:uuid workload))))
 
 (defn ^:private start-tdr-source [tx source]
   (update-last-checked tx source (utc-now)))

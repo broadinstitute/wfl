@@ -3,6 +3,7 @@
             [clojure.java.jdbc     :as jdbc]
             [clojure.set           :as set]
             [clojure.spec.alpha    :as s]
+            [wfl.api.workloads     :as workloads]
             [wfl.service.datarepo  :as datarepo]
             [wfl.service.postgres  :as postgres]
             [wfl.source            :as source]
@@ -85,6 +86,11 @@
       (update-in [:rows 0] butlast)
       (assoc :totalRows (str (dec mock-new-rows-size)))))
 
+(defn ^:private mock-load-workload-for-uuid
+  "Mock workloads/load-workload-for-uuid to return a mocked workload"
+  [source]
+  (fn [tx uuid] {:uuid uuid :source (reload-source tx source)}))
+
 (deftest test-backfill-tdr-source
   (letfn [(rows-from [source]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -93,21 +99,23 @@
                    (mapcat :datarepo_row_ids))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))]
-    (let [args         [testing-dataset testing-table-name testing-column-name
-                        (repeatedly 2 #(-> (Instant/now) str
-                                           (subs 0 (count "2021-07-14T15:47:02"))))
-                        [:datarepo_row_id]]
-          record-count (int (Math/ceil (/ mock-new-rows-size 500)))
-          source       (create-tdr-source)]
+    (let [args          [testing-dataset testing-table-name testing-column-name
+                         (repeatedly 2 #(-> (Instant/now) str
+                                            (subs 0 (count "2021-07-14T15:47:02"))))
+                         [:datarepo_row_id]]
+          record-count  (int (Math/ceil (/ mock-new-rows-size 500)))
+          source        (create-tdr-source)
+          workload-uuid (UUID/randomUUID)]
       (testing "update-source! loads snapshots"
-        (with-redefs [source/tdr-source-should-poll? (constantly true)
-                      datarepo/query-table-between   mock-query-table-between-miss
-                      source/check-tdr-job           mock-check-tdr-job
-                      source/create-snapshots        mock-create-snapshots]
+        (with-redefs [source/tdr-source-should-poll?   (constantly true)
+                      datarepo/query-table-between     mock-query-table-between-miss
+                      source/check-tdr-job             mock-check-tdr-job
+                      source/create-snapshots          mock-create-snapshots
+                      workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
           (source/update-source!
            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
              (source/start-source! tx source)
-             {:uuid (UUID/randomUUID) :source (reload-source tx source)})))
+             ((mock-load-workload-for-uuid source) tx workload-uuid))))
         (let [miss-count (dec mock-new-rows-size)
               miss-set   (set (rows-from source))]
           (is (== record-count (stage/queue-length source)))
@@ -117,10 +125,11 @@
             (with-redefs [source/tdr-source-should-poll? (constantly true)
                           datarepo/query-table-between   mock-query-table-between-all
                           source/check-tdr-job           mock-check-tdr-job
-                          source/create-snapshots        mock-create-snapshots]
+                          source/create-snapshots        mock-create-snapshots
+                          workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
               (source/update-source!
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 {:uuid (UUID/randomUUID) :source (reload-source tx source)})))
+                 ((mock-load-workload-for-uuid source) tx workload-uuid))))
             (let [all-rows (rows-from source)
                   missing  (set/difference (set all-rows) miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
@@ -170,17 +179,18 @@
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
         expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
-        workload             {:uuid (UUID/randomUUID)}]
+        workload-uuid        (UUID/randomUUID)]
     (with-redefs-fn
-      {#'source/tdr-source-should-poll? (constantly true)
-       #'source/create-snapshots        mock-create-snapshots
-       #'source/find-new-rows           mock-find-new-rows
-       #'source/check-tdr-job           mock-check-tdr-job}
+      {#'source/tdr-source-should-poll?   (constantly true)
+       #'source/create-snapshots          mock-create-snapshots
+       #'source/find-new-rows             mock-find-new-rows
+       #'source/check-tdr-job             mock-check-tdr-job
+       #'workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)}
       (fn []
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           (merge workload {:source (reload-source tx source)})))
+           ((mock-load-workload-for-uuid source) tx workload-uuid)))
         (is (== expected-num-records (stage/queue-length source))
             "snapshots should be enqueued")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -196,7 +206,7 @@
         (let [stopped-source (:source (source/update-source!
                                        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                          (source/stop-source! tx source)
-                                         (merge workload {:source (reload-source tx source)}))))]
+                                         ((mock-load-workload-for-uuid source) tx workload-uuid))))]
           (is (== expected-num-records (stage/queue-length stopped-source))
               "no more snapshots should be enqueued")
           (is (not (stage/done? stopped-source))
@@ -207,22 +217,23 @@
         ex-message      (str "source/find-and-snapshot-new-rows "
                              "should not be called when ineligible "
                              "to poll TDR for new rows.")
-        workload        {:uuid (UUID/randomUUID)}
+        workload-uuid   (UUID/randomUUID)
         throw-if-called (fn [& args] (throw (ex-info ex-message
                                                      {:called-with args})))]
     (with-redefs-fn
       {#'source/tdr-source-should-poll?    (constantly false)
-       #'source/find-and-snapshot-new-rows throw-if-called}
+       #'source/find-and-snapshot-new-rows throw-if-called
+       #'workloads/load-workload-for-uuid  (mock-load-workload-for-uuid source)}
       (fn []
         (source/update-source!
          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (source/start-source! tx source)
-           (merge workload {:source (reload-source tx source)})))
+           ((mock-load-workload-for-uuid source) tx workload-uuid)))
         (is (zero? (stage/queue-length source)) "No snapshots should be enqueued")
         (let [stopped-source (:source (source/update-source!
                                        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                                          (source/stop-source! tx source)
-                                         (merge workload {:source (reload-source tx source)}))))]
+                                         ((mock-load-workload-for-uuid source) tx workload-uuid))))]
           (is (stage/done? stopped-source)
               "the tdr source should be done if no snapshots to consume"))))))
 

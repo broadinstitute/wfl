@@ -4,7 +4,7 @@
             [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
-            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.api.workloads     :refer [defoverload] :as workloads]
             [wfl.environment       :as env]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
@@ -139,7 +139,7 @@
 (defn ^:private create-user-comment
   "Create a user comment to be added to an executor submission."
   [note {:keys [uuid] :as _workload}]
-  (str note " Workload: " uuid " host: " (env/getenv "WFL_WFL_URL")))
+  (str/join \space [note "Workload:" uuid "host:" (env/getenv "WFL_WFL_URL")]))
 
 (defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
@@ -315,7 +315,7 @@
   writing its workflows to `details` table.
   Update statuses for active or failed workflows in `details` table.
   Return updated `workload`."
-  [{:keys [executor source] :as workload}]
+  [{:keys [source executor] :as workload}]
   (when-let [object (stage/peek-queue source)]
     (let [entity      (from-source executor object)
           userComment (create-user-comment "New submission" workload)
@@ -324,7 +324,8 @@
       (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
-  workload)
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (workloads/load-workload-for-uuid tx (:uuid workload))))
 
 (defn ^:private combine-record-workflow-and-outputs
   [{:keys [updated] :as _record}
