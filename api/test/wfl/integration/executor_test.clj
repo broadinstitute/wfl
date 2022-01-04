@@ -312,8 +312,8 @@
     (is (== 2 (stage/queue-length executor))
         "Two workflows should be enqueued prior to retry.")
     (let [executor           (reload-terra-executor executor)
-        workload-uuid        (UUID/randomUUID)
-        workload             {:uuid workload-uuid :source source :executor executor}]
+          workload-uuid        (UUID/randomUUID)
+          workload             {:uuid workload-uuid :source source :executor executor}]
       (is (== 2 (:methodConfigurationVersion executor))
           "Reloaded executor's method config should have version 2 post-update.")
       (with-redefs-fn
