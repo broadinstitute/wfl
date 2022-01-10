@@ -3,6 +3,7 @@
             [clojure.test          :refer [deftest is use-fixtures]]
             [wfl.executor          :as executor]
             [wfl.jdbc              :as jdbc]
+            [wfl.service.datarepo  :as datarepo]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
@@ -66,7 +67,9 @@
 
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
-  {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
+  {:name   "test-snapshot-name"
+   :id     (str (UUID/randomUUID))
+   :tables [{:name "table"}]})
 
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
@@ -430,14 +433,20 @@
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
         actualMcVersion       (+ (:methodConfigurationVersion executor) 1)
-        inc'dMcVersion        (+ actualMcVersion 1)]
+        inc'dMcVersion        (+ actualMcVersion 1)
+        rootEntityTypePre     "rootEntityTypePreUpdate"
+        rootEntityTypePost    "rootEntityTypePostUpdate"]
     (letfn [(firecloud-method-configuration
               [_workspace qualifiedMcName]
               (let [[mcNamespace mcName] (str/split qualifiedMcName #"/")]
                 {:namespace           mcNamespace
                  :name                mcName
                  :dataReferenceName   dataReferenceNamePre
-                 :methodConfigVersion actualMcVersion}))
+                 :methodConfigVersion actualMcVersion
+                 :rootEntityType      rootEntityTypePre}))
+            (datarepo-snapshot
+              [_snapshot-id]
+              {:tables [{:name rootEntityTypePost}]})
             (verify-firecloud-update-params
               [_workspace qualifiedMcName mc]
               (is (= qualifiedMcName (str (:namespace mc) "/" (:name mc)))
@@ -445,9 +454,12 @@
               (is (= dataReferenceNamePost (:dataReferenceName mc))
                   "Method configuration data reference name should be updated")
               (is (== inc'dMcVersion (:methodConfigVersion mc))
-                  "Method configuration's actual version should be incremented"))]
+                  "Method configuration's actual version should be incremented")
+              (is (= rootEntityTypePost (:rootEntityType mc))
+                  "Method configuration root entity type should be snapshot's table name"))]
       (with-redefs-fn
         {#'firecloud/method-configuration        firecloud-method-configuration
+         #'datarepo/snapshot                     datarepo-snapshot
          #'firecloud/update-method-configuration verify-firecloud-update-params}
         #(#'executor/update-method-configuration! executor reference))
       (let [reloaded (reload-terra-executor executor)]
