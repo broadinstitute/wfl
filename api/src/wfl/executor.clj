@@ -9,6 +9,7 @@
             [wfl.log               :as log]
             [wfl.module.all        :as all]
             [wfl.service.cromwell  :as cromwell]
+            [wfl.service.datarepo  :as datarepo]
             [wfl.service.dockstore :as dockstore]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -182,9 +183,27 @@
                     {:executor executor
                      :object   object}))))
 
+(def ^:private table-from-snapshot-reference-error-message
+  (str/join \space
+            ["Will not set method configuration root entity table:"
+             "expected exactly one table in snapshot."]))
+
+(defn ^:private table-from-snapshot-reference
+  "Return singular table in snapshot from `reference`, or log error."
+  [executor reference]
+  (let [snapshot-id               (get-in reference [:attributes :snapshot])
+        snapshot                  (datarepo/snapshot snapshot-id)
+        [table & rest :as tables] (map :name (:tables snapshot))]
+    (if (and table (empty? rest))
+      table
+      (log/error {:cause     table-from-snapshot-reference-error-message
+                  :executor  executor
+                  :reference reference
+                  :tables    tables}))))
+
 (defn ^:private update-method-configuration!
-  "Update `methodConfiguration` in `workspace` with snapshot reference `name`
-  as :dataReferenceName via Firecloud.
+  "Update `methodConfiguration` in `workspace` with snapshot `reference` name
+  and table as its root entity via Firecloud.
   Update executor table record ID with incremented `methodConfigurationVersion`."
   [{:keys [id
            workspace
@@ -195,13 +214,16 @@
         current (firecloud/method-configuration workspace methodConfiguration)
         _       (error-on-method-config-version-mismatch
                  current methodConfigurationVersion)
-        inc'd   (inc (:methodConfigVersion current))]
-    (-> "%s Updating %s in %s with {:dataReferenceName %s :methodConfigVersion %s}"
-        (format (log-prefix executor) methodConfiguration workspace name inc'd)
-        log/debug)
-    (firecloud/update-method-configuration
-     workspace methodConfiguration
-     (assoc current :dataReferenceName name :methodConfigVersion inc'd))
+        inc'd   (inc (:methodConfigVersion current))
+        newMc   (merge
+                 current
+                 {:dataReferenceName name :methodConfigVersion inc'd}
+                 (when-let [table (table-from-snapshot-reference executor reference)]
+                   {:rootEntityType table}))]
+    (log/debug {:action                 "Updating method configuration"
+                :executor               executor
+                :newMethodConfiguration newMc})
+    (firecloud/update-method-configuration workspace methodConfiguration newMc)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx terra-executor-table
                     {:method_configuration_version inc'd}
