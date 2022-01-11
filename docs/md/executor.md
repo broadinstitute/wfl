@@ -84,8 +84,14 @@ Example fetch of a method configuration's version from the appropriate
 Firecloud instance (prod):
 
 ```shell
-curl -X 'GET' \
-  'https://firecloud-orchestration.dsde-prod.broadinstitute.org/api/workspaces/emerge_prod/Arrays_test/method_configs/warp-pipelines/Arrays' \
+FIRECLOUD=https://firecloud-orchestration.dsde-prod.broadinstitute.org
+
+# Should be as they'd appear in a Terra UI URL path:
+WORKSPACE=emerge_prod/Arrays_test
+METHOD_CONFIG=warp-pipelines/Arrays
+
+curl -X GET \
+  "$FIRECLOUD/api/workspaces/$WORKSPACE/method_configs/$METHOD_CONFIG" \
   -H 'accept: */*' \
   -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
   | jq .methodConfigVersion
@@ -135,19 +141,13 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
      convertible to the `Executor`s.")
   (executor-workflows
     ^IPersistentVector
-    [^Connection transaction  ;; JDBC Connection
-     ^Executor   executor     ;; This executor instance
-     ]
-    "Use database `transaction` to return workflows created by the `executor`.")
-  (executor-workflows-by-filters
-    ^IPersistentVector
     [^Connection        transaction  ;; JDBC Connection
      ^Executor          executor     ;; This executor instance
-     ^IPersistentVector filters      ;; Workflow filters to match
+     ^IPersistentVector filters      ;; Optional workflow filters to match
                                      ;; (ex. status, submission)
     ]
     "Use database `transaction` to return workflows created by the `executor`
-     matching the workflow `filters` (ex. status, submission).")
+     matching the optional workflow `filters` (ex. status, submission).")
   (executor-throw-if-invalid-retry-filters
     ;; Executed for side effects
     [^IPersistentHashmap workload  ;; Workload for which a retry is requested
