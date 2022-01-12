@@ -134,27 +134,25 @@
   [workspace submission-id]
   (get-workspace-json workspace "submissions" submission-id))
 
+;; Further work needed if we needed to specify multiple `include-key`s.
+;;
 (defn get-workflow
   "Query the `firecloud-url` for the the `workflow` created by the `submission`
-   in the Terra `workspace`."
-  [workspace submission-id workflow-id]
-  (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id))
+   in the Terra `workspace`, optionally restricting output to `include-key`."
+  ([workspace submission-id workflow-id include-key]
+   (let [parts [workspace "submissions" submission-id "workflows" workflow-id]]
+     (-> (apply workspace-api-url parts)
+         (http/get {:headers      (auth/get-auth-header)
+                    :query-params (when include-key {:includeKey include-key})})
+         (util/response-body-json))))
+  ([workspace submission-id workflow-id]
+   (get-workflow workspace submission-id workflow-id nil)))
 
 (defn get-workflow-outputs
   "Query the `firecloud-url` for the outputs of the `workflow` created by
    the `submission` in the Terra `workspace`."
   [workspace submission-id workflow-id]
   (get-workspace-json workspace "submissions" submission-id "workflows" workflow-id "outputs"))
-
-(defn get-workflow-status-by-entity
-  "Get workflow status given a Terra submission-id and entity-name."
-  [workspace {:keys [uuid inputs] :as _item}]
-  (let [name (:entity-name inputs)]
-    (->> (get-submission workspace uuid)
-         :workflows
-         (filter #(= name (get-in % [:workflowEntity :entityName])))
-         first
-         :status)))
 
 (defn get-entity
   "Fetch the `entity` metadata from the `workspace`."

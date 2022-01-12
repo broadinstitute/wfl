@@ -167,13 +167,15 @@
                                              (succeeded-workflow-from-submission submission-id)])}))
 
 ;; Workflow fetch mocks within update-workflow-statuses!
-(defn ^:private mock-firecloud-get-running-workflow-update-status [_ submission-id workflow-id]
+(defn ^:private mock-firecloud-get-running-workflow-update-status
+  [_ submission-id workflow-id & _]
   (let [workflow-base (get-in submission-base [submission-id :running])]
     (is (= (:workflow-id workflow-base) workflow-id)
         "Expecting to fetch and update status for running workflow")
     (assoc (mock-firecloud-get-workflow workflow-base) :status "Succeeded")))
 
-(defn ^:private mock-firecloud-get-known-workflow [_ submission-id workflow-id]
+(defn ^:private mock-firecloud-get-known-workflow
+  [_ submission-id workflow-id & _]
   (if-let [workflow-base (->> (get submission-base submission-id)
                               vals
                               (filter #(= workflow-id (:workflow-id %)))

@@ -118,8 +118,13 @@
 
 (deftest test-get-workflow
   (using-assemble-refbased-workflow-bindings
-   (let [wf (firecloud/get-workflow workspace submission workflow)]
-     (is (= pipeline (:workflowName wf))))))
+   (let [wf        (firecloud/get-workflow workspace submission workflow)
+         wf-status (firecloud/get-workflow workspace submission workflow "status")]
+     (is (= pipeline (:workflowName wf)))
+     (is (= "Succeeded" (:status wf)))
+     (is (empty? (:workflowName wf-status))
+         "Workflow fetch specifying include-key should have keys restricted")
+     (is (= "Succeeded" (:status wf-status))))))
 
 (deftest test-get-workflow-outputs
   (using-assemble-refbased-workflow-bindings

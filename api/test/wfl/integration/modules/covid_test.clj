@@ -207,7 +207,7 @@
 
 ;; Workflow fetch mocks within update-workflow-statuses!
 
-(defn ^:private mock-workflow-keep-status [_ _ workflow-id]
+(defn ^:private mock-workflow-keep-status [_ _ workflow-id & _]
   (is (not (= (:workflowId succeeded-workflow-mock) workflow-id))
       "Successful workflow records should be filtered out before firecloud fetch")
   running-workflow-mock)

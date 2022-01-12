@@ -320,7 +320,7 @@
   [{:keys [workspace details] :as executor}]
   (letfn [(update-status-from-firecloud
             [{:keys [submission workflow] :as record}]
-            (->> (firecloud/get-workflow workspace submission workflow)
+            (->> (firecloud/get-workflow workspace submission workflow "status")
                  :status
                  (assoc record :status)))
           (write-workflow-statuses [now records]
