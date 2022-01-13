@@ -140,7 +140,7 @@
 (defn ^:private create-user-comment
   "Create a user comment to be added to an executor submission."
   [note {:keys [uuid] :as _workload} snapshot-id]
-  (str/join \newline [note "Workload:" uuid "Snapshot ID:" snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
+  (str/join \space [note "Workload:" uuid "Snapshot ID:" snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
 
 (defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
