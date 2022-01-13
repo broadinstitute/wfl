@@ -131,9 +131,9 @@
 
 (defn ^:private poll-for-results
   "Update sink until there is a truthy result or the max number of attempts is reached."
-  [executor sink seconds max-attempts]
+  [{:keys [sink] :as workload} seconds max-attempts]
   (letfn [(update-and-check []
-            (sink/update-sink! executor sink)
+            (sink/update-sink! workload)
             (stage/done? sink))]
     (loop [attempt 1]
       (if-let [result (update-and-check)]
@@ -153,12 +153,16 @@
                                                             :outint    27
                                                             :outstring "Hello, World!"}}
         failing-upstream (make-queue-from-list [[description failing-workflow]])
-        sink             (create-and-load-datarepo-sink)]
-    (sink/update-sink! upstream sink)
+        sink             (create-and-load-datarepo-sink)
+        workload         {:executor upstream
+                          :sink     sink}
+        failing-workload {:executor failing-upstream
+                          :sink     sink}]
+    (sink/update-sink! workload)
     (is (stage/done? upstream))
-    (is (poll-for-results upstream sink 10 20))
+    (is (poll-for-results workload 10 20))
     (is (== 1 (count-succeeded-ingest-jobs sink)) "has a succeeded job")
-    (eventually (throws? UserException) #(sink/update-sink! failing-upstream sink)
+    (eventually (throws? UserException) #(sink/update-sink! failing-workload)
                 :interval 5 :times 10)
     (is (stage/done? sink) "failed jobs are no longer considered")
-    (is (or (sink/update-sink! failing-upstream sink) true) "subsequent updates do nothing")))
+    (is (or (sink/update-sink! failing-workload) true) "subsequent updates do nothing")))

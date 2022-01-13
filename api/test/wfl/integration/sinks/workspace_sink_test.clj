@@ -100,14 +100,18 @@
           (throw-if-called [fname & args]
             (throw (ex-info (str fname " should not have been called")
                             {:called-with args})))]
-    (let [workflow     {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
-                        :status  "Succeeded"
-                        :outputs (-> "sarscov2_illumina_full/outputs.edn"
-                                     resources/read-resource
-                                     (assoc :flowcell_id testing-entity-name))}
-          executor     (make-queue-from-list [[nil workflow]])
-          sink-throws  (sink "not-a-workflow-input-or-output")
-          sink-updates (sink "flowcell_id")]
+    (let [workflow         {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
+                            :status  "Succeeded"
+                            :outputs (-> "sarscov2_illumina_full/outputs.edn"
+                                         resources/read-resource
+                                         (assoc :flowcell_id testing-entity-name))}
+          executor         (make-queue-from-list [[nil workflow]])
+          sink-throws      (sink "not-a-workflow-input-or-output")
+          sink-updates     (sink "flowcell_id")
+          workload-throws  {:executor executor
+                            :sink     sink-throws}
+          workload-updates {:executor executor
+                            :sink     sink-updates}]
       (testing "Sink identifier matches no workflow output or input"
         (with-redefs-fn
           {#'rawls/batch-upsert        (partial throw-if-called "rawls/batch-upsert")
@@ -115,7 +119,7 @@
            #'firecloud/delete-entities (partial throw-if-called "firecloud/delete-entities")}
           #(is (thrown-with-msg?
                 ExceptionInfo (re-pattern sink/entity-name-not-found-error-message)
-                (sink/update-sink! executor sink-throws))
+                (sink/update-sink! workload-throws))
                "Sink update should throw if identifier not found in workflow output or input"))
         (is (== 1 (stage/queue-length executor)) "The workflow should not have been consumed")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -126,7 +130,7 @@
           {#'rawls/batch-upsert        verify-upsert-request
            #'sink/entity-exists?       (constantly false)
            #'firecloud/delete-entities (partial throw-if-called "firecloud/delete-entities")}
-          #(sink/update-sink! executor sink-updates))
+          #(sink/update-sink! workload-updates))
         (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
           (let [[record & rest] (->> sink-updates :details (postgres/get-table tx))]
@@ -156,8 +160,10 @@
                               :skipValidation true}
                              (sink/create-sink! tx (rand-int 1000000))
                              (zipmap [:sink_type :sink_items])
-                             (sink/load-sink! tx)))]
-        (sink/update-sink! executor sink)
+                             (sink/load-sink! tx)))
+            workload  {:executor executor
+                       :sink     sink}]
+        (sink/update-sink! workload)
         (is (== 1 (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [{:keys [entityType name attributes]}
@@ -169,7 +175,7 @@
           (is (= [:aligned_crams {:itemsType "AttributeValue"
                                   :items ["aligned-thing.cram"]}]
                  (first attributes))))
-        (sink/update-sink! executor sink)
+        (sink/update-sink! workload)
         (is (zero? (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [entites (firecloud/list-entities workspace testing-entity-type)]

@@ -65,18 +65,21 @@
 
 (defn submit-method
   "Submit the`methodconfig` for processing in the Terra `workspace`."
-  [workspace methodconfig]
-  {:pre [(every? string? [workspace methodconfig])]}
-  (let [[mcns mcn] (str/split methodconfig #"/")]
-    (-> (workspace-api-url workspace "submissions")
-        (http/post {:headers      (auth/get-auth-header)
-                    :content-type :application/json
-                    :body         (json/write-str
-                                   {:methodConfigurationNamespace mcns
-                                    :methodConfigurationName mcn
-                                    :useCallCache true}
-                                   :escape-slash false)})
-        util/response-body-json)))
+  ([workspace methodconfig]
+   (submit-method workspace methodconfig ""))
+  ([workspace methodconfig usercomment]
+   {:pre [(every? string? [workspace methodconfig usercomment])]}
+   (let [[mcns mcn] (str/split methodconfig #"/")]
+     (-> (workspace-api-url workspace "submissions")
+         (http/post {:headers      (auth/get-auth-header)
+                     :content-type :application/json
+                     :body         (json/write-str
+                                    {:methodConfigurationNamespace mcns
+                                     :methodConfigurationName mcn
+                                     :useCallCache true
+                                     :userComment usercomment}
+                                    :escape-slash false)})
+         util/response-body-json))))
 
 (defn create-workspace
   "Create an empty Terra workspace with the fully-qualified `workspace` name,
