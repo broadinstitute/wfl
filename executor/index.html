@@ -868,22 +868,22 @@ service in the cloud to execute workflows.</p>
   downstream <code>Sink</code> to consume their outputs</li>
 </ul>
 <p>A typical <code>Terra</code> executor configuration in the workload request looks like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;workspace&quot;</span><span class="p">:</span> <span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span> <span class="s2">&quot;{method-configuration-namespace}/{method-configuration-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-  <span class="nt">&quot;fromSource&quot;</span><span class="p">:</span> <span class="s2">&quot;importSnapshot&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{method-configuration-namespace}/{method-configuration-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div></p>
 <p>And a real-life example for a known method configuration:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;workspace&quot;</span><span class="p">:</span> <span class="s2">&quot;wfl-dev/CDC_Viral_Sequencing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span> <span class="s2">&quot;wfl-dev/sarscov2_illumina_full&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-  <span class="nt">&quot;fromSource&quot;</span><span class="p">:</span> <span class="s2">&quot;importSnapshot&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/CDC_Viral_Sequencing&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/sarscov2_illumina_full&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div></p>
 <p><img alt="" src="../assets/executor/terra-method-configuration.png" /></p>
 <p>The table below summarises the purpose of each attribute in the above request.</p>
@@ -975,18 +975,17 @@ updating <code>methodConfiguration</code> with the reference as its root entity 
 <p>An executor is a <code>Queue</code> that satisfies the <code>Executor</code> protocol below:
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defprotocol </span><span class="nv">Executor</span>
   <span class="p">(</span><span class="nf">update-executor!</span>
-    <span class="o">^</span><span class="nv">Executor</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Queue</span>    <span class="nv">upstream</span>  <span class="c1">;; The queue from which to pull items to execute</span>
-     <span class="o">^</span><span class="nv">Executor</span> <span class="nv">executor</span>  <span class="c1">;; This executor instance</span>
+    <span class="o">^</span><span class="nv">Workload</span>
+    <span class="p">[</span><span class="o">^</span><span class="nv">Workload</span> <span class="nv">workload</span>
     <span class="p">]</span>
-    <span class="s">&quot;Consume items from the `upstream` queue and enqueue</span>
-<span class="s">     to the `executor` queue for consumption by a later processing stage,</span>
+    <span class="s">&quot;Consume items from the `workload`&#39;s source queue and enqueue to its executor</span>
+<span class="s">     queue for consumption by a later processing stage,</span>
 <span class="s">     performing any external effects as necessary.</span>
 <span class="s">     Implementations should avoid maintaining in-memory state and making long-</span>
 <span class="s">     running external calls, favouring internal queues to manage such tasks</span>
-<span class="s">     asynchronously between invocations.  Note that the `Executor` and `Queue`</span>
-<span class="s">     are parameterised types and the `Queue`&#39;s parameterisation must be</span>
-<span class="s">     convertible to the `Executor`s.&quot;</span><span class="p">)</span>
+<span class="s">     asynchronously between invocations.  Note that the `Workload`&#39;s Source queue and Executor</span>
+<span class="s">     are parameterised types and the Source queue&#39;s parameterisation must be</span>
+<span class="s">     convertible to the Executor&#39;s.&quot;</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">executor-workflows</span>
     <span class="o">^</span><span class="nv">IPersistentVector</span>
     <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span> <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>

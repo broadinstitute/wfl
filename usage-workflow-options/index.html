@@ -748,65 +748,65 @@ workflows).</p>
 </ul>
 </div>
 <p>Suppose the following valid workload request that you might <code>POST</code> to <code>/create</code> or <code>/exec</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">    </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample1234&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">},</span><span class="w"></span>
+<span class="w">    </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample5678&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">]</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <p>You may optionally add arbitrary JSON objects as <code>options</code> either for individual
 workflows, for the entire workload, or both:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;common&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project&quot;</span>
-    <span class="p">}</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span>
-      <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-        <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project-2&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;common&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;google_project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;broad-google-project&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">    </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample1234&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">},</span><span class="w"></span>
+<span class="w">    </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample5678&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;google_project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;broad-google-project-2&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">]</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <details class="info" open="open">
 <summary>Info</summary>
@@ -824,29 +824,29 @@ option with more granularity gives it higher precedence)</li>
 <p>In other words, WFL will recursively merge the options objects together to
 resolve the options for individual workflows. You can see this in WFL's
 response, which includes all workflow options calculated for each workflow:</p>
-<div class="highlight"><pre><span></span><code><span class="p">[{</span>  
-  <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample1234&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-    <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project&quot;</span>
-  <span class="p">}</span>
-<span class="p">},</span>
-<span class="p">{</span>
-  <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;sample_name&quot;</span><span class="p">:</span> <span class="s2">&quot;TestSample5678&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-    <span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
-    <span class="nt">&quot;google_project&quot;</span><span class="p">:</span> <span class="s2">&quot;broad-google-project-2&quot;</span>
-  <span class="p">}</span>
-<span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w">  </span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample1234&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-something-execution&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;google_project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;broad-google-project&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">},</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample5678&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;jes_gcs_root&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-different-execution&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;default_runtime_attributes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;maxRetries&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">},</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;write_to_cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;google_project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;broad-google-project-2&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}]</span><span class="w"></span>
 </code></pre></div>
 <p>One note is that WFL already has some default values it passes for
 workflow options and you'll see those defaults when you look at the

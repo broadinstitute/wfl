@@ -879,17 +879,17 @@ later stage of the workload. Therefore, you must ensure the account
 </div>
 <p>A typical <code>Terra DataRepo</code> source configuration in the workload request looks
 like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra DataRepo&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;{dataset-id}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;{dataset-table-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;column&quot;</span><span class="p">:</span> <span class="s2">&quot;{dataset-column-name-to-poll}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;snapshotReaders&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="s2">&quot;{user}@{domain}&quot;</span><span class="p">,</span>
-    <span class="err">...</span>
-  <span class="p">],</span>
-  <span class="nt">&quot;pollingIntervalMinutes&quot;</span><span class="p">:</span> <span class="mi">1</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra DataRepo&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-id}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-table-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-column-name-to-poll}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;snapshotReaders&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">    </span><span class="s2">&quot;{user}@{domain}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="err">...</span><span class="w"></span>
+<span class="w">  </span><span class="p">],</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pollingIntervalMinutes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 The table below summarises the purpose of each attribute in the above request.</p>
 <table>
@@ -964,13 +964,13 @@ must ensure that <code>workflow-launcher@firecloud.org</code> is a <code>reader<
 snapshots you want it to process.</p>
 <p>A typical <code>TDR Snapshots</code> source configuration in the workload request looks
 like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;TDR Snapshots&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;snapshots&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="s2">&quot;{snapshot-id}&quot;</span><span class="p">,</span>
-    <span class="err">...</span>
-  <span class="p">]</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TDR Snapshots&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;snapshots&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">    </span><span class="s2">&quot;{snapshot-id}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="err">...</span><span class="w"></span>
+<span class="w">  </span><span class="p">]</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div></p>
 <p>The table below summarises the purpose of each attribute in the above request.</p>
 <table>
@@ -1020,9 +1020,9 @@ downstream processing stage that consumes them.</p>
 <span class="s">     be called after `start-source!`. Any outstanding items on the `source`</span>
 <span class="s">     queue may still be consumed by a later processing stage.&quot;</span><span class="p">)</span>
   <span class="p">(</span><span class="nf">update-source!</span>
-    <span class="o">^</span><span class="nv">Source</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Source</span> <span class="nv">source</span><span class="p">]</span>
-    <span class="s">&quot;Enqueue items onto the `source` queue to be consumed by a later processing</span>
+    <span class="o">^</span><span class="nv">Workload</span>
+    <span class="p">[</span><span class="o">^</span><span class="nv">Workload</span> <span class="nv">workload</span><span class="p">]</span>
+    <span class="s">&quot;Enqueue items onto the `workload`&#39;s source queue to be consumed by a later processing</span>
 <span class="s">     stage unless stopped, performing any external effects as necessary.</span>
 <span class="s">     Implementations should avoid maintaining in-memory state and making long-</span>
 <span class="s">     running external calls, favouring internal queues to manage such tasks</span>

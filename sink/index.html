@@ -902,18 +902,18 @@ to a desired location in the cloud.</p>
 <p>You can write workflow outputs to a Terra Workspace using the <code>Terra Workspace</code>
 sink. A typical <code>Terra Workspace</code> sink configuration in the workload request
 looks like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra Workspace&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;workspace&quot;</span><span class="p">:</span> <span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;entityType&quot;</span><span class="p">:</span> <span class="s2">&quot;{entity-type-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;identifier&quot;</span><span class="p">:</span> <span class="s2">&quot;{workflow-identifier}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;fromOutputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;attribute0&quot;</span><span class="p">:</span> <span class="s2">&quot;output0&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;attribute1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;output1&quot;</span><span class="p">,</span> <span class="s2">&quot;output2&quot;</span><span class="p">],</span>
-    <span class="nt">&quot;attribute3&quot;</span><span class="p">:</span> <span class="s2">&quot;$literal&quot;</span><span class="p">,</span>
-    <span class="err">...</span>
-  <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra Workspace&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;entityType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{entity-type-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;identifier&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{workflow-identifier}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;fromOutputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;attribute0&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;output0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;attribute1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;output1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;output2&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;attribute3&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$literal&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="err">...</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 The table below summarises the purpose of each attribute in the above request.</p>
 <table>
@@ -1005,17 +1005,17 @@ and supports the following relations:</p>
 <p>You can write workflow outputs to a Terra Data Repository dataset using the
 <code>Terra DataRepo</code> sink. A typical <code>Terra DataRepo</code> sink configuration in the
 workload request looks like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Terra DataRepo&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;{dataset-id}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;{table-name}&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;fromOutputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;column0&quot;</span><span class="p">:</span> <span class="s2">&quot;output0&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;column1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;output1&quot;</span><span class="p">,</span> <span class="s2">&quot;output2&quot;</span><span class="p">],</span>
-    <span class="nt">&quot;column3&quot;</span><span class="p">:</span> <span class="s2">&quot;$literal&quot;</span><span class="p">,</span>
-    <span class="err">...</span>
-  <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra DataRepo&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-id}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{table-name}&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;fromOutputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;column0&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;output0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;column1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;output1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;output2&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;column3&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$literal&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="err">...</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 The table below summarises the purpose of each attribute in the above request.</p>
 <table>
@@ -1095,17 +1095,16 @@ added row.</p>
 <p>A sink is one satisfying the <code>Sink</code> protocol as below:
 <div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defprotocol </span><span class="nv">Sink</span>
   <span class="p">(</span><span class="nf">update-sink!</span>
-    <span class="o">^</span><span class="nv">Sink</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Queue</span> <span class="nv">upstream</span> <span class="c1">;; The queue to sink outputs from</span>
-     <span class="o">^</span><span class="nv">Sink</span>  <span class="nv">sink</span>     <span class="c1">;; This sink instance</span>
+    <span class="o">^</span><span class="nv">Workload</span>
+    <span class="p">[</span><span class="o">^</span><span class="nv">Workload</span> <span class="nv">workload</span>  <span class="c1">;; This sink instance</span>
     <span class="p">]</span>
-    <span class="s">&quot;Update the internal state of the `sink`, consuming objects from the</span>
-<span class="s">     Queue `upstream`, performing any external effects as required.</span>
+    <span class="s">&quot;Update the internal state of the `Workload`&#39;s sink, consuming objects from the</span>
+<span class="s">     `Workload`&#39;s executor queue, performing any external effects as required.</span>
 <span class="s">     Implementations should avoid maintaining in-memory state and making long-</span>
 <span class="s">     running external calls, favouring internal queues to manage such tasks</span>
-<span class="s">     asynchronously between invocations. Note that The `Sink` and `Queue` are</span>
-<span class="s">     parameterised types and the `Queue`&#39;s parameterisation must be convertible</span>
-<span class="s">     to the `Sink`s.&quot;</span><span class="p">))</span>
+<span class="s">     asynchronously between invocations. Note that the `Workload`&#39;s Sink and its Executor Queue are</span>
+<span class="s">     parameterised types and the Executor Queue&#39;s parameterisation must be convertible</span>
+<span class="s">     to the Sink&#39;s.&quot;</span><span class="p">))</span>
 </code></pre></div></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

@@ -1039,51 +1039,51 @@ when you have questions about permissions.</p>
 <p>Create a WFL workload running in production.</p>
 <div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="err">curl</span> <span class="mi">--</span><span class="err">loca</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span> <span class="mi">--</span><span class="err">reques</span><span class="kc">t</span> <span class="err">POST</span> <span class="err">\</span>
-<span class="err">h</span><span class="kc">tt</span><span class="err">ps</span><span class="p">:</span><span class="err">//go</span><span class="kc">t</span><span class="err">c</span><span class="mi">-</span><span class="err">prod</span><span class="mi">-</span><span class="err">w</span><span class="kc">fl</span><span class="err">.go</span><span class="kc">t</span><span class="err">c</span><span class="mi">-</span><span class="err">prod.broadi</span><span class="kc">nst</span><span class="err">i</span><span class="kc">tute</span><span class="err">.org/api/v</span><span class="mi">1</span><span class="err">/crea</span><span class="kc">te</span> <span class="err">\</span>
-<span class="mi">--</span><span class="err">header</span> <span class="s2">&quot;Authorization: Bearer $(gcloud auth print-access-token)&quot;</span> <span class="err">\</span>
-<span class="mi">--</span><span class="err">header</span> <span class="err">&#39;Co</span><span class="kc">ntent</span><span class="mi">-</span><span class="err">Type</span><span class="p">:</span> <span class="err">applica</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="err">/jso</span><span class="kc">n</span><span class="err">&#39;</span> <span class="err">\</span>
-<span class="mi">--</span><span class="err">da</span><span class="kc">ta</span><span class="mi">-</span><span class="err">raw</span> <span class="err">&#39;</span>
-<span class="p">{</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;items&quot;</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;base_file_name&quot;</span><span class="p">:</span> <span class="s2">&quot;27B-6&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;contamination_vcf&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;contamination_vcf_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span>
-        <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="nt">&quot;monitoring_script&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-prod-storage/scripts/monitoring_script.sh&quot;</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">]</span>
-<span class="p">}</span><span class="err">&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="err">curl</span><span class="w"> </span><span class="mi">--</span><span class="err">loca</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="w"> </span><span class="mi">--</span><span class="err">reques</span><span class="kc">t</span><span class="w"> </span><span class="err">POST</span><span class="w"> </span><span class="err">\</span><span class="w"></span>
+<span class="err">h</span><span class="kc">tt</span><span class="err">ps</span><span class="p">:</span><span class="err">//go</span><span class="kc">t</span><span class="err">c</span><span class="mi">-</span><span class="err">prod</span><span class="mi">-</span><span class="err">w</span><span class="kc">fl</span><span class="err">.go</span><span class="kc">t</span><span class="err">c</span><span class="mi">-</span><span class="err">prod.broadi</span><span class="kc">nst</span><span class="err">i</span><span class="kc">tute</span><span class="err">.org/api/v</span><span class="mi">1</span><span class="err">/crea</span><span class="kc">te</span><span class="w"> </span><span class="err">\</span><span class="w"></span>
+<span class="mi">--</span><span class="err">header</span><span class="w"> </span><span class="s2">&quot;Authorization: Bearer $(gcloud auth print-access-token)&quot;</span><span class="w"> </span><span class="err">\</span><span class="w"></span>
+<span class="mi">--</span><span class="err">header</span><span class="w"> </span><span class="err">&#39;Co</span><span class="kc">ntent</span><span class="mi">-</span><span class="err">Type</span><span class="p">:</span><span class="w"> </span><span class="err">applica</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="err">/jso</span><span class="kc">n</span><span class="err">&#39;</span><span class="w"> </span><span class="err">\</span><span class="w"></span>
+<span class="mi">--</span><span class="err">da</span><span class="kc">ta</span><span class="mi">-</span><span class="err">raw</span><span class="w"> </span><span class="err">&#39;</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">    </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;base_file_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;27B-6&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;contamination_vcf&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;contamination_vcf_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nt">&quot;monitoring_script&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-prod-storage/scripts/monitoring_script.sh&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">]</span><span class="w"></span>
+<span class="p">}</span><span class="err">&#39;</span><span class="w"></span>
 </code></pre></div>
 <div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <p>Note that the <code>GDCWholeGenomeSomaticSingleSample</code> pipeline
 supports Cromwell <code>workflowOptions</code>
@@ -1102,20 +1102,20 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start <span class="se"
 </code></pre></div>
 <div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <h3 id="start-workload-apiv1start_1">Start Workload: <code>/api/v1/start</code><a class="headerlink" href="#start-workload-apiv1start_1" title="Permanent link">⚓︎</a></h3>
 <p>Included for compatibility with continuous workloads.</p>
@@ -1128,21 +1128,21 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start <span class="se"
 </code></pre></div>
 <div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-  <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;stopped&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:33Z&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span>
-<span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;stopped&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:33Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </code></pre></div>
 <h3 id="exec-workload-apiv1exec">Exec Workload: <code>/api/v1/exec</code><a class="headerlink" href="#exec-workload-apiv1exec" title="Permanent link">⚓︎</a></h3>
 <p>Create a workload,
@@ -1168,22 +1168,22 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid<span cla
 <p>A successful response from <code>/api/v1/workload</code>
 is always an array of workload objects,
 but specifying a UUID returns only one.</p>
-<div class="highlight"><pre><span></span><code><span class="p">[</span>
- <span class="p">{</span>
-   <span class="nt">&quot;commit&quot;</span><span class="p">:</span> <span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;creator&quot;</span><span class="p">:</span> <span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;executor&quot;</span><span class="p">:</span> <span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;pipeline&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;release&quot;</span><span class="p">:</span> <span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;started&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span>
-   <span class="nt">&quot;wdl&quot;</span><span class="p">:</span> <span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span>
- <span class="p">}</span>
-<span class="p">]</span>
+<div class="highlight"><pre><span></span><code><span class="p">[</span><span class="w"></span>
+<span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:31Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tbl@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-prod-somatic-genomes-output&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GDCWholeGenomeSomaticSingleSample_v1.1.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;efb00901-378e-4365-86e7-edd0fbdaaab2&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">   </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl&quot;</span><span class="w"></span>
+<span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="p">]</span><span class="w"></span>
 </code></pre></div>
 <h3 id="query-workload-with-project-apiv1workloadprojectproject">Query Workload with project: <code>/api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
 <p>Query WFL for all workloads
@@ -1215,24 +1215,24 @@ and take a while to process.</p>
 </div>
 <p>A successful response from <code>/api/v1/workload/{uuid}/workload</code>
 is always an array of Cromwell workflows with their statuses.</p>
-<div class="highlight"><pre><span></span><code><span class="p">[{</span>
-      <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Submitted&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;uuid&quot;</span><span class="p">:</span> <span class="s2">&quot;8c1f586e-036b-4690-87c2-2af5d7e00450&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-          <span class="nt">&quot;base_file_name&quot;</span><span class="p">:</span> <span class="s2">&quot;27B-6&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;contamination_vcf&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;contamination_vcf_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;input_cram&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram&quot;</span>
-      <span class="p">},</span>
-      <span class="nt">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span>
-          <span class="nt">&quot;monitoring_script&quot;</span><span class="p">:</span> <span class="s2">&quot;gs://broad-gotc-prod-storage/scripts/monitoring_script.sh&quot;</span>
-      <span class="p">}</span>
-<span class="p">}]</span>
+<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Submitted&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2021-04-05T16:02:32Z&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;8c1f586e-036b-4690-87c2-2af5d7e00450&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;base_file_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;27B-6&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;contamination_vcf&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;contamination_vcf_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">},</span><span class="w"></span>
+<span class="w">      </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">          </span><span class="nt">&quot;monitoring_script&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-prod-storage/scripts/monitoring_script.sh&quot;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="p">}]</span><span class="w"></span>
 </code></pre></div>
                 
               
