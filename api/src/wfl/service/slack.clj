@@ -27,6 +27,13 @@
   (when-let [[tag value] s]
     (and (= "email" tag) (util/email-address? value))))
 
+;; https://api.slack.com/reference/surfaces/formatting#linking-urls
+;;
+(defn link
+  "Return a mrkdwn link to `url` with `description."
+  [url description]
+  (format "<%s|%s>" url description))
+
 (defn ^:private slack-api-raise-for-status
   "Slack API has its own way of reporting
    statuses, so we need to parse the `body`
@@ -77,12 +84,15 @@
 
 ;; FIXME: add permission checks for slack-channel-watchers
 ;;
-(defn notify-channels
-  "Notify `watchers` of an `exception` in the workload with `uuid`."
-  [channels uuid exception]
-  (let [message        (format "Workload %s update threw %s" uuid (.getMessage exception))]
+(defn notify-watchers
+  "Send `message` associated with workload `uuid` to Slack `watchers`."
+  [{:keys [watchers uuid project] :as _workload} message]
+  (let [channels (filter slack-channel-watcher? watchers)
+        swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
+        header   (format "%s workload *%s*" (link swagger "WFL") project uuid)]
     (letfn [(notify [[_tag channel]]
-              (let [payload {:channel channel :message message}]
+              (let [payload {:channel channel
+                             :message (str/join \newline [header message])}]
                 (log/info payload)
                 (add-notification notifier payload)))]
       (run! notify channels))))

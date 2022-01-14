@@ -11,6 +11,18 @@
            [java.util UUID]
            [wfl.util UserException]))
 
+(defn terra-ui-url
+  "Return a link within the Terra UI constructed from `parts`."
+  [& parts]
+  (let [url (util/de-slashify (env/getenv "WFL_TERRA_URL"))]
+    (str/join "/" (cons url parts))))
+
+(defn job-manager-ui-url
+  "Return a link within the Job Manager UI constructed from `parts`."
+  [& parts]
+  (let [url (util/de-slashify (env/getenv "WFL_JOB_MANAGER_URL"))]
+    (str/join "/" (cons url parts))))
+
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
     (str/join "/" (cons url parts))))

@@ -67,15 +67,16 @@
 ;; Mocks
 
 ;; Snapshot and snapshot reference mocks
-(def ^:private snapshot
-  {:name   "test-snapshot-name"
+(def ^:private snapshot-name "test-snapshot-name")
+(def ^:private snapshot-table-name "snapshot-table")
+(defn ^:private mock-datarepo-snapshot [& _]
+  {:name   snapshot-name
    :id     (str (UUID/randomUUID))
-   :tables [{:name "table"}]})
+   :tables [{:name snapshot-table-name}]})
 
 (def ^:private snapshot-reference-id (str (UUID/randomUUID)))
-(def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-snapshot-reference [& _]
-  {:metadata {:name            snapshot-reference-name
+  {:metadata {:name            snapshot-name
               :resourceId      snapshot-reference-id
               :resourceType    "DATA_REPO_SNAPSHOT"
               :stewardshipType "REFERENCED"}})
@@ -97,7 +98,7 @@
 
 (defn ^:private mock-firecloud-update-method-configuration [method-config-version]
   (fn [_ _ {:keys [dataReferenceName methodConfigVersion]}]
-    (is (= dataReferenceName snapshot-reference-name)
+    (is (= dataReferenceName snapshot-name)
         "Snapshot reference name should be passed to method config update")
     (is (= methodConfigVersion (inc method-config-version))
         "Incremented version should be passed to method config update")
@@ -221,7 +222,7 @@
   (fn [_ uuid] {:uuid uuid :source source :executor executor}))
 
 (deftest test-update-terra-executor
-  (let [source        (make-queue-from-list [[:datarepo/snapshot snapshot]])
+  (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
         workload-uuid (UUID/randomUUID)
         workload      {:uuid workload-uuid :source source :executor executor}]
@@ -233,6 +234,7 @@
       (with-redefs-fn
         {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
          #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+         #'datarepo/snapshot                      mock-datarepo-snapshot
          #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
          #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
          #'firecloud/get-submission               mock-firecloud-get-submission
@@ -266,13 +268,14 @@
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded?    #{"Succeeded"}
-        source        (make-queue-from-list [[:datarepo/snapshot snapshot]])
+        source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
         workload-uuid (UUID/randomUUID)
         workload      {:uuid workload-uuid :source source :executor executor}]
     (with-redefs-fn
       {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
        #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+       #'datarepo/snapshot                      mock-datarepo-snapshot
        #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
        #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
        #'firecloud/get-submission               mock-firecloud-get-submission
@@ -298,13 +301,14 @@
          (is (not (stage/done? executor)))))))
 
 (deftest test-terra-executor-retry-workflows
-  (let [source        (make-queue-from-list [[:datarepo/snapshot snapshot]])
+  (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
         workload-uuid (UUID/randomUUID)
         workload      {:uuid workload-uuid :source source :executor executor}]
     (with-redefs-fn
       {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
        #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+       #'datarepo/snapshot                      mock-datarepo-snapshot
        #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
        #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
        #'firecloud/get-submission               mock-firecloud-get-submission
@@ -322,6 +326,7 @@
       (with-redefs-fn
         {#'rawls/get-snapshot-reference           mock-rawls-snapshot-reference
          #'firecloud/method-configuration         mock-firecloud-get-method-configuration-post-update
+         #'datarepo/snapshot                      mock-datarepo-snapshot
          #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-post-update
          #'firecloud/submit-method                (mock-firecloud-create-submission retry-submission-id)
          #'firecloud/get-submission               mock-firecloud-get-submission
@@ -377,12 +382,13 @@
   (with-redefs-fn
     {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
      #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+     #'datarepo/snapshot                      mock-datarepo-snapshot
      #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
      #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
      #'firecloud/get-submission               mock-firecloud-get-submission
      #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
      #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
-    #(let [source        (make-queue-from-list [[:datarepo/snapshot snapshot]])
+    #(let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
            executor      (create-terra-executor (rand-int 1000000))
            workload-uuid (UUID/randomUUID)
            workload      {:uuid workload-uuid :source source :executor executor}]
@@ -402,12 +408,13 @@
   (with-redefs-fn
     {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
      #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+     #'datarepo/snapshot                      mock-datarepo-snapshot
      #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
      #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
      #'firecloud/get-submission               mock-firecloud-get-submission
      #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
      #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
-    #(let [source                (make-queue-from-list [[:datarepo/snapshot snapshot]])
+    #(let [source                (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
            executor              (create-terra-executor (rand-int 1000000))
            workload-uuid         (UUID/randomUUID)
            workload              {:uuid workload-uuid :source source :executor executor}]
@@ -447,9 +454,9 @@
       {#'rawls/create-snapshot-reference        throw-if-called
        #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
       #(let [executor  (create-terra-executor (rand-int 1000000))
-             reference (#'executor/entity-from-snapshot executor snapshot)]
+             reference (#'executor/entity-from-snapshot executor (mock-datarepo-snapshot))]
          (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
-                  (= snapshot-reference-name (get-in reference [:metadata :name]))))))))
+                  (= snapshot-name (get-in reference [:metadata :name]))))))))
 
 (deftest test-update-method-configuration-with-version-mismatch
   (let [id                    (rand-int 1000000)
@@ -459,8 +466,7 @@
         reference             {:metadata {:name dataReferenceNamePost}}
         actualMcVersion       (+ (:methodConfigurationVersion executor) 1)
         inc'dMcVersion        (+ actualMcVersion 1)
-        rootEntityTypePre     "rootEntityTypePreUpdate"
-        rootEntityTypePost    "rootEntityTypePostUpdate"]
+        rootEntityTypePre     "rootEntityTypePreUpdate"]
     (letfn [(firecloud-method-configuration
               [_workspace qualifiedMcName]
               (let [[mcNamespace mcName] (str/split qualifiedMcName #"/")]
@@ -469,9 +475,6 @@
                  :dataReferenceName   dataReferenceNamePre
                  :methodConfigVersion actualMcVersion
                  :rootEntityType      rootEntityTypePre}))
-            (datarepo-snapshot
-              [_snapshot-id]
-              {:tables [{:name rootEntityTypePost}]})
             (verify-firecloud-update-params
               [_workspace qualifiedMcName mc]
               (is (= qualifiedMcName (str (:namespace mc) "/" (:name mc)))
@@ -480,11 +483,11 @@
                   "Method configuration data reference name should be updated")
               (is (== inc'dMcVersion (:methodConfigVersion mc))
                   "Method configuration's actual version should be incremented")
-              (is (= rootEntityTypePost (:rootEntityType mc))
+              (is (= snapshot-table-name (:rootEntityType mc))
                   "Method configuration root entity type should be snapshot's table name"))]
       (with-redefs-fn
         {#'firecloud/method-configuration        firecloud-method-configuration
-         #'datarepo/snapshot                     datarepo-snapshot
+         #'datarepo/snapshot                     mock-datarepo-snapshot
          #'firecloud/update-method-configuration verify-firecloud-update-params}
         #(#'executor/update-method-configuration! executor reference))
       (let [reloaded (reload-terra-executor executor)]

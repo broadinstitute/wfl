@@ -15,6 +15,7 @@
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
+            [wfl.service.slack     :as slack]
             [wfl.stage             :as stage :refer [log-prefix]]
             [wfl.util              :as util :refer [map-keys utc-now]])
   (:import [wfl.util UserException]))
@@ -254,12 +255,48 @@
            (map (partial to-row (utc-now)))
            (jdbc/insert-multi! tx details)))))
 
+(defn ^:private workflow-url
+  "Return a link to `workflow` in Job Manager UI."
+  [workflow]
+  (firecloud/job-manager-ui-url "jobs" workflow))
+
+(defn ^:private submission-url
+  "Return a link to `submission` job history in Terra UI."
+  [{:keys [workspace] :as _executor} submission]
+  (firecloud/terra-ui-url "#workspaces" workspace
+                          "job_history" submission))
+
+(defn ^:private workflow-finished-slack-msg
+  "Return a mrkdwn Slack message to be emitted for finished `workflow`s."
+  [executor {:keys [submission workflow status] :as _record}]
+  (let [emoji                 (cromwell/emoji status)
+        workflow-slack-link   (slack/link (workflow-url workflow) workflow)
+        submission-slack-link (slack/link (submission-url executor submission)
+                                          submission)]
+    (str/join \newline
+              [(format "*%s Workflow %s %s*" emoji workflow-slack-link status)
+               (format "Submission *%s*" submission-slack-link)])))
+
+;; TODO: Unit tests
+;; Should only be called while updating active workflows.
+;;
+(defn ^:private notify-on-workflow-completion
+  "Notify `workload` watchers of any newly terminated workflows
+  in executor details `records`.
+  Return `records` for downstream processing."
+  [{:keys [executor] :as workload} records]
+  (->> records
+       (filter #(cromwell/final? (:status %)))
+       (mapv #(workflow-finished-slack-msg executor %))
+       (run! #(slack/notify-watchers workload %)))
+  records)
+
 ;; Workflows in newly created firecloud submissions may not have been scheduled
 ;; yet and thus do not have a workflow uuid. Thus, we first "allocate" the
 ;; workflow in the database and then later assign workflow uuids.
 (defn ^:private update-unassigned-workflow-uuids!
   "Assign workflow uuids from previous submissions"
-  [{:keys [workspace details] :as executor}]
+  [{{:keys [workspace details] :as executor} :executor :as workload}]
   (letfn [(read-a-submission-without-workflows []
             (let [query "SELECT id, submission, entity FROM %s
                          WHERE submission IN (
@@ -297,6 +334,7 @@
              (map #(update % :workflowEntity :entityName))
              (sort-by :workflowEntity)
              (map zip-record (sort-by :entity records))
+             (notify-on-workflow-completion workload)
              (write-workflow-statuses (utc-now)))))))
 
 (def ^:private active-workflows-query-template
@@ -312,7 +350,7 @@
 
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in `details` table for active `workspace` workflows."
-  [{:keys [workspace details] :as executor}]
+  [{{:keys [workspace details] :as executor} :executor :as workload}]
   (letfn [(update-status-from-firecloud
             [{:keys [submission workflow] :as record}]
             (->> (firecloud/get-workflow workspace submission workflow)
@@ -330,6 +368,7 @@
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (jdbc/query tx (format active-workflows-query-template details)))
          (mapv update-status-from-firecloud)
+         (notify-on-workflow-completion workload)
          (write-workflow-statuses (utc-now)))))
 
 (defn ^:private update-terra-executor
@@ -344,8 +383,8 @@
           submission  (create-submission! executor userComment entity)]
       (allocate-submission executor entity submission)
       (stage/pop-queue! source)))
-  (update-unassigned-workflow-uuids! executor)
-  (update-terra-workflow-statuses! executor)
+  (update-unassigned-workflow-uuids! workload)
+  (update-terra-workflow-statuses! workload)
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (workloads/load-workload-for-uuid tx (:uuid workload))))
 
