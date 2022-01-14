@@ -341,7 +341,7 @@
   [{{:keys [stopped] :as source} :source :as workload}]
   (let [now (utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
-      (find-and-snapshot-new-rows source now)))
+      (find-and-snapshot-new-rows workload now)))
   (update-pending-snapshot-jobs workload)
   ;; load and return the workload with the updated source
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
