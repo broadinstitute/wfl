@@ -82,14 +82,28 @@
       (pop queue))
     queue))
 
+;; TODO: Unit tests
+;;
+(defn ^:private label-val
+  "Return first value associated with `label-key` in `labels`
+  or nil if no match."
+  [labels label-key]
+  (when-let [matched (->> labels
+                          (filter #(str/starts-with? % (str label-key ":")))
+                          first)]
+    (let [[_label-key label-val] (str/split matched #":")]
+      label-val)))
+
 ;; FIXME: add permission checks for slack-channel-watchers
 ;;
 (defn notify-watchers
   "Send `message` associated with workload `uuid` to Slack `watchers`."
-  [{:keys [watchers uuid project] :as _workload} message]
+  [{:keys [watchers uuid project labels] :as _workload} message]
   (let [channels (filter slack-channel-watcher? watchers)
+        project  (or project (label-val labels "project"))
         swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
-        header   (format "%s workload *%s*" (link swagger "WFL") project uuid)]
+        header   (format "%s workload %s *%s*"
+                         (link swagger "WFL") project uuid)]
     (letfn [(notify [[_tag channel]]
               (let [payload {:channel channel
                              :message (str/join \newline [header message])}]
