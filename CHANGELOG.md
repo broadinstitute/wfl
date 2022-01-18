@@ -1,3 +1,9 @@
+# Release 0.12.0
+- [GH-1581] Run AoU pipeline with the Arrays_v2.6.2 WDL. ([#554](https://github.com/broadinstitute/wfl/pull/554))
+- [GH-1540] Apply User Comments to Terra Submissions ([#551](https://github.com/broadinstitute/wfl/pull/551))
+- [GH-1560] TerraExecutor tries to set root entity table on submission ([#550](https://github.com/broadinstitute/wfl/pull/550))
+- [GH-1555] add null check to rename-gather-bulk ([#549](https://github.com/broadinstitute/wfl/pull/549))
+
 # Release 0.11.0
 - [GH-1526] Release "Arrays_v2.6.0" ([#547](https://github.com/broadinstitute/wfl/pull/547))
 - [GH-1546] Increment minor version to 0.11.0 ([#545](https://github.com/broadinstitute/wfl/pull/545))
