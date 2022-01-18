@@ -121,18 +121,17 @@ An executor is a `Queue` that satisfies the `Executor` protocol below:
 ```clojure
 (defprotocol Executor
   (update-executor!
-    ^Executor
-    [^Queue    upstream  ;; The queue from which to pull items to execute
-     ^Executor executor  ;; This executor instance
+    ^Workload
+    [^Workload workload
     ]
-    "Consume items from the `upstream` queue and enqueue
-     to the `executor` queue for consumption by a later processing stage,
+    "Consume items from the `workload`'s source queue and enqueue to its executor
+     queue for consumption by a later processing stage,
      performing any external effects as necessary.
      Implementations should avoid maintaining in-memory state and making long-
      running external calls, favouring internal queues to manage such tasks
-     asynchronously between invocations.  Note that the `Executor` and `Queue`
-     are parameterised types and the `Queue`'s parameterisation must be
-     convertible to the `Executor`s.")
+     asynchronously between invocations.  Note that the `Workload`'s Source queue and Executor
+     are parameterised types and the Source queue's parameterisation must be
+     convertible to the Executor's.")
   (executor-workflows
     ^IPersistentVector
     [^Connection transaction  ;; JDBC Connection

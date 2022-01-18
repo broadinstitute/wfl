@@ -4,11 +4,13 @@
             [clojure.spec.alpha    :as s]
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
-            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.api.workloads     :refer [defoverload] :as workloads]
+            [wfl.environment       :as env]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
             [wfl.service.cromwell  :as cromwell]
+            [wfl.service.datarepo  :as datarepo]
             [wfl.service.dockstore :as dockstore]
             [wfl.service.firecloud :as firecloud]
             [wfl.service.postgres  :as postgres]
@@ -19,14 +21,15 @@
 
 ;; executor operations
 (defmulti update-executor!
-  "Consume items from the `upstream-queue` and enqueue to the `executor` queue
-   for consumption by a later processing stage, performing any external effects
-   as necessary. Implementations should avoid maintaining in-memory state and
-   making long-running external calls, favouring internal queues to manage such
-   tasks asynchronously between invocations.  Note that the `Executor` and
-   `Queue` are parameterised types and the `Queue`'s parameterisation must be
-   convertible to the `Executor`s."
-  (fn [_upstream-queue executor] (:type executor)))
+  "Consume items from the `workload`'s source queue and enqueue to its executor
+   queue for consumption by a later processing stage,
+   performing any external effects as necessary.
+   Implementations should avoid maintaining in-memory state and making long-
+   running external calls, favouring internal queues to manage such tasks
+   asynchronously between invocations.  Note that the `Workload`'s Source queue and Executor
+   are parameterised types and the Source queue's parameterisation must be
+   convertible to the Executor's."
+  (fn [{:keys [executor] :as _workload}] (:type executor)))
 
 (defmulti executor-workflows
   "Return the workflows managed by the `executor"
@@ -43,7 +46,7 @@
 
 (defmulti executor-retry-workflows!
   "Retry/resubmit the `workflows` managed by the `executor`."
-  (fn [executor _workflows] (:type executor)))
+  (fn [{:keys [executor] :as _workload} _workflows] (:type executor)))
 
 ;; load/save operations
 (defmulti create-executor!
@@ -134,6 +137,11 @@
     (throw (UserException. "Only Dockstore methods are supported."
                            {:status 400 :methodRepoMethod methodRepoMethod}))))
 
+(defn ^:private create-user-comment
+  "Create a user comment to be added to an executor submission."
+  [note {:keys [uuid] :as _workload} snapshot-id]
+  (str/join \space [note "Workload:" uuid "Snapshot ID:" snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
+
 (defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
   [{:keys [skipValidation
@@ -171,9 +179,27 @@
                     {:executor executor
                      :object   object}))))
 
+(def ^:private table-from-snapshot-reference-error-message
+  (str/join \space
+            ["Will not set method configuration root entity table:"
+             "expected exactly one table in snapshot."]))
+
+(defn ^:private table-from-snapshot-reference
+  "Return singular table in snapshot from `reference`, or log error."
+  [executor reference]
+  (let [snapshot-id               (get-in reference [:attributes :snapshot])
+        snapshot                  (datarepo/snapshot snapshot-id)
+        [table & rest :as tables] (map :name (:tables snapshot))]
+    (if (and table (empty? rest))
+      table
+      (log/error {:cause     table-from-snapshot-reference-error-message
+                  :executor  executor
+                  :reference reference
+                  :tables    tables}))))
+
 (defn ^:private update-method-configuration!
-  "Update `methodConfiguration` in `workspace` with snapshot reference `name`
-  as :dataReferenceName via Firecloud.
+  "Update `methodConfiguration` in `workspace` with snapshot `reference` name
+  and table as its root entity via Firecloud.
   Update executor table record ID with incremented `methodConfigurationVersion`."
   [{:keys [id
            workspace
@@ -184,13 +210,16 @@
         current (firecloud/method-configuration workspace methodConfiguration)
         _       (error-on-method-config-version-mismatch
                  current methodConfigurationVersion)
-        inc'd   (inc (:methodConfigVersion current))]
-    (-> "%s Updating %s in %s with {:dataReferenceName %s :methodConfigVersion %s}"
-        (format (log-prefix executor) methodConfiguration workspace name inc'd)
-        log/debug)
-    (firecloud/update-method-configuration
-     workspace methodConfiguration
-     (assoc current :dataReferenceName name :methodConfigVersion inc'd))
+        inc'd   (inc (:methodConfigVersion current))
+        newMc   (merge
+                 current
+                 {:dataReferenceName name :methodConfigVersion inc'd}
+                 (when-let [table (table-from-snapshot-reference executor reference)]
+                   {:rootEntityType table}))]
+    (log/debug {:action                 "Updating method configuration"
+                :executor               executor
+                :newMethodConfiguration newMc})
+    (firecloud/update-method-configuration workspace methodConfiguration newMc)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (jdbc/update! tx terra-executor-table
                     {:method_configuration_version inc'd}
@@ -199,11 +228,11 @@
 (defn ^:private create-submission!
   "Update `methodConfiguration` to use `reference`.
   Create and return submission in `workspace` for `methodConfiguration` via Firecloud."
-  [{:keys [workspace methodConfiguration] :as executor} reference]
+  [{:keys [workspace methodConfiguration] :as executor} userComment reference]
   (update-method-configuration! executor reference)
   (log/debug (format "%s Submitting %s to %s..."
                      (log-prefix executor) methodConfiguration workspace))
-  (firecloud/submit-method workspace methodConfiguration))
+  (firecloud/submit-method workspace methodConfiguration userComment))
 
 (defn ^:private allocate-submission
   "Write or allocate workflow records for `submission` in `details` table,
@@ -307,16 +336,18 @@
   "Create new submission from new `source` snapshot if available,
   writing its workflows to `details` table.
   Update statuses for active or failed workflows in `details` table.
-  Return `executor`."
-  [source executor]
+  Return updated `workload`."
+  [{:keys [source executor] :as workload}]
   (when-let [object (stage/peek-queue source)]
-    (let [entity     (from-source executor object)
-          submission (create-submission! executor entity)]
+    (let [entity      (from-source executor object)
+          userComment (create-user-comment "New submission" workload (get-in entity [:attributes :snapshot]))
+          submission  (create-submission! executor userComment entity)]
       (allocate-submission executor entity submission)
       (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! executor)
   (update-terra-workflow-statuses! executor)
-  executor)
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (workloads/load-workload-for-uuid tx (:uuid workload))))
 
 (defn ^:private combine-record-workflow-and-outputs
   [{:keys [updated] :as _record}
@@ -604,14 +635,15 @@
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
-  [{:keys [workspace] :as executor} workflows]
+  [{{:keys [workspace] :as executor} :executor :as workload} workflows]
   (letfn [(submit-reference [reference-id]
             ;; Further work required to deal in generic entities
             ;; rather than assumed snapshot references:
             ;; https://broadinstitute.atlassian.net/browse/GH-1422
-            (let [reference (rawls/get-snapshot-reference workspace reference-id)]
+            (let [reference (rawls/get-snapshot-reference workspace reference-id)
+                  userComment (create-user-comment "Retry" workload (get-in reference [:attributes :snapshot]))]
               (->> reference
-                   (create-submission! executor)
+                   (create-submission! executor userComment)
                    (allocate-submission executor reference))))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (workflow-and-sibling-records tx executor workflows))
