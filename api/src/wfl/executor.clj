@@ -277,7 +277,6 @@
               [(format "*%s Workflow %s %s*" emoji workflow-slack-link status)
                (format "Submission *%s*" submission-slack-link)])))
 
-;; TODO: Unit tests
 ;; Should only be called while updating active workflows.
 ;;
 (defn ^:private notify-on-workflow-completion

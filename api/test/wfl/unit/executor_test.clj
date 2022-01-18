@@ -2,7 +2,8 @@
   (:require [clojure.test         :refer [deftest is testing]]
             [wfl.executor         :as executor]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.datarepo :as datarepo])
+            [wfl.service.datarepo :as datarepo]
+            [wfl.service.slack    :as slack])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
@@ -133,3 +134,18 @@
         {#'datarepo/snapshot (datarepo-snapshot [table1 table2])}
         #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
              "A snapshot with more than 1 tables should log error but return nil")))))
+
+(deftest test-notify-on-workflow-completion
+  (let [records [{:status "Running"}
+                 {:status "Failed"}
+                 {:status "Succeeded"}]
+        workload {:executor {:workspace "workspaceNs/workspaceName"}}]
+    (letfn [(mock-workflow-finished-slack-msg
+              [_executor {:keys [status] :as _record}]
+              (is (cromwell/final? status)
+                  "Should not notify for non-final workflows"))]
+      (with-redefs-fn
+        {#'executor/workflow-finished-slack-msg mock-workflow-finished-slack-msg
+         #'slack/notify-watchers                (constantly nil)}
+        #(is (= records (#'executor/notify-on-workflow-completion workload records))
+             "Should return all passed-in records")))))
