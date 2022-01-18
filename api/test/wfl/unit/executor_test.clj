@@ -1,7 +1,8 @@
 (ns wfl.unit.executor-test
   (:require [clojure.test         :refer [deftest is testing]]
             [wfl.executor         :as executor]
-            [wfl.service.cromwell :as cromwell])
+            [wfl.service.cromwell :as cromwell]
+            [wfl.service.datarepo :as datarepo])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
@@ -109,3 +110,26 @@
              (verify-filter-errors-then-throw {:submission submission-valid :status status-invalid}))))
       (testing "Valid filter combination should not throw"
         (is (nil? (verify-filter-errors-then-throw {:submission submission-valid :status status-valid})))))))
+
+(deftest test-terra-executor-table-from-snapshot-reference
+  (let [executor  {}
+        reference {:attributes {:snapshot (str (UUID/randomUUID))}}
+        table1    "table1"
+        table2    "table2"]
+    (letfn [(table [table-name]
+              {:name table-name})
+            (datarepo-snapshot [table-names]
+              (fn [_snapshot-id]
+                {:tables (vec (map table table-names))}))]
+      (with-redefs-fn
+        {#'datarepo/snapshot (datarepo-snapshot [])}
+        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
+             "A snapshot with no table should log error but return nil"))
+      (with-redefs-fn
+        {#'datarepo/snapshot (datarepo-snapshot [table1])}
+        #(is (= table1 (#'executor/table-from-snapshot-reference executor reference))
+             "A snapshot with exactly 1 table should resolve to the table name"))
+      (with-redefs-fn
+        {#'datarepo/snapshot (datarepo-snapshot [table1 table2])}
+        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
+             "A snapshot with more than 1 tables should log error but return nil")))))
