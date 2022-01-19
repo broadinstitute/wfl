@@ -56,6 +56,12 @@
                                             ::all/uuid
                                             ::all/version]))
 
+(s/def ::workflow  (s/keys :opt-un [::all/options
+                                    ::all/status
+                                    ::all/updated
+                                    ::all/uuid]
+                           :req-un [:wfl.api.spec/inputs]))
+
 (defn ^:private cromwell-status
   "`status` of the workflow with `uuid` in `cromwell`."
   [cromwell uuid]

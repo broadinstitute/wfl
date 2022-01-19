@@ -33,7 +33,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "Arrays_v2.6.2"
+  {:release "Arrays_v2.6.3"
    :path    "pipelines/broad/arrays/single_sample/Arrays.wdl"})
 
 (def cromwell-label-map

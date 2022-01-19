@@ -11,15 +11,15 @@ which includes a source, executor, and sink.
 
 The `covid` module supports the following API endpoints:
 
-| Verb | Endpoint                            | Description                                                           |
-|------|-------------------------------------|-----------------------------------------------------------------------|
-| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project           |
-| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for workload `uuid`, filtering by supplied filters |
-| POST | `/api/v1/workload/{uuid}/retry`     | Retry workflows matching given filters in workload `uuid`             |
-| POST | `/api/v1/create`                    | Create a new workload                                                 |
-| POST | `/api/v1/start`                     | Start a workload                                                      |
-| POST | `/api/v1/stop`                      | Stop a running workload                                               |
-| POST | `/api/v1/exec`                      | Create and start (execute) a workload                                 |
+| Verb | Endpoint                            | Description                                                                     |
+|------|-------------------------------------|---------------------------------------------------------------------------------|
+| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project                     |
+| GET  | `/api/v1/workload/{uuid}/workflows` | List all unretried workflows for workload `uuid`, filtering by supplied filters |
+| POST | `/api/v1/workload/{uuid}/retry`     | Retry unretried workflows matching given filters in workload `uuid`             |
+| POST | `/api/v1/create`                    | Create a new workload                                                           |
+| POST | `/api/v1/start`                     | Start a workload                                                                |
+| POST | `/api/v1/stop`                      | Stop a running workload                                                         |
+| POST | `/api/v1/exec`                      | Create and start (execute) a workload                                           |
 
 The life-cycle of a workload is a multi-stage process:
 
@@ -156,33 +156,52 @@ The response is an array of [workload objects](#workload-response-format).
 
 Query WFL for all unretried workflows associated with workload `uuid`.
 
-The response is a list of Firecloud-derived
-[workflows](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowMetadata)
-and their
-[outputs](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Submissions/workflowOutputsInSubmission)
-when available (when the workflow has succeeded).
+!!! warning "Note"
+    Fetching workflows in a workload without any other filters
+    may yield a large response and take a long time to process,
+    such as for long-running continuous workloads.
 
 === "Request"
 
     ```
-    curl -X GET 'http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows' \
+    WFL=http://localhost:3000
+    UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22  # workload UUID
+
+    curl -X GET \
+         "$WFL/api/v1/workload/$UUID/workflows" \
          -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
          -H 'Accept: application/json'
     ```
+The response is a list of WFL workflow records, each of which tell us:
+
+- WFL submitted `methodConfiguration` in `workspace` with the
+  snapshot `reference` as its root entity type
+
+- The resulting submission had Terra `submission` UUID
+
+- The workflow had Terra `workflow` UUID and is processing the snapshot row
+  with `entity` as its row UUID
+
+- At WFL's last poll at `updated`, we noted that the workflow had `status`
+
+- Once a workflow has succeeded, `consumed` is populated with a timestamp
+  when WFL has "sunk" its outputs to their destination
 
 === "Response"
 
     ```
     [ {
-    "inputs" : {
-    "biosample_to_genbank.docker" : "quay.io/broadinstitute/viral-phylo:2.1.19.1",
-    "instrument_model" : "Illumina NovaSeq 6000",
-    ...
-    },
-    "uuid" : "53f70344-6f0f-47fb-adee-4e780fb3f19a",
-    "status" : "Failed",
-    "outputs" : { },
-    "updated" : "2021-08-06T21:41:28Z"
+    "retry": null,
+    "workspace": "emerge_prod/Arrays_test_AD",
+    "updated": "2022-01-03T21:35:40Z",
+    "workflow": "99956c17-26af-4d50-8954-9de9ecc4f733",
+    "reference": "4de4b53c-3904-43f9-a155-9f2e2460eb42",
+    "status": "Aborted",
+    "id": 1,
+    "methodConfiguration": "emerge_prod/Arrays_TDR_GH-1560",
+    "consumed": null,
+    "submission": "fbb96180-f6a5-4895-a154-72d133e442db",
+    "entity": "d4ce2b14-49d6-4209-95ab-424e2edf1741"
     } ]
     ```
 
@@ -199,7 +218,13 @@ The response has the same format as when querying without filters.
 === "Request"
 
     ```
-    curl -X GET 'http://localhost:3000/api/v1/workload/8d67a71e-9afd-4fca-bcf6-a7a74984a0e8/workflows?submission=14bffc69-6ce7-4615-b318-7ef1c457c894&status=Succeeded' \
+    WFL=http://localhost:3000
+    UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+    SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
+    STATUS=Aborted                                  # Cromwell workflow status
+
+    curl -X GET \
+         "$WFL/api/v1/workload/$UUID/workflows?submission=$SUBMISSION&status=$STATUS" \
          -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
          -H 'Accept: application/json'
     ```
@@ -231,10 +256,15 @@ Further information found in general
 === "Request"
 
     ```
-    curl -X POST "http://localhost:3000/api/v1/workload/e66c86b2-120d-4f7f-9c3a-b9eaadeb1919/retry" \
+    WFL=http://localhost:3000
+    UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+    SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
+
+    curl -X POST \
+        "$WFL/api/v1/workload/$UUID/retry" \
         -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
         -H "Content-Type: application/json" \
-        -d '{ "submission": "14bffc69-6ce7-4615-b318-7ef1c457c894" }'
+        -d "{ \"submission\": \"$SUBMISSION\" }"
     ```
 
 ### Create Workload

@@ -41,8 +41,8 @@
                       :sg       ::sg/workflow-inputs
                       :other    map?))
 
-(s/def ::workflow  (s/keys :req-un [::inputs]
-                           :opt-un [::all/status ::all/updated ::all/uuid ::all/options]))
+(s/def ::workflow (s/or :batch  ::batch/workflow
+                        :staged ::executor/executor-workflow))
 
 (s/def ::workflows (s/* ::workflow))
 

@@ -20,7 +20,7 @@ UUID=0d307eb3-2b8e-419c-b687-8c08c84e2a0c       # workload UUID
 SUBMISSION=14bffc69-6ce7-4615-b318-7ef1c457c894 # Terra submission UUID
 
 curl -X POST -H "$AUTH" $WFL/$UUID/retry \
-  --data '{"submission":"$SUBMISSION"}' \
+  --data "{\"submission\":\"$SUBMISSION\"}" \
   | jq
 ```
 
