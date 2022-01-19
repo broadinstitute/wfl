@@ -91,52 +91,6 @@ The result would be similar:
 The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
 WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.
 
-In order to change this level as desired would be done like so:
-```
-curl -X POST http://localhost:3000/api/v1/logging_level?level=DEBUG \
-     -H 'accept: application/json' \
-     -H "authorization: Bearer "$(gcloud auth print-access-token)
-```
-
-The result would be similar:
-```
-{
-  "level" : "DEBUG"
-}
-```
-
-The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
-WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.
-
-The result will look something like this:
-```
-{
-  "level" : "INFO"
-}
-```
-
-In order to change this level as desired would be done like so:
-```
-curl -X POST http://localhost:3000/api/v1/logging_level?level=DEBUG \
-     -H 'accept: application/json' \
-     -H "authorization: Bearer "$(gcloud auth print-access-token)
-```
-
-The result would be similar:
-```
-{
-  "level" : "DEBUG"
-}
-```
-
-The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
-WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.
-
-Example:
-```clojure
-(binding [log/*logger* log/disabled-logger]
-  (log/info "This message will not be written"))
-```
 ## Testing
 Test for this can be found in `test/wfl/unit/logging_test.clj`. Currently, the tests check whether the logging methods
 produce json that includes the correct severity and message.
