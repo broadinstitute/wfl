@@ -876,7 +876,7 @@ and resubmits the underlying snapshot for processing.</p>
 <span class="nv">SUBMISSION</span><span class="o">=</span>14bffc69-6ce7-4615-b318-7ef1c457c894 <span class="c1"># Terra submission UUID</span>
 
 curl -X POST -H <span class="s2">&quot;</span><span class="nv">$AUTH</span><span class="s2">&quot;</span> <span class="nv">$WFL</span>/<span class="nv">$UUID</span>/retry <span class="se">\</span>
-  --data <span class="s1">&#39;{&quot;submission&quot;:&quot;$SUBMISSION&quot;}&#39;</span> <span class="se">\</span>
+  --data <span class="s2">&quot;{\&quot;submission\&quot;:\&quot;</span><span class="nv">$SUBMISSION</span><span class="s2">\&quot;}&quot;</span> <span class="se">\</span>
   <span class="p">|</span> jq
 </code></pre></div>
 <p>A successful <code>/retry</code> request returns the workload specified by <code>$UUID</code>.
