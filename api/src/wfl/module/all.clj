@@ -135,11 +135,8 @@
 (s/def ::common map?)
 
 (s/def ::entityType string?)
-(s/def ::fromSource string?)
 (s/def ::labels (s/* util/label?))
 (s/def ::name string?)
-(s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
-(s/def ::methodConfigurationVersion integer?)
 (s/def ::watcher
   (s/or :email slack/email-watcher?
         :slack slack/slack-channel-watcher?))
