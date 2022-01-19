@@ -128,9 +128,10 @@
   "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id source executor sink] :as workload} now]
-            (-> (source/update-source! source)
-                (executor/update-executor! executor)
-                (sink/update-sink! sink))
+            (-> workload
+                (source/update-source!)
+                (executor/update-executor!)
+                (sink/update-sink!))
             (patch-workload tx workload {:updated now})
             (when (every? stage/done? [source executor sink])
               (patch-workload tx workload {:finished now}))
@@ -160,7 +161,7 @@
                            {:workload workload})))
   ;; TODO: validate workload's executor and sink objects.
   ;; https://broadinstitute.atlassian.net/browse/GH-1421
-  (executor/executor-retry-workflows! executor workflows)
+  (executor/executor-retry-workflows! workload workflows)
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (when-not (stage/done? executor)
       (patch-workload tx workload {:finished nil :updated (utc-now)}))

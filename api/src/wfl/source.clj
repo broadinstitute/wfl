@@ -3,7 +3,7 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
-            [wfl.api.workloads     :refer [defoverload]]
+            [wfl.api.workloads     :refer [defoverload] :as workloads]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
@@ -56,13 +56,13 @@
   (fn [_transaction source] (:type source)))
 
 (defmulti update-source!
-  "Enqueue items onto the `source` queue to be consumed by a later processing
+  "Enqueue items onto the `workload`'s source queue to be consumed by a later processing
    stage unless stopped, performing any external effects as necessary.
    Implementations should avoid maintaining in-memory state and making long-
    running external calls, favouring internal queues to manage such tasks
    asynchronously between invocations. This function is called one or more
    times after `start-source!` and may be called after `stop-source!`"
-  :type)
+  (fn [{:keys [source] :as _workload}] (:type source)))
 
 ;; source load/save operations
 (defmulti create-source!
@@ -326,17 +326,17 @@
     (<= polling-interval minutes-since-poll)))
 
 (defn ^:private update-tdr-source
-  "Check for new data in TDR from `source`, create new snapshots,
+  "Check for new data in TDR from `Workload`'s `source`, create new snapshots,
   insert resulting job creation ids into database and update the
   timestamp for next time."
-  [{:keys [stopped] :as source}]
+  [{{:keys [stopped] :as source} :source :as workload}]
   (let [now (utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
   (update-pending-snapshot-jobs source)
-  ;; load and return the source table
+  ;; load and return the workload with the updated source
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (load-tdr-source tx {:source_items (str (:id source))})))
+    (workloads/load-workload-for-uuid tx (:uuid workload))))
 
 (defn ^:private start-tdr-source [tx source]
   (update-last-checked tx source (utc-now)))
@@ -443,7 +443,7 @@
 
 (defn ^:private start-tdr-snapshot-list [_ source] source)
 (defn ^:private stop-tdr-snapshot-list  [_ source] source)
-(defn ^:private update-tdr-snapshot-list [source]  source)
+(defn ^:private update-tdr-snapshot-list [workload]  workload)
 
 (defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
   (let [query "SELECT *        FROM %s

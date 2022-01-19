@@ -44,14 +44,14 @@
   (fn [_transaction workload] (:sink_type workload)))
 
 (defmulti update-sink!
-  "Update the internal state of the `sink`, consuming objects from the
-   Queue `upstream-queue`, performing any external effects as required.
+  "Update the internal state of the `Workload`'s sink, consuming objects from the
+   `Workload`'s executor queue, performing any external effects as required.
    Implementations should avoid maintaining in-memory state and making long-
    running external calls, favouring internal queues to manage such tasks
-   asynchronously between invocations.
-   Note that the `Sink` and `Queue` are parameterised types
-   and the `Queue`'s parameterisation must be convertible to the `Sink`s."
-  (fn [_upstream-queue sink] (:type sink)))
+   asynchronously between invocations. Note that the `Workload`'s Sink and its Executor Queue are
+   parameterised types and the Executor Queue's parameterisation must be convertible
+   to the Sink's."
+  (fn [{:keys [sink] :as _workload}] (:type sink)))
 
 (defmethod create-sink! :default
   [_ _ {:keys [name] :as request}]
@@ -199,7 +199,8 @@
 (defn ^:private update-terra-workspace-sink
   "Write outputs from consumable `executor` workflows
    to `entityType` table in `workspace`."
-  [executor {:keys [fromOutputs workspace entityType details] :as sink}]
+  [{executor :executor
+    {:keys [fromOutputs workspace entityType details] :as sink} :sink :as _workload}]
   (when-let [[_ {:keys [uuid] :as workflow}] (stage/peek-queue executor)]
     (log/debug {:action     "Attempting to sink workflow outputs"
                 :workflow   uuid
@@ -413,9 +414,9 @@
          (push-job sink))))
 
 (defn ^:private update-datarepo-sink
-  "Attempt to a pull a workflow off the upstream `executor` queue and write its
+  "Attempt to a pull a workflow off the `Workload`'s `executor` queue and write its
    outputs as new rows in a tdr dataset table asynchronously."
-  [executor sink]
+  [{:keys [executor sink] :as _workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
