@@ -175,20 +175,20 @@
   otherwise return all `rows`."
   [{:keys [dataset table loadTag] :as _source} rows]
   (if loadTag
-    (let [meta-table (datarepo/metadata table)
-          where      (format "load_tag = '%s'" loadTag)
-          cols       [:datarepo_row_id]
-          metadata   (-> (datarepo/query-table-where
-                          dataset meta-table [where] cols)
-                         :rows
-                         flatten)]
+    (let [meta-table   (datarepo/metadata table)
+          where-clause (format "load_tag = '%s'" loadTag)
+          cols         [:datarepo_row_id]
+          metadata     (-> (datarepo/query-table-where
+                            dataset meta-table [where-clause] cols)
+                           :rows
+                           flatten)]
       (filter (set metadata) rows))
     rows))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table column loadTag] :as source}
-   [begin end                                    :as _interval]]
+  [{:keys [dataset details table column] :as source}
+   [begin end                            :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
