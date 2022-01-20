@@ -30,7 +30,8 @@
                    ::all/table
                    ::snapshotReaders]
           :opt-un [::snapshots
-                   ::pollingIntervalMinutes]))
+                   ::pollingIntervalMinutes
+                   ::datarepo/loadTag]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::all/name ::snapshots]))
@@ -102,7 +103,8 @@
    :table                  :dataset_table
    :column                 :table_column_name
    :snapshotReaders        :snapshot_readers
-   :pollingIntervalMinutes :polling_interval_minutes})
+   :pollingIntervalMinutes :polling_interval_minutes
+   :loadTag                :load_tag})
 
 (def ^:private bigquery-datetime-format
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
@@ -143,28 +145,55 @@
         (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))
 
-(defn combine-tdr-source-details
-  "Reduce to `result` by combining the Terra Data Repo source `_detail`.
-  Collect `datarepo_row_ids` already seen while preserving the latest
-  `end_time` and the earliest `start_time`."
-  [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
-                  start_time] :as _detail}]
-  (if (#{"running" "succeeded"} snapshot_creation_job_status)
-    (-> result
-        (update :datarepo_row_ids into          datarepo_row_ids)
-        (update :end_time         util/latest   end_time)
-        (update :start_time       util/earliest start_time))
-    result))
+(defn ^:private combine-tdr-source-details
+  "Reduces TerraDataRepoSourceDetails snapshot creation job `records`
+   to a single result with all previously processed row IDs,
+   the earliest snapshot creation job start time,
+   and the latest snapshot creation job end time."
+  [records]
+  (letfn [(running-or-succeeded?
+            [{:keys [snapshot_creation_job_status] :as _record}]
+            (#{"running" "succeeded"} snapshot_creation_job_status))
+          (combine-records
+            [result {:keys [datarepo_row_ids start_time end_time] :as _record}]
+            (-> result
+                (update :datarepo_row_ids into          datarepo_row_ids)
+                (update :start_time       util/earliest start_time)
+                (update :end_time         util/latest   end_time)))]
+    (when (seq records)
+      (->> records
+           (filter running-or-succeeded?)
+           (reduce combine-records)))))
+
+;; In the future, we will support polling for new rows via
+;; TDR row metadata table's `ingest_time` column.
+;; We may completely remove the option to set (:column source) as the one to poll.
+;; In either case, this metadata fetch would need to be altered / moved.
+;;
+(defn ^:private filter-load-tag
+  "Return `rows` matching TDR row metadata `loadTag` if specified,
+  otherwise return all `rows`."
+  [{:keys [dataset table loadTag] :as _source} rows]
+  (if loadTag
+    (let [meta-table (datarepo/metadata table)
+          where      (format "load_tag = '%s'" loadTag)
+          cols       [:datarepo_row_id]
+          metadata   (-> (datarepo/query-table-where
+                          dataset meta-table [where] cols)
+                         :rows
+                         flatten)]
+      (filter (set metadata) rows))
+    rows))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table column] :as source}
-   [begin end                            :as _interval]]
+  [{:keys [dataset details table column loadTag] :as source}
+   [begin end                                    :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (postgres/get-table tx details))
-        old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
+        old   (combine-tdr-source-details wfl)
         start (if-let [start_time (:start_time old)]
                 (-> start_time
                     (util/latest (instant/read-instant-timestamp begin))
@@ -175,7 +204,10 @@
                   (datarepo/query-table-between
                    table column [start end] [:datarepo_row_id])
                   :rows flatten)]
-    (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
+    (when (seq tdr)
+      (->> tdr
+           (filter-load-tag source)
+           (remove (set (:datarepo_row_ids old)))))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then

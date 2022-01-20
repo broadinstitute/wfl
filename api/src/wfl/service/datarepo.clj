@@ -2,6 +2,7 @@
   "Do stuff in the data repo."
   (:require [clj-http.client             :as http]
             [clojure.data.json           :as json]
+            [clojure.spec.alpha         :as s]
             [clojure.string              :as str]
             [wfl.auth                    :as auth]
             [wfl.environment             :as env]
@@ -11,6 +12,9 @@
   (:import [clojure.lang ExceptionInfo]
            [java.time Instant]
            [wfl.util UserException]))
+
+;; Specs
+(s/def ::loadTag string?)
 
 (def final?
   "The final statuses a data repo job can have."
@@ -281,6 +285,27 @@
    (query-table-impl dataset table
                      (util/to-comma-separated-list (map name columns)))))
 
+(defn ^:private query-table-where-impl
+  [dataset-or-snapshot table where-clauses col-spec]
+  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
+        where (if (seq where-clauses)
+                (format " WHERE %s"
+                        (util/remove-empty-and-join where-clauses " AND "))
+                "")]
+    (-> "SELECT %s FROM `%s.%s.%s`%s"
+        (format col-spec dataProject datasetId table where)
+        (->> (bigquery/query-sync dataProject)))))
+
+(defn query-table-where
+  "Return rows from `table` in `dataset-or-snapshot` matching `where-clauses`,
+  selecting `columns` from matching rows when specified.
+  A 400 response means no rows matched the query."
+  ([dataset-or-snapshot table where-clauses]
+   (query-table-where-impl dataset-or-snapshot table where-clauses "*"))
+  ([dataset-or-snapshot table where-clauses columns]
+   (query-table-where-impl dataset-or-snapshot table where-clauses
+                           (util/to-comma-separated-list (map name columns)))))
+
 (defn ^:private query-table-between-impl
   [dataset-or-snapshot table between [start end] col-spec]
   (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
@@ -301,7 +326,6 @@
    (->> (map name columns)
         util/to-comma-separated-list
         (query-table-between-impl dataset table between interval))))
-
 
 ;; utilities
 
@@ -327,3 +351,8 @@
                              {:table   table-name
                               :dataset (id-and-name dataset)})))
     table))
+
+(defn metadata
+  "Return TDR row metadata table name corresponding to `table-name`."
+  [table-name]
+  (format "datarepo_row_metadata_%s" table-name))

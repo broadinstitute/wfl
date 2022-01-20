@@ -584,3 +584,10 @@
   "Return the latest time of `instants`."
   [& instants]
   (last (sort instants)))
+
+(defn remove-empty-and-join
+  "Remove empty elements of `vec` and join with `separator`."
+  ([vec separator]
+   (->> vec (remove empty?) (str/join separator)))
+  ([vec]
+   (remove-empty-and-join vec \space)))
