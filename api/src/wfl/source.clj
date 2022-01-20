@@ -171,9 +171,9 @@
 ;; In either case, this metadata fetch would need to be altered / moved.
 ;;
 (defn ^:private filter-load-tag
-  "Return `rows` matching TDR row metadata `loadTag` if specified,
-  otherwise return all `rows`."
-  [{:keys [dataset table loadTag] :as _source} rows]
+  "Return `row-ids` matching TDR row metadata `loadTag` if specified,
+  otherwise return all `row-ids`."
+  [{:keys [dataset table loadTag] :as _source} row-ids]
   (if loadTag
     (let [meta-table   (datarepo/metadata table)
           where-clause (format "load_tag = '%s'" loadTag)
@@ -182,8 +182,8 @@
                             dataset meta-table [where-clause] cols)
                            :rows
                            flatten)]
-      (filter (set metadata) rows))
-    rows))
+      (filter (set metadata) row-ids))
+    row-ids))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
