@@ -453,6 +453,10 @@
               "a workflow should have been created")
           (finally
             (endpoints/stop-workload workload)))
+        ;; Note: when the workload's workflows have finished,
+        ;; we expect a notification for each workflow
+        ;; to be emitted to the Slack channels in
+        ;; wfl.tools.workloads/watchers.
         (is (util/poll
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
