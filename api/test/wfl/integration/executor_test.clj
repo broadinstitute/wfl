@@ -169,13 +169,15 @@
                                              (succeeded-workflow-from-submission submission-id)])}))
 
 ;; Workflow fetch mocks within update-workflow-statuses!
-(defn ^:private mock-firecloud-get-running-workflow-update-status [_ submission-id workflow-id]
+(defn ^:private mock-firecloud-get-running-workflow-update-status
+  [_ submission-id workflow-id & _]
   (let [workflow-base (get-in submission-base [submission-id :running])]
     (is (= (:workflow-id workflow-base) workflow-id)
         "Expecting to fetch and update status for running workflow")
     (assoc (mock-firecloud-get-workflow workflow-base) :status "Succeeded")))
 
-(defn ^:private mock-firecloud-get-known-workflow [_ submission-id workflow-id]
+(defn ^:private mock-firecloud-get-known-workflow
+  [_ submission-id workflow-id & _]
   (if-let [workflow-base (->> (get submission-base submission-id)
                               vals
                               (filter #(= workflow-id (:workflow-id %)))
@@ -333,7 +335,7 @@
          #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
         #(let [workflows-to-retry
                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (executor/executor-workflows-by-filters tx executor {:status "Running"}))]
+                 (executor/executor-workflows tx executor {:status "Running"}))]
            (is (== 1 (count workflows-to-retry))
                "Should have one running workflow to retry.")
            (executor/executor-retry-workflows! workload workflows-to-retry)))
@@ -401,7 +403,7 @@
        (is (== 2 (stage/queue-length executor))
            "The retried workflow should remain visible downstream")
        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (is (== 1 (count (executor/executor-workflows tx executor)))
+         (is (== 1 (count (executor/executor-workflows tx executor {})))
              "The retried workflow should not be returned")))))
 
 (deftest test-terra-executor-queue-length
