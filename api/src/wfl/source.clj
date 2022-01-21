@@ -3,6 +3,7 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
+            [clojure.string        :as str]
             [wfl.api.workloads     :refer [defoverload] :as workloads]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
@@ -160,10 +161,9 @@
                 (update :datarepo_row_ids into          datarepo_row_ids)
                 (update :start_time       util/earliest start_time)
                 (update :end_time         util/latest   end_time)))]
-    (when (seq records)
-      (->> records
-           (filter running-or-succeeded?)
-           (reduce combine-records)))))
+    (let [filtered (filter running-or-succeeded? records)]
+      (when (seq filtered)
+        (reduce combine-records filtered)))))
 
 ;; In the future, we will support polling for new rows via
 ;; TDR row metadata table's `ingest_time` column.
@@ -238,9 +238,9 @@
            (map-indexed create-snapshot)))))
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
-  (let [query "SELECT id, snapshot_creation_job_id FROM %s
-               WHERE snapshot_creation_job_status = 'running'
-               ORDER BY id ASC"]
+  (let [query (str/join \space ["SELECT id, snapshot_creation_job_id FROM %s"
+                                "WHERE snapshot_creation_job_status = 'running'"
+                                "ORDER BY id ASC"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -349,8 +349,8 @@
   [{:keys [type id last_checked pollingIntervalMinutes] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
-        polling-interval (or pollingIntervalMinutes
-                             tdr-source-default-polling-interval-minutes)]
+        polling-interval   (or pollingIntervalMinutes
+                               tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
                 :minutes-since-poll minutes-since-poll
@@ -379,11 +379,11 @@
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from `details` table."
   [{:keys [details] :as _source}]
-  (let [query "SELECT * FROM %s
-               WHERE consumed    IS NULL
-               AND   snapshot_id IS NOT NULL
-               ORDER BY id ASC
-               LIMIT 1"]
+  (let [query (str/join \space ["SELECT * FROM %s"
+                                "WHERE consumed IS NULL"
+                                "AND snapshot_id IS NOT NULL"
+                                "ORDER BY id ASC"
+                                "LIMIT 1"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -398,9 +398,9 @@
 (defn ^:private tdr-source-queue-length
   "Return the number of unconsumed snapshot records from `details` table."
   [{:keys [details] :as _source}]
-  (let [query "SELECT COUNT(*) FROM %s
-               WHERE consumed IS NULL
-               AND   snapshot_creation_job_status <> 'failed'"]
+  (let [query (str/join \space ["SELECT COUNT(*) FROM %s"
+                                "WHERE consumed IS NULL"
+                                "AND snapshot_creation_job_status <> 'failed'"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -478,10 +478,10 @@
 (defn ^:private update-tdr-snapshot-list [workload]  workload)
 
 (defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
-  (let [query "SELECT *        FROM %s
-               WHERE  consumed IS NULL
-               ORDER BY id ASC
-               LIMIT 1"]
+  (let [query (str/join \space ["SELECT * FROM %s"
+                                "WHERE consumed IS NULL"
+                                "ORDER BY id ASC"
+                                "LIMIT 1"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query items)
            (jdbc/query tx)
