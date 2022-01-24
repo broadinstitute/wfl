@@ -68,23 +68,31 @@
   (atom :info))
 
 (defmacro log
-  "Log `expression` with `severity` and a optional set of special
-   fields to provide more information about a logging message.
+  "Log `expression` with `severity` and optional fields to provide more
+  information in a logging message.
 
-   A detailed explanation of the fields and their meaning can be found
-   here: https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
+  An explanation of the fields can be found here:
+  https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
 
-  :httpRequest  A structured record for the Http Request that was made
+  :httpRequest
+  A structured record for the Http Request that was made
 
-  :logging.googleapis.com/insertId    An optional unique identifier. Logs with the same identifier and timestamp will be considered duplicates in Google Logging.
+  :logging.googleapis.com/insertId
+  Logs with the same insertId and timestamp
+  are considered duplicates in Google Logging.
 
-  :logging.googleapis.com/labels    A map of key value pairs that can be searched on in Google Logging.
+  :logging.googleapis.com/labels
+  A map of key value pairs that can be searched on in Google Logging.
 
-  :logging.googleapis.com/operation    Additional information about a potentially long-running operation with which a log entry is associated.
+  :logging.googleapis.com/operation
+  Additional information about a potentially long-running operation
+  with which a log entry is associated.
 
-  :logging.googleapis.com/trace    Resource name of the trace associated with the log entry if any.
+  :logging.googleapis.com/trace
+  Resource name of the trace associated with the log entry if any.
 
-  :logging.googleapis.com/spanId    The span ID within the trace associated with the log entry."
+  :logging.googleapis.com/spanId
+  The span ID within the trace associated with the log entry."
   [severity expression & {:as additional-fields}]
   (let [{:keys [line]} (meta &form)]
     `(let [x# ~expression
