@@ -88,11 +88,11 @@
   Additional information about a potentially long-running operation
   with which a log entry is associated.
 
-  :logging.googleapis.com/trace
-  Resource name of the trace associated with the log entry if any.
-
   :logging.googleapis.com/spanId
-  The span ID within the trace associated with the log entry."
+  The span ID within the trace associated with the log entry.
+
+  :logging.googleapis.com/trace
+  Resource name of the trace associated with the log entry if any."
   [severity expression & {:as additional-fields}]
   (let [{:keys [line]} (meta &form)]
     `(let [x# ~expression
