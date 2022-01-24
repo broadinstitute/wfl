@@ -20,11 +20,11 @@
        (str/starts-with? channel-id "C")))
 
 (defn slack-channel-watcher? [s]
-  (when-let [[tag value] s]
+  (when-let [[tag value & _] s]
     (and (= "slack" tag) (valid-channel-id? value))))
 
 (defn email-watcher? [s]
-  (when-let [[tag value] s]
+  (when-let [[tag value & _] s]
     (and (= "email" tag) (util/email-address? value))))
 
 ;; https://api.slack.com/reference/surfaces/formatting#linking-urls
@@ -92,8 +92,8 @@
         swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
         header   (format "%s workload %s *%s*"
                          (link swagger "WFL") project uuid)]
-    (letfn [(notify [[_tag channel]]
-              (let [payload {:channel channel
+    (letfn [(notify [[_tag channel-id _channel-name]]
+              (let [payload {:channel channel-id
                              :message (str/join \newline [header message])}]
                 (log/info payload)
                 (add-notification notifier payload)))]

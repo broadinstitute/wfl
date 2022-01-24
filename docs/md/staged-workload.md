@@ -29,7 +29,7 @@ Workloads for other projects may leverage different implementations for source, 
 {
     "watchers": [
         ["slack", "C000XXX0XXX"],
-        ["slack", "C000YYY0YYY"]
+        ["slack", "C000YYY0YYY", "#optional-channel-name-for-context"]
     ],
     "labels": [
         "hornet:test"
@@ -83,15 +83,17 @@ Workloads for other projects may leverage different implementations for source, 
 The optional `watchers` field in a workload request
 registers Slack channels as watchers of the workload.
 
-When specified, WFL expects a list of **Slack channel IDs**
-(not channel names, since those can be changed).
-
 ```
 "watchers": [
         ["slack", "C000XXX0XXX"],
-        ["slack", "C000YYY0YYY"]
+        ["slack", "C000YYY0YYY", "#optional-channel-name-for-context"]
     ]
 ```
+
+When specified, WFL expects a list of **Slack channel IDs**.
+You can also add the channel name as the watcher's third element,
+but because channel names can change this is for decoration
+and debugging assistance only and not accessed programmatically.
 
 Slack channel IDs start with a `C` and can be found at the bottom
 of your channel's "Get channel details" dropdown:
