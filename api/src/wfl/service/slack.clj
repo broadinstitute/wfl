@@ -99,7 +99,7 @@
         (letfn [(notify [[_tag channel-id _channel-name]]
                   (let [payload {:channel channel-id
                                  :message (str/join \newline [header message])}]
-                    (log/info payload)
+                    (log/info payload :workload uuid)
                     (add-notification notifier payload)))]
           (run! notify channels)))
       (log/info {:slackDisabled
