@@ -837,27 +837,6 @@ The logging can also be disabled if you see fit for whatever reason by binding t
 </code></pre></div></p>
 <p>The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
 WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.</p>
-<p>The result will look something like this:
-<div class="highlight"><pre><span></span><code>{
-  &quot;level&quot; : &quot;INFO&quot;
-}
-</code></pre></div></p>
-<p>In order to change this level as desired would be done like so:
-<div class="highlight"><pre><span></span><code>curl -X POST http://localhost:3000/api/v1/logging_level?level=DEBUG \
-     -H &#39;accept: application/json&#39; \
-     -H &quot;authorization: Bearer &quot;$(gcloud auth print-access-token)
-</code></pre></div></p>
-<p>The result would be similar:
-<div class="highlight"><pre><span></span><code>{
-  &quot;level&quot; : &quot;DEBUG&quot;
-}
-</code></pre></div></p>
-<p>The above change would allow all logs DEBUG and higher to be written, i.e. DEBUG, INFO, NOTICE,
-WARNING, ERROR, CRITICAL, ALERT, EMERGENCY.</p>
-<p>Example:
-<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nb">binding </span><span class="p">[</span><span class="nv">log/*logger*</span> <span class="nv">log/disabled-logger</span><span class="p">]</span>
-  <span class="p">(</span><span class="nf">log/info</span> <span class="s">&quot;This message will not be written&quot;</span><span class="p">))</span>
-</code></pre></div></p>
 <h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">⚓︎</a></h2>
 <p>Test for this can be found in <code>test/wfl/unit/logging_test.clj</code>. Currently, the tests check whether the logging methods
 produce json that includes the correct severity and message.</p>
