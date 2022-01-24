@@ -179,7 +179,7 @@
 
 (defn ^:private register-workflow-in-clio
   "Ensure Clio knows the `workflow` outputs of `executor`."
-  [executor output {:keys [status uuid] :as _workflow}]
+  [{:keys [executor labels] workload-uuid :uuid :as _workload} output {:keys [status uuid] :as _workflow}]
   (when (= "Succeeded" status)
     (let [finalize (partial final_workflow_outputs_dir_hack output)
           clio-url (-> executor cromwell->strings :clio-url)
@@ -194,15 +194,15 @@
                   (select-keys (vals cromwell->clio)))
           final (zipmap (keys bam) (map finalize (vals bam)))]
       (when (some empty? (vals final))
-        (log/warn "Bad metadata from executor")
-        (log/error {:executor executor :metadata metadata}))
+        (log/warn "Bad metadata from executor" :workload workload-uuid :labels labels)
+        (log/error {:executor executor :metadata metadata} :workload workload-uuid :labels labels))
       (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
 ;; visible for testing
 (defn register-workload-in-clio
   "Register `workload` outputs with Clio."
-  [{:keys [executor output] :as _workload} workflows]
-  (run! (partial register-workflow-in-clio executor output) workflows))
+  [{:keys [output] :as workload} workflows]
+  (run! (partial register-workflow-in-clio workload output) workflows))
 
 (defn update-sg-workload!
   "Use transaction `tx` to batch-update `workload` statuses."

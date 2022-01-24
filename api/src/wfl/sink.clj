@@ -416,7 +416,7 @@
 (defn ^:private update-datarepo-sink
   "Attempt to a pull a workflow off the `Workload`'s `executor` queue and write its
    outputs as new rows in a tdr dataset table asynchronously."
-  [{:keys [executor sink] :as _workload}]
+  [{:keys [executor sink uuid labels] :as _workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
@@ -425,7 +425,7 @@
     (try
       (let [result (datarepo/job-result job)]
         (if (< (:bad_row_count result) 1)
-          (log/info "Sunk workflow outputs to dataset")
+          (log/info "Sunk workflow outputs to dataset" :workload uuid :labels labels)
           (throw (UserException. "Row failed to sink to dataset" {:job job
                                                                   :workflow workflow}))))
       (finally

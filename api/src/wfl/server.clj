@@ -83,28 +83,28 @@
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
-  (letfn [(do-update! [{:keys [id uuid] :as _workload}]
+  (letfn [(do-update! [{:keys [id uuid labels] :as _workload}]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (let [workload (workloads/load-workload-for-id tx id)]
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
-                    (log/warn (format "Error updating workload %s" uuid))
-                    (log/warn e)
+                    (log/warning (format "Error updating workload %s" uuid) :workload uuid :labels labels)
+                    (log/warning e :workload uuid :labels labels)
                     (slack/notify-watchers workload (.getMessage e)))))))
-          (try-update [{:keys [uuid] :as workload}]
+          (try-update [{:keys [uuid labels] :as workload}]
             (try
-              (log/info (format "Updating workload %s" uuid))
+              (log/info (format "Updating workload %s" uuid) :workload uuid :labels labels)
               (do-update! workload)
               (catch Throwable t
                 (log/error (format "Failed to update workload %s" uuid))
-                (log/error (str t)))))
+                (log/error (str t) :workload uuid :labels labels))))
           (update-workloads []
             (try
               (log/info "Finding workloads to update...")
               (run! try-update
                     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                      (jdbc/query tx "SELECT id,uuid FROM workload
+                      (jdbc/query tx "SELECT id,uuid,labels FROM workload
                                       WHERE started IS NOT NULL
                                       AND finished IS NULL")))
               (catch Throwable t

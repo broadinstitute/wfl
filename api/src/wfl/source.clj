@@ -167,7 +167,7 @@
   [{:keys [dataset details table loadTag] :as source}
    [begin end                             :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                    (log-prefix source) (:name dataset) table begin end))
+                    (log-prefix source) (:name dataset) table begin end) :workload uuid :labels labels)
   (let [wfl     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                   (postgres/get-table tx details))
         old     (filter-and-combine-tdr-source-details wfl)
@@ -286,31 +286,32 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [dataset table last_checked] :as source} utc-now]
+  [{:keys [uuid labels] {:keys [dataset table last_checked] :as source} :source :as workload}
+   utc-now]
   (let [checked      (timestamp-to-offsetdatetime last_checked)
         hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked utc-now)))
         then         (.minusHours utc-now hours-ago)
         shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
-                          (find-new-rows source)
+                          (find-new-rows workload)
                           (create-snapshots source utc-now))]
     (when (seq shards->jobs)
       (log/info (format "%s Snapshots created from new rows in %s.%s."
-                        (log-prefix source) (:name dataset) table))
+                        (log-prefix source) (:name dataset) table) :workload uuid :labels labels)
       (write-snapshots-creation-jobs source utc-now shards->jobs))
     ;; Even if our poll did not yield new rows to snapshot, at least we tried:
     (update-last-checked source utc-now)))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of TDR snapshot jobs that are still 'running'."
-  [source]
-  (log/debug (format "%s Looking for running snapshot jobs..." (log-prefix source)))
+  [{:keys [source uuid labels]}]
+  (log/debug (format "%s Looking for running snapshot jobs..." (log-prefix source)) :workload uuid :labels labels)
   (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
     (when (seq pending-tdr-jobs)
       (->> pending-tdr-jobs
            (map #(update % 1 check-tdr-job))
            (run! #(write-snapshot-id source %)))
-      (log/debug (format "%s Running snapshot jobs updated." (log-prefix source))))))
+      (log/debug (format "%s Running snapshot jobs updated." (log-prefix source)) :workload uuid :labels labels))))
 
 ;; Workloads in general may be updated more frequently,
 ;; but overpolling the TDR increases the chances of:
@@ -341,7 +342,7 @@
   (let [now (utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
-  (update-pending-snapshot-jobs source)
+  (update-pending-snapshot-jobs workload)
   ;; load and return the workload with the updated source
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (workloads/load-workload-for-uuid tx (:uuid workload))))
