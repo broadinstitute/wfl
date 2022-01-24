@@ -50,11 +50,11 @@
     {:get  {:no-doc true
             :summary "Get the current logging level"
             :handler handlers/get-logging-level
-            :responses {200 {:body ::log/logging-level-response}}
+            :responses {200 {:body ::log/level-response}}
             :swagger {:tags ["Informational"]}}
      :post {:summary    "Post a new logging level."
-            :parameters {:query ::log/logging-level-request}
-            :responses  {200 {:body ::log/logging-level-response}}
+            :parameters {:query ::log/level-request}
+            :responses  {200 {:body ::log/level-response}}
             :handler    handlers/update-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
