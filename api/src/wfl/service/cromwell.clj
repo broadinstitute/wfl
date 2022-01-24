@@ -28,17 +28,12 @@
 (defn emoji
   "Return Slack emoji corresponding to Cromwell `status`."
   [status]
-  (let [submitted ":cromwell-submitted:"
-        running   ":cromwell-running:"
-        succeeded ":cromwell-succeeded:"
-        failed    ":cromwell-failed:"
-        default   ":cromwell:"]
-    (case status
-      ("On Hold" "Submitted") submitted
-      ("Running" "Aborting")  running
-      "Succeeded"             succeeded
-      ("Failed" "Aborted")    failed
-      default)))
+  (case status
+    ("On Hold" "Submitted") ":cromwell-submitted:"
+    ("Running" "Aborting")  ":cromwell-running:"
+    "Succeeded"             ":cromwell-succeeded:"
+    ("Failed" "Aborted")    ":cromwell-failed:"
+    ":cromwell:"))
 
 (defn ^:private api
   "Get the api url given Cromwell URL."

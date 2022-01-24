@@ -288,7 +288,8 @@
               [(format "*%s Workflow %s %s*" emoji workflow-slack-link status)
                (format "Submission *%s*" submission-slack-link)])))
 
-;; Should only be called while updating active workflows.
+;; Call this only while updating active workflows
+;; to avoid repeated notifications for the same workflow's completion.
 ;;
 (defn ^:private notify-on-workflow-completion
   "Notify `workload` watchers of any newly terminated workflows
