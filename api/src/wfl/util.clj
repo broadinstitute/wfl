@@ -562,6 +562,16 @@
   (let [[name value & rest] (str/split s #":" 3)]
     (and (label-name? name) (label-value? value) (nil? rest))))
 
+(defn label-value
+  "Return first value associated with `label-name` in `labels`
+  or nil if no match."
+  [labels label-name]
+  (when-let [matched (->> labels
+                          (filter #(str/starts-with? % (str label-name ":")))
+                          first)]
+    (let [[_name value & _rest] (str/split matched #":" 3)]
+      value)))
+
 (defn uuid-string? [s] (uuid? (do-or-nil (UUID/fromString s))))
 (defn datetime-string? [s] (do-or-nil (OffsetDateTime/parse s)))
 
