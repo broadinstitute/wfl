@@ -37,7 +37,7 @@
    (fn [] "https://data.terra.bio")
    "WFL_TERRA_URL"
    (fn [] "https://app.terra.bio")
-   "WFL_JOB_MANAGER_URL"
+   "WFL_TERRA_JOB_MANAGER_URL"
    (fn [] "https://job-manager.dsde-prod.broadinstitute.org")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
