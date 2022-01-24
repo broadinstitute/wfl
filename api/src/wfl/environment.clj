@@ -35,6 +35,10 @@
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :cookie_secret)
    "WFL_TDR_URL"
    (fn [] "https://data.terra.bio")
+   "WFL_TERRA_URL"
+   (fn [] "https://app.terra.bio")
+   "WFL_TERRA_JOB_MANAGER_URL"
+   (fn [] "https://job-manager.dsde-prod.broadinstitute.org")
    "WFL_OAUTH2_CLIENT_ID"
    #(-> "secret/dsde/gotc/dev/zero" vault-secrets :oauth2_client_id)
    "WFL_POSTGRES_PASSWORD"

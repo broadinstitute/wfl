@@ -25,7 +25,7 @@
 
 (def watchers
   [["email" "hornet@broadinstitute.org"]
-   ["slack" "C026PTM4XPA"]])
+   ["slack" "C026PTM4XPA" "#hornet-slack-app-testing"]])
 
 (def ^:private git-branch
   (delay (util/shell! "git" "branch" "--show-current")))

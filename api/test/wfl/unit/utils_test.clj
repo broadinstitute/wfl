@@ -74,3 +74,13 @@
                       [:membership "flowcell_set" membership]
                       [:membership "flowcell_set_id" membership]]]
       (run! go parameters))))
+
+(deftest test-label-value
+  (let [labels ["1:one" "1:uno" "2:two" "11:eleven"]]
+    (is (nil? (util/label-value labels "not-a-label-name"))
+        "No match for label name should return nil")
+    (is (= "one" (util/label-value labels "1"))
+        "First match for label name should be returned")
+    (is (= "two" (util/label-value labels "2")))
+    (is (= "eleven" (util/label-value labels "11"))
+        "Value matching label name exactly should be returned")))

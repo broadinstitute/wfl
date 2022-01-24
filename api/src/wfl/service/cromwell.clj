@@ -25,6 +25,16 @@
   "All the statuses a Cromwell workflow can have."
   (into active? final?))
 
+(defn emoji
+  "Return Slack emoji corresponding to Cromwell `status`."
+  [status]
+  (case status
+    ("On Hold" "Submitted") ":cromwell-submitted:"
+    ("Running" "Aborting")  ":cromwell-running:"
+    "Succeeded"             ":cromwell-succeeded:"
+    ("Failed" "Aborted")    ":cromwell-failed:"
+    ":cromwell:"))
+
 (defn ^:private api
   "Get the api url given Cromwell URL."
   [url]
