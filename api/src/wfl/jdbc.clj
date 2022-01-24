@@ -26,8 +26,7 @@
      `(let [db#         ~db
             sql-params# ~sql-params]
         (logger/debug
-         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#)])
-         ~line)
+         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#)]))
         (jdbc/query db# sql-params#))))
   ([db sql-params opts]
    (let [{:keys [line]} (meta &form)]
@@ -35,8 +34,7 @@
             sql-params# ~sql-params
             opts#       ~opts]
         (logger/debug
-         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#) opts#])
-         ~line)
+         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#) opts#]))
         (jdbc/query db# sql-params# opts#)))))
 
 (defmacro update!
@@ -93,8 +91,7 @@
      `(let [db#         ~db
             sql-params# ~sql-params]
         (logger/info
-         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#)])
-         ~line)
+         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#)]))
         (jdbc/execute! db# sql-params#))))
   ([db sql-params opts]
    (let [{:keys [line]} (meta &form)]
@@ -102,8 +99,7 @@
             sql-params# ~sql-params
             opts#       ~opts]
         (logger/info
-         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#) opts#])
-         ~line)
+         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#) opts#]))
         (jdbc/execute! db# sql-params# opts#)))))
 
 (defmacro db-do-commands
