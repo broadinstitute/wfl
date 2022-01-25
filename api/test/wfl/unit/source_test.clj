@@ -53,6 +53,9 @@
                         :end_time                     (format time "50")}]
     (testing "No rows"
       (is (nil? (#'source/filter-and-combine-tdr-source-details
+                 nil))
+          "Nil row object passed in should not break processing")
+      (is (nil? (#'source/filter-and-combine-tdr-source-details
                  []))
           "Empty rows passed in should not break processing"))
     (testing "Keep all rows"
