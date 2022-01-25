@@ -143,18 +143,24 @@
         (datarepo/throw-unless-column-exists column dataset))
       (assoc source :dataset dataset))))
 
-(defn combine-tdr-source-details
-  "Reduce to `result` by combining the Terra Data Repo source `_detail`.
-  Collect `datarepo_row_ids` already seen while preserving the latest
-  `end_time` and the earliest `start_time`."
-  [result {:keys [datarepo_row_ids end_time snapshot_creation_job_status
-                  start_time] :as _detail}]
-  (if (#{"running" "succeeded"} snapshot_creation_job_status)
-    (-> result
-        (update :datarepo_row_ids into          datarepo_row_ids)
-        (update :end_time         util/latest   end_time)
-        (update :start_time       util/earliest start_time))
-    result))
+(defn ^:private filter-and-combine-tdr-source-details
+  "Reduce TerraDataRepoSourceDetails snapshot creation job `records`
+   to a single result with all previously processed row IDs,
+   the earliest snapshot creation job start time,
+   and the latest snapshot creation job end time."
+  [records]
+  (letfn [(running-or-succeeded?
+            [{:keys [snapshot_creation_job_status] :as _record}]
+            (#{"running" "succeeded"} snapshot_creation_job_status))
+          (combine-records
+            [result {:keys [datarepo_row_ids start_time end_time] :as _record}]
+            (-> result
+                (update :datarepo_row_ids into          datarepo_row_ids)
+                (update :start_time       util/earliest start_time)
+                (update :end_time         util/latest   end_time)))]
+    (let [filtered (filter running-or-succeeded? records)]
+      (when (seq filtered)
+        (reduce combine-records filtered)))))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
@@ -164,7 +170,7 @@
                     (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                 (postgres/get-table tx details))
-        old   (when (seq wfl) (reduce combine-tdr-source-details wfl))
+        old   (filter-and-combine-tdr-source-details wfl)
         start (if-let [start_time (:start_time old)]
                 (-> start_time
                     (util/latest (instant/read-instant-timestamp begin))
