@@ -9,9 +9,13 @@
 
 ;; https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 ;;
+(def levels
+  "The log severity level keywords by increasing severity."
+  [:debug :info :notice :warning :error :critical :alert :emergency])
+
 (def ^:private level?
   "The set of log severity level keywords."
-  #{:debug :info :notice :warning :error :critical :alert :emergency})
+  (set levels))
 
 (defn ^:private level-string?
   "True when `level` string names a log severity level."
