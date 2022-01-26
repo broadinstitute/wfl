@@ -60,48 +60,53 @@
    :integer "outint"
    :string  "outstring"})
 
-(deftest test-ingest-pipeline-outputs
+(deftest test-ingest-pipeline-outputs-and-snapshot
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
         tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
-      [(fixtures/with-temporary-cloud-storage-folder fixtures/gcs-tdr-test-bucket)
+      [(fixtures/with-temporary-cloud-storage-folder
+         fixtures/gcs-tdr-test-bucket)
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp-bucket dataset-id]]
-        (let [table-url (str temp-bucket "table.json")
+        (let [table-url   (str temp-bucket "table.json")
               workflow-id (UUID/randomUUID)
-              dataset (datarepo/datasets dataset-id)]
-          (-> (sink/rename-gather-bulk workflow-id dataset table-name outputs from-outputs temp-bucket)
-              (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
+              dataset     (datarepo/datasets dataset-id)]
+          (-> (sink/rename-gather-bulk workflow-id
+                                       dataset
+                                       table-name
+                                       outputs
+                                       from-outputs
+                                       temp-bucket)
+              (assoc :ingested (.format (util/utc-now)
+                                        workflows/tdr-date-time-formatter))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
                 (datarepo/poll-job
                  (datarepo/ingest-table dataset-id table-url table-name))]
-            (is (= 1 row_count))
-            (is (= 0 bad_row_count))
-            (is (seq (:rows (datarepo/query-table dataset table-name)))
-                "inputs should have been written to the dataset")))))))
-
-(deftest test-create-snapshot
-  (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        dataset     (datarepo/datasets (:id testing-dataset))
-        table       "flowcells"
-        row-ids     (-> (datarepo/query-table-between
-                         dataset
-                         table
-                         "run_date"
-                         ["2021-04-30T04:00:00" "2021-05-01T04:00:00"]
-                         [:datarepo_row_id])
-                        :rows
-                        flatten)]
-    (fixtures/with-temporary-snapshot
-      (snapshots/unique-snapshot-request tdr-profile dataset table row-ids)
-      #(let [snapshot (datarepo/snapshot %)]
-         (is (= % (:id snapshot)))
-         (is (str/starts-with? (:name snapshot) (str (:name dataset) "_" table))
-             "Snapshot name should start with dataset name and table name")))))
+            (is (== 1 row_count))
+            (is (== 0 bad_row_count))
+            (let [row-ids
+                  (-> dataset
+                      (datarepo/query-table table-name [:datarepo_row_id])
+                      :rows
+                      flatten)]
+              (is (== 1 (count row-ids))
+                  "Single input row should have been written to the dataset")
+              (testing "creating snapshot after completed ingest"
+                (fixtures/with-temporary-snapshot
+                  (snapshots/unique-snapshot-request tdr-profile
+                                                     dataset
+                                                     table-name
+                                                     row-ids)
+                  #(let [snapshot        (datarepo/snapshot %)
+                         expected-prefix (str (:name dataset) "_" table-name)]
+                     (is (= % (:id snapshot)))
+                     (is (str/starts-with? (:name snapshot) expected-prefix)
+                         (str "Snapshot name should start with "
+                              "dataset name and table name"))))))))))))
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
