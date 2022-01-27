@@ -85,16 +85,21 @@
   []
   (letfn [(do-update! [{:keys [id uuid labels] :as _workload}]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (let [workload (workloads/load-workload-for-id tx id)]
+              (let [{:keys [watchers] :as workload}
+                    (workloads/load-workload-for-id tx id)
+                    slack-watchers
+                    (filter slack/slack-channel-watcher? watchers)]
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
-                    (log/warning (format "Error updating workload %s" uuid) :workload uuid :labels labels)
+                    (log/warning (format "Error updating workload %s" uuid)
+                                 :workload uuid :labels labels)
                     (log/warning e :workload uuid :labels labels)
                     (slack/notify-watchers workload (.getMessage e)))))))
           (try-update [{:keys [uuid labels] :as workload}]
             (try
-              (log/info (format "Updating workload %s" uuid) :workload uuid :labels labels)
+              (log/info (format "Updating workload %s" uuid)
+                        :workload uuid :labels labels)
               (do-update! workload)
               (catch Throwable t
                 (log/error (format "Failed to update workload %s" uuid))
@@ -121,12 +126,13 @@
 (defn ^:private start-logging-polling
   "Start polling for changes to the log level."
   []
-  (letfn [(get-logging-level [] (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                                  (let [config (config/get-config tx "LOGGING_LEVEL")]
-                                    (reset! log/logging-level
-                                            (if (empty? config)
-                                              :info
-                                              (-> config str/lower-case keyword))))))]
+  (letfn [(get-logging-level []
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (let [config (config/get-config tx "LOGGING_LEVEL")]
+                (reset! log/logging-level
+                        (if (empty? config)
+                          :info
+                          (-> config str/lower-case keyword))))))]
     (get-logging-level)
     (future
       (while true
