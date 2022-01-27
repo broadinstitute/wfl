@@ -8,7 +8,7 @@
             [clojure.pprint                 :refer [pprint]]
             [clojure.spec.alpha             :as s]
             [clojure.string                 :as str]
-            [wfl.log                        :as logr]
+            [wfl.log                        :as log]
             [wfl.auth                       :as auth]
             [wfl.util                       :as util])
   (:import [org.apache.tika Tika]))
@@ -262,7 +262,7 @@
                              {:headers {"Authorization" auth-token}})]
       (json/read-str (:body response) :key-fn keyword))
     (do
-      (logr/error "No auth header in request")
+      (log/error "No auth header in request")
       (throw
        (ex-info "No auth header in request"
                 {:type :clj-http.client/unexceptional-status})))))
