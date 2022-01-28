@@ -20,13 +20,11 @@
            [wfl.util UserException]))
 
 ;; specs
-(s/def ::column string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
 (s/def ::pollingIntervalMinutes int?)
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
-                   ::column
                    ::all/dataset
                    ::all/table
                    ::snapshotReaders]
@@ -102,7 +100,6 @@
 (def ^:private ^:const tdr-source-serialized-fields
   {:dataset                :dataset
    :table                  :dataset_table
-   :column                 :table_column_name
    :snapshotReaders        :snapshot_readers
    :pollingIntervalMinutes :polling_interval_minutes
    :loadTag                :load_tag})
@@ -138,12 +135,12 @@
 (defn datarepo-source-validate-request-or-throw
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
-  [{:keys [dataset table column skipValidation] :as source}]
+  [{:keys [dataset table skipValidation] :as source}]
   (if skipValidation
     (assoc source :dataset {:id (get source :dataset)})
     (let [dataset (datarepo/datasets dataset)]
-      (doto (datarepo/table-or-throw table dataset)
-        (datarepo/throw-unless-column-exists column dataset))
+      (datarepo/table-or-throw table dataset)
+      (datarepo/metadata-table-path-or-throw table dataset)
       (assoc source :dataset dataset))))
 
 (defn ^:private filter-and-combine-tdr-source-details
@@ -165,30 +162,23 @@
       (when (seq filtered)
         (reduce combine-records filtered)))))
 
-;; In the future, we will support polling for new rows via
-;; TDR row metadata table's `ingest_time` column.
-;; We may completely remove the option to set (:column source) as the one to poll.
-;; In either case, this metadata fetch would need to be altered / moved.
-;;
-(defn ^:private filter-load-tag
-  "Return `row-ids` matching TDR row metadata `loadTag` if specified,
-  otherwise return all `row-ids`."
-  [{:keys [dataset table loadTag] :as _source} row-ids]
-  (if loadTag
-    (let [meta-table   (datarepo/metadata table)
-          where-clause (format "load_tag = '%s'" loadTag)
-          cols         [:datarepo_row_id]
-          metadata     (-> (datarepo/query-table-where
-                            dataset meta-table [where-clause] cols)
-                           :rows
-                           flatten)]
-      (filter (set metadata) row-ids))
-    row-ids))
+(defn ^:private tdr-metadata-row-ids
+  "Return row ids from TDR `dataset`.`table` metadata falling in `interval`
+  and ingested with `loadTag` if specified."
+  [{:keys [dataset table loadTag] :as _source} interval]
+  (let [meta-table     (datarepo/metadata table)
+        where-between  (datarepo/where-between :ingest_time interval)
+        where-load-tag (when loadTag (format "load_tag = '%s'" loadTag))
+        where-clauses  (remove empty? [where-between where-load-tag])
+        cols           [:datarepo_row_id]]
+    (-> (datarepo/query-table-where dataset meta-table where-clauses cols)
+        :rows
+        flatten)))
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table column] :as source}
-   [begin end                            :as _interval]]
+  [{:keys [dataset details table] :as source}
+   [begin end                     :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
   (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -200,14 +190,8 @@
                     timestamp-to-offsetdatetime
                     (.format bigquery-datetime-format))
                 begin)
-        tdr   (-> dataset
-                  (datarepo/query-table-between
-                   table column [start end] [:datarepo_row_id])
-                  :rows flatten)]
-    (when (seq tdr)
-      (->> tdr
-           (filter-load-tag source)
-           (remove (set (:datarepo_row_ids old)))))))
+        tdr   (tdr-metadata-row-ids source [start end])]
+    (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!
   "Create snapshot in TDR from `dataset` body, `table` and `row-ids` then
@@ -445,7 +429,7 @@
 (def ^:private ^:const tdr-snapshot-list-name "TDR Snapshots")
 (def ^:private ^:const tdr-snapshot-list-type "TDRSnapshotListSource")
 
-(defn tdr-snappshot-list-validate-request-or-throw
+(defn tdr-snapshot-list-validate-request-or-throw
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
             (try
@@ -517,7 +501,7 @@
 (defmethod create-source! tdr-snapshot-list-name
   [tx id request]
   (write-tdr-snapshot-list
-   tx id (tdr-snappshot-list-validate-request-or-throw request)))
+   tx id (tdr-snapshot-list-validate-request-or-throw request)))
 
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)

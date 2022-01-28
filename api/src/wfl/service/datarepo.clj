@@ -91,13 +91,16 @@
       :maxFailedFileLoads 0})))
 
 (defn ingest-table
-  "Ingest TABLE at PATH to DATASET-ID and return the job ID."
-  [dataset-id path table]
-  (ingest "ingest" dataset-id {:format          "json"
-                               :load_tag        (new-load-tag)
-                               :max_bad_records 0
-                               :path            path
-                               :table           table}))
+  "Ingest TABLE at PATH with LOAD-TAG to DATASET-ID.
+  Return the job ID."
+  ([dataset-id path table load-tag]
+   (ingest "ingest" dataset-id {:format          "json"
+                                :load_tag        load-tag
+                                :max_bad_records 0
+                                :path            path
+                                :table           table}))
+  ([dataset-id path table]
+   (ingest-table dataset-id path table (new-load-tag))))
 
 (defn poll-job
   "Poll the job with `job-id` every `seconds` [default: 5] and return its
@@ -248,32 +251,41 @@
 
 ;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
 ;;
-(defn ^:private bq-datasetId-dataProject
-  "Return a BigQuery [datasetId dataProject] pair for `dataset-or-snapshot`."
+(defn ^:private bq-qualification
+  "Return a map defining dataProject and datasetId for `dataset-or-snapshot`
+  for querying its contents in BigQuery."
   [dataset-or-snapshot]
-  (cond (not= ::snap (:defaultSnapshotId dataset-or-snapshot ::snap))
-        (let [{:keys [accessInformation dataProject name] :as _dataset}
-              dataset-or-snapshot]
-          [(or (get-in accessInformation [:bigQuery :datasetId])
-               (str "datarepo_" name))
-           dataProject])
-        (map? dataset-or-snapshot)
-        (let [{:keys [dataProject name] :as _snapshot} dataset-or-snapshot]
-          [name dataProject])
-        (string? dataset-or-snapshot)
-        (let [{:keys [accessInformation dataProject name] :as _dataset}
-              (datasets dataset-or-snapshot)]
-          [(or (get-in accessInformation [:bigQuery :datasetId])
-               (str "datarepo_" name))
-           dataProject])
-        :else
-        (throw (UserException. "Not dataset or snapshot" dataset-or-snapshot))))
+  (letfn [(datasetId-for-dataset
+            [{:keys [accessInformation name] :as _dataset}]
+            (or (get-in accessInformation [:bigQuery :datasetId])
+                (str "datarepo_" name)))]
+    (cond (not= ::snap (:defaultSnapshotId dataset-or-snapshot ::snap))
+          (let [{:keys [dataProject] :as dataset} dataset-or-snapshot]
+            {:dataProject dataProject
+             :datasetId   (datasetId-for-dataset dataset)})
+          (map? dataset-or-snapshot)
+          (let [{:keys [dataProject name] :as _snapshot} dataset-or-snapshot]
+            {:dataProject dataProject
+             :datasetId   name})
+          (string? dataset-or-snapshot)
+          (let [{:keys [dataProject] :as dataset} (datasets dataset-or-snapshot)]
+            {:dataProject dataProject
+             :datasetId   (datasetId-for-dataset dataset)})
+          :else
+          (throw (UserException. "Not dataset, snapshot, or dataset UUID"
+                                 dataset-or-snapshot)))))
+
+(defn ^:private bq-path
+  "Return the fully-qualified path to `table-name` in BigQuery."
+  [{:keys [dataProject datasetId] :as _qualifier} table-name]
+  (format "%s.%s.%s" dataProject datasetId table-name))
 
 (defn ^:private query-table-impl
   [dataset-or-snapshot table col-spec]
-  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)]
-    (-> "SELECT %s FROM `%s.%s.%s`"
-        (format col-spec dataProject datasetId table)
+  (let [{:keys [dataProject] :as qual} (bq-qualification dataset-or-snapshot)
+        qualified-table-path           (bq-path qual table)]
+    (-> "SELECT %s FROM `%s`"
+        (format col-spec qualified-table-path)
         (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table
@@ -287,13 +299,14 @@
 
 (defn ^:private query-table-where-impl
   [dataset-or-snapshot table where-clauses col-spec]
-  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
+  (let [{:keys [dataProject] :as qual} (bq-qualification dataset-or-snapshot)
+        qualified-table-path           (bq-path qual table)
         where (if (seq where-clauses)
-                (format " WHERE %s"
+                (format "WHERE %s"
                         (util/remove-empty-and-join where-clauses " AND "))
                 "")]
-    (-> "SELECT %s FROM `%s.%s.%s`%s"
-        (format col-spec dataProject datasetId table where)
+    (-> "SELECT %s FROM `%s` %s"
+        (format col-spec qualified-table-path where)
         (->> (bigquery/query-sync dataProject)))))
 
 (defn query-table-where
@@ -306,26 +319,6 @@
    (query-table-where-impl dataset-or-snapshot table where-clauses
                            (util/to-comma-separated-list (map name columns)))))
 
-(defn ^:private query-table-between-impl
-  [dataset-or-snapshot table between [start end] col-spec]
-  (let [[datasetId dataProject] (bq-datasetId-dataProject dataset-or-snapshot)
-        [table between] (map name [table between])]
-    (-> (str/join \newline ["SELECT %s FROM `%s.%s.%s`"
-                            "WHERE %s BETWEEN '%s' AND '%s'"])
-        (format col-spec dataProject datasetId table between start end)
-        (->> (bigquery/query-sync dataProject)))))
-
-(defn query-table-between
-  "Return rows from `table` of `dataset`, where `dataset` can name a
-  snapshot and values in the `between` column fall within `interval`.
-  Select `columns` from matching rows when specified.  A 400 response
-  means no rows matched the query."
-  ([dataset table between interval]
-   (query-table-between-impl dataset table between interval "*"))
-  ([dataset table between interval columns]
-   (->> (map name columns)
-        util/to-comma-separated-list
-        (query-table-between-impl dataset table between interval))))
 
 ;; utilities
 
@@ -352,7 +345,42 @@
                               :dataset (id-and-name dataset)})))
     table))
 
+;; Public for testing
+(def metadata-table-name-prefix "datarepo_row_metadata_")
+
 (defn metadata
   "Return TDR row metadata table name corresponding to `table-name`."
   [table-name]
-  (format "datarepo_row_metadata_%s" table-name))
+  (format "%s%s" metadata-table-name-prefix table-name))
+
+(defn metadata-table-path-or-throw
+  "Throw or return the path to `dataset`.`table-name`'s row metadata table
+   in BigQuery."
+  [table-name dataset]
+  (let [{:keys [dataProject] :as qual}
+        (bq-qualification dataset)
+        tables-path          (bq-path qual "__TABLES__")
+        metadata-name        (metadata table-name)
+        metadata-path        (bq-path qual metadata-name)
+        metadata-found?      (-> "SELECT * FROM `%s` WHERE table_id = '%s'"
+                                 (format tables-path metadata-name)
+                                 (->> (bigquery/query-sync dataProject))
+                                 :totalRows
+                                 Integer/parseInt
+                                 (> 0))
+        not-found-msg        (str/join \space ["TDR row metadata table not found"
+                                               "in BigQuery at"
+                                               metadata-path])]
+    (when-not metadata-found?
+      (throw (UserException. not-found-msg
+                             {:table          table-name
+                              :metadata-table metadata-name
+                              :metadata-path  metadata-path
+                              :dataset        (id-and-name dataset)})))
+    metadata-path))
+
+(defn where-between
+  "Return clause to restrict output to when `column` values
+  fall between `interval`."
+  [column [start end :as _interval]]
+  (format "%s BETWEEN '%s' AND '%s'" (name column) start end))

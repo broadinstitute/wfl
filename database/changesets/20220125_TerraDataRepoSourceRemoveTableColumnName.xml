@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="okotsopo@broadinstitute.org"
+               dbms="postgresql"
+               id="20220125"
+               logicalFilePath="20220125_TerraDataRepoSourceRemoveTableColumnName.xml"
+               runInTransaction="false">
+        <comment>
+            Previously, TerraDataRepoSource polled for new rows
+            by checking the time stored in `table_column_name`.
+
+            Now that each TDR dataset's table has a corresponding
+            row metadata table, we can query metadata consistently
+            across workloads.
+        </comment>
+        <sql>
+            ALTER TABLE TerraDataRepoSource
+            DROP COLUMN table_column_name;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

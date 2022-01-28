@@ -39,7 +39,6 @@ Workloads for other projects may leverage different implementations for source, 
         "name": "Terra DataRepo",
         "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
         "table": "flowcells",
-        "column": "last_modified_date",
         "snapshotReaders": [
             "workflow-launcher-dev@firecloud.org"
         ]
