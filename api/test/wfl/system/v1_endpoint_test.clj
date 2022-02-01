@@ -400,9 +400,9 @@
              (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest inputs for the illimina_genotyping_array pipeline into the
-   illimina_genotyping_array `dataset`"
-  [dataset load-tag]
+  "Ingest inputs for the illumina_genotyping_array pipeline into the
+   illumina_genotyping_array `dataset`"
+  [dataset-id load-tag]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-tdr-test-bucket
     (fn [temporary-cloud-storage-folder]
@@ -414,7 +414,7 @@
               (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
-        (datarepo/poll-job (datarepo/ingest-table dataset file "inputs" load-tag))))))
+        (datarepo/poll-job (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
 
 (deftest ^:parallel test-workload-sink-outputs-to-tdr
   (fixtures/with-fixtures
@@ -428,13 +428,13 @@
        [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
          :accessLevel "OWNER"}])]
     (fn [[dataset-id workspace]]
-      (let [source   {:name                   "Terra DataRepo"
+      (let [dataset  (datarepo/datasets dataset-id)
+            source   {:name                   "Terra DataRepo"
                       :dataset                dataset-id
                       :table                  "inputs"
                       :snapshotReaders        ["hornet@firecloud.org"]
                       :pollingIntervalMinutes 1
                       :loadTag                "loadTagToMonitor"}
-            metadata (-> source :table datarepo/metadata)
             executor {:name                       "Terra"
                       :workspace                  workspace
                       :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
@@ -450,13 +450,15 @@
         (try
           (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
           (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
-          (let [row-ids      (-> (datarepo/query-table
-                                  dataset-id metadata [:datarepo_row_id])
+          (let [row-ids      (-> dataset
+                                 (datarepo/query-metadata-table
+                                  (:table source) {} [:datarepo_row_id])
                                  :rows
                                  flatten)
-                where-load   (format "load_tag = '%s'" (:loadTag source))
-                keep-row-ids (-> (datarepo/query-table-where
-                                  dataset-id metadata [where-load] [:datarepo_row_id])
+                where-load   {:loadTag (:loadTag source)}
+                keep-row-ids (-> dataset
+                                 (datarepo/query-metadata-table
+                                  (:table source) where-load [:datarepo_row_id])
                                  :rows
                                  flatten)
                 [workflow & rest]
@@ -481,5 +483,5 @@
              #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (:rows (datarepo/query-table dataset-id "outputs")))
+        (is (seq (:rows (datarepo/query-table dataset "outputs")))
             "outputs should have been written to the dataset")))))

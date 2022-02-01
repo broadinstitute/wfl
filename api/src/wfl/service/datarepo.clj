@@ -2,7 +2,7 @@
   "Do stuff in the data repo."
   (:require [clj-http.client             :as http]
             [clojure.data.json           :as json]
-            [clojure.spec.alpha         :as s]
+            [clojure.spec.alpha          :as s]
             [clojure.string              :as str]
             [wfl.auth                    :as auth]
             [wfl.environment             :as env]
@@ -37,11 +37,25 @@
       (http/get {:headers (auth/get-auth-header)})
       util/response-body-json))
 
+;; By default, this endpoint retrieves all dataset elements
+;; except for ACCESS_INFORMATION,
+;; which is needed to construct BigQuery paths.
+;; Explicitly include all dataset elements.
+;; https://data.terra.bio/swagger-ui.html#/repository/retrieveDataset
+;;
 (defn datasets
   "Query the DataRepo for the Dataset with `dataset-id`."
   [dataset-id]
   (try
-    (get-repository-json "datasets" dataset-id)
+    (let [include ["ACCESS_INFORMATION"
+                   "DATA_PROJECT"
+                   "PROFILE"
+                   "SCHEMA"
+                   "STORAGE"]]
+      (-> (repository "datasets" dataset-id)
+          (http/get {:headers      (auth/get-auth-header)
+                     :query-params {:include include}})
+          util/response-body-json))
     (catch ExceptionInfo e
       (throw
        (UserException. "Cannot access dataset"
@@ -203,10 +217,24 @@
       :id
       poll-job))
 
+;; By default, this endpoint retrieves all snapshot elements
+;; except for ACCESS_INFORMATION,
+;; which is needed to construct BigQuery paths.
+;; Explicitly include all snapshot elements.
+;; https://data.terra.bio/swagger-ui.html#/repository/retrieveSnapshot
+;;
 (defn snapshot
   "Return the snapshot with `snapshot-id`."
   [snapshot-id]
-  (get-repository-json "snapshots" snapshot-id))
+  (let [include ["ACCESS_INFORMATION"
+                 "DATA_PROJECT"
+                 "PROFILE"
+                 "SOURCES"
+                 "TABLES"]]
+    (-> (apply repository ["snapshots" snapshot-id])
+        (http/get {:headers      (auth/get-auth-header)
+                   :query-params {:include include}})
+        util/response-body-json)))
 
 (defn delete-dataset-snapshots
   "Delete snapshots on dataset with `dataset-id`."
@@ -249,44 +277,18 @@
    :name        (str name "_" table)
    :profileId   defaultProfileId})
 
-;; HACK: (str "datarepo_" name) is a hack while accessInformation is nil.
-;;
-(defn ^:private bq-qualification
-  "Return a map defining dataProject and datasetId for `dataset-or-snapshot`
-  for querying its contents in BigQuery."
-  [dataset-or-snapshot]
-  (letfn [(datasetId-for-dataset
-            [{:keys [accessInformation name] :as _dataset}]
-            (or (get-in accessInformation [:bigQuery :datasetId])
-                (str "datarepo_" name)))]
-    (cond (not= ::snap (:defaultSnapshotId dataset-or-snapshot ::snap))
-          (let [{:keys [dataProject] :as dataset} dataset-or-snapshot]
-            {:dataProject dataProject
-             :datasetId   (datasetId-for-dataset dataset)})
-          (map? dataset-or-snapshot)
-          (let [{:keys [dataProject name] :as _snapshot} dataset-or-snapshot]
-            {:dataProject dataProject
-             :datasetId   name})
-          (string? dataset-or-snapshot)
-          (let [{:keys [dataProject] :as dataset} (datasets dataset-or-snapshot)]
-            {:dataProject dataProject
-             :datasetId   (datasetId-for-dataset dataset)})
-          :else
-          (throw (UserException. "Not dataset, snapshot, or dataset UUID"
-                                 dataset-or-snapshot)))))
-
 (defn ^:private bq-path
   "Return the fully-qualified path to `table-name` in BigQuery."
-  [{:keys [dataProject datasetId] :as _qualifier} table-name]
-  (format "%s.%s.%s" dataProject datasetId table-name))
+  [{:keys [accessInformation] :as _dataset-or-snapshot} table-name]
+  (let [projectId   (get-in accessInformation [:bigQuery :projectId])
+        datasetName (get-in accessInformation [:bigQuery :datasetName])]
+    (format "%s.%s.%s" projectId datasetName table-name)))
 
 (defn ^:private query-table-impl
-  [dataset-or-snapshot table col-spec]
-  (let [{:keys [dataProject] :as qual} (bq-qualification dataset-or-snapshot)
-        qualified-table-path           (bq-path qual table)]
-    (-> "SELECT %s FROM `%s`"
-        (format col-spec qualified-table-path)
-        (->> (bigquery/query-sync dataProject)))))
+  [{:keys [dataProject] :as dataset-or-snapshot} table col-spec]
+  (-> "SELECT %s FROM `%s`"
+      (format col-spec (bq-path dataset-or-snapshot table))
+      (->> (bigquery/query-sync dataProject))))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo
@@ -297,27 +299,46 @@
    (query-table-impl dataset table
                      (util/to-comma-separated-list (map name columns)))))
 
-(defn ^:private query-table-where-impl
-  [dataset-or-snapshot table where-clauses col-spec]
-  (let [{:keys [dataProject] :as qual} (bq-qualification dataset-or-snapshot)
-        qualified-table-path           (bq-path qual table)
-        where (if (seq where-clauses)
-                (format "WHERE %s"
-                        (util/remove-empty-and-join where-clauses " AND "))
-                "")]
+;; Public for testing
+(def metadata-table-name-prefix "datarepo_row_metadata_")
+
+(defn metadata
+  "Return TDR row metadata table name corresponding to `table-name`."
+  [table-name]
+  (format "%s%s" metadata-table-name-prefix table-name))
+
+(defn ^:private query-metadata-table-impl
+  "Return `col-spec` from rows from TDR `dataset`.`table` metadata
+  falling in `interval` and ingested with `loadTag` if specified."
+  [{:keys [dataProject]        :as dataset-or-snapshot}
+   table
+   {:keys [ingestTime loadTag] :as _filters}
+   col-spec]
+  (let [meta-table        (metadata table)
+        [start end]       ingestTime
+        where-ingest-time (when (and start end)
+                            (format "ingest_time BETWEEN '%s' AND '%s'"
+                                    start end))
+        where-load-tag    (when loadTag
+                            (format "load_tag = '%s'" loadTag))
+        where-clauses     (util/remove-empty-and-join
+                           [where-ingest-time where-load-tag] " AND ")
+        where             (if-not (empty? where-clauses)
+                            (format "WHERE %s" where-clauses)
+                            "")]
     (-> "SELECT %s FROM `%s` %s"
-        (format col-spec qualified-table-path where)
+        (format col-spec (bq-path dataset-or-snapshot meta-table) where)
         (->> (bigquery/query-sync dataProject)))))
 
-(defn query-table-where
-  "Return rows from `table` in `dataset-or-snapshot` matching `where-clauses`,
-  selecting `columns` from matching rows when specified.
-  A 400 response means no rows matched the query."
-  ([dataset-or-snapshot table where-clauses]
-   (query-table-where-impl dataset-or-snapshot table where-clauses "*"))
-  ([dataset-or-snapshot table where-clauses columns]
-   (query-table-where-impl dataset-or-snapshot table where-clauses
-                           (util/to-comma-separated-list (map name columns)))))
+(defn query-metadata-table
+  "Return `columns` in rows from metadata `table` in `dataset-or-snapshot`
+  matching specified `filters`.
+  A 400 response means no rows matched the query. "
+  ([dataset-or-snapshot table filters]
+   (query-metadata-table-impl dataset-or-snapshot table filters "*"))
+  ([dataset-or-snapshot table filters columns]
+   (let [col-spec (util/to-comma-separated-list (map name columns))]
+     (query-metadata-table-impl dataset-or-snapshot table filters col-spec))))
 
 
 ;; utilities
@@ -345,23 +366,13 @@
                               :dataset (id-and-name dataset)})))
     table))
 
-;; Public for testing
-(def metadata-table-name-prefix "datarepo_row_metadata_")
-
-(defn metadata
-  "Return TDR row metadata table name corresponding to `table-name`."
-  [table-name]
-  (format "%s%s" metadata-table-name-prefix table-name))
-
 (defn metadata-table-path-or-throw
   "Throw or return the path to `dataset`.`table-name`'s row metadata table
    in BigQuery."
-  [table-name dataset]
-  (let [{:keys [dataProject] :as qual}
-        (bq-qualification dataset)
-        tables-path          (bq-path qual "__TABLES__")
+  [table-name {:keys [dataProject] :as dataset}]
+  (let [tables-path          (bq-path dataset "__TABLES__")
         metadata-name        (metadata table-name)
-        metadata-path        (bq-path qual metadata-name)
+        metadata-path        (bq-path dataset metadata-name)
         metadata-found?      (-> "SELECT * FROM `%s` WHERE table_id = '%s'"
                                  (format tables-path metadata-name)
                                  (->> (bigquery/query-sync dataProject))
@@ -378,9 +389,3 @@
                               :metadata-path  metadata-path
                               :dataset        (id-and-name dataset)})))
     metadata-path))
-
-(defn where-between
-  "Return clause to restrict output to when `column` values
-  fall between `interval`."
-  [column [start end :as _interval]]
-  (format "%s BETWEEN '%s' AND '%s'" (name column) start end))

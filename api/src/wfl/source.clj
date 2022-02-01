@@ -162,35 +162,27 @@
       (when (seq filtered)
         (reduce combine-records filtered)))))
 
-(defn ^:private tdr-metadata-row-ids
-  "Return row ids from TDR `dataset`.`table` metadata falling in `interval`
-  and ingested with `loadTag` if specified."
-  [{:keys [dataset table loadTag] :as _source} interval]
-  (let [meta-table     (datarepo/metadata table)
-        where-between  (datarepo/where-between :ingest_time interval)
-        where-load-tag (when loadTag (format "load_tag = '%s'" loadTag))
-        where-clauses  (remove empty? [where-between where-load-tag])
-        cols           [:datarepo_row_id]]
-    (-> (datarepo/query-table-where dataset meta-table where-clauses cols)
-        :rows
-        flatten)))
-
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table] :as source}
-   [begin end                     :as _interval]]
+  [{:keys [dataset details table loadTag] :as source}
+   [begin end                             :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
-  (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (postgres/get-table tx details))
-        old   (filter-and-combine-tdr-source-details wfl)
-        start (if-let [start_time (:start_time old)]
-                (-> start_time
-                    (util/latest (instant/read-instant-timestamp begin))
-                    timestamp-to-offsetdatetime
-                    (.format bigquery-datetime-format))
-                begin)
-        tdr   (tdr-metadata-row-ids source [start end])]
+  (let [wfl     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (postgres/get-table tx details))
+        old     (filter-and-combine-tdr-source-details wfl)
+        start   (if-let [start_time (:start_time old)]
+                  (-> start_time
+                      (util/latest (instant/read-instant-timestamp begin))
+                      timestamp-to-offsetdatetime
+                      (.format bigquery-datetime-format))
+                  begin)
+        filters   {:ingestTime [start end]
+                   :loadTag    loadTag}
+        tdr     (-> (datarepo/query-metadata-table
+                     dataset table filters [:datarepo_row_id])
+                    :rows
+                    flatten)]
     (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!

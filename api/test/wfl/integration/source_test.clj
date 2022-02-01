@@ -66,15 +66,10 @@
 (defonce all-rows
   (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
 
-(defn ^:private mock-query-table-where-all
-  "Mock datarepo/query-table-where to find all rows."
-  [_dataset table where-clauses columns]
-  (is (str/starts-with? table datarepo/metadata-table-name-prefix)
-      "TerraDataRepoSource should poll row metadata table")
-  (let [[where-between & _rest]
-        (filter #(str/starts-with? % "ingest_time BETWEEN") where-clauses)]
-    (is where-between
-        "TerraDataRepoSource should query metadata.ingest_time for new rows"))
+(defn ^:private mock-query-metadata-table-all
+  "Mock datarepo/query-metadata-table to find all rows."
+  [_dataset _table {:keys [ingestTime] :as _filters} columns]
+  (is (every? parse-timestamp ingestTime))
   (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
           (fields [columns] (mapv field columns))]
     (-> {:jobComplete true
@@ -83,10 +78,10 @@
          :totalRows (str (count @all-rows))}
         (assoc-in [:schema :fields] (fields columns)))))
 
-(defn ^:private mock-query-table-where-miss
-  "Mock datarepo/query-table-where to miss some rows."
-  [dataset table where-clauses columns]
-  (-> (mock-query-table-where-all dataset table where-clauses columns)
+(defn ^:private mock-query-metadata-table-miss
+  "Mock datarepo/query-metadata-table to miss some rows."
+  [dataset table filters columns]
+  (-> (mock-query-metadata-table-all dataset table filters columns)
       (update-in [:rows 0] butlast)
       (assoc :totalRows (str (dec mock-new-rows-size)))))
 
@@ -103,18 +98,20 @@
                    (mapcat :datarepo_row_ids))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))]
-    (let [interval      (repeatedly 2 #(-> (Instant/now) str
-                                           (subs 0 (count "2021-07-14T15:47:02"))))
+    (let [interval      (repeatedly 2
+                                    #(-> (Instant/now)
+                                         str
+                                         (subs 0 (count "2021-07-14T15:47:02"))))
           args          [testing-dataset
-                         (datarepo/metadata testing-table-name)
-                         [(datarepo/where-between :ingest_time interval)]
+                         testing-table-name
+                         {:ingestTime interval}
                          [:datarepo_row_id]]
           record-count  (int (Math/ceil (/ mock-new-rows-size 500)))
           source        (create-tdr-source)
           workload-uuid (UUID/randomUUID)]
       (testing "update-source! loads snapshots"
         (with-redefs [source/tdr-source-should-poll?   (constantly true)
-                      datarepo/query-table-where       mock-query-table-where-miss
+                      datarepo/query-metadata-table    mock-query-metadata-table-miss
                       source/check-tdr-job             mock-check-tdr-job
                       source/create-snapshots          mock-create-snapshots
                       workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
@@ -125,11 +122,11 @@
         (let [miss-count (dec mock-new-rows-size)
               miss-set   (set (rows-from source))]
           (is (== record-count (stage/queue-length source)))
-          (is (== miss-count   (total-rows mock-query-table-where-miss args)))
+          (is (== miss-count   (total-rows mock-query-metadata-table-miss args)))
           (is (== miss-count   (count miss-set)))
           (testing "update-source! adds a snapshot of rows missed in prior interval"
             (with-redefs [source/tdr-source-should-poll? (constantly true)
-                          datarepo/query-table-where     mock-query-table-where-all
+                          datarepo/query-metadata-table  mock-query-metadata-table-all
                           source/check-tdr-job           mock-check-tdr-job
                           source/create-snapshots        mock-create-snapshots
                           workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
@@ -139,7 +136,7 @@
             (let [all-rows (rows-from source)
                   missing  (set/difference (set all-rows) miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
-              (is (== mock-new-rows-size (total-rows mock-query-table-where-all args)))
+              (is (== mock-new-rows-size (total-rows mock-query-metadata-table-all args)))
               (is (=  (last all-rows) (first missing)))
               (is (== 1 (count missing))))))))))
 
