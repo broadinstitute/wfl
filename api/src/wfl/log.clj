@@ -84,6 +84,10 @@
   "The current logging level of the application."
   (atom :info))
 
+(defn set-logging-level
+  [level]
+  ())
+
 (defmacro log
   "Log `expression` with `severity` and `additional-fields`."
   [severity expression & {:as additional-fields}]

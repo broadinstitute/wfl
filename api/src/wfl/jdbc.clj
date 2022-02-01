@@ -2,7 +2,7 @@
   "wfl.log wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string    :as str]
-            [wfl.log           :as logger])
+            [wfl.log           :as log])
   (:import (clojure.lang IPersistentVector)
            (java.sql PreparedStatement Array)))
 
@@ -11,7 +11,7 @@
   (memoize (fn [{:keys [connection-uri user] :as db}]
              (let [random     (rand-int 10000)
                    identifier (str user "@" connection-uri "#" random)]
-               (logger/info (dissoc db :password))
+               (log/info (dissoc db :password))
                identifier))))
 
 (defn format-db
@@ -25,16 +25,19 @@
    (let [{:keys [line]} (meta &form)]
      `(let [db#         ~db
             sql-params# ~sql-params]
-        (logger/debug
-         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#)]))
+        (log/debug
+         (str/join \space ["jdbc/query:" (format-db db#) (pr-str sql-params#)])
+         :line ~line)
         (jdbc/query db# sql-params#))))
   ([db sql-params opts]
    (let [{:keys [line]} (meta &form)]
      `(let [db#         ~db
             sql-params# ~sql-params
             opts#       ~opts]
-        (logger/debug
-         (str/join " " ["jdbc/query:" (format-db db#) (pr-str sql-params#) opts#]))
+        (log/debug
+         (str/join \space
+                   ["jdbc/query:" (format-db db#) (pr-str sql-params#) opts#])
+         :line ~line)
         (jdbc/query db# sql-params# opts#)))))
 
 (defmacro update!
@@ -45,7 +48,11 @@
             table#        ~table
             set-map#      ~set-map
             where-clause# ~where-clause]
-        (logger/log :info (str/join " " ["jdbc/update!" (format-db db#) table# set-map# where-clause#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["jdbc/update!" (format-db db#) table#
+                                  set-map# where-clause#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/update! db# table# set-map# where-clause#))))
   ([db table set-map where-clause opts]
    (let [{:keys [line]} (meta &form)]
@@ -54,7 +61,11 @@
             set-map#      ~set-map
             where-clause# ~where-clause
             opts#         ~opts]
-        (logger/log :info (str/join " " ["jdbc/update!" (format-db db#) table# set-map# where-clause# opts#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["jdbc/update!" (format-db db#)
+                                  table# set-map# where-clause# opts#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/update! db# table# set-map# where-clause# opts#)))))
 
 (defmacro insert-multi!
@@ -64,7 +75,10 @@
      `(let [db#    ~db
             table# ~table
             rows#  ~rows]
-        (logger/log :info (str/join " " ["jdbc/insert-multi!" (format-db db#) table# rows#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space ["jdbc/insert-multi!" (format-db db#)
+                                         table# rows#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/insert-multi! db# table# rows#))))
   ([db table cols-or-rows values-or-opts]
    (let [{:keys [line]} (meta &form)]
@@ -72,7 +86,11 @@
             table#          ~table
             cols-or-rows#   ~cols-or-rows
             values-or-opts# ~values-or-opts]
-        (logger/log :info (str/join " " ["jdbc/insert-multi!" (format-db db#) table# cols-or-rows# values-or-opts#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["jdbc/insert-multi!" (format-db db#)
+                                  table# cols-or-rows# values-or-opts#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/insert-multi! db# table# cols-or-rows# values-or-opts#))))
   ([db table cols values opts]
    (let [{:keys [line]} (meta &form)]
@@ -81,7 +99,10 @@
             cols#   ~cols
             values# ~values
             opts#   ~opts]
-        (logger/log :info (str/join " " ["jdbc/insert-multi!" (format-db db#) table# cols# values# opts#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space ["jdbc/insert-multi!" (format-db db#)
+                                         table# cols# values# opts#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/insert-multi! db# table# cols# values# opts#)))))
 
 (defmacro execute!
@@ -90,16 +111,18 @@
    (let [{:keys [line]} (meta &form)]
      `(let [db#         ~db
             sql-params# ~sql-params]
-        (logger/info
-         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#)]))
+        (log/info
+         (str/join \space
+                   ["jdbc/execute!" (format-db db#) (pr-str sql-params#)]))
         (jdbc/execute! db# sql-params#))))
   ([db sql-params opts]
    (let [{:keys [line]} (meta &form)]
      `(let [db#         ~db
             sql-params# ~sql-params
             opts#       ~opts]
-        (logger/info
-         (str/join " " ["jdbc/execute!" (format-db db#) (pr-str sql-params#) opts#]))
+        (log/info
+         (str/join \space ["jdbc/execute!" (format-db db#)
+                           (pr-str sql-params#) opts#]))
         (jdbc/execute! db# sql-params# opts#)))))
 
 (defmacro db-do-commands
@@ -108,14 +131,21 @@
    (let [{:keys [line]} (meta &form)]
      `(let [db#           ~db
             sql-commands# ~sql-commands]
-        (logger/log :info (str/join " " ["jbs/db-do-commands" (format-db db#) sql-commands#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["jbs/db-do-commands" (format-db db#)
+                                  sql-commands#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/db-do-commands db# sql-commands#))))
   ([db transaction? sql-commands]
    (let [{:keys [line]} (meta &form)]
      `(let [db#           ~db
             transaction?# ~transaction?
             sql-commands# ~sql-commands]
-        (logger/log :info (str/join " " ["jbs/db-do-commands" (format-db db#) transaction?# sql-commands#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space ["jbs/db-do-commands" (format-db db#)
+                                         transaction?# sql-commands#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/db-do-commands db# transaction?# sql-commands#)))))
 
 (defmacro insert!
@@ -125,7 +155,10 @@
      `(let [db#    ~db
             table# ~table
             row#   ~row]
-        (logger/log :info (str/join " " ["jdbc/insert" (format-db db#) table# row#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["jdbc/insert" (format-db db#) table# row#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/insert! db# table# row#))))
   ([db table cols-or-row values-or-opts]
    (let [{:keys [line]} (meta &form)]
@@ -133,7 +166,10 @@
             table#          ~table
             cols-or-row#    ~cols-or-row
             values-or-opts# ~values-or-opts]
-        (logger/log :info (str/join " " ["jdbc/insert" (format-db db#) table# cols-or-row# values-or-opts#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space ["jdbc/insert" (format-db db#)
+                                         table# cols-or-row# values-or-opts#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/insert! db# table# cols-or-row# values-or-opts#))))
   ([db table cols values opts]
    (let [{:keys [line]} (meta &form)]
@@ -142,7 +178,10 @@
             cols#   ~cols
             values# ~values
             opts#   ~opts]
-        (logger/log :info (str/join " " ["jdbc/insert" (format-db db#) table# cols# values# opts#]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space ["jdbc/insert" (format-db db#)
+                                         table# cols# values# opts#])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         "jdbc/insert" db# table# cols# values# opts#))))
 
 (defmacro with-db-transaction
@@ -151,9 +190,15 @@
   (let [{:keys [line]} (meta &form)]
     `(let [id#    (rand-int 10000)
            init# ~(second binding)]
-       (logger/log :info (str/join " " ["JDBC transaction" id# "started to" (format-db init#)]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+       (log/log :info (str/join \space
+                                ["JDBC transaction" id# "started to"
+                                 (format-db init#)])
+                :logging.googleapis.com/sourceLocation
+                {:file ~*file* :line ~line})
        (let [exe# (jdbc/with-db-transaction [~(first binding) init#] ~@body)]
-         (logger/log :info (str/join " " ["JDBC SQL transaction" id# "ended"]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+         (log/log :info (str/join \space ["JDBC SQL transaction" id# "ended"])
+                  :logging.googleapis.com/sourceLocation
+                  {:file ~*file* :line ~line})
          exe#))))
 
 (defmacro prepare-statement
@@ -169,12 +214,20 @@
   ([db-spec]
    (let [{:keys [line]} (meta &form)]
      `(do
-        (logger/log :info (str/join " " ["JBDC SQL connection made (no opts):" (format-db ~db-spec)]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["JBDC SQL connection made (no opts):"
+                                  (format-db ~db-spec)])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/get-connection ~db-spec))))
   ([db-spec opts]
    (let [{:keys [line]} (meta &form)]
      `(do
-        (logger/log :info (str/join " " ["JBDC SQL connection made:" (format-db ~db-spec) ~opts]) :logging.googleapis.com/sourceLocation {:file ~*file* :line ~line})
+        (log/log :info (str/join \space
+                                 ["JBDC SQL connection made:"
+                                  (format-db ~db-spec) ~opts])
+                 :logging.googleapis.com/sourceLocation
+                 {:file ~*file* :line ~line})
         (jdbc/get-connection ~db-spec ~opts)))))
 
 ;; Expertly copied and pasted from Stack Overflow:
