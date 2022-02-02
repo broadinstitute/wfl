@@ -105,13 +105,16 @@
   [{:keys [uuid pipeline] :as workload}]
   (testing (format "calling api/v1/start with %s workload" pipeline)
     (let [workload (endpoints/start-workload workload)]
-      (is (= uuid (:uuid workload)))
-      (is (:started workload))
-      (let [workflows (endpoints/get-workflows workload)]
-        (is (every? :updated workflows))
-        (is (every? :uuid workflows)))
-      (verify-internal-properties-removed workload)
-      (workloads/when-all-workflows-finish verify-succeeded-workload workload))))
+      (try
+        (is (= uuid (:uuid workload)))
+        (is (:started workload))
+        (let [workflows (endpoints/get-workflows workload)]
+          (is (every? :updated workflows))
+          (is (every? :uuid workflows)))
+        (verify-internal-properties-removed workload)
+        (workloads/when-all-workflows-finish verify-succeeded-workload workload)
+        (finally
+          (endpoints/stop-workload workload))))))
 
 (deftest ^:parallel test-start-wgs-workload
   (test-start-workload (create-wgs-workload)))
@@ -158,18 +161,21 @@
   (testing (format "calling api/v1/exec with %s workload request" pipeline)
     (let [{:keys [created creator started uuid] :as workload}
           (endpoints/exec-workload request)]
-      (is uuid    "workloads should have a uuid")
-      (is created "should have a created timestamp")
-      (is started "should have a started timestamp")
-      (is (= @workloads/email creator)
-          "creator inferred from auth token")
-      (letfn [(included [m] (select-keys m [:pipeline :project]))]
-        (is (= (included request) (included workload))))
-      (let [workflows (endpoints/get-workflows workload)]
-        (is (every? :updated workflows))
-        (is (every? :uuid workflows)))
-      (verify-internal-properties-removed workload)
-      (workloads/when-all-workflows-finish verify-succeeded-workload workload))))
+      (try
+        (is uuid    "workloads should have a uuid")
+        (is created "should have a created timestamp")
+        (is started "should have a started timestamp")
+        (is (= @workloads/email creator)
+            "creator inferred from auth token")
+        (letfn [(included [m] (select-keys m [:pipeline :project]))]
+          (is (= (included request) (included workload))))
+        (let [workflows (endpoints/get-workflows workload)]
+          (is (every? :updated workflows))
+          (is (every? :uuid workflows)))
+        (verify-internal-properties-removed workload)
+        (workloads/when-all-workflows-finish verify-succeeded-workload workload)
+        (finally
+          (endpoints/stop-workload workload))))))
 
 (deftest ^:parallel test-exec-wgs-workload
   (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
@@ -234,13 +240,16 @@
                           @workloads/cromwell-url)
         workload (endpoints/exec-workload
                   (workloads/aou-workload-request (UUID/randomUUID)))]
-    (testing "appending sample successfully launches an aou workflow"
-      (is (->> workload
-               (endpoints/append-to-aou-workload [workloads/aou-sample])
-               (map (comp await :uuid))
-               (every? #{"Succeeded"})))
-      (->> (endpoints/get-workload-status (:uuid workload))
-           (workloads/when-all-workflows-finish verify-succeeded-workload)))))
+    (try
+      (testing "appending sample successfully launches an aou workflow"
+        (is (->> workload
+                 (endpoints/append-to-aou-workload [workloads/aou-sample])
+                 (map (comp await :uuid))
+                 (every? #{"Succeeded"})))
+        (->> (endpoints/get-workload-status (:uuid workload))
+             (workloads/when-all-workflows-finish verify-succeeded-workload)))
+      (finally
+        (endpoints/stop-workload workload)))))
 
 (deftest test-bad-pipeline
   (let [request (-> (workloads/copyfile-workload-request
