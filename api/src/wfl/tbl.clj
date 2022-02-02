@@ -74,9 +74,10 @@
   (wfl.debug/trace [key value])
   ((:value-fn json/default-write-options)
    key
-   (cond (set?  value) (pr-str value)
-         (list? value) (pr-str value)
-         :else         value)))
+   (cond (keyword? value) (pr-str value)
+         (list?    value) (pr-str value)
+         (set?     value) (pr-str value)
+         :else            value)))
 
 ;; HACK: Override how JSONWriter handles Throwables.
 ;; json/write-object is private and handles java.util.Map.
@@ -116,40 +117,50 @@
   stdout-logger)
 
 (defmacro log
-  "Log `expression` with `severity` and `more` fields."
-  [severity expression & {:as more}]
-  `(let [result#   ~expression
-         severity# ~severity]
+  "Log `expression` in `context` with `severity` and `more` fields."
+  [context severity expression more]
+  `(let [context#   ~context
+         function#  '~(:expression context)
+         result#    ~expression
+         severity#  ~severity]
      (when (@active-severity-predicate severity#)
        (-write *logger*
-               {::message        (merge {:column    ~(:column (meta &form))
+               {::message        (merge {:column    (:column    context#)
                                          :namespace '~(ns-name *ns*)
                                          :result    result#} ~more)
-                ::severity       severity#
-                ::sourceLocation {:file     ~*file*
+                ::severity       (str/upper-case (name severity#))
+                ::sourceLocation {:file     (:file context#)
                                   :function '~expression
-                                  :line     ~(:line (meta &form))}
+                                  :line     (:line context#)}
                 ::time            (Instant/now)}))
      result#))
 
-(defma)
+(defmacro error
+  [expression & {:as more}]
+  `(log ~(assoc (meta &form) :file *file*) :error ~expression ~more))
 
+(defmacro debug
+  [expression & {:as more}]
+  `(log ~(assoc (meta &form) :file *file*) :debug ~expression ~more))
+
+(type (ns-name *ns*))
+
+(debug :fnord)
 (error :fnord)
+(error 'fnord)
+(error (symbol "fnord"))
 (macroexpand '(error :fnord))
 (json/pprint (macroexpand '(error :fnord)))
 
 (def two-three {:two 3})
 
-(log :error (assoc two-three :three 4) :fnord (str "one" \: 23))
-(log :error #{assoc two-three :three 4} :fnord (str "one" \: 23))
-(log :error ['assoc two-three :three 4] :fnord (str "one" \: 23))
-(log :error (list 'assoc two-three :three 4) :fnord (str "one" \: 23))
-(log :error 'assoc :fnord (str "one" \: 23))
-
-(log :error "oops!")
+(error (assoc two-three :three 4) :fnord (str "one" \: 23))
+(error #{assoc two-three :three 4} :fnord (str "one" \: 23))
+(error ['assoc two-three :three 4] :fnord (str "one" \: 23))
+(error (list 'assoc two-three :three 4) :fnord (str "one" \: 23))
+(error 'assoc :fnord (str "one" \: 23))
 
 (def twenty-three 23)
 
-(log :error twenty-three)
 (macroexpand '(error twenty-three))
 (json/pprint (macroexpand '(error twenty-three)))
