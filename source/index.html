@@ -422,13 +422,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#column" class="md-nav__link">
-    column
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#snapshotreaders" class="md-nav__link">
     snapshotReaders
   </a>
@@ -436,8 +429,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pollingintervalminutes" class="md-nav__link">
-    pollingIntervalMinutes
+  <a href="#optional-pollingintervalminutes" class="md-nav__link">
+    Optional pollingIntervalMinutes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-loadtag" class="md-nav__link">
+    Optional loadTag
   </a>
   
 </li>
@@ -788,13 +788,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#column" class="md-nav__link">
-    column
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#snapshotreaders" class="md-nav__link">
     snapshotReaders
   </a>
@@ -802,8 +795,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pollingintervalminutes" class="md-nav__link">
-    pollingIntervalMinutes
+  <a href="#optional-pollingintervalminutes" class="md-nav__link">
+    Optional pollingIntervalMinutes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-loadtag" class="md-nav__link">
+    Optional loadTag
   </a>
   
 </li>
@@ -858,18 +858,17 @@ from a specified location or service in the cloud.</p>
 <p>You can configure the type of <code>Source</code> used in your workload by changing the
 <code>source</code> attribute of your workload request.</p>
 <h3 id="terra-datarepo-source"><code>Terra DataRepo</code> Source<a class="headerlink" href="#terra-datarepo-source" title="Permanent link">⚓︎</a></h3>
-<p>You can configure workflow-launcher to fetch workflow inputs from a Terra Data
-Repository (TDR) dataset in real-time using the <code>Terra DataRepo</code> source. The
-<code>Terra DataRepo</code> source polls a specified table in your dataset for new and/or
-updated rows and snapshots the rows to be processed downstream by an <code>Executor</code>.
-The table in your dataset must include a <code>DateTime</code> or <code>Timestamp</code> column
-representing the load or last modification date of that row to be compatible
-with a <code>Terra DataRepo</code> source. The <code>Terra DataRepo</code> source can only read inputs
-from a single table.</p>
+<p>You can configure workflow-launcher to fetch workflow inputs
+from a Terra Data Repository (TDR) dataset in real-time
+using the <code>Terra DataRepo</code> source.</p>
+<p><code>Terra DataRepo</code> source polls a <code>dataset.table</code>'s row metadata table
+for newly ingested rows.
+It snapshots those rows for downstream processing by an <code>Executor.</code>
+The <code>Terra DataRepo</code> source can only read inputs from a single table.</p>
 <p>When you <code>start</code> the workload, the <code>Terra DataRepo</code> source will start looking
-for new/updated rows from that instant.</p>
+for new rows from that instant.</p>
 <p>When you <code>stop</code> the workload, the <code>Terra DataRepo</code> source will stop looking
-for new/updated rows from that instant. All pending snapshots may continue
+for new rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -883,12 +882,12 @@ like:
 <span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra DataRepo&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-id}&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;table&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-table-name}&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{dataset-column-name-to-poll}&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;snapshotReaders&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
 <span class="w">    </span><span class="s2">&quot;{user}@{domain}&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="err">...</span><span class="w"></span>
 <span class="w">  </span><span class="p">],</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pollingIntervalMinutes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;pollingIntervalMinutes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;loadTag&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{load-tag-to-poll}&quot;</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </code></pre></div>
 The table below summarises the purpose of each attribute in the above request.</p>
@@ -913,49 +912,47 @@ The table below summarises the purpose of each attribute in the above request.</
 <td>The name of the <code>dataset</code> table to monitor and read from.</td>
 </tr>
 <tr>
-<td><code>column</code></td>
-<td>The name of the UTC <code>DateTime</code> or <code>Timestamp</code> column in the <code>table</code> to poll.</td>
-</tr>
-<tr>
 <td><code>snapshotReaders</code></td>
-<td>A list of email addresses whom should be <code>readers</code> of all snapshots created by workflow-launcher in this workload.</td>
+<td>A list of email addresses to set as <code>readers</code> of all snapshots created in this workload.</td>
 </tr>
 <tr>
 <td><code>pollingIntervalMinutes</code></td>
-<td>Optional.  Rate at which WFL will poll TDR for new rows to snapshot</td>
+<td>Optional.  Rate at which WFL will poll TDR for new rows to snapshot.</td>
+</tr>
+<tr>
+<td><code>loadTag</code></td>
+<td>Optional.  Only snapshot new rows ingested to TDR with <code>loadTag</code>.</td>
 </tr>
 </tbody>
 </table>
 <h4 id="dataset"><code>dataset</code><a class="headerlink" href="#dataset" title="Permanent link">⚓︎</a></h4>
-<p>The dataset attribute is the <code>UUID</code> that uniquely identifies the TDR dataset you
-want workflow-launcher to fetch workflow inputs form.</p>
+<p>The <code>UUID</code> uniquely identifying the TDR dataset which WFL will poll
+for new workflow inputs.</p>
 <h4 id="table"><code>table</code><a class="headerlink" href="#table" title="Permanent link">⚓︎</a></h4>
-<p>The <code>table</code> is the name of the table in the dataset that you want
-workflow-launcher to fetch inputs from. You should design this table such that
+<p>The name of the table in <code>dataset</code> which WFL will poll
+for new workflow inputs.</p>
+<p>You should design this table such that
 each row contains all the inputs required to execute a workflow by the workload
 <code>Executor</code> downstream.</p>
-<h4 id="column"><code>column</code><a class="headerlink" href="#column" title="Permanent link">⚓︎</a></h4>
-<p>The <code>column</code> is the name of a column in the table specified above
-used to determine which rows are new or have been updated
-and therefore need reprocessing.
-It should be a <code>Timestamp</code>,
-but <code>DateTime</code> is accepted too.
-You must ensure that the <code>Timestamp</code> or <code>DateTime</code> column
-uses Universal Coordinated Time (UTC).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Using a <code>Timestamp</code> will increase the likelihood of workflow-launcher
-detecting and scheduling new rows in real-time due to greater precision.
-Using <code>DateTime</code> may cause workflow-launcher to miss the row at first
-(though it will be picked up later).</p>
-</div>
 <h4 id="snapshotreaders"><code>snapshotReaders</code><a class="headerlink" href="#snapshotreaders" title="Permanent link">⚓︎</a></h4>
 <p>The email addresses of those whom should be "readers" of all snapshots created
 by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.</p>
-<h4 id="pollingintervalminutes"><code>pollingIntervalMinutes</code><a class="headerlink" href="#pollingintervalminutes" title="Permanent link">⚓︎</a></h4>
-<p>Optional. The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
+<h4 id="optional-pollingintervalminutes">Optional <code>pollingIntervalMinutes</code><a class="headerlink" href="#optional-pollingintervalminutes" title="Permanent link">⚓︎</a></h4>
+<p>The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
 If not provided, the default interval is 20 minutes.</p>
+<h4 id="optional-loadtag">Optional <code>loadTag</code><a class="headerlink" href="#optional-loadtag" title="Permanent link">⚓︎</a></h4>
+<p>WFL will only snapshot new rows ingested to TDR with <code>loadTag</code>.
+If not provided, all new rows will be eligible for snapshotting.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When initiating a TDR ingest, one can optionally set a load tag.
+Each row ingested will have this load tag set in its corresponding
+TDR row metadata table (only visible in BigQuery and not TDR UI).
+The same load tag can be reused across multiple ingests to logically link them.</p>
+<p>For questions on how to set the load tag for a particular flavor of ingest,
+contact #dsp-jade</p>
+</div>
 <h3 id="tdr-snapshots-source"><code>TDR Snapshots</code> Source<a class="headerlink" href="#tdr-snapshots-source" title="Permanent link">⚓︎</a></h3>
 <p>You can configure workflow-launcher to use a list of TDR snapshots directly.
 This may be useful if you don't want workflow-launcher to be a custodian of your
