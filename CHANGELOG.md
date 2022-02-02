@@ -5,6 +5,10 @@
 - [GH-1578] TerraDataRepoSource filters old rows before reducing ([#560](https://github.com/broadinstitute/wfl/pull/560))
 - [GH-1542] TerraExecutor notifies Slack watchers on workflow completion ([#553](https://github.com/broadinstitute/wfl/pull/553))
 
+# Release 0.12.1
+- [GH-1586] Run AoU pipeline with the Arrays_v2.6.3 WDL. ([#557](https://github.com/broadinstitute/wfl/pull/557))
+- [GH-1527] Remove Firecloud calls when fetching TerraExecutor workflows ([#543](https://github.com/broadinstitute/wfl/pull/543))
+
 # Release 0.12.0
 - [GH-1581] Run AoU pipeline with the Arrays_v2.6.2 WDL. ([#554](https://github.com/broadinstitute/wfl/pull/554))
 - [GH-1540] Apply User Comments to Terra Submissions ([#551](https://github.com/broadinstitute/wfl/pull/551))
