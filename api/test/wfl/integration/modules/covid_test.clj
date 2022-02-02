@@ -42,7 +42,6 @@
 (def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
 (def ^:private testing-method-configuration-version 2)
 (def ^:private testing-table-name "flowcells")
-(def ^:private testing-column-name "run_date")
 
 (let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
                "WFL_TDR_URL"       "https://data.terra.bio"
@@ -281,7 +280,6 @@
       (->> {:name            "Terra DataRepo"
             :dataset         testing-dataset
             :table           testing-table-name
-            :column          testing-column-name
             :snapshotReaders ["workflow-launcher-dev@firecloud.org"]}
            (assoc request :source)
            app))
