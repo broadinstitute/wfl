@@ -253,23 +253,6 @@
   (delete-dataset-snapshots dataset-id)
   (delete-dataset dataset-id))
 
-(defn delete-dataset-snapshots
-  "Delete snapshots on dataset with `dataset-id`."
-  [dataset-id]
-  (letfn [(delete [{:keys [id] :as _snapshot}]
-            (-> (repository "snapshots" id)
-                (http/delete {:headers (auth/get-service-account-header)})
-                util/response-body-json :id))]
-    (->> dataset-id list-snapshots :items
-         (map delete)   doall
-         (map poll-job) doall)))
-
-(defn delete-snapshots-then-dataset
-  "Delete snapshots on dataset with `dataset-id` then delete it."
-  [dataset-id]
-  (delete-dataset-snapshots dataset-id)
-  (delete-dataset dataset-id))
-
 (defn all-columns
   "Helper function to parse all of the columns
    of `table` in `dataset` body."
