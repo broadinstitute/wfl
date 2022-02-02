@@ -10,20 +10,20 @@ You can configure the type of `Source` used in your workload by changing the
 `source` attribute of your workload request.
 
 ### `Terra DataRepo` Source
-You can configure workflow-launcher to fetch workflow inputs from a Terra Data
-Repository (TDR) dataset in real-time using the `Terra DataRepo` source. The
-`Terra DataRepo` source polls a specified table in your dataset for new and/or
-updated rows and snapshots the rows to be processed downstream by an `Executor`.
-The table in your dataset must include a `DateTime` or `Timestamp` column
-representing the load or last modification date of that row to be compatible
-with a `Terra DataRepo` source. The `Terra DataRepo` source can only read inputs
-from a single table.
+You can configure workflow-launcher to fetch workflow inputs
+from a Terra Data Repository (TDR) dataset in real-time
+using the `Terra DataRepo` source.
+
+`Terra DataRepo` source polls a `dataset.table`'s row metadata table
+for newly ingested rows.
+It snapshots those rows for downstream processing by an `Executor.`
+The `Terra DataRepo` source can only read inputs from a single table.
 
 When you `start` the workload, the `Terra DataRepo` source will start looking
-for new/updated rows from that instant.
+for new rows from that instant.
 
 When you `stop` the workload, the `Terra DataRepo` source will stop looking
-for new/updated rows from that instant. All pending snapshots may continue
+for new rows from that instant. All pending snapshots may continue
 to be processed by a later workload stage.
 
 !!! note
@@ -38,12 +38,12 @@ like:
   "name": "Terra DataRepo",
   "dataset": "{dataset-id}",
   "table": "{dataset-table-name}",
-  "column": "{dataset-column-name-to-poll}",
   "snapshotReaders": [
     "{user}@{domain}",
     ...
   ],
-  "pollingIntervalMinutes": 1
+  "pollingIntervalMinutes": 1,
+  "loadTag": "{load-tag-to-poll}"
 }
 ```
 The table below summarises the purpose of each attribute in the above request.
@@ -53,46 +53,49 @@ The table below summarises the purpose of each attribute in the above request.
 | `name`                   | Selects the `Terra DataRepo` source implementation.      |
 | `dataset`                | The `UUID` of dataset to monitor and read from.          |
 | `table`                  | The name of the `dataset` table to monitor and read from.|
-| `column`                 | The name of the UTC `DateTime` or `Timestamp` column in the `table` to poll.|
-| `snapshotReaders`        | A list of email addresses whom should be `readers` of all snapshots created by workflow-launcher in this workload.|
-| `pollingIntervalMinutes` | Optional.  Rate at which WFL will poll TDR for new rows to snapshot|
+| `snapshotReaders`        | A list of email addresses to set as `readers` of all snapshots created in this workload.|
+| `pollingIntervalMinutes` | Optional.  Rate at which WFL will poll TDR for new rows to snapshot.|
+| `loadTag`                | Optional.  Only snapshot new rows ingested to TDR with `loadTag`.|
 
 #### `dataset`
-The dataset attribute is the `UUID` that uniquely identifies the TDR dataset you
-want workflow-launcher to fetch workflow inputs form.
+
+The `UUID` uniquely identifying the TDR dataset which WFL will poll
+for new workflow inputs.
 
 #### `table`
-The `table` is the name of the table in the dataset that you want
-workflow-launcher to fetch inputs from. You should design this table such that
+
+The name of the table in `dataset` which WFL will poll
+for new workflow inputs.
+
+You should design this table such that
 each row contains all the inputs required to execute a workflow by the workload
 `Executor` downstream.
 
-#### `column`
-
-The `column` is the name of a column in the table specified above
-used to determine which rows are new or have been updated
-and therefore need reprocessing.
-It should be a `Timestamp`,
-but `DateTime` is accepted too.
-You must ensure that the `Timestamp` or `DateTime` column
-uses Universal Coordinated Time (UTC).
-
-!!! note
-    Using a `Timestamp` will increase the likelihood of workflow-launcher
-    detecting and scheduling new rows in real-time due to greater precision.
-    Using `DateTime` may cause workflow-launcher to miss the row at first
-    (though it will be picked up later).
-
 #### `snapshotReaders`
+
 
 The email addresses of those whom should be "readers" of all snapshots created
 by workflow-launcher in this workload. You can specify individual users and/or
 Terra/Firecloud groups.
 
-#### `pollingIntervalMinutes`
+#### Optional `pollingIntervalMinutes`
 
-Optional. The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
+The rate, in minutes, at which WFL will poll TDR for new rows to snapshot.
 If not provided, the default interval is 20 minutes.
+
+#### Optional `loadTag`
+
+WFL will only snapshot new rows ingested to TDR with `loadTag`.
+If not provided, all new rows will be eligible for snapshotting.
+
+!!! note
+    When initiating a TDR ingest, one can optionally set a load tag.
+    Each row ingested will have this load tag set in its corresponding
+    TDR row metadata table (only visible in BigQuery and not TDR UI).
+    The same load tag can be reused across multiple ingests to logically link them.
+
+    For questions on how to set the load tag for a particular flavor of ingest,
+    contact #dsp-jade
 
 ### `TDR Snapshots` Source
 

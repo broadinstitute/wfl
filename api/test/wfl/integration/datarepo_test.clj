@@ -169,3 +169,25 @@
                             (map :name)
                             set)]
           (is (every? names entities)))))))
+
+(deftest test-dataset-has-access-information
+  (let [{:keys [datasetName projectId] :as bq-access}
+        (-> (:id testing-dataset)
+            datarepo/datasets
+            (get-in [:accessInformation :bigQuery]))]
+    (is bq-access "Fetched dataset should include BQ access information")
+    (is (= "tdr-prod-workflow-launcher-dev" projectId)
+        "Access information should include project ID")
+    (is (= (str "datarepo_" (:name testing-dataset)) datasetName)
+        "Access information should include appropriately prefixed dataset name")))
+
+(deftest test-snapshot-has-access-information
+  (let [{:keys [datasetName projectId] :as bq-access}
+        (-> (:id testing-snapshot)
+            datarepo/snapshot
+            (get-in [:accessInformation :bigQuery]))]
+    (is bq-access "Fetched snapshot should include BQ access information")
+    (is (= "tdr-prod-workflow-launcher-dev" projectId)
+        "Access information should include project ID")
+    (is (= (:name testing-snapshot) datasetName)
+        "Access information should include snapshot name")))

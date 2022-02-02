@@ -46,4 +46,6 @@
     <include file="changesets/20210910_AddRetryToTerraDataRepoSourceDetails.xml"      relativeToChangelogFile="true"/>
     <include file="changesets/20211102_WorkloadWatchersDataCompatibilityUpdate.xml"   relativeToChangelogFile="true"/>
     <include file="changesets/20211110_AddPollingIntervalColumn.xml"                  relativeToChangelogFile="true"/>
+    <include file="changesets/20220119_TerraDataRepoSourceAddLoadTagColumn.xml"       relativeToChangelogFile="true"/>
+    <include file="changesets/20220125_TerraDataRepoSourceRemoveTableColumnName.xml"  relativeToChangelogFile="true"/>
 </databaseChangeLog>

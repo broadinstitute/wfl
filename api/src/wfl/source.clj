@@ -3,6 +3,7 @@
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
+            [clojure.string        :as str]
             [wfl.api.workloads     :refer [defoverload] :as workloads]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
@@ -19,18 +20,17 @@
            [wfl.util UserException]))
 
 ;; specs
-(s/def ::column string?)
 (s/def ::snapshotReaders (s/* util/email-address?))
 (s/def ::snapshots (s/* ::all/uuid))
 (s/def ::pollingIntervalMinutes int?)
 (s/def ::tdr-source
   (s/keys :req-un [::all/name
-                   ::column
                    ::all/dataset
                    ::all/table
                    ::snapshotReaders]
           :opt-un [::snapshots
-                   ::pollingIntervalMinutes]))
+                   ::pollingIntervalMinutes
+                   ::datarepo/loadTag]))
 
 (s/def ::snapshot-list-source
   (s/keys :req-un [::all/name ::snapshots]))
@@ -100,9 +100,9 @@
 (def ^:private ^:const tdr-source-serialized-fields
   {:dataset                :dataset
    :table                  :dataset_table
-   :column                 :table_column_name
    :snapshotReaders        :snapshot_readers
-   :pollingIntervalMinutes :polling_interval_minutes})
+   :pollingIntervalMinutes :polling_interval_minutes
+   :loadTag                :load_tag})
 
 (def ^:private bigquery-datetime-format
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
@@ -135,12 +135,12 @@
 (defn datarepo-source-validate-request-or-throw
   "Verify that the `dataset` exists and that WFL has the necessary permissions
    to read it."
-  [{:keys [dataset table column skipValidation] :as source}]
+  [{:keys [dataset table skipValidation] :as source}]
   (if skipValidation
     (assoc source :dataset {:id (get source :dataset)})
     (let [dataset (datarepo/datasets dataset)]
-      (doto (datarepo/table-or-throw table dataset)
-        (datarepo/throw-unless-column-exists column dataset))
+      (datarepo/table-or-throw table dataset)
+      (datarepo/metadata-table-path-or-throw table dataset)
       (assoc source :dataset dataset))))
 
 (defn ^:private filter-and-combine-tdr-source-details
@@ -164,23 +164,25 @@
 
 (defn ^:private find-new-rows
   "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table column] :as source}
-   [begin end                            :as _interval]]
+  [{:keys [dataset details table loadTag] :as source}
+   [begin end                             :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
                     (log-prefix source) (:name dataset) table begin end))
-  (let [wfl   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                (postgres/get-table tx details))
-        old   (filter-and-combine-tdr-source-details wfl)
-        start (if-let [start_time (:start_time old)]
-                (-> start_time
-                    (util/latest (instant/read-instant-timestamp begin))
-                    timestamp-to-offsetdatetime
-                    (.format bigquery-datetime-format))
-                begin)
-        tdr   (-> dataset
-                  (datarepo/query-table-between
-                   table column [start end] [:datarepo_row_id])
-                  :rows flatten)]
+  (let [wfl     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (postgres/get-table tx details))
+        old     (filter-and-combine-tdr-source-details wfl)
+        start   (if-let [start_time (:start_time old)]
+                  (-> start_time
+                      (util/latest (instant/read-instant-timestamp begin))
+                      timestamp-to-offsetdatetime
+                      (.format bigquery-datetime-format))
+                  begin)
+        filters   {:ingestTime [start end]
+                   :loadTag    loadTag}
+        tdr     (-> (datarepo/query-metadata-table
+                     dataset table filters [:datarepo_row_id])
+                    :rows
+                    flatten)]
     (when (seq tdr) (remove (set (:datarepo_row_ids old)) tdr))))
 
 (defn ^:private go-create-snapshot!
@@ -212,9 +214,9 @@
            (map-indexed create-snapshot)))))
 
 (defn ^:private get-pending-tdr-jobs [{:keys [details] :as _source}]
-  (let [query "SELECT id, snapshot_creation_job_id FROM %s
-               WHERE snapshot_creation_job_status = 'running'
-               ORDER BY id ASC"]
+  (let [query (str/join \space ["SELECT id, snapshot_creation_job_id FROM %s"
+                                "WHERE snapshot_creation_job_status = 'running'"
+                                "ORDER BY id ASC"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -323,8 +325,8 @@
   [{:keys [type id last_checked pollingIntervalMinutes] :as _source} utc-now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked utc-now)
-        polling-interval (or pollingIntervalMinutes
-                             tdr-source-default-polling-interval-minutes)]
+        polling-interval   (or pollingIntervalMinutes
+                               tdr-source-default-polling-interval-minutes)]
     (log/debug {:type               type
                 :id                 id
                 :minutes-since-poll minutes-since-poll
@@ -353,11 +355,11 @@
 (defn ^:private peek-tdr-source-details
   "Get first unconsumed snapshot record from `details` table."
   [{:keys [details] :as _source}]
-  (let [query "SELECT * FROM %s
-               WHERE consumed    IS NULL
-               AND   snapshot_id IS NOT NULL
-               ORDER BY id ASC
-               LIMIT 1"]
+  (let [query (str/join \space ["SELECT * FROM %s"
+                                "WHERE consumed IS NULL"
+                                "AND snapshot_id IS NOT NULL"
+                                "ORDER BY id ASC"
+                                "LIMIT 1"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -372,9 +374,9 @@
 (defn ^:private tdr-source-queue-length
   "Return the number of unconsumed snapshot records from `details` table."
   [{:keys [details] :as _source}]
-  (let [query "SELECT COUNT(*) FROM %s
-               WHERE consumed IS NULL
-               AND   snapshot_creation_job_status <> 'failed'"]
+  (let [query (str/join \space ["SELECT COUNT(*) FROM %s"
+                                "WHERE consumed IS NULL"
+                                "AND snapshot_creation_job_status <> 'failed'"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
            (jdbc/query tx)
@@ -419,7 +421,7 @@
 (def ^:private ^:const tdr-snapshot-list-name "TDR Snapshots")
 (def ^:private ^:const tdr-snapshot-list-type "TDRSnapshotListSource")
 
-(defn tdr-snappshot-list-validate-request-or-throw
+(defn tdr-snapshot-list-validate-request-or-throw
   [{:keys [skipValidation] :as source}]
   (letfn [(snapshot-or-throw [snapshot-id]
             (try
@@ -452,10 +454,10 @@
 (defn ^:private update-tdr-snapshot-list [workload]  workload)
 
 (defn ^:private peek-tdr-snapshot-details-table [{:keys [items] :as _source}]
-  (let [query "SELECT *        FROM %s
-               WHERE  consumed IS NULL
-               ORDER BY id ASC
-               LIMIT 1"]
+  (let [query (str/join \space ["SELECT * FROM %s"
+                                "WHERE consumed IS NULL"
+                                "ORDER BY id ASC"
+                                "LIMIT 1"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query items)
            (jdbc/query tx)
@@ -491,7 +493,7 @@
 (defmethod create-source! tdr-snapshot-list-name
   [tx id request]
   (write-tdr-snapshot-list
-   tx id (tdr-snappshot-list-validate-request-or-throw request)))
+   tx id (tdr-snapshot-list-validate-request-or-throw request)))
 
 (defoverload load-source!   tdr-snapshot-list-type  load-tdr-snapshot-list)
 (defoverload start-source!  tdr-snapshot-list-type  start-tdr-snapshot-list)

@@ -127,7 +127,6 @@
                {:name            "Terra DataRepo"
                 :dataset         (str util/uuid-nil)
                 :table           "table"
-                :column          "column"
                 :snapshotReaders []}
                source)
     :executor (merge

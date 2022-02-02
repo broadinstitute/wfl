@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="okotsopo@broadinstitute.org"
+               dbms="postgresql"
+               id="20220119"
+               logicalFilePath="20220119_TerraDataRepoSourceAddLoadTagColumn.xml"
+               runInTransaction="false">
+        <comment>
+            When load_tag is specified, TerraDataRepoSource
+            will only snapshot new rows matching the load_tag
+            sourced from corresponding TDR row metadata table.
+        </comment>
+        <sql>
+            ALTER TABLE TerraDataRepoSource
+            ADD load_tag TEXT;              -- Only snapshot rows with row metadata load_tag
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -523,23 +523,17 @@
 ;; not already an active workflow at the `HEAD`.
 ;;
 ;; ** Admittedly, this is still a problem with this design.
-(defn ^:private remove-nil-and-join
-  "Remove nil elements of `vec` and join with `separator`."
-  ([vec separator]
-   (->> vec (remove nil?) (str/join separator)))
-  ([vec]
-   (remove-nil-and-join vec \space)))
-
 (defn ^:private terra-executor-workflows-sql-params
   "Return sql and params that query `details` for non-retried workflows
   matching `submission` and/or `status` if specified."
   [{:keys [details] :as _executor} {:keys [submission status] :as _filters}]
-  (let [query (remove-nil-and-join ["SELECT * FROM %s"
-                                    "WHERE workflow IS NOT NULL"
-                                    "AND retry IS NULL"
-                                    (when submission "AND submission = ?")
-                                    (when status "AND status = ?")
-                                    "ORDER BY id ASC"])]
+  (let [query (util/remove-empty-and-join
+               ["SELECT * FROM %s"
+                "WHERE workflow IS NOT NULL"
+                "AND retry IS NULL"
+                (when submission "AND submission = ?")
+                (when status "AND status = ?")
+                "ORDER BY id ASC"])]
     (->> [submission status]
          (concat [(format query details)])
          (remove nil?))))

@@ -261,7 +261,6 @@
         source    {:name                   "Terra DataRepo"
                    :dataset                "79fc88f5-dcf4-48b0-8c01-615dfbc1c63a"
                    :table                  "flowcells"
-                   :column                 "last_modified_date"
                    :snapshotReaders        ["hornet@firecloud.org"]
                    :pollingIntervalMinutes 1}
         executor  {:name                       "Terra"
@@ -401,9 +400,9 @@
              (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest inputs for the illimina_genotyping_array pipeline into the
-   illimina_genotyping_array `dataset`"
-  [dataset]
+  "Ingest inputs for the illumina_genotyping_array pipeline into the
+   illumina_genotyping_array `dataset`"
+  [dataset-id load-tag]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-tdr-test-bucket
     (fn [temporary-cloud-storage-folder]
@@ -415,7 +414,7 @@
               (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
-        (datarepo/poll-job (datarepo/ingest-table dataset file "inputs"))))))
+        (datarepo/poll-job (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
 
 (deftest ^:parallel test-workload-sink-outputs-to-tdr
   (fixtures/with-fixtures
@@ -428,29 +427,52 @@
        "workflow-launcher-dev"
        [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
          :accessLevel "OWNER"}])]
-    (fn [[dataset workspace]]
-      (let [source   {:name                   "Terra DataRepo"
-                      :dataset                dataset
+    (fn [[dataset-id workspace]]
+      (let [dataset  (datarepo/datasets dataset-id)
+            source   {:name                   "Terra DataRepo"
+                      :dataset                dataset-id
                       :table                  "inputs"
-                      :column                 "ingested"
                       :snapshotReaders        ["hornet@firecloud.org"]
-                      :pollingIntervalMinutes 1}
+                      :pollingIntervalMinutes 1
+                      :loadTag                "loadTagToMonitor"}
             executor {:name                       "Terra"
                       :workspace                  workspace
                       :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
                       :methodConfigurationVersion 1
                       :fromSource                 "importSnapshot"}
             sink     {:name        "Terra DataRepo"
-                      :dataset     dataset
+                      :dataset     dataset-id
                       :table       "outputs"
                       :fromOutputs (resources/read-resource
                                     "illumina_genotyping_array/fromOutputs.edn")}
             workload (endpoints/exec-workload
                       (workloads/covid-workload-request source executor sink))]
         (try
-          (ingest-illumina-genotyping-array-inputs dataset)
-          (is (util/poll #(seq (endpoints/get-workflows workload)) 20 100)
-              "a workflow should have been created")
+          (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
+          (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
+          (let [row-ids      (-> dataset
+                                 (datarepo/query-metadata-table
+                                  (:table source) {} [:datarepo_row_id])
+                                 :rows
+                                 flatten)
+                where-load   {:loadTag (:loadTag source)}
+                keep-row-ids (-> dataset
+                                 (datarepo/query-metadata-table
+                                  (:table source) where-load [:datarepo_row_id])
+                                 :rows
+                                 flatten)
+                [workflow & rest]
+                (util/poll #(seq (endpoints/get-workflows workload)) 20 100)]
+            (is (== 2 (count row-ids))
+                "2 rows should have been ingested")
+            (is (== 1 (count keep-row-ids))
+                "1 row should have been ingested with our monitored load tag")
+            (is workflow
+                "One workflow should have been created")
+            (is (= (first keep-row-ids) (:entity workflow))
+                "Row ingested with monitored load tag should have been submitted")
+            (is (empty? rest)
+                "Only one workflow should have been created"))
           (finally
             (endpoints/stop-workload workload)))
         ;; Note: when the workload's workflows have finished,
