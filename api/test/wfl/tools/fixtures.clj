@@ -193,6 +193,10 @@
    datarepo/delete-snapshots-then-dataset
    f))
 
+;; Recommendation: only call this within a temporary dataset.
+;; If calling within a fixed dataset, running the same test concurrently
+;; may fail due to exclusive dataset locking on snapshot deletion.
+;;
 (defn with-temporary-snapshot
   "Create a temporary Terra Data Repository Snapshot with `snapshot-request`"
   [snapshot-request f]

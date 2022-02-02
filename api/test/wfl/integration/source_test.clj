@@ -1,15 +1,16 @@
 (ns wfl.integration.source-test
-  (:require [clojure.test          :refer [deftest is testing use-fixtures]]
-            [clojure.java.jdbc     :as jdbc]
-            [clojure.set           :as set]
-            [clojure.spec.alpha    :as s]
-            [wfl.api.workloads     :as workloads]
-            [wfl.service.datarepo  :as datarepo]
-            [wfl.service.postgres  :as postgres]
-            [wfl.source            :as source]
-            [wfl.stage             :as stage]
-            [wfl.tools.fixtures    :as fixtures]
-            [wfl.util              :as util])
+  (:require [clojure.test         :refer [deftest is testing use-fixtures]]
+            [clojure.java.jdbc    :as jdbc]
+            [clojure.set          :as set]
+            [clojure.spec.alpha   :as s]
+            [wfl.api.workloads    :as workloads]
+            [wfl.service.datarepo :as datarepo]
+            [wfl.service.postgres :as postgres]
+            [wfl.source           :as source]
+            [wfl.stage            :as stage]
+            [wfl.tools.fixtures   :as fixtures]
+            [wfl.util             :as util]
+            [clojure.string       :as str])
   (:import [java.time Instant LocalDateTime]
            [java.util UUID]
            [wfl.util  UserException]))
@@ -17,7 +18,6 @@
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
 (def ^:private testing-table-name "flowcells")
-(def ^:private testing-column-name "run_date")
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 1234)
@@ -48,8 +48,7 @@
 
 (defn ^:private create-tdr-source []
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:column         "a-column"
-          :dataset        {:name "a-dataset"}
+    (->> {:dataset        {:name "a-dataset"}
           :id             "an-id"
           :name           "Terra DataRepo"
           :skipValidation true
@@ -67,10 +66,10 @@
 (defonce all-rows
   (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
 
-(defn ^:private mock-query-table-between-all
-  "Mock datarepo/query-table-between to find all rows."
-  [_dataset _table _between interval columns]
-  (is (every? parse-timestamp interval))
+(defn ^:private mock-query-metadata-table-all
+  "Mock datarepo/query-metadata-table to find all rows."
+  [_dataset _table {:keys [ingestTime] :as _filters} columns]
+  (is (every? parse-timestamp ingestTime))
   (letfn [(field [column] {:mode "NULLABLE" :name column :type "STRING"})
           (fields [columns] (mapv field columns))]
     (-> {:jobComplete true
@@ -79,10 +78,10 @@
          :totalRows (str (count @all-rows))}
         (assoc-in [:schema :fields] (fields columns)))))
 
-(defn ^:private mock-query-table-between-miss
-  "Mock datarepo/query-table-between to miss some rows."
-  [dataset table between interval columns]
-  (-> (mock-query-table-between-all dataset table between interval columns)
+(defn ^:private mock-query-metadata-table-miss
+  "Mock datarepo/query-metadata-table to miss some rows."
+  [dataset table filters columns]
+  (-> (mock-query-metadata-table-all dataset table filters columns)
       (update-in [:rows 0] butlast)
       (assoc :totalRows (str (dec mock-new-rows-size)))))
 
@@ -99,16 +98,20 @@
                    (mapcat :datarepo_row_ids))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))]
-    (let [args          [testing-dataset testing-table-name testing-column-name
-                         (repeatedly 2 #(-> (Instant/now) str
-                                            (subs 0 (count "2021-07-14T15:47:02"))))
+    (let [interval      (repeatedly 2
+                                    #(-> (Instant/now)
+                                         str
+                                         (subs 0 (count "2021-07-14T15:47:02"))))
+          args          [testing-dataset
+                         testing-table-name
+                         {:ingestTime interval}
                          [:datarepo_row_id]]
           record-count  (int (Math/ceil (/ mock-new-rows-size 500)))
           source        (create-tdr-source)
           workload-uuid (UUID/randomUUID)]
       (testing "update-source! loads snapshots"
         (with-redefs [source/tdr-source-should-poll?   (constantly true)
-                      datarepo/query-table-between     mock-query-table-between-miss
+                      datarepo/query-metadata-table    mock-query-metadata-table-miss
                       source/check-tdr-job             mock-check-tdr-job
                       source/create-snapshots          mock-create-snapshots
                       workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
@@ -119,11 +122,11 @@
         (let [miss-count (dec mock-new-rows-size)
               miss-set   (set (rows-from source))]
           (is (== record-count (stage/queue-length source)))
-          (is (== miss-count   (total-rows mock-query-table-between-miss args)))
+          (is (== miss-count   (total-rows mock-query-metadata-table-miss args)))
           (is (== miss-count   (count miss-set)))
           (testing "update-source! adds a snapshot of rows missed in prior interval"
             (with-redefs [source/tdr-source-should-poll? (constantly true)
-                          datarepo/query-table-between   mock-query-table-between-all
+                          datarepo/query-metadata-table  mock-query-metadata-table-all
                           source/check-tdr-job           mock-check-tdr-job
                           source/create-snapshots        mock-create-snapshots
                           workloads/load-workload-for-uuid (mock-load-workload-for-uuid source)]
@@ -133,7 +136,7 @@
             (let [all-rows (rows-from source)
                   missing  (set/difference (set all-rows) miss-set)]
               (is (== (inc record-count) (stage/queue-length source)))
-              (is (== mock-new-rows-size (total-rows mock-query-table-between-all args)))
+              (is (== mock-new-rows-size (total-rows mock-query-metadata-table-all args)))
               (is (=  (last all-rows) (first missing)))
               (is (== 1 (count missing))))))))))
 
@@ -141,8 +144,7 @@
   (is (source/datarepo-source-validate-request-or-throw
        {:name    "Terra DataRepo"
         :dataset testing-dataset
-        :table   testing-table-name
-        :column  testing-column-name})))
+        :table   testing-table-name})))
 
 (deftest test-create-tdr-source-with-non-existent-dataset
   (is (thrown-with-msg?
@@ -159,14 +161,15 @@
          :dataset testing-dataset
          :table   "no_such_table"}))))
 
-(deftest test-create-tdr-source-with-invalid-dataset-column
-  (is (thrown-with-msg?
-       UserException #"Column not found"
-       (source/datarepo-source-validate-request-or-throw
-        {:name    "Terra DataRepo"
-         :dataset testing-dataset
-         :table   testing-table-name
-         :column  "no_such_column"}))))
+(deftest test-create-tdr-source-with-invalid-dataset-metadata-table
+  (with-redefs
+   [datarepo/metadata-table-name-prefix "wrong-metadata-table-name-"]
+    (is (thrown-with-msg?
+         UserException #"TDR row metadata table not found in BigQuery"
+         (source/datarepo-source-validate-request-or-throw
+          {:name    "Terra DataRepo"
+           :dataset testing-dataset
+           :table   testing-table-name})))))
 
 (deftest test-start-tdr-source
   (let [source (create-tdr-source)]
@@ -262,13 +265,13 @@
     (is (s/valid? ::source/snapshot-list-source source))))
 
 (deftest test-create-covid-workload-with-empty-snapshot-list
-  (is (source/tdr-snappshot-list-validate-request-or-throw
+  (is (source/tdr-snapshot-list-validate-request-or-throw
        {:name      "TDR Snapshots"
         :snapshots [testing-snapshot]})))
 
 (deftest test-create-covid-workload-with-invalid-snapshot
   (is (thrown-with-msg?
        UserException #"Cannot access snapshot"
-       (source/tdr-snappshot-list-validate-request-or-throw
+       (source/tdr-snapshot-list-validate-request-or-throw
         {:name     "TDR Snapshots"
          :snapshots [util/uuid-nil]}))))

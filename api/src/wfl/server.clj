@@ -85,15 +85,13 @@
   []
   (letfn [(do-update! [{:keys [id uuid] :as _workload}]
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (let [{:keys [watchers] :as workload}
-                    (workloads/load-workload-for-id tx id)
-                    slack-watchers (filter slack/slack-channel-watcher? watchers)]
+              (let [workload (workloads/load-workload-for-id tx id)]
                 (try
                   (workloads/update-workload! tx workload)
                   (catch UserException e
                     (log/warn (format "Error updating workload %s" uuid))
                     (log/warn e)
-                    (slack/notify-channels slack-watchers uuid e))))))
+                    (slack/notify-watchers workload (.getMessage e)))))))
           (try-update [{:keys [uuid] :as workload}]
             (try
               (log/info (format "Updating workload %s" uuid))
