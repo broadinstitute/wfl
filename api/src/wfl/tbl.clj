@@ -135,6 +135,28 @@
                 ::time            (Instant/now)}))
      result#))
 
+(do
+  (for [severity [:info] #_severities]
+    (let [macro   (symbol (name severity))
+          binding '[expression & {:as more}]]
+      `(defmacro ~macro ~binding
+         '(log ~'~(assoc (meta &form) :file *file*)
+               ~severity ~'~expression ~'~more)))))
+
+(defn make-log-level
+  [severity-keyword]
+  (let [macro (symbol (name severity-keyword))]
+    `(defmacro macro
+       [expression & {:as more}]
+       (log '~(assoc (meta '&form) :file *file*)
+            severity-keyword '~expression '~more))))
+
+(make-log-level :info)
+(defmacro
+  (symbol (name :info))
+  [expression & {:as more}]
+  (log ~(assoc (meta &form) :file *file*) :info ~expression ~more))
+
 (defmacro error
   [expression & {:as more}]
   `(log ~(assoc (meta &form) :file *file*) :error ~expression ~more))
