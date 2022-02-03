@@ -203,11 +203,6 @@
                                     (each (inc page) total)))))]
       (util/lazy-unchunk (each 1 0)))))
 
-(defn release-hold
-  "Let 'On Hold' workflow with ID run on Cromwell given URL."
-  [url id]
-  (post-thing "releaseHold" url id))
-
 (defn status
   "Status of the workflow with ID on Cromwell given URL."
   [url id]
