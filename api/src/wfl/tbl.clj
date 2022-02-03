@@ -117,57 +117,38 @@
   stdout-logger)
 
 (defmacro log
-  "Log `expression` in `context` with `severity` and `more` fields."
+  "Log `expression` with `severity` and `more` fields."
   [context severity expression more]
-  `(let [context#   ~context
-         function#  '~(:expression context)
+  `(let [context#   ~context #_(assoc (meta &form) :file *file*)
          result#    ~expression
          severity#  ~severity]
      (when (@active-severity-predicate severity#)
        (-write *logger*
-               {::message        (merge {:column    (:column    context#)
+               {::message        (merge {:column    (:column context#)
                                          :namespace '~(ns-name *ns*)
                                          :result    result#} ~more)
                 ::severity       (str/upper-case (name severity#))
                 ::sourceLocation {:file     (:file context#)
-                                  :function '~expression
+                                  :function ~expression
                                   :line     (:line context#)}
                 ::time            (Instant/now)}))
      result#))
 
-(do
-  (for [severity [:info] #_severities]
-    (let [macro   (symbol (name severity))
-          binding '[expression & {:as more}]]
-      `(defmacro ~macro ~binding
-         '(log ~'~(assoc (meta &form) :file *file*)
-               ~severity ~'~expression ~'~more)))))
+(defmacro make-log-macros
+  []
+  (let [binding '[expression & {:as more}]]
+    `(do
+       ~@(for [severity severities]
+           (let [severity# severity]
+             `(defmacro ~(symbol (name severity#)) ~binding
+                (log (assoc (meta ~'&form) :file *file*)
+                     ~severity# ~'expression ~'more)))))))
 
-(defn make-log-level
-  [severity-keyword]
-  (let [macro (symbol (name severity-keyword))]
-    `(defmacro macro
-       [expression & {:as more}]
-       (log '~(assoc (meta '&form) :file *file*)
-            severity-keyword '~expression '~more))))
 
-(make-log-level :info)
-(defmacro
-  (symbol (name :info))
-  [expression & {:as more}]
-  (log ~(assoc (meta &form) :file *file*) :info ~expression ~more))
+(eval (macroexpand '(make-log-macros)))
 
-(defmacro error
-  [expression & {:as more}]
-  `(log ~(assoc (meta &form) :file *file*) :error ~expression ~more))
+(info :fnord :foo "bar")
 
-(defmacro debug
-  [expression & {:as more}]
-  `(log ~(assoc (meta &form) :file *file*) :debug ~expression ~more))
-
-(type (ns-name *ns*))
-
-(debug :fnord)
 (error :fnord)
 (error 'fnord)
 (error (symbol "fnord"))
