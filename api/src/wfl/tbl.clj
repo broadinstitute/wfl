@@ -8,7 +8,7 @@
 
 ;; https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 ;;
-(def severities
+(def ^:private severities
   "The log severity keywords by increasing severity."
   [:debug :info :notice :warning :error :critical :alert :emergency])
 
@@ -21,14 +21,14 @@
   [severity]
   (some severity? (-> severity str/lower-case keyword)))
 
-(def active-map
+(def ^:private active-map
   "Map a severity keyword to a set of active severities."
   (loop [sofar {} severities severities]
     (if-let [severity (first severities)]
       (recur (assoc sofar severity (set severities)) (rest severities))
       sofar)))
 
-(def active-severity-predicate
+(def ^:private active-severity-predicate
   "The current active severity predicate."
   (atom (:info active-map)))
 
@@ -39,14 +39,9 @@
           (-> (if (empty? severity) "info" severity)
               str/lower-case keyword active-map)))
 
-(defn active-severity?
-  "True when the `severity` keyword should be logged."
-  [severity]
-  (@active-severity-predicate severity))
-
 ;; https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
 ;;
-(def google-fields
+(def ^:private google-fields
   "Map WFL's log field names to what Stackdriver recognizes."
   {::httpRequest    :httpRequest
    ::insertId       ::lgc/insertId
@@ -135,6 +130,7 @@
      result#))
 
 (defmacro make-log-macros
+  "Define a (log expression ...) macro for each keyword in `severities`."
   []
   (let [binding '[expression & {:as more}]]
     `(do
@@ -144,26 +140,4 @@
                 (log (assoc (meta ~'&form) :file *file*)
                      ~severity# ~'expression ~'more)))))))
 
-
-(eval (macroexpand '(make-log-macros)))
-
-(info :fnord :foo "bar")
-
-(error :fnord)
-(error 'fnord)
-(error (symbol "fnord"))
-(macroexpand '(error :fnord))
-(json/pprint (macroexpand '(error :fnord)))
-
-(def two-three {:two 3})
-
-(error (assoc two-three :three 4) :fnord (str "one" \: 23))
-(error #{assoc two-three :three 4} :fnord (str "one" \: 23))
-(error ['assoc two-three :three 4] :fnord (str "one" \: 23))
-(error (list 'assoc two-three :three 4) :fnord (str "one" \: 23))
-(error 'assoc :fnord (str "one" \: 23))
-
-(def twenty-three 23)
-
-(macroexpand '(error twenty-three))
-(json/pprint (macroexpand '(error twenty-three)))
+(make-log-macros)
