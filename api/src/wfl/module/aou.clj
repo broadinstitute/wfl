@@ -180,8 +180,8 @@
         workloads (jdbc/query tx ["SELECT * FROM workload WHERE project = ? AND pipeline = ?::pipeline AND release = ? AND output = ?"
                                   project pipeline release slashified-output])]
     (when (< 1 (count workloads))
-      (log/warn "Found more than 1 workloads!")
-      (log/error workloads))
+      (log/warning "Found more than 1 workloads!")
+      (log/error   workloads))
     (if-let [workload (first workloads)]
       (:id workload)
       (let [id            (->> {:commit   commit
