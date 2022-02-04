@@ -28,15 +28,15 @@
 
 (deftest level-test
   (testing "basic logging levels"
-    (with-redefs [log/logging-level (atom :debug)]
-      (is (logged? (with-out-str (log/info "Hello World!")) :info "Hello World!"))
-      (is (logged? (with-out-str (log/warn "This is a warning")) :warning "This is a warning"))
-      (is (logged? (with-out-str (log/error "This is an error")) :error "This is an error"))
-      (is (logged? (with-out-str (log/debug "This is just a debugging message")) :debug "This is just a debugging message")))))
+    (with-redefs [log/active-severity-predicate (atom (:debug @#'log/active-map))]
+      (is (logged? (with-out-str (log/info    "Hello World!"))      :info    "Hello World!"))
+      (is (logged? (with-out-str (log/warning "This is a warning")) :warning "This is a warning"))
+      (is (logged? (with-out-str (log/error   "This is an error"))  :error   "This is an error"))
+      (is (logged? (with-out-str (log/debug   "For debugging"))     :debug   "For debugging")))))
 
 (deftest severity-level-filtering-test
   (testing "test current logging level correctly ignores lesser levels"
-    (with-redefs [log/logging-level (atom :info)]
+    (with-redefs [log/active-severity-predicate (atom (:info @#'log/active-map))]
       (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged? (with-out-str (log/info "Info Message")) :info "Info Message")))))
 

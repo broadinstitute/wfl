@@ -243,8 +243,8 @@
       "running"   metadata
       "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
       ;; Likely failed job, or otherwise unknown job status:
-      (do (log/warn {:metadata metadata
-                     :result   (result-or-catch get-job-result)})
+      (do (log/warning {:metadata metadata
+                        :result   (result-or-catch get-job-result)})
           metadata))))
 
 (defn ^:private write-snapshot-id

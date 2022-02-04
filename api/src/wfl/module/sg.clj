@@ -111,8 +111,8 @@
   (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
-      (log/warn "More than 1 Clio BAM record")
-      (log/error {:bam_record bam :count n}))
+      (log/warning "More than 1 Clio BAM record")
+      (log/error   {:bam_record bam :count n}))
     (first records)))
 
 (defn ^:private clio-cram-record
@@ -121,8 +121,8 @@
   (let [records (clio/query-cram clio {:cram_path input_cram})
         n       (count records)]
     (when (not= 1 n)
-      (log/warn "Expected 1 Clio record with cram_path")
-      (log/error {:count n :cram_path input_cram}))
+      (log/warning "Expected 1 Clio record with cram_path")
+      (log/error   {:count n :cram_path input_cram}))
     (-> records first (select-keys [:billing_project
                                     :data_type
                                     :document_status
@@ -194,8 +194,10 @@
                   (select-keys (vals cromwell->clio)))
           final (zipmap (keys bam) (map finalize (vals bam)))]
       (when (some empty? (vals final))
-        (log/warn "Bad metadata from executor" :workload workload-uuid :labels labels)
-        (log/error {:executor executor :metadata metadata} :workload workload-uuid :labels labels))
+        (log/warning "Bad metadata from executor"
+                     :workload workload-uuid :labels labels)
+        (log/error   {:executor executor :metadata metadata}
+                     :workload workload-uuid :labels labels))
       (maybe-update-clio-and-write-final-files clio-url final metadata))))
 
 ;; visible for testing

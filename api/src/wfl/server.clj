@@ -128,11 +128,8 @@
   []
   (letfn [(get-logging-level []
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (let [config (config/get-config tx "LOGGING_LEVEL")]
-                (reset! log/logging-level
-                        (if (empty? config)
-                          :info
-                          (-> config str/lower-case keyword))))))]
+              (log/set-active-severity
+               (config/get-config tx "LOGGING_LEVEL"))))]
     (get-logging-level)
     (future
       (while true
