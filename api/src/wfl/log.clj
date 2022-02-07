@@ -2,8 +2,7 @@
   "Log to GCP Stackdriver."
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]
-            [clojure.string     :as str]
-            [wfl.debug          :as debug])
+            [clojure.string     :as str])
   (:import [java.time Instant]))
 
 (alias 'lgc (ns-name (create-ns 'logging.googleapis.com)))
@@ -36,7 +35,7 @@
 
 (def active-severity-predicate
   "The current active severity predicate."
-  (atom (:info active-map)))
+  (atom (:debug active-map)))
 
 (defn set-active-severity
   "Set `active-severity?` for the `severity` string."
@@ -72,7 +71,6 @@
 (defn ^:private value-fn
   "Preserve more of `value` EDN somehow."
   [key value]
-  '(wfl.debug/trace [key value])
   ((:value-fn json/default-write-options)
    key
    (cond (char?    value) (pr-str value)
@@ -109,7 +107,6 @@
   "A logger to write to standard output"
   (reify Logger
     (-write [logger edn]
-      '(debug/trace [logger edn])
       (-> edn
           (json/write-str :escape-slash false
                           :key-fn       key-fn
@@ -121,14 +118,13 @@
   stdout-logger)
 
 (defn log
-  [context severity result]
-  (wfl.debug/trace [context severity result])
+  [context severity result & {:as more}]
   (let [{:keys [column expression file line namespace]} context]
     (when (@active-severity-predicate severity)
       (-write *logger*
-              {::message        {:column    column
-                                 :namespace namespace
-                                 :result    result}
+              {::message        (merge {:column    column
+                                        :namespace namespace
+                                        :result    result} more)
                ::severity       (str/upper-case (name severity))
                ::sourceLocation {:file     file
                                  :function expression
@@ -156,8 +152,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :debug result# ~@more)))
 
 (defmacro info
@@ -165,8 +161,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :info result# ~@more)))
 
 (defmacro notice
@@ -174,8 +170,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :notice result# ~@more)))
 
 (defmacro warning
@@ -183,8 +179,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :warning result# ~@more)))
 
 (defmacro error
@@ -192,8 +188,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :error result# ~@more)))
 
 (defmacro critical
@@ -201,8 +197,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :critical result# ~@more)))
 
 (defmacro alert
@@ -210,8 +206,8 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :alert result# ~@more)))
 
 (defmacro emergency
@@ -219,6 +215,6 @@
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
-                 :file       *file*
-                 :namespace  (ns-name *ns*))
+                 :file       ~*file*
+                 :namespace  '~(ns-name *ns*))
           :emergency result# ~@more)))
