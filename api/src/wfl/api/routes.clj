@@ -157,10 +157,11 @@
   "Like [[exception-handler]] but also log information about the exception."
   [status message labels severity return-trace exception request]
   (let [{:keys [body] :as result}
-        (exception-handler status message exception request return-trace)]
+        (exception-handler status message exception request return-trace)
+        message (util/make-map exception body)]
     (case severity
-      :warning (log/log :warning (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
-      :error (log/log :error (str (util/make-map exception body)) :logging.googleapis.com/labels labels))
+      :warning (log/warning message ::log/labels labels)
+      :error   (log/error   message ::log/labels labels))
     result))
 
 (def exception-middleware

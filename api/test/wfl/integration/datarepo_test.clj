@@ -36,14 +36,6 @@
                (let [dataset (datarepo/datasets %)]
                  (is (= % (:id dataset))))))))))
 
-(defn ^:private replace-urls-with-file-ids
-  [file->fileid object]
-  (letfn [(f [[type value]]
-            (case type
-              "File" (file->fileid value)
-              value))]
-    (workflows/traverse f object)))
-
 (def ^:private pi (* 4 (Math/atan 1)))
 
 (def ^:private outputs

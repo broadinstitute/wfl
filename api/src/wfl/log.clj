@@ -5,8 +5,6 @@
             [clojure.string     :as str])
   (:import [java.time Instant]))
 
-(alias 'lgc (ns-name (create-ns 'logging.googleapis.com)))
-
 ;; https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 ;;
 (def ^:private severities
@@ -49,15 +47,15 @@
 (def ^:private google-fields
   "Map WFL's log field names to what Stackdriver recognizes."
   {::httpRequest    :httpRequest
-   ::insertId       ::lgc/insertId
-   ::labels         ::lgc/labels
+   ::insertId       :logging.googleapis.com/insertId
+   ::labels         :logging.googleapis.com/labels
    ::message        :message
-   ::operation      ::lgc/operation
+   ::operation      :logging.googleapis.com/operation
    ::severity       :severity
-   ::sourceLocation ::lgc/sourceLocation
-   ::spanId         ::lgc/spanId
+   ::sourceLocation :logging.googleapis.com/sourceLocation
+   ::spanId         :logging.googleapis.com/spanId
    ::time           :time
-   ::trace          ::lgc/trace})
+   ::trace          :logging.googleapis.com/trace})
 
 (defn ^:private key-fn
   "Preserve the namespace of `key` when qualified."
