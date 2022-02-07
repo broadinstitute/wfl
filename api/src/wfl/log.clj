@@ -136,76 +136,89 @@
                ::time            (Instant/now)}))
     result))
 
-fnord
+(defn make-log-macro
+  [level]
+  (let [expression `expression#
+        result     `result#]
+    `(defmacro ~(symbol (name level))
+       [~expression]
+       `(let [~result ~~expression]
+          (log (assoc ~(meta ~'&form)
+                      :expression ~~expression
+                      :file       *file*
+                      :namespace  (ns-name *ns*))
+               ~~level ~result)))))
 
-(defmacro ^:private make []
-  (cons 'do
-        (for [level severities]
-          `(defmacro ~(symbol (name level)) [expression#]
-             (let [result# expression#]
-               (log (assoc (meta ~'&form)
-                           :expression expression#
-                           :file       *file*
-                           :namespace  (ns-name *ns*))
-                    ~level result#))))))
+'(make-log-macro :emergency)
 
-(defmacro ^:private maker []
-  (cons 'do
-        (for [level severities]
-          (list 'defmacro (symbol (name level)) '[expression]
-                (list 'let ['result `(identity ~'expression)]
-                      `(log (assoc (meta ~'&form)
-                                   :expression ~'expression
-                                   :file       *file*
-                                   :namespace  (ns-name *ns*))
-                            ~level ~'result))))))
-
-(defmacro ^:private makes []
-  (cons 'do
-        (for [level severities]
-          `(defmacro emergency
-             [expression#]
-             `(let [result# ~expression#]
-                (log (assoc ~(meta ~'&form)
-                            :expression '~expression#
-                            :file       *file*
-                            :namespace  (ns-name *ns*))
-                     :emergency ~result#))))))
-
-(defmacro emergency
-  [expression]
+(defmacro debug
+  [expression & more]
   `(let [result# ~expression]
      (log (assoc ~(meta &form)
                  :expression '~expression
                  :file       *file*
                  :namespace  (ns-name *ns*))
-          :emergency result#)))
+          :debug result# ~@more)))
 
-(let [gs `x#]
-  `(let [~gs 1]
-     ~@(repeat 3 `(println ~gs))))
+(defmacro info
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :info result# ~@more)))
 
-(make)
+(defmacro notice
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :notice result# ~@more)))
 
-(def twenty-3 23)
+(defmacro warning
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :warning result# ~@more)))
 
-(error twenty-3)
+(defmacro error
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :error result# ~@more)))
 
-(macroexpand '(error (str :fnord \s)))
+(defmacro critical
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :critical result# ~@more)))
 
-'(defmacro error
-   [expression]
-   `(log ~(assoc (meta &form) :file *file* :namespace '(ns-name *ns*))
-         '~expression :error ~expression))
+(defmacro alert
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :alert result# ~@more)))
 
-
-(error (str :fnord \s))
-(error :fnord)
-(error #{:fnord})
-
-,,,,,,,,,,,,,,,,,,,,,,,(emergency (str :fnord \s))
-(emergency twenty-3)
-
-(macroexpand '(emergency (str :fnord \s)))
-
-;; (remove-ns 'wfl.log)
+(defmacro emergency
+  [expression & more]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :emergency result# ~@more)))
