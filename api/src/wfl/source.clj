@@ -167,7 +167,7 @@
   [{:keys [dataset details table loadTag] :as source}
    [begin end                             :as _interval]]
   (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                    (log-prefix source) (:name dataset) table begin end) :workload uuid :labels labels)
+                    (log-prefix source) (:name dataset) table begin end))
   (let [wfl     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                   (postgres/get-table tx details))
         old     (filter-and-combine-tdr-source-details wfl)
