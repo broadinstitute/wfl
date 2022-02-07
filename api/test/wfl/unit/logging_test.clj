@@ -38,7 +38,7 @@
 (deftest severity-level-filtering-test
   (testing "test current logging level correctly ignores lesser levels"
     (with-redefs
-      [log/active-severity-predicate (atom (:info @#'log/active-map))]
+     [log/active-severity-predicate (atom (:info @#'log/active-map))]
       (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged?    (with-out-str (log/info  "Info Message"))
                       :info "Info Message")))))
