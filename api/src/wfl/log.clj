@@ -72,13 +72,13 @@
 (defn ^:private value-fn
   "Preserve more of `value` EDN somehow."
   [key value]
-  (wfl.debug/trace [key value])
+  '(wfl.debug/trace [key value])
   ((:value-fn json/default-write-options)
    key
    (cond (char?    value) (pr-str value)
          (keyword? value) (pr-str value)
          (list?    value) (pr-str value)
-         (seq?     value) (pr-str value)
+         ;; (seq?     value) (pr-str value)
          (set?     value) (pr-str value)
          :else                    value)))
 
@@ -109,7 +109,7 @@
   "A logger to write to standard output"
   (reify Logger
     (-write [logger edn]
-      (debug/trace [logger edn])
+      '(debug/trace [logger edn])
       (-> edn
           (json/write-str :escape-slash false
                           :key-fn       key-fn
@@ -120,32 +120,92 @@
   "The logger now."
   stdout-logger)
 
-(defmacro log
-  "Log `expression` with `severity` and `more` fields."
-  [context severity expression more]
-  `(let [context#   ~context #_(assoc (meta &form) :file *file*)
-         result#    ~expression
-         severity#  ~severity]
-     (when (@active-severity-predicate severity#)
-       (-write *logger*
-               {::message        (merge {:column    (:column context#)
-                                         :namespace '~(ns-name *ns*)
-                                         :result    result#} ~more)
-                ::severity       (str/upper-case (name severity#))
-                ::sourceLocation {:file     (:file context#)
-                                  :function ~expression
-                                  :line     (:line context#)}
-                ::time            (Instant/now)}))
-     result#))
+(defn log
+  [context severity result]
+  (wfl.debug/trace [context severity result])
+  (let [{:keys [column expression file line namespace]} context]
+    (when (@active-severity-predicate severity)
+      (-write *logger*
+              {::message        {:column    column
+                                 :namespace namespace
+                                 :result    result}
+               ::severity       (str/upper-case (name severity))
+               ::sourceLocation {:file     file
+                                 :function expression
+                                 :line     line}
+               ::time            (Instant/now)}))
+    result))
 
-(defmacro ^:private make-log-macros
-  "Export a (log expression ...) macro for each keyword in `severities`."
-  []
-  (let [binding '[expression & {:as more}]]
-    `(do ~@(for [severity severities]
-             (let [severity# severity]
-               `(defmacro ~(symbol (name severity#)) ~binding
-                  (log (assoc (meta ~'&form) :file *file*)
-                       ~severity# ~'expression ~'more)))))))
+fnord
 
-(make-log-macros)
+(defmacro ^:private make []
+  (cons 'do
+        (for [level severities]
+          `(defmacro ~(symbol (name level)) [expression#]
+             (let [result# expression#]
+               (log (assoc (meta ~'&form)
+                           :expression expression#
+                           :file       *file*
+                           :namespace  (ns-name *ns*))
+                    ~level result#))))))
+
+(defmacro ^:private maker []
+  (cons 'do
+        (for [level severities]
+          (list 'defmacro (symbol (name level)) '[expression]
+                (list 'let ['result `(identity ~'expression)]
+                      `(log (assoc (meta ~'&form)
+                                   :expression ~'expression
+                                   :file       *file*
+                                   :namespace  (ns-name *ns*))
+                            ~level ~'result))))))
+
+(defmacro ^:private makes []
+  (cons 'do
+        (for [level severities]
+          `(defmacro emergency
+             [expression#]
+             `(let [result# ~expression#]
+                (log (assoc ~(meta ~'&form)
+                            :expression '~expression#
+                            :file       *file*
+                            :namespace  (ns-name *ns*))
+                     :emergency ~result#))))))
+
+(defmacro emergency
+  [expression]
+  `(let [result# ~expression]
+     (log (assoc ~(meta &form)
+                 :expression '~expression
+                 :file       *file*
+                 :namespace  (ns-name *ns*))
+          :emergency result#)))
+
+(let [gs `x#]
+  `(let [~gs 1]
+     ~@(repeat 3 `(println ~gs))))
+
+(make)
+
+(def twenty-3 23)
+
+(error twenty-3)
+
+(macroexpand '(error (str :fnord \s)))
+
+'(defmacro error
+   [expression]
+   `(log ~(assoc (meta &form) :file *file* :namespace '(ns-name *ns*))
+         '~expression :error ~expression))
+
+
+(error (str :fnord \s))
+(error :fnord)
+(error #{:fnord})
+
+,,,,,,,,,,,,,,,,,,,,,,,(emergency (str :fnord \s))
+(emergency twenty-3)
+
+(macroexpand '(emergency (str :fnord \s)))
+
+;; (remove-ns 'wfl.log)
