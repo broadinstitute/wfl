@@ -37,7 +37,7 @@
   [clio thing md]
   (let [need (keep (fn [k] (when-not (k md) k)) add-keys)]
     (when-not (empty need)
-      (throw (ex-info "Need these metadata keys:" need)))
+      (throw (ex-info "Need these metadata keys:" {:need need})))
     (post clio
           (str/join "/" (into [thing "metadata"] ((apply juxt add-keys) md)))
           (apply dissoc md add-keys))))

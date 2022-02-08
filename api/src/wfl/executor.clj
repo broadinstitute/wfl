@@ -1,4 +1,4 @@
-(ns wfl.executor
+(ns wfl.executor                        ; (remove-ns 'wfl.executor)
   (:require [clojure.edn           :as edn]
             [clojure.set           :as set :refer [rename-keys]]
             [clojure.spec.alpha    :as s]
