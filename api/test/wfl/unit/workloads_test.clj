@@ -2,7 +2,7 @@
   (:require [clojure.test       :refer [deftest is testing use-fixtures]]
             [wfl.api.workloads  :as workloads]
             [wfl.tools.fixtures :refer [method-overload-fixture]])
-  (:import (clojure.lang ExceptionInfo)))
+  (:import [clojure.lang ExceptionInfo]))
 
 (deftest test-saved-before?
   (testing "in version 0.4.0, wgs workloads were serialized using CromwellWorkload table"

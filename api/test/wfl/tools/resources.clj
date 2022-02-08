@@ -3,7 +3,7 @@
             [clojure.string           :as str]
             [clojure.tools.reader.edn :as edn]
             [wfl.util                 :as util])
-  (:import (java.io FileNotFoundException)))
+  (:import [java.io FileNotFoundException]))
 
 (defn read-resource
   "Read the uniquely named resource by suffix `suffix`.
