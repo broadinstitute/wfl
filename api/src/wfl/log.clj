@@ -1,4 +1,4 @@
-(ns wfl.log
+(ns wfl.log                             ; (remove-ns 'wfl.log)
   "Log to GCP Stackdriver."
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]
@@ -128,7 +128,7 @@
                                  :function expression
                                  :line     line}
                ::time            (Instant/now)}))
-    result))
+    #_result))
 
 (defn make-log-macro
   [level]

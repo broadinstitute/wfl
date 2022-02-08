@@ -2,6 +2,7 @@
   "wfl.log wrapping for clojure.java.jdbc"
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string    :as str]
+            [wfl.debug]
             [wfl.log           :as log])
   (:import (clojure.lang IPersistentVector)
            (java.sql PreparedStatement Array)))
@@ -22,6 +23,7 @@
 (defn query
   "Logged alias for `clojure.java.jdbc/query`."
   ([db sql-params opts]
+   (wfl.debug/trace [db sql-params opts])
    (log/debug
     (str/join \space ["jdbc/query:" (format-db db) (pr-str sql-params) opts]))
    (jdbc/query db sql-params opts))
