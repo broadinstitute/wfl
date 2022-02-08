@@ -18,8 +18,8 @@
             [wfl.service.slack              :as slack]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
-  (:import (java.util.concurrent Future TimeUnit)
-           (wfl.util UserException)))
+  (:import [java.util.concurrent Future TimeUnit]
+           [wfl.util UserException]))
 
 (def description
   "The purpose of this command."

@@ -3,7 +3,7 @@
             [wfl.tools.resources :as resources]
             [wfl.tools.workflows :as workflows]
             [wfl.util            :as util])
-  (:import (clojure.lang ExceptionInfo)))
+  (:import [clojure.lang ExceptionInfo]))
 
 (defn ^:private collect-values-where-type [test? object]
   (letfn [(f [vs [t v]] (if (test? t) (conj vs v) vs))]

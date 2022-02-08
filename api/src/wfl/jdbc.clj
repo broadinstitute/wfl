@@ -1,10 +1,10 @@
 (ns wfl.jdbc
-  "wfl.log wrapping for clojure.java.jdbc"
+  "Wrap clojure.java.jdbc to log database access."
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string    :as str]
             [wfl.log           :as log])
-  (:import (clojure.lang IPersistentVector)
-           (java.sql PreparedStatement Array)))
+  (:import [clojure.lang IPersistentVector]
+           [java.sql PreparedStatement Array]))
 
 (def ^:private remember-db
   "Memoized helper to only print the db out the first time"
