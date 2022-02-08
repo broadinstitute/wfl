@@ -1,4 +1,4 @@
-(ns wfl.log                             ; (remove-ns 'wfl.log)
+(ns wfl.log
   "Log to GCP Stackdriver."
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]

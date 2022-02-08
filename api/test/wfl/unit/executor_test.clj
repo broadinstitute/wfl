@@ -1,4 +1,4 @@
-(ns wfl.unit.executor-test              ; (remove-ns 'wfl.unit.executor-test)
+(ns wfl.unit.executor-test
   (:require [clojure.test         :refer [deftest is testing]]
             [wfl.executor         :as executor]
             [wfl.service.cromwell :as cromwell]
