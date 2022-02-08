@@ -98,15 +98,9 @@
    (jdbc/insert! db table cols values opts)))
 
 (defmacro with-db-transaction
-  "Logged alias for `clojure.java.jdbc/with-db-transaction`."
-  [binding & body]
-  `(let [id#    (rand-int 10000)
-         init# ~(second binding)]
-     (log/info
-      (str/join \space ["JDBC transaction" id# "started to" (format-db init#)]))
-     (let [exe# (jdbc/with-db-transaction [~(first binding) init#] ~@body)]
-       (log/info (str/join \space ["JDBC SQL transaction" id# "ended"]))
-       exe#)))
+  "Alias `clojure.java.jdbc/with-db-transaction` for consistency."
+  [& body]
+  `(jdbc/with-db-transaction ~@body))
 
 (defmacro prepare-statement
   "Alias for `clojure.java.jdbc/prepare-statement`.
