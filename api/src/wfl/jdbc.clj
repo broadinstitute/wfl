@@ -103,12 +103,9 @@
   `(jdbc/with-db-transaction ~@body))
 
 (defmacro prepare-statement
-  "Alias for `clojure.java.jdbc/prepare-statement`.
-  Does not log since the statement would be used later."
-  ([con sql]
-   `(jdbc/prepare-statement ~con ~sql))
-  ([^java.sql.Connection con ^String sql opts]
-   `(jdbc/prepare-statement ~con ~sql ~opts)))
+  "Alias `clojure.java.jdbc/prepare-statement` for consistency."
+  [& body]
+  `(jdbc/prepare-statement ~@body))
 
 (defn get-connection
   "Logged alias for `clojure.java.jdbc/get-connection`."
