@@ -33,7 +33,7 @@
 
 (def active-severity-predicate
   "The current active severity predicate."
-  (atom (:debug active-map)))
+  (atom (:error active-map)))
 
 (defn set-active-severity
   "Set `active-severity?` for the `severity` string."
