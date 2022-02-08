@@ -1,13 +1,13 @@
 (ns wfl.service.cromwell
   "Common utilities and clients to talk to Cromwell."
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.walk :as walk]
-            [clj-http.client :as http]
-            [wfl.auth :as auth]
-            [wfl.debug :as debug]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl]))
+            [clojure.string    :as str]
+            [clojure.walk      :as walk]
+            [clj-http.client   :as http]
+            [wfl.auth          :as auth]
+            [wfl.debug         :as debug]
+            [wfl.util          :as util]
+            [wfl.wfl           :as wfl]))
 
 (def retry-status?
   "Cromwell workflow statuses eligible for retry."

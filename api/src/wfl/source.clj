@@ -1,11 +1,10 @@
-(ns wfl.source                          ; (remove-ns 'wfl.source)
+(ns wfl.source
   (:require [clojure.edn           :as edn]
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
             [clojure.set           :as set]
             [clojure.string        :as str]
             [wfl.api.workloads     :refer [defoverload] :as workloads]
-            [wfl.debug]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
@@ -216,16 +215,12 @@
 
 (defn ^:private get-pending-tdr-jobs
   [{:keys [details] :as _source}]
-  (wfl.debug/trace _source)
   (let [query (str/join \space ["SELECT id, snapshot_creation_job_id FROM %s"
                                 "WHERE snapshot_creation_job_status = 'running'"
                                 "ORDER BY id ASC"])]
-    (wfl.debug/trace query)
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (format query details)
-           wfl.debug/trace
            (jdbc/query tx)
-           wfl.debug/trace
            (map (juxt :id :snapshot_creation_job_id))))))
 
 (defn ^:private result-or-catch
@@ -311,7 +306,6 @@
 (defn ^:private update-pending-snapshot-jobs
   "Update status of 'running' TDR snapshots in `source`."
   [source]
-  (wfl.debug/trace [:update-pending-snapshot-jobs source])
   (log/debug "Looking for running snapshot jobs..." :source source)
   (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
     (when (seq pending-tdr-jobs)
@@ -346,8 +340,6 @@
   insert resulting job creation ids into database and update the
   timestamp for next time."
   [{{:keys [stopped] :as source} :source :as workload}]
-  (wfl.debug/trace [:update-tdr-source workload])
-  (wfl.debug/trace [:update-tdr-source source])
   (let [now (util/utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
       (find-and-snapshot-new-rows source now)))
