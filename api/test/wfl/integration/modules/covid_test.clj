@@ -1,4 +1,4 @@
-(ns wfl.integration.modules.covid-test
+(ns wfl.integration.modules.covid-test  ; (remove-ns 'wfl.integration.modules.covid-test)
   "Test the Sarscov2IlluminaFull COVID pipeline."
   (:require [clojure.test                   :refer [deftest is testing
                                                     use-fixtures]]
@@ -218,6 +218,9 @@
                    {:skipValidation true}
                    {:skipValidation true}))]
     (is (empty? (workloads/workflows workload)))))
+
+(comment
+  (clojure.test/test-vars [#'test-workload-state-transition]))
 
 (deftest test-workload-state-transition
   (with-redefs-fn
