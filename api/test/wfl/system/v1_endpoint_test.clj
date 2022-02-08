@@ -390,24 +390,6 @@
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
 
-(defn ^:private ingest-illumina-genotyping-array-files
-  "Return filrefs for inputs to illumina-genotyping-array dataset."
-  [dataset gcs-folder inputs-json]
-  (let [profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
-    (letfn [(ingest [source]
-              (let [dest (str/join "/" [gcs-folder (util/basename source)])]
-                (datarepo/ingest-file dataset profile source dest)))]
-      (let [input-map (->> "datasets/illumina-genotyping-array.json"
-                           resources/read-resource :schema :tables
-                           (filter (comp (partial = "inputs") :name))
-                           first :columns
-                           (filter (comp (partial = "fileref") :datatype))
-                           (map (comp keyword :name))
-                           (select-keys inputs-json))]
-        (->> input-map vals
-             (map (comp :fileId datarepo/poll-job ingest))
-             (zipmap (keys input-map)))))))
-
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest inputs for the illumina_genotyping_array pipeline into the
    illumina_genotyping_array `dataset`"

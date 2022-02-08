@@ -1,4 +1,4 @@
-(ns wfl.source
+(ns wfl.source                          ; (remove-ns 'wfl.source)
   (:require [clojure.edn           :as edn]
             [clojure.instant       :as instant]
             [clojure.spec.alpha    :as s]
@@ -286,18 +286,17 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [uuid labels] {:keys [dataset table last_checked] :as source} :source :as workload}
-   utc-now]
+  [{:keys [dataset table last_checked] :as source} utc-now]
   (let [checked      (timestamp-to-offsetdatetime last_checked)
         hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked utc-now)))
         then         (.minusHours utc-now hours-ago)
         shards->jobs (->> [then utc-now]
                           (mapv #(.format % bigquery-datetime-format))
-                          (find-new-rows workload)
+                          (find-new-rows source)
                           (create-snapshots source utc-now))]
     (when (seq shards->jobs)
       (log/info (format "%s Snapshots created from new rows in %s.%s."
-                        (log-prefix source) (:name dataset) table) :workload uuid :labels labels)
+                        (log-prefix source) (:name dataset) table))
       (write-snapshots-creation-jobs source utc-now shards->jobs))
     ;; Even if our poll did not yield new rows to snapshot, at least we tried:
     (update-last-checked source utc-now)))
@@ -341,8 +340,8 @@
   [{{:keys [stopped] :as source} :source :as workload}]
   (let [now (utc-now)]
     (when (and (not stopped) (tdr-source-should-poll? source now))
-      (find-and-snapshot-new-rows workload now)))
-  (update-pending-snapshot-jobs workload)
+      (find-and-snapshot-new-rows source now)))
+  (update-pending-snapshot-jobs source)
   ;; load and return the workload with the updated source
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (workloads/load-workload-for-uuid tx (:uuid workload))))
