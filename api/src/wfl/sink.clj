@@ -399,11 +399,11 @@
     (rename-gather-bulk uuid dataset table outputs fromOutputs)
     (catch Exception cause
       (throw (ex-info "Failed to coerce workflow outputs to dataset columns"
-                      {:outputs     outputs
-                       :table       table
+                      {:dataset     dataset
                        :fromOutputs fromOutputs
-                       :workflow    workflow
-                       :dataset     dataset} cause)))))
+                       :outputs     outputs
+                       :table       table
+                       :workflow    workflow} cause)))))
 
 (defn ^:private start-ingesting-outputs
   "Start ingesting the `workflow` outputs as a new row in the target
