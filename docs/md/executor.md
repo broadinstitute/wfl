@@ -62,7 +62,7 @@ in the Terra UI.
 Prerequisites:
 
 - The workspace must exist prior to workload creation.
-- `workflow-launcher@firecloud.org` must be a workspace "Owner" in order to
+- `workflow-launcher@firecloud.org` must be a workspace "Writer" in order to
   import snapshots to the workspace.
 - The workspace must be compatible with any downstream processing stage that
   consumes its workflows.
