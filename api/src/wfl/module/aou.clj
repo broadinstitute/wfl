@@ -183,10 +183,10 @@
                                             "AND output = ?"])
         workloads                (jdbc/query tx [query-string
                                                  project pipeline
-                                                 release slashified-output])]
-    (when (< 1 (count workloads))
-      (log/warning "Found more than 1 workload!")
-      (log/error   workloads))
+                                                 release slashified-output])
+        n                        (count workloads)]
+    (when (> n 1)
+      (log/error "Too many workloads" :count n :workloads workloads))
     (if-let [workload (first workloads)]
       (:id workload)
       (let [id            (->> {:commit   commit
