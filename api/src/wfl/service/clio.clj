@@ -1,9 +1,10 @@
 (ns wfl.service.clio
   "Manage Clio's BAM and CRAM indexes."
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clj-http.client :as http]
-            [wfl.auth :as auth]))
+            [clojure.string    :as str]
+            [clj-http.client   :as http]
+            [wfl.auth          :as auth]
+            [wfl.util          :as util]))
 
 (defn api
   "The Clio API URL for server at `clio`."
@@ -18,8 +19,7 @@
        :headers (merge {"Content-Type" "application/json"}
                        (auth/get-service-account-header))
        :body    (json/write-str md :escape-slash false)}
-      http/request :body
-      (json/read-str :key-fn keyword)))
+      http/request util/response-body-json))
 
 (def add-keys
   "The keys Clio metadata needs to add a BAM or CRAM record."

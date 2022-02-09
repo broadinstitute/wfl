@@ -31,7 +31,7 @@
 (defn parse-int [s] (do-or-nil (Integer/parseInt s)))
 
 (defn parse-json
-  "Parse JSON `object` into keyword->object map recursively."
+  "Try to parse `object` string as JSON."
   [^String object]
   (try (json/read-str object :key-fn keyword)
        (catch Throwable x
