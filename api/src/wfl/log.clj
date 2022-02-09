@@ -7,39 +7,39 @@
 
 ;; https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 ;;
-(def ^:private severities
-  "The log severity keywords by increasing severity."
+(def ^:private levels
+  "The log level keywords by increasing severity."
   [:debug :info :notice :warning :error :critical :alert :emergency])
 
-(def ^:private severity?
-  "The set of log severity keywords."
-  (set severities))
+(def ^:private level?
+  "The set of log level keywords."
+  (set levels))
 
-(defn ^:private severity-string?
-  "True when `severity` string names a log severity."
-  [severity]
-  (some severity? (-> severity str/lower-case keyword)))
+(defn ^:private level-string?
+  "True when `level` string names a log level."
+  [level]
+  (some level? (-> level str/lower-case keyword)))
 
-(s/def ::severity-string (s/and string? severity-string?))
-(s/def ::level-request   (s/keys :req-un [::severity-string]))
-(s/def ::level-response  (s/keys :req-un [::severity-string]))
+(s/def ::level-string (s/and string? level-string?))
+(s/def ::level-request   (s/keys :req-un [::level-string]))
+(s/def ::level-response  (s/keys :req-un [::level-string]))
 
 (def ^:private active-map
-  "Map a severity keyword to a set of active severities."
-  (loop [sofar {} severities severities]
-    (if-let [severity (first severities)]
-      (recur (assoc sofar severity (set severities)) (rest severities))
+  "Map a level keyword to a set of active levels."
+  (loop [sofar {} levels levels]
+    (if-let [level (first levels)]
+      (recur (assoc sofar level (set levels)) (rest levels))
       sofar)))
 
-(def active-severity-predicate
-  "The current active severity predicate."
+(def active-level-predicate
+  "The current active level predicate."
   (atom (:error active-map)))
 
-(defn set-active-severity
-  "Set `active-severity?` for the `severity` string."
-  [severity]
-  (reset! active-severity-predicate
-          (-> (if (empty? severity) "info" severity)
+(defn set-active-level
+  "Set `active-level?` for the `level` string."
+  [level]
+  (reset! active-level-predicate
+          (-> (if (empty? level) "info" level)
               str/lower-case keyword active-map)))
 
 ;; https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields
@@ -118,7 +118,7 @@
 (defn log
   [level context severity result & {:as more}]
   (let [{:keys [column expression file line namespace]} context]
-    (when (@active-severity-predicate level)
+    (when (@active-level-predicate level)
       (-write *logger*
               {::message        (merge {:column    column
                                         :namespace namespace
@@ -129,21 +129,6 @@
                                  :line     line}
                ::time            (Instant/now)}))
     #_result))
-
-(defn make-log-macro
-  [level]
-  (let [expression `expression#
-        result     `result#]
-    `(defmacro ~(symbol (name level))
-       [~expression]
-       `(let [~result ~~expression]
-          (log :level (assoc ~(meta ~'&form)
-                             :expression ~~expression
-                             :file       *file*
-                             :namespace  (ns-name *ns*))
-               "SEVERITY" ~~level ~result)))))
-
-'(make-log-macro :emergency)
 
 (defmacro debug
   [expression & more]
