@@ -74,7 +74,6 @@
    (cond (char?    value) (pr-str value)
          (keyword? value) (pr-str value)
          (list?    value) (pr-str value)
-         ;; (seq?     value) (pr-str value)
          (set?     value) (pr-str value)
          :else                    value)))
 
