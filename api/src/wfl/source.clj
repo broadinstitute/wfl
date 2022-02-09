@@ -214,6 +214,7 @@
            (map-indexed create-snapshot)))))
 
 (defn ^:private get-pending-tdr-jobs
+  "Return the IDs of pending TDR snapshot creation jobs for `_source.`"
   [{:keys [details] :as _source}]
   (let [query (str/join \space ["SELECT id, snapshot_creation_job_id FROM %s"
                                 "WHERE snapshot_creation_job_status = 'running'"
@@ -304,7 +305,7 @@
     (update-last-checked source now)))
 
 (defn ^:private update-pending-snapshot-jobs
-  "Update status of 'running' TDR snapshots in `source`."
+  "Update the status of 'running' TDR snapshots in `source`."
   [source]
   (log/debug "Looking for running snapshot jobs..." :source source)
   (let [pending-tdr-jobs (get-pending-tdr-jobs source)]

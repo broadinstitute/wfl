@@ -1,5 +1,6 @@
 (ns wfl.system.v1-endpoint-test
   (:require [clojure.test               :refer [deftest is testing]]
+            [clojure.data.json          :as json]
             [clojure.instant            :as instant]
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
@@ -16,11 +17,10 @@
             [wfl.tools.datasets         :as datasets]
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
-            [wfl.tools.workloads        :as workloads]
             [wfl.tools.resources        :as resources]
-            [wfl.util                   :as util]
-            [clojure.data.json          :as json]
-            [wfl.tools.workflows        :as workflows])
+            [wfl.tools.workflows        :as workflows]
+            [wfl.tools.workloads        :as workloads]
+            [wfl.util                   :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
 

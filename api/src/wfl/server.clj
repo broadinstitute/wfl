@@ -18,7 +18,7 @@
             [wfl.service.slack              :as slack]
             [wfl.util                       :as util]
             [wfl.wfl                        :as wfl])
-  (:import [java.util.concurrent Future TimeUnit]
+  (:import [java.util.concurrent Future]
            [wfl.util UserException]))
 
 (def description
@@ -78,50 +78,55 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
+(defn ^:private do-update!
+  "Update `_workload` in a database transaction. "
+  [{:keys [id uuid labels] :as _workload}]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (let [workload (workloads/load-workload-for-id tx id)]
+      (try
+        (workloads/update-workload! tx workload)
+        (catch UserException e
+          (log/warning "Error updating workload"
+                       :exception e :labels labels :workload uuid)
+          (slack/notify-watchers workload (.getMessage e)))))))
+
+(defn ^:private try-update
+  "Try to update the workflows in `workload` with a backstop."
+  [{:keys [uuid labels] :as workload}]
+  (try
+    (log/info "Updating workload" :labels labels :workload uuid)
+    (do-update! workload)
+    (catch Throwable t
+      (log/error "Failed to update workload %s"
+                 :labels labels :throwable t :workload uuid))))
+
+(defn ^:private update-workloads
+  "Update the active workflows in the active workloads."
+  []
+  (try
+    (log/info "Finding workloads to update...")
+    (run! try-update
+          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+            (jdbc/query tx "SELECT id,uuid,labels FROM workload
+                                      WHERE started IS NOT NULL
+                                      AND finished IS NULL")))
+    (catch Throwable t
+      (log/error "Failed to update workloads" :throwable t))))
+
 (defn ^:private start-workload-manager
   "Update the workload database, then start a `future` to manage the
   state of workflows in the background. Dereference the future to wait
   for the background task to finish (when an error occurs)."
   []
-  (letfn [(do-update! [{:keys [id uuid labels] :as _workload}]
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (let [workload (workloads/load-workload-for-id tx id)]
-                (try
-                  (workloads/update-workload! tx workload)
-                  (catch UserException e
-                    (log/warning (format "Error updating workload %s" uuid)
-                                 :workload uuid :labels labels)
-                    (log/warning e :workload uuid :labels labels)
-                    (slack/notify-watchers workload (.getMessage e)))))))
-          (try-update [{:keys [uuid labels] :as workload}]
-            (try
-              (log/info (format "Updating workload %s" uuid)
-                        :workload uuid :labels labels)
-              (do-update! workload)
-              (catch Throwable t
-                (log/error (format "Failed to update workload %s" uuid))
-                (log/error (str t) :workload uuid :labels labels))))
-          (update-workloads []
-            (try
-              (log/info "Finding workloads to update...")
-              (run! try-update
-                    (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                      (jdbc/query tx "SELECT id,uuid,labels FROM workload
-                                      WHERE started IS NOT NULL
-                                      AND finished IS NULL")))
-              (catch Throwable t
-                (log/error "Failed to update workloads")
-                (log/error (str t)))))]
-    (log/info "starting workload update loop")
-    (update-workloads)
-    (future
-      (while true
-        (update-workloads)
-        (util/sleep-seconds 20)))
-    (slack/start-notification-loop slack/notifier)))
+  (log/info "Starting workload update loop")
+  (update-workloads)
+  (future
+    (while true
+      (update-workloads)
+      (util/sleep-seconds 20))))
 
 (defn ^:private start-logging-polling
-  "Start polling for changes to the log level."
+  "Poll for changes to the log level."
   []
   (letfn [(get-logging-level []
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -131,21 +136,21 @@
     (future
       (while true
         (get-logging-level)
-        (.sleep TimeUnit/SECONDS 60)))))
+        (util/sleep-seconds 60)))))
 
 (defn ^:private start-webserver
   "Start the jetty webserver asynchronously to serve http requests on the
   specified port. Returns a java.util.concurrent.Future that, when de-
   referenced, blocks until the server ends."
   [port]
-  (log/info (format "starting jetty webserver on port %s" port))
+  (log/info "Starting jetty webserver" :port port)
   (let [server (jetty/run-jetty (app) {:port port :join? false})]
     (reify Future
-      (cancel [_ _] (throw (UnsupportedOperationException.)))
-      (get [_] (.join server))
-      (get [_ _ _] (throw (UnsupportedOperationException.)))
-      (isCancelled [_] false)
-      (isDone [_] (.isStopped server)))))
+      (cancel      [_ _]   (throw (UnsupportedOperationException.)))
+      (get         [_]     (.join server))
+      (get         [_ _ _] (throw (UnsupportedOperationException.)))
+      (isCancelled [_]     false)
+      (isDone      [_]     (.isStopped server)))))
 
 (defn ^:private await-some
   "Poll the sequence of futures until at least one is done then dereference
@@ -154,14 +159,15 @@
   (loop []
     (if-let [f (first (filter future-done? futures))]
       (do @f nil)
-      (do (.sleep TimeUnit/SECONDS 20)
+      (do (util/sleep-seconds 20)
           (recur)))))
 
 (defn run
-  "Run server in ENVIRONMENT on PORT."
+  "Run server in `environment` on `port`."
   [& args]
   (log/info (str/join " " ["Run:" wfl/the-name "server" args]))
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)
-        logger  (start-logging-polling)]
-    (await-some manager logger (start-webserver port))))
+        logger  (start-logging-polling)
+        slacker (slack/start-notification-loop slack/notifier)]
+    (await-some manager logger slacker (start-webserver port))))

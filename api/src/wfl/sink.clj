@@ -347,8 +347,7 @@
                                  {:job      job
                                   :workflow workflow})))))))
 
-;; visible for testing
-(defn rename-gather-bulk
+(defn ^:private rename-gather-bulk
   "Transform the `values` using the transformation defined in
   `mapping`, building bulk load file models instead of strings."
   ([workflow-id dataset table values mapping]
@@ -432,10 +431,9 @@
       (let [result (datarepo/job-result job)]
         (if (< (:bad_row_count result) 1)
           (log/info "Sunk workflow outputs to dataset"
-                    :workload uuid :labels labels)
+                    :labels labels :workload uuid)
           (throw (UserException. "Row failed to sink to dataset"
-                                 {:job job
-                                  :workflow workflow}))))
+                                 {:job job :workflow workflow}))))
       (finally
         (pop-job-queue! sink record)))))
 
