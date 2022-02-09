@@ -125,3 +125,5 @@ ingress:
   annotations: {}
   hosts: []
   tls: []
+  # -- Seconds to use for the backend service's timeout, see GH-1601
+  backendTimeout: 60
