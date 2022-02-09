@@ -349,8 +349,8 @@
 
 ;; visible for testing
 (defn rename-gather-bulk
-  "Transform the `values` using the transformation defined in `mapping`, building bulk
-   load file models instead of strings."
+  "Transform the `values` using the transformation defined in
+  `mapping`, building bulk load file models instead of strings."
   ([workflow-id dataset table values mapping]
    (rename-gather-bulk workflow-id dataset table values mapping ""))
   ([workflow-id {:keys [schema] :as dataset} table values mapping target-bucket]
@@ -388,7 +388,11 @@
      (into {} (for [[k v] mapping] (go! k v))))))
 
 (defn ^:private to-dataset-row
-  "Use `fromOutputs` and the schema provided in the `table` within the `dataset` to coerce the `workflow` outputs into a row in the dataset table. The dataset table schema describes column types while `fromOutputs` provides a mapping between workflow outputs and the table."
+  "Use `fromOutputs` and the schema provided for `table` within the
+  `dataset` to coerce the `workflow` outputs into a row in the dataset
+  table. The dataset table schema describes column types while
+  `fromOutputs` provides a mapping between workflow outputs and the
+  table."
   [dataset table fromOutputs {:keys [outputs uuid] :as workflow}]
   (when-not (map? fromOutputs)
     (throw (IllegalStateException. "fromOutputs is malformed")))
@@ -396,12 +400,15 @@
     (rename-gather-bulk uuid dataset table outputs fromOutputs)
     (catch Exception cause
       (throw (ex-info "Failed to coerce workflow outputs to dataset columns"
-                      {:outputs outputs :table table :fromOutputs fromOutputs :workflow workflow :dataset dataset}
-                      cause)))))
+                      {:outputs     outputs
+                       :table       table
+                       :fromOutputs fromOutputs
+                       :workflow    workflow
+                       :dataset     dataset} cause)))))
 
 (defn ^:private start-ingesting-outputs
-  "Start ingesting the `workflow` outputs as a new row in the target dataset
-   and push the tdr ingest job into the `sink`'s job queue."
+  "Start ingesting the `workflow` outputs as a new row in the target
+  dataset and push the TDR ingest job into the `sink`'s job queue."
   [{:keys [dataset table fromOutputs] :as sink}
    {:keys [uuid] :as workflow}]
   (let [file (tdr-outputs-bucket (str uuid ".json"))]
@@ -413,8 +420,8 @@
          (push-job sink))))
 
 (defn ^:private update-datarepo-sink
-  "Attempt to a pull a workflow off the `Workload`'s `executor` queue and write its
-   outputs as new rows in a tdr dataset table asynchronously."
+  "Pull a workflow off the `_workload`'s `executor` queue and write its
+  outputs as new rows in a TDR dataset table."
   [{:keys [executor sink uuid labels] :as _workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
@@ -424,14 +431,16 @@
     (try
       (let [result (datarepo/job-result job)]
         (if (< (:bad_row_count result) 1)
-          (log/info "Sunk workflow outputs to dataset" :workload uuid :labels labels)
-          (throw (UserException. "Row failed to sink to dataset" {:job job
-                                                                  :workflow workflow}))))
+          (log/info "Sunk workflow outputs to dataset"
+                    :workload uuid :labels labels)
+          (throw (UserException. "Row failed to sink to dataset"
+                                 {:job job
+                                  :workflow workflow}))))
       (finally
         (pop-job-queue! sink record)))))
 
 (defn ^:private datarepo-sink-done?
-  "True when all tdr ingest jobs created by the `_sink` have terminated."
+  "True when all TDR ingest jobs created by `_sink` have terminated."
   [{:keys [details] :as _sink}]
   (let [query "SELECT COUNT(*) FROM %s
                WHERE status <> 'failed' AND consumed IS NULL"]
