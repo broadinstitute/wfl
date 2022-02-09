@@ -125,7 +125,7 @@
   []
   (letfn [(get-logging-level []
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (log/set-active-severity
+              (log/set-active-level
                (config/get-config tx "LOGGING_LEVEL"))))]
     (get-logging-level)
     (future

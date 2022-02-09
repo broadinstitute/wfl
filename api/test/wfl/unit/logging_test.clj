@@ -28,8 +28,7 @@
 
 (deftest level-test
   (testing "basic logging levels"
-    (with-redefs [log/active-severity-predicate
-                  (atom (:debug @#'log/active-map))]
+    (with-redefs [log/active-level-predicate (atom (:debug @#'log/active-map))]
       (is (logged? (with-out-str (log/info    "ofni"))    :info    "ofni"))
       (is (logged? (with-out-str (log/warning "gninraw")) :warning "gninraw"))
       (is (logged? (with-out-str (log/error   "rorre"))   :error   "rorre"))
@@ -38,7 +37,7 @@
 (deftest severity-level-filtering-test
   (testing "test current logging level correctly ignores lesser levels"
     (with-redefs
-     [log/active-severity-predicate (atom (:info @#'log/active-map))]
+     [log/active-level-predicate (atom (:info @#'log/active-map))]
       (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged?    (with-out-str (log/info  "Info Message"))
                       :info "Info Message")))))
