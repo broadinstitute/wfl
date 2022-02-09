@@ -67,8 +67,7 @@
 (add-watch notifier :watcher
            (fn [_key _ref _old-state new-state]
              (when-let [queue (seq new-state)]
-               (log/debug "The current notification queue is"
-                          :queue queue))))
+               (log/debug "Current notification queue" :queue queue))))
 
 (defn add-notification
   "Add notification defined by a map of
