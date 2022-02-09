@@ -1,4 +1,4 @@
-(ns wfl.log                             ; (remove-ns 'wfl.log)
+(ns wfl.log
   "Log to GCP Stackdriver."
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]
@@ -116,6 +116,7 @@
   stdout-logger)
 
 (defn log
+  "Log `context`, `result`, and `more` at `level` with `severity`."
   [level context severity result & {:as more}]
   (let [{:keys [column expression file line namespace]} context]
     (when (@active-level-predicate level)
@@ -128,7 +129,9 @@
                                  :function expression
                                  :line     line}
                ::time            (Instant/now)}))
-    #_result))
+    #_result))                          ; Not ready for this yet.
+
+;; Generate these 8 macros from the wfl.log/levels keywords.
 
 (defmacro debug
   [expression & more]

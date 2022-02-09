@@ -1,25 +1,25 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
-  (:require [clojure.string                     :as str]
-            [muuntaja.core                      :as muuntaja-core]
+  (:require [clojure.string                    :as str]
+            [muuntaja.core                     :as muuntaja-core]
             [reitit.coercion.spec]
-            [reitit.ring                        :as ring]
-            [reitit.ring.coercion               :as coercion]
-            [reitit.ring.middleware.exception   :as exception]
-            [reitit.ring.middleware.multipart   :as multipart]
-            [reitit.ring.middleware.muuntaja    :as muuntaja]
-            [reitit.ring.middleware.parameters  :as parameters]
-            [reitit.swagger                     :as swagger]
-            [reitit.swagger-ui                  :as swagger-ui]
-            [wfl.api.handlers                   :as handlers]
-            [wfl.api.spec                       :as spec]
-            [wfl.api.workloads                  :as workloads]
-            [wfl.environment                    :as env]
-            [wfl.log                            :as log]
-            [wfl.module.all                     :as all]
-            [wfl.module.aou                     :as aou]
-            [wfl.util                           :as util]
-            [wfl.wfl                            :as wfl])
+            [reitit.ring                       :as ring]
+            [reitit.ring.coercion              :as coercion]
+            [reitit.ring.middleware.exception  :as exception]
+            [reitit.ring.middleware.multipart  :as multipart]
+            [reitit.ring.middleware.muuntaja   :as muuntaja]
+            [reitit.ring.middleware.parameters :as parameters]
+            [reitit.swagger                    :as swagger]
+            [reitit.swagger-ui                 :as swagger-ui]
+            [wfl.api.handlers                  :as handlers]
+            [wfl.api.spec                      :as spec]
+            [wfl.api.workloads                 :as workloads]
+            [wfl.environment                   :as env]
+            [wfl.log                           :as log]
+            [wfl.module.all                    :as all]
+            [wfl.module.aou                    :as aou]
+            [wfl.util                          :as util]
+            [wfl.wfl                           :as wfl])
   (:import [java.sql SQLException]
            [org.apache.commons.lang3.exception ExceptionUtils]
            [wfl.util UserException]))
@@ -157,11 +157,10 @@
   "Like [[exception-handler]] but also log information about the exception."
   [status message labels severity return-trace exception request]
   (let [{:keys [body] :as result}
-        (exception-handler status message exception request return-trace)
-        message (util/make-map exception body)]
+        (exception-handler status message exception request return-trace)]
     (case severity
-      :warning (log/warning message ::log/labels labels)
-      :error   (log/error   message ::log/labels labels))
+      :warning (log/warning (util/make-map exception body) ::log/labels labels)
+      :error   (log/error   (util/make-map exception body) ::log/labels labels))
     result))
 
 (def exception-middleware

@@ -1,5 +1,5 @@
 (ns wfl.unit.logging-test
-  "Test that our overcomplicated logging namespace works."
+  "Test that our overcomplicated logging works."
   (:require [clojure.test      :refer [is deftest testing]]
             [clojure.data.json :as json]
             [clojure.string    :as str]
@@ -18,7 +18,7 @@
   (re-find expected actual))
 
 (defn logged?
-  "Test that the logs worked."
+  "Test that the expected logs happened."
   [result severity test]
   (let [json (json/read-str result :key-fn keyword)]
     (and (= (:severity json) (-> severity name str/upper-case))

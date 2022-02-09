@@ -1,17 +1,18 @@
 (ns wfl.service.google.storage
-  "Wrappers for Google Cloud Storage REST APIs.
-  See https://cloud.google.com/storage/docs/json_api/v1"
-  (:require [clj-http.client                :as http]
-            [clj-http.util                  :as http-util]
-            [clojure.data.json              :as json]
-            [clojure.java.io                :as io]
-            [clojure.pprint                 :refer [pprint]]
-            [clojure.spec.alpha             :as s]
-            [clojure.string                 :as str]
-            [wfl.log                        :as log]
-            [wfl.auth                       :as auth]
-            [wfl.util                       :as util])
+  "Use the Google Cloud Storage APIs."
+  (:require [clojure.data.json  :as json]
+            [clojure.java.io    :as io]
+            [clojure.pprint     :refer [pprint]]
+            [clojure.spec.alpha :as s]
+            [clojure.string     :as str]
+            [clj-http.client    :as http]
+            [clj-http.util      :as http-util]
+            [wfl.auth           :as auth]
+            [wfl.log            :as log]
+            [wfl.util           :as util])
   (:import [org.apache.tika Tika]))
+
+;; See https://cloud.google.com/storage/docs/json_api/v1
 
 (def api-url
   "The Google Cloud API URL."

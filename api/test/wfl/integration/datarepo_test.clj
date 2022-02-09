@@ -5,13 +5,13 @@
             [wfl.environment             :as env]
             [wfl.service.datarepo        :as datarepo]
             [wfl.service.firecloud       :as firecloud]
-            [wfl.service.google.storage  :as gcs]
             [wfl.service.google.bigquery :as bigquery]
+            [wfl.service.google.storage  :as gcs]
             [wfl.sink                    :as sink]
             [wfl.tools.datasets          :as datasets]
             [wfl.tools.fixtures          :as fixtures]
-            [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.resources         :as resources]
+            [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.workflows         :as workflows]
             [wfl.util                    :as util :refer [>>>]])
   (:import [java.util UUID]))
@@ -65,12 +65,12 @@
         (let [table-url   (str temp-bucket "table.json")
               workflow-id (UUID/randomUUID)
               dataset     (datarepo/datasets dataset-id)]
-          (-> (sink/rename-gather-bulk workflow-id
-                                       dataset
-                                       table-name
-                                       outputs
-                                       from-outputs
-                                       temp-bucket)
+          (-> (#'sink/rename-gather-bulk workflow-id
+                                         dataset
+                                         table-name
+                                         outputs
+                                         from-outputs
+                                         temp-bucket)
               (assoc :ingested (.format (util/utc-now)
                                         workflows/tdr-date-time-formatter))
               (json/write-str :escape-slash false)
