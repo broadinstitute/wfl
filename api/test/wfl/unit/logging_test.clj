@@ -63,11 +63,11 @@
   (let [workspace  "wfl-dev/Illumina-Genotyping-Array-Templateecf09d017b8d4033bab8d5feeae86987"
         submission "6ac9a307-5eeb-4e20-9321-b32d0f80adf4"
         thrown    (try
-                     (firecloud/get-submission workspace submission)
-                     (catch ExceptionInfo x
-                       (println "Caught exception when fetching submission for deleted workspace")
-                       (println (str x))
-                       x))
+                    (firecloud/get-submission workspace submission)
+                    (catch ExceptionInfo x
+                      (println "Caught exception when fetching submission for deleted workspace")
+                      (println (str x))
+                      x))
         remove-bad (ex-info (.getMessage thrown)
                             (dissoc (ex-data thrown) :http-client)
                             (.getCause thrown))]
