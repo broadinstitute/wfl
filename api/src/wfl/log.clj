@@ -54,10 +54,17 @@
   "A logger to write to standard output"
   (reify Logger
     (-write [logger edn]
-      (-> edn
-          (json/write-str :escape-slash false
-                          :key-fn       key-fn)
-          println))))
+      (let [json-write-str
+            #(json/write-str
+              %
+              :escape-slash false
+              :key-fn       key-fn)
+            to-log
+            (try (json-write-str edn)
+                 (catch Exception x
+                   (json-write-str {:tried-to-log (str edn)
+                                    :cause        x})))]
+        (println to-log)))))
 
 (def ^:dynamic *logger*
   "The logger now."
