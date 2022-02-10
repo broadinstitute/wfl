@@ -3,7 +3,7 @@
             [clojure.string           :as str]
             [clojure.tools.reader.edn :as edn]
             [wfl.util                 :as util])
-  (:import [java.io FileNotFoundException]))
+  (:import [java.io File FileNotFoundException]))
 
 (defn read-resource
   "Read the uniquely named resource by suffix `suffix`.
@@ -14,7 +14,7 @@
   (let [files (mapcat
                (fn [folder]
                  (->> (file-seq (io/file folder))
-                      (map #(.getCanonicalPath %))
+                      (map #(.getCanonicalPath ^File %))
                       (filter #(str/ends-with? % suffix))))
                ["resources"
                 "test/resources"

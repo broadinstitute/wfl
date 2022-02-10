@@ -103,7 +103,7 @@
 (def stdout-logger
   "A logger to write to standard output"
   (reify Logger
-    (-write [logger edn]
+    (-write [_logger edn]
       (-> edn
           (json/write-str :escape-slash false
                           :key-fn       key-fn

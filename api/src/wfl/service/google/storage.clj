@@ -10,7 +10,8 @@
             [wfl.auth           :as auth]
             [wfl.log            :as log]
             [wfl.util           :as util])
-  (:import [org.apache.tika Tika]))
+  (:import [java.io File]
+           [org.apache.tika Tika]))
 
 ;; See https://cloud.google.com/storage/docs/json_api/v1
 
@@ -140,7 +141,7 @@
 
 (defn upload-content
   "Upload CONTENT to BUCKET with name OBJECT."
-  ([content bucket object]
+  ([^String content bucket object]
    (-> (str upload-url bucket "/o")
        (http/post {:query-params {:uploadType "media" :name object}
                    :content-type (.detect (new Tika) content)

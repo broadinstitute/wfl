@@ -132,11 +132,12 @@
    using `from-snapshot` to map column names in `table` to the `columns` in the
    workspace entity. Return the names of the entities imported into `workspace`"
   [table workspace [primary-key & _ :as columns] from-snapshot]
-  (let [maps (table->map-view table)]
-    (->> (make-entity-import-request-tsv from-snapshot columns maps)
-         .getBytes
-         (firecloud/import-entities workspace))
-    (map #(% primary-key) maps)))
+  (letfn [(get-bytes [^String s] (.getBytes s))]
+    (let [maps (table->map-view table)]
+      (->> (make-entity-import-request-tsv from-snapshot columns maps)
+           get-bytes
+           (firecloud/import-entities workspace))
+      (map #(% primary-key) maps))))
 
 (def ^:private entity-columns
   "Return the columns in the `entity-type`."

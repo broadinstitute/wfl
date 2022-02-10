@@ -12,7 +12,7 @@
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
            [java.time OffsetDateTime ZoneId]
-           [java.util ArrayList Collections Random UUID]
+           [java.util ArrayList Collection Collections List Random UUID]
            [java.util.concurrent TimeUnit TimeoutException]
            [javax.mail.internet InternetAddress]
            [org.apache.commons.io FilenameUtils])
@@ -121,7 +121,7 @@
   [& files]
   (when (seq files)
     (let [file (first files)
-          more (.listFiles file)]
+          more (.listFiles ^File file)]
       (if (seq more)
         (recur (concat more files))
         (do (io/delete-file file :無)
@@ -131,7 +131,7 @@
   "Copy files from SRC to under DEST."
   [^File src ^File dest]
   (let [prefix (str (.getParent src) "/")]
-    (doseq [file (file-seq src)]
+    (doseq [^File file (file-seq src)]
       (when-not (.isDirectory file)
         (let [target (io/file dest (unprefix (.getPath file) prefix))]
           (io/make-parents target)
@@ -253,7 +253,7 @@
 
 (defn seeded-shuffle
   "Randomize COLL consistently."
-  [coll]
+  [^Collection coll]
   (let [seed  (Random. 23)
         array (ArrayList. coll)]
     (Collections/shuffle array seed)
@@ -294,7 +294,7 @@
 (defn shell-io!
   "Run ARGS in a subprocess with inherited standard streams."
   [& args]
-  (let [exit (-> args ProcessBuilder. .inheritIO .start .waitFor)]
+  (let [exit (-> ^List args ProcessBuilder. .inheritIO .start .waitFor)]
     (when-not (zero? exit)
       (throw (Exception. (format "%s: %s exit status from: %s"
                                  wfl/the-name exit args))))))
@@ -311,9 +311,10 @@
   (let [resource (io/resource resource-name)]
     (when (nil? resource)
       (throw (IOException. (str "No such resource " resource-name))))
-    (let [temp (.toFile (Files/createTempDirectory "wfl" (into-array FileAttribute nil)))
+    (let [temp (.toFile (Files/createTempDirectory
+                         "wfl" (into-array FileAttribute nil)))
           file (io/file temp (FilenameUtils/getName resource-name))]
-      (run! #(.deleteOnExit %) [temp file])
+      (run! #(.deleteOnExit ^File %) [temp file])
       (with-open [in (io/input-stream resource)] (io/copy in file))
       file)))
 
@@ -504,11 +505,11 @@
   ([message data]       [[message] data])
   ([message data cause] [[message cause] data]))
 
-(defn ^:private user-exception-getData [this]
+(defn ^:private user-exception-getData [^wfl.util.UserException this]
   (.data this))
 
-(defn ^:private user-exception-toString [this]
-  (let [data  (.getData this)
+(defn ^:private user-exception-toString [^wfl.util.UserException this]
+  (let [data  (.getData  this)
         cause (.getCause this)]
     (cond-> (str (-> this .getClass .getName) ": " (.getMessage this))
       (and data (seq data)) (str " " data)
@@ -522,7 +523,7 @@
 
 (def digit?          (set "0123456789"))
 (def lowercase?      (set "abcdefghijklmnopqrstuvwxyz"))
-(def uppercase?      (set (map #(Character/toUpperCase %) lowercase?)))
+(def uppercase?      (set (map #(Character/toUpperCase ^Character %) lowercase?)))
 (def letter?         (into lowercase? uppercase?))
 (def alphanumeric?   (into letter? digit?))
 (def spaceunderdash? (set " _-"))
@@ -579,7 +580,7 @@
   [s]
   (do-or-nil (or (.validate (InternetAddress. s)) true)))
 
-(defn utc-now
+(defn ^OffsetDateTime utc-now
   "Return OffsetDateTime/now in UTC."
   []
   (OffsetDateTime/now (ZoneId/of "UTC")))

@@ -229,10 +229,11 @@
                        [[\"sample\" \"NA12878\"] [\"sample\" \"NA12879\"]])
   "
   [workspace entity-set-name [[entity-type _] & _ :as entities]]
-  (->> (for [[_ entity-name] entities] [entity-set-name entity-name])
-       (util/columns-rows->terra-tsv :membership [entity-type entity-type])
-       .getBytes
-       (import-entities workspace)))
+  (letfn [(get-bytes [^String s] (.getBytes s))]
+    (->> (for [[_ entity-name] entities] [entity-set-name entity-name])
+         (util/columns-rows->terra-tsv :membership [entity-type entity-type])
+         get-bytes
+         (import-entities workspace))))
 
 (defn create-submission-for-entity-set
   "

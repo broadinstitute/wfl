@@ -46,15 +46,15 @@
  {:wfl {:main-opts ["-m" "wfl.main"]}
 
   :check-format
-  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
+  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}
    :main-opts  ["-m" "cljfmt.main" "check"]}
 
   :format
-  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.7.0"}}
+  {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}
    :main-opts  ["-m" "cljfmt.main" "fix"]}
 
   :kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.06.01"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.02.09"}}
    :main-opts ["-m" "clj-kondo.main"]}
 
   :kibit
@@ -62,7 +62,7 @@
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
 
   :eastwood
-  {:extra-deps {jonase/eastwood {:mvn/version "0.4.3"}
+  {:extra-deps {jonase/eastwood {:mvn/version "1.2.2"}
                 org.liquibase/liquibase-core
                 {:mvn/version "4.3.5"
                  :exclusions  [ch.qos.logback/logback-classic]}}

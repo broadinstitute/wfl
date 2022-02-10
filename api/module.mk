@@ -55,9 +55,9 @@ $(BUILD): $(SCM_SRC) $(POM_OUT)
 
 LIKELY_FIX := 'Run `clojure -M:format` in this directory'
 $(LINT): $(SCM_SRC) $(SCM_RESOURCES)
-	@$(CLOJURE) -M:check-format || (c=$$?; $(ECHO) $(LIKELY_FIX); $(EXIT) $$c)
-	@$(CLOJURE) -M:eastwood
-	@$(CLOJURE) -M:kibit
+	$(CLOJURE) -M:check-format || (c=$$?; $(ECHO) $(LIKELY_FIX); $(EXIT) $$c)
+	$(CLOJURE) -M:eastwood
+	$(CLOJURE) -M:kibit
 	-@$(CLOJURE) -M:kondo --config ./resources/kondo.edn --lint .
 	@$(TOUCH) $@
 

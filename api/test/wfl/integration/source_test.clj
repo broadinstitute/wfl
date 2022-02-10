@@ -24,7 +24,7 @@
 (defn ^:private parse-timestamp
   "Parse `timestamp` string in BigQuery format."
   [timestamp]
-  (LocalDateTime/parse timestamp @#'source/bigquery-datetime-format))
+  (LocalDateTime/parse timestamp @#'source/bigquery-datetime-formatter))
 
 (defn ^:private mock-find-new-rows
   [_source interval]

@@ -4,21 +4,24 @@
             [clojure.string    :as str]
             [wfl.environment :as env]
             [wfl.util         :as util])
-  (:import [com.google.auth.oauth2 GoogleCredentials]))
+  (:import [com.google.auth.oauth2 GoogleCredentials ServiceAccountCredentials]))
 
 (defn ^:private authorization-header-with-bearer-token
   "An Authorization header with a Bearer TOKEN."
   [token]
   {"Authorization" (str/join \space ["Bearer" token])})
 
-(defn ^:private service-account-credentials
+(defn ^:private ^ServiceAccountCredentials service-account-credentials
   "Nil or credentials for WFL from the environment."
   []
-  (some-> (env/getenv "GOOGLE_APPLICATION_CREDENTIALS")
-          io/input-stream GoogleCredentials/fromStream
-          (.createScoped ["https://www.googleapis.com/auth/cloud-platform"
-                          "https://www.googleapis.com/auth/userinfo.email"
-                          "https://www.googleapis.com/auth/userinfo.profile"])))
+  (let [cred  (some-> (env/getenv "GOOGLE_APPLICATION_CREDENTIALS")
+                      io/input-stream GoogleCredentials/fromStream)
+        scope (into-array
+               String
+               ["https://www.googleapis.com/auth/cloud-platform"
+                "https://www.googleapis.com/auth/userinfo.email"
+                "https://www.googleapis.com/auth/userinfo.profile"])]
+    (.createScoped ^GoogleCredentials cred ^"[Ljava.lang.String;" scope)))
 
 (defn service-account-email
   "The client_email for the WFL service account."

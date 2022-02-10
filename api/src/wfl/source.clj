@@ -104,10 +104,15 @@
    :pollingIntervalMinutes :polling_interval_minutes
    :loadTag                :load_tag})
 
-(def ^:private bigquery-datetime-format
+(def ^:private bigquery-datetime-formatter
   (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
 
-(defn ^:private timestamp-to-offsetdatetime
+(defn ^:private bigquery-datetime-format
+  "Serve up OffsetDateTime `odt` how BigQuery likes it."
+  [^OffsetDateTime odt]
+  (.format odt bigquery-datetime-formatter))
+
+(defn ^:private ^OffsetDateTime timestamp-to-offsetdatetime
   "Parse the Timestamp `t` into an `OffsetDateTime`."
   [^Timestamp t]
   (OffsetDateTime/ofInstant (.toInstant t) (ZoneId/of "UTC")))
@@ -175,7 +180,7 @@
                   (-> start_time
                       (util/latest (instant/read-instant-timestamp begin))
                       timestamp-to-offsetdatetime
-                      (.format bigquery-datetime-format))
+                      bigquery-datetime-format)
                   begin)
         filters   {:ingestTime [start end]
                    :loadTag    loadTag}
@@ -204,7 +209,7 @@
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
   [source now-obj row-ids]
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
-        compact-now (.format now-obj dt-format)]
+        compact-now (.format ^OffsetDateTime now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
               [shard (go-create-snapshot! (format "_%s_%s" compact-now idx)
                                           source shard)])]
@@ -292,9 +297,9 @@
   [{:keys [dataset table last_checked] :as source} now]
   (let [checked      (timestamp-to-offsetdatetime last_checked)
         hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked now)))
-        then         (.minusHours now hours-ago)
+        then         (.minusHours ^OffsetDateTime now hours-ago)
         shards->jobs (->> [then now]
-                          (mapv #(.format % bigquery-datetime-format))
+                          (mapv bigquery-datetime-format)
                           (find-new-rows source)
                           (create-snapshots source now))]
     (when (seq shards->jobs)

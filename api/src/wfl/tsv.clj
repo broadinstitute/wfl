@@ -14,13 +14,13 @@
 
 (extend-protocol TsvField
   clojure.lang.Named
-  (^:private -write [field out]
+  (^:private -write [field ^Writer out]
     (.write out (name field)))
   java.lang.Object
-  (^:private -write [field out]
+  (^:private -write [field ^Writer out]
     (.write out (json/write-str field :escape-slash false)))
   java.lang.String
-  (^:private -write [field out]
+  (^:private -write [field ^Writer out]
     (.write out field)))
 
 ;; BUG: Do not quote or escape \tab or \newline.

@@ -20,7 +20,8 @@
             [wfl.module.aou                    :as aou]
             [wfl.util                          :as util]
             [wfl.wfl                           :as wfl])
-  (:import [java.sql SQLException]
+  (:import [clojure.lang ExceptionInfo]
+           [java.sql SQLException]
            [org.apache.commons.lang3.exception ExceptionUtils]
            [wfl.util UserException]))
 
@@ -140,10 +141,11 @@
 
 ;; https://cljdoc.org/d/metosin/reitit/0.5.10/doc/ring/exception-handling-with-ring#exceptioncreate-exception-middleware
 ;;
-(defn exception-handler
+(defn ^:private exception-handler
   "Top level exception handler. Prefer to use status and message
    from EXCEPTION and fallback to the provided STATUS and MESSAGE."
-  [status message exception {:keys [uri] :as _request} return-trace]
+  [status message ^ExceptionInfo exception
+   {:keys [uri] :as _request} return-trace]
   {:status (or (:status (ex-data exception)) status)
    :body   (merge {:message message}
                   (when return-trace

@@ -10,10 +10,7 @@
             [wfl.service.postgres       :as postgres]
             [wfl.tools.liquibase        :as liquibase]
             [wfl.util                   :as util])
-  (:import [java.nio.file.attribute FileAttribute]
-           [java.nio.file Files]
-           [java.util UUID]
-           [org.apache.commons.io FileUtils]))
+  (:import [java.util UUID]))
 
 (defn with-temporary-overload
   "Temporarily dispatch MULTIFN to OVERLOAD on DISPATCH-VAL"
@@ -122,24 +119,6 @@
                       g# `(fn [~x] ~(go fs (conj args x)))]
                   (if (seq? f) (concat f (list g#)) (list f g#)))))]
     (go fixtures [])))
-
-(defn with-temporary-folder
-  "Create a temporary folder in the local filesystem and call `use-folder` with
-   the path to the temporary folder. The folder will be deleted after execution
-   transfers from `use-folder`.
-
-   Parameters
-   ----------
-     use-folder - function to call with temporary folder
-
-   Example
-   -------
-     (with-temporary-folder (fn [folder] #_(use folder)))"
-  [use-folder]
-  (util/bracket
-   #(Files/createTempDirectory "wfl-test-" (into-array FileAttribute []))
-   #(FileUtils/deleteDirectory (.toFile %))
-   (comp use-folder #(.toString %))))
 
 (defn with-temporary-cloud-storage-folder
   "Create a temporary folder in the Google Cloud storage `bucket` and call
