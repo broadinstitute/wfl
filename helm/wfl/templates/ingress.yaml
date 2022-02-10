@@ -3,6 +3,15 @@
 {{- $fullName := include "wfl.fullname" . -}}
 {{- $servicePort := .Values.ingress.servicePort -}}
 
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ $fullName }}-backend-config
+spec:
+  timeoutSec: {{ .Values.ingress.backendTimeout }}
+
+---
+
 {{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1beta1
 {{- else -}}
@@ -15,6 +24,7 @@ metadata:
     {{- include "wfl.labels" . | nindent 4 }}
 {{- with .Values.ingress.annotations }}
   annotations:
+    cloud.google.com/backend-config: '{"default": "{{ $fullName }}-backend-config"}'
 {{ toYaml . | indent 4 }}
 {{- end }}
 spec:
