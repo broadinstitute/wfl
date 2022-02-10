@@ -1,10 +1,12 @@
 (ns wfl.unit.logging-test
   "Test that our overcomplicated logging works."
-  (:require [clojure.test      :refer [is deftest testing]]
-            [clojure.data.json :as json]
-            [clojure.string    :as str]
-            [wfl.log           :as log])
-  (:import java.util.regex.Pattern))
+  (:require [clojure.test          :refer [is deftest testing]]
+            [clojure.data.json     :as json]
+            [clojure.string        :as str]
+            [wfl.log               :as log]
+            [wfl.service.firecloud :as firecloud])
+  (:import [clojure.lang ExceptionInfo]
+           [java.util.regex Pattern]))
 
 (defmulti check-message?
   (fn [expected actual]
@@ -56,3 +58,28 @@
       (is (= "I did it again."      (get-in result [:via 0 :data :why])))
       (is (= "Oh baby, baby."       (get-in result [:cause])))
       (is (= "I'm sent from above." (get-in result [:data :that]))))))
+
+(deftest demo-log-with-json-incompatible-http-client
+  (let [workspace  "wfl-dev/Illumina-Genotyping-Array-Templateecf09d017b8d4033bab8d5feeae86987"
+        submission "6ac9a307-5eeb-4e20-9321-b32d0f80adf4"
+        thrown    (try
+                     (firecloud/get-submission workspace submission)
+                     (catch ExceptionInfo x
+                       (println "Caught exception when fetching submission for deleted workspace")
+                       (println (str x))
+                       x))
+        remove-bad (ex-info (.getMessage thrown)
+                            (dissoc (ex-data thrown) :http-client)
+                            (.getCause thrown))]
+    (try
+      (-> thrown log/alert with-out-str (json/read-str :key-fn keyword))
+      (println "We shouldn't be here, shouldn't be able to log with http-object...")
+      (catch Exception x
+        (println "Can't log when including http-object :-(")
+        (println x)))
+    (try
+      (-> remove-bad log/alert with-out-str (json/read-str :key-fn keyword))
+      (println "Can log when excluding http-object!")
+      (catch Exception x
+        (println "We shouldn't be here, should be able to log without http-object...")
+        (println x)))))
