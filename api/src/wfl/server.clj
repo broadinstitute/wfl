@@ -97,7 +97,7 @@
     (log/info "Updating workload" :labels labels :workload uuid)
     (do-update! workload)
     (catch Throwable t
-      (log/error "Failed to update workload %s"
+      (log/error "Failed to update workload"
                  :labels labels :throwable t :workload uuid))))
 
 (defn ^:private update-workloads
@@ -107,9 +107,10 @@
     (log/info "Finding workloads to update...")
     (run! try-update
           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (jdbc/query tx "SELECT id,uuid,labels FROM workload
-                                      WHERE started IS NOT NULL
-                                      AND finished IS NULL")))
+            (jdbc/query tx (str/join \space
+                                     ["SELECT id,uuid,labels FROM workload"
+                                      "WHERE started IS NOT NULL"
+                                      "AND finished IS NULL"]))))
     (catch Throwable t
       (log/error "Failed to update workloads" :throwable t))))
 
