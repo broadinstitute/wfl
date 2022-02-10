@@ -63,7 +63,7 @@
             (try (json-write-str edn)
                  (catch Exception x
                    (json-write-str {:tried-to-log (str edn)
-                                    :cause        x})))]
+                                    :cause        (str x)})))]
         (println to-log)))))
 
 (def ^:dynamic *logger*

@@ -54,13 +54,15 @@
       (is (= "Oh baby, baby."        (get-in log [:message :cause])))
       (is (= "I'm sent from above."  (get-in log [:message :data :that])))))
   (testing "JSON-incompatible input is stringified"
-    (let [x      (ex-info "Try to log non-JSON"
-                          {:bad (tagged-literal 'object :fnord)})
-          log    (json/read-str (with-out-str (log/info x)) :key-fn keyword)]
-      (is (string? (get-in log [:tried-to-log])))
-      (is (str/includes?
-           (get-in log [:tried-to-log]) ":cause \"Try to log non-JSON\""))
-      (is (str/includes?
-           (get-in log [:tried-to-log]) ":data {:bad #object :fnord}"))
-      (is (= "Don't know how to write JSON of class clojure.lang.TaggedLiteral"
-             (get-in log [:cause :via 0 :message]))))))
+    (let [x
+          (ex-info "Try to log non-JSON" {:bad (tagged-literal 'object :fnord)})
+          {:keys [tried-to-log cause] :as _log}
+          (json/read-str (with-out-str (log/info x)) :key-fn keyword)]
+      (is (string? tried-to-log))
+      (is (str/includes? tried-to-log ":cause \"Try to log non-JSON\""))
+      (is (str/includes? tried-to-log ":data {:bad #object :fnord}"))
+      (is (string? cause))
+      (is (= (str/join \space ["java.lang.Exception:"
+                               "Don't know how to write JSON"
+                               "of class clojure.lang.TaggedLiteral"])
+             cause)))))
