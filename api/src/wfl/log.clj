@@ -53,11 +53,18 @@
 (def stdout-logger
   "A logger to write to standard output"
   (reify Logger
-    (-write [logger edn]
-      (-> edn
-          (json/write-str :escape-slash false
-                          :key-fn       key-fn)
-          println))))
+    (-write [_logger edn]
+      (let [json-write-str
+            #(json/write-str
+              %
+              :escape-slash false
+              :key-fn       key-fn)
+            to-log
+            (try (json-write-str edn)
+                 (catch Throwable t
+                   (json-write-str {:tried-to-log (str edn)
+                                    :cause        (str t)})))]
+        (println to-log)))))
 
 (def ^:dynamic *logger*
   "The logger now."
