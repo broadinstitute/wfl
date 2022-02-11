@@ -1,3 +1,6 @@
+# Release 0.14.1
+- [GH-1604] Disable / hide Slacking behind WFL_SLACK_ENABLED ([#571](https://github.com/broadinstitute/wfl/pull/571))
+
 # Release 0.14.0
 - [GH-1607] wfl.log/stdout-logger should handle JSON-incompatible edn ([#569](https://github.com/broadinstitute/wfl/pull/569))
 - [DDO-1920] Configure GKE LB Backend Service timeout in Helm ([#564](https://github.com/broadinstitute/wfl/pull/564))
