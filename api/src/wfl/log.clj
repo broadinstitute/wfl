@@ -92,6 +92,7 @@
                               :escape-slash false
                               :key-fn       key-fn)))
 
+(extend clojure.lang.ExceptionInfo json/JSONWriter {:-write write-tagged})
 (extend clojure.lang.TaggedLiteral json/JSONWriter {:-write write-tagged})
 (extend java.lang.Character        json/JSONWriter {:-write write-character})
 (extend java.lang.Throwable        json/JSONWriter {:-write write-throwable})
@@ -113,8 +114,8 @@
                                     :escape-slash false
                                     :key-fn       key-fn)
                     (catch Throwable t
-                      (pr-str {:edn       edn
-                               :throwable t})))))))
+                      (str {:tried-to-log edn
+                            :cause        t})))))))
 
 (def ^:dynamic *logger*
   "The logger now."
