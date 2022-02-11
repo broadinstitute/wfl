@@ -20,9 +20,9 @@
   [level]
   (some level? (-> level str/lower-case keyword)))
 
-(s/def ::level-string (s/and string? level-string?))
-(s/def ::level-request   (s/keys :req-un [::level-string]))
-(s/def ::level-response  (s/keys :req-un [::level-string]))
+(s/def ::level-string   (s/and  string? level-string?))
+(s/def ::level-request  (s/keys :req-un [::level-string]))
+(s/def ::level-response (s/keys :req-un [::level-string]))
 
 (def ^:private active-map
   "Map a level keyword to a set of active levels."
@@ -31,12 +31,12 @@
       (recur (assoc sofar level (set levels)) (rest levels))
       sofar)))
 
-(def active-level-predicate
-  "The current active level predicate."
+(def ^:private active-level-predicate
+  "The active level predicate now."
   (atom (:error active-map)))
 
 (defn set-active-level
-  "Set `active-level?` for the `level` string."
+  "Set `active-level-predicate` for the `level` string."
   [level]
   (reset! active-level-predicate
           (-> (if (empty? level) "info" level)
@@ -66,30 +66,35 @@
        (str (namespace googled) \/ (name googled))
        key))))
 
-(defn ^:private value-fn
-  "Preserve more of `value` EDN somehow."
-  [key value]
-  ((:value-fn json/default-write-options)
-   key
-   (cond (char?    value) (pr-str value)
-         (keyword? value) (pr-str value)
-         (list?    value) (pr-str value)
-         (set?     value) (pr-str value)
-         :else                    value)))
+;; HACK: Override how JSONWriter handles some EDN values.
 
-;; HACK: Override how JSONWriter handles Throwables.
-;; json/write-object is private and handles java.util.Map.
-;;
+(defn ^:private write-tagged
+  "Write the TaggedLiteral X to OUT as JSON with OPTIONS."
+  [x out options]
+  (#'json/write-string (pr-str x) out
+                       (assoc options
+                              :escape-slash false
+                              :key-fn       key-fn)))
+
+(defn ^:private write-character
+  "Write the Character X to OUT as JSON with OPTIONS."
+  [x out options]
+  (#'json/write-string (str x) out
+                       (assoc options
+                              :escape-slash false
+                              :key-fn       key-fn)))
+
 (defn ^:private write-throwable
   "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
   (#'json/write-object (Throwable->map x) out
                        (assoc options
                               :escape-slash false
-                              :key-fn       key-fn
-                              :value-fn     value-fn)))
+                              :key-fn       key-fn)))
 
-(extend java.lang.Throwable json/JSONWriter {:-write write-throwable})
+(extend clojure.lang.TaggedLiteral json/JSONWriter {:-write write-tagged})
+(extend java.lang.Character        json/JSONWriter {:-write write-character})
+(extend java.lang.Throwable        json/JSONWriter {:-write write-throwable})
 
 (defprotocol Logger
   "Log `edn` to `logger` as JSON."
@@ -101,14 +106,15 @@
     (-write [_ _])))
 
 (def stdout-logger
-  "A logger to write to standard output"
+  "A logger to write to standard output."
   (reify Logger
-    (-write [logger edn]
-      (-> edn
-          (json/write-str :escape-slash false
-                          :key-fn       key-fn
-                          :value-fn     value-fn)
-          println))))
+    (-write [_logger edn]
+      (println (try (json/write-str edn
+                                    :escape-slash false
+                                    :key-fn       key-fn)
+                    (catch Throwable t
+                      (pr-str {:edn       edn
+                               :throwable t})))))))
 
 (def ^:dynamic *logger*
   "The logger now."
