@@ -12,7 +12,7 @@
 (defonce ^:private token
   (delay (:bot-user-token (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
 
-(def feature-env-var-name "WFL_SLACK_FEATURE_SWITCH")
+(def enabled-env-var-name "WFL_SLACK_ENABLED")
 
 ;; FIXME: suppress warning `javax.mail.internet.AddressException: Missing final '@domain'`
 ;;
@@ -89,7 +89,7 @@
 (defn notify-watchers
   "Send `message` associated with workload `uuid` to Slack `watchers`."
   [{:keys [watchers uuid project labels] :as _workload} message]
-  (let [feature-switch (env/getenv feature-env-var-name)]
+  (let [feature-switch (env/getenv enabled-env-var-name)]
     (if (= "enabled" feature-switch)
       (let [channels (filter slack-channel-watcher? watchers)
             project  (or project (util/label-value labels "project"))
@@ -103,7 +103,7 @@
                     (add-notification notifier payload)))]
           (run! notify channels)))
       (log/info {:slackDisabled
-                 {:env-var-name       feature-env-var-name
+                 {:env-var-name       enabled-env-var-name
                   :env-var-val        feature-switch
                   :workload           uuid
                   :would-have-slacked (pr-str message)}}))))

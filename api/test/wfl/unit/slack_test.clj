@@ -17,22 +17,25 @@
       (await testing-agent)
       (is (= num-msg (count (seq @testing-agent)))))))
 
-(deftest test-notify-watchers-behind-feature-switch
+(deftest test-notify-watchers-only-when-enabled
   (let [notification (testing-slack-notification)
         workload     {:uuid     "workload-uuid"
                       :watchers [["slack" (:channel notification)]]}
         message      (:message notification)]
-    (letfn [(mock-add-notification [switch]
+    (letfn [(mock-add-notification [maybe-enabled]
               (fn [_notifier payload]
-                (if (= "enabled" switch)
+                (if (= "enabled" maybe-enabled)
                   (do (is (= (:channel notification) (:channel payload)))
                       (is (str/includes? (:message payload) message)))
                   (throw (ex-info "Should not notify"
-                                  {:switch switch})))))
-            (verify [switch]
+                                  {:maybe-enabled maybe-enabled})))))
+            (verify [maybe-enabled]
               (fixtures/with-temporary-environment
-                {slack/feature-env-var-name switch}
+                {slack/enabled-env-var-name maybe-enabled}
                 #(with-redefs-fn
-                   {#'slack/add-notification (mock-add-notification switch)}
+                   {#'slack/add-notification (mock-add-notification maybe-enabled)}
                    (fn [] (slack/notify-watchers workload message)))))]
-      (run! verify ["enabled" "anything-else-is-disabled"]))))
+      (testing "notifications emitted when feature enabled"
+        (verify "enabled"))
+      (testing "notifications not emitted when feature disabled"
+        (verify "any-other-value-disables-slacking")))))
