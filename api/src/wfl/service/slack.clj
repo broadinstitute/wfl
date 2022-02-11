@@ -12,6 +12,8 @@
 (defonce ^:private token
   (delay (:bot-user-token (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
 
+(def enabled-env-var-name "WFL_SLACK_ENABLED")
+
 ;; FIXME: suppress warning `javax.mail.internet.AddressException: Missing final '@domain'`
 ;;
 (defn ^:private valid-channel-id?
@@ -87,17 +89,24 @@
 (defn notify-watchers
   "Send `message` associated with workload `uuid` to Slack `watchers`."
   [{:keys [watchers uuid project labels] :as _workload} message]
-  (let [channels (filter slack-channel-watcher? watchers)
-        project  (or project (util/label-value labels "project"))
-        swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
-        header   (format "%s workload %s *%s*"
-                         (link swagger "WFL") project uuid)]
-    (letfn [(notify [[_tag channel-id _channel-name]]
-              (let [payload {:channel channel-id
-                             :message (str/join \newline [header message])}]
-                (log/info payload)
-                (add-notification notifier payload)))]
-      (run! notify channels))))
+  (let [feature-switch (env/getenv enabled-env-var-name)]
+    (if (= "enabled" feature-switch)
+      (let [channels (filter slack-channel-watcher? watchers)
+            project  (or project (util/label-value labels "project"))
+            swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
+            header   (format "%s workload %s *%s*"
+                             (link swagger "WFL") project uuid)]
+        (letfn [(notify [[_tag channel-id _channel-name]]
+                  (let [payload {:channel channel-id
+                                 :message (str/join \newline [header message])}]
+                    (log/info payload)
+                    (add-notification notifier payload)))]
+          (run! notify channels)))
+      (log/info {:slackDisabled
+                 {:env-var-name       enabled-env-var-name
+                  :env-var-val        feature-switch
+                  :workload           uuid
+                  :would-have-slacked (pr-str message)}}))))
 
 (defn start-notification-loop
   "Return a future that listens at `agent` and

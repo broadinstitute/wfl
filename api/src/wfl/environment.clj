@@ -53,6 +53,10 @@
    (fn [] "https://rawls.dsde-dev.broadinstitute.org")
    "WFL_DOCKSTORE_URL"
    (fn [] "https://dockstore.org")
+   ;; To enable Slack notifications, set to "enabled":
+   ;; all other values disable them.
+   "WFL_SLACK_ENABLED"
+   (fn [] "disabled")
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"

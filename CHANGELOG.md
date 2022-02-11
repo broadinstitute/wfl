@@ -1,8 +1,3 @@
-# Release 0.14.0
-- [GH-1607] wfl.log/stdout-logger should handle JSON-incompatible edn ([#569](https://github.com/broadinstitute/wfl/pull/569))
-- [DDO-1920] Configure GKE LB Backend Service timeout in Helm ([#564](https://github.com/broadinstitute/wfl/pull/564))
-- [GH-1598] Update TerraExecutor documentation ([#566](https://github.com/broadinstitute/wfl/pull/566))
-
 # Release 0.13.0
 - [GH-1539] Stop started workloads in system tests ([#562](https://github.com/broadinstitute/wfl/pull/562))
 - [GH-1563] [GH-1573] TerraDataRepoSource polls row metadata table ([#559](https://github.com/broadinstitute/wfl/pull/559))
