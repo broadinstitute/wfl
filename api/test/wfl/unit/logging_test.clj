@@ -50,7 +50,7 @@
                   (with-out-str
                     (log/error false :what? true)
                     (log/error nil)
-                    (log/error nil :set #{false nil nil? true Math/E})
+                    (log/error  Math/E :set #{false nil nil? true Math/E})
                     (log/error 23 :ok 'OK! :never "mind")
                     (log/error (/ 22 7) :pi :pi :pi 'pie)
                     (log/error \X 'hey 'hey 'hey 'ho)
