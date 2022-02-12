@@ -2,7 +2,8 @@
   "Log to GCP Stackdriver."
   (:require [clojure.data.json  :as json]
             [clojure.spec.alpha :as s]
-            [clojure.string     :as str])
+            [clojure.string     :as str]
+            [clojure.template   :as template])
   (:import [java.time Instant]))
 
 ;; https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
@@ -67,6 +68,7 @@
        key))))
 
 ;; HACK: Override how JSONWriter handles some EDN values.
+;; Not sure what to do about java.lang.Class and such.
 
 (defn ^:private write-tagged
   "Write the TaggedLiteral X to OUT as JSON with OPTIONS."
@@ -75,7 +77,6 @@
                        (assoc options
                               :escape-slash false
                               :key-fn       key-fn)))
-
 (defn ^:private write-character
   "Write the Character X to OUT as JSON with OPTIONS."
   [x out options]
@@ -83,17 +84,13 @@
                        (assoc options
                               :escape-slash false
                               :key-fn       key-fn)))
-
-;; Not sure what to do about java.lang.Class and such.
-;;
 (defn ^:private write-class
   "Write the Class X to OUT as JSON with OPTIONS."
-  [x out options]
+  [_x out options]
   (#'json/write-string "(-Some java.lang.Class!-)" out
                        (assoc options
                               :escape-slash false
                               :key-fn       key-fn)))
-
 (defn ^:private write-throwable
   "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
@@ -101,7 +98,6 @@
                        (assoc options
                               :escape-slash false
                               :key-fn       key-fn)))
-
 (extend clojure.lang.ExceptionInfo json/JSONWriter {:-write write-tagged})
 (extend clojure.lang.TaggedLiteral json/JSONWriter {:-write write-tagged})
 (extend java.lang.Character        json/JSONWriter {:-write write-character})
@@ -149,76 +145,23 @@
                ::time            (Instant/now)}))
     #_result))                          ; Not ready for this yet.
 
-;; Can clojure.template make these from the wfl.log/levels keywords?
-
-(defmacro debug
-  [expression & more]
-  `(let [result# ~expression]
-     (log :debug (assoc ~(meta &form)
-                        :expression '~expression
-                        :file       ~*file*
-                        :namespace  '~(ns-name *ns*))
-          "DEBUG" result# ~@more)))
-
-(defmacro info
-  [expression & more]
-  `(let [result# ~expression]
-     (log :info (assoc ~(meta &form)
-                       :expression '~expression
-                       :file       ~*file*
-                       :namespace  '~(ns-name *ns*))
-          "INFO" result# ~@more)))
-
-(defmacro notice
-  [expression & more]
-  `(let [result# ~expression]
-     (log :notice (assoc ~(meta &form)
-                         :expression '~expression
-                         :file       ~*file*
-                         :namespace  '~(ns-name *ns*))
-          "NOTICE" result# ~@more)))
-
-(defmacro warning
-  [expression & more]
-  `(let [result# ~expression]
-     (log :warning (assoc ~(meta &form)
-                          :expression '~expression
-                          :file       ~*file*
-                          :namespace  '~(ns-name *ns*))
-          "WARNING" result# ~@more)))
-
-(defmacro error
-  [expression & more]
-  `(let [result# ~expression]
-     (log :error (assoc ~(meta &form)
-                        :expression '~expression
-                        :file       ~*file*
-                        :namespace  '~(ns-name *ns*))
-          "ERROR" result# ~@more)))
-
-(defmacro critical
-  [expression & more]
-  `(let [result# ~expression]
-     (log :critical (assoc ~(meta &form)
-                           :expression '~expression
-                           :file       ~*file*
-                           :namespace  '~(ns-name *ns*))
-          "CRITICAL" result# ~@more)))
-
-(defmacro alert
-  [expression & more]
-  `(let [result# ~expression]
-     (log :alert (assoc ~(meta &form)
-                        :expression '~expression
-                        :file       ~*file*
-                        :namespace  '~(ns-name *ns*))
-          "ALERT" result# ~@more)))
-
-(defmacro emergency
-  [expression & more]
-  `(let [result# ~expression]
-     (log :emergency (assoc ~(meta &form)
+(defn ^:private make-one-macro
+  "Define a log macro for `level`."
+  [level]
+  (template/apply-template
+   '[macro level severity]
+   '(defmacro macro [expression & more]
+      `(let [result# ~expression]
+         (log ~level (assoc ~(meta &form)
                             :expression '~expression
                             :file       ~*file*
                             :namespace  '~(ns-name *ns*))
-          "EMERGENCY" result# ~@more)))
+              ~severity result# ~@more)))
+   [(symbol (name level)) level (str/upper-case (name level))]))
+
+(defmacro ^:private make-all-macros
+  "Define a log macro for each level in `levels`."
+  []
+  `(do ~@(map make-one-macro levels)))
+
+(make-all-macros)
