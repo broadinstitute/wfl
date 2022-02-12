@@ -73,31 +73,19 @@
 (defn ^:private write-tagged
   "Write the TaggedLiteral X to OUT as JSON with OPTIONS."
   [x out options]
-  (#'json/write-string (pr-str x) out
-                       (assoc options
-                              :escape-slash false
-                              :key-fn       key-fn)))
+  (#'json/write-string (pr-str x) out options))
 (defn ^:private write-character
   "Write the Character X to OUT as JSON with OPTIONS."
   [x out options]
-  (#'json/write-string (str x) out
-                       (assoc options
-                              :escape-slash false
-                              :key-fn       key-fn)))
+  (#'json/write-string (str x) out options))
 (defn ^:private write-class
   "Write the Class X to OUT as JSON with OPTIONS."
   [_x out options]
-  (#'json/write-string "(-Some java.lang.Class!-)" out
-                       (assoc options
-                              :escape-slash false
-                              :key-fn       key-fn)))
+  (#'json/write-string "(-Some java.lang.Class!-)" out options))
 (defn ^:private write-throwable
   "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
-  (#'json/write-object (Throwable->map x) out
-                       (assoc options
-                              :escape-slash false
-                              :key-fn       key-fn)))
+  (#'json/write-object (Throwable->map x) out options))
 (extend clojure.lang.ExceptionInfo json/JSONWriter {:-write write-tagged})
 (extend clojure.lang.TaggedLiteral json/JSONWriter {:-write write-tagged})
 (extend java.lang.Character        json/JSONWriter {:-write write-character})
