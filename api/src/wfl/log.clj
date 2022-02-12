@@ -84,6 +84,16 @@
                               :escape-slash false
                               :key-fn       key-fn)))
 
+;; Not sure what to do about java.lang.Class and such.
+;;
+(defn ^:private write-class
+  "Write the Class X to OUT as JSON with OPTIONS."
+  [x out options]
+  (#'json/write-string "(-Some java.lang.Class!-)" out
+                       (assoc options
+                              :escape-slash false
+                              :key-fn       key-fn)))
+
 (defn ^:private write-throwable
   "Write the Throwable X to OUT as JSON with OPTIONS."
   [x out options]
@@ -95,6 +105,8 @@
 (extend clojure.lang.ExceptionInfo json/JSONWriter {:-write write-tagged})
 (extend clojure.lang.TaggedLiteral json/JSONWriter {:-write write-tagged})
 (extend java.lang.Character        json/JSONWriter {:-write write-character})
+(extend java.lang.Class            json/JSONWriter {:-write write-class})
+(extend java.lang.Object           json/JSONWriter {:-write write-character})
 (extend java.lang.Throwable        json/JSONWriter {:-write write-throwable})
 
 (defprotocol Logger
@@ -114,8 +126,8 @@
                                     :escape-slash false
                                     :key-fn       key-fn)
                     (catch Throwable t
-                      (str {:tried-to-log edn
-                            :cause        t})))))))
+                      (pr-str (str {:tried-to-log edn
+                                    :cause        t}))))))))
 
 (def ^:dynamic *logger*
   "The logger now."
@@ -132,12 +144,12 @@
                                         :result    result} more)
                ::severity       severity
                ::sourceLocation {:file     file
-                                 :function expression
+                                 :function (pr-str expression)
                                  :line     line}
                ::time            (Instant/now)}))
     #_result))                          ; Not ready for this yet.
 
-;; Generate these 8 macros from the wfl.log/levels keywords.
+;; Can clojure.template make these from the wfl.log/levels keywords?
 
 (defmacro debug
   [expression & more]
