@@ -137,15 +137,19 @@
   "Define a log macro for `level`."
   [level]
   (template/apply-template
-   '[macro level severity]
-   '(defmacro macro [expression & more]
+   '[macro doc level severity]
+   '(defmacro macro doc
+      [expression & more]
       `(let [result# ~expression]
          (log ~level (assoc ~(meta &form)
                             :expression '~expression
                             :file       ~*file*
                             :namespace  '~(ns-name *ns*))
               ~severity result# ~@more)))
-   [(symbol (name level)) level (str/upper-case (name level))]))
+   [(symbol (name level))
+    (str "Log `expression` and `more` at " level " level.")
+    level
+    (str/upper-case (name level))]))
 
 (defmacro ^:private make-all-macros
   "Define a log macro for each level in `levels`."
