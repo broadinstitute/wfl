@@ -68,6 +68,29 @@ The response is similar.
 The above change allows all logs
 at`"DEBUG"` and higher through.
 
+## Log keys
+
+Some logging frameworks,
+such as Stackdriver,
+treat some field keys
+in log records specially.
+
+The WFL log calls will translate keywords
+qualified to the `wfl.log` namespace
+into the keys expected by the framework.
+For example,
+when logging with Stackdriver,
+the following `info` call
+will add a `logging.googleapis.com/spanId`
+key to the record logging `some-query`.
+
+``` clojure
+(require '[wfl.log :as log])
+(let [spanId (+ 1000 (rand-int 1000)))]
+  (log/info some-query ::log/spanId spanId))
+
+```
+
 ## Testing
 
 Tests are in `wfl.unit/logging-test`.
