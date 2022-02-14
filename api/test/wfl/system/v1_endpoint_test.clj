@@ -1,5 +1,6 @@
 (ns wfl.system.v1-endpoint-test
   (:require [clojure.test               :refer [deftest is testing]]
+            [clojure.data.json          :as json]
             [clojure.instant            :as instant]
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
@@ -16,11 +17,10 @@
             [wfl.tools.datasets         :as datasets]
             [wfl.tools.endpoints        :as endpoints]
             [wfl.tools.fixtures         :as fixtures]
-            [wfl.tools.workloads        :as workloads]
             [wfl.tools.resources        :as resources]
-            [wfl.util                   :as util]
-            [clojure.data.json          :as json]
-            [wfl.tools.workflows        :as workflows])
+            [wfl.tools.workflows        :as workflows]
+            [wfl.tools.workloads        :as workloads]
+            [wfl.util                   :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
 
@@ -389,24 +389,6 @@
           (run! verify statuses)
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
-
-(defn ^:private ingest-illumina-genotyping-array-files
-  "Return filrefs for inputs to illumina-genotyping-array dataset."
-  [dataset gcs-folder inputs-json]
-  (let [profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
-    (letfn [(ingest [source]
-              (let [dest (str/join "/" [gcs-folder (util/basename source)])]
-                (datarepo/ingest-file dataset profile source dest)))]
-      (let [input-map (->> "datasets/illumina-genotyping-array.json"
-                           resources/read-resource :schema :tables
-                           (filter (comp (partial = "inputs") :name))
-                           first :columns
-                           (filter (comp (partial = "fileref") :datatype))
-                           (map (comp keyword :name))
-                           (select-keys inputs-json))]
-        (->> input-map vals
-             (map (comp :fileId datarepo/poll-job ingest))
-             (zipmap (keys input-map)))))))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest inputs for the illumina_genotyping_array pipeline into the

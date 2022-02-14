@@ -23,16 +23,15 @@
   [& body]
   `(try (do ~@body)
         (catch Exception x#
-          (log/warn (str/join " " [(str x#) "from wfl.util/do-or-nil"]))
+          (log/error "wfl.util/do-or-nil" :x x#)
           nil)))
 
 ;; Parsers that will not throw.
 ;;
 (defn parse-int [s] (do-or-nil (Integer/parseInt s)))
-(defn parse-boolean [s] (do-or-nil (Boolean/valueOf s)))
 
 (defn parse-json
-  "Parse JSON `object` into keyword->object map recursively."
+  "Try to parse `object` string as JSON."
   [^String object]
   (try (json/read-str object :key-fn keyword)
        (catch Throwable x

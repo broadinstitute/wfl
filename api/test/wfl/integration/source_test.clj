@@ -9,8 +9,7 @@
             [wfl.source           :as source]
             [wfl.stage            :as stage]
             [wfl.tools.fixtures   :as fixtures]
-            [wfl.util             :as util]
-            [clojure.string       :as str])
+            [wfl.util             :as util])
   (:import [java.time Instant LocalDateTime]
            [java.util UUID]
            [wfl.util  UserException]))
@@ -98,10 +97,9 @@
                    (mapcat :datarepo_row_ids))))
           (total-rows [query args]
             (-> query (apply args) :totalRows Integer/parseInt))]
-    (let [interval      (repeatedly 2
-                                    #(-> (Instant/now)
-                                         str
-                                         (subs 0 (count "2021-07-14T15:47:02"))))
+    (let [interval      (repeatedly
+                         2 #(-> (Instant/now) str
+                                (subs 0 (count "2021-07-14T15:47:02"))))
           args          [testing-dataset
                          testing-table-name
                          {:ingestTime interval}

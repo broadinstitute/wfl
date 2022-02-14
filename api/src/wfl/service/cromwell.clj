@@ -1,13 +1,13 @@
 (ns wfl.service.cromwell
   "Common utilities and clients to talk to Cromwell."
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [clojure.walk :as walk]
-            [clj-http.client :as http]
-            [wfl.auth :as auth]
-            [wfl.debug :as debug]
-            [wfl.util :as util]
-            [wfl.wfl :as wfl]))
+            [clojure.string    :as str]
+            [clojure.walk      :as walk]
+            [clj-http.client   :as http]
+            [wfl.auth          :as auth]
+            [wfl.debug         :as debug]
+            [wfl.util          :as util]
+            [wfl.wfl           :as wfl]))
 
 (def retry-status?
   "Cromwell workflow statuses eligible for retry."
@@ -202,11 +202,6 @@
                 (lazy-cat results (when (< total totalResultsCount)
                                     (each (inc page) total)))))]
       (util/lazy-unchunk (each 1 0)))))
-
-(defn release-hold
-  "Let 'On Hold' workflow with ID run on Cromwell given URL."
-  [url id]
-  (post-thing "releaseHold" url id))
 
 (defn status
   "Status of the workflow with ID on Cromwell given URL."
