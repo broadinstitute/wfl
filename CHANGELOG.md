@@ -1,3 +1,8 @@
+# Release 0.15.0
+- [GH-1609] Make do-or-nil log at :debug level. ([#574](https://github.com/broadinstitute/wfl/pull/574))
+- [GH-1566] Add workload info to logs ([#552](https://github.com/broadinstitute/wfl/pull/552))
+- [GH-1608] Pull WFL v0.14.x version, changelog into develop ([#573](https://github.com/broadinstitute/wfl/pull/573))
+
 # Release 0.14.1
 - [GH-1604] Disable / hide Slacking behind WFL_SLACK_ENABLED ([#571](https://github.com/broadinstitute/wfl/pull/571))
 
