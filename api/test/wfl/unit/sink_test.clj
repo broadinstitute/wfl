@@ -22,11 +22,13 @@
                      :workspace_name "$SARSCoV2-Illumina-Full"}})))))
 
 (deftest test-rename-gather-bulk
-  (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")
+  (let [inputs  (resources/read-resource "sarscov2_illumina_full/inputs.edn")
         dataset (resources/read-resource "sarscov2-illumina-full-inputs.json")
-        result (sink/rename-gather-bulk (UUID/randomUUID) dataset "flowcell" inputs {:flowcell_tgz "flowcell_tgz"
-                                                                                     :flowcell_id "flowcell_id"
-                                                                                     :sample_rename_map "sample_rename_map"})]
+        result  (#'sink/rename-gather-bulk
+                 (UUID/randomUUID) dataset "flowcell"
+                 inputs {:flowcell_tgz      "flowcell_tgz"
+                         :flowcell_id       "flowcell_id"
+                         :sample_rename_map "sample_rename_map"})]
     (is (= (:flowcell_id inputs)
            (:flowcell_id result)))
     (is (= (:flowcell_tgz inputs)

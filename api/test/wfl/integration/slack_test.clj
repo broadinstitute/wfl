@@ -1,7 +1,7 @@
 (ns wfl.integration.slack-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test      :refer [deftest is testing]]
             [wfl.service.slack :as slack]
-            [wfl.util :as util])
+            [wfl.util          :as util])
   (:import [clojure.lang PersistentQueue]))
 
 (def ^:private testing-agent (agent (PersistentQueue/EMPTY)))
@@ -23,11 +23,12 @@
       (pop queue))
     queue))
 
-(add-watch testing-agent :watcher
-           (fn [_key _ref _old-state new-state]
-             (when (seq new-state)
-               (testing "notification is added to agent"
-                 (is (= (:channel (first (seq new-state))) testing-slack-channel))))))
+(add-watch
+ testing-agent :watcher
+ (fn [_key _ref _old-state new-state]
+   (when (seq new-state)
+     (testing "notification is added to agent"
+       (is (= (:channel (first (seq new-state))) testing-slack-channel))))))
 
 ;; This is test is flaky on Github Actions but works fine locally
 ;;
@@ -36,4 +37,5 @@
     #(do (slack/add-notification testing-agent (testing-slack-notification))
          (send-off testing-agent #'slack/send-notification)
          (testing "notification can actually be sent to slack"
-           (is (true? (deref notify-promise 10000 :timeout)) "Waited 10s for notification.")))))
+           (is (true? (deref notify-promise 10000 :timeout))
+               "Waited 10s for notification.")))))

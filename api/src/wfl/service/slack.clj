@@ -10,7 +10,8 @@
 
 ;; Slack Bot User token obtained from Vault
 (defonce ^:private token
-  (delay (:bot-user-token (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
+  (delay (:bot-user-token
+          (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
 
 (def enabled-env-var-name "WFL_SLACK_ENABLED")
 
@@ -66,8 +67,8 @@
 (def notifier (agent (PersistentQueue/EMPTY)))
 (add-watch notifier :watcher
            (fn [_key _ref _old-state new-state]
-             (when (seq new-state)
-               (log/debug (format "the current notification queue is: %s" (seq new-state))))))
+             (when-let [queue (seq new-state)]
+               (log/debug "Current notification queue" :queue queue))))
 
 (defn add-notification
   "Add notification defined by a map of
@@ -99,7 +100,7 @@
         (letfn [(notify [[_tag channel-id _channel-name]]
                   (let [payload {:channel channel-id
                                  :message (str/join \newline [header message])}]
-                    (log/info payload)
+                    (log/info payload :labels labels :workload uuid)
                     (add-notification notifier payload)))]
           (run! notify channels)))
       (log/info {:slackDisabled
