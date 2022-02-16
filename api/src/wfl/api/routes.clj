@@ -1,25 +1,25 @@
 (ns wfl.api.routes
   "Define routes for API endpoints."
-  (:require [clojure.string                     :as str]
-            [muuntaja.core                      :as muuntaja-core]
+  (:require [clojure.string                    :as str]
+            [muuntaja.core                     :as muuntaja-core]
             [reitit.coercion.spec]
-            [reitit.ring                        :as ring]
-            [reitit.ring.coercion               :as coercion]
-            [reitit.ring.middleware.exception   :as exception]
-            [reitit.ring.middleware.multipart   :as multipart]
-            [reitit.ring.middleware.muuntaja    :as muuntaja]
-            [reitit.ring.middleware.parameters  :as parameters]
-            [reitit.swagger                     :as swagger]
-            [reitit.swagger-ui                  :as swagger-ui]
-            [wfl.api.handlers                   :as handlers]
-            [wfl.api.spec                       :as spec]
-            [wfl.api.workloads                  :as workloads]
-            [wfl.environment                    :as env]
-            [wfl.log                            :as log]
-            [wfl.module.all                     :as all]
-            [wfl.module.aou                     :as aou]
-            [wfl.util                           :as util]
-            [wfl.wfl                            :as wfl])
+            [reitit.ring                       :as ring]
+            [reitit.ring.coercion              :as coercion]
+            [reitit.ring.middleware.exception  :as exception]
+            [reitit.ring.middleware.multipart  :as multipart]
+            [reitit.ring.middleware.muuntaja   :as muuntaja]
+            [reitit.ring.middleware.parameters :as parameters]
+            [reitit.swagger                    :as swagger]
+            [reitit.swagger-ui                 :as swagger-ui]
+            [wfl.api.handlers                  :as handlers]
+            [wfl.api.spec                      :as spec]
+            [wfl.api.workloads                 :as workloads]
+            [wfl.environment                   :as env]
+            [wfl.log                           :as log]
+            [wfl.module.all                    :as all]
+            [wfl.module.aou                    :as aou]
+            [wfl.util                          :as util]
+            [wfl.wfl                           :as wfl])
   (:import [java.sql SQLException]
            [org.apache.commons.lang3.exception ExceptionUtils]
            [wfl.util UserException]))
@@ -50,11 +50,11 @@
     {:get  {:no-doc true
             :summary "Get the current logging level"
             :handler handlers/get-logging-level
-            :responses {200 {:body ::log/logging-level-response}}
+            :responses {200 {:body ::log/level-response}}
             :swagger {:tags ["Informational"]}}
      :post {:summary    "Post a new logging level."
-            :parameters {:query ::log/logging-level-request}
-            :responses  {200 {:body ::log/logging-level-response}}
+            :parameters {:query ::log/level-request}
+            :responses  {200 {:body ::log/level-response}}
             :handler    handlers/update-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
@@ -159,8 +159,8 @@
   (let [{:keys [body] :as result}
         (exception-handler status message exception request return-trace)]
     (case severity
-      :warning (log/log :warning (str (util/make-map exception body)) :logging.googleapis.com/labels labels)
-      :error (log/log :error (str (util/make-map exception body)) :logging.googleapis.com/labels labels))
+      :warning (log/warning (util/make-map exception body) ::log/labels labels)
+      :error   (log/error   (util/make-map exception body) ::log/labels labels))
     result))
 
 (def exception-middleware

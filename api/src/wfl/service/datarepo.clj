@@ -340,9 +340,7 @@
    (let [col-spec (util/to-comma-separated-list (map name columns))]
      (query-metadata-table-impl dataset-or-snapshot table filters col-spec))))
 
-
 ;; utilities
-
 
 (defn ^:private id-and-name [{:keys [id name] :as _dataset}]
   (util/make-map id name))

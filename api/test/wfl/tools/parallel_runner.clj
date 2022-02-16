@@ -1,7 +1,7 @@
 (ns wfl.tools.parallel-runner
   (:require [clojure.test :as test]
             [wfl.log :as log])
-  (:import (java.io StringWriter)))
+  (:import [java.io StringWriter]))
 
 (defn -main
   "Concurrently run tests marked with ^:parallel in NAMESPACES.

@@ -152,7 +152,8 @@
 (defn ^:private create-user-comment
   "Create a user comment to be added to an executor submission."
   [note {:keys [uuid] :as _workload} snapshot-id]
-  (str/join \space [note "Workload:" uuid "Snapshot ID:" snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
+  (str/join \space [note "Workload:" uuid "Snapshot ID:"
+                    snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
 
 (defn terra-executor-validate-request-or-throw
   "Verify the method-configuration exists."
@@ -391,7 +392,9 @@
   [{:keys [source executor] :as workload}]
   (when-let [object (stage/peek-queue source)]
     (let [entity      (from-source executor object)
-          userComment (create-user-comment "New submission" workload (get-in entity [:attributes :snapshot]))
+          userComment (create-user-comment
+                       "New submission" workload
+                       (get-in entity [:attributes :snapshot]))
           submission  (create-submission! executor userComment entity)]
       (allocate-submission executor entity submission)
       (stage/pop-queue! source)))
@@ -664,7 +667,9 @@
   [{{:keys [workspace] :as executor} :executor :as workload} workflows]
   (letfn [(submit-reference [reference-id]
             (let [reference (rawls/get-snapshot-reference workspace reference-id)
-                  userComment (create-user-comment "Retry" workload (get-in reference [:attributes :snapshot]))]
+                  userComment (create-user-comment
+                               "Retry" workload
+                               (get-in reference [:attributes :snapshot]))]
               (->> reference
                    (create-submission! executor userComment)
                    (allocate-submission executor reference))))]
