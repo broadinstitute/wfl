@@ -16,7 +16,7 @@ api:
   image:
     repository: broadinstitute/workflow-launcher-api
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   deployment:
     containerPort: 80
   env:
