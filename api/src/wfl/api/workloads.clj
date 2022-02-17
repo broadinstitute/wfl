@@ -189,7 +189,7 @@
 (defmethod to-log
   :default
   [workload]
-  (select-keys workload [:uuid :pipeline :labels]))
+  (select-keys workload [:uuid :pipeline :project :labels]))
 
 (defmethod load-workload-impl
   :default
