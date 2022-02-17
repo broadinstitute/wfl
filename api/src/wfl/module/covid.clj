@@ -175,6 +175,17 @@
       (update :executor util/to-edn)
       (update :sink     util/to-edn)))
 
+;; Handle `workload` as a raw DB record
+;; (source, executor, and sink not populated)
+;; or a loaded workload object.
+;;
+(defn ^:private workload-to-log [workload]
+  (-> workload
+      (select-keys [:uuid :source :executor :sink :labels])
+      (update :source   #(or (stage/to-log %) (:source_type workload)))
+      (update :executor #(or (stage/to-log %) (:executor_type workload)))
+      (update :sink     #(or (stage/to-log %) (:sink_type workload)))))
+
 (defoverload workloads/create-workload!     pipeline create-covid-workload)
 (defoverload workloads/start-workload!      pipeline start-covid-workload)
 (defoverload workloads/update-workload!     pipeline update-covid-workload)
@@ -190,3 +201,4 @@
   pipeline executor/executor-throw-if-invalid-retry-filters)
 (defoverload workloads/retry               pipeline retry-covid-workload)
 (defoverload workloads/to-edn              pipeline workload-to-edn)
+(defoverload workloads/to-log              pipeline workload-to-log)

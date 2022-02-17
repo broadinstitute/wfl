@@ -52,6 +52,10 @@
   "Return an EDN representation of the `workload` that will be shown to users."
   :pipeline)
 
+(defmulti to-log
+  "A `workload` context object for logs."
+  :pipeline)
+
 ;; loading utilities
 (defmulti load-workload-impl
   "Load the workload given a TRANSACTION and a partially loaded WORKLOAD.
@@ -181,6 +185,11 @@
             {:workload workload
              :pipeline pipeline
              :type     ::invalid-pipeline})))
+
+(defmethod to-log
+  :default
+  [workload]
+  (select-keys workload [:uuid :pipeline :labels]))
 
 (defmethod load-workload-impl
   :default
