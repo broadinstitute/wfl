@@ -1,3 +1,6 @@
+# Release 0.15.1
+- [GH-1620] Set the API's image pullPolicy to Always. ([#576](https://github.com/broadinstitute/wfl/pull/576))
+
 # Release 0.15.0
 - [GH-1609] Make do-or-nil log at :debug level. ([#574](https://github.com/broadinstitute/wfl/pull/574))
 - [GH-1566] Add workload info to logs ([#552](https://github.com/broadinstitute/wfl/pull/552))
