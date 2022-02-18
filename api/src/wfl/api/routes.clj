@@ -47,15 +47,15 @@
            :responses {200 {:body {:oauth2-client-id string?}}}
            :swagger   {:tags ["Informational"]}}}]
    ["/api/v1/logging_level"
-    {:get  {:no-doc true
-            :summary "Get the current logging level"
-            :handler handlers/get-logging-level
-            :responses {200 {:body ::log/level-response}}
-            :swagger {:tags ["Informational"]}}
+    {:get  {:summary    "Get the current logging level"
+            :handler    handlers/get-logging-level
+            :responses  {200 {:body ::log/level-response}}
+            :swagger    {:tags ["Informational"]}}
      :post {:summary    "Post a new logging level."
             :parameters {:query ::log/level-request}
             :responses  {200 {:body ::log/level-response}}
-            :handler    handlers/update-logging-level}}]
+            :handler    handlers/post-logging-level
+            :swagger    {:tags ["Informational"]}}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::aou/append-to-aou-request}
@@ -183,10 +183,7 @@
   (ring/ring-handler
    (ring/router
     (endpoint-swagger-auth-processor endpoints)
-    {;; uncomment to debug coercion and middleware transformations
-     ;; :reitit.middleware/transform dev/print-request-diffs
-     ;; :exception pretty/exception
-     :data {:coercion   reitit.coercion.spec/coercion
+    {:data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muuntaja-core/instance
             :middleware [exception-middleware
                          ;; query-params & form-params
