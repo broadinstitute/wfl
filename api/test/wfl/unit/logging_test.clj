@@ -1,10 +1,11 @@
 (ns wfl.unit.logging-test
   "Test that our overcomplicated logging works."
-  (:require [clojure.test      :refer [is deftest testing]]
-            [clojure.data.json :as json]
-            [clojure.edn       :as edn]
-            [clojure.string    :as str]
-            [wfl.log           :as log])
+  (:require [clojure.test        :refer [is deftest testing]]
+            [clojure.data.json   :as json]
+            [clojure.edn         :as edn]
+            [clojure.string      :as str]
+            [wfl.log             :as log]
+            [wfl.tools.endpoints :as endpoints])
   (:import [java.util.regex Pattern]))
 
 (defmulti check-message?
@@ -25,6 +26,19 @@
     (and (= (:severity json) (-> severity name str/upper-case))
          (boolean (check-message? test (get-in json [:message :result]))))))
 
+(deftest endpoint
+  (testing "the /logging_level endpoint works"
+    (let [{:keys [level] :as init} (endpoints/get-logging-level)]
+      (is (#'log/level-string? level))
+      (try (let [other  (-> level set
+                            (remove @#'log/levels)
+                            first name str/upper-case)
+                 posted (endpoints/post-logging-level other)
+                 got    (endpoints/get-logging-level)]
+             (is (= got posted {:level other})))
+           (finally (endpoints/post-logging-level level)))
+      (is (= init (endpoints/get-logging-level))))))
+
 (deftest level-test
   (testing "basic logging levels"
     (with-redefs [log/active-level-predicate (atom (:debug @#'log/active-map))]
@@ -36,7 +50,7 @@
 (deftest severity-level-filtering-test
   (testing "logging level ignores lesser severities"
     (with-redefs
-     [log/active-level-predicate (atom (:info @#'log/active-map))]
+      [log/active-level-predicate (atom (:info @#'log/active-map))]
       (is (str/blank? (with-out-str (log/debug "Debug Message"))))
       (is (logged?    (with-out-str (log/info  "Info Message"))
                       :info "Info Message")))))
