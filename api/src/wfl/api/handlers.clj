@@ -9,7 +9,7 @@
             [wfl.log                        :as log]
             [wfl.module.aou                 :as aou]
             [wfl.module.copyfile]
-            [wfl.module.covid]
+            [wfl.module.staged]
             [wfl.module.sg]
             [wfl.module.wgs]
             [wfl.module.xx]

@@ -262,12 +262,12 @@
     (is (= (:snapshots source) [(:id snapshot)]))
     (is (s/valid? ::source/snapshot-list-source source))))
 
-(deftest test-create-covid-workload-with-empty-snapshot-list
+(deftest test-create-staged-workload-with-empty-snapshot-list
   (is (source/tdr-snapshot-list-validate-request-or-throw
        {:name      "TDR Snapshots"
         :snapshots [testing-snapshot]})))
 
-(deftest test-create-covid-workload-with-invalid-snapshot
+(deftest test-create-staged-workload-with-invalid-snapshot
   (is (thrown-with-msg?
        UserException #"Cannot access snapshot"
        (source/tdr-snapshot-list-validate-request-or-throw
