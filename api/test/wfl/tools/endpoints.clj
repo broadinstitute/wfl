@@ -139,3 +139,18 @@
                   :uri            "/test"
                   :body-params    request})]
         (is (== 200 status) (pr-str body))))))
+
+(defn get-logging-level
+  "Return response from the logging_level API."
+  []
+  (-> (wfl-url "api" "v1" "logging_level")
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
+(defn post-logging-level
+  "Use the logging_level API to set `level`."
+  [level]
+  (-> (wfl-url "api" "v1" "logging_level")
+      (http/post {:headers (auth/get-auth-header)
+                  :query-params {:level level}})
+      util/response-body-json))
