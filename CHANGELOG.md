@@ -1,5 +1,4 @@
 # Release 0.15.2
-- Merge branch 'develop' into tbl/GH-1625-deploy-wfl-v0.15.2
 - [GH-1622] Fix logging and logging_level API. ([#581](https://github.com/broadinstitute/wfl/pull/581))
 - Update CHANGELOG and version from main.
 
