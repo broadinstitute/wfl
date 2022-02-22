@@ -380,11 +380,6 @@
   [f]
   (fn [x & xs] (apply partial f x xs)))
 
-(defn >>>
-  "Left-to-right function composition, ie `(= (>>> f g) (comp g f))`."
-  [f & fs]
-  (reduce #(comp %2 %1) f fs))
-
 (defn poll
   "Poll `task!` every `seconds` [default: 1], attempting at most `max-attempts`
    [default: 3]."

@@ -10,6 +10,7 @@
             [wfl.debug                  :as debug]
             [wfl.environment            :as env]
             [wfl.executor               :as executor]
+            [wfl.log                    :as log]
             [wfl.module.covid           :as module]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -478,3 +479,16 @@
             "The workload should have finished")
         (is (seq (:rows (datarepo/query-table dataset "outputs")))
             "outputs should have been written to the dataset")))))
+
+(deftest ^:parallel test-logging-level
+  (testing "the /logging_level endpoint works"
+    (let [{:keys [level] :as init} (endpoints/get-logging-level)]
+      (is (#'log/level-string? level))
+      (try (let [other  (-> level set
+                            (remove @#'log/levels)
+                            first name str/upper-case)
+                 posted (endpoints/post-logging-level other)
+                 got    (endpoints/get-logging-level)]
+             (is (= got posted {:level other})))
+           (finally (endpoints/post-logging-level level)))
+      (is (= init (endpoints/get-logging-level))))))

@@ -13,7 +13,7 @@
             [wfl.tools.resources         :as resources]
             [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.workflows         :as workflows]
-            [wfl.util                    :as util :refer [>>>]])
+            [wfl.util                    :as util])
   (:import [java.util UUID]))
 
 (def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
@@ -140,9 +140,9 @@
 
 (def ^:private entity-columns
   "Return the columns in the `entity-type`."
-  (>>> (juxt :idName :attributeNames)
-       #(apply cons %)
-       #(mapv keyword %)))
+  (comp #(mapv keyword %)
+        #(apply cons %)
+        (juxt :idName :attributeNames)))
 
 (deftest test-import-snapshot
   (let [dataset-table "flowcells"
