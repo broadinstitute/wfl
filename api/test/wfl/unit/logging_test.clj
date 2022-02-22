@@ -26,19 +26,6 @@
     (and (= (:severity json) (-> severity name str/upper-case))
          (boolean (check-message? test (get-in json [:message :result]))))))
 
-(deftest endpoint
-  (testing "the /logging_level endpoint works"
-    (let [{:keys [level] :as init} (endpoints/get-logging-level)]
-      (is (#'log/level-string? level))
-      (try (let [other  (-> level set
-                            (remove @#'log/levels)
-                            first name str/upper-case)
-                 posted (endpoints/post-logging-level other)
-                 got    (endpoints/get-logging-level)]
-             (is (= got posted {:level other})))
-           (finally (endpoints/post-logging-level level)))
-      (is (= init (endpoints/get-logging-level))))))
-
 (deftest level-test
   (testing "basic logging levels"
     (with-redefs [log/active-level-predicate (atom (:debug @#'log/active-map))]

@@ -54,8 +54,7 @@
      :post {:summary    "Post a new logging level."
             :parameters {:query ::log/level-request}
             :responses  {200 {:body ::log/level-response}}
-            :handler    handlers/post-logging-level
-            :swagger    {:tags ["Informational"]}}}]
+            :handler    handlers/post-logging-level}}]
    ["/api/v1/append_to_aou"
     {:post {:summary    "Append to an existing AOU workload."
             :parameters {:body ::aou/append-to-aou-request}
