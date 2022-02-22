@@ -1,10 +1,11 @@
 (ns wfl.unit.logging-test
   "Test that our overcomplicated logging works."
-  (:require [clojure.test      :refer [is deftest testing]]
-            [clojure.data.json :as json]
-            [clojure.edn       :as edn]
-            [clojure.string    :as str]
-            [wfl.log           :as log])
+  (:require [clojure.test        :refer [is deftest testing]]
+            [clojure.data.json   :as json]
+            [clojure.edn         :as edn]
+            [clojure.string      :as str]
+            [wfl.log             :as log]
+            [wfl.tools.endpoints :as endpoints])
   (:import [java.util.regex Pattern]))
 
 (defmulti check-message?

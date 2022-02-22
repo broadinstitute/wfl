@@ -19,11 +19,11 @@
 (defn ^:private level-string?
   "True when `level` string names a log level."
   [level]
-  (some level? (-> level str/lower-case keyword)))
+  (-> level str/lower-case keyword level?))
 
-(s/def ::level-string   (s/and  string? level-string?))
-(s/def ::level-request  (s/keys :req-un [::level-string]))
-(s/def ::level-response (s/keys :req-un [::level-string]))
+(s/def ::level          (s/and  string? level-string?))
+(s/def ::level-request  (s/keys :req-un [::level]))
+(s/def ::level-response (s/keys :req-un [::level]))
 
 (def ^:private active-map
   "Map a level keyword to a set of active levels."
@@ -40,7 +40,7 @@
   "Set `active-level-predicate` for the `level` string."
   [level]
   (reset! active-level-predicate
-          (-> (if (empty? level) "info" level)
+          (-> (if (empty? level) "INFO" level)
               str/lower-case keyword active-map)))
 
 ;; https://cloud.google.com/logging/docs/agent/logging/configuration#special-fields

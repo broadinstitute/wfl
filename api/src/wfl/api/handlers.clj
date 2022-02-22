@@ -45,11 +45,11 @@
           to-result
           succeed))))
 
-(defn update-logging-level
-  "Updates the current logging level of the API."
-  [request]
+(defn post-logging-level
+  "Update the logging level according to `parameters` in `request`."
+  [{:keys [parameters] :as request}]
   (log/info (select-keys request [:request-method :uri :parameters]))
-  (let [{:keys [level]} (get-in request [:parameters :query])]
+  (let [level (some :level (vals parameters))]
     (letfn [(to-result [s] {:level s})]
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (-> (config/upsert-config tx "LOGGING_LEVEL" level)
