@@ -1,7 +1,7 @@
 (ns wfl.unit.sink-test
   (:require [clojure.test         :refer [deftest is]]
             [wfl.sink             :as sink]
-            [wfl.tools.endpoints  :refer [coercion-tester]]
+            [wfl.tools.endpoints  :as endpoints]
             [wfl.tools.resources  :as resources]
             [wfl.util             :refer [uuid-nil]])
   (:import [java.util UUID]
@@ -49,11 +49,11 @@
    :fromOutputs {}})
 
 (deftest test-workspace-sink-request-coercion
-  (let [test! (coercion-tester ::sink/sink)]
+  (let [test! (endpoints/coercion-tester ::sink/sink)]
     (test! workspace-sink-request)))
 
 (deftest test-datarepo-sink-request-coercion
-  (let [test! (coercion-tester ::sink/sink)]
+  (let [test! (endpoints/coercion-tester ::sink/sink)]
     (test! datarepo-sink-request)))
 
 (deftest test-throw-or-entity-name-from-workspace
