@@ -1,10 +1,7 @@
 # Sink
 
-The workload `Sink` models the terminal stage
-of a processing pipeline.
-In a typical workload configuration,
-a `Sink` can be used to write workflow outputs
-to a desired location in the cloud.
+The workload `Sink` models the terminal stage of a processing pipeline.
+A `Sink` writes workflow outputs to a desired location in the cloud.
 
 ## User Guide
 You can configure the type of `Sink` used in your workload by changing the
