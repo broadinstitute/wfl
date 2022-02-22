@@ -10,7 +10,7 @@
             [wfl.service.firecloud          :as firecloud]
             [wfl.service.rawls              :as rawls]
             [wfl.source                     :as source]
-            [wfl.tools.endpoints            :refer [coercion-tester]]
+            [wfl.tools.endpoints            :as endpoints]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
@@ -269,7 +269,7 @@
        {:skipValidation true}))))
 
 (deftest test-create-workload-coercion
-  (let [app     (coercion-tester
+  (let [app     (endpoints/coercion-tester
                  ::spec/workload-request
                  ::spec/workload-response
                  (comp util/to-edn workloads/create-workload!))

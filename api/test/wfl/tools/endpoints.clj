@@ -9,7 +9,7 @@
             [ring.util.http-response :refer [ok]]
             [wfl.auth                :as auth]
             [wfl.environment         :as env]
-            [wfl.util                :as util :refer [>>>]]))
+            [wfl.util                :as util]))
 
 (defn ^:private wfl-url
   "The WFL server URL to test."
@@ -126,9 +126,9 @@
          (ring/router
           [["/test" {:post {:parameters {:body request-spec}
                             :responses  {200 {:body (or response-spec nil?)}}
-                            :handler    (>>> :body-params
-                                             (or transform (constantly nil))
-                                             ok)}}]]
+                            :handler    (comp ok
+                                              (or transform (constantly nil))
+                                              :body-params)}}]]
           {:data {:coercion   reitit.coercion.spec/coercion
                   :middleware [coercion/coerce-exceptions-middleware
                                coercion/coerce-request-middleware
@@ -139,3 +139,18 @@
                   :uri            "/test"
                   :body-params    request})]
         (is (== 200 status) (pr-str body))))))
+
+(defn get-logging-level
+  "Return response from the logging_level API."
+  []
+  (-> (wfl-url "api" "v1" "logging_level")
+      (http/get {:headers (auth/get-auth-header)})
+      util/response-body-json))
+
+(defn post-logging-level
+  "Use the logging_level API to set `level`."
+  [level]
+  (-> (wfl-url "api" "v1" "logging_level")
+      (http/post {:headers (auth/get-auth-header)
+                  :query-params {:level level}})
+      util/response-body-json))
