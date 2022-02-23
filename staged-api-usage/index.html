@@ -14,7 +14,7 @@
     
     
       
-        <title>Overview - Workflow Launcher</title>
+        <title>API Usage - Workflow Launcher</title>
       
     
     
@@ -65,7 +65,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#staged-workloads" class="md-skip">
+        <a href="#staged-workload-api-overview" class="md-skip">
           Skip to content
         </a>
       
@@ -95,7 +95,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              API Usage
             
           </span>
         </div>
@@ -345,6 +345,18 @@
             
   
   
+  
+    <li class="md-nav__item">
+      <a href="../staged-workload/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
     
   
   
@@ -353,24 +365,20 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
       
-        
-      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Overview
+          API Usage
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Overview
+        API Usage
       </a>
       
         
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
-  
-    
   
   
     <label class="md-nav__title" for="__toc">
@@ -380,78 +388,72 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#staged-workload-components" class="md-nav__link">
-    Staged Workload Components
+  <a href="#staged-workload-api-overview" class="md-nav__link">
+    Staged Workload API Overview
   </a>
   
-    <nav class="md-nav" aria-label="Staged Workload Components">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-usage-examples" class="md-nav__link">
+    API Usage Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="API Usage Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    Source
+  <a href="#workload-response-format" class="md-nav__link">
+    Workload Response Format
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#executor" class="md-nav__link">
-    Executor
+  <a href="#get-workloads" class="md-nav__link">
+    Get Workloads
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sink" class="md-nav__link">
-    Sink
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-staged-workload" class="md-nav__link">
-    Example Staged Workload
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#staged-workload-anatomy-high-level" class="md-nav__link">
-    Staged Workload Anatomy (High Level)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#slack-notifications-for-watchers" class="md-nav__link">
-    Slack Notifications for Watchers
-  </a>
-  
-    <nav class="md-nav" aria-label="Slack Notifications for Watchers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-notifications-are-emitted" class="md-nav__link">
-    What notifications are emitted?
+  <a href="#get-workflows" class="md-nav__link">
+    Get Workflows
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites
+  <a href="#retry-workload" class="md-nav__link">
+    Retry Workload
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#stopping-notifications" class="md-nav__link">
-    Stopping Notifications
+  <a href="#create-workload" class="md-nav__link">
+    Create Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload" class="md-nav__link">
+    Start Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload" class="md-nav__link">
+    Stop Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-workload" class="md-nav__link">
+    Execute Workload
   </a>
   
 </li>
@@ -465,18 +467,6 @@
   
 </nav>
       
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../staged-api-usage/" class="md-nav__link">
-        API Usage
-      </a>
     </li>
   
 
@@ -755,8 +745,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -765,78 +753,72 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#staged-workload-components" class="md-nav__link">
-    Staged Workload Components
+  <a href="#staged-workload-api-overview" class="md-nav__link">
+    Staged Workload API Overview
   </a>
   
-    <nav class="md-nav" aria-label="Staged Workload Components">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-usage-examples" class="md-nav__link">
+    API Usage Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="API Usage Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#source" class="md-nav__link">
-    Source
+  <a href="#workload-response-format" class="md-nav__link">
+    Workload Response Format
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#executor" class="md-nav__link">
-    Executor
+  <a href="#get-workloads" class="md-nav__link">
+    Get Workloads
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sink" class="md-nav__link">
-    Sink
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-staged-workload" class="md-nav__link">
-    Example Staged Workload
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#staged-workload-anatomy-high-level" class="md-nav__link">
-    Staged Workload Anatomy (High Level)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#slack-notifications-for-watchers" class="md-nav__link">
-    Slack Notifications for Watchers
-  </a>
-  
-    <nav class="md-nav" aria-label="Slack Notifications for Watchers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-notifications-are-emitted" class="md-nav__link">
-    What notifications are emitted?
+  <a href="#get-workflows" class="md-nav__link">
+    Get Workflows
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites
+  <a href="#retry-workload" class="md-nav__link">
+    Retry Workload
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#stopping-notifications" class="md-nav__link">
-    Stopping Notifications
+  <a href="#create-workload" class="md-nav__link">
+    Create Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload" class="md-nav__link">
+    Start Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload" class="md-nav__link">
+    Stop Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-workload" class="md-nav__link">
+    Execute Workload
   </a>
   
 </li>
@@ -858,166 +840,405 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/staged-workload.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/staged-api-usage.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="staged-workloads">Staged Workloads<a class="headerlink" href="#staged-workloads" title="Permanent link">⚓︎</a></h1>
-<p>A staged workload takes data from a source,
-pushes it into a workflow executor for analysis,
-and then delivers the results of the analysis
-to an output location (also known as a sink).</p>
-<p>Depending on the workload's source, processing may be
-continuous -- inputs streaming in until stopped --
-or discrete -- all inputs known at workload creation.</p>
-<h2 id="staged-workload-components">Staged Workload Components<a class="headerlink" href="#staged-workload-components" title="Permanent link">⚓︎</a></h2>
-<h3 id="source">Source<a class="headerlink" href="#source" title="Permanent link">⚓︎</a></h3>
-<p>The workload <a href="../staged-source/">Source</a> models the first stage of a processing pipeline.
-A <code>Source</code> reads workflow inputs from a specified location
-or service in the cloud.</p>
-<h3 id="executor">Executor<a class="headerlink" href="#executor" title="Permanent link">⚓︎</a></h3>
-<p>The workload <a href="../staged-executor/">Executor</a> models an intermediate stage of a processing pipeline.
-An <code>Executor</code> uses a supported service in the cloud to execute workflows.</p>
-<h3 id="sink">Sink<a class="headerlink" href="#sink" title="Permanent link">⚓︎</a></h3>
-<p>The workload <a href="../staged-sink/">Sink</a> models the terminal stage of a processing pipeline.
-A <code>Sink</code> writes workflow outputs to a desired location in the cloud.</p>
-<h2 id="example-staged-workload">Example Staged Workload<a class="headerlink" href="#example-staged-workload" title="Permanent link">⚓︎</a></h2>
-<p>The specific values below are derived from the
-"COVID-19 Surveillance in Terra" project.</p>
-<p>Workloads for other projects may leverage different implementations
-for source, executor or sink.</p>
-<p>For guidance on how to interact with staged workloads
-via WFL API, see <a href="../staged-api-usage/">API Usage</a>.</p>
-<div class="highlight"><pre><span></span><code>{
-    &quot;watchers&quot;: [
-        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
-        [&quot;slack&quot;, &quot;C000YYY0YYY&quot;, &quot;#optional-channel-name-for-context&quot;]
-    ],
-    &quot;labels&quot;: [
-        &quot;hornet:test&quot;
-    ],
-    &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-    &quot;source&quot;: {
-        &quot;name&quot;: &quot;Terra DataRepo&quot;,
-        &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
-        &quot;table&quot;: &quot;flowcells&quot;,
-        &quot;snapshotReaders&quot;: [
-            &quot;workflow-launcher-dev@firecloud.org&quot;
-        ]
-    },
-    &quot;executor&quot;: {
-        &quot;name&quot;: &quot;Terra&quot;,
-        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-        &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
-        &quot;methodConfigurationVersion&quot;: 1,
-        &quot;fromSource&quot;: &quot;importSnapshot&quot;
-    },
-    &quot;sink&quot;: {
-        &quot;name&quot;: &quot;Terra Workspace&quot;,
-        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-        &quot;entityType&quot;: &quot;flowcell&quot;,
-        &quot;identifier&quot;: &quot;run_id&quot;,
-        &quot;fromOutputs&quot;: {
-            &quot;submission_xml&quot; : &quot;submission_xml&quot;,
-            &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
-            &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
-            ...
-        }
-    }
-}
-</code></pre></div>
-<h2 id="staged-workload-anatomy-high-level">Staged Workload Anatomy (High Level)<a class="headerlink" href="#staged-workload-anatomy-high-level" title="Permanent link">⚓︎</a></h2>
+                  <h1>API Usage</h1>
+                
+                <h2 id="staged-workload-api-overview">Staged Workload API Overview<a class="headerlink" href="#staged-workload-api-overview" title="Permanent link">⚓︎</a></h2>
+<p>Users interact with staged workloads via the following WFL API endpoints:</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
+<th>Verb</th>
+<th>Endpoint</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>watchers</td>
-<td>List</td>
-<td>An optional list of Slack channels to notify</td>
+<td>GET</td>
+<td><code>/api/v1/workload</code></td>
+<td>List all workloads, optionally filtering by uuid or project</td>
 </tr>
 <tr>
-<td>labels</td>
-<td>List</td>
-<td>A list of user-defined labels. They must be a string of the form <code>"name":"value”</code>, where <code>name</code> must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and <code>value</code> is any non-blank string</td>
+<td>GET</td>
+<td><code>/api/v1/workload/{uuid}/workflows</code></td>
+<td>List all unretried workflows for workload <code>uuid</code>, filtering by supplied filters</td>
 </tr>
 <tr>
-<td>project</td>
-<td>String</td>
-<td>A non-null string to allow querying workloads by project</td>
+<td>POST</td>
+<td><code>/api/v1/workload/{uuid}/retry</code></td>
+<td>Retry unretried workflows matching given filters in workload <code>uuid</code></td>
 </tr>
 <tr>
-<td>source</td>
-<td>Object</td>
-<td>The source of new workflow inputs</td>
+<td>POST</td>
+<td><code>/api/v1/create</code></td>
+<td>Create a new workload</td>
 </tr>
 <tr>
-<td>executor</td>
-<td>Object</td>
-<td>The mechanism executing the analysis</td>
+<td>POST</td>
+<td><code>/api/v1/start</code></td>
+<td>Start a workload</td>
 </tr>
 <tr>
-<td>sink</td>
-<td>Object</td>
-<td>The destination for workflow outputs</td>
+<td>POST</td>
+<td><code>/api/v1/stop</code></td>
+<td>Stop a running workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/exec</code></td>
+<td>Create and start (execute) a workload</td>
 </tr>
 </tbody>
 </table>
-<h2 id="slack-notifications-for-watchers">Slack Notifications for Watchers<a class="headerlink" href="#slack-notifications-for-watchers" title="Permanent link">⚓︎</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Slack notifications are temporarily disabled:
-see <a href="https://broadinstitute.atlassian.net/browse/GH-1604">GH-1604</a>.</p>
-</div>
-<p>The optional <code>watchers</code> field in a workload request
-registers Slack channels as watchers of the workload.</p>
-<div class="highlight"><pre><span></span><code>&quot;watchers&quot;: [
-        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
-        [&quot;slack&quot;, &quot;C000YYY0YYY&quot;, &quot;#optional-channel-name-for-context&quot;]
-    ]
+<p>These endpoints play into a staged workload's lifecycle thusly:</p>
+<ol>
+<li>
+<p>The caller needs to <a href="#create-workload">create</a> a workload and specify the
+   <a href="../staged-source/">source</a>,
+   <a href="../staged-executor/">executor</a>, and
+   <a href="../staged-sink/">sink</a>.</p>
+<p>If all stage requests pass verification,
+the caller will receive the newly created
+<a href="#workload-response-format">workload object</a> with an assigned <code>uuid</code>
+in response.</p>
+</li>
+<li>
+<p>Next, the caller needs to <a href="#start-workload">start</a> the newly created workload.
+   Once started, WFL will continue to poll for new inputs in the source until stopped.</p>
+<p>(Alternatively: callers can <a href="#execute-workload">execute</a> a workload request
+to create and start a workload within a single call,
+sidestepping the possibility of creating a workload
+but forgetting to start it.)</p>
+</li>
+<li>
+<p><a href="#stop-workload">Stopping</a> a workload will not cancel analysis in progress,
+   but WFL will stop polling for new inputs,
+   and will mark the workload finished
+   once any previously-identified inputs have undergone processing.</p>
+<ul>
+<li>Example: the caller may wish to stop a continuous workflow
+  if maintenance is required on the underlying method.</li>
+</ul>
+</li>
+</ol>
+<p>The caller can also <a href="#retry-workload">retry</a> workflows in a workload
+matching a Terra submission ID and optional workflow status (ex. "Failed").</p>
+<h2 id="api-usage-examples">API Usage Examples<a class="headerlink" href="#api-usage-examples" title="Permanent link">⚓︎</a></h2>
+<p>Here you'll find example requests and responses for the endpoints enumerated above.</p>
+<h3 id="workload-response-format">Workload Response Format<a class="headerlink" href="#workload-response-format" title="Permanent link">⚓︎</a></h3>
+<p>Many of the API endpoints return staged workloads in their responses.</p>
+<p>An example workload response at the time of this writing is formatted thusly:</p>
+<div class="highlight"><pre><span></span><code>{
+    &quot;started&quot; : &quot;2021-07-14T15:36:47Z&quot;,
+    &quot;watchers&quot; : [
+        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;]
+    ],
+    &quot;labels&quot; : [ &quot;hornet:test&quot;, &quot;project:okotsopo testing enhanced source, executor, sink logging&quot; ],
+    &quot;creator&quot; : &quot;okotsopo@broadinstitute.org&quot;,
+    &quot;updated&quot; : &quot;2021-08-06T21:41:28Z&quot;,
+    &quot;created&quot; : &quot;2021-07-14T15:36:07Z&quot;,
+    &quot;source&quot; : {
+    &quot;snapshots&quot; : [ &quot;67a2bfd7-88e4-4adf-9e41-9b0d04fb32ea&quot; ],
+    &quot;name&quot; : &quot;TDR Snapshots&quot;
+    },
+    &quot;finished&quot; : &quot;2021-08-06T21:41:28Z&quot;,
+    &quot;commit&quot; : &quot;9719eda7424bf5b0804f5493875681fa014cdb29&quot;,
+    &quot;uuid&quot; : &quot;e66c86b2-120d-4f7f-9c3a-b9eaadeb1919&quot;,
+    &quot;executor&quot; : {
+    &quot;workspace&quot; : &quot;wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707&quot;,
+    &quot;methodConfiguration&quot; : &quot;wfl-dev/sarscov2_illumina_full&quot;,
+    &quot;methodConfigurationVersion&quot; : 41,
+    &quot;fromSource&quot; : &quot;importSnapshot&quot;,
+    &quot;name&quot; : &quot;Terra&quot;
+    },
+    &quot;version&quot; : &quot;0.8.0&quot;,
+    &quot;sink&quot; : {
+    &quot;workspace&quot; : &quot;wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707&quot;,
+    &quot;entityType&quot; : &quot;flowcell&quot;,
+    &quot;fromOutputs&quot; : {
+    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
+    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
+    ...
+    },
+    &quot;identifier&quot; : &quot;run_id&quot;,
+    &quot;name&quot; : &quot;Terra Workspace&quot;
+    }
+    }
 </code></pre></div>
-<p>When specified, WFL expects a list of <strong>Slack channel IDs</strong>.
-You can also add the channel name as the watcher's third element,
-but because channel names can change this is for decoration
-and debugging assistance only and not accessed programmatically.</p>
-<p>Slack channel IDs start with a <code>C</code> and can be found at the bottom
-of your channel's "Get channel details" dropdown:</p>
-<p><img alt="" src="../assets/staged-workload/channel-id.png" /></p>
-<h3 id="what-notifications-are-emitted">What notifications are emitted?<a class="headerlink" href="#what-notifications-are-emitted" title="Permanent link">⚓︎</a></h3>
-<p><strong>User-facing exceptions</strong>
-- Ex. Issues accessing TDR dataset, snapshot, etc.</p>
-<p><strong>Notable state changes</strong>
-- Ex. Workflow has completed</p>
-<p><img alt="" src="../assets/staged-workload/workflow-finished-notifications.png" /></p>
-<p>In the future, WFL may allow for these two notification streams
-to be configured separately.
-High-volume use cases (ex. 100s of workflows/day) may find
-state change notifications too noisy.</p>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">⚓︎</a></h3>
+<p>Worth mentioning is that the contents of the <code>source</code>, <code>executor</code> and <code>sink</code> blocks
+within the response will be formatted according to the corresponding stage implementation.</p>
+<h3 id="get-workloads">Get Workloads<a class="headerlink" href="#get-workloads" title="Permanent link">⚓︎</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p>A request to the <code>/api/v1/workload</code> endpoint without a <code>uuid</code>
+or <code>project</code> parameter returns all workloads known to WFL.
+That response might be large and take awhile to process.</p>
+</div>
+<p><strong>GET /api/v1/workload?uuid={uuid}</strong></p>
+<p>Query WFL for a workload by its UUID.</p>
+<p>Note that a successful response from <code>/api/v1/workload</code> will
+always be an array of <a href="#workload-response-format">workload objects</a>,
+but specifying a <code>uuid</code> will return a singleton array.</p>
+<div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload&#39; \
+    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+    -H &#39;Accept: application/json&#39; \
+    -d $&#39;{ &quot;uuid&quot;: &quot;e66c86b2-120d-4f7f-9c3a-b9eaadeb1919&quot; }&#39;
+</code></pre></div>
+</div>
+</div>
+<p><strong>GET /api/v1/workload?project={project}</strong></p>
+<p>Query WFL for all workloads with a specified <code>project</code> label.</p>
+<p>The response is an array of <a href="#workload-response-format">workload objects</a>.</p>
+<div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload&#39; \
+    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+    -H &#39;Accept: application/json&#39; \
+    -d $&#39;{ &quot;project&quot;: &quot;PO-1234&quot; }&#39;
+</code></pre></div>
+</div>
+</div>
+<h3 id="get-workflows">Get Workflows<a class="headerlink" href="#get-workflows" title="Permanent link">⚓︎</a></h3>
+<p><strong>GET /api/v1/workload/{uuid}/workflows</strong></p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p>Fetching workflows in a workload without any other filters
+may yield a large response and take a long time to process,
+such as for long-running continuous workloads.</p>
+</div>
+<div class="tabbed-set" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22  # workload UUID
+
+curl -X GET \
+     &quot;$WFL/api/v1/workload/$UUID/workflows&quot; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Accept: application/json&#39;
+</code></pre></div>
+</div>
+</div>
+<p>The response is a list of WFL workflow records, each of which tell us:</p>
 <ul>
 <li>
-<p>Channel must live in the <code>broadinstitute.slack.com</code>
-  Slack organization</p>
+<p>WFL submitted <code>methodConfiguration</code> in <code>workspace</code> with the
+  snapshot <code>reference</code> as its root entity type</p>
 </li>
 <li>
-<p>The WFL notifier Slack App has been added to your channel --
-  <code>/invite @WorkFlow Launcher Notifier</code></p>
+<p>The resulting submission had Terra <code>submission</code> UUID</p>
+</li>
+<li>
+<p>The workflow had Terra <code>workflow</code> UUID and is processing the snapshot row
+  with <code>entity</code> as its row UUID</p>
+</li>
+<li>
+<p>At WFL's last poll at <code>updated</code>, we noted that the workflow had <code>status</code></p>
+</li>
+<li>
+<p>Once a workflow has succeeded, <code>consumed</code> is populated with a timestamp
+  when WFL has "sunk" its outputs to their destination</p>
 </li>
 </ul>
-<h3 id="stopping-notifications">Stopping Notifications<a class="headerlink" href="#stopping-notifications" title="Permanent link">⚓︎</a></h3>
-<p>If notifications are too noisy, you can <code>/remove @WorkFlow Launcher Notifier</code>
-from your channel as a quick fix.</p>
-<p>At this time, there isn't a way to update the <code>watchers</code> list
-for an existing workload.</p>
-<p>The long-term approach is to stop your workload,
-recreate it with an updated <code>watchers</code> list,
-and start the new workload.</p>
+<div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Response</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>[ {
+&quot;retry&quot;: null,
+&quot;workspace&quot;: &quot;emerge_prod/Arrays_test_AD&quot;,
+&quot;updated&quot;: &quot;2022-01-03T21:35:40Z&quot;,
+&quot;workflow&quot;: &quot;99956c17-26af-4d50-8954-9de9ecc4f733&quot;,
+&quot;reference&quot;: &quot;4de4b53c-3904-43f9-a155-9f2e2460eb42&quot;,
+&quot;status&quot;: &quot;Aborted&quot;,
+&quot;id&quot;: 1,
+&quot;methodConfiguration&quot;: &quot;emerge_prod/Arrays_TDR_GH-1560&quot;,
+&quot;consumed&quot;: null,
+&quot;submission&quot;: &quot;fbb96180-f6a5-4895-a154-72d133e442db&quot;,
+&quot;entity&quot;: &quot;d4ce2b14-49d6-4209-95ab-424e2edf1741&quot;
+} ]
+</code></pre></div>
+</div>
+</div>
+<p><strong>GET /api/v1/workload/{uuid}/workflows?submission={submission}&amp;status={status}</strong></p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>,
+filtering by any workflow filters specified as query params:</p>
+<ul>
+<li><code>submission</code> - Terra submission ID (must be a valid UUID)</li>
+<li><code>status</code> - Workflow status (must be a valid Cromwell workflow status)</li>
+</ul>
+<p>The response has the same format as when querying without filters.</p>
+<div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
+STATUS=Aborted                                  # Cromwell workflow status
+
+curl -X GET \
+     &quot;$WFL/api/v1/workload/$UUID/workflows?submission=$SUBMISSION&amp;status=$STATUS&quot; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Accept: application/json&#39;
+</code></pre></div>
+</div>
+</div>
+<h3 id="retry-workload">Retry Workload<a class="headerlink" href="#retry-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/workload/{uuid}/retry</strong></p>
+<p>Resubmit all unretried workflows associated with workload <code>uuid</code>
+and request body filters.</p>
+<p>Prerequisites:</p>
+<ul>
+<li>The request body filters must be <a href="../usage-retry/#request-body">valid</a></li>
+<li>Workflows must exist in the workload for the specified filters</li>
+<li>The workload should be started</li>
+</ul>
+<p>With all prerequisite fulfilled, WFL will then...</p>
+<ul>
+<li>Submit the retry to the executor</li>
+<li>(If necessary) remark the workload as active
+  so that it will be visible in the update loop</li>
+</ul>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<p>Further information found in general
+<a href="../usage-retry/#retrying-terra-workflows-via-wfl-api">retry documentation</a>.</p>
+<div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
+
+curl -X POST \
+    &quot;$WFL/api/v1/workload/$UUID/retry&quot; \
+    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;{ \&quot;submission\&quot;: \&quot;$SUBMISSION\&quot; }&quot;
+</code></pre></div>
+</div>
+</div>
+<h3 id="create-workload">Create Workload<a class="headerlink" href="#create-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/create</strong></p>
+<p>Create a new workload from a request.
+Expected request format documented within <a href="../staged-workload/">staged workload</a>
+navigation.</p>
+<p>The response is the newly created <a href="#workload-response-format">workload object</a>
+with an assigned <code>uuid</code>.</p>
+<div class="tabbed-set" data-tabs="7:1"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X &quot;POST&quot; &quot;http://localhost:3000/api/v1/create&quot; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Content-Type: application/json&#39; \
+     -d &#39;{
+            &quot;watchers&quot;: [
+                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
+                [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
+            ],
+            &quot;labels&quot;: [
+                &quot;hornet:test&quot;
+            ],
+            &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+            &quot;source&quot;: {
+                &quot;name&quot;: &quot;Terra DataRepo&quot;,
+                &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
+                &quot;table&quot;: &quot;flowcells&quot;,
+                &quot;snapshotReaders&quot;: [
+                    &quot;workflow-launcher-dev@firecloud.org&quot;
+                ]
+            },
+            &quot;executor&quot;: {
+                &quot;name&quot;: &quot;Terra&quot;,
+                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+                &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
+                &quot;methodConfigurationVersion&quot;: 2,
+                &quot;fromSource&quot;: &quot;importSnapshot&quot;
+            },
+            &quot;sink&quot;: {
+                &quot;name&quot;: &quot;Terra Workspace&quot;,
+                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+                &quot;entityType&quot;: &quot;flowcell&quot;,
+                &quot;identifier&quot;: &quot;run_id&quot;,
+                &quot;fromOutputs&quot;: {
+                    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
+                    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
+                    &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+                    ...
+                }
+            }
+        }&#39;
+</code></pre></div>
+</div>
+</div>
+<h3 id="start-workload">Start Workload<a class="headerlink" href="#start-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/start?uuid={uuid}</strong></p>
+<p>Start an existing, unstarted workload <code>uuid</code>.</p>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<div class="tabbed-set" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><label for="__tabbed_8_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X POST &#39;http://localhost:3000/api/v1/start&#39; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Content-Type: application/json&#39; \
+     -d $&#39;{ &quot;uuid&quot;: &quot;fb06bcf3-bc10-471b-a309-b2f99e4f5a67&quot; }&#39;
+</code></pre></div>
+</div>
+</div>
+<h3 id="stop-workload">Stop Workload<a class="headerlink" href="#stop-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/stop?uuid={uuid}</strong></p>
+<p>Stop a running workload <code>uuid</code>.</p>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<div class="tabbed-set" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><label for="__tabbed_9_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X POST &#39;http://localhost:3000/api/v1/stop&#39; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Content-Type: application/json&#39; \
+     -d $&#39;{ &quot;uuid&quot;: &quot;fb06bcf3-bc10-471b-a309-b2f99e4f5a67&quot; }&#39;
+</code></pre></div>
+</div>
+</div>
+<h3 id="execute-workload">Execute Workload<a class="headerlink" href="#execute-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/exec</strong></p>
+<p>Create and start (execute) a workload from a request.
+Expected request format documented within <a href="../staged-workload/">staged workload</a>
+navigation.</p>
+<p>The response is the newly created and started <a href="#workload-response-format">workload object</a>
+with an assigned <code>uuid</code>.</p>
+<div class="tabbed-set" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><label for="__tabbed_10_1">Request</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>curl -X &quot;POST&quot; &quot;http://localhost:3000/api/v1/exec&quot; \
+     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
+     -H &#39;Content-Type: application/json&#39; \
+     -d &#39;{
+            &quot;watchers&quot;: [
+                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;]
+            ],
+            &quot;labels&quot;: [
+                &quot;hornet:test&quot;
+            ],
+            &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+            &quot;source&quot;: {
+                &quot;name&quot;: &quot;Terra DataRepo&quot;,
+                &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
+                &quot;table&quot;: &quot;flowcells&quot;,
+                &quot;snapshotReaders&quot;: [
+                    &quot;workflow-launcher-dev@firecloud.org&quot;
+                ]
+            },
+            &quot;executor&quot;: {
+                &quot;name&quot;: &quot;Terra&quot;,
+                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+                &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
+                &quot;methodConfigurationVersion&quot;: 2,
+                &quot;fromSource&quot;: &quot;importSnapshot&quot;
+            },
+            &quot;sink&quot;: {
+                &quot;name&quot;: &quot;Terra Workspace&quot;,
+                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
+                &quot;entityType&quot;: &quot;flowcell&quot;,
+                &quot;identifier&quot;: &quot;run_id&quot;,
+                &quot;fromOutputs&quot;: {
+                    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
+                    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
+                    &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+                    ...
+                }
+            }
+        }&#39;
+</code></pre></div>
+</div>
+</div>
                 
               
               
@@ -1042,7 +1263,7 @@ and start the new workload.</p>
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../dev-monitoring/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Monitoring" rel="prev">
+        <a href="../staged-workload/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1051,20 +1272,20 @@ and start the new workload.</p>
               <span class="md-footer__direction">
                 Previous
               </span>
-              Monitoring
+              Overview
             </div>
           </div>
         </a>
       
       
         
-        <a href="../staged-api-usage/" class="md-footer__link md-footer__link--next" aria-label="Next: API Usage" rel="next">
+        <a href="../staged-source/" class="md-footer__link md-footer__link--next" aria-label="Next: Source" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              API Usage
+              Source
             </div>
           </div>
           <div class="md-footer__button md-icon">

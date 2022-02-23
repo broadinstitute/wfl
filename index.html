@@ -491,7 +491,19 @@
   
   
     <li class="md-nav__item">
-      <a href="source/" class="md-nav__link">
+      <a href="staged-api-usage/" class="md-nav__link">
+        API Usage
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="staged-source/" class="md-nav__link">
         Source
       </a>
     </li>
@@ -503,7 +515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="executor/" class="md-nav__link">
+      <a href="staged-executor/" class="md-nav__link">
         Executor
       </a>
     </li>
@@ -515,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="sink/" class="md-nav__link">
+      <a href="staged-sink/" class="md-nav__link">
         Sink
       </a>
     </li>
@@ -573,18 +585,6 @@
     <li class="md-nav__item">
       <a href="modules-aou-arrays/" class="md-nav__link">
         Arrays
-      </a>
-    </li>
-  
-
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="modules-covid/" class="md-nav__link">
-        Covid
       </a>
     </li>
   
@@ -914,10 +914,10 @@ incoming notifications that describe all of the required inputs to launch Arrays
 scientific pipelines in Cromwell.</p>
 <p>Most recent efforts leverage the general applicability of a
 <a href="staged-workload/">staged workload</a> model
-which automates fetching data from a <a href="source/">source</a>,
-pushing it into a workflow <a href="executor/">executor</a> for analysis,
+which automates fetching data from a <a href="staged-source/">source</a>,
+pushing it into a workflow <a href="staged-executor/">executor</a> for analysis,
 and delivering the results of the analysis to an output location
-(also known as a <a href="sink/">sink</a>).</p>
+(also known as a <a href="staged-sink/">sink</a>).</p>
 <p>WFL is designed to be deployed to run as a service in the cloud, primarily
 on Kubernetes clusters.</p>
 <div class="admonition info">
