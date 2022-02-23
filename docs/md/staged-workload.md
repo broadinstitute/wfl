@@ -1,8 +1,13 @@
 # Staged Workloads
 
-A staged workload is a continuous body of work which takes data from a source,
+A staged workload takes data from a source,
 pushes it into a workflow executor for analysis,
-and then delivers the results of the analysis to an output location (also known as a sink).
+and then delivers the results of the analysis
+to an output location (also known as a sink).
+
+Depending on the workload's source, processing may be
+continuous -- inputs streaming in until stopped --
+or discrete -- all inputs known at workload creation.
 
 ## Staged Workload Components
 ### Source
