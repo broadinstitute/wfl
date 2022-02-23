@@ -1,9 +1,8 @@
 # Source
 
 The workload `Source` models the first stage of a processing pipeline.
-In a typical workload configuration,
-a `Source` can be used to read workflow inputs
-from a specified location or service in the cloud.
+A `Source` reads workflow inputs from a specified location
+or service in the cloud.
 
 ## User Guide
 You can configure the type of `Source` used in your workload by changing the
@@ -16,7 +15,7 @@ using the `Terra DataRepo` source.
 
 `Terra DataRepo` source polls a `dataset.table`'s row metadata table
 for newly ingested rows.
-It snapshots those rows for downstream processing by an `Executor.`
+It snapshots those rows for downstream processing by an `Executor`.
 The `Terra DataRepo` source can only read inputs from a single table.
 
 When you `start` the workload, the `Terra DataRepo` source will start looking

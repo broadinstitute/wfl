@@ -1,29 +1,37 @@
 # Staged Workloads
 
-A staged workload is a discrete body of work, which takes data from a source,
+A staged workload takes data from a source,
 pushes it into a workflow executor for analysis,
-and then delivers the results of the analysis to an output location (also known as a sink).
+and then delivers the results of the analysis
+to an output location (also known as a sink).
+
+Depending on the workload's source, processing may be
+continuous -- inputs streaming in until stopped --
+or discrete -- all inputs known at workload creation.
 
 ## Staged Workload Components
 ### Source
-The workload [Source](./source.md) models the first stage of a processing pipeline.
-In a typical workload configuration, a `Source` can be used to read workflow inputs
-from a specified location or service in the cloud.
+The workload [Source](./staged-source.md) models the first stage of a processing pipeline.
+A `Source` reads workflow inputs from a specified location
+or service in the cloud.
 
 ### Executor
-The workload [Executor](./executor.md) models an intermediate stage of a processing pipeline.
-In a typical workload configuration, an `Executor` uses a supported
-service in the cloud to execute workflows.
+The workload [Executor](./staged-executor.md) models an intermediate stage of a processing pipeline.
+An `Executor` uses a supported service in the cloud to execute workflows.
 
 ### Sink
-The workload [Sink](./sink.md) models the terminal stage of a processing pipeline.
-In a typical workload configuration, a `Sink` can be used to write workflow outputs
-to a desired location in the cloud.
+The workload [Sink](./staged-sink.md) models the terminal stage of a processing pipeline.
+A `Sink` writes workflow outputs to a desired location in the cloud.
 
 ## Example Staged Workload
-The specific values below are from the
-[COVID-19 Surveillance in Terra](./modules-covid.md) project.
-Workloads for other projects may leverage different implementations for source, executor or sink.
+The specific values below are derived from the
+"COVID-19 Surveillance in Terra" project.
+
+Workloads for other projects may leverage different implementations
+for source, executor or sink.
+
+For guidance on how to interact with staged workloads
+via WFL API, see [API Usage](./staged-api-usage.md).
 
 ```
 {
@@ -68,16 +76,20 @@ Workloads for other projects may leverage different implementations for source, 
 ## Staged Workload Anatomy (High Level)
 
 | Field    | Type   | Description                                                                                                                                                                                                                                 |
-|----------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| watchers | List   | An optional list of Slack channels to notify                                                                                                                                                                                                |
-| labels   | List   | A list of user-defined labels.They must be a string of the form `"name":"value”`, where `name` must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and `value` is any non-blank string |
-| project  | String | The project is a non-null string required in the workload table. It's needed to support querying workloads by project                                                                                                                       |
-| source   | Object | The data source                                                                                                                                                                                                                             |
-| executor | Object | The mechanism executing the analysis. (Most often this is Terra)                                                                                                                                                                            |
-| sink     | Object | The location where data will be placed after analysis is complete                                                                                                                                                                           |
+|----------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| watchers | List   | An optional list of Slack channels to notify                                                                                                                                                                                                 |
+| labels   | List   | A list of user-defined labels. They must be a string of the form `"name":"value”`, where `name` must start with a letter followed by any combination of digits, letters, spaces, underscores and hyphens and `value` is any non-blank string |
+| project  | String | A non-null string to allow querying workloads by project                                                                                                                                                                                     |
+| source   | Object | The source of new workflow inputs                                                                                                                                                                                                            |
+| executor | Object | The mechanism executing the analysis                                                                                                                                                                                                         |
+| sink     | Object | The destination for workflow outputs                                                                                                                                                                                                         |
 
 
 ## Slack Notifications for Watchers
+
+!!! warning
+    Slack notifications are temporarily disabled:
+    see [GH-1604](https://broadinstitute.atlassian.net/browse/GH-1604).
 
 The optional `watchers` field in a workload request
 registers Slack channels as watchers of the workload.

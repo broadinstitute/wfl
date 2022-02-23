@@ -1,7 +1,6 @@
 # Executor
 The workload `Executor` models an intermediate stage of a processing pipeline.
-In a typical workload configuration, an `Executor` uses a supported
-service in the cloud to execute workflows.
+An `Executor` uses a supported service in the cloud to execute workflows.
 
 ## User Guide
 You can configure the type of `Executor` used in your workload by changing the
