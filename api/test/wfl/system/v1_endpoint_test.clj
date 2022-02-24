@@ -378,9 +378,9 @@
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)
-               (take 23)                ; Why not?
+               (filter :finished)
+               (take 5)                 ; Why not?
                (map summarize-workflows-in-workload)
-               (filter (comp :finished :workload))
                (sort-by :count >)
                first)
           statuses (set (keep :status workflows))]
