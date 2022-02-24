@@ -9,11 +9,6 @@
             [wfl.api.workloads :as workloads])
   (:import [clojure.lang PersistentQueue]))
 
-;; Slack Bot User token obtained from Vault
-(defonce ^:private token
-  (delay (:bot-user-token
-          (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
-
 (def enabled-env-var-name "WFL_SLACK_ENABLED")
 
 ;; Disabled logger suppresses warning:
@@ -46,12 +41,13 @@
 (defn ^:private post-message
   "Post `message` to `channel`."
   [channel message]
-  (-> "https://slack.com/api/chat.postMessage"
-      (http/post {:headers      {:Authorization (str "Bearer " @token)}
-                  :content-type :application/json
-                  :body         (json/write-str {:channel channel
-                                                 :text    message})})
-      util/response-body-json))
+  (let [headers {:Authorization (str "Bearer " (env/getenv "WFL_SLACK_TOKEN"))}
+        body    (json/write-str {:channel channel :text message})]
+    (-> "https://slack.com/api/chat.postMessage"
+        (http/post {:headers      headers
+                    :content-type :application/json
+                    :body         body})
+        util/response-body-json)))
 
 ;; Slack API has its own way of reporting statuses:
 ;; https://api.slack.com/web#slack-web-api__evaluating-responses
