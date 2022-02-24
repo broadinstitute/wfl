@@ -3,7 +3,7 @@
 ## Retrying Terra Workflows via WFL API
 
 WFL [staged workloads](./staged-workload.md) with a
-[Terra executor](./executor.md#terra-executor)
+[Terra executor](./staged-executor.md#terra-executor)
 have a `/retry` endpoint that selects unretried workflows
 by their submission ID and re-submits them.
 

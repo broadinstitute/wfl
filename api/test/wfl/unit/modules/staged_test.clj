@@ -1,4 +1,4 @@
-(ns wfl.unit.modules.covid-test
+(ns wfl.unit.modules.staged-test
   (:require [clojure.spec.alpha   :as s]
             [clojure.test         :refer [deftest is testing]]
             [wfl.service.datarepo :as datarepo]
@@ -38,7 +38,7 @@
 
 (deftest test-tdr-source-spec
   (let [valid?           (partial s/valid? ::source/tdr-source)
-        {:keys [source]} (workloads/covid-workload-request)]
+        {:keys [source]} (workloads/staged-workload-request)]
     (is (valid? source) (s/explain-str ::source/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))

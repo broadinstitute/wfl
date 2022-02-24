@@ -7,8 +7,8 @@
             [wfl.module.aou       :as aou]
             [wfl.module.batch     :as batch]
             [wfl.module.copyfile  :as copyfile]
-            [wfl.module.covid     :as covid]
             [wfl.module.sg        :as sg]
+            [wfl.module.staged    :as staged]
             [wfl.module.wgs       :as wgs]
             [wfl.module.xx        :as xx]
             [wfl.util             :as util]))
@@ -46,10 +46,10 @@
 
 (s/def ::workflows (s/* ::workflow))
 
-(s/def ::workload-request (s/or :batch ::batch/workload-request
-                                :covid ::covid/workload-request))
+(s/def ::workload-request (s/or :batch  ::batch/workload-request
+                                :staged ::staged/workload-request))
 
-(s/def ::workload-response (s/or :batch ::batch/workload-response
-                                 :covid ::covid/workload-response))
+(s/def ::workload-response (s/or :batch  ::batch/workload-response
+                                 :staged ::staged/workload-response))
 
 (s/def ::workload-responses (s/* ::workload-response))

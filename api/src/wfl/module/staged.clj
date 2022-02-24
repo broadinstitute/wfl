@@ -1,5 +1,5 @@
-(ns wfl.module.covid
-  "Manage the Sarscov2IlluminaFull pipeline."
+(ns wfl.module.staged
+  "Manage staged (source -> executor -> sink) workloads."
   (:require [clojure.spec.alpha   :as s]
             [clojure.edn          :as edn]
             [wfl.api.workloads    :as workloads :refer [defoverload]]
@@ -92,7 +92,7 @@
    ,      sink_items     = ?
    WHERE  id = ?")
 
-(defn ^:private create-covid-workload
+(defn ^:private create-staged-workload
   [tx {:keys [source executor sink] :as request}]
   (let [id (add-workload-metadata tx request)]
     (jdbc/execute!
@@ -104,7 +104,7 @@
              [id]))
     (workloads/load-workload-for-id tx id)))
 
-(defn ^:private load-covid-workload-impl [tx {:keys [id] :as workload}]
+(defn ^:private load-staged-workload-impl [tx {:keys [id] :as workload}]
   (let [src-exc-sink {:source   (source/load-source! tx workload)
                       :executor (executor/load-executor! tx workload)
                       :sink     (sink/load-sink! tx workload)}]
@@ -115,7 +115,7 @@
       (filter second $)
       (into {:type :workload :id id} $))))
 
-(defn ^:private start-covid-workload
+(defn ^:private start-staged-workload
   "Start creating and managing workflows from the source."
   [tx {:keys [started] :as workload}]
   (letfn [(start [{:keys [id source] :as workload} now]
@@ -124,7 +124,7 @@
             (workloads/load-workload-for-id tx id))]
     (if-not started (start workload (utc-now)) workload)))
 
-(defn ^:private update-covid-workload
+(defn ^:private update-staged-workload
   "Use transaction `tx` to update `workload` statuses."
   [tx {:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id source executor sink] :as workload} now]
@@ -138,7 +138,7 @@
             (workloads/load-workload-for-id tx id))]
     (if (and started (not finished)) (update! workload (utc-now)) workload)))
 
-(defn ^:private stop-covid-workload
+(defn ^:private stop-staged-workload
   "Use transaction `tx` to stop the `workload` looking for new data."
   [tx {:keys [started stopped finished] :as workload}]
   (letfn [(stop! [{:keys [id source] :as workload} now]
@@ -152,7 +152,7 @@
                              {:workload workload})))
     (if-not (or stopped finished) (stop! workload (utc-now)) workload)))
 
-(defn ^:private retry-covid-workload
+(defn ^:private retry-staged-workload
   "Retry/resubmit the `workflows` managed by the `workload` and return the
    workload that manages the new workflows."
   [{:keys [started id executor] :as workload} workflows]
@@ -186,11 +186,11 @@
       (update :executor #(or (stage/to-log %) (:executor_type workload)))
       (update :sink     #(or (stage/to-log %) (:sink_type workload)))))
 
-(defoverload workloads/create-workload!     pipeline create-covid-workload)
-(defoverload workloads/start-workload!      pipeline start-covid-workload)
-(defoverload workloads/update-workload!     pipeline update-covid-workload)
-(defoverload workloads/stop-workload!       pipeline stop-covid-workload)
-(defoverload workloads/load-workload-impl   pipeline load-covid-workload-impl)
+(defoverload workloads/create-workload!     pipeline create-staged-workload)
+(defoverload workloads/start-workload!      pipeline start-staged-workload)
+(defoverload workloads/update-workload!     pipeline update-staged-workload)
+(defoverload workloads/stop-workload!       pipeline stop-staged-workload)
+(defoverload workloads/load-workload-impl   pipeline load-staged-workload-impl)
 (defmethod   workloads/workflows            pipeline
   [tx {:keys [executor] :as _workload}]
   (executor/executor-workflows tx executor {}))
@@ -199,6 +199,6 @@
   (executor/executor-workflows tx executor filters))
 (defoverload workloads/throw-if-invalid-retry-filters
   pipeline executor/executor-throw-if-invalid-retry-filters)
-(defoverload workloads/retry               pipeline retry-covid-workload)
+(defoverload workloads/retry               pipeline retry-staged-workload)
 (defoverload workloads/to-edn              pipeline workload-to-edn)
 (defoverload workloads/to-log              pipeline workload-to-log)
