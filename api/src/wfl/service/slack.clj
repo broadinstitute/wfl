@@ -1,11 +1,12 @@
 (ns wfl.service.slack
   "Interact with Slack API."
-  (:require [clojure.data.json  :as json]
-            [clojure.string     :as str]
-            [clj-http.client    :as http]
-            [wfl.environment    :as env]
-            [wfl.log            :as log]
-            [wfl.util           :as util])
+  (:require [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [clj-http.client   :as http]
+            [wfl.environment   :as env]
+            [wfl.log           :as log]
+            [wfl.util          :as util]
+            [wfl.api.workloads :as workloads])
   (:import [clojure.lang PersistentQueue]))
 
 ;; Slack Bot User token obtained from Vault
@@ -89,7 +90,7 @@
 ;;
 (defn notify-watchers
   "Send `message` associated with workload `uuid` to Slack `watchers`."
-  [{:keys [watchers uuid project labels] :as _workload} message]
+  [{:keys [watchers uuid project labels] :as workload} message]
   (let [feature-switch (env/getenv enabled-env-var-name)]
     (if (= "enabled" feature-switch)
       (let [channels (filter slack-channel-watcher? watchers)
@@ -100,14 +101,16 @@
         (letfn [(notify [[_tag channel-id _channel-name]]
                   (let [payload {:channel channel-id
                                  :message (str/join \newline [header message])}]
-                    (log/info payload :labels labels :workload uuid)
+                    (log/info "About to Slack"
+                              :workload (workloads/to-log workload)
+                              :payload  (pr-str payload))
                     (add-notification notifier payload)))]
           (run! notify channels)))
-      (log/info {:slackDisabled
-                 {:env-var-name       enabled-env-var-name
-                  :env-var-val        feature-switch
-                  :workload           uuid
-                  :would-have-slacked (pr-str message)}}))))
+      (log/info "Slack disabled"
+                :workload           (workloads/to-log workload)
+                :env-var-name       enabled-env-var-name
+                :env-var-val        feature-switch
+                :would-have-slacked (pr-str message)))))
 
 (defn start-notification-loop
   "Return a future that listens at `agent` and

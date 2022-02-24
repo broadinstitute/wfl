@@ -19,16 +19,17 @@
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
-(defn ^:private mock-find-new-rows [_ interval]
+(defn ^:private mock-find-new-rows [_workload interval]
   (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
   (take mock-new-rows-size (range)))
-(defn ^:private mock-create-snapshots [_ _ row-ids]
+(defn ^:private mock-create-snapshots
+  [_workload _now-obj row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
          (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
-(defn ^:private mock-check-tdr-job [job-id]
+(defn ^:private mock-check-tdr-job [_workload job-id]
   {:snapshot_id (str (UUID/randomUUID))
    :job_status "succeeded"
    :id job-id})
