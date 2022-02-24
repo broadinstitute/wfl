@@ -369,21 +369,22 @@
 (defn ^:private summarize-workflows-in-workload
   "Summarize the workflows in `workload`."
   [workload]
-  (let [workflows (try-to-get-workflows 3 workload)]
-    {:count     (count workflows)
+  (let [workflows (try-to-get-workflows 3 workload)
+        statuses  (set (keep :status workflows))]
+    {:count     (count statuses)
+     :statuses  statuses
      :workload  workload
      :workflows workflows}))
 
 (deftest ^:parallel test-workflows-by-filters
   (testing "Get workflows by status"
-    (let [{:keys [workflows workload]}
+    (let [{:keys [statuses workflows workload]}
           (->> (endpoints/get-workloads)
                (filter :finished)
-               (take 5)                 ; Why not?
+               (take 7)                 ; Why not?
                (map summarize-workflows-in-workload)
                (sort-by :count >)
-               first)
-          statuses (set (keep :status workflows))]
+               first)]
       (letfn [(verify [status]
                 (run! #(is (= status (:status %)))
                       (endpoints/get-workflows workload status)))]
