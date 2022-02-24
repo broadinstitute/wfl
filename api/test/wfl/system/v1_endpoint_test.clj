@@ -362,7 +362,7 @@
   [n workload]
   (try (endpoints/get-workflows workload)
        (catch Throwable x
-         (debug/trace x)
+         (debug/trace [n workload x])
          (when (> n 0)
            (try-to-get-workflows (dec n) workload)))))
 
@@ -378,11 +378,12 @@
   (testing "Get workflows by status"
     (let [{:keys [workflows workload]}
           (->> (endpoints/get-workloads)
+               (take 23)                ; Why not?
                (map summarize-workflows-in-workload)
                (filter (comp :finished :workload))
                (sort-by :count >)
-               first :workflows)
-          statuses (set (map :status workflows))]
+               first)
+          statuses (set (keep :status workflows))]
       (letfn [(verify [status]
                 (run! #(is (= status (:status %)))
                       (endpoints/get-workflows workload status)))]
