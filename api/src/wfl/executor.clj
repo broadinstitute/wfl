@@ -128,8 +128,8 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(defn ^:private error-on-method-config-version-mismatch
-  "Throw or log error if `methodConfigVersion` does not match `expected`."
+(defn ^:private warn-on-method-config-version-mismatch
+  "Throw or log warning if `methodConfigVersion` does not match `expected`."
   ([{:keys [methodConfigVersion] :as methodconfig} expected throw?]
    (when-not (== expected methodConfigVersion)
      (let [cause "Unexpected method configuration version"
@@ -138,9 +138,9 @@
                   :methodConfiguration methodconfig}]
        (if throw?
          (throw (UserException. cause data))
-         (log/error (merge {:cause cause} data))))))
+         (log/warning (merge {:cause cause} data))))))
   ([methodconfig expected]
-   (error-on-method-config-version-mismatch methodconfig expected false)))
+   (warn-on-method-config-version-mismatch methodconfig expected false)))
 
 (defn ^:private throw-unless-dockstore-method
   "Throw unless the `sourceRepo` of `methodRepoMethod` is \"dockstore\"."
@@ -168,7 +168,7 @@
       (throw
        (UserException. "Unsupported coercion" (util/make-map fromSource))))
     (let [m (firecloud/method-configuration workspace methodConfiguration)]
-      (error-on-method-config-version-mismatch m methodConfigurationVersion true)
+      (warn-on-method-config-version-mismatch m methodConfigurationVersion true)
       (throw-unless-dockstore-method (:methodRepoMethod m))))
   executor)
 
@@ -221,7 +221,7 @@
    reference]
   (let [name    (get-in reference [:metadata :name])
         current (firecloud/method-configuration workspace methodConfiguration)
-        _       (error-on-method-config-version-mismatch
+        _       (warn-on-method-config-version-mismatch
                  current methodConfigurationVersion)
         inc'd   (inc (:methodConfigVersion current))
         newMc   (merge
