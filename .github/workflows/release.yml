@@ -122,6 +122,7 @@ jobs:
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
+          WFL_SLACK_TOKEN: ${{ secrets.WFL_SLACK_TOKEN }}
         run: USER='Automated Release Action' make ${MODULES} TARGET=integration
 
       - name: Images
