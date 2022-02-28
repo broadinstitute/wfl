@@ -115,5 +115,9 @@ jobs:
         env:
           WFL_POSTGRES_USERNAME: postgres
           WFL_POSTGRES_PASSWORD: postgres
+          #
+          # Assign env variables from Atlantis-managed GitHub Secrets:
+          # https://github.com/broadinstitute/terraform-ap-deployments/blob/master/github/tfvars/broadinstitute-wfl.tfvars
+          #
           WFL_SLACK_TOKEN: ${{ secrets.WFL_SLACK_TOKEN }}
         run: make ${MODULES} TARGET=integration
