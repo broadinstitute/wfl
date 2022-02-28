@@ -16,9 +16,9 @@
 
 (defn ^:private mock-post-message-and-throw-if-failure
   [channel message]
-  (let [response
-        (#'slack/post-message-and-throw-if-failure-impl channel message)]
-    (when (:ok response) (deliver notify-promise true))))
+  (->> (#'slack/post-message-and-throw-if-failure-impl channel message)
+       :ok
+       (deliver notify-promise)))
 
 (add-watch
  testing-agent :watcher
