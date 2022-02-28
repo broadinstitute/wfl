@@ -39,3 +39,14 @@
         (verify "enabled"))
       (testing "notifications not emitted when feature disabled"
         (verify "any-other-value-disables-slacking")))))
+
+(deftest test-send-notification-does-not-throw-on-bad-response
+  (let [queue (conj (PersistentQueue/EMPTY) testing-slack-notification)]
+    (with-redefs-fn
+      {#'slack/post-message #({:ok false :error "something_bad"})}
+      #(is (= queue (slack/send-notification queue))
+           "Queue should remain when posting Slack message returns error"))
+    (with-redefs-fn
+      {#'slack/post-message #(throw (ex-info "Unexpected throwable" {}))}
+      #(is (= queue (slack/send-notification queue))
+           "Queue should remain when posting Slack message throws"))))
