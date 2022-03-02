@@ -20,3 +20,20 @@ in that workload running WGS reprocessing; a workload could also be a queue of
 incoming notifications that describe all of the required inputs to launch Arrays
 scientific pipelines in Cromwell.
 
+## GitHub Secrets from Vault
+
+When we need to access a Vault secret within GitHub Actions
+(ex. within integration test runs), we should propagate it to a
+[Github Secret](https://github.com/broadinstitute/wfl/settings/secrets/actions)
+managed by Atlantis -- DSP's Terraform deployment server.
+The GitHub Secret should then be passed to the action
+as an environment variable rather than Vault being accessed
+directly, an operation which could risk leaking secrets publicly.
+
+To view or maintain WFL's Atlantis-managed Github Secrets, see
+[terraform-ap-deployments](https://github.com/broadinstitute/terraform-ap-deployments/blob/master/github/tfvars/broadinstitute-wfl.tfvars)
+repository.
+
+More Information: ["Moving Vault secrets to Github via Atlantis"](https://docs.google.com/document/d/1JbjV4xjAlSOuZY-2bInatl4av3M-y_LmHQkLYyISYns/edit?usp=sharing)
+
+Questions: [#dsp-devops-champions](https://broadinstitute.slack.com/archives/CADM7MZ35)

@@ -9,19 +9,11 @@
             [wfl.api.workloads :as workloads])
   (:import [clojure.lang PersistentQueue]))
 
-;; Slack Bot User token obtained from Vault
-(defonce ^:private token
-  (delay (:bot-user-token
-          (#'env/vault-secrets "secret/dsde/gotc/dev/wfl/slack"))))
-
 (def enabled-env-var-name "WFL_SLACK_ENABLED")
 
-;; FIXME: suppress warning `javax.mail.internet.AddressException: Missing final '@domain'`
-;;
 (defn ^:private valid-channel-id?
   [channel-id]
-  (and (not (util/email-address? channel-id))
-       (str/starts-with? channel-id "C")))
+  (str/starts-with? channel-id "C"))
 
 (defn slack-channel-watcher? [s]
   (when-let [[tag value & _] s]
@@ -38,52 +30,63 @@
   [url description]
   (format "<%s|%s>" url description))
 
-(defn ^:private slack-api-raise-for-status
-  "Slack API has its own way of reporting
-   statuses, so we need to parse the `body`
-   to raise for status."
-  [body]
-  (let [response (json/read-str body)]
-    (when-not (response "ok")
-      (throw (ex-info "failed to notify via Slack"
-                      {:error (response "error")})))
+;; More information on the meaning of error responses:
+;; https://api.slack.com/methods/chat.postMessage#errors
+;;
+(defn ^:private post-message
+  "Post `message` to `channel`."
+  [channel message]
+  (let [headers {:Authorization (str "Bearer " (env/getenv "WFL_SLACK_TOKEN"))}
+        body    (json/write-str {:channel channel :text message})]
+    (-> "https://slack.com/api/chat.postMessage"
+        (http/post {:headers      headers
+                    :content-type :application/json
+                    :body         body})
+        util/response-body-json)))
+
+;; Slack API has its own way of reporting statuses:
+;; https://api.slack.com/web#slack-web-api__evaluating-responses
+;;
+(defn ^:private post-message-or-throw
+  "Post `message` to `channel` and throw if response indicates a failure."
+  [channel message]
+  {:pre [(valid-channel-id? channel)]}
+  (let [response (post-message channel message)]
+    (when-not (:ok response)
+      (throw (ex-info "Slack API chat.postMessage failed"
+                      {:channel  channel
+                       :message  message
+                       :response response})))
     response))
 
-(defn post-message
-  "Post message to channel and pass response to callback."
-  ([channel message]
-   {:pre [(valid-channel-id? channel)]}
-   (-> "https://slack.com/api/chat.postMessage"
-       (http/post {:headers      {:Authorization (str "Bearer " @token)}
-                   :content-type :application/json
-                   :body         (json/write-str {:channel channel
-                                                  :text    message})})
-       :body
-       slack-api-raise-for-status))
-  ([channel message callback]
-   (callback (post-message channel message))))
+(def ^:private notifier (agent (PersistentQueue/EMPTY)))
 
-;; Create the agent queue and attach a watcher
-;;
-(def notifier (agent (PersistentQueue/EMPTY)))
-(add-watch notifier :watcher
-           (fn [_key _ref _old-state new-state]
-             (when-let [queue (seq new-state)]
-               (log/debug "Current notification queue" :queue queue))))
+(defn ^:private log-notifier-queue-content
+  [_key _ref _old-state new-state]
+  (when-let [queue (seq new-state)]
+    (log/debug "Slack queue" :queue queue)))
 
-(defn add-notification
-  "Add notification defined by a map of
-   `channel` and `message` to `agent` queue."
-  [agent {:keys [channel message]}]
+(add-watch notifier log-notifier-queue-content log-notifier-queue-content)
+
+(defn ^:private queue-notification
+  "Add notification of `message` for `channel` to `notifier`."
+  [{:keys [channel message] :as _notification}]
   {:pre [(valid-channel-id? channel)]}
-  (send agent #(conj % {:channel channel :message message})))
+  (send notifier conj {:channel channel :message message}))
 
-(defn send-notification
+(defn dispatch-notification
+  "Dispatch the next notification in `queue`."
   [queue]
-  (if (seq queue)
-    (let [{:keys [channel message]} (peek queue)]
-      (post-message channel message)
-      (pop queue))
+  (if-let [{:keys [channel message] :as notification} (peek queue)]
+    (let [popped (pop queue)]
+      (try
+        (post-message-or-throw channel message)
+        popped
+        (catch Throwable throwable
+          (log/error "post-message-or-throw threw"
+                     :notification notification
+                     :throwable    throwable)
+          (conj popped notification))))
     queue))
 
 ;; FIXME: add permission checks for slack-channel-watchers
@@ -104,7 +107,7 @@
                     (log/info "About to Slack"
                               :workload (workloads/to-log workload)
                               :payload  (pr-str payload))
-                    (add-notification notifier payload)))]
+                    (queue-notification payload)))]
           (run! notify channels)))
       (log/info "Slack disabled"
                 :workload           (workloads/to-log workload)
@@ -115,7 +118,11 @@
 (defn start-notification-loop
   "Return a future that listens at `agent` and
    sends out notifications."
-  [agent]
-  (future (while true
-            (send-off agent send-notification)
-            (util/sleep-seconds 1))))
+  []
+  (future
+    (while true
+      (try
+        (send-off notifier dispatch-notification)
+        (catch Throwable throwable
+          (log/error "dispatch-notification threw" :throwable throwable)))
+      (util/sleep-seconds 1))))
