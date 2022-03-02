@@ -276,7 +276,6 @@
         executor  {:name                       "Terra"
                    :workspace                  workspace
                    :methodConfiguration        (terra-ns "sarscov2_illumina_full")
-                   :methodConfigurationVersion 2
                    :fromSource                 "importSnapshot"}
         sink      {:name           "Terra Workspace"
                    :workspace      workspace
@@ -432,7 +431,6 @@
             executor {:name                       "Terra"
                       :workspace                  workspace
                       :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
-                      :methodConfigurationVersion 1
                       :fromSource                 "importSnapshot"}
             sink     {:name        "Terra DataRepo"
                       :dataset     dataset-id

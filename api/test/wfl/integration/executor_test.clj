@@ -1,6 +1,6 @@
 (ns wfl.integration.executor-test
   (:require [clojure.string        :as str]
-            [clojure.test          :refer [deftest is use-fixtures]]
+            [clojure.test          :refer [deftest is testing use-fixtures]]
             [wfl.api.workloads     :as workloads]
             [wfl.executor          :as executor]
             [wfl.jdbc              :as jdbc]
@@ -28,12 +28,22 @@
     fixtures/temporary-postgresql-database))
 
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (is (executor/terra-executor-validate-request-or-throw
-       {:name                       "Terra"
-        :workspace                  testing-workspace
-        :methodConfiguration        testing-method-configuration
-        :methodConfigurationVersion testing-method-configuration-version
-        :fromSource                 "importSnapshot"})))
+  (let [request {:name                       "Terra"
+                 :workspace                  testing-workspace
+                 :methodConfiguration        testing-method-configuration
+                 :fromSource                 "importSnapshot"}]
+    (letfn [(check-mc-version [executor]
+              (is executor)
+              (is (== testing-method-configuration-version
+                      (:methodConfigurationVersion executor))))]
+      (testing "request without method configuration version"
+        (-> request
+            executor/terra-executor-validate-request-or-throw
+            check-mc-version))
+      (testing "request ignores specified method configuration version"
+        (-> (assoc request :methodConfigurationVersion -1)
+            executor/terra-executor-validate-request-or-throw
+            check-mc-version)))))
 
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
@@ -42,18 +52,9 @@
         {:name                       "Terra"
          :workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
-         :methodConfigurationVersion testing-method-configuration-version
          :fromSource                 "frobnicate"}))))
 
-(deftest test-validate-terra-executor-with-wrong-method-configuration-version
-  (is (thrown-with-msg?
-       UserException #"Unexpected method configuration version"
-       (executor/terra-executor-validate-request-or-throw
-        {:name                       "Terra"
-         :workspace                  testing-workspace
-         :methodConfiguration        testing-method-configuration
-         :methodConfigurationVersion -1
-         :fromSource                 "importSnapshot"}))))
+
 
 (deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
@@ -204,7 +205,6 @@
     (->> {:name                       "Terra"
           :workspace                  "workspace-ns/workspace-name"
           :methodConfiguration        fake-method-config
-          :methodConfigurationVersion method-config-version-init
           :fromSource                 "importSnapshot"
           :skipValidation             true}
          (executor/create-executor! tx id)
@@ -466,8 +466,7 @@
         dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
-        actualMcVersion       (+ (:methodConfigurationVersion executor) 1)
-        inc'dMcVersion        (+ actualMcVersion 1)
+        inc'dMcVersion        (+ testing-method-configuration-version 1)
         rootEntityTypePre     "rootEntityTypePreUpdate"]
     (letfn [(firecloud-method-configuration
               [_workspace qualifiedMcName]
@@ -475,7 +474,7 @@
                 {:namespace           mcNamespace
                  :name                mcName
                  :dataReferenceName   dataReferenceNamePre
-                 :methodConfigVersion actualMcVersion
+                 :methodConfigVersion testing-method-configuration-version
                  :rootEntityType      rootEntityTypePre}))
             (verify-firecloud-update-params
               [_workspace qualifiedMcName mc]
@@ -493,5 +492,7 @@
          #'firecloud/update-method-configuration verify-firecloud-update-params}
         #(#'executor/update-method-configuration! executor reference))
       (let [reloaded (reload-terra-executor executor)]
+        (is (nil? (:methodConfigurationVersion executor))
+            "Method configuration's version in DB should initially be unpopulated")
         (is (== inc'dMcVersion (:methodConfigurationVersion reloaded))
             "Method configuration's version in DB should be updated to match actual")))))

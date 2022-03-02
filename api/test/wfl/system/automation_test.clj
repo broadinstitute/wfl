@@ -23,7 +23,6 @@
    :executor {:name                       "Terra"
               :workspace                  workspace
               :methodConfiguration        "wfl-dev/sarscov2_illumina_full"
-              :methodConfigurationVersion 1
               :fromSource                 "importSnapshot"}
    :sink     {:name           "Terra Workspace"
               :workspace      workspace

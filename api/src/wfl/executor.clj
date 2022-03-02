@@ -97,8 +97,8 @@
 (s/def ::terra-executor (s/keys :req-un [::all/name
                                          ::fromSource
                                          ::methodConfiguration
-                                         ::methodConfigurationVersion
-                                         ::all/workspace]))
+                                         ::all/workspace]
+                                :opt-un [::methodConfigurationVersion]))
 
 (s/def ::terra-executor-workflow (s/keys :req-un [::entity
                                                   ::methodConfiguration
@@ -128,20 +128,6 @@
         (update :fromSource edn/read-string))
     (throw (ex-info "Invalid executor_items" {:workload workload}))))
 
-(defn ^:private warn-on-method-config-version-mismatch
-  "Throw or log warning if `methodConfigVersion` does not match `expected`."
-  ([{:keys [methodConfigVersion] :as methodconfig} expected throw?]
-   (when-not (== expected methodConfigVersion)
-     (let [cause "Unexpected method configuration version"
-           data  {:expected            expected
-                  :actual              methodConfigVersion
-                  :methodConfiguration methodconfig}]
-       (if throw?
-         (throw (UserException. cause data))
-         (log/warning (merge {:cause cause} data))))))
-  ([methodconfig expected]
-   (warn-on-method-config-version-mismatch methodconfig expected false)))
-
 (defn ^:private throw-unless-dockstore-method
   "Throw unless the `sourceRepo` of `methodRepoMethod` is \"dockstore\"."
   [{:keys [sourceRepo] :as methodRepoMethod}]
@@ -160,17 +146,17 @@
   [{:keys [skipValidation
            workspace
            methodConfiguration
-           methodConfigurationVersion
            fromSource] :as executor}]
-  (when-not skipValidation
-    (firecloud/workspace-or-throw workspace)
-    (when-not (= "importSnapshot" fromSource)
-      (throw
-       (UserException. "Unsupported coercion" (util/make-map fromSource))))
-    (let [m (firecloud/method-configuration workspace methodConfiguration)]
-      (warn-on-method-config-version-mismatch m methodConfigurationVersion true)
-      (throw-unless-dockstore-method (:methodRepoMethod m))))
-  executor)
+  (if skipValidation
+    executor
+    (do (firecloud/workspace-or-throw workspace)
+        (when-not (= "importSnapshot" fromSource)
+          (throw
+           (UserException. "Unsupported coercion" (util/make-map fromSource))))
+        (let [{:keys [methodRepoMethod methodConfigVersion]}
+              (firecloud/method-configuration workspace methodConfiguration)]
+          (throw-unless-dockstore-method methodRepoMethod)
+          (assoc executor :methodConfigurationVersion methodConfigVersion)))))
 
 (defn ^:private entity-from-snapshot
   "Coerce the `snapshot` into a workspace entity via `fromSource`."
@@ -191,6 +177,15 @@
     (throw (ex-info "No method to coerce object into workspace entity"
                     {:executor executor
                      :object   object}))))
+
+(defn ^:private warn-on-method-config-version-mismatch
+  "Log warning if `methodConfigVersion` does not match `expected`."
+  [{:keys [methodConfigVersion] :as methodconfig} expected]
+  (when-not (= expected methodConfigVersion)
+    (log/warning "Unexpected method configuration version"
+                 :expected            expected
+                 :actual              methodConfigVersion
+                 :methodConfiguration methodconfig)))
 
 (def ^:private table-from-snapshot-reference-error-message
   (str/join \space

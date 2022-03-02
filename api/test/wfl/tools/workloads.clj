@@ -134,7 +134,6 @@
                {:name                       "Terra"
                 :workspace                  "namespace/name"
                 :methodConfiguration        "namespace/name"
-                :methodConfigurationVersion 0
                 :fromSource                 "importSnapshot"}
                executor)
     :sink     (merge

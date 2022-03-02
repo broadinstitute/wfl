@@ -73,7 +73,6 @@ An example workload response at the time of this writing is formatted thusly:
     "executor" : {
     "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
     "methodConfiguration" : "wfl-dev/sarscov2_illumina_full",
-    "methodConfigurationVersion" : 41,
     "fromSource" : "importSnapshot",
     "name" : "Terra"
     },
@@ -289,7 +288,6 @@ with an assigned `uuid`.
                     "name": "Terra",
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-                    "methodConfigurationVersion": 2,
                     "fromSource": "importSnapshot"
                 },
                 "sink": {
@@ -378,7 +376,6 @@ with an assigned `uuid`.
                     "name": "Terra",
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-                    "methodConfigurationVersion": 2,
                     "fromSource": "importSnapshot"
                 },
                 "sink": {

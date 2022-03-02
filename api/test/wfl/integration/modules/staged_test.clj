@@ -132,7 +132,6 @@
         {:skipValidation true}
         {:workspace                  testing-workspace
          :methodConfiguration        testing-method-configuration
-         :methodConfigurationVersion testing-method-configuration-version
          :fromSource                 "importSnapshot"}
         {:skipValidation true}))))
 
