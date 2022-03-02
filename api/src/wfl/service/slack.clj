@@ -11,14 +11,9 @@
 
 (def enabled-env-var-name "WFL_SLACK_ENABLED")
 
-;; Disabled logger suppresses warning:
-;; `javax.mail.internet.AddressException: Missing final '@domain'`
-;;
 (defn ^:private valid-channel-id?
   [channel-id]
-  (binding [wfl.log/*logger* wfl.log/disabled-logger]
-    (and (not (util/email-address? channel-id))
-         (str/starts-with? channel-id "C"))))
+  (str/starts-with? channel-id "C"))
 
 (defn slack-channel-watcher? [s]
   (when-let [[tag value & _] s]
@@ -52,7 +47,7 @@
 ;; Slack API has its own way of reporting statuses:
 ;; https://api.slack.com/web#slack-web-api__evaluating-responses
 ;;
-(defn ^:private post-message-and-throw-if-failure-impl
+(defn ^:private post-message-or-throw
   "Post `message` to `channel` and throw if response indicates a failure."
   [channel message]
   {:pre [(valid-channel-id? channel)]}
@@ -64,40 +59,34 @@
                        :response response})))
     response))
 
-;; Deferring implementation to allow for response verification in tests.
-;;
-(defn ^:private post-message-and-throw-if-failure
-  "Post `message` to `channel` and throw if response indicates a failure."
-  [channel message]
-  (post-message-and-throw-if-failure-impl channel message))
+(def ^:private notifier (agent (PersistentQueue/EMPTY)))
 
-;; Create the agent queue and attach a watcher
-;;
-(def notifier (agent (PersistentQueue/EMPTY)))
-(add-watch notifier :watcher
-           (fn [_key _ref _old-state new-state]
-             (when-let [queue (seq new-state)]
-               (log/debug "Current notification queue" :queue queue))))
+(defn ^:private log-notifier-queue-content
+  [_key _ref _old-state new-state]
+  (when-let [queue (seq new-state)]
+    (log/debug "Slack queue" :queue queue)))
 
-(defn add-notification
-  "Add notification of `message` for `channel` to `agent` queue."
-  [agent {:keys [channel message]}]
+(add-watch notifier log-notifier-queue-content log-notifier-queue-content)
+
+(defn ^:private queue-notification
+  "Add notification of `message` for `channel` to `notifier`."
+  [{:keys [channel message] :as _notification}]
   {:pre [(valid-channel-id? channel)]}
-  (send agent #(conj % {:channel channel :message message})))
+  (send notifier conj {:channel channel :message message}))
 
-(defn send-notification
+(defn dispatch-notification
+  "Dispatch the next notification in `queue`."
   [queue]
-  (if (seq queue)
-    (let [{:keys [channel message]} (peek queue)]
+  (if-let [{:keys [channel message] :as notification} (peek queue)]
+    (let [popped (pop queue)]
       (try
-        (post-message-and-throw-if-failure channel message)
-        (pop queue)
-        (catch Throwable t
-          (log/error "Failed when posting Slack message"
-                     :channel   channel
-                     :message   message
-                     :throwable t)
-          queue)))
+        (post-message-or-throw channel message)
+        popped
+        (catch Throwable throwable
+          (log/error "post-message-or-throw threw"
+                     :notification notification
+                     :throwable    throwable)
+          (conj popped notification))))
     queue))
 
 ;; FIXME: add permission checks for slack-channel-watchers
@@ -118,7 +107,7 @@
                     (log/info "About to Slack"
                               :workload (workloads/to-log workload)
                               :payload  (pr-str payload))
-                    (add-notification notifier payload)))]
+                    (queue-notification payload)))]
           (run! notify channels)))
       (log/info "Slack disabled"
                 :workload           (workloads/to-log workload)
@@ -129,12 +118,11 @@
 (defn start-notification-loop
   "Return a future that listens at `agent` and
    sends out notifications."
-  [agent]
+  []
   (future
     (while true
       (try
-        (send-off agent send-notification)
-        (catch Throwable t
-          (log/error "Failed when dispatching to Slack agent"
-                     :throwable t)))
+        (send-off notifier dispatch-notification)
+        (catch Throwable throwable
+          (log/error "dispatch-notification threw" :throwable throwable)))
       (util/sleep-seconds 1))))

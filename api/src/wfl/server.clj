@@ -173,5 +173,5 @@
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)
         logger  (start-logging-polling)
-        slacker (slack/start-notification-loop slack/notifier)]
+        slacker (slack/start-notification-loop)]
     (await-some manager logger slacker (start-webserver port))))

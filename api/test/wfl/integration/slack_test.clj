@@ -5,36 +5,24 @@
             [wfl.util            :as util])
   (:import [clojure.lang PersistentQueue]))
 
-(def ^:private testing-agent (agent (PersistentQueue/EMPTY)))
-(def ^:private testing-slack-channel "C026PTM4XPA")
-(defn ^:private testing-slack-notification [fn-name]
-  {:channel testing-slack-channel
-   :message (format "%s `wfl.integration.slack-test/%s`: %s"
-                    @workloads/project fn-name (util/utc-now))})
+(defn ^:private make-notification
+  [fn-name]
+  {:channel "C026PTM4XPA"
+   :message (format "%s `%s/%s`: %s"
+                    @workloads/project *ns* fn-name (util/utc-now))})
 
-(def ^:private notify-promise (promise))
-
-(defn ^:private mock-post-message-and-throw-if-failure
-  [channel message]
-  (->> (#'slack/post-message-and-throw-if-failure-impl channel message)
-       :ok
-       (deliver notify-promise)))
-
-(add-watch
- testing-agent :watcher
- (fn [_key _ref _old-state new-state]
-   (when (seq new-state)
-     (testing "notification is added to agent"
-       (is (= (:channel (first (seq new-state))) testing-slack-channel))))))
-
-(deftest test-send-notification
-  (with-redefs-fn
-    {#'slack/post-message-and-throw-if-failure
-     mock-post-message-and-throw-if-failure}
-    #(do (slack/add-notification
-          testing-agent
-          (testing-slack-notification "test-send-notification"))
-         (send-off testing-agent #'slack/send-notification)
-         (testing "notification can actually be sent to slack"
-           (is (true? (deref notify-promise 10000 :timeout))
-               "Waited 10s for notification.")))))
+(deftest test-dispatch-notification
+  (let [notification  (make-notification 'test-dispatch-notification)
+        notifier      (agent (PersistentQueue/EMPTY))
+        posted        (promise)]
+    (letfn [(mock [channel message]
+              (deliver posted (#'slack/post-message channel message)))]
+      (with-redefs [slack/notifier              notifier
+                    slack/post-message-or-throw mock]
+        (#'slack/queue-notification notification)
+        (send-off notifier #'slack/dispatch-notification)
+        (testing "send a notification to slack"
+          (let [{:keys [channel ok] :as result} (deref posted 10000 ::timeout)]
+            (is (not= ::timeout result))
+            (is (true? ok))
+            (is (= (:channel notification) channel))))))))
