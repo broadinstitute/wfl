@@ -141,22 +141,17 @@
   (str/join \space [note "Workload:" uuid "Snapshot ID:"
                     snapshot-id "origin:" (env/getenv "WFL_WFL_URL")]))
 
-(defn terra-executor-validate-request-or-throw
-  "Verify the method-configuration exists."
-  [{:keys [skipValidation
-           workspace
-           methodConfiguration
-           fromSource] :as executor}]
-  (if skipValidation
-    executor
-    (do (firecloud/workspace-or-throw workspace)
-        (when-not (= "importSnapshot" fromSource)
-          (throw
-           (UserException. "Unsupported coercion" (util/make-map fromSource))))
-        (let [{:keys [methodRepoMethod methodConfigVersion]}
-              (firecloud/method-configuration workspace methodConfiguration)]
-          (throw-unless-dockstore-method methodRepoMethod)
-          (assoc executor :methodConfigurationVersion methodConfigVersion)))))
+(defn ^:private terra-executor-validate-request-or-throw
+  "Verify existence and availability of `workspace` and `methodConfiguration`."
+  [{:keys [workspace methodConfiguration fromSource] :as executor}]
+  (firecloud/workspace-or-throw workspace)
+  (when-not (= "importSnapshot" fromSource)
+    (throw
+     (UserException. "Unsupported coercion" (util/make-map fromSource))))
+  (let [{:keys [methodRepoMethod methodConfigVersion]}
+        (firecloud/method-configuration workspace methodConfiguration)]
+    (throw-unless-dockstore-method methodRepoMethod)
+    (assoc executor :methodConfigurationVersion methodConfigVersion)))
 
 (defn ^:private entity-from-snapshot
   "Coerce the `snapshot` into a workspace entity via `fromSource`."
@@ -184,7 +179,6 @@
   (when-not (= expected methodConfigVersion)
     (log/warning "Unexpected method configuration version"
                  :expected            expected
-                 :actual              methodConfigVersion
                  :methodConfiguration methodconfig)))
 
 (def ^:private table-from-snapshot-reference-error-message
@@ -683,8 +677,11 @@
       (assoc :name terra-executor-name)))
 
 (defmethod create-executor! terra-executor-name
-  [tx id request]
-  (write-terra-executor tx id (terra-executor-validate-request-or-throw request)))
+  [tx id {:keys [skipValidation] :as request}]
+  (let [executor (if skipValidation
+                   request
+                   (terra-executor-validate-request-or-throw request))]
+    (write-terra-executor tx id executor)))
 
 (defoverload load-executor!                terra-executor-type load-terra-executor)
 (defoverload update-executor!              terra-executor-type update-terra-executor)

@@ -28,36 +28,36 @@
     fixtures/temporary-postgresql-database))
 
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (let [request {:name                       "Terra"
-                 :workspace                  testing-workspace
-                 :methodConfiguration        testing-method-configuration
-                 :fromSource                 "importSnapshot"}]
+  (let [request {:name                "Terra"
+                 :workspace           testing-workspace
+                 :methodConfiguration testing-method-configuration
+                 :fromSource          "importSnapshot"}]
     (letfn [(check-mc-version [executor]
               (is executor)
               (is (== testing-method-configuration-version
                       (:methodConfigurationVersion executor))))]
       (testing "request without method configuration version"
         (-> request
-            executor/terra-executor-validate-request-or-throw
+            (#'executor/terra-executor-validate-request-or-throw)
             check-mc-version))
       (testing "request ignores specified method configuration version"
         (-> (assoc request :methodConfigurationVersion -1)
-            executor/terra-executor-validate-request-or-throw
+            (#'executor/terra-executor-validate-request-or-throw)
             check-mc-version)))))
 
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
        UserException #"Unsupported coercion"
-       (executor/terra-executor-validate-request-or-throw
-        {:name                       "Terra"
-         :workspace                  testing-workspace
-         :methodConfiguration        testing-method-configuration
-         :fromSource                 "frobnicate"}))))
+       (#'executor/terra-executor-validate-request-or-throw
+        {:name                "Terra"
+         :workspace           testing-workspace
+         :methodConfiguration testing-method-configuration
+         :fromSource          "frobnicate"}))))
 
 (deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
        UserException #"Cannot access method configuration"
-       (executor/terra-executor-validate-request-or-throw
+       (#'executor/terra-executor-validate-request-or-throw
         {:name                "Terra"
          :workspace           testing-workspace
          :methodConfiguration "no_such/method_configuration"
@@ -200,11 +200,11 @@
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name                       "Terra"
-          :workspace                  "workspace-ns/workspace-name"
-          :methodConfiguration        fake-method-config
-          :fromSource                 "importSnapshot"
-          :skipValidation             true}
+    (->> {:name                "Terra"
+          :workspace           "workspace-ns/workspace-name"
+          :methodConfiguration fake-method-config
+          :fromSource          "importSnapshot"
+          :skipValidation      true}
          (executor/create-executor! tx id)
          (zipmap [:executor_type :executor_items])
          (executor/load-executor! tx))))
