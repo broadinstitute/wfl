@@ -446,13 +446,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#methodconfigurationversion" class="md-nav__link">
-    methodConfigurationVersion
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#fromsource" class="md-nav__link">
     fromSource
   </a>
@@ -787,13 +780,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#methodconfigurationversion" class="md-nav__link">
-    methodConfigurationVersion
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#fromsource" class="md-nav__link">
     fromSource
   </a>
@@ -871,7 +857,6 @@ An <code>Executor</code> uses a supported service in the cloud to execute workfl
 <span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{method-configuration-namespace}/{method-configuration-name}&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </code></pre></div></p>
@@ -880,7 +865,6 @@ An <code>Executor</code> uses a supported service in the cloud to execute workfl
 <span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/CDC_Viral_Sequencing&quot;</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/sarscov2_illumina_full&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;methodConfigurationVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"></span>
 <span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </code></pre></div></p>
@@ -907,10 +891,6 @@ An <code>Executor</code> uses a supported service in the cloud to execute workfl
 <td>Method configuration from which to generate submissions.</td>
 </tr>
 <tr>
-<td><code>methodConfigurationVersion</code></td>
-<td>Expected version of the method configuration.</td>
-</tr>
-<tr>
 <td><code>fromSource</code></td>
 <td>Instruction to coerce an output from an upstream <code>Source</code> to a type understood by this <code>executor</code>.</td>
 </tr>
@@ -935,36 +915,6 @@ appears in the URL path in the Terra UI.</p>
 <li>The method configuration must exist within <code>workspace</code> prior to
   workload creation.</li>
 </ul>
-<h4 id="methodconfigurationversion"><code>methodConfigurationVersion</code><a class="headerlink" href="#methodconfigurationversion" title="Permanent link">⚓︎</a></h4>
-<p>The expected version of <code>methodConfiguration</code>, stored as an integer in
-<a href="https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Method%20Configurations/getWorkspaceMethodConfig">Firecloud</a>.</p>
-<p>Example fetch of a method configuration's version from the appropriate
-Firecloud instance (prod):</p>
-<div class="highlight"><pre><span></span><code><span class="nv">FIRECLOUD</span><span class="o">=</span>https://firecloud-orchestration.dsde-prod.broadinstitute.org
-
-<span class="c1"># Should be as they&#39;d appear in a Terra UI URL path:</span>
-<span class="nv">WORKSPACE</span><span class="o">=</span>emerge_prod/Arrays_test
-<span class="nv">METHOD_CONFIG</span><span class="o">=</span>warp-pipelines/Arrays
-
-curl -X GET <span class="se">\</span>
-  <span class="s2">&quot;</span><span class="nv">$FIRECLOUD</span><span class="s2">/api/workspaces/</span><span class="nv">$WORKSPACE</span><span class="s2">/method_configs/</span><span class="nv">$METHOD_CONFIG</span><span class="s2">&quot;</span> <span class="se">\</span>
-  -H <span class="s1">&#39;accept: */*&#39;</span> <span class="se">\</span>
-  -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
-  <span class="p">|</span> jq .methodConfigVersion
-<span class="m">7</span>
-</code></pre></div>
-<p>Prerequisites:</p>
-<ul>
-<li>The <code>methodConfiguration</code> version when fetched from Firecloud
-  at workload creation should match <code>methodConfigurationVersion</code>.</li>
-</ul>
-<div class="admonition warning">
-<p class="admonition-title">Implications of Version Mismatch</p>
-<p>A version mismatch may indicate a possible concurrent modification of the
-method configuration used for launching submissions.  Modification is possible
-programmatically or via the Terra UI.  An unexpected modification may cause
-submission and/or workflow creation to fail.</p>
-</div>
 <h4 id="fromsource"><code>fromSource</code><a class="headerlink" href="#fromsource" title="Permanent link">⚓︎</a></h4>
 <p>This attribute tells workflow-launcher how to coerce an output
 from an upstream <code>Source</code> into a data type understood by the executor.</p>
