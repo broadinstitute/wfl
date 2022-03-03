@@ -464,7 +464,7 @@
         dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
-        inc'dMcVersion        (+ testing-method-configuration-version 1)
+        inc'dMcVersion        (inc testing-method-configuration-version)
         rootEntityTypePre     "rootEntityTypePreUpdate"]
     (letfn [(firecloud-method-configuration
               [_workspace qualifiedMcName]
