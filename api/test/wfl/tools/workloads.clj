@@ -120,8 +120,9 @@
    :project  @project
    :items    [{:inputs {:src src :dst dst}}]})
 
-(defn covid-workload-request
-  "Make a COVID Sarscov2IlluminaFull workload creation request."
+(defn staged-workload-request
+  "A staged workload request:
+  TerraDataRepoSource, TerraExecutor, and TerraWorkspaceSink."
   ([source executor sink]
    {:source   (merge
                {:name            "Terra DataRepo"
@@ -130,11 +131,10 @@
                 :snapshotReaders []}
                source)
     :executor (merge
-               {:name                       "Terra"
-                :workspace                  "namespace/name"
-                :methodConfiguration        "namespace/name"
-                :methodConfigurationVersion 0
-                :fromSource                 "importSnapshot"}
+               {:name                "Terra"
+                :workspace           "namespace/name"
+                :methodConfiguration "namespace/name"
+                :fromSource          "importSnapshot"}
                executor)
     :sink     (merge
                {:name        "Terra Workspace"
@@ -148,7 +148,7 @@
     :watchers watchers
     :labels   ["hornet:test"]})
   ([]
-   (covid-workload-request {} {} {})))
+   (staged-workload-request {} {} {})))
 
 (defn xx-workload-request
   "A whole genome sequencing workload used for testing."

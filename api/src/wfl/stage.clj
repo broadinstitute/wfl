@@ -18,6 +18,13 @@
   "Test if the processing `stage` is complete and will not process any more data."
   :type)
 
+(defn to-log
+  "A `stage` context object for logs."
+  [stage]
+  (:type stage))
+
+;; Goal: deprecate in favor of attaching `workloads/to-log` to logs.
+;;
 (defn log-prefix
   "Prefix string for `stage` logs indicating the `type` (table) and row `id`."
   [{:keys [type id] :as _stage}]

@@ -163,11 +163,14 @@
         (reduce combine-records filtered)))))
 
 (defn ^:private find-new-rows
-  "Query TDR for rows within `_interval` that are new to `source`."
-  [{:keys [dataset details table loadTag] :as source}
-   [begin end                             :as _interval]]
-  (log/info (format "%s Looking for rows in %s.%s between [%s, %s]..."
-                    (stage/log-prefix source) (:name dataset) table begin end))
+  "Query TDR for rows within `interval` that are new to `source`."
+  [{{:keys [dataset details table loadTag]} :source :as workload}
+   [begin end                                       :as interval]]
+  (log/info "Looking for new rows in row metadata table"
+            :workload (workloads/to-log workload)
+            :dataset  (:name dataset)
+            :table    table
+            :interval interval)
   (let [wfl     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                   (postgres/get-table tx details))
         old     (filter-and-combine-tdr-source-details wfl)
@@ -190,7 +193,9 @@
    write job info as well as rows into `source-details-name` table.
    Snapshots will be readable by members of the `snapshotReaders` list.
    `suffix` will be appended to the snapshot names."
-  [suffix {:keys [dataset table snapshotReaders] :as _source} row-ids]
+  [suffix
+   {{:keys [dataset table snapshotReaders]} :source :as _workload}
+   row-ids]
   (let [columns (->> (datarepo/all-columns dataset table)
                      (mapv :name)
                      (cons "datarepo_row_id"))]
@@ -202,12 +207,12 @@
 (defn ^:private create-snapshots
   "Create uniquely named snapshots in TDR with max partition size of 500,
    using the frozen `now-obj`, from `row-ids`, return shards and TDR job-ids."
-  [source now-obj row-ids]
+  [workload now-obj row-ids]
   (let [dt-format   (DateTimeFormatter/ofPattern "YYYYMMdd'T'HHmmss")
         compact-now (.format now-obj dt-format)]
     (letfn [(create-snapshot [idx shard]
               [shard (go-create-snapshot! (format "_%s_%s" compact-now idx)
-                                          source shard)])]
+                                          workload shard)])]
       (->> row-ids
            (partition-all 500)
            (map vec)
@@ -215,12 +220,12 @@
 
 (defn ^:private get-pending-tdr-jobs
   "Return the IDs of pending TDR snapshot creation jobs for `_source.`"
-  [{:keys [details] :as _source}]
+  [{:keys [source] :as _workload}]
   (let [query (str/join \space ["SELECT id, snapshot_creation_job_id FROM %s"
                                 "WHERE snapshot_creation_job_status = 'running'"
                                 "ORDER BY id ASC"])]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-      (->> (format query details)
+      (->> (format query (:details source))
            (jdbc/query tx)
            (map (juxt :id :snapshot_creation_job_id))))))
 
@@ -238,33 +243,37 @@
 (defn ^:private check-tdr-job
   "Check TDR job status for `job-id` and return job metadata,
    with snapshot_id attached if the job succeeded."
-  [job-id]
+  [workload job-id]
   (let [{:keys [job_status] :as metadata} (datarepo/job-metadata job-id)
         get-job-result                    #(datarepo/job-result job-id)]
     (case job_status
       "running"   metadata
       "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
-      ;; Likely failed job, or otherwise unknown job status:
-      (do (log/warning {:metadata metadata
-                        :result   (result-or-catch get-job-result)})
+      (do (log/warning "TDR job failed or has otherwise unknown status"
+                       :workload   (workloads/to-log workload)
+                       :metadata    metadata
+                       :job-result (result-or-catch get-job-result))
           metadata))))
 
 (defn ^:private write-snapshot-id
-  "Write `snapshot_id` and `job_status` into source `details` table
+  "Write `snapshot_id` and `job_status` into `source` details table
    from the `_tdr-job-metadata` map, update timestamp with real now."
-  [{:keys [details] :as _source}
+  [{:keys [source]                     :as _workload}
    [id {:keys [job_status snapshot_id] :as _tdr-job-metadata}]]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (jdbc/update! tx details {:snapshot_creation_job_status job_status
-                              :snapshot_id                  snapshot_id
-                              :updated                      (util/utc-now)}
+    (jdbc/update! tx (:details source)
+                  {:snapshot_creation_job_status job_status
+                   :snapshot_id                  snapshot_id
+                   :updated                      (util/utc-now)}
                   ["id = ?" id])))
 
 (defn ^:private write-snapshots-creation-jobs
   "Write the shards and corresponding snapshot creation jobs from
    `shards->snapshot-jobs` into source `details` table, with the frozen `now`.
    Also initialize all jobs statuses to running."
-  [{:keys [last_checked details] :as source} now shards->snapshot-jobs]
+  [{{:keys [last_checked details]} :source :as workload}
+   now
+   shards->snapshot-jobs]
   (letfn [(make-record [[shard id]]
             {:snapshot_creation_job_id     id
              :snapshot_creation_job_status "running"
@@ -275,8 +284,8 @@
       (->> shards->snapshot-jobs
            (map make-record)
            (jdbc/insert-multi! tx details)))
-    (log/debug (format "%s Snapshot creation jobs written."
-                       (stage/log-prefix source)))))
+    (log/debug "Snapshot creation jobs written."
+               :workload (workloads/to-log workload))))
 
 (defn ^:private update-last-checked
   "Update the `last_checked` field in source table with
@@ -289,62 +298,70 @@
 
 (defn ^:private find-and-snapshot-new-rows
   "Create and enqueue snapshots from new rows in the `source` dataset."
-  [{:keys [dataset table last_checked] :as source} now]
+  [{{:keys [dataset table last_checked] :as source} :source :as workload}
+   now]
   (let [checked      (timestamp-to-offsetdatetime last_checked)
         hours-ago    (* 2 (max 1 (.between ChronoUnit/HOURS checked now)))
         then         (.minusHours now hours-ago)
         shards->jobs (->> [then now]
                           (mapv #(.format % bigquery-datetime-format))
-                          (find-new-rows source)
-                          (create-snapshots source now))]
+                          (find-new-rows workload)
+                          (create-snapshots workload now))]
     (when (seq shards->jobs)
-      (log/info (format "%s Snapshots created from new rows in %s.%s."
-                        (stage/log-prefix source) (:name dataset) table))
-      (write-snapshots-creation-jobs source now shards->jobs))
+      (log/info "Snapshots created from new rows."
+                :workload (workloads/to-log workload)
+                :dataset  (:name dataset)
+                :table    table)
+      (write-snapshots-creation-jobs workload now shards->jobs))
     ;; Even if our poll did not yield new rows to snapshot, at least we tried:
     (update-last-checked source now)))
 
 (defn ^:private update-pending-snapshot-jobs
   "Update the status of 'running' TDR snapshots in `source`."
-  [source]
-  (log/debug "Looking for running snapshot jobs..." :source source)
-  (let [pending-tdr-jobs (get-pending-tdr-jobs source)]
+  [workload]
+  (log/debug "Looking for running snapshot jobs."
+             :workload (workloads/to-log workload))
+  (let [pending-tdr-jobs (get-pending-tdr-jobs workload)]
     (when (seq pending-tdr-jobs)
       (->> pending-tdr-jobs
-           (map #(update % 1 check-tdr-job))
-           (run! #(write-snapshot-id source %)))
-      (log/debug "Running snapshot jobs updated." :source source))))
+           (map #(update % 1 (partial check-tdr-job workload)))
+           (run! #(write-snapshot-id workload %)))
+      (log/debug "Running snapshot jobs updated."
+                 :workload (workloads/to-log workload)))))
 
 ;; Workloads in general may be updated more frequently,
 ;; but overpolling the TDR increases the chances of:
 ;; - creating many single-row / low-cardinality snapshots
 ;; - locking the dataset / running into dataset locks
+;;
 (def ^:private tdr-source-default-polling-interval-minutes 20)
 
 (defn ^:private tdr-source-should-poll?
   "Return true if it's been at least the specified `polling_interval_minutes`
    or, if unspecified, `tdr-source-default-polling-interval-minutes`
    since `last_checked` -- when we last checked for new rows in the TDR."
-  [{:keys [type id last_checked pollingIntervalMinutes] :as _source} now]
+  [{{:keys [last_checked pollingIntervalMinutes]} :source :as workload} now]
   (let [checked            (timestamp-to-offsetdatetime last_checked)
         minutes-since-poll (.between ChronoUnit/MINUTES checked now)
         polling-interval   (or pollingIntervalMinutes
                                tdr-source-default-polling-interval-minutes)]
-    (log/debug {:type               type
-                :id                 id
-                :minutes-since-poll minutes-since-poll
-                :polling-interval   polling-interval})
+    (log/debug "Checking if we should poll TDR for new rows."
+               :workload           (workloads/to-log workload)
+               :minutes-since-poll minutes-since-poll
+               :polling-interval   polling-interval)
     (<= polling-interval minutes-since-poll)))
 
 (defn ^:private update-tdr-source
-  "Check for new data in TDR from `Workload`'s `source`, create new snapshots,
-  insert resulting job creation ids into database and update the
-  timestamp for next time."
-  [{{:keys [stopped] :as source} :source :as workload}]
+  "Check for new data in TDR from `workload`'s `source`,
+  create new snapshots,
+  insert resulting job creation ids into database,
+  and update the timestamp for next time."
+  [{:keys [source] :as workload}]
   (let [now (util/utc-now)]
-    (when (and (not stopped) (tdr-source-should-poll? source now))
-      (find-and-snapshot-new-rows source now)))
-  (update-pending-snapshot-jobs source)
+    (when (and (not (:stopped source))
+               (tdr-source-should-poll? workload now))
+      (find-and-snapshot-new-rows workload now)))
+  (update-pending-snapshot-jobs workload)
   ;; load and return the workload with the updated source
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (workloads/load-workload-for-uuid tx (:uuid workload))))

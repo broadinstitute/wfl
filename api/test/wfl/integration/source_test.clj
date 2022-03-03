@@ -27,17 +27,18 @@
   (LocalDateTime/parse timestamp @#'source/bigquery-datetime-format))
 
 (defn ^:private mock-find-new-rows
-  [_source interval]
+  [_workload interval]
   (is (every? parse-timestamp interval))
   (range mock-new-rows-size))
 
-(defn ^:private mock-create-snapshots [_ _ row-ids]
+(defn ^:private mock-create-snapshots
+  [_workload _now-obj row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
          (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
-(defn ^:private mock-check-tdr-job [job-id]
+(defn ^:private mock-check-tdr-job [_workload job-id]
   {:snapshot_id (str (UUID/randomUUID))
    :job_status  "succeeded"
    :id          job-id})
@@ -262,12 +263,12 @@
     (is (= (:snapshots source) [(:id snapshot)]))
     (is (s/valid? ::source/snapshot-list-source source))))
 
-(deftest test-create-covid-workload-with-empty-snapshot-list
+(deftest test-create-staged-workload-with-empty-snapshot-list
   (is (source/tdr-snapshot-list-validate-request-or-throw
        {:name      "TDR Snapshots"
         :snapshots [testing-snapshot]})))
 
-(deftest test-create-covid-workload-with-invalid-snapshot
+(deftest test-create-staged-workload-with-invalid-snapshot
   (is (thrown-with-msg?
        UserException #"Cannot access snapshot"
        (source/tdr-snapshot-list-validate-request-or-throw

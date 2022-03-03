@@ -40,13 +40,13 @@ nav:
     - Monitoring: dev-monitoring.md
   - Staged Workloads:
     - Overview: staged-workload.md
-    - Source: source.md
-    - Executor: executor.md
-    - Sink: sink.md
+    - API Usage: staged-api-usage.md
+    - Source: staged-source.md
+    - Executor: staged-executor.md
+    - Sink: staged-sink.md
   - Module-Specific Usage:
     - Overview: modules-general.md
     - Arrays: modules-aou-arrays.md
-    - Covid: modules-covid.md
     - External Exome: modules-external-exome-reprocessing.md
     - Somatic Genomes: modules-sg.md
     - Whole Genome: modules-wgs.md
