@@ -54,8 +54,6 @@
          :methodConfiguration        testing-method-configuration
          :fromSource                 "frobnicate"}))))
 
-
-
 (deftest test-validate-terra-executor-with-wrong-method-configuration
   (is (thrown-with-msg?
        UserException #"Cannot access method configuration"
