@@ -273,11 +273,10 @@
                    :table                  "flowcells"
                    :snapshotReaders        ["hornet@firecloud.org"]
                    :pollingIntervalMinutes 1}
-        executor  {:name                       "Terra"
-                   :workspace                  workspace
-                   :methodConfiguration        (terra-ns "sarscov2_illumina_full")
-                   :methodConfigurationVersion 2
-                   :fromSource                 "importSnapshot"}
+        executor  {:name                "Terra"
+                   :workspace           workspace
+                   :methodConfiguration (terra-ns "sarscov2_illumina_full")
+                   :fromSource          "importSnapshot"}
         sink      {:name           "Terra Workspace"
                    :workspace      workspace
                    :entityType     "assemblies"
@@ -429,11 +428,10 @@
                       :snapshotReaders        ["hornet@firecloud.org"]
                       :pollingIntervalMinutes 1
                       :loadTag                "loadTagToMonitor"}
-            executor {:name                       "Terra"
-                      :workspace                  workspace
-                      :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
-                      :methodConfigurationVersion 1
-                      :fromSource                 "importSnapshot"}
+            executor {:name                "Terra"
+                      :workspace           workspace
+                      :methodConfiguration "warp-pipelines/IlluminaGenotypingArray"
+                      :fromSource          "importSnapshot"}
             sink     {:name        "Terra DataRepo"
                       :dataset     dataset-id
                       :table       "outputs"

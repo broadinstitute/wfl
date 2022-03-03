@@ -131,11 +131,10 @@
                 :snapshotReaders []}
                source)
     :executor (merge
-               {:name                       "Terra"
-                :workspace                  "namespace/name"
-                :methodConfiguration        "namespace/name"
-                :methodConfigurationVersion 0
-                :fromSource                 "importSnapshot"}
+               {:name                "Terra"
+                :workspace           "namespace/name"
+                :methodConfiguration "namespace/name"
+                :fromSource          "importSnapshot"}
                executor)
     :sink     (merge
                {:name        "Terra Workspace"

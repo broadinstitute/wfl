@@ -130,10 +130,9 @@
   (is (workloads/create-workload!
        (workloads/staged-workload-request
         {:skipValidation true}
-        {:workspace                  testing-workspace
-         :methodConfiguration        testing-method-configuration
-         :methodConfigurationVersion testing-method-configuration-version
-         :fromSource                 "importSnapshot"}
+        {:workspace           testing-workspace
+         :methodConfiguration testing-method-configuration
+         :fromSource          "importSnapshot"}
         {:skipValidation true}))))
 
 (deftest test-start-workload

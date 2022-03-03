@@ -55,7 +55,6 @@ via WFL API, see [API Usage](./staged-api-usage.md).
         "name": "Terra",
         "workspace": "wfl-dev/CDC_Viral_Sequencing",
         "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-        "methodConfigurationVersion": 1,
         "fromSource": "importSnapshot"
     },
     "sink": {

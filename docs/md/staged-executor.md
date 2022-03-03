@@ -26,7 +26,6 @@ A typical `Terra` executor configuration in the workload request looks like:
   "name": "Terra",
   "workspace": "{workspace-namespace}/{workspace-name}",
   "methodConfiguration": "{method-configuration-namespace}/{method-configuration-name}",
-  "methodConfigurationVersion": 1,
   "fromSource": "importSnapshot"
 }
 ```
@@ -37,7 +36,6 @@ And a real-life example for a known method configuration:
   "name": "Terra",
   "workspace": "wfl-dev/CDC_Viral_Sequencing",
   "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-  "methodConfigurationVersion": 1,
   "fromSource": "importSnapshot"
 }
 ```
@@ -46,13 +44,12 @@ And a real-life example for a known method configuration:
 
 The table below summarises the purpose of each attribute in the above request.
 
-| Attribute                    | Description                                                                                       |
-|------------------------------|---------------------------------------------------------------------------------------------------|
-| `name`                       | Selects the `Terra` executor implementation.                                                      |
-| `workspace`                  | Terra Workspace in which to execute workflows.                                                    |
-| `methodConfiguration`        | Method configuration from which to generate submissions.                                          |
-| `methodConfigurationVersion` | Expected version of the method configuration.                                                     |
-| `fromSource`                 | Instruction to coerce an output from an upstream `Source` to a type understood by this `executor`.|
+| Attribute             | Description                                                                                       |
+|-----------------------|---------------------------------------------------------------------------------------------------|
+| `name`                | Selects the `Terra` executor implementation.                                                      |
+| `workspace`           | Terra Workspace in which to execute workflows.                                                    |
+| `methodConfiguration` | Method configuration from which to generate submissions.                                          |
+| `fromSource`          | Instruction to coerce an output from an upstream `Source` to a type understood by this `executor`.|
 
 #### `workspace`
 A `{workspace-namespace}/{workspace-name}` string as it appears in the URL path
@@ -74,39 +71,6 @@ Prerequisites:
 
 - The method configuration must exist within `workspace` prior to
   workload creation.
-
-#### `methodConfigurationVersion`
-The expected version of `methodConfiguration`, stored as an integer in
-[Firecloud](https://firecloud-orchestration.dsde-prod.broadinstitute.org/#/Method%20Configurations/getWorkspaceMethodConfig).
-
-Example fetch of a method configuration's version from the appropriate
-Firecloud instance (prod):
-
-```shell
-FIRECLOUD=https://firecloud-orchestration.dsde-prod.broadinstitute.org
-
-# Should be as they'd appear in a Terra UI URL path:
-WORKSPACE=emerge_prod/Arrays_test
-METHOD_CONFIG=warp-pipelines/Arrays
-
-curl -X GET \
-  "$FIRECLOUD/api/workspaces/$WORKSPACE/method_configs/$METHOD_CONFIG" \
-  -H 'accept: */*' \
-  -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
-  | jq .methodConfigVersion
-7
-```
-
-Prerequisites:
-
-- The `methodConfiguration` version when fetched from Firecloud
-  at workload creation should match `methodConfigurationVersion`.
-
-!!! warning "Implications of Version Mismatch"
-    A version mismatch may indicate a possible concurrent modification of the
-    method configuration used for launching submissions.  Modification is possible
-    programmatically or via the Terra UI.  An unexpected modification may cause
-    submission and/or workflow creation to fail.
 
 #### `fromSource`
 This attribute tells workflow-launcher how to coerce an output
