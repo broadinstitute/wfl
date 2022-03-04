@@ -11,7 +11,7 @@
             [wfl.environment            :as env]
             [wfl.executor               :as executor]
             [wfl.log                    :as log]
-            [wfl.module.covid           :as module]
+            [wfl.module.staged          :as staged]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
             [wfl.service.google.storage :as gcs]
@@ -273,11 +273,10 @@
                    :table                  "flowcells"
                    :snapshotReaders        ["hornet@firecloud.org"]
                    :pollingIntervalMinutes 1}
-        executor  {:name                       "Terra"
-                   :workspace                  workspace
-                   :methodConfiguration        (terra-ns "sarscov2_illumina_full")
-                   :methodConfigurationVersion 2
-                   :fromSource                 "importSnapshot"}
+        executor  {:name                "Terra"
+                   :workspace           workspace
+                   :methodConfiguration (terra-ns "sarscov2_illumina_full")
+                   :fromSource          "importSnapshot"}
         sink      {:name           "Terra Workspace"
                    :workspace      workspace
                    :entityType     "assemblies"
@@ -285,22 +284,22 @@
                    :fromOutputs    (resources/read-resource
                                     "sarscov2_illumina_full/entity-from-outputs.edn")
                    :skipValidation true}]
-    (workloads/covid-workload-request source executor sink)))
+    (workloads/staged-workload-request source executor sink)))
 
 (defn instantify-timestamps
   "Replace timestamps at keys KS of map M with parsed #inst values."
   [m & ks]
   (reduce (fn [m k] (update m k instant/read-instant-timestamp)) m ks))
 
-(deftest ^:parallel test-covid-workload
-  (testing "/create covid workload"
+(deftest ^:parallel test-staged-workload
+  (testing "/create staged workload"
     (let [workload-request (covid-workload-request)
           {:keys [creator started uuid] :as workload}
           (-> workload-request
               endpoints/create-workload
               (update :created instant/read-instant-timestamp))]
-      (is (s/valid? ::module/workload-request  workload-request))
-      (is (s/valid? ::module/workload-response workload))
+      (is (s/valid? ::staged/workload-request  workload-request))
+      (is (s/valid? ::staged/workload-response workload))
       (verify-internal-properties-removed workload)
       (is (not started))
       (is (= @workloads/email creator))
@@ -310,7 +309,7 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::module/workload-response response))))
+          (is (s/valid? ::staged/workload-response response))))
       (testing "/workload all"
         (let [{:keys [started] :as response}
               (-> (endpoints/get-workloads)
@@ -319,8 +318,8 @@
                   (instantify-timestamps :created))]
           (is (not started))
           (verify-internal-properties-removed response)
-          (is (s/valid? ::module/workload-response response))))
-      (testing "/retry covid workload"
+          (is (s/valid? ::staged/workload-response response))))
+      (testing "/retry staged workload"
         (letfn [(should-throw-400 [message filters]
                   (is (thrown-with-msg?
                        ExceptionInfo #"clj-http: status 400"
@@ -341,18 +340,18 @@
             (run! (partial should-throw-400
                            handlers/retry-no-workflows-error-message)
                   filters-valid))))
-      (testing "/start covid workload"
+      (testing "/start staged workload"
         (let [{:keys [created started] :as response}
               (-> workload endpoints/start-workload
                   (instantify-timestamps :created :started))]
-          (is (s/valid? ::module/workload-response response))
+          (is (s/valid? ::staged/workload-response response))
           (is (inst? created))
           (is (inst? started))))
-      (testing "/stop covid workload"
+      (testing "/stop staged workload"
         (let [{:keys [created started stopped] :as response}
               (-> workload endpoints/stop-workload
                   (instantify-timestamps :created :started :stopped))]
-          (is (s/valid? ::module/workload-response response))
+          (is (s/valid? ::staged/workload-response response))
           (is (inst? created))
           (is (inst? started))
           (is (inst? stopped)))))))
@@ -362,27 +361,29 @@
   [n workload]
   (try (endpoints/get-workflows workload)
        (catch Throwable x
-         (debug/trace x)
+         (debug/trace [n workload x])
          (when (> n 0)
            (try-to-get-workflows (dec n) workload)))))
 
 (defn ^:private summarize-workflows-in-workload
   "Summarize the workflows in `workload`."
   [workload]
-  (let [workflows (try-to-get-workflows 3 workload)]
-    {:count     (count workflows)
+  (let [workflows (try-to-get-workflows 3 workload)
+        statuses  (set (keep :status workflows))]
+    {:count     (count statuses)
+     :statuses  statuses
      :workload  workload
      :workflows workflows}))
 
 (deftest ^:parallel test-workflows-by-filters
   (testing "Get workflows by status"
-    (let [{:keys [workflows workload]}
+    (let [{:keys [statuses workflows workload]}
           (->> (endpoints/get-workloads)
+               (filter :finished)
+               (take 7)                 ; Why not?
                (map summarize-workflows-in-workload)
-               (filter (comp :finished :workload))
                (sort-by :count >)
-               first :workflows)
-          statuses (set (map :status workflows))]
+               first)]
       (letfn [(verify [status]
                 (run! #(is (= status (:status %)))
                       (endpoints/get-workflows workload status)))]
@@ -427,18 +428,17 @@
                       :snapshotReaders        ["hornet@firecloud.org"]
                       :pollingIntervalMinutes 1
                       :loadTag                "loadTagToMonitor"}
-            executor {:name                       "Terra"
-                      :workspace                  workspace
-                      :methodConfiguration        "warp-pipelines/IlluminaGenotypingArray"
-                      :methodConfigurationVersion 1
-                      :fromSource                 "importSnapshot"}
+            executor {:name                "Terra"
+                      :workspace           workspace
+                      :methodConfiguration "warp-pipelines/IlluminaGenotypingArray"
+                      :fromSource          "importSnapshot"}
             sink     {:name        "Terra DataRepo"
                       :dataset     dataset-id
                       :table       "outputs"
                       :fromOutputs (resources/read-resource
                                     "illumina_genotyping_array/fromOutputs.edn")}
             workload (endpoints/exec-workload
-                      (workloads/covid-workload-request source executor sink))]
+                      (workloads/staged-workload-request source executor sink))]
         (try
           (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
           (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))

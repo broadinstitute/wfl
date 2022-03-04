@@ -1,15 +1,6 @@
-# COVID module
+## Staged Workload API Overview
 
-WorkFlow Launcher (WFL) uses the `covid` module to automate the sequencing
-of COVID-positive samples in Terra workspaces for better understanding
-of SARS-CoV-2 spread and evolution.
-
-For this processing, WFL follows a [staged workload](./staged-workload.md) model
-which includes a source, executor, and sink.
-
-## API Overview
-
-The `covid` module supports the following API endpoints:
+Users interact with staged workloads via the following WFL API endpoints:
 
 | Verb | Endpoint                            | Description                                                                     |
 |------|-------------------------------------|---------------------------------------------------------------------------------|
@@ -21,36 +12,30 @@ The `covid` module supports the following API endpoints:
 | POST | `/api/v1/stop`                      | Stop a running workload                                                         |
 | POST | `/api/v1/exec`                      | Create and start (execute) a workload                                           |
 
-The life-cycle of a workload is a multi-stage process:
+These endpoints play into a staged workload's lifecycle thusly:
 
-1. The caller needs to [create](#create-workload) a workload
-   and specify the source, executor, and sink.
-
-    - For continuous processing, the [Source](./source.md) request
-      is expected to have name [`Terra DataRepo`](./source.md#terra-datarepo-source)
-      and specify a Terra Data Repository (TDR) dataset to poll and snapshot.
-      In one-off processing or development, we may instead use name
-      [`TDR Snapshots Source`](./source.md#tdr-snapshots-source)
-      to specify a list of existing TDR snapshots.
-
-    - The [Executor](./executor.md) request is expected to have name
-      [`Terra`](./executor.md#terra-executor) and specify the Terra workspace
-      configuration for executing workflows.
-
-    - The [Sink](./sink.md) request is expected to have name
-      [`Terra Workspace`](./sink.md#terra-workspace-sink)
-      and specify the Terra workspace configuration for saving workflow outputs.
+1. The caller needs to [create](#create-workload) a workload and specify the
+   [source](./staged-source.md),
+   [executor](./staged-executor.md), and
+   [sink](./staged-sink.md).
 
     If all stage requests pass verification,
-    in response the caller will receive the newly created
-    [workload object](#workload-response-format) with an assigned `uuid`.
+    the caller will receive the newly created
+    [workload object](#workload-response-format) with an assigned `uuid`
+    in response.
 
-2. Next, the caller needs to [start](#start-workload) the newly created workload, which will begin the analysis.
-   Once started, WFL will continue to poll for new inputs to the source until it is stopped.
+2. Next, the caller needs to [start](#start-workload) the newly created workload.
+   Once started, WFL will continue to poll for new inputs in the source until stopped.
 
-3. WFL can, in addition, [stop](#stop-workload) watching a workflow.
-   This will not cancel analysis, but WFL will stop polling for new inputs to that workload,
-   and will mark the workload finished once any previously-identified inputs have undergone processing.
+    (Alternatively: callers can [execute](#execute-workload) a workload request
+    to create and start a workload within a single call,
+    sidestepping the possibility of creating a workload
+    but forgetting to start it.)
+
+3. [Stopping](#stop-workload) a workload will not cancel analysis in progress,
+   but WFL will stop polling for new inputs,
+   and will mark the workload finished
+   once any previously-identified inputs have undergone processing.
 
     - Example: the caller may wish to stop a continuous workflow
       if maintenance is required on the underlying method.
@@ -64,7 +49,7 @@ Here you'll find example requests and responses for the endpoints enumerated abo
 
 ### Workload Response Format
 
-Many of the API endpoints return COVID workloads in their responses.
+Many of the API endpoints return staged workloads in their responses.
 
 An example workload response at the time of this writing is formatted thusly:
 
@@ -72,8 +57,7 @@ An example workload response at the time of this writing is formatted thusly:
 {
     "started" : "2021-07-14T15:36:47Z",
     "watchers" : [
-        ["slack", "C000XXX0XXX"],
-        ["email", "okotsopo@broadinstitute.org"]
+        ["slack", "C000XXX0XXX"]
     ],
     "labels" : [ "hornet:test", "project:okotsopo testing enhanced source, executor, sink logging" ],
     "creator" : "okotsopo@broadinstitute.org",
@@ -89,7 +73,6 @@ An example workload response at the time of this writing is formatted thusly:
     "executor" : {
     "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
     "methodConfiguration" : "wfl-dev/sarscov2_illumina_full",
-    "methodConfigurationVersion" : 41,
     "fromSource" : "importSnapshot",
     "name" : "Terra"
     },
@@ -297,7 +280,6 @@ with an assigned `uuid`.
                     "name": "Terra DataRepo",
                     "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
                     "table": "flowcells",
-                    "column": "last_modified_date",
                     "snapshotReaders": [
                         "workflow-launcher-dev@firecloud.org"
                     ]
@@ -306,7 +288,6 @@ with an assigned `uuid`.
                     "name": "Terra",
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-                    "methodConfigurationVersion": 2,
                     "fromSource": "importSnapshot"
                 },
                 "sink": {
@@ -377,8 +358,7 @@ with an assigned `uuid`.
          -H 'Content-Type: application/json' \
          -d '{
                 "watchers": [
-                    ["slack", "C000XXX0XXX"],
-                    ["email", "tester@broadinstitute.org"]
+                    ["slack", "C000XXX0XXX"]
                 ],
                 "labels": [
                     "hornet:test"
@@ -388,7 +368,6 @@ with an assigned `uuid`.
                     "name": "Terra DataRepo",
                     "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
                     "table": "flowcells",
-                    "column": "last_modified_date",
                     "snapshotReaders": [
                         "workflow-launcher-dev@firecloud.org"
                     ]
@@ -397,7 +376,6 @@ with an assigned `uuid`.
                     "name": "Terra",
                     "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
                     "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
-                    "methodConfigurationVersion": 2,
                     "fromSource": "importSnapshot"
                 },
                 "sink": {

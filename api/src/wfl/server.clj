@@ -80,25 +80,28 @@
 
 (defn ^:private do-update!
   "Update `_workload` in a database transaction. "
-  [{:keys [id uuid labels] :as _workload}]
+  [{:keys [id] :as _workload}]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
     (let [workload (workloads/load-workload-for-id tx id)]
       (try
         (workloads/update-workload! tx workload)
         (catch UserException e
           (log/warning "Error updating workload"
-                       :exception e :labels labels :workload uuid)
+                       :workload  (workloads/to-log workload)
+                       :exception e)
           (slack/notify-watchers workload (.getMessage e)))))))
 
 (defn ^:private try-update
   "Try to update the workflows in `workload` with a backstop."
-  [{:keys [uuid labels] :as workload}]
+  [workload]
   (try
-    (log/info "Updating workload" :labels labels :workload uuid)
+    (log/info "Updating workload"
+              :workload (workloads/to-log workload))
     (do-update! workload)
     (catch Throwable t
       (log/error "Failed to update workload"
-                 :labels labels :throwable t :workload uuid))))
+                 :workload  (workloads/to-log workload)
+                 :throwable t))))
 
 (defn ^:private update-workloads
   "Update the active workflows in the active workloads."
@@ -108,7 +111,7 @@
     (run! try-update
           (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
             (jdbc/query tx (str/join \space
-                                     ["SELECT id,uuid,labels FROM workload"
+                                     ["SELECT * FROM workload"
                                       "WHERE started IS NOT NULL"
                                       "AND finished IS NULL"]))))
     (catch Throwable t
@@ -170,5 +173,5 @@
   (let [port    (util/is-non-negative! (first args))
         manager (start-workload-manager)
         logger  (start-logging-polling)
-        slacker (slack/start-notification-loop slack/notifier)]
+        slacker (slack/start-notification-loop)]
     (await-some manager logger slacker (start-webserver port))))

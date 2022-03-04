@@ -1,4 +1,4 @@
-(ns wfl.unit.modules.covid-test
+(ns wfl.unit.modules.staged-test
   (:require [clojure.spec.alpha   :as s]
             [clojure.test         :refer [deftest is testing]]
             [wfl.service.datarepo :as datarepo]
@@ -20,15 +20,16 @@
 (deftest test-create-snapshots
   (let [mock-new-rows-size  2021
         expected-num-shards (int (Math/ceil (/ mock-new-rows-size 500)))
-        source              {:dataset {}
-                             :table "flowcell"
-                             :snapshotReaders readers-list}
+        workload            {:uuid   "a-workload-uuid"
+                             :source {:dataset         {}
+                                      :table           "flowcell"
+                                      :snapshotReaders readers-list}}
         row-ids             (take mock-new-rows-size (range))
         now-obj             (OffsetDateTime/now (ZoneId/of "UTC"))
         shards->snapshot-requests
         (with-redefs-fn
           {#'datarepo/create-snapshot-job mock-create-snapshot-job}
-          #(vec (#'source/create-snapshots source now-obj row-ids)))]
+          #(vec (#'source/create-snapshots workload now-obj row-ids)))]
     (testing "snapshot requests are properly partitioned and made unique"
       (is (= expected-num-shards (count shards->snapshot-requests))
           "requests are not partitioned correctly!")
@@ -37,7 +38,7 @@
 
 (deftest test-tdr-source-spec
   (let [valid?           (partial s/valid? ::source/tdr-source)
-        {:keys [source]} (workloads/covid-workload-request)]
+        {:keys [source]} (workloads/staged-workload-request)]
     (is (valid? source) (s/explain-str ::source/tdr-source source))
     (is (not (valid? (assoc source :snapshotReaders ["geoff"])))
         "snapshotReaders should be a list of email addresses")))

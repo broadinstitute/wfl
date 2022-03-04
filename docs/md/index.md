@@ -17,11 +17,11 @@ incoming notifications that describe all of the required inputs to launch Arrays
 scientific pipelines in Cromwell.
 
 Most recent efforts leverage the general applicability of a
-[staged workload](staged-workload.md) model
-which automates fetching data from a [source](./source.md),
-pushing it into a workflow [executor](./executor.md) for analysis,
+[staged workload](./staged-workload.md) model
+which automates fetching data from a [source](./staged-source.md),
+pushing it into a workflow [executor](./staged-executor.md) for analysis,
 and delivering the results of the analysis to an output location
-(also known as a [sink](./sink.md)).
+(also known as a [sink](./staged-sink.md)).
 
 WFL is designed to be deployed to run as a service in the cloud, primarily
 on Kubernetes clusters.

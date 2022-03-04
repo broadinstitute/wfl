@@ -1,10 +1,10 @@
 (ns wfl.environment
   "Map environment to various values here."
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [wfl.log :as log]
+            [clojure.string    :as str]
+            [wfl.log           :as log]
             [vault.client.http] ; vault.core needs this
-            [vault.core :as vault]))
+            [vault.core        :as vault]))
 
 (declare getenv)
 
@@ -57,6 +57,8 @@
    ;; all other values disable them.
    "WFL_SLACK_ENABLED"
    (fn [] "disabled")
+   "WFL_SLACK_TOKEN"
+   #(-> "secret/dsde/gotc/dev/wfl/slack" vault-secrets :bot-user-token)
 
    ;; -- variables used in test code below this line --
    "WFL_CROMWELL_URL"

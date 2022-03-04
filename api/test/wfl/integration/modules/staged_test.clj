@@ -1,5 +1,4 @@
-(ns wfl.integration.modules.covid-test
-  "Test the Sarscov2IlluminaFull COVID pipeline."
+(ns wfl.integration.modules.staged-test
   (:require [clojure.test                   :refer [deftest is testing
                                                     use-fixtures]]
             [clojure.set                    :as set]
@@ -20,16 +19,17 @@
 
 ;; Snapshot creation mock
 (def ^:private mock-new-rows-size 2021)
-(defn ^:private mock-find-new-rows [_ interval]
+(defn ^:private mock-find-new-rows [_workload interval]
   (is (every? #(LocalDateTime/parse % @#'source/bigquery-datetime-format) interval))
   (take mock-new-rows-size (range)))
-(defn ^:private mock-create-snapshots [_ _ row-ids]
+(defn ^:private mock-create-snapshots
+  [_workload _now-obj row-ids]
   (letfn [(f [idx shard] [(vec shard) (format "mock_job_id_%s" idx)])]
     (->> (partition-all 500 row-ids)
          (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
-(defn ^:private mock-check-tdr-job [job-id]
+(defn ^:private mock-check-tdr-job [_workload job-id]
   {:snapshot_id (str (UUID/randomUUID))
    :job_status "succeeded"
    :id job-id})
@@ -64,7 +64,7 @@
             (is (str/starts-with? details "TerraWorkspaceSink_")))]
     (let [{:keys [created creator source executor sink labels watchers] :as workload}
           (workloads/create-workload!
-           (workloads/covid-workload-request
+           (workloads/staged-workload-request
             {:skipValidation true}
             {:skipValidation true}
             {:skipValidation true}))]
@@ -79,7 +79,7 @@
       (is (vector? watchers)))))
 
 (deftest test-workload-to-edn
-  (let [request  (workloads/covid-workload-request
+  (let [request  (workloads/staged-workload-request
                   {:skipValidation true}
                   {:skipValidation true}
                   {:skipValidation true})]
@@ -99,46 +99,45 @@
       (is (not-any? (:executor workload) [:id :details :type]))
       (is (not-any? (:sink workload) [:id :details :type])))))
 
-(deftest test-create-covid-workload-with-misnamed-source
+(deftest test-create-staged-workload-with-misnamed-source
   (is (thrown-with-msg?
        UserException #"Invalid source"
        (workloads/create-workload!
-        (workloads/covid-workload-request
+        (workloads/staged-workload-request
          {:name "bad name"}
          {:skipValidation true}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-misnamed-executor
+(deftest test-create-staged-workload-with-misnamed-executor
   (is (thrown-with-msg?
        UserException #"Invalid executor"
        (workloads/create-workload!
-        (workloads/covid-workload-request
+        (workloads/staged-workload-request
          {:skipValidation true}
          {:name "bad name"}
          {:skipValidation true})))))
 
-(deftest test-create-covid-workload-with-misnamed-sink
+(deftest test-create-staged-workload-with-misnamed-sink
   (is (thrown-with-msg?
        UserException #"Invalid sink"
        (workloads/create-workload!
-        (workloads/covid-workload-request
+        (workloads/staged-workload-request
          {:skipValidation true}
          {:skipValidation true}
          {:name "bad name"})))))
 
-(deftest test-create-covid-workload-with-valid-executor-request
+(deftest test-create-staged-workload-with-valid-executor-request
   (is (workloads/create-workload!
-       (workloads/covid-workload-request
+       (workloads/staged-workload-request
         {:skipValidation true}
-        {:workspace                  testing-workspace
-         :methodConfiguration        testing-method-configuration
-         :methodConfigurationVersion testing-method-configuration-version
-         :fromSource                 "importSnapshot"}
+        {:workspace           testing-workspace
+         :methodConfiguration testing-method-configuration
+         :fromSource          "importSnapshot"}
         {:skipValidation true}))))
 
 (deftest test-start-workload
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request
+                  (workloads/staged-workload-request
                    {:skipValidation true}
                    {:skipValidation true}
                    {:skipValidation true}))]
@@ -213,7 +212,7 @@
 
 (deftest test-get-workflows-empty
   (let [workload (workloads/create-workload!
-                  (workloads/covid-workload-request
+                  (workloads/staged-workload-request
                    {:skipValidation true}
                    {:skipValidation true}
                    {:skipValidation true}))]
@@ -231,14 +230,14 @@
      #'firecloud/get-submission               mock-firecloud-get-submission
      #'firecloud/get-workflow                 mock-workflow-keep-status}
     #(shared/run-workload-state-transition-test!
-      (workloads/covid-workload-request
+      (workloads/staged-workload-request
        {:skipValidation true}
        {:skipValidation true}
        {:skipValidation true}))))
 
-(deftest test-batch-workload-state-transition
+(deftest test-staged-workload-state-transition
   (shared/run-workload-state-transition-test!
-   (workloads/covid-workload-request
+   (workloads/staged-workload-request
     {:name      "TDR Snapshots"
      :snapshots []}
     {:skipValidation true}
@@ -246,7 +245,7 @@
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test!
-   (workloads/covid-workload-request
+   (workloads/staged-workload-request
     {:skipValidation true}
     {:skipValidation true}
     {:skipValidation true})))
@@ -262,7 +261,7 @@
      #'firecloud/submit-method                mock-firecloud-create-submission
      #'firecloud/get-workflow                 (constantly {:status "Failed"})}
     #(shared/run-workload-state-transition-test!
-      (workloads/covid-workload-request
+      (workloads/staged-workload-request
        {:skipValidation true}
        {:skipValidation true}
        {:skipValidation true}))))
@@ -272,7 +271,7 @@
                  ::spec/workload-request
                  ::spec/workload-response
                  (comp util/to-edn workloads/create-workload!))
-        request (workloads/covid-workload-request
+        request (workloads/staged-workload-request
                  {}
                  {:skipValidation true}
                  {:skipValidation true})]
@@ -299,7 +298,7 @@
      #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
      #'firecloud/submit-method                mock-firecloud-create-submission
      #'firecloud/get-workflow                 (constantly {:status "Failed"})}
-    #(let [workload-request (workloads/covid-workload-request
+    #(let [workload-request (workloads/staged-workload-request
                              {:skipValidation true}
                              {:skipValidation true}
                              {:skipValidation true})

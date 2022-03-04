@@ -20,11 +20,10 @@
   [workspace]
   {:source   {:name      "TDR Snapshots"
               :snapshots ["f9242ab8-c522-4305-966d-7c51419377ab"]}
-   :executor {:name                       "Terra"
-              :workspace                  workspace
-              :methodConfiguration        "wfl-dev/sarscov2_illumina_full"
-              :methodConfigurationVersion 1
-              :fromSource                 "importSnapshot"}
+   :executor {:name                "Terra"
+              :workspace           workspace
+              :methodConfiguration "wfl-dev/sarscov2_illumina_full"
+              :fromSource          "importSnapshot"}
    :sink     {:name           "Terra Workspace"
               :workspace      workspace
               :entityType     "run_date"

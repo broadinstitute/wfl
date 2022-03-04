@@ -6,16 +6,18 @@
            [java.time.temporal ChronoUnit]))
 
 (deftest test-tdr-source-should-poll?
-  (let [now    (utc-now)
-        source {:last_checked (Timestamp/from (.toInstant now))}]
+  (let [now      (utc-now)
+        source   {:last_checked (Timestamp/from (.toInstant now))}
+        workload {:uuid   "a-workload-uuid"
+                  :source source}]
     (letfn [(end-of-interval [min-from-interval]
               (->> #'source/tdr-source-default-polling-interval-minutes
                    var-get
                    (+ min-from-interval)
                    (.addTo ChronoUnit/MINUTES now)))]
-      (is (false? (#'source/tdr-source-should-poll? source (end-of-interval -1))))
-      (is (true? (#'source/tdr-source-should-poll? source (end-of-interval 0))))
-      (is (true? (#'source/tdr-source-should-poll? source (end-of-interval 1)))))))
+      (is (false? (#'source/tdr-source-should-poll? workload (end-of-interval -1))))
+      (is (true?  (#'source/tdr-source-should-poll? workload (end-of-interval 0))))
+      (is (true?  (#'source/tdr-source-should-poll? workload (end-of-interval 1)))))))
 
 (deftest test-result-or-catch
   (testing "callable returns"
