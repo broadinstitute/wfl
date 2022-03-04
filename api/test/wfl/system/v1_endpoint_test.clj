@@ -468,8 +468,6 @@
           (finally
             (endpoints/stop-workload workload)))
         ;; Note: when the workload's workflows have finished,
-        ;; if Slacking is enabled via
-        ;; `wfl.service.slack/feature-env-var-name`
         ;; we expect a notification for each workflow
         ;; to be emitted to the Slack channels in
         ;; `wfl.tools.workloads/watchers`.
