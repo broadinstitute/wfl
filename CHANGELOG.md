@@ -1,3 +1,10 @@
+# Release 0.16.0
+- [GH-1629] TerraExecutor gets method configuration version from Firecloud ([#585](https://github.com/broadinstitute/wfl/pull/585))
+- [GH-1553] [GH-1604] Add error handling to Slack service ([#584](https://github.com/broadinstitute/wfl/pull/584))
+- [GH-1628] Look at the first 7 workloads returned in test-workflows-by-filters. ([#583](https://github.com/broadinstitute/wfl/pull/583))
+- [GH-1617] Consistent workload representation for logs ([#579](https://github.com/broadinstitute/wfl/pull/579))
+- [GH-1624] Rename covid -> staged in code, docs ([#580](https://github.com/broadinstitute/wfl/pull/580))
+
 # Release 0.15.2
 - [GH-1622] Fix logging and logging_level API. ([#581](https://github.com/broadinstitute/wfl/pull/581))
 - Update CHANGELOG and version from main.
