@@ -1,8 +1,6 @@
 (ns wfl.unit.slack-test
-  (:require [clojure.string     :as str]
-            [clojure.test       :refer [deftest is testing]]
-            [wfl.service.slack  :as slack]
-            [wfl.tools.fixtures :as fixtures])
+  (:require [clojure.test      :refer [deftest is testing]]
+            [wfl.service.slack :as slack])
   (:import [clojure.lang PersistentQueue]))
 
 (defn ^:private make-notification [tag]
@@ -17,29 +15,6 @@
           (#'slack/queue-notification (make-notification n))))
       (is (await-for (* 9 message-count 1000) notifier))
       (is (= message-count (count (seq @notifier)))))))
-
-(deftest test-notify-only-when-enabled
-  (let [notification (make-notification 'test-notify-only-when-enabled)
-        workload     {:uuid     "workload-uuid"
-                      :watchers [["slack" (:channel notification)]]}
-        message      (:message notification)]
-    (letfn [(mock [maybe-enabled]
-              (fn [payload]
-                (when-not (= "enabled" maybe-enabled)
-                  (throw (ex-info "Should not notify"
-                                  {:maybe-enabled maybe-enabled})))
-                (is (= (:channel notification) (:channel payload)))
-                (is (str/includes? (:message payload) message))))
-            (verify [maybe-enabled]
-              (fixtures/with-temporary-environment
-                {slack/enabled-env-var-name maybe-enabled}
-                #(with-redefs
-                  [slack/queue-notification (mock maybe-enabled)]
-                   (slack/notify-watchers workload message))))]
-      (testing "notifications emitted when feature enabled"
-        (verify "enabled"))
-      (testing "notifications not emitted when feature disabled"
-        (verify "any-other-value-disables-slacking")))))
 
 (deftest test-dispatch-does-not-throw
   (let [queue (conj (PersistentQueue/EMPTY)

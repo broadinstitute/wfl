@@ -9,8 +9,6 @@
             [wfl.api.workloads :as workloads])
   (:import [clojure.lang PersistentQueue]))
 
-(def enabled-env-var-name "WFL_SLACK_ENABLED")
-
 (defn ^:private valid-channel-id?
   [channel-id]
   (str/starts-with? channel-id "C"))
@@ -94,26 +92,19 @@
 (defn notify-watchers
   "Send `message` associated with workload `uuid` to Slack `watchers`."
   [{:keys [watchers uuid project labels] :as workload} message]
-  (let [feature-switch (env/getenv enabled-env-var-name)]
-    (if (= "enabled" feature-switch)
-      (let [channels (filter slack-channel-watcher? watchers)
-            project  (or project (util/label-value labels "project"))
-            swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
-            header   (format "%s workload %s *%s*"
-                             (link swagger "WFL") project uuid)]
-        (letfn [(notify [[_tag channel-id _channel-name]]
-                  (let [payload {:channel channel-id
-                                 :message (str/join \newline [header message])}]
-                    (log/info "About to Slack"
-                              :workload (workloads/to-log workload)
-                              :payload  (pr-str payload))
-                    (queue-notification payload)))]
-          (run! notify channels)))
-      (log/info "Slack disabled"
-                :workload           (workloads/to-log workload)
-                :env-var-name       enabled-env-var-name
-                :env-var-val        feature-switch
-                :would-have-slacked (pr-str message)))))
+  (let [channels (filter slack-channel-watcher? watchers)
+        project  (or project (util/label-value labels "project"))
+        swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
+        header   (format "%s workload %s *%s*"
+                         (link swagger "WFL") project uuid)]
+    (letfn [(notify [[_tag channel-id _channel-name]]
+              (let [payload {:channel channel-id
+                             :message (str/join \newline [header message])}]
+                (log/info "About to Slack"
+                          :workload (workloads/to-log workload)
+                          :payload  (pr-str payload))
+                (queue-notification payload)))]
+      (run! notify channels))))
 
 (defn start-notification-loop
   "Return a future that listens at `agent` and

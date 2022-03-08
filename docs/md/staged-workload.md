@@ -86,10 +86,6 @@ via WFL API, see [API Usage](./staged-api-usage.md).
 
 ## Slack Notifications for Watchers
 
-!!! warning
-    Slack notifications are temporarily disabled:
-    see [GH-1604](https://broadinstitute.atlassian.net/browse/GH-1604).
-
 The optional `watchers` field in a workload request
 registers Slack channels as watchers of the workload.
 
