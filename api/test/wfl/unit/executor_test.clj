@@ -113,7 +113,7 @@
         (is (nil? (verify-filter-errors-then-throw {:submission submission-valid :status status-valid})))))))
 
 (deftest test-terra-executor-table-from-snapshot-reference
-  (let [executor  {}
+  (let [workload  {}
         reference {:attributes {:snapshot (str (UUID/randomUUID))}}
         table1    "table1"
         table2    "table2"]
@@ -124,15 +124,15 @@
                 {:tables (vec (map table table-names))}))]
       (with-redefs-fn
         {#'datarepo/snapshot (datarepo-snapshot [])}
-        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
+        #(is (nil? (#'executor/table-from-snapshot-reference workload reference))
              "A snapshot with no table should log error but return nil"))
       (with-redefs-fn
         {#'datarepo/snapshot (datarepo-snapshot [table1])}
-        #(is (= table1 (#'executor/table-from-snapshot-reference executor reference))
+        #(is (= table1 (#'executor/table-from-snapshot-reference workload reference))
              "A snapshot with exactly 1 table should resolve to the table name"))
       (with-redefs-fn
         {#'datarepo/snapshot (datarepo-snapshot [table1 table2])}
-        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
+        #(is (nil? (#'executor/table-from-snapshot-reference workload reference))
              "A snapshot with more than 1 tables should log error but return nil")))))
 
 (deftest test-notify-on-workflow-completion

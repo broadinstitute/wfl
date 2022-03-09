@@ -94,9 +94,7 @@
   [{:keys [watchers uuid project labels] :as workload} message]
   (let [channels (filter slack-channel-watcher? watchers)
         project  (or project (util/label-value labels "project"))
-        swagger  (str/join "/" [(env/getenv "WFL_WFL_URL") "swagger"])
-        header   (format "%s workload %s *%s*"
-                         (link swagger "WFL") project uuid)]
+        header   (format "WFL workload %s *%s*" project uuid)]
     (letfn [(notify [[_tag channel-id _channel-name]]
               (let [payload {:channel channel-id
                              :message (str/join \newline [header message])}]

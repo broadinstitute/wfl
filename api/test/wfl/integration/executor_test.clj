@@ -454,13 +454,15 @@
       {#'rawls/create-snapshot-reference        throw-if-called
        #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
       #(let [executor  (create-terra-executor (rand-int 1000000))
-             reference (#'executor/entity-from-snapshot executor (mock-datarepo-snapshot))]
+             workload  {:uuid (UUID/randomUUID) :executor executor}
+             reference (#'executor/entity-from-snapshot workload (mock-datarepo-snapshot))]
          (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
                   (= snapshot-name (get-in reference [:metadata :name]))))))))
 
 (deftest test-update-method-configuration-with-version-mismatch
   (let [id                    (rand-int 1000000)
         executor              (create-terra-executor id)
+        workload              {:uuid (UUID/randomUUID) :executor executor}
         dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
@@ -488,7 +490,7 @@
         {#'firecloud/method-configuration        firecloud-method-configuration
          #'datarepo/snapshot                     mock-datarepo-snapshot
          #'firecloud/update-method-configuration verify-firecloud-update-params}
-        #(#'executor/update-method-configuration! executor reference))
+        #(#'executor/update-method-configuration! workload reference))
       (let [reloaded (reload-terra-executor executor)]
         (is (nil? (:methodConfigurationVersion executor))
             "Method configuration's version in DB should initially be unpopulated")
