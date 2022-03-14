@@ -112,14 +112,15 @@ of your channel's "Get channel details" dropdown:
 - Ex. Issues accessing TDR dataset, snapshot, etc.
 
 **Notable state changes**
-- Ex. Workflow has completed
+- TDR snapshot creation job failed
+- Terra workflow has completed
 
 ![](assets/staged-workload/workflow-finished-notifications.png)
 
 In the future, WFL may allow for these two notification streams
 to be configured separately.
 High-volume use cases (ex. 100s of workflows/day) may find
-state change notifications too noisy.
+some state change notifications too noisy.
 
 ### Prerequisites
 

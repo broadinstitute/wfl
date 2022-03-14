@@ -1,17 +1,18 @@
 (ns wfl.source
-  (:require [clojure.edn           :as edn]
-            [clojure.instant       :as instant]
-            [clojure.spec.alpha    :as s]
-            [clojure.set           :as set]
-            [clojure.string        :as str]
-            [wfl.api.workloads     :refer [defoverload] :as workloads]
-            [wfl.jdbc              :as jdbc]
-            [wfl.log               :as log]
-            [wfl.module.all        :as all]
-            [wfl.service.datarepo  :as datarepo]
-            [wfl.service.postgres  :as postgres]
-            [wfl.stage             :as stage]
-            [wfl.util              :as util])
+  (:require [clojure.edn          :as edn]
+            [clojure.instant      :as instant]
+            [clojure.spec.alpha   :as s]
+            [clojure.set          :as set]
+            [clojure.string       :as str]
+            [wfl.api.workloads    :refer [defoverload] :as workloads]
+            [wfl.jdbc             :as jdbc]
+            [wfl.log              :as log]
+            [wfl.module.all       :as all]
+            [wfl.service.datarepo :as datarepo]
+            [wfl.service.postgres :as postgres]
+            [wfl.service.slack    :as slack]
+            [wfl.stage            :as stage]
+            [wfl.util             :as util])
   (:import [clojure.lang ExceptionInfo]
            [java.sql Timestamp]
            [java.time OffsetDateTime ZoneId]
@@ -240,20 +241,32 @@
         {:status status
          :body   (util/response-body-json data)}))))
 
-(defn ^:private check-tdr-job
+(defn ^:private tdr-job-failed-slack-msg
+  "Return a mrkdwn Slack message to be emitted for failed TDR jobs."
+  [{:keys [id job_status] :as _metadata}
+   {:keys [status body]   :as _caught-job-result}]
+  (str/join \newline
+            [(format "*:sadpanda: Snapshot creation job %s %s*" id job_status)
+             (format "`%s: %s`" status (:message body))]))
+
+(defn ^:private check-tdr-job-and-notify-on-failure
   "Check TDR job status for `job-id` and return job metadata,
-   with snapshot_id attached if the job succeeded."
-  [workload job-id]
+   with snapshot_id attached if the job succeeded.
+   Notify `workload` watchers if the job failed."
+  [job-id workload]
   (let [{:keys [job_status] :as metadata} (datarepo/job-metadata job-id)
         get-job-result                    #(datarepo/job-result job-id)]
     (case job_status
       "running"   metadata
       "succeeded" (assoc metadata :snapshot_id (:id (get-job-result)))
-      (do (log/warning "TDR job failed or has otherwise unknown status"
-                       :workload   (workloads/to-log workload)
-                       :metadata    metadata
-                       :job-result (result-or-catch get-job-result))
-          metadata))))
+      (let [caught  (result-or-catch get-job-result)
+            message (tdr-job-failed-slack-msg metadata caught)]
+        (log/warning "TDR job failed or has otherwise unknown status"
+                     :workload   (workloads/to-log workload)
+                     :metadata   metadata
+                     :job-result caught)
+        (slack/notify-watchers workload message)
+        metadata))))
 
 (defn ^:private write-snapshot-id
   "Write `snapshot_id` and `job_status` into `source` details table
@@ -324,7 +337,7 @@
   (let [pending-tdr-jobs (get-pending-tdr-jobs workload)]
     (when (seq pending-tdr-jobs)
       (->> pending-tdr-jobs
-           (map #(update % 1 (partial check-tdr-job workload)))
+           (map #(update % 1 check-tdr-job-and-notify-on-failure workload))
            (run! #(write-snapshot-id workload %)))
       (log/debug "Running snapshot jobs updated."
                  :workload (workloads/to-log workload)))))

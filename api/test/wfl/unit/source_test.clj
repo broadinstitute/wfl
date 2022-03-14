@@ -1,7 +1,9 @@
 (ns wfl.unit.source-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [wfl.source   :as source]
-            [wfl.util     :refer [utc-now]])
+  (:require [clojure.test         :refer [deftest is testing]]
+            [wfl.service.datarepo :as datarepo]
+            [wfl.service.slack    :as slack]
+            [wfl.source           :as source]
+            [wfl.util             :refer [utc-now]])
   (:import [java.sql Timestamp]
            [java.time.temporal ChronoUnit]))
 
@@ -89,3 +91,37 @@
       (is (nil? (#'source/filter-and-combine-tdr-source-details
                  [failed]))
           "failed rows should not be kept"))))
+
+(deftest test-check-tdr-job-and-notify-on-failure
+  (let [workload    {}
+        job-id      "tdr-job-id"
+        job-result  {:id "tdr-snapshot-id"}]
+    (letfn [(mock-tdr-job-failed-slack-msg
+              [{:keys [job_status] :as _metadata} _caught-job-result]
+              (is (not (#{"running" "succeeded"} job_status))
+                  "Should not notify for running or succeeded jobs"))]
+      (with-redefs
+       [datarepo/job-result             (constantly job-result)
+        source/tdr-job-failed-slack-msg mock-tdr-job-failed-slack-msg
+        slack/notify-watchers           (constantly nil)]
+        (let [metadata {:job_status "running"}]
+          (with-redefs [datarepo/job-metadata (constantly metadata)]
+            (is (= metadata
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
+                "Should return metadata for running job")))
+        (let [metadata {:job_status "succeeded"}
+              expected (assoc metadata :snapshot_id (:id job-result))]
+          (with-redefs [datarepo/job-metadata (constantly metadata)]
+            (is (= expected
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
+                "Should return metadata and snapshot ID for succeeded job")))
+        (let [metadata {:job_status "failed"}]
+          (with-redefs [datarepo/job-metadata (constantly metadata)]
+            (is (= metadata
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
+                "Should return metadata for failed job")))
+        (let [metadata {:job_status "unknown"}]
+          (with-redefs [datarepo/job-metadata (constantly metadata)]
+            (is (= metadata
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
+                "Should return metadata for job with unknown status")))))))
