@@ -38,7 +38,7 @@
          (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
-(defn ^:private mock-check-tdr-job [_workload job-id]
+(defn ^:private mock-check-tdr-job [job-id _workload]
   {:snapshot_id (str (UUID/randomUUID))
    :job_status  "succeeded"
    :id          job-id})

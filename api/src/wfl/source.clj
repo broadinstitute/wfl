@@ -253,7 +253,7 @@
   "Check TDR job status for `job-id` and return job metadata,
    with snapshot_id attached if the job succeeded.
    Notify `workload` watchers if the job failed."
-  [workload job-id]
+  [job-id workload]
   (let [{:keys [job_status] :as metadata} (datarepo/job-metadata job-id)
         get-job-result                    #(datarepo/job-result job-id)]
     (case job_status
@@ -337,7 +337,7 @@
   (let [pending-tdr-jobs (get-pending-tdr-jobs workload)]
     (when (seq pending-tdr-jobs)
       (->> pending-tdr-jobs
-           (map #(update % 1 (partial check-tdr-job-and-notify-on-failure workload)))
+           (map #(update % 1 check-tdr-job-and-notify-on-failure workload))
            (run! #(write-snapshot-id workload %)))
       (log/debug "Running snapshot jobs updated."
                  :workload (workloads/to-log workload)))))

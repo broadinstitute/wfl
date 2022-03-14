@@ -107,21 +107,21 @@
         (let [metadata {:job_status "running"}]
           (with-redefs [datarepo/job-metadata (constantly metadata)]
             (is (= metadata
-                   (#'source/check-tdr-job-and-notify-on-failure workload job-id))
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
                 "Should return metadata for running job")))
         (let [metadata {:job_status "succeeded"}
               expected (assoc metadata :snapshot_id (:id job-result))]
           (with-redefs [datarepo/job-metadata (constantly metadata)]
             (is (= expected
-                   (#'source/check-tdr-job-and-notify-on-failure workload job-id))
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
                 "Should return metadata and snapshot ID for succeeded job")))
         (let [metadata {:job_status "failed"}]
           (with-redefs [datarepo/job-metadata (constantly metadata)]
             (is (= metadata
-                   (#'source/check-tdr-job-and-notify-on-failure workload job-id))
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
                 "Should return metadata for failed job")))
         (let [metadata {:job_status "unknown"}]
           (with-redefs [datarepo/job-metadata (constantly metadata)]
             (is (= metadata
-                   (#'source/check-tdr-job-and-notify-on-failure workload job-id))
+                   (#'source/check-tdr-job-and-notify-on-failure job-id workload))
                 "Should return metadata for job with unknown status")))))))
