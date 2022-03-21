@@ -322,10 +322,10 @@
         (is (== 2 (:methodConfigurationVersion executor))
             "Reloaded executor's method config should have version 2 post-update.")
         (with-redefs
-         [rawls/get-snapshot-reference           mock-rawls-snapshot-reference
-          firecloud/method-configuration         mock-firecloud-get-method-configuration-post-update
-          firecloud/update-method-configuration  mock-firecloud-update-method-configuration-post-update
-          firecloud/submit-method                (mock-firecloud-create-submission retry-submission-id)]
+         [rawls/get-snapshot-reference          mock-rawls-snapshot-reference
+          firecloud/method-configuration        mock-firecloud-get-method-configuration-post-update
+          firecloud/update-method-configuration mock-firecloud-update-method-configuration-post-update
+          firecloud/submit-method               (mock-firecloud-create-submission retry-submission-id)]
           (let [workflows-to-retry
                 (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                   (executor/executor-workflows tx executor {:status "Running"}))]
@@ -409,10 +409,10 @@
     firecloud/get-submission               mock-firecloud-get-submission
     firecloud/get-workflow                 mock-firecloud-get-known-workflow
     firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs]
-    (let [source                (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
-          executor              (create-terra-executor (rand-int 1000000))
-          workload-uuid         (UUID/randomUUID)
-          workload              {:uuid workload-uuid :source source :executor executor}]
+    (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
+          executor      (create-terra-executor (rand-int 1000000))
+          workload-uuid (UUID/randomUUID)
+          workload      {:uuid workload-uuid :source source :executor executor}]
       (with-redefs
        [workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)]
         (executor/update-executor! workload))
