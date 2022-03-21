@@ -9,23 +9,24 @@
 ;; Of the form NAMESPACE/NAME
 (def workspace "wfl-dev/Illumina-Genotyping-Array")
 
+(def pipeline "IlluminaGenotypingArray")
 ;; Of the form NAMESPACE/NAME
-(def method-configuration "warp-pipelines/IlluminaGenotypingArray")
+(def method-configuration (str "warp-pipelines/" pipeline))
 
 ;; An entity is a pair [Type Name]
 (def entity ["sample" "NA12878"])
 (def entity-set-type (str (first entity) "_set"))
 
-;; A submission that was manually created
-(def well-known-submission "12ea8b91-737d-4838-972e-05f3c80f3881")
-(def well-known-workflow   "1d5c211a-810f-49c5-be3a-e9502d7828d1")
+;; A manually-triggered submission and its workflow
+(def submission-id "454df415-e349-4929-b8e2-4f56661f0446")
+(def workflow-id   "1e7eb23c-88e9-44a4-878f-b08b75112384")
 
 (deftest test-get-submission
-  (let [submission (firecloud/get-submission workspace well-known-submission)]
+  (let [submission (firecloud/get-submission workspace submission-id)]
     (is (= "Done" (:status submission)))
     (let [[workflow & rest] (:workflows submission)]
       (is (empty? rest))
-      (is (= well-known-workflow (:workflowId workflow)))
+      (is (= workflow-id (:workflowId workflow)))
       (is (#{"Succeeded"} (:status workflow))))))
 
 (deftest test-create-submission
@@ -85,27 +86,18 @@
             (is (= entity-count (count items)))
             (is (every? (matches-entity? entity) items))))))))
 
-(defmacro ^:private using-assemble-refbased-workflow-bindings
-  "Define a set of workflow bindings for use in `body`. The values refer to a
-   workflow in the public COVID-19 surveillance workspace, used as an example."
-  [& body]
-  `(let [~'workspace "pathogen-genomic-surveillance/COVID-19_Broad_Viral_NGS"
-         ~'submission "d0c5ff07-5b31-4e94-a075-fcefe92e57e6"
-         ~'workflow "0099d8cc-e129-4656-8d83-7f5e1b16780e"
-         ~'pipeline "assemble_refbased"
-         ~'wdl {:path    "pipes/WDL/workflows/assemble_refbased.wdl"
-                :release "master"
-                :repo    "viral-pipelines"}]
-     ~@body))
-
 (deftest test-describe-workflow-url
-  (using-assemble-refbased-workflow-bindings
-   (let [description (firecloud/describe-workflow (cromwell/wdl-map->url wdl))]
-     (is (:valid description))
-     (is (empty? (:errors description)))
-     (is (= pipeline (:name description)))
-     (is (some? (:inputs description)))
-     (is (some? (:outputs description))))))
+  (let [description
+        (-> {:path    "pipelines/broad/genotyping/illumina/IlluminaGenotypingArray.wdl"
+             :release "IlluminaGenotypingArray_v1.11.0"
+             :repo    "warp"}
+            cromwell/wdl-map->url
+            firecloud/describe-workflow)]
+    (is (:valid description))
+    (is (empty? (:errors description)))
+    (is (= pipeline (:name description)))
+    (is (some? (:inputs description)))
+    (is (some? (:outputs description)))))
 
 (deftest test-describe-workflow-source
   (let [description (firecloud/describe-workflow
@@ -117,16 +109,17 @@
     (is (empty? (:outputs description)))))
 
 (deftest test-get-workflow
-  (using-assemble-refbased-workflow-bindings
-   (let [wf        (firecloud/get-workflow workspace submission workflow)
-         wf-status (firecloud/get-workflow workspace submission workflow "status")]
-     (is (= pipeline (:workflowName wf)))
-     (is (= "Succeeded" (:status wf)))
-     (is (empty? (:workflowName wf-status))
-         "Workflow fetch specifying include-key should have keys restricted")
-     (is (= "Succeeded" (:status wf-status))))))
+  (let [wf        (firecloud/get-workflow workspace submission-id workflow-id)
+        wf-status (firecloud/get-workflow workspace submission-id workflow-id "status")]
+    (when (:metadataArchiveStatus wf)
+      (throw (ex-info "Need to reference a newer unarchived workflow in tests"
+                      {:workflow wf})))
+    (is (= pipeline (:workflowName wf)))
+    (is (= "Succeeded" (:status wf)))
+    (is (empty? (:workflowName wf-status))
+        "Workflow fetch specifying include-key should have keys restricted")
+    (is (= "Succeeded" (:status wf-status)))))
 
 (deftest test-get-workflow-outputs
-  (using-assemble-refbased-workflow-bindings
-   (let [outputs (firecloud/get-workflow-outputs workspace submission workflow)]
-     (is (some? (-> outputs :tasks ((keyword pipeline)) :outputs))))))
+  (let [outputs (firecloud/get-workflow-outputs workspace submission-id workflow-id)]
+    (is (some? (-> outputs :tasks ((keyword pipeline)) :outputs)))))
