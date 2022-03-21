@@ -113,6 +113,7 @@ of your channel's "Get channel details" dropdown:
 
 **Notable state changes**
 - TDR snapshot creation job failed
+- Terra submission created
 - Terra workflow has completed
 
 ![](assets/staged-workload/workflow-finished-notifications.png)

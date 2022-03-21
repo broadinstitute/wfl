@@ -135,11 +135,6 @@
     (throw (UserException. "Only Dockstore methods are supported."
                            {:status 400 :methodRepoMethod methodRepoMethod}))))
 
-(defn ^:private create-user-comment
-  "Create a user comment to be added to an executor submission."
-  [note {:keys [uuid] :as _workload} snapshot-id]
-  (str/join \space [note "Workload:" uuid "Snapshot ID:" snapshot-id]))
-
 (defn ^:private terra-executor-validate-request-or-throw
   "Verify existence and availability of `workspace` and `methodConfiguration`."
   [{:keys [workspace methodConfiguration fromSource] :as executor}]
@@ -175,6 +170,13 @@
                     {:executor executor
                      :object   object}))))
 
+(defn ^:private create-user-comment
+  "Create a user comment to be added to an executor submission."
+  [note workload snapshot]
+  (str/join \space [note
+                    "Workload:"    (:uuid workload)
+                    "Snapshot ID:" (:id snapshot)]))
+
 (defn ^:private warn-on-method-config-version-mismatch
   "Log warning if `methodConfigVersion` does not match that of `executor`."
   [{:keys [executor]            :as workload}
@@ -186,18 +188,15 @@
                    :expected            expected
                    :methodConfiguration methodconfig))))
 
-(defn ^:private table-from-snapshot-reference
-  "Return singular table in snapshot from `reference`, or log error."
-  [workload reference]
-  (let [snapshot-id               (get-in reference [:attributes :snapshot])
-        snapshot                  (datarepo/snapshot snapshot-id)
-        [table & rest :as tables] (map :name (:tables snapshot))]
+(defn ^:private table-from-snapshot
+  "Return singular table in `snapshot`, or log error."
+  [workload {:keys [tables] :as snapshot}]
+  (let [[table & rest] (map :name tables)]
     (if (and table (empty? rest))
       table
       (log/error "Expected exactly one table in snapshot"
-                 :workload  (workloads/to-log workload)
-                 :reference reference
-                 :tables    tables))))
+                 :workload (workloads/to-log workload)
+                 :snapshot snapshot))))
 
 (defn ^:private update-method-configuration!
   "Update `methodConfiguration` in `workspace` with snapshot `reference` name
@@ -206,7 +205,8 @@
   [{{:keys [id
             workspace
             methodConfiguration]} :executor :as workload}
-   reference]
+   reference
+   snapshot]
   (let [name    (get-in reference [:metadata :name])
         current (firecloud/method-configuration workspace methodConfiguration)
         _       (warn-on-method-config-version-mismatch workload current)
@@ -214,7 +214,7 @@
         newMc   (merge
                  current
                  {:dataReferenceName name :methodConfigVersion inc'd}
-                 (when-let [table (table-from-snapshot-reference workload reference)]
+                 (when-let [table (table-from-snapshot workload snapshot)]
                    {:rootEntityType table}))]
     (log/debug "Updating method configuration"
                :workload               (workloads/to-log workload)
@@ -225,18 +225,49 @@
                     {:method_configuration_version inc'd}
                     ["id = ?" id]))))
 
+(defn ^:private submission-created-slack-msg
+  "Return a mrkdwn Slack message to be emitted for newly created `submission`."
+  [{:keys [workspace]    :as _executor}
+   {:keys [submissionId] :as _submission}
+   snapshot]
+  (let [emoji           (cromwell/emoji "Submitted")
+        submission-link (-> submissionId
+                            (firecloud/submission-url workspace)
+                            (slack/link submissionId))
+        snapshot-link   (-> snapshot
+                            datarepo/snapshot-url
+                            (slack/link (:name snapshot)))]
+    (str/join \newline
+              [(format "*%s Launched submission %s*" emoji submission-link)
+               (format "Snapshot %s" snapshot-link)])))
+
 (defn ^:private create-submission!
   "Update `executor` method configuration to use `reference`,
   then submit in `executor` workspace via Firecloud.
-  Return submission."
-  [{:keys [executor] :as workload} userComment reference]
-  (let [{:keys [workspace methodConfiguration]} executor]
-    (update-method-configuration! workload reference)
-    (log/debug "Initiating Terra submission"
-               :workload            (workloads/to-log workload)
-               :methodConfiguration methodConfiguration
-               :workspace           workspace)
-    (firecloud/submit-method workspace methodConfiguration userComment)))
+  Notify Slack watchers and return submission."
+  ([{:keys [executor] :as workload}
+    user-comment-note
+    reference
+    [_type snapshot   :as _source-object]]
+   (let [{:keys [workspace methodConfiguration]} executor]
+     (update-method-configuration! workload reference snapshot)
+     (log/debug "Initiating Terra submission"
+                :workload            (workloads/to-log workload)
+                :methodConfiguration methodConfiguration
+                :workspace           workspace)
+     (let [userComment
+           (create-user-comment user-comment-note workload snapshot)
+           submission
+           (firecloud/submit-method workspace methodConfiguration userComment)
+           message
+           (submission-created-slack-msg executor submission snapshot)]
+       (slack/notify-watchers workload message)
+       submission)))
+  ([workload user-comment-note reference]
+   (->> (get-in reference [:attributes :snapshot])
+        datarepo/snapshot
+        (conj [:datarepo/snapshot])
+        (create-submission! workload user-comment-note reference))))
 
 (defn ^:private allocate-submission
   "Write or allocate workflow records for `submission`
@@ -260,27 +291,20 @@
            (map (partial to-row (utc-now)))
            (jdbc/insert-multi! tx (:details executor))))))
 
-(defn ^:private workflow-url
-  "Return a link to `workflow` in Job Manager UI."
-  [workflow]
-  (firecloud/job-manager-ui-url "jobs" workflow))
-
-(defn ^:private submission-url
-  "Return a link to `submission` job history in Terra UI."
-  [{:keys [workspace] :as _executor} submission]
-  (firecloud/terra-ui-url "#workspaces" workspace
-                          "job_history" submission))
-
 (defn ^:private workflow-finished-slack-msg
   "Return a mrkdwn Slack message to be emitted for finished `workflow`s."
-  [executor {:keys [submission workflow status] :as _record}]
-  (let [emoji                 (cromwell/emoji status)
-        workflow-slack-link   (slack/link (workflow-url workflow) workflow)
-        submission-slack-link (slack/link (submission-url executor submission)
-                                          submission)]
+  [{:keys [workspace]                  :as _executor}
+   {:keys [submission workflow status] :as _record}]
+  (let [emoji           (cromwell/emoji status)
+        workflow-link   (-> workflow
+                            firecloud/workflow-url
+                            (slack/link workflow))
+        submission-link (-> workspace
+                            (firecloud/submission-url workspace)
+                            (slack/link submission))]
     (str/join \newline
-              [(format "*%s Workflow %s %s*" emoji workflow-slack-link status)
-               (format "Submission *%s*" submission-slack-link)])))
+              [(format "*%s Workflow %s %s*" emoji workflow-link status)
+               (format "Submission *%s*" submission-link)])))
 
 ;; Call this only while updating active workflows
 ;; to avoid repeated notifications for the same workflow's completion.
@@ -361,7 +385,7 @@
 
 (defn ^:private update-terra-workflow-statuses!
   "Update statuses in `details` table for active `workspace` workflows."
-  [{{:keys [workspace details] :as executor} :executor :as workload}]
+  [{{:keys [workspace details]} :executor :as workload}]
   (letfn [(update-status-from-firecloud
             [{:keys [submission workflow] :as record}]
             (->> (firecloud/get-workflow workspace submission workflow "status")
@@ -389,11 +413,8 @@
   Return updated `workload`."
   [{:keys [source _executor] :as workload}]
   (when-let [object (stage/peek-queue source)]
-    (let [entity      (from-source workload object)
-          userComment (create-user-comment
-                       "New submission" workload
-                       (get-in entity [:attributes :snapshot]))
-          submission  (create-submission! workload userComment entity)]
+    (let [entity     (from-source workload object)
+          submission (create-submission! workload "New submission" entity object)]
       (allocate-submission workload entity submission)
       (stage/pop-queue! source)))
   (update-unassigned-workflow-uuids! workload)
@@ -666,12 +687,9 @@
   and update each original workflow record with the row ID of its retry."
   [{{:keys [workspace] :as executor} :executor :as workload} workflows]
   (letfn [(submit-reference [reference-id]
-            (let [reference (rawls/get-snapshot-reference workspace reference-id)
-                  userComment (create-user-comment
-                               "Retry" workload
-                               (get-in reference [:attributes :snapshot]))]
+            (let [reference (rawls/get-snapshot-reference workspace reference-id)]
               (->> reference
-                   (create-submission! workload userComment)
+                   (create-submission! workload "Retry")
                    (allocate-submission workload reference))))]
     (->> (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
            (workflow-and-sibling-records tx workload workflows))

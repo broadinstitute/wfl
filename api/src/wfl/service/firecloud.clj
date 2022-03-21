@@ -17,11 +17,21 @@
   (let [url (util/de-slashify (env/getenv "WFL_TERRA_URL"))]
     (str/join "/" (cons url parts))))
 
+(defn submission-url
+  "Return a link to `submission` job history in Terra UI."
+  [submission workspace]
+  (terra-ui-url "#workspaces" workspace "job_history" submission))
+
 (defn job-manager-ui-url
   "Return a link within the Terra Job Manager UI constructed from `parts`."
   [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_TERRA_JOB_MANAGER_URL"))]
     (str/join "/" (cons url parts))))
+
+(defn workflow-url
+  "Return a link to `workflow` in Job Manager UI."
+  [workflow]
+  (job-manager-ui-url "jobs" workflow))
 
 (defn ^:private firecloud-url [& parts]
   (let [url (util/de-slashify (env/getenv "WFL_FIRECLOUD_URL"))]
