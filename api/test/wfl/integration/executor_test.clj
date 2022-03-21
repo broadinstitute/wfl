@@ -231,16 +231,16 @@
                   "The record ID was incorrect given the workflow order in mocked submission")
               (is (= (:workflowId workflow) (:workflow record))
                   "The workflow ID was incorrect and should match corresponding record"))]
-      (with-redefs-fn
-        {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-         #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
-         #'datarepo/snapshot                      mock-datarepo-snapshot
-         #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
-         #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
-         #'firecloud/get-submission               mock-firecloud-get-submission
-         #'firecloud/get-workflow                 mock-firecloud-get-running-workflow-update-status
-         #'workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)}
-        #(executor/update-executor! workload))
+      (with-redefs
+       [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+        firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+        datarepo/snapshot                      mock-datarepo-snapshot
+        firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
+        firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
+        firecloud/get-submission               mock-firecloud-get-submission
+        firecloud/get-workflow                 mock-firecloud-get-running-workflow-update-status
+        workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)]
+        (executor/update-executor! workload))
       (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
       (is (== 2 (stage/queue-length executor)) "Two workflows should be enqueued")
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
@@ -272,171 +272,166 @@
         executor      (create-terra-executor (rand-int 1000000))
         workload-uuid (UUID/randomUUID)
         workload      {:uuid workload-uuid :source source :executor executor}]
-    (with-redefs-fn
-      {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-       #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
-       #'datarepo/snapshot                      mock-datarepo-snapshot
-       #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
-       #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
-       #'firecloud/get-submission               mock-firecloud-get-submission
-       #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
-       #'workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)}
-      #(executor/update-executor! workload))
-    (with-redefs-fn
-      {#'executor/describe-method       (constantly nil)
-       #'firecloud/get-workflow         mock-firecloud-get-known-workflow
-       #'firecloud/get-workflow-outputs mock-firecloud-get-workflow-outputs}
-      #(let [[_ workflow] (stage/peek-queue executor)
-             succeeded-workflow-id
-             (get-in submission-base [init-submission-id :succeeded :workflow-id])]
-         (is (succeeded? (:status workflow)))
-         (is (= succeeded-workflow-id (:uuid workflow)))
-         (is (contains? workflow :updated))
-         (is (= "value" (-> workflow :inputs :input)))
-         (is (= "value" (-> workflow :outputs :output)))
-         (is (not (-> workflow :outputs :noise)))
-         (stage/pop-queue! executor)
-         (is (nil? (stage/peek-queue executor)))
-         (is (== 1 (stage/queue-length executor)))
-         (is (not (stage/done? executor)))))))
+    (with-redefs
+     [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+      firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+      datarepo/snapshot                      mock-datarepo-snapshot
+      firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
+      firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
+      firecloud/get-submission               mock-firecloud-get-submission
+      firecloud/get-workflow                 mock-firecloud-get-known-workflow
+      firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs
+      workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)
+      executor/describe-method               (constantly nil)]
+      (executor/update-executor! workload)
+      (let [[_ workflow] (stage/peek-queue executor)
+            succeeded-workflow-id
+            (get-in submission-base [init-submission-id :succeeded :workflow-id])]
+        (is (succeeded? (:status workflow)))
+        (is (= succeeded-workflow-id (:uuid workflow)))
+        (is (contains? workflow :updated))
+        (is (= "value" (-> workflow :inputs :input)))
+        (is (= "value" (-> workflow :outputs :output)))
+        (is (not (-> workflow :outputs :noise)))
+        (stage/pop-queue! executor)
+        (is (nil? (stage/peek-queue executor)))
+        (is (== 1 (stage/queue-length executor)))
+        (is (not (stage/done? executor)))))))
 
 (deftest test-terra-executor-retry-workflows
   (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
         workload-uuid (UUID/randomUUID)
         workload      {:uuid workload-uuid :source source :executor executor}]
-    (with-redefs-fn
-      {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-       #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
-       #'datarepo/snapshot                      mock-datarepo-snapshot
-       #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
-       #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
-       #'firecloud/get-submission               mock-firecloud-get-submission
-       #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
-       #'workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)}
-      #(executor/update-executor! workload))
-    (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
-    (is (== 2 (stage/queue-length executor))
-        "Two workflows should be enqueued prior to retry.")
-    (let [executor           (reload-terra-executor executor)
-          workload-uuid        (UUID/randomUUID)
-          workload             {:uuid workload-uuid :source source :executor executor}]
-      (is (== 2 (:methodConfigurationVersion executor))
-          "Reloaded executor's method config should have version 2 post-update.")
-      (with-redefs-fn
-        {#'rawls/get-snapshot-reference           mock-rawls-snapshot-reference
-         #'firecloud/method-configuration         mock-firecloud-get-method-configuration-post-update
-         #'datarepo/snapshot                      mock-datarepo-snapshot
-         #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-post-update
-         #'firecloud/submit-method                (mock-firecloud-create-submission retry-submission-id)
-         #'firecloud/get-submission               mock-firecloud-get-submission
-         #'firecloud/get-workflow                 mock-firecloud-get-known-workflow}
-        #(let [workflows-to-retry
-               (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                 (executor/executor-workflows tx executor {:status "Running"}))]
-           (is (== 1 (count workflows-to-retry))
-               "Should have one running workflow to retry.")
-           (executor/executor-retry-workflows! workload workflows-to-retry)))
-      ;; We only specify 1 workflow to retry,
-      ;; but must retry both workflows from its submission.
-      (is (== 4 (stage/queue-length executor))
-          "Four workflows should be enqueued following retry.")
-      (let [[running succeeded retry-running retry-succeeded & _ :as records]
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (->> executor :details (postgres/get-table tx) (sort-by :id)))
-            executor-record
-            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-              (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor)))
-            compare-original-with-retry
-            (fn [original retry status-kw]
-              (is (= (:retry original) (:id retry))
-                  (str status-kw " - original record should be linked to its retry."))
-              (is (= init-submission-id (:submission original))
-                  (str status-kw " - original record has incorrect submission id."))
-              (is (= retry-submission-id (:submission retry))
-                  (str status-kw " - retry record has incorrect submission id."))
-              (is (= (get-in submission-base [init-submission-id
-                                              status-kw
-                                              :workflow-id])
-                     (:workflow original))
-                  (str status-kw " - original record has incorrect workflow id."))
-              (is (nil? (:workflow retry))
-                  (str status-kw " - retry record should not have workflow id "
-                       "populated prior to update loop."))
-              (is (every? #(= (get-in submission-base [init-submission-id
-                                                       status-kw
-                                                       :entity])
-                              (:entity %)) [original retry])
-                  (str status-kw " - original record should have "
-                       "same entity as its retry.")))]
-        (is (== 4 (count records))
-            "Exactly 4 workflows should be visible in the database")
-        (is (every? #(= snapshot-reference-id (:reference %)) records)
-            "The snapshot reference ID was incorrect and should match all records")
-        (compare-original-with-retry running retry-running :running)
-        (compare-original-with-retry succeeded retry-succeeded :succeeded)
-        (is (== (inc method-config-version-post-update) (:method_configuration_version executor-record))
-            "Method configuration version was not incremented.")))))
+    (with-redefs
+     [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+      firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+      datarepo/snapshot                      mock-datarepo-snapshot
+      firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
+      firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
+      firecloud/get-submission               mock-firecloud-get-submission
+      firecloud/get-workflow                 mock-firecloud-get-known-workflow
+      workloads/load-workload-for-uuid       (mock-load-workload-for-uuid source executor)]
+      (executor/update-executor! workload)
+      (is (zero? (stage/queue-length source)) "The snapshot was not consumed.")
+      (is (== 2 (stage/queue-length executor))
+          "Two workflows should be enqueued prior to retry.")
+      (let [executor      (reload-terra-executor executor)
+            workload-uuid (UUID/randomUUID)
+            workload      {:uuid workload-uuid :source source :executor executor}]
+        (is (== 2 (:methodConfigurationVersion executor))
+            "Reloaded executor's method config should have version 2 post-update.")
+        (with-redefs
+         [rawls/get-snapshot-reference          mock-rawls-snapshot-reference
+          firecloud/method-configuration        mock-firecloud-get-method-configuration-post-update
+          firecloud/update-method-configuration mock-firecloud-update-method-configuration-post-update
+          firecloud/submit-method               (mock-firecloud-create-submission retry-submission-id)]
+          (let [workflows-to-retry
+                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (executor/executor-workflows tx executor {:status "Running"}))]
+            (is (== 1 (count workflows-to-retry))
+                "Should have one running workflow to retry.")
+            (executor/executor-retry-workflows! workload workflows-to-retry))
+          ;; We only specify 1 workflow to retry,
+          ;; but must retry both workflows from its submission.
+          (is (== 4 (stage/queue-length executor))
+              "Four workflows should be enqueued following retry.")
+          (let [[running succeeded retry-running retry-succeeded & _ :as records]
+                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (->> executor :details (postgres/get-table tx) (sort-by :id)))
+                executor-record
+                (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                  (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor)))
+                compare-original-with-retry
+                (fn [original retry status-kw]
+                  (is (= (:retry original) (:id retry))
+                      (str status-kw " - original record should be linked to its retry."))
+                  (is (= init-submission-id (:submission original))
+                      (str status-kw " - original record has incorrect submission id."))
+                  (is (= retry-submission-id (:submission retry))
+                      (str status-kw " - retry record has incorrect submission id."))
+                  (is (= (get-in submission-base [init-submission-id
+                                                  status-kw
+                                                  :workflow-id])
+                         (:workflow original))
+                      (str status-kw " - original record has incorrect workflow id."))
+                  (is (nil? (:workflow retry))
+                      (str status-kw " - retry record should not have workflow id "
+                           "populated prior to update loop."))
+                  (is (every? #(= (get-in submission-base [init-submission-id
+                                                           status-kw
+                                                           :entity])
+                                  (:entity %)) [original retry])
+                      (str status-kw " - original record should have "
+                           "same entity as its retry.")))]
+            (is (== 4 (count records))
+                "Exactly 4 workflows should be visible in the database")
+            (is (every? #(= snapshot-reference-id (:reference %)) records)
+                "The snapshot reference ID was incorrect and should match all records")
+            (compare-original-with-retry running retry-running :running)
+            (compare-original-with-retry succeeded retry-succeeded :succeeded)
+            (is (== (inc method-config-version-post-update) (:method_configuration_version executor-record))
+                "Method configuration version was not incremented.")))))))
 
 (deftest test-terra-executor-get-retried-workflows
-  (with-redefs-fn
-    {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-     #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
-     #'datarepo/snapshot                      mock-datarepo-snapshot
-     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
-     #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
-     #'firecloud/get-submission               mock-firecloud-get-submission
-     #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
-     #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
-    #(let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
-           executor      (create-terra-executor (rand-int 1000000))
-           workload-uuid (UUID/randomUUID)
-           workload      {:uuid workload-uuid :source source :executor executor}]
-       (with-redefs-fn
-         {#'workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)}
-         (fn [] (executor/update-executor! workload)))
-       (is (== 2 (stage/queue-length executor)))
-       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (jdbc/update! tx (:details executor) {:retry 2} ["id = ?" 1]))
-       (is (== 2 (stage/queue-length executor))
-           "The retried workflow should remain visible downstream")
-       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-         (is (== 1 (count (executor/executor-workflows tx executor {})))
-             "The retried workflow should not be returned")))))
+  (with-redefs
+   [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+    firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+    datarepo/snapshot                      mock-datarepo-snapshot
+    firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
+    firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
+    firecloud/get-submission               mock-firecloud-get-submission
+    firecloud/get-workflow                 mock-firecloud-get-known-workflow
+    firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs]
+    (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
+          executor      (create-terra-executor (rand-int 1000000))
+          workload-uuid (UUID/randomUUID)
+          workload      {:uuid workload-uuid :source source :executor executor}]
+      (with-redefs
+       [workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)]
+        (executor/update-executor! workload))
+      (is (== 2 (stage/queue-length executor)))
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (jdbc/update! tx (:details executor) {:retry 2} ["id = ?" 1]))
+      (is (== 2 (stage/queue-length executor))
+          "The retried workflow should remain visible downstream")
+      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+        (is (== 1 (count (executor/executor-workflows tx executor {})))
+            "The retried workflow should not be returned")))))
 
 (deftest test-terra-executor-queue-length
-  (with-redefs-fn
-    {#'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-     #'firecloud/method-configuration         mock-firecloud-get-method-configuration-init
-     #'datarepo/snapshot                      mock-datarepo-snapshot
-     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
-     #'firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
-     #'firecloud/get-submission               mock-firecloud-get-submission
-     #'firecloud/get-workflow                 mock-firecloud-get-known-workflow
-     #'firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs}
-    #(let [source                (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
-           executor              (create-terra-executor (rand-int 1000000))
-           workload-uuid         (UUID/randomUUID)
-           workload              {:uuid workload-uuid :source source :executor executor}]
-       (with-redefs-fn
-         {#'workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)}
-         (fn [] (executor/update-executor! workload)))
-       (let [record                (#'executor/peek-terra-executor-details executor)
-             succeeded-workflow-id (get-in submission-base [init-submission-id :succeeded :workflow-id])]
-         (is (= succeeded-workflow-id (:workflow record))
-             "Peeked record's workflow uuid should match succeeded workflow's")
-         (is (= "Succeeded" (:status record))
-             "Peeked record's status should match succeeded workflow's")
-         (is (== 2 (stage/queue-length executor))
-             "Both running and succeeded workflows in submission should be counted in queue length")
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (jdbc/update! tx (:details executor) {:status nil} ["id = ?" (:id record)]))
-         (is (== 2 (stage/queue-length executor))
-             "Workflows without status should be counted in queue length")
-         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-           (jdbc/update! tx (:details executor) {:workflow nil} ["id = ?" (:id record)]))
-         (is (== 2 (stage/queue-length executor))
-             "Workflows without status or uuid should be counted in queue length")))))
+  (with-redefs
+   [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
+    firecloud/method-configuration         mock-firecloud-get-method-configuration-init
+    datarepo/snapshot                      mock-datarepo-snapshot
+    firecloud/update-method-configuration  mock-firecloud-update-method-configuration-init
+    firecloud/submit-method                (mock-firecloud-create-submission init-submission-id)
+    firecloud/get-submission               mock-firecloud-get-submission
+    firecloud/get-workflow                 mock-firecloud-get-known-workflow
+    firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs]
+    (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
+          executor      (create-terra-executor (rand-int 1000000))
+          workload-uuid (UUID/randomUUID)
+          workload      {:uuid workload-uuid :source source :executor executor}]
+      (with-redefs
+       [workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)]
+        (executor/update-executor! workload))
+      (let [record                (#'executor/peek-terra-executor-details executor)
+            succeeded-workflow-id (get-in submission-base [init-submission-id :succeeded :workflow-id])]
+        (is (= succeeded-workflow-id (:workflow record))
+            "Peeked record's workflow uuid should match succeeded workflow's")
+        (is (= "Succeeded" (:status record))
+            "Peeked record's status should match succeeded workflow's")
+        (is (== 2 (stage/queue-length executor))
+            "Both running and succeeded workflows in submission should be counted in queue length")
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (jdbc/update! tx (:details executor) {:status nil} ["id = ?" (:id record)]))
+        (is (== 2 (stage/queue-length executor))
+            "Workflows without status should be counted in queue length")
+        (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+          (jdbc/update! tx (:details executor) {:workflow nil} ["id = ?" (:id record)]))
+        (is (== 2 (stage/queue-length executor))
+            "Workflows without status or uuid should be counted in queue length")))))
 
 (deftest test-terra-executor-describe-method
   (let [description (executor/describe-method
@@ -450,17 +445,19 @@
             (throw (ex-info (str "rawls/create-snapshot-reference "
                                  "should not have been called directly")
                             {:called-with args})))]
-    (with-redefs-fn
-      {#'rawls/create-snapshot-reference        throw-if-called
-       #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference}
-      #(let [executor  (create-terra-executor (rand-int 1000000))
-             reference (#'executor/entity-from-snapshot executor (mock-datarepo-snapshot))]
-         (is (and (= snapshot-reference-id (get-in reference [:metadata :resourceId]))
-                  (= snapshot-name (get-in reference [:metadata :name]))))))))
+    (with-redefs
+     [rawls/create-snapshot-reference        throw-if-called
+      rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference]
+      (let [executor  (create-terra-executor (rand-int 1000000))
+            workload  {:uuid (UUID/randomUUID) :executor executor}
+            reference (#'executor/entity-from-snapshot workload (mock-datarepo-snapshot))]
+        (is (= snapshot-reference-id (get-in reference [:metadata :resourceId])))
+        (is (= snapshot-name (get-in reference [:metadata :name])))))))
 
 (deftest test-update-method-configuration-with-version-mismatch
   (let [id                    (rand-int 1000000)
         executor              (create-terra-executor id)
+        workload              {:uuid (UUID/randomUUID) :executor executor}
         dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
@@ -484,11 +481,11 @@
                   "Method configuration's actual version should be incremented")
               (is (= snapshot-table-name (:rootEntityType mc))
                   "Method configuration root entity type should be snapshot's table name"))]
-      (with-redefs-fn
-        {#'firecloud/method-configuration        firecloud-method-configuration
-         #'datarepo/snapshot                     mock-datarepo-snapshot
-         #'firecloud/update-method-configuration verify-firecloud-update-params}
-        #(#'executor/update-method-configuration! executor reference))
+      (with-redefs
+       [firecloud/method-configuration        firecloud-method-configuration
+        firecloud/update-method-configuration verify-firecloud-update-params]
+        (#'executor/update-method-configuration!
+         workload reference (mock-datarepo-snapshot)))
       (let [reloaded (reload-terra-executor executor)]
         (is (nil? (:methodConfigurationVersion executor))
             "Method configuration's version in DB should initially be unpopulated")

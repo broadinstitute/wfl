@@ -2,16 +2,15 @@
   (:require [clojure.test         :refer [deftest is testing]]
             [wfl.executor         :as executor]
             [wfl.service.cromwell :as cromwell]
-            [wfl.service.datarepo :as datarepo]
             [wfl.service.slack    :as slack])
   (:import [java.util UUID]
            [wfl.util UserException]))
 
 (deftest test-terra-executor-workflows-sql-params
-  (let [executor   {:details "TerraExecutor_00000001"}
+  (let [executor {:details "TerraExecutor_00000001"}
         submission (str (UUID/randomUUID))
-        status     "Failed"
-        filters    {:submission submission :status status}]
+        status "Failed"
+        filters {:submission submission :status status}]
     (letfn [(arg-count [sql] (-> sql frequencies (get \? 0)))]
       (testing "No filters"
         (let [[sql & params] (#'executor/terra-executor-workflows-sql-params
@@ -69,12 +68,12 @@
         "No error expected for retriable Cromwell status")))
 
 (deftest test-terra-executor-throw-if-invalid-retry-filters
-  (let [workload-uuid      (str (UUID/randomUUID))
-        workload           {:uuid workload-uuid}
-        submission-valid   (str (UUID/randomUUID))
+  (let [workload-uuid (str (UUID/randomUUID))
+        workload {:uuid workload-uuid}
+        submission-valid (str (UUID/randomUUID))
         submission-invalid nil
-        status-valid       "Failed"
-        status-invalid     "Running"]
+        status-valid "Failed"
+        status-invalid "Running"]
     (letfn [(verify-submission-error
               [{:keys [validation-errors] :as _ex-data}]
               (is (some #(= executor/retry-invalid-submission-error-message %)
@@ -112,28 +111,23 @@
       (testing "Valid filter combination should not throw"
         (is (nil? (verify-filter-errors-then-throw {:submission submission-valid :status status-valid})))))))
 
-(deftest test-terra-executor-table-from-snapshot-reference
-  (let [executor  {}
-        reference {:attributes {:snapshot (str (UUID/randomUUID))}}
-        table1    "table1"
-        table2    "table2"]
+(deftest test-terra-executor-table-from-snapshot
+  (let [workload {}
+        table1   "table1"
+        table2   "table2"]
     (letfn [(table [table-name]
               {:name table-name})
             (datarepo-snapshot [table-names]
-              (fn [_snapshot-id]
-                {:tables (vec (map table table-names))}))]
-      (with-redefs-fn
-        {#'datarepo/snapshot (datarepo-snapshot [])}
-        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
-             "A snapshot with no table should log error but return nil"))
-      (with-redefs-fn
-        {#'datarepo/snapshot (datarepo-snapshot [table1])}
-        #(is (= table1 (#'executor/table-from-snapshot-reference executor reference))
-             "A snapshot with exactly 1 table should resolve to the table name"))
-      (with-redefs-fn
-        {#'datarepo/snapshot (datarepo-snapshot [table1 table2])}
-        #(is (nil? (#'executor/table-from-snapshot-reference executor reference))
-             "A snapshot with more than 1 tables should log error but return nil")))))
+              {:tables (vec (map table table-names))})]
+      (let [snapshot (datarepo-snapshot [])]
+        (is (nil? (#'executor/table-from-snapshot workload snapshot))
+            "A snapshot with no table should log error but return nil"))
+      (let [snapshot (datarepo-snapshot [table1])]
+        (is (= table1 (#'executor/table-from-snapshot workload snapshot))
+            "A snapshot with 1 table should resolve to the table name"))
+      (let [snapshot (datarepo-snapshot [table1 table2])]
+        (is (nil? (#'executor/table-from-snapshot workload snapshot))
+            "A snapshot with >1 tables should log error but return nil")))))
 
 (deftest test-notify-on-workflow-completion
   (let [records [{:status "Running"}
@@ -144,8 +138,8 @@
               [_executor {:keys [status] :as _record}]
               (is (cromwell/final? status)
                   "Should not notify for non-final workflows"))]
-      (with-redefs-fn
-        {#'executor/workflow-finished-slack-msg mock-workflow-finished-slack-msg
-         #'slack/notify-watchers                (constantly nil)}
-        #(is (= records (#'executor/notify-on-workflow-completion workload records))
-             "Should return all passed-in records")))))
+      (with-redefs
+       [executor/workflow-finished-slack-msg mock-workflow-finished-slack-msg
+        slack/notify-watchers                (constantly nil)]
+        (is (= records (#'executor/notify-on-workflow-completion workload records))
+            "Should return all passed-in records")))))

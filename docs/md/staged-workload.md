@@ -86,10 +86,6 @@ via WFL API, see [API Usage](./staged-api-usage.md).
 
 ## Slack Notifications for Watchers
 
-!!! warning
-    Slack notifications are temporarily disabled:
-    see [GH-1604](https://broadinstitute.atlassian.net/browse/GH-1604).
-
 The optional `watchers` field in a workload request
 registers Slack channels as watchers of the workload.
 
@@ -116,14 +112,16 @@ of your channel's "Get channel details" dropdown:
 - Ex. Issues accessing TDR dataset, snapshot, etc.
 
 **Notable state changes**
-- Ex. Workflow has completed
+- TDR snapshot creation job failed
+- Terra submission created
+- Terra workflow has completed
 
 ![](assets/staged-workload/workflow-finished-notifications.png)
 
 In the future, WFL may allow for these two notification streams
 to be configured separately.
 High-volume use cases (ex. 100s of workflows/day) may find
-state change notifications too noisy.
+some state change notifications too noisy.
 
 ### Prerequisites
 

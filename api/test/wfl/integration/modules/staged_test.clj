@@ -29,7 +29,7 @@
          (map-indexed f))))
 
 ;; Note this mock only covers happy paths of TDR jobs
-(defn ^:private mock-check-tdr-job [_workload job-id]
+(defn ^:private mock-check-tdr-job [job-id _workload]
   {:snapshot_id (str (UUID/randomUUID))
    :job_status "succeeded"
    :id job-id})
@@ -219,21 +219,21 @@
     (is (empty? (workloads/workflows workload)))))
 
 (deftest test-workload-state-transition
-  (with-redefs-fn
-    {#'source/find-new-rows                   mock-find-new-rows
-     #'source/create-snapshots                mock-create-snapshots
-     #'source/check-tdr-job                   mock-check-tdr-job
-     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
-     #'firecloud/submit-method                mock-firecloud-create-submission
-     #'firecloud/get-submission               mock-firecloud-get-submission
-     #'firecloud/get-workflow                 mock-workflow-keep-status}
-    #(shared/run-workload-state-transition-test!
-      (workloads/staged-workload-request
-       {:skipValidation true}
-       {:skipValidation true}
-       {:skipValidation true}))))
+  (with-redefs
+   [source/find-new-rows                       mock-find-new-rows
+    source/create-snapshots                    mock-create-snapshots
+    source/check-tdr-job-and-notify-on-failure mock-check-tdr-job
+    rawls/create-or-get-snapshot-reference     mock-rawls-snapshot-reference
+    firecloud/method-configuration             mock-firecloud-get-method-configuration
+    firecloud/update-method-configuration      mock-firecloud-update-method-configuration
+    firecloud/submit-method                    mock-firecloud-create-submission
+    firecloud/get-submission                   mock-firecloud-get-submission
+    firecloud/get-workflow                     mock-workflow-keep-status]
+    (shared/run-workload-state-transition-test!
+     (workloads/staged-workload-request
+      {:skipValidation true}
+      {:skipValidation true}
+      {:skipValidation true}))))
 
 (deftest test-staged-workload-state-transition
   (shared/run-workload-state-transition-test!
@@ -251,20 +251,20 @@
     {:skipValidation true})))
 
 (deftest test-workload-state-transition-with-failed-workflow
-  (with-redefs-fn
-    {#'source/find-new-rows                   mock-find-new-rows
-     #'source/create-snapshots                mock-create-snapshots
-     #'source/check-tdr-job                   mock-check-tdr-job
-     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
-     #'firecloud/submit-method                mock-firecloud-create-submission
-     #'firecloud/get-workflow                 (constantly {:status "Failed"})}
-    #(shared/run-workload-state-transition-test!
-      (workloads/staged-workload-request
-       {:skipValidation true}
-       {:skipValidation true}
-       {:skipValidation true}))))
+  (with-redefs
+   [source/find-new-rows                       mock-find-new-rows
+    source/create-snapshots                    mock-create-snapshots
+    source/check-tdr-job-and-notify-on-failure mock-check-tdr-job
+    rawls/create-or-get-snapshot-reference     mock-rawls-snapshot-reference
+    firecloud/method-configuration             mock-firecloud-get-method-configuration
+    firecloud/update-method-configuration      mock-firecloud-update-method-configuration
+    firecloud/submit-method                    mock-firecloud-create-submission
+    firecloud/get-workflow                     (constantly {:status "Failed"})]
+    (shared/run-workload-state-transition-test!
+     (workloads/staged-workload-request
+      {:skipValidation true}
+      {:skipValidation true}
+      {:skipValidation true}))))
 
 (deftest test-create-workload-coercion
   (let [app     (endpoints/coercion-tester
@@ -289,21 +289,21 @@
            app))))
 
 (deftest test-retry-workload-throws-when-not-started
-  (with-redefs-fn
-    {#'source/find-new-rows                   mock-find-new-rows
-     #'source/create-snapshots                mock-create-snapshots
-     #'source/check-tdr-job                   mock-check-tdr-job
-     #'rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
-     #'firecloud/method-configuration         mock-firecloud-get-method-configuration
-     #'firecloud/update-method-configuration  mock-firecloud-update-method-configuration
-     #'firecloud/submit-method                mock-firecloud-create-submission
-     #'firecloud/get-workflow                 (constantly {:status "Failed"})}
-    #(let [workload-request (workloads/staged-workload-request
-                             {:skipValidation true}
-                             {:skipValidation true}
-                             {:skipValidation true})
-           workload         (workloads/create-workload! workload-request)]
-       (is (not (:started workload)))
-       (is (thrown-with-msg?
-            UserException #"Cannot retry workload before it's been started."
-            (workloads/retry workload []))))))
+  (with-redefs
+   [source/find-new-rows                       mock-find-new-rows
+    source/create-snapshots                    mock-create-snapshots
+    source/check-tdr-job-and-notify-on-failure mock-check-tdr-job
+    rawls/create-or-get-snapshot-reference     mock-rawls-snapshot-reference
+    firecloud/method-configuration             mock-firecloud-get-method-configuration
+    firecloud/update-method-configuration      mock-firecloud-update-method-configuration
+    firecloud/submit-method                    mock-firecloud-create-submission
+    firecloud/get-workflow                     (constantly {:status "Failed"})]
+    (let [workload-request (workloads/staged-workload-request
+                            {:skipValidation true}
+                            {:skipValidation true}
+                            {:skipValidation true})
+          workload         (workloads/create-workload! workload-request)]
+      (is (not (:started workload)))
+      (is (thrown-with-msg?
+           UserException #"Cannot retry workload before it's been started."
+           (workloads/retry workload []))))))

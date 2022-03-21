@@ -53,10 +53,6 @@
    (fn [] "https://rawls.dsde-dev.broadinstitute.org")
    "WFL_DOCKSTORE_URL"
    (fn [] "https://dockstore.org")
-   ;; To enable Slack notifications, set to "enabled":
-   ;; all other values disable them.
-   "WFL_SLACK_ENABLED"
-   (fn [] "disabled")
    "WFL_SLACK_TOKEN"
    #(-> "secret/dsde/gotc/dev/wfl/slack" vault-secrets :bot-user-token)
 
