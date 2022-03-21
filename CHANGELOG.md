@@ -1,3 +1,9 @@
+# Release 0.17.0
+- [GH-1592] [GH-1635] Notify Slack watchers on Terra submission creation ([#591](https://github.com/broadinstitute/wfl/pull/591))
+- [GH-1593] Notify Slack watchers on failed TDR snapshot jobs ([#590](https://github.com/broadinstitute/wfl/pull/590))
+- [GH-1618] Add workload info to executor logs ([#589](https://github.com/broadinstitute/wfl/pull/589))
+- [GH-1633] Remove WFL_SLACK_ENABLED feature switch ([#587](https://github.com/broadinstitute/wfl/pull/587))
+
 # Release 0.16.0
 - [GH-1629] TerraExecutor gets method configuration version from Firecloud ([#585](https://github.com/broadinstitute/wfl/pull/585))
 - [GH-1553] [GH-1604] Add error handling to Slack service ([#584](https://github.com/broadinstitute/wfl/pull/584))
