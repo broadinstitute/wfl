@@ -32,10 +32,13 @@
 ;; https://api.slack.com/methods/chat.postMessage#errors
 ;;
 (defn ^:private post-message
-  "Post `message` to `channel`."
+  "Post `message` to `channel` with link unfurling disabled."
   [channel message]
   (let [headers {:Authorization (str "Bearer " (env/getenv "WFL_SLACK_TOKEN"))}
-        body    (json/write-str {:channel channel :text message})]
+        body    (json/write-str {:channel      channel
+                                 :text         message
+                                 :unfurl_links false
+                                 :unfurl_media false})]
     (-> "https://slack.com/api/chat.postMessage"
         (http/post {:headers      headers
                     :content-type :application/json
