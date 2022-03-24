@@ -184,12 +184,13 @@
          (mapcat submit-batch!))))
 
 (defn update-workload!
-  "Use transaction TX to batch-update WORKLOAD statuses."
-  [tx {:keys [started finished] :as workload}]
+  "Batch-update WORKLOAD statuses."
+  [{:keys [started finished] :as workload}]
   (letfn [(update! [{:keys [id] :as workload}]
-            (batch-update-workflow-statuses! tx workload)
-            (update-workload-status! tx workload)
-            (workloads/load-workload-for-id tx id))]
+            (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+              (batch-update-workflow-statuses! tx workload)
+              (update-workload-status! tx workload)
+              (workloads/load-workload-for-id tx id)))]
     (if (and started (not finished)) (update! workload) workload)))
 
 (defn stop-workload!

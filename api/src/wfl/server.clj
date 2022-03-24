@@ -78,29 +78,23 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn ^:private do-update!
-  "Update `_workload` in a database transaction. "
-  [{:keys [id] :as _workload}]
-  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (let [workload (workloads/load-workload-for-id tx id)]
+(defn ^:private try-update
+  "Try to update `workload-record` with backstops."
+  [{:keys [id] :as workload-record}]
+  (try
+    (let [workload (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                     (workloads/load-workload-for-id tx id))]
+      (log/info "Updating workload" :workload (workloads/to-log workload))
       (try
-        (workloads/update-workload! tx workload)
+        (workloads/update-workload! workload)
         (catch UserException e
-          (log/warning "Error updating workload"
+          (log/warning "UserException while updating workload"
                        :workload  (workloads/to-log workload)
                        :exception e)
-          (slack/notify-watchers workload (.getMessage e)))))))
-
-(defn ^:private try-update
-  "Try to update the workflows in `workload` with a backstop."
-  [workload]
-  (try
-    (log/info "Updating workload"
-              :workload (workloads/to-log workload))
-    (do-update! workload)
+          (slack/notify-watchers workload (.getMessage e)))))
     (catch Throwable t
       (log/error "Failed to update workload"
-                 :workload  (workloads/to-log workload)
+                 :workload  (workloads/to-log workload-record)
                  :throwable t))))
 
 (defn ^:private update-workloads

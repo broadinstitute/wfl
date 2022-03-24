@@ -1,8 +1,8 @@
 (ns wfl.module.sg
   "Handle Somatic Genomes."
   (:require [clojure.data.json          :as json]
-            [clojure.spec.alpha         :as s]
             [clojure.set                :as set]
+            [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.jdbc                   :as jdbc]
@@ -13,6 +13,7 @@
             [wfl.service.clio           :as clio]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres       :as postgres]
             [wfl.util                   :as util]
             [wfl.wfl                    :as wfl])
   (:import [java.time OffsetDateTime]))
@@ -210,19 +211,20 @@
   (run! (partial register-workflow-in-clio workload output) workflows))
 
 (defn update-sg-workload!
-  "Use transaction `tx` to batch-update `workload` statuses."
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (batch/batch-update-workflow-statuses! tx workload)
-            (batch/update-workload-status! tx workload)
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished))
-      (let [workload' (update! workload)]
-        (when (:finished workload')
-          (register-workload-in-clio workload'
-                                     (workloads/workflows tx workload')))
-        workload')
-      workload)))
+  "Batch-update `workload` statuses."
+  [{:keys [started finished] :as workload}]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (letfn [(update! [{:keys [id] :as workload}]
+              (batch/batch-update-workflow-statuses! tx workload)
+              (batch/update-workload-status! tx workload)
+              (workloads/load-workload-for-id tx id))]
+      (if (and started (not finished))
+        (let [workload' (update! workload)]
+          (when (:finished workload')
+            (register-workload-in-clio workload'
+                                       (workloads/workflows tx workload')))
+          workload')
+        workload))))
 
 (defoverload workloads/create-workload!     pipeline create-sg-workload!)
 (defoverload workloads/start-workload!      pipeline start-sg-workload!)
