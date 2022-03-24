@@ -88,17 +88,18 @@
               (is (== 1 (count row-ids))
                   "Single input row should have been written to the dataset")
               (testing "creating snapshot after completed ingest"
-                (fixtures/with-temporary-snapshot
-                  (snapshots/unique-snapshot-request tdr-profile
-                                                     dataset
-                                                     table-name
-                                                     row-ids)
-                  #(let [snapshot        (datarepo/snapshot %)
-                         expected-prefix (str (:name dataset) "_" table-name)]
-                     (is (= % (:id snapshot)))
-                     (is (str/starts-with? (:name snapshot) expected-prefix)
-                         (str "Snapshot name should start with "
-                              "dataset name and table name"))))))))))))
+                (let [request         (snapshots/unique-snapshot-request
+                                       tdr-profile
+                                       dataset
+                                       table-name
+                                       row-ids)
+                      snapshot-id     (datarepo/create-snapshot request)
+                      snapshot        (datarepo/snapshot snapshot-id)
+                      expected-prefix (str (:name dataset) "_" table-name)]
+                  (is (= snapshot-id (:id snapshot)))
+                  (is (str/starts-with? (:name snapshot) expected-prefix)
+                      (str "Snapshot name should start with "
+                           "dataset name and table name")))))))))))
 
 (deftest test-flattened-query-result
   (let [samplesheets (-> (datarepo/snapshot (:id testing-snapshot))
