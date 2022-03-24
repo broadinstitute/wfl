@@ -6,7 +6,7 @@
             [clojure.set                :as set]
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
-            [wfl.api.workloads          :refer [defoverload]]
+            [wfl.api.workloads          :as workloads :refer [defoverload]]
             [wfl.environment            :as env]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
@@ -199,11 +199,8 @@
   "Write outputs from consumable `executor` workflows
    to `entityType` table in `workspace`."
   [{executor :executor
-    {:keys [fromOutputs workspace entityType details] :as sink} :sink :as _workload}]
+    {:keys [fromOutputs workspace entityType details] :as sink} :sink :as workload}]
   (when-let [[_ {:keys [uuid] :as workflow}] (stage/peek-queue executor)]
-    (log/debug {:action     "Attempting to sink workflow outputs"
-                :workflow   uuid
-                :entityType entityType})
     (let [entityName (throw-or-entity-name-from-workflow workflow sink)
           entity     [entityType entityName]
           attributes (terra-workspace-sink-to-attributes workflow fromOutputs)]
@@ -211,9 +208,11 @@
         (firecloud/delete-entities workspace [entity]))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
-      (log/debug {:action   "Sunk workflow outputs"
-                  :workflow uuid
-                  :entity   entity})
+      (log/info "Sunk workflow outputs to Terra workspace"
+                :workload   (workloads/to-log workload)
+                :workflow   uuid
+                :workspace  workspace
+                :entityType entityType)
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (jdbc/insert! tx details {:entity   entityName
                                   :updated  (util/utc-now)
@@ -421,7 +420,7 @@
 (defn ^:private update-datarepo-sink
   "Pull a workflow off the `_workload`'s `executor` queue and write its
   outputs as new rows in a TDR dataset table."
-  [{:keys [executor sink uuid labels] :as _workload}]
+  [{:keys [executor sink] :as workload}]
   (when-let [[_ workflow] (stage/peek-queue executor)]
     (start-ingesting-outputs sink workflow)
     (stage/pop-queue! executor))
@@ -430,10 +429,12 @@
     (try
       (let [result (datarepo/job-result job)]
         (if (< (:bad_row_count result) 1)
-          (log/info "Sunk workflow outputs to dataset"
-                    :labels labels :workload uuid)
-          (throw (UserException. "Row failed to sink to dataset"
-                                 {:job job :workflow workflow}))))
+          (log/info "Sunk all workflow outputs to TDR dataset"
+                    :workload (workloads/to-log workload)
+                    :job-id   job
+                    :workflow workflow)
+          (throw (UserException. "Row failed to sink to TDR dataset"
+                                 {:job-id job :workflow workflow}))))
       (finally
         (pop-job-queue! sink record)))))
 
