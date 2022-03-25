@@ -299,7 +299,7 @@
         workflow-link   (-> workflow
                             firecloud/workflow-url
                             (slack/link workflow))
-        submission-link (-> workspace
+        submission-link (-> submission
                             (firecloud/submission-url workspace)
                             (slack/link submission))]
     (str/join \newline
