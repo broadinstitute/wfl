@@ -211,20 +211,22 @@
   (run! (partial register-workflow-in-clio workload output) workflows))
 
 (defn update-sg-workload!
-  "Batch-update `workload` statuses."
-  [{:keys [started finished] :as workload}]
+  "Batch-update `workload-record` statuses."
+  [{:keys [id started finished] :as _workload-record}]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (letfn [(update! [{:keys [id] :as workload}]
+    (letfn [(load-workload []
+              (workloads/load-workload-for-id tx id))
+            (update!       [workload]
               (batch/batch-update-workflow-statuses! tx workload)
               (batch/update-workload-status! tx workload)
-              (workloads/load-workload-for-id tx id))]
+              (load-workload))]
       (if (and started (not finished))
-        (let [workload' (update! workload)]
-          (when (:finished workload')
-            (register-workload-in-clio workload'
-                                       (workloads/workflows tx workload')))
-          workload')
-        workload))))
+        (let [{:keys [finished] :as updated} (update! (load-workload))]
+          (when finished
+            (register-workload-in-clio updated
+                                       (workloads/workflows tx updated)))
+          updated)
+        (load-workload)))))
 
 (defoverload workloads/create-workload!     pipeline create-sg-workload!)
 (defoverload workloads/start-workload!      pipeline start-sg-workload!)

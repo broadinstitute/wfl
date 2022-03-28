@@ -27,7 +27,7 @@
   (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti update-workload!
-  "workload -> workload"
+  "workload-record -> workload"
   :pipeline)
 
 (defmulti workflows
@@ -148,10 +148,10 @@
 
 (defmethod update-workload!
   :default
-  [{:keys [pipeline] :as workload}]
+  [{:keys [pipeline] :as workload-record}]
   (throw
    (ex-info "Failed to update workload - no such pipeline"
-            {:workload workload
+            {:workload workload-record
              :pipeline pipeline
              :type     ::invalid-pipeline})))
 

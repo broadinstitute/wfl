@@ -78,20 +78,23 @@
       wrap-internal-error
       (wrap-json-response {:pretty true})))
 
-(defn ^:private try-update
-  "Try to update `workload-record` with backstops."
-  [{:keys [id] :as workload-record}]
+(defn ^:private do-update!
+  "Update `workload-record` and notify watchers on UserException."
+  [workload-record]
   (try
-    (let [workload (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-                     (workloads/load-workload-for-id tx id))]
-      (log/info "Updating workload" :workload (workloads/to-log workload))
-      (try
-        (workloads/update-workload! workload)
-        (catch UserException e
-          (log/warning "UserException while updating workload"
-                       :workload  (workloads/to-log workload)
-                       :exception e)
-          (slack/notify-watchers workload (.getMessage e)))))
+    (workloads/update-workload! workload-record)
+    (catch UserException e
+      (log/warning "UserException while updating workload"
+                   :workload  (workloads/to-log workload-record)
+                   :exception e)
+      (slack/notify-watchers workload-record (.getMessage e)))))
+
+(defn ^:private try-update
+  "Try to update `workload-record` with backstop."
+  [workload-record]
+  (try
+    (log/info "Updating workload" :workload (workloads/to-log workload-record))
+    (do-update! workload-record)
     (catch Throwable t
       (log/error "Failed to update workload"
                  :workload  (workloads/to-log workload-record)
@@ -102,12 +105,13 @@
   []
   (try
     (log/info "Finding workloads to update...")
-    (run! try-update
-          (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-            (jdbc/query tx (str/join \space
-                                     ["SELECT * FROM workload"
-                                      "WHERE started IS NOT NULL"
-                                      "AND finished IS NULL"]))))
+    (let [query   (str/join \space
+                            ["SELECT * FROM workload"
+                             "WHERE started IS NOT NULL"
+                             "AND finished IS NULL"])
+          records (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                    (jdbc/query tx query))]
+      (run! try-update records))
     (catch Throwable t
       (log/error "Failed to update workloads" :throwable t))))
 

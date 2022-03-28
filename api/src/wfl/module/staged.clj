@@ -125,9 +125,11 @@
     (if-not started (start workload (utc-now)) workload)))
 
 (defn ^:private update-staged-workload
-  "Update `workload` stages."
-  [{:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id source executor sink] :as workload} now]
+  "Update `workload-record` stages."
+  [{:keys [id started finished] :as _workload-record}]
+  (letfn [(load-workload [tx]
+            (workloads/load-workload-for-id tx id))
+          (update! [{:keys [source executor sink] :as workload} now]
             (-> workload
                 (source/update-source!)
                 (executor/update-executor!)
@@ -136,8 +138,12 @@
               (patch-workload tx workload {:updated now})
               (when (every? stage/done? [source executor sink])
                 (patch-workload tx workload {:finished now}))
-              (workloads/load-workload-for-id tx id)))]
-    (if (and started (not finished)) (update! workload (utc-now)) workload)))
+              (load-workload tx)))]
+    (let [workload (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+                     (load-workload tx))]
+      (if (and started (not finished))
+        (update! workload (utc-now))
+        workload))))
 
 (defn ^:private stop-staged-workload
   "Use transaction `tx` to stop the `workload` looking for new data."
