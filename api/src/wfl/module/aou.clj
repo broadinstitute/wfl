@@ -314,13 +314,18 @@
 
 (defmethod workloads/update-workload!
   pipeline
-  [tx {:keys [started finished] :as workload}]
-  (letfn [(update! [{:keys [id] :as workload}]
-            (batch/update-workflow-statuses! tx workload)
-            (when (:stopped workload)
-              (batch/update-workload-status! tx workload))
-            (workloads/load-workload-for-id tx id))]
-    (if (and started (not finished)) (update! workload) workload)))
+  [{:keys [id started stopped finished] :as _workload-record}]
+  (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
+    (letfn [(load-workload []
+              (workloads/load-workload-for-id tx id))
+            (update!       [workload]
+              (batch/update-workflow-statuses! tx workload)
+              (when stopped
+                (batch/update-workload-status! tx workload))
+              (load-workload))]
+      (if (and started (not finished))
+        (update! (load-workload))
+        (load-workload)))))
 
 (defoverload workloads/workflows            pipeline aou-workflows)
 (defoverload workloads/workflows-by-filters pipeline aou-workflows-by-filters)
