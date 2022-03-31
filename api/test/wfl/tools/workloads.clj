@@ -285,7 +285,7 @@
 (def start-workload!      (evalT wfl.api.workloads/start-workload!))
 (def stop-workload!       (evalT wfl.api.workloads/stop-workload!))
 (def execute-workload!    (evalT wfl.api.workloads/execute-workload!))
-(def update-workload!     (evalT wfl.api.workloads/update-workload!))
+(def update-workload!     wfl.api.workloads/update-workload!)
 (def workflows            (evalT wfl.api.workloads/workflows))
 (def workflows-by-filters (evalT wfl.api.workloads/workflows-by-filters))
 
