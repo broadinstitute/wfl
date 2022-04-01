@@ -8,7 +8,7 @@
             [clojure.string     :as str]
             [wfl.log            :as log]
             [wfl.wfl            :as wfl])
-  (:import [java.io File IOException StringWriter Writer]
+  (:import [java.io IOException StringWriter Writer]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
            [java.time OffsetDateTime ZoneId]
@@ -115,27 +115,6 @@
   `(if (~pred ~coll ~key)
      (assoc ~coll ~key ~value)
      ~coll))
-
-(defn delete-tree
-  "Recursively delete a sequence of FILES."
-  [& files]
-  (when (seq files)
-    (let [file (first files)
-          more (.listFiles file)]
-      (if (seq more)
-        (recur (concat more files))
-        (do (io/delete-file file :無)
-            (recur (rest files)))))))
-
-(defn copy-directory
-  "Copy files from SRC to under DEST."
-  [^File src ^File dest]
-  (let [prefix (str (.getParent src) "/")]
-    (doseq [file (file-seq src)]
-      (when-not (.isDirectory file)
-        (let [target (io/file dest (unprefix (.getPath file) prefix))]
-          (io/make-parents target)
-          (io/copy file target))))))
 
 (defn sleep-seconds
   "Sleep for N seconds."
