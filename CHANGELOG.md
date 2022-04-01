@@ -1,3 +1,11 @@
+# Release 0.18.0
+- [GH-1623] workloads/update-workload! should define own transactions ([#597](https://github.com/broadinstitute/wfl/pull/597))
+- [GH-1640] Broken Terra Submission links in completed workflow Slack messages ([#598](https://github.com/broadinstitute/wfl/pull/598))
+- [GH-1639] Pin jinja2 version for mkdocks compatibility ([#596](https://github.com/broadinstitute/wfl/pull/596))
+- [GH-1433] No TDR temporary snapshots in tests ([#595](https://github.com/broadinstitute/wfl/pull/595))
+- [GH-1619] Add workload info to sink logs ([#594](https://github.com/broadinstitute/wfl/pull/594))
+- [GH-1638] Disable link unfurling when Slacking watchers ([#593](https://github.com/broadinstitute/wfl/pull/593))
+
 # Release 0.17.0
 - [GH-1592] [GH-1635] Notify Slack watchers on Terra submission creation ([#591](https://github.com/broadinstitute/wfl/pull/591))
 - [GH-1593] Notify Slack watchers on failed TDR snapshot jobs ([#590](https://github.com/broadinstitute/wfl/pull/590))

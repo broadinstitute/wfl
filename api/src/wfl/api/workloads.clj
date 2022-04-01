@@ -27,8 +27,8 @@
   (fn [_transaction workload] (:pipeline workload)))
 
 (defmulti update-workload!
-  "(transaction workload) -> workload"
-  (fn [_transaction workload] (:pipeline workload)))
+  "workload-record -> workload"
+  :pipeline)
 
 (defmulti workflows
   "Use db `transaction` to return the workflows managed by the `workload`."
@@ -148,10 +148,10 @@
 
 (defmethod update-workload!
   :default
-  [_ {:keys [pipeline] :as workload}]
+  [{:keys [pipeline] :as workload-record}]
   (throw
    (ex-info "Failed to update workload - no such pipeline"
-            {:workload workload
+            {:workload workload-record
              :pipeline pipeline
              :type     ::invalid-pipeline})))
 
