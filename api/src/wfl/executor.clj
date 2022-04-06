@@ -5,7 +5,6 @@
             [clojure.string        :as str]
             [ring.util.codec       :refer [url-encode]]
             [wfl.api.workloads     :refer [defoverload] :as workloads]
-            [wfl.environment       :as env]
             [wfl.jdbc              :as jdbc]
             [wfl.log               :as log]
             [wfl.module.all        :as all]
@@ -16,7 +15,7 @@
             [wfl.service.postgres  :as postgres]
             [wfl.service.rawls     :as rawls]
             [wfl.service.slack     :as slack]
-            [wfl.stage             :as stage :refer [log-prefix]]
+            [wfl.stage             :as stage]
             [wfl.util              :as util :refer [map-keys utc-now]])
   (:import [wfl.util UserException]))
 
@@ -685,7 +684,7 @@
 (defn ^:private terra-executor-retry-workflows
   "Resubmit the snapshot references associated with `workflows` in `workspace`
   and update each original workflow record with the row ID of its retry."
-  [{{:keys [workspace] :as executor} :executor :as workload} workflows]
+  [{{:keys [workspace] :as _executor} :executor :as workload} workflows]
   (letfn [(submit-reference [reference-id]
             (let [reference (rawls/get-snapshot-reference workspace reference-id)]
               (->> reference
