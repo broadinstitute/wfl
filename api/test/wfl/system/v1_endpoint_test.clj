@@ -377,7 +377,7 @@
 
 (deftest ^:parallel test-workflows-by-filters
   (testing "Get workflows by status"
-    (let [{:keys [statuses workflows workload]}
+    (let [{:keys [statuses workload]}
           (->> (endpoints/get-workloads)
                (filter :finished)
                (take 7)                 ; Why not?

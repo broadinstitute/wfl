@@ -1,3 +1,7 @@
+# Release 0.18.1
+- [GH-1645] Update wfl.module.wgs/workflow-wdl to allow overriding read_length in CollectRawWgsMetrics. ([#600](https://github.com/broadinstitute/wfl/pull/597))
+- [GH-1644] Drop delete-directory and copy-directory from wfl.util. ([#600](https://github.com/broadinstitute/wfl/pull/597))
+
 # Release 0.18.0
 - [GH-1623] workloads/update-workload! should define own transactions ([#597](https://github.com/broadinstitute/wfl/pull/597))
 - [GH-1640] Broken Terra Submission links in completed workflow Slack messages ([#598](https://github.com/broadinstitute/wfl/pull/598))
