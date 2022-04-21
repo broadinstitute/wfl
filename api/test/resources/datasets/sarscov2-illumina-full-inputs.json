@@ -51,11 +51,8 @@
           }
         ],
         "primaryKey": [
-          "authors_sbt",
           "flowcell_id",
-          "flowcell_tgz",
           "instrument_model",
-          "sample_rename_map",
           "title",
           "updated"
         ],
