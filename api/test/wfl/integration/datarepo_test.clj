@@ -53,7 +53,7 @@
    :integer "outint"
    :string  "outstring"})
 
-(deftest test-ingest-pipeline-outputs-and-snapshot
+(deftest ^:kaocha/pending test-ingest-pipeline-outputs-and-snapshot
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
         tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
