@@ -404,11 +404,13 @@
             (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
             (as-> inputs
                   (assoc inputs :green_idat_cloud_path (workflows/convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
-              (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
+                  (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
 
+;; FIXME: GH-1652 :kaocha/pending does not work with :parallel now.
+#_
 (deftest ^:parallel test-workload-sink-outputs-to-tdr
   (fixtures/with-fixtures
     [(fixtures/with-temporary-dataset
