@@ -16,14 +16,16 @@
             [wfl.util                    :as util])
   (:import [java.util UUID]))
 
-(def ^:private testing-dataset {:id "4a5d30fe-1f99-42cd-998b-a979885dea00"
+(def ^:private testing-dataset {:id   "4a5d30fe-1f99-42cd-998b-a979885dea00"
                                 :name "workflow_launcher_testing_dataset"})
 (def ^:private testing-snapshot
   {:id "0ef4bc30-b8a0-4782-b178-e6145b777404"
    :name "workflow_launcher_testing_dataset7561609c9bb54ca6b34a12156dc947c1"})
 
+;; Add a dataset JSON file to the `definition` list to test its validity
+;; Wait 3 seconds to avoid random 404 transient issues from TDR.
+;;
 (deftest test-create-dataset
-  ;; To test that your dataset json file is valid, add its path to the list!
   (let [tdr-profile (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (doseq [definition ["sarscov2-illumina-full-inputs.json"
                         "sarscov2-illumina-full-outputs.json"
@@ -31,7 +33,6 @@
       (testing (str "creating dataset " (util/basename definition))
         (fixtures/with-temporary-dataset
           (datasets/unique-dataset-request tdr-profile definition)
-          ;; wait for 3 seconds to avoid random 404 transient issues from TDR
           #(do (util/sleep-seconds 3)
                (let [dataset (datarepo/datasets %)]
                  (is (= % (:id dataset))))))))))
@@ -52,7 +53,7 @@
    :integer "outint"
    :string  "outstring"})
 
-(deftest test-ingest-pipeline-outputs-and-snapshot
+(deftest ^:kaocha/pending test-ingest-pipeline-outputs-and-snapshot
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
         tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]

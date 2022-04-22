@@ -1,6 +1,10 @@
+# Release 0.18.2
+- [GH-1652] Fix PrimaryKey mumble cannot be a column with fileref type errors from TDR. ([#603](https://github.com/broadinstitute/wfl/pull/603))
+- [GH-1651] Re-deploy WFL to pick up new version of WGS to support setting memory_multiplier in SortSam. ([#603](https://github.com/broadinstitute/wfl/pull/603))
+
 # Release 0.18.1
-- [GH-1645] Update wfl.module.wgs/workflow-wdl to allow overriding read_length in CollectRawWgsMetrics. ([#600](https://github.com/broadinstitute/wfl/pull/597))
-- [GH-1644] Drop delete-directory and copy-directory from wfl.util. ([#600](https://github.com/broadinstitute/wfl/pull/597))
+- [GH-1645] Update wfl.module.wgs/workflow-wdl to allow overriding read_length in CollectRawWgsMetrics. ([#600](https://github.com/broadinstitute/wfl/pull/600))
+- [GH-1644] Drop delete-directory and copy-directory from wfl.util. ([#600](https://github.com/broadinstitute/wfl/pull/600))
 
 # Release 0.18.0
 - [GH-1623] workloads/update-workload! should define own transactions ([#597](https://github.com/broadinstitute/wfl/pull/597))
