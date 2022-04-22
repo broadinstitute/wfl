@@ -411,8 +411,7 @@
     (fn [cloud-folder]
       (let [file (str cloud-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
-            (assoc :ingested (.format (util/utc-now)
-                                      workflows/tdr-date-time-formatter))
+            (assoc :ingested (workflows/tdr-now))
             (update :green_idat_cloud_path convert-to-bulk cloud-folder)
             (update :red_idat_cloud_path   convert-to-bulk cloud-folder)
             (json/write-str :escape-slash false)

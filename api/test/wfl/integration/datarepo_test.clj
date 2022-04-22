@@ -72,8 +72,7 @@
                                          outputs
                                          from-outputs
                                          temp-bucket)
-              (assoc :ingested (.format (util/utc-now)
-                                        workflows/tdr-date-time-formatter))
+              (assoc :ingested (workflows/tdr-now))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
