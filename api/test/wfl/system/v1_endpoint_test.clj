@@ -11,6 +11,7 @@
             [wfl.environment            :as env]
             [wfl.executor               :as executor]
             [wfl.log                    :as log]
+            [wfl.mime-type              :as mime-type]
             [wfl.module.staged          :as staged]
             [wfl.service.cromwell       :as cromwell]
             [wfl.service.datarepo       :as datarepo]
@@ -392,22 +393,32 @@
           (testing "WARN: No workloads to test status query"
             (is (empty? statuses))))))))
 
+(defn ^:private convert-to-bulk
+  "Convert fileref `value` to BulkLoadFileModel in `bucket` for TDR."
+  [value bucket]
+  (let [basename (util/basename value)]
+    {:description basename
+     :mimeType (mime-type/ext-mime-type value)
+     :sourcePath value
+     :targetPath (str bucket basename)}))
+
 (defn ^:private ingest-illumina-genotyping-array-inputs
   "Ingest inputs for the illumina_genotyping_array pipeline into the
    illumina_genotyping_array `dataset`"
   [dataset-id load-tag]
   (fixtures/with-temporary-cloud-storage-folder
     fixtures/gcs-tdr-test-bucket
-    (fn [temporary-cloud-storage-folder]
-      (let [file (str temporary-cloud-storage-folder "inputs.json")]
+    (fn [cloud-folder]
+      (let [file (str cloud-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
-            (assoc :ingested (.format (util/utc-now) workflows/tdr-date-time-formatter))
-            (as-> inputs
-                  (assoc inputs :green_idat_cloud_path (workflows/convert-to-bulk (:green_idat_cloud_path inputs) temporary-cloud-storage-folder))
-              (assoc inputs :red_idat_cloud_path (workflows/convert-to-bulk (:red_idat_cloud_path inputs) temporary-cloud-storage-folder)))
+            (assoc :ingested (.format (util/utc-now)
+                                      workflows/tdr-date-time-formatter))
+            (update :green_idat_cloud_path convert-to-bulk cloud-folder)
+            (update :red_idat_cloud_path   convert-to-bulk cloud-folder)
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
-        (datarepo/poll-job (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
+        (datarepo/poll-job
+         (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
 
 ;; FIXME: GH-1652 :kaocha/pending does not work with :parallel now.
 #_(deftest ^:parallel test-workload-sink-outputs-to-tdr
