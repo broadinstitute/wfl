@@ -136,19 +136,20 @@
                                :attributeListName list-name}
                   make-member (partial assoc template :newMember)]
               (reduce #(conj %1 (make-member %2)) [init] v)))
-          (no-op [] [])
+          (no-op [_ _] [])
           (on-unhandled-attribute [name value]
             (throw (ex-info "No method to make upsert operation for attribute"
                             {:name name :value value})))
           (to-operations [attributes]
             (flatten
              (for [[k v] (seq attributes)]
-               (cond (number? v) (add-scalar k v)
-                     (string? v) (add-scalar k v)
-                     (map?    v) (add-scalar k v)
-                     (coll?   v) (add-list   k v)
-                     (nil?    v) (no-op)
-                     :else       (on-unhandled-attribute k v)))))
+               (cond (boolean? v) (add-scalar k v)
+                     (number? v)  (add-scalar k v)
+                     (string? v)  (add-scalar k v)
+                     (map?    v)  (add-scalar k v)
+                     (coll?   v)  (add-list   k v)
+                     (nil?    v)  (no-op      k v)
+                     :else        (on-unhandled-attribute k v)))))
           (make-request [[type name attributes]]
             {:entityType type :name name :operations (to-operations attributes)})]
     (-> (workspace-api-url workspace "entities/batchUpsert")
