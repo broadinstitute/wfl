@@ -56,9 +56,9 @@
                                   (make-reference (first names))))))))))
 
 (deftest test-batch-upsert-entities
-  (let [entity-type   "outputs"
-        entity-name   "test"
-        outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
+  (let [entity-type "outputs"
+        entity-name "test"
+        outputs     (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
     (fixtures/with-temporary-workspace
       "general-dev-billing-account/test-workspace"
       "hornet-eng"
