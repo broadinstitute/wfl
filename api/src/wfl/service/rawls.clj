@@ -1,13 +1,13 @@
 (ns wfl.service.rawls
   "Analyze and manipulate Terra Workspaces using the Rawls API.
    Note that firecloud exposes a subset of Rawls' API."
-  (:require [clj-http.client      :as http]
-            [clojure.data.json    :as json]
-            [clojure.string       :as str]
-            [wfl.auth             :as auth]
-            [wfl.environment      :as env]
-            [wfl.log              :as log]
-            [wfl.util             :as util])
+  (:require [clj-http.client   :as http]
+            [clojure.data.json :as json]
+            [clojure.string    :as str]
+            [wfl.auth          :as auth]
+            [wfl.environment   :as env]
+            [wfl.log           :as log]
+            [wfl.util          :as util])
   (:import [clojure.lang ExceptionInfo]))
 
 (def final-statuses
@@ -118,7 +118,7 @@
       util/response-body-json))
 
 (defn batch-upsert
-  "Batch update and insert entities into a `workspace`."
+  "Batch update and insert `entities` into a `workspace`."
   [workspace [[_type _name _attributes] & _ :as entities]]
   {:pre [(string? workspace) (not-empty entities)]}
   (log/debug {:action    "Upserting entities"
@@ -136,20 +136,13 @@
                                :attributeListName list-name}
                   make-member (partial assoc template :newMember)]
               (reduce #(conj %1 (make-member %2)) [init] v)))
-          (no-op [_ _] [])
-          (on-unhandled-attribute [name value]
-            (throw (ex-info "No method to make upsert operation for attribute"
-                            {:name name :value value})))
           (to-operations [attributes]
             (flatten
              (for [[k v] (seq attributes)]
-               (cond (boolean? v) (add-scalar k v)
-                     (number? v)  (add-scalar k v)
-                     (string? v)  (add-scalar k v)
-                     (map?    v)  (add-scalar k v)
-                     (coll?   v)  (add-list   k v)
-                     (nil?    v)  (no-op      k v)
-                     :else        (on-unhandled-attribute k v)))))
+               (cond (map?  v) (add-scalar k v)
+                     (coll? v) (add-list   k v)
+                     (nil?  v) []       ; flatten removes this.
+                     :else     (add-scalar k v)))))
           (make-request [[type name attributes]]
             {:entityType type :name name :operations (to-operations attributes)})]
     (-> (workspace-api-url workspace "entities/batchUpsert")
