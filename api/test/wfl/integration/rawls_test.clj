@@ -65,9 +65,10 @@
         "hornet-eng"
         (fn [workspace]
           (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
-          (let [[{:keys [name attributes]} & _]
+          (let [value-not-nil? (comp (complement nil?) second)
+                [{:keys [name attributes]} & _]
                 (util/poll
                  #(not-empty (firecloud/list-entities workspace entity-type)))]
             (is (= name entity-name) "The test entity was not created")
             (is (= (util/map-vals #(if (map? %) (:items %) %) attributes)
-                   (into {} (keep second outputs))))))))))
+                   (into {} (filter value-not-nil? outputs))))))))))
