@@ -13,7 +13,9 @@
        (mapv #(set/rename-keys % {:name :fieldName :valueType :fieldType}))
        (assoc {:typeName "Object"} :objectFieldTypes)))
 
-(defn ^:private make-type-environment [{:keys [objectFieldTypes] :as _type}]
+(defn ^:private make-type-environment
+  "Use fields in `_type` to return a function that maps a `varname` to a type."
+  [{:keys [objectFieldTypes] :as _type}]
   (let [collect    (juxt (comp keyword :fieldName) :fieldType)
         name->type (into {} (map collect objectFieldTypes))]
     (fn [varname]
