@@ -1,4 +1,7 @@
-{:submission_xml
+{:is_control_sample true
+ :is_a_bug false
+ :is_nil nil
+ :submission_xml
  "gs://fc-f9083173-1e35-4c1b-9d80-d837d6d12283/475d0a1d-20c0-42a1-968a-7540b79fcf0c/sarscov2_illumina_full/2768b29e-c808-4bd6-a46b-6c94fd2a67aa/call-package_genbank_ftp_submission/cacheCopy/submission.xml",
  :assembled_ids
  ["1227385894_TWIST"
