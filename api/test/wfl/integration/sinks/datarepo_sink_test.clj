@@ -143,7 +143,7 @@
           (do (.sleep TimeUnit/SECONDS seconds)
               (recur (inc attempt))))))))
 
-(deftest ^:kaocha/pending test-update-datarepo-sink
+(deftest test-update-datarepo-sink
   (let [description      (resources/read-resource "primitive.edn")
         workflow         {:uuid (UUID/randomUUID) :outputs outputs}
         upstream         (make-queue-from-list [[description workflow]])
