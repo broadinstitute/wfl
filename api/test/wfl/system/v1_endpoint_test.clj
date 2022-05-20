@@ -420,75 +420,74 @@
          (datarepo/ingest-table dataset-id file "inputs" load-tag))))))
 
 ;; FIXME: GH-1652 :kaocha/pending does not work with :parallel now.
-#_
-(deftest ^:parallel test-workload-sink-outputs-to-tdr
-  (fixtures/with-fixtures
-    [(fixtures/with-temporary-dataset
-       (datasets/unique-dataset-request
-        (env/getenv "WFL_TDR_DEFAULT_PROFILE")
-        "illumina-genotyping-array.json"))
-     (fixtures/with-shared-temporary-workspace-clone
-       "wfl-dev/Illumina-Genotyping-Array-Template"
-       "workflow-launcher-dev"
-       [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
-         :accessLevel "OWNER"}])]
-    (fn [[dataset-id workspace]]
-      (let [dataset  (datarepo/datasets dataset-id)
-            source   {:name                   "Terra DataRepo"
-                      :dataset                dataset-id
-                      :table                  "inputs"
-                      :snapshotReaders        ["hornet@firecloud.org"]
-                      :pollingIntervalMinutes 1
-                      :loadTag                "loadTagToMonitor"}
-            executor {:name                "Terra"
-                      :workspace           workspace
-                      :methodConfiguration "warp-pipelines/IlluminaGenotypingArray"
-                      :fromSource          "importSnapshot"}
-            sink     {:name        "Terra DataRepo"
-                      :dataset     dataset-id
-                      :table       "outputs"
-                      :fromOutputs (resources/read-resource
-                                    "illumina_genotyping_array/fromOutputs.edn")}
-            workload (endpoints/exec-workload
-                      (workloads/staged-workload-request source executor sink))]
-        (try
-          (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
-          (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
-          (let [row-ids      (-> dataset
-                                 (datarepo/query-metadata-table
-                                  (:table source) {} [:datarepo_row_id])
-                                 :rows
-                                 flatten)
-                where-load   {:loadTag (:loadTag source)}
-                keep-row-ids (-> dataset
-                                 (datarepo/query-metadata-table
-                                  (:table source) where-load [:datarepo_row_id])
-                                 :rows
-                                 flatten)
-                [workflow & rest]
-                (util/poll #(seq (endpoints/get-workflows workload)) 20 100)]
-            (is (== 2 (count row-ids))
-                "2 rows should have been ingested")
-            (is (== 1 (count keep-row-ids))
-                "1 row should have been ingested with our monitored load tag")
-            (is workflow
-                "One workflow should have been created")
-            (is (= (first keep-row-ids) (:entity workflow))
-                "Row ingested with monitored load tag should have been submitted")
-            (is (empty? rest)
-                "Only one workflow should have been created"))
-          (finally
-            (endpoints/stop-workload workload)))
+#_(deftest ^:parallel test-workload-sink-outputs-to-tdr
+    (fixtures/with-fixtures
+      [(fixtures/with-temporary-dataset
+         (datasets/unique-dataset-request
+          (env/getenv "WFL_TDR_DEFAULT_PROFILE")
+          "illumina-genotyping-array.json"))
+       (fixtures/with-shared-temporary-workspace-clone
+         "wfl-dev/Illumina-Genotyping-Array-Template"
+         "workflow-launcher-dev"
+         [{:email (env/getenv "WFL_TDR_SERVICE_ACCOUNT")
+           :accessLevel "OWNER"}])]
+      (fn [[dataset-id workspace]]
+        (let [dataset  (datarepo/datasets dataset-id)
+              source   {:name                   "Terra DataRepo"
+                        :dataset                dataset-id
+                        :table                  "inputs"
+                        :snapshotReaders        ["hornet@firecloud.org"]
+                        :pollingIntervalMinutes 1
+                        :loadTag                "loadTagToMonitor"}
+              executor {:name                "Terra"
+                        :workspace           workspace
+                        :methodConfiguration "warp-pipelines/IlluminaGenotypingArray"
+                        :fromSource          "importSnapshot"}
+              sink     {:name        "Terra DataRepo"
+                        :dataset     dataset-id
+                        :table       "outputs"
+                        :fromOutputs (resources/read-resource
+                                      "illumina_genotyping_array/fromOutputs.edn")}
+              workload (endpoints/exec-workload
+                        (workloads/staged-workload-request source executor sink))]
+          (try
+            (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
+            (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
+            (let [row-ids      (-> dataset
+                                   (datarepo/query-metadata-table
+                                    (:table source) {} [:datarepo_row_id])
+                                   :rows
+                                   flatten)
+                  where-load   {:loadTag (:loadTag source)}
+                  keep-row-ids (-> dataset
+                                   (datarepo/query-metadata-table
+                                    (:table source) where-load [:datarepo_row_id])
+                                   :rows
+                                   flatten)
+                  [workflow & rest]
+                  (util/poll #(seq (endpoints/get-workflows workload)) 20 100)]
+              (is (== 2 (count row-ids))
+                  "2 rows should have been ingested")
+              (is (== 1 (count keep-row-ids))
+                  "1 row should have been ingested with our monitored load tag")
+              (is workflow
+                  "One workflow should have been created")
+              (is (= (first keep-row-ids) (:entity workflow))
+                  "Row ingested with monitored load tag should have been submitted")
+              (is (empty? rest)
+                  "Only one workflow should have been created"))
+            (finally
+              (endpoints/stop-workload workload)))
         ;; Note: when the workload's workflows have finished,
         ;; we expect a notification for each workflow
         ;; to be emitted to the Slack channels in
         ;; `wfl.tools.workloads/watchers`.
-        (is (util/poll
-             #(-> workload :uuid endpoints/get-workload-status :finished)
-             20 100)
-            "The workload should have finished")
-        (is (seq (:rows (datarepo/query-table dataset "outputs")))
-            "outputs should have been written to the dataset")))))
+          (is (util/poll
+               #(-> workload :uuid endpoints/get-workload-status :finished)
+               20 100)
+              "The workload should have finished")
+          (is (seq (:rows (datarepo/query-table dataset "outputs")))
+              "outputs should have been written to the dataset")))))
 
 (deftest ^:parallel test-logging-level
   (testing "the /logging_level endpoint works"
