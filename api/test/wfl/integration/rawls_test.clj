@@ -56,17 +56,19 @@
                                   (make-reference (first names))))))))))
 
 (deftest test-batch-upsert-entities
-  (let [entity-type   "outputs"
-        entity-name   "test"
-        outputs       (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
-    (fixtures/with-temporary-workspace
-      "general-dev-billing-account/test-workspace"
-      "hornet-eng"
-      (fn [workspace]
-        (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
-        (let [[{:keys [name attributes]} & _]
-              (util/poll
-               #(not-empty (firecloud/list-entities workspace entity-type)))]
-          (is (= name entity-name) "The test entity was not created")
-          (is (= (util/map-vals #(if (map? %) (:items %) %) attributes)
-                 (into {} (filter second outputs)))))))))
+  (testing "a 1MB entities file can be uploaded"
+    (let [entity-type "outputs"
+          entity-name "test"
+          outputs     (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
+      (fixtures/with-temporary-workspace
+        "general-dev-billing-account/test-workspace"
+        "hornet-eng"
+        (fn [workspace]
+          (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
+          (let [value-not-nil? (comp (complement nil?) second)
+                [{:keys [name attributes]} & _]
+                (util/poll
+                 #(not-empty (firecloud/list-entities workspace entity-type)))]
+            (is (= name entity-name) "The test entity was not created")
+            (is (= (util/map-vals #(if (map? %) (:items %) %) attributes)
+                   (into {} (filter value-not-nil? outputs))))))))))
