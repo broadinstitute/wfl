@@ -88,6 +88,7 @@
 ;; Specs
 (s/def ::entity ::all/uuid)
 (s/def ::fromSource string?)
+(s/def ::memoryRetryMultiplier number?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::reference ::all/uuid)
@@ -98,7 +99,8 @@
                                          ::fromSource
                                          ::methodConfiguration
                                          ::all/workspace]
-                                :opt-un [::methodConfigurationVersion]))
+                                :opt-un [::memoryRetryMultiplier
+                                         ::methodConfigurationVersion]))
 
 (s/def ::terra-executor-workflow (s/keys :req-un [::entity
                                                   ::methodConfiguration
