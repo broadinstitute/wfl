@@ -17,7 +17,7 @@
         </comment>
         <sql>
             ALTER TABLE TerraExecutor
-            ADD memory_retry_multiplier REAL;
+            ADD COLUMN memory_retry_multiplier REAL;
         </sql>
     </changeSet>
 </databaseChangeLog>
