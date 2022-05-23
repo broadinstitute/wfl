@@ -27,11 +27,14 @@
     (fixtures/temporary-environment new-env)
     fixtures/temporary-postgresql-database))
 
+;; (clojure.spec.gen.alpha/generate (s/gen ::memoryRetryMultiplier)) here?
+
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (let [request {:name                "Terra"
-                 :workspace           testing-workspace
-                 :methodConfiguration testing-method-configuration
-                 :fromSource          "importSnapshot"}]
+  (let [memoryRetryMultiplier 5.23
+        request               {:name                "Terra"
+                               :workspace           testing-workspace
+                               :methodConfiguration testing-method-configuration
+                               :fromSource          "importSnapshot"}]
     (letfn [(check-mc-version [executor]
               (is executor)
               (is (== testing-method-configuration-version
@@ -43,7 +46,12 @@
       (testing "request ignores specified method configuration version"
         (-> (assoc request :methodConfigurationVersion -1)
             (#'executor/terra-executor-validate-request-or-throw)
-            check-mc-version)))))
+            check-mc-version))
+      (testing "request with memoryRetryMultiplier"
+        (-> request
+            (assoc :memoryRetryMultiplier memoryRetryMultiplier)
+            (#'executor/terra-executor-validate-request-or-throw)
+            :memoryRetryMultiplier (== memoryRetryMultiplier) is)))))
 
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
