@@ -80,6 +80,7 @@
 (def ^:private ^:const terra-executor-table "TerraExecutor")
 (def ^:private ^:const terra-executor-serialized-fields
   {:workspace                  :workspace
+   :memoryRetryMultiplier      :memory_retry_multiplier
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
