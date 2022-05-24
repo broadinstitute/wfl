@@ -239,7 +239,7 @@
 (defn snapshot-url
   "Return a link to `snapshot` in TDR UI."
   [{:keys [id] :as _snapshot}]
-  (datarepo-url "snapshots/details" id))
+  (datarepo-url "snapshots" id))
 
 (defn delete-dataset-snapshots
   "Delete snapshots on dataset with `dataset-id`."
