@@ -1,5 +1,6 @@
 # Release 0.18.3
 - [GH-1658] Shouldn't wfl.service.rawls/batch-upsert handle Boolean attributes? ([#607](https://github.com/broadinstitute/wfl/pull/607))
+- [GH-1653] TDR snapshot direct links have changed ([#606](https://github.com/broadinstitute/wfl/pull/606))
 
 # Release 0.18.2
 - [GH-1652] Fix PrimaryKey mumble cannot be a column with fileref type errors from TDR. ([#603](https://github.com/broadinstitute/wfl/pull/603))
