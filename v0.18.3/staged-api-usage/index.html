@@ -1,0 +1,1326 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
+    
+    
+      
+        <title>API Usage - Workflow Launcher</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.f7f47774.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
+  
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+      <script>var palette=__get("__palette");if(null!==palette&&"object"==typeof palette.color)for(var key in palette.color)document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#staged-workload-api-overview" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Workflow Launcher" class="md-header__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Workflow Launcher
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Workflow Launcher" class="md-nav__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Workflow Launcher
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Get Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Development Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Development Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-process/" class="md-nav__link">
+        Development Process and Tips
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-release/" class="md-nav__link">
+        Release Process
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      <label class="md-nav__link" for="__nav_3">
+        Staged Workloads
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Staged Workloads" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Staged Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-workload/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          API Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        API Usage
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#staged-workload-api-overview" class="md-nav__link">
+    Staged Workload API Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-usage-examples" class="md-nav__link">
+    API Usage Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="API Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workload-response-format" class="md-nav__link">
+    Workload Response Format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-workloads" class="md-nav__link">
+    Get Workloads
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-workflows" class="md-nav__link">
+    Get Workflows
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retry-workload" class="md-nav__link">
+    Retry Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-workload" class="md-nav__link">
+    Create Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload" class="md-nav__link">
+    Start Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload" class="md-nav__link">
+    Stop Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-workload" class="md-nav__link">
+    Execute Workload
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-source/" class="md-nav__link">
+        Source
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-executor/" class="md-nav__link">
+        Executor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-sink/" class="md-nav__link">
+        Sink
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      <label class="md-nav__link" for="__nav_4">
+        Module-Specific Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Module-Specific Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Module-Specific Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-general/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-aou-arrays/" class="md-nav__link">
+        Arrays
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-external-exome-reprocessing/" class="md-nav__link">
+        External Exome
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-sg/" class="md-nav__link">
+        Somatic Genomes
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-wgs/" class="md-nav__link">
+        Whole Genome
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      <label class="md-nav__link" for="__nav_5">
+        General Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="General Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          General Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-workflow-options/" class="md-nav__link">
+        Workflow Options
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-across-directory/" class="md-nav__link">
+        Usage Across a Directory
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-retry/" class="md-nav__link">
+        Retrying Workflows
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-abort/" class="md-nav__link">
+        Aborting a Workload
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      <label class="md-nav__link" for="__nav_6">
+        Readings
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Readings" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Readings
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terra/" class="md-nav__link">
+        WorkFlow Launcher's Role in Terra
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#staged-workload-api-overview" class="md-nav__link">
+    Staged Workload API Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-usage-examples" class="md-nav__link">
+    API Usage Examples
+  </a>
+  
+    <nav class="md-nav" aria-label="API Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workload-response-format" class="md-nav__link">
+    Workload Response Format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-workloads" class="md-nav__link">
+    Get Workloads
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-workflows" class="md-nav__link">
+    Get Workflows
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retry-workload" class="md-nav__link">
+    Retry Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-workload" class="md-nav__link">
+    Create Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload" class="md-nav__link">
+    Start Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload" class="md-nav__link">
+    Stop Workload
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-workload" class="md-nav__link">
+    Execute Workload
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/staged-api-usage.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  <h1>API Usage</h1>
+                
+                <h2 id="staged-workload-api-overview">Staged Workload API Overview<a class="headerlink" href="#staged-workload-api-overview" title="Permanent link">⚓︎</a></h2>
+<p>Users interact with staged workloads via the following WFL API endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Verb</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload</code></td>
+<td>List all workloads, optionally filtering by uuid or project</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload/{uuid}/workflows</code></td>
+<td>List all unretried workflows for workload <code>uuid</code>, filtering by supplied filters</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/workload/{uuid}/retry</code></td>
+<td>Retry unretried workflows matching given filters in workload <code>uuid</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/create</code></td>
+<td>Create a new workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/start</code></td>
+<td>Start a workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/stop</code></td>
+<td>Stop a running workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/exec</code></td>
+<td>Create and start (execute) a workload</td>
+</tr>
+</tbody>
+</table>
+<p>These endpoints play into a staged workload's lifecycle thusly:</p>
+<ol>
+<li>
+<p>The caller needs to <a href="#create-workload">create</a> a workload and specify the
+   <a href="../staged-source/">source</a>,
+   <a href="../staged-executor/">executor</a>, and
+   <a href="../staged-sink/">sink</a>.</p>
+<p>If all stage requests pass verification,
+the caller will receive the newly created
+<a href="#workload-response-format">workload object</a> with an assigned <code>uuid</code>
+in response.</p>
+</li>
+<li>
+<p>Next, the caller needs to <a href="#start-workload">start</a> the newly created workload.
+   Once started, WFL will continue to poll for new inputs in the source until stopped.</p>
+<p>(Alternatively: callers can <a href="#execute-workload">execute</a> a workload request
+to create and start a workload within a single call,
+sidestepping the possibility of creating a workload
+but forgetting to start it.)</p>
+</li>
+<li>
+<p><a href="#stop-workload">Stopping</a> a workload will not cancel analysis in progress,
+   but WFL will stop polling for new inputs,
+   and will mark the workload finished
+   once any previously-identified inputs have undergone processing.</p>
+<ul>
+<li>Example: the caller may wish to stop a continuous workflow
+  if maintenance is required on the underlying method.</li>
+</ul>
+</li>
+</ol>
+<p>The caller can also <a href="#retry-workload">retry</a> workflows in a workload
+matching a Terra submission ID and optional workflow status (ex. "Failed").</p>
+<h2 id="api-usage-examples">API Usage Examples<a class="headerlink" href="#api-usage-examples" title="Permanent link">⚓︎</a></h2>
+<p>Here you'll find example requests and responses for the endpoints enumerated above.</p>
+<h3 id="workload-response-format">Workload Response Format<a class="headerlink" href="#workload-response-format" title="Permanent link">⚓︎</a></h3>
+<p>Many of the API endpoints return staged workloads in their responses.</p>
+<p>An example workload response at the time of this writing is formatted thusly:</p>
+<p><code>{
+    "started" : "2021-07-14T15:36:47Z",
+    "watchers" : [
+        ["slack", "C000XXX0XXX"]
+    ],
+    "labels" : [ "hornet:test", "project:okotsopo testing enhanced source, executor, sink logging" ],
+    "creator" : "okotsopo@broadinstitute.org",
+    "updated" : "2021-08-06T21:41:28Z",
+    "created" : "2021-07-14T15:36:07Z",
+    "source" : {
+    "snapshots" : [ "67a2bfd7-88e4-4adf-9e41-9b0d04fb32ea" ],
+    "name" : "TDR Snapshots"
+    },
+    "finished" : "2021-08-06T21:41:28Z",
+    "commit" : "9719eda7424bf5b0804f5493875681fa014cdb29",
+    "uuid" : "e66c86b2-120d-4f7f-9c3a-b9eaadeb1919",
+    "executor" : {
+    "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
+    "methodConfiguration" : "wfl-dev/sarscov2_illumina_full",
+    "fromSource" : "importSnapshot",
+    "name" : "Terra"
+    },
+    "version" : "0.8.0",
+    "sink" : {
+    "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
+    "entityType" : "flowcell",
+    "fromOutputs" : {
+    "submission_xml" : "submission_xml",
+    "assembled_ids" : "assembled_ids",
+    ...
+    },
+    "identifier" : "run_id",
+    "name" : "Terra Workspace"
+    }
+    }</code></p>
+<p>Worth mentioning is that the contents of the <code>source</code>, <code>executor</code> and <code>sink</code> blocks
+within the response will be formatted according to the corresponding stage implementation.</p>
+<h3 id="get-workloads">Get Workloads<a class="headerlink" href="#get-workloads" title="Permanent link">⚓︎</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p>A request to the <code>/api/v1/workload</code> endpoint without a <code>uuid</code>
+or <code>project</code> parameter returns all workloads known to WFL.
+That response might be large and take awhile to process.</p>
+</div>
+<p><strong>GET /api/v1/workload?uuid={uuid}</strong></p>
+<p>Query WFL for a workload by its UUID.</p>
+<p>Note that a successful response from <code>/api/v1/workload</code> will
+always be an array of <a href="#workload-response-format">workload objects</a>,
+but specifying a <code>uuid</code> will return a singleton array.</p>
+<div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
+<p><code>curl -X GET 'http://localhost:3000/api/v1/workload' \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H 'Accept: application/json' \
+    -d $'{ "uuid": "e66c86b2-120d-4f7f-9c3a-b9eaadeb1919" }'</code></p>
+</div>
+</div>
+<p><strong>GET /api/v1/workload?project={project}</strong></p>
+<p>Query WFL for all workloads with a specified <code>project</code> label.</p>
+<p>The response is an array of <a href="#workload-response-format">workload objects</a>.</p>
+<div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
+<p><code>curl -X GET 'http://localhost:3000/api/v1/workload' \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H 'Accept: application/json' \
+    -d $'{ "project": "PO-1234" }'</code></p>
+</div>
+</div>
+<h3 id="get-workflows">Get Workflows<a class="headerlink" href="#get-workflows" title="Permanent link">⚓︎</a></h3>
+<p><strong>GET /api/v1/workload/{uuid}/workflows</strong></p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p>Fetching workflows in a workload without any other filters
+may yield a large response and take a long time to process,
+such as for long-running continuous workloads.</p>
+</div>
+<div class="tabbed-set" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
+<p>```
+WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22  # workload UUID</p>
+<p>curl -X GET \
+     "$WFL/api/v1/workload/$UUID/workflows" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Accept: application/json'
+```</p>
+</div>
+</div>
+<p>The response is a list of WFL workflow records, each of which tell us:</p>
+<ul>
+<li>
+<p>WFL submitted <code>methodConfiguration</code> in <code>workspace</code> with the
+  snapshot <code>reference</code> as its root entity type</p>
+</li>
+<li>
+<p>The resulting submission had Terra <code>submission</code> UUID</p>
+</li>
+<li>
+<p>The workflow had Terra <code>workflow</code> UUID and is processing the snapshot row
+  with <code>entity</code> as its row UUID</p>
+</li>
+<li>
+<p>At WFL's last poll at <code>updated</code>, we noted that the workflow had <code>status</code></p>
+</li>
+<li>
+<p>Once a workflow has succeeded, <code>consumed</code> is populated with a timestamp
+  when WFL has "sunk" its outputs to their destination</p>
+</li>
+</ul>
+<div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Response</label><div class="tabbed-content">
+<p><code>[ {
+"retry": null,
+"workspace": "emerge_prod/Arrays_test_AD",
+"updated": "2022-01-03T21:35:40Z",
+"workflow": "99956c17-26af-4d50-8954-9de9ecc4f733",
+"reference": "4de4b53c-3904-43f9-a155-9f2e2460eb42",
+"status": "Aborted",
+"id": 1,
+"methodConfiguration": "emerge_prod/Arrays_TDR_GH-1560",
+"consumed": null,
+"submission": "fbb96180-f6a5-4895-a154-72d133e442db",
+"entity": "d4ce2b14-49d6-4209-95ab-424e2edf1741"
+} ]</code></p>
+</div>
+</div>
+<p><strong>GET /api/v1/workload/{uuid}/workflows?submission={submission}&amp;status={status}</strong></p>
+<p>Query WFL for all unretried workflows associated with workload <code>uuid</code>,
+filtering by any workflow filters specified as query params:</p>
+<ul>
+<li><code>submission</code> - Terra submission ID (must be a valid UUID)</li>
+<li><code>status</code> - Workflow status (must be a valid Cromwell workflow status)</li>
+</ul>
+<p>The response has the same format as when querying without filters.</p>
+<div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
+<p>```
+WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
+STATUS=Aborted                                  # Cromwell workflow status</p>
+<p>curl -X GET \
+     "$WFL/api/v1/workload/$UUID/workflows?submission=$SUBMISSION&amp;status=$STATUS" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Accept: application/json'
+```</p>
+</div>
+</div>
+<h3 id="retry-workload">Retry Workload<a class="headerlink" href="#retry-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/workload/{uuid}/retry</strong></p>
+<p>Resubmit all unretried workflows associated with workload <code>uuid</code>
+and request body filters.</p>
+<p>Prerequisites:</p>
+<ul>
+<li>The request body filters must be <a href="../usage-retry/#request-body">valid</a></li>
+<li>Workflows must exist in the workload for the specified filters</li>
+<li>The workload should be started</li>
+</ul>
+<p>With all prerequisite fulfilled, WFL will then...</p>
+<ul>
+<li>Submit the retry to the executor</li>
+<li>(If necessary) remark the workload as active
+  so that it will be visible in the update loop</li>
+</ul>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<p>Further information found in general
+<a href="../usage-retry/#retrying-terra-workflows-via-wfl-api">retry documentation</a>.</p>
+<div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
+<p>```
+WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
+SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID</p>
+<p>curl -X POST \
+    "$WFL/api/v1/workload/$UUID/retry" \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H "Content-Type: application/json" \
+    -d "{ \"submission\": \"$SUBMISSION\" }"
+```</p>
+</div>
+</div>
+<h3 id="create-workload">Create Workload<a class="headerlink" href="#create-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/create</strong></p>
+<p>Create a new workload from a request.
+Expected request format documented within <a href="../staged-workload/">staged workload</a>
+navigation.</p>
+<p>The response is the newly created <a href="#workload-response-format">workload object</a>
+with an assigned <code>uuid</code>.</p>
+<div class="tabbed-set" data-tabs="7:1"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content">
+<p><code>curl -X "POST" "http://localhost:3000/api/v1/create" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+            "watchers": [
+                ["slack", "C000XXX0XXX"],
+                ["email", "tester@broadinstitute.org"]
+            ],
+            "labels": [
+                "hornet:test"
+            ],
+            "project": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+            "source": {
+                "name": "Terra DataRepo",
+                "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
+                "table": "flowcells",
+                "snapshotReaders": [
+                    "workflow-launcher-dev@firecloud.org"
+                ]
+            },
+            "executor": {
+                "name": "Terra",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+                "fromSource": "importSnapshot"
+            },
+            "sink": {
+                "name": "Terra Workspace",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "entityType": "flowcell",
+                "identifier": "run_id",
+                "fromOutputs": {
+                    "submission_xml" : "submission_xml",
+                    "assembled_ids" : "assembled_ids",
+                    "num_failed_assembly" : "num_failed_assembly",
+                    ...
+                }
+            }
+        }'</code></p>
+</div>
+</div>
+<h3 id="start-workload">Start Workload<a class="headerlink" href="#start-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/start?uuid={uuid}</strong></p>
+<p>Start an existing, unstarted workload <code>uuid</code>.</p>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<div class="tabbed-set" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><label for="__tabbed_8_1">Request</label><div class="tabbed-content">
+<p><code>curl -X POST 'http://localhost:3000/api/v1/start' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d $'{ "uuid": "fb06bcf3-bc10-471b-a309-b2f99e4f5a67" }'</code></p>
+</div>
+</div>
+<h3 id="stop-workload">Stop Workload<a class="headerlink" href="#stop-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/stop?uuid={uuid}</strong></p>
+<p>Stop a running workload <code>uuid</code>.</p>
+<p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
+<div class="tabbed-set" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><label for="__tabbed_9_1">Request</label><div class="tabbed-content">
+<p><code>curl -X POST 'http://localhost:3000/api/v1/stop' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d $'{ "uuid": "fb06bcf3-bc10-471b-a309-b2f99e4f5a67" }'</code></p>
+</div>
+</div>
+<h3 id="execute-workload">Execute Workload<a class="headerlink" href="#execute-workload" title="Permanent link">⚓︎</a></h3>
+<p><strong>POST /api/v1/exec</strong></p>
+<p>Create and start (execute) a workload from a request.
+Expected request format documented within <a href="../staged-workload/">staged workload</a>
+navigation.</p>
+<p>The response is the newly created and started <a href="#workload-response-format">workload object</a>
+with an assigned <code>uuid</code>.</p>
+<div class="tabbed-set" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><label for="__tabbed_10_1">Request</label><div class="tabbed-content">
+<p><code>curl -X "POST" "http://localhost:3000/api/v1/exec" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+            "watchers": [
+                ["slack", "C000XXX0XXX"]
+            ],
+            "labels": [
+                "hornet:test"
+            ],
+            "project": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+            "source": {
+                "name": "Terra DataRepo",
+                "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
+                "table": "flowcells",
+                "snapshotReaders": [
+                    "workflow-launcher-dev@firecloud.org"
+                ]
+            },
+            "executor": {
+                "name": "Terra",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+                "fromSource": "importSnapshot"
+            },
+            "sink": {
+                "name": "Terra Workspace",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "entityType": "flowcell",
+                "identifier": "run_id",
+                "fromOutputs": {
+                    "submission_xml" : "submission_xml",
+                    "assembled_ids" : "assembled_ids",
+                    "num_failed_assembly" : "num_failed_assembly",
+                    ...
+                }
+            }
+        }'</code></p>
+</div>
+</div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../staged-workload/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Overview
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../staged-source/" class="md-footer__link md-footer__link--next" aria-label="Next: Source" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Source
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/broadinstitute/wfl" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>
+      
+    
+  </body>
+</html>
