@@ -15,19 +15,21 @@
   (:import [java.util UUID]
            [wfl.util UserException]))
 
-(def ^:private testing-namespace "wfl-dev")
-(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
-(def ^:private testing-method-name "sarscov2_illumina_full")
-(def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
+(def ^:private testing-namespace
+  "wfl-dev")
+(def ^:private testing-workspace
+  (str testing-namespace "/" "CDC_Viral_Sequencing"))
+(def ^:private testing-method-name
+  "sarscov2_illumina_full")
+(def ^:private testing-method-configuration
+  (str testing-namespace "/" testing-method-name))
 (def ^:private testing-method-configuration-version 2)
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
-
-;; (clojure.spec.gen.alpha/generate (s/gen ::memoryRetryMultiplier)) here?
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"})
+  fixtures/temporary-postgresql-database)
 
 (deftest test-validate-terra-executor-with-valid-executor-request
   (let [memoryRetryMultiplier 5.23
@@ -47,7 +49,7 @@
         (-> (assoc request :methodConfigurationVersion -1)
             (#'executor/terra-executor-validate-request-or-throw)
             check-mc-version))
-      (testing "request with memoryRetryMultiplier"
+      (testing "request propagates memoryRetryMultiplier"
         (-> request
             (assoc :memoryRetryMultiplier memoryRetryMultiplier)
             (#'executor/terra-executor-validate-request-or-throw)
