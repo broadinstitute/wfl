@@ -210,11 +210,12 @@
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name                "Terra"
-          :workspace           "workspace-ns/workspace-name"
-          :methodConfiguration fake-method-config
-          :fromSource          "importSnapshot"
-          :skipValidation      true}
+    (->> {:fromSource            "importSnapshot"
+          :memoryRetryMultiplier 1.23
+          :methodConfiguration   fake-method-config
+          :name                  "Terra"
+          :skipValidation        true
+          :workspace             "workspace-ns/workspace-name"}
          (executor/create-executor! tx id)
          (zipmap [:executor_type :executor_items])
          (executor/load-executor! tx))))
@@ -256,7 +257,8 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))
-              executor-record
+              {:keys [memory_retry_multiplier method_configuration_version]
+               :as   executor-record}
               (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor))
               running-workflow (running-workflow-from-submission init-submission-id)
               succeeded-workflow (succeeded-workflow-from-submission init-submission-id)]
@@ -273,8 +275,9 @@
           (is (not (stage/done? executor)) "executor should not have finished processing")
           (verify-record-against-workflow running-record running-workflow 1)
           (verify-record-against-workflow succeeded-record succeeded-workflow 2)
-          (is (== method-config-version-post-update (:method_configuration_version executor-record))
-              "Method configuration version was not incremented."))))))
+          (is (== method-config-version-post-update method_configuration_version)
+              "Method configuration version was not incremented.")
+          (is (== (:memoryRetryMultiplier executor) memory_retry_multiplier)))))))
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded?    #{"Succeeded"}
