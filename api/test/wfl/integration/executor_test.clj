@@ -257,8 +257,7 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))
-              {:keys [memory_retry_multiplier method_configuration_version]
-               :as   executor-record}
+              {:keys [memory_retry_multiplier method_configuration_version]}
               (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor))
               running-workflow (running-workflow-from-submission init-submission-id)
               succeeded-workflow (succeeded-workflow-from-submission init-submission-id)]
