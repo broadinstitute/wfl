@@ -251,16 +251,16 @@
     user-comment-note
     reference
     [_type snapshot   :as _source-object]]
-   (let [{:keys [workspace methodConfiguration]} executor]
+   (let [{:keys [memoryRetryMultiplier methodConfiguration workspace]} executor]
      (update-method-configuration! workload reference snapshot)
      (log/debug "Initiating Terra submission"
-                :workload            (workloads/to-log workload)
-                :methodConfiguration methodConfiguration
-                :workspace           workspace)
+                :workload (workloads/to-log workload)
+                :executor executor)
      (let [userComment
            (create-user-comment user-comment-note workload snapshot)
            submission
-           (firecloud/submit-method workspace methodConfiguration userComment)
+           (firecloud/submit-method memoryRetryMultiplier
+                                    methodConfiguration userComment workspace)
            message
            (submission-created-slack-msg executor submission snapshot)]
        (slack/notify-watchers workload message)
