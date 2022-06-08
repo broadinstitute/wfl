@@ -15,23 +15,28 @@
   (:import [java.util UUID]
            [wfl.util UserException]))
 
-(def ^:private testing-namespace "wfl-dev")
-(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
-(def ^:private testing-method-name "sarscov2_illumina_full")
-(def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
+(def ^:private testing-namespace
+  "wfl-dev")
+(def ^:private testing-workspace
+  (str testing-namespace "/" "CDC_Viral_Sequencing"))
+(def ^:private testing-method-name
+  "sarscov2_illumina_full")
+(def ^:private testing-method-configuration
+  (str testing-namespace "/" testing-method-name))
 (def ^:private testing-method-configuration-version 2)
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"})
+  fixtures/temporary-postgresql-database)
 
 (deftest test-validate-terra-executor-with-valid-executor-request
-  (let [request {:name                "Terra"
-                 :workspace           testing-workspace
-                 :methodConfiguration testing-method-configuration
-                 :fromSource          "importSnapshot"}]
+  (let [memoryRetryMultiplier 5.23
+        request               {:name                "Terra"
+                               :workspace           testing-workspace
+                               :methodConfiguration testing-method-configuration
+                               :fromSource          "importSnapshot"}]
     (letfn [(check-mc-version [executor]
               (is executor)
               (is (== testing-method-configuration-version
@@ -43,7 +48,12 @@
       (testing "request ignores specified method configuration version"
         (-> (assoc request :methodConfigurationVersion -1)
             (#'executor/terra-executor-validate-request-or-throw)
-            check-mc-version)))))
+            check-mc-version))
+      (testing "request propagates memoryRetryMultiplier"
+        (-> request
+            (assoc :memoryRetryMultiplier memoryRetryMultiplier)
+            (#'executor/terra-executor-validate-request-or-throw)
+            :memoryRetryMultiplier (== memoryRetryMultiplier) is)))))
 
 (deftest test-validate-terra-executor-with-invalid-executor-request
   (is (thrown-with-msg?
@@ -200,11 +210,12 @@
 
 (defn ^:private create-terra-executor [id]
   (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
-    (->> {:name                "Terra"
-          :workspace           "workspace-ns/workspace-name"
-          :methodConfiguration fake-method-config
-          :fromSource          "importSnapshot"
-          :skipValidation      true}
+    (->> {:fromSource            "importSnapshot"
+          :memoryRetryMultiplier 1.23
+          :methodConfiguration   fake-method-config
+          :name                  "Terra"
+          :skipValidation        true
+          :workspace             "workspace-ns/workspace-name"}
          (executor/create-executor! tx id)
          (zipmap [:executor_type :executor_items])
          (executor/load-executor! tx))))
@@ -246,7 +257,7 @@
       (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
         (let [[running-record succeeded-record & _ :as records]
               (->> executor :details (postgres/get-table tx) (sort-by :id))
-              executor-record
+              {:keys [memory_retry_multiplier method_configuration_version]}
               (#'postgres/load-record-by-id! tx "TerraExecutor" (:id executor))
               running-workflow (running-workflow-from-submission init-submission-id)
               succeeded-workflow (succeeded-workflow-from-submission init-submission-id)]
@@ -263,8 +274,9 @@
           (is (not (stage/done? executor)) "executor should not have finished processing")
           (verify-record-against-workflow running-record running-workflow 1)
           (verify-record-against-workflow succeeded-record succeeded-workflow 2)
-          (is (== method-config-version-post-update (:method_configuration_version executor-record))
-              "Method configuration version was not incremented."))))))
+          (is (== method-config-version-post-update method_configuration_version)
+              "Method configuration version was not incremented.")
+          (is (== (:memoryRetryMultiplier executor) memory_retry_multiplier)))))))
 
 (deftest test-peek-terra-executor-queue
   (let [succeeded?    #{"Succeeded"}

@@ -20,7 +20,7 @@
   (let [queue (conj (PersistentQueue/EMPTY)
                     (make-notification 'test-dispatch-does-not-throw))]
     (with-redefs
-     [slack/post-message #({:ok false :error "something_bad"})]
+     [slack/post-message (constantly {:ok false :error "something_bad"})]
       (is (= (seq queue) (seq (slack/dispatch-notification queue)))
           "Queue should remain when posting Slack message returns error"))
     (with-redefs
