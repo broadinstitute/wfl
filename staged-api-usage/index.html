@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -933,42 +933,41 @@ matching a Terra submission ID and optional workflow status (ex. "Failed").</p>
 <h3 id="workload-response-format">Workload Response Format<a class="headerlink" href="#workload-response-format" title="Permanent link">⚓︎</a></h3>
 <p>Many of the API endpoints return staged workloads in their responses.</p>
 <p>An example workload response at the time of this writing is formatted thusly:</p>
-<div class="highlight"><pre><span></span><code>{
-    &quot;started&quot; : &quot;2021-07-14T15:36:47Z&quot;,
-    &quot;watchers&quot; : [
-        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;]
+<p><code>{
+    "started" : "2021-07-14T15:36:47Z",
+    "watchers" : [
+        ["slack", "C000XXX0XXX"]
     ],
-    &quot;labels&quot; : [ &quot;hornet:test&quot;, &quot;project:okotsopo testing enhanced source, executor, sink logging&quot; ],
-    &quot;creator&quot; : &quot;okotsopo@broadinstitute.org&quot;,
-    &quot;updated&quot; : &quot;2021-08-06T21:41:28Z&quot;,
-    &quot;created&quot; : &quot;2021-07-14T15:36:07Z&quot;,
-    &quot;source&quot; : {
-    &quot;snapshots&quot; : [ &quot;67a2bfd7-88e4-4adf-9e41-9b0d04fb32ea&quot; ],
-    &quot;name&quot; : &quot;TDR Snapshots&quot;
+    "labels" : [ "hornet:test", "project:okotsopo testing enhanced source, executor, sink logging" ],
+    "creator" : "okotsopo@broadinstitute.org",
+    "updated" : "2021-08-06T21:41:28Z",
+    "created" : "2021-07-14T15:36:07Z",
+    "source" : {
+    "snapshots" : [ "67a2bfd7-88e4-4adf-9e41-9b0d04fb32ea" ],
+    "name" : "TDR Snapshots"
     },
-    &quot;finished&quot; : &quot;2021-08-06T21:41:28Z&quot;,
-    &quot;commit&quot; : &quot;9719eda7424bf5b0804f5493875681fa014cdb29&quot;,
-    &quot;uuid&quot; : &quot;e66c86b2-120d-4f7f-9c3a-b9eaadeb1919&quot;,
-    &quot;executor&quot; : {
-    &quot;workspace&quot; : &quot;wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707&quot;,
-    &quot;methodConfiguration&quot; : &quot;wfl-dev/sarscov2_illumina_full&quot;,
-    &quot;fromSource&quot; : &quot;importSnapshot&quot;,
-    &quot;name&quot; : &quot;Terra&quot;
+    "finished" : "2021-08-06T21:41:28Z",
+    "commit" : "9719eda7424bf5b0804f5493875681fa014cdb29",
+    "uuid" : "e66c86b2-120d-4f7f-9c3a-b9eaadeb1919",
+    "executor" : {
+    "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
+    "methodConfiguration" : "wfl-dev/sarscov2_illumina_full",
+    "fromSource" : "importSnapshot",
+    "name" : "Terra"
     },
-    &quot;version&quot; : &quot;0.8.0&quot;,
-    &quot;sink&quot; : {
-    &quot;workspace&quot; : &quot;wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707&quot;,
-    &quot;entityType&quot; : &quot;flowcell&quot;,
-    &quot;fromOutputs&quot; : {
-    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
-    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
+    "version" : "0.8.0",
+    "sink" : {
+    "workspace" : "wfl-dev/CDC_Viral_Sequencing_okotsopo_20210707",
+    "entityType" : "flowcell",
+    "fromOutputs" : {
+    "submission_xml" : "submission_xml",
+    "assembled_ids" : "assembled_ids",
     ...
     },
-    &quot;identifier&quot; : &quot;run_id&quot;,
-    &quot;name&quot; : &quot;Terra Workspace&quot;
+    "identifier" : "run_id",
+    "name" : "Terra Workspace"
     }
-    }
-</code></pre></div>
+    }</code></p>
 <p>Worth mentioning is that the contents of the <code>source</code>, <code>executor</code> and <code>sink</code> blocks
 within the response will be formatted according to the corresponding stage implementation.</p>
 <h3 id="get-workloads">Get Workloads<a class="headerlink" href="#get-workloads" title="Permanent link">⚓︎</a></h3>
@@ -984,22 +983,20 @@ That response might be large and take awhile to process.</p>
 always be an array of <a href="#workload-response-format">workload objects</a>,
 but specifying a <code>uuid</code> will return a singleton array.</p>
 <div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload&#39; \
-    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-    -H &#39;Accept: application/json&#39; \
-    -d $&#39;{ &quot;uuid&quot;: &quot;e66c86b2-120d-4f7f-9c3a-b9eaadeb1919&quot; }&#39;
-</code></pre></div>
+<p><code>curl -X GET 'http://localhost:3000/api/v1/workload' \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H 'Accept: application/json' \
+    -d $'{ "uuid": "e66c86b2-120d-4f7f-9c3a-b9eaadeb1919" }'</code></p>
 </div>
 </div>
 <p><strong>GET /api/v1/workload?project={project}</strong></p>
 <p>Query WFL for all workloads with a specified <code>project</code> label.</p>
 <p>The response is an array of <a href="#workload-response-format">workload objects</a>.</p>
 <div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET &#39;http://localhost:3000/api/v1/workload&#39; \
-    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-    -H &#39;Accept: application/json&#39; \
-    -d $&#39;{ &quot;project&quot;: &quot;PO-1234&quot; }&#39;
-</code></pre></div>
+<p><code>curl -X GET 'http://localhost:3000/api/v1/workload' \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H 'Accept: application/json' \
+    -d $'{ "project": "PO-1234" }'</code></p>
 </div>
 </div>
 <h3 id="get-workflows">Get Workflows<a class="headerlink" href="#get-workflows" title="Permanent link">⚓︎</a></h3>
@@ -1012,14 +1009,14 @@ may yield a large response and take a long time to process,
 such as for long-running continuous workloads.</p>
 </div>
 <div class="tabbed-set" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
-UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22  # workload UUID
-
-curl -X GET \
-     &quot;$WFL/api/v1/workload/$UUID/workflows&quot; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Accept: application/json&#39;
-</code></pre></div>
+<p>```
+WFL=http://localhost:3000
+UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22  # workload UUID</p>
+<p>curl -X GET \
+     "$WFL/api/v1/workload/$UUID/workflows" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Accept: application/json'
+```</p>
 </div>
 </div>
 <p>The response is a list of WFL workflow records, each of which tell us:</p>
@@ -1044,20 +1041,19 @@ curl -X GET \
 </li>
 </ul>
 <div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>[ {
-&quot;retry&quot;: null,
-&quot;workspace&quot;: &quot;emerge_prod/Arrays_test_AD&quot;,
-&quot;updated&quot;: &quot;2022-01-03T21:35:40Z&quot;,
-&quot;workflow&quot;: &quot;99956c17-26af-4d50-8954-9de9ecc4f733&quot;,
-&quot;reference&quot;: &quot;4de4b53c-3904-43f9-a155-9f2e2460eb42&quot;,
-&quot;status&quot;: &quot;Aborted&quot;,
-&quot;id&quot;: 1,
-&quot;methodConfiguration&quot;: &quot;emerge_prod/Arrays_TDR_GH-1560&quot;,
-&quot;consumed&quot;: null,
-&quot;submission&quot;: &quot;fbb96180-f6a5-4895-a154-72d133e442db&quot;,
-&quot;entity&quot;: &quot;d4ce2b14-49d6-4209-95ab-424e2edf1741&quot;
-} ]
-</code></pre></div>
+<p><code>[ {
+"retry": null,
+"workspace": "emerge_prod/Arrays_test_AD",
+"updated": "2022-01-03T21:35:40Z",
+"workflow": "99956c17-26af-4d50-8954-9de9ecc4f733",
+"reference": "4de4b53c-3904-43f9-a155-9f2e2460eb42",
+"status": "Aborted",
+"id": 1,
+"methodConfiguration": "emerge_prod/Arrays_TDR_GH-1560",
+"consumed": null,
+"submission": "fbb96180-f6a5-4895-a154-72d133e442db",
+"entity": "d4ce2b14-49d6-4209-95ab-424e2edf1741"
+} ]</code></p>
 </div>
 </div>
 <p><strong>GET /api/v1/workload/{uuid}/workflows?submission={submission}&amp;status={status}</strong></p>
@@ -1069,16 +1065,16 @@ filtering by any workflow filters specified as query params:</p>
 </ul>
 <p>The response has the same format as when querying without filters.</p>
 <div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
+<p>```
+WFL=http://localhost:3000
 UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
 SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
-STATUS=Aborted                                  # Cromwell workflow status
-
-curl -X GET \
-     &quot;$WFL/api/v1/workload/$UUID/workflows?submission=$SUBMISSION&amp;status=$STATUS&quot; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Accept: application/json&#39;
-</code></pre></div>
+STATUS=Aborted                                  # Cromwell workflow status</p>
+<p>curl -X GET \
+     "$WFL/api/v1/workload/$UUID/workflows?submission=$SUBMISSION&amp;status=$STATUS" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Accept: application/json'
+```</p>
 </div>
 </div>
 <h3 id="retry-workload">Retry Workload<a class="headerlink" href="#retry-workload" title="Permanent link">⚓︎</a></h3>
@@ -1101,16 +1097,16 @@ and request body filters.</p>
 <p>Further information found in general
 <a href="../usage-retry/#retrying-terra-workflows-via-wfl-api">retry documentation</a>.</p>
 <div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>WFL=http://localhost:3000
+<p>```
+WFL=http://localhost:3000
 UUID=e8bc2c14-2396-469e-80fe-ebfed8d60a22       # workload UUID
-SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID
-
-curl -X POST \
-    &quot;$WFL/api/v1/workload/$UUID/retry&quot; \
-    -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-    -H &quot;Content-Type: application/json&quot; \
-    -d &quot;{ \&quot;submission\&quot;: \&quot;$SUBMISSION\&quot; }&quot;
-</code></pre></div>
+SUBMISSION=fbb96180-f6a5-4895-a154-72d133e442db # Terra submission UUID</p>
+<p>curl -X POST \
+    "$WFL/api/v1/workload/$UUID/retry" \
+    -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+    -H "Content-Type: application/json" \
+    -d "{ \"submission\": \"$SUBMISSION\" }"
+```</p>
 </div>
 </div>
 <h3 id="create-workload">Create Workload<a class="headerlink" href="#create-workload" title="Permanent link">⚓︎</a></h3>
@@ -1121,46 +1117,45 @@ navigation.</p>
 <p>The response is the newly created <a href="#workload-response-format">workload object</a>
 with an assigned <code>uuid</code>.</p>
 <div class="tabbed-set" data-tabs="7:1"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X &quot;POST&quot; &quot;http://localhost:3000/api/v1/create&quot; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Content-Type: application/json&#39; \
-     -d &#39;{
-            &quot;watchers&quot;: [
-                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
-                [&quot;email&quot;, &quot;tester@broadinstitute.org&quot;]
+<p><code>curl -X "POST" "http://localhost:3000/api/v1/create" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+            "watchers": [
+                ["slack", "C000XXX0XXX"],
+                ["email", "tester@broadinstitute.org"]
             ],
-            &quot;labels&quot;: [
-                &quot;hornet:test&quot;
+            "labels": [
+                "hornet:test"
             ],
-            &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-            &quot;source&quot;: {
-                &quot;name&quot;: &quot;Terra DataRepo&quot;,
-                &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
-                &quot;table&quot;: &quot;flowcells&quot;,
-                &quot;snapshotReaders&quot;: [
-                    &quot;workflow-launcher-dev@firecloud.org&quot;
+            "project": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+            "source": {
+                "name": "Terra DataRepo",
+                "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
+                "table": "flowcells",
+                "snapshotReaders": [
+                    "workflow-launcher-dev@firecloud.org"
                 ]
             },
-            &quot;executor&quot;: {
-                &quot;name&quot;: &quot;Terra&quot;,
-                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-                &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
-                &quot;fromSource&quot;: &quot;importSnapshot&quot;
+            "executor": {
+                "name": "Terra",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+                "fromSource": "importSnapshot"
             },
-            &quot;sink&quot;: {
-                &quot;name&quot;: &quot;Terra Workspace&quot;,
-                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-                &quot;entityType&quot;: &quot;flowcell&quot;,
-                &quot;identifier&quot;: &quot;run_id&quot;,
-                &quot;fromOutputs&quot;: {
-                    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
-                    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
-                    &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+            "sink": {
+                "name": "Terra Workspace",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "entityType": "flowcell",
+                "identifier": "run_id",
+                "fromOutputs": {
+                    "submission_xml" : "submission_xml",
+                    "assembled_ids" : "assembled_ids",
+                    "num_failed_assembly" : "num_failed_assembly",
                     ...
                 }
             }
-        }&#39;
-</code></pre></div>
+        }'</code></p>
 </div>
 </div>
 <h3 id="start-workload">Start Workload<a class="headerlink" href="#start-workload" title="Permanent link">⚓︎</a></h3>
@@ -1168,11 +1163,10 @@ with an assigned <code>uuid</code>.</p>
 <p>Start an existing, unstarted workload <code>uuid</code>.</p>
 <p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
 <div class="tabbed-set" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><label for="__tabbed_8_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST &#39;http://localhost:3000/api/v1/start&#39; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Content-Type: application/json&#39; \
-     -d $&#39;{ &quot;uuid&quot;: &quot;fb06bcf3-bc10-471b-a309-b2f99e4f5a67&quot; }&#39;
-</code></pre></div>
+<p><code>curl -X POST 'http://localhost:3000/api/v1/start' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d $'{ "uuid": "fb06bcf3-bc10-471b-a309-b2f99e4f5a67" }'</code></p>
 </div>
 </div>
 <h3 id="stop-workload">Stop Workload<a class="headerlink" href="#stop-workload" title="Permanent link">⚓︎</a></h3>
@@ -1180,11 +1174,10 @@ with an assigned <code>uuid</code>.</p>
 <p>Stop a running workload <code>uuid</code>.</p>
 <p>The response is the updated <a href="#workload-response-format">workload object</a>.</p>
 <div class="tabbed-set" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><label for="__tabbed_9_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST &#39;http://localhost:3000/api/v1/stop&#39; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Content-Type: application/json&#39; \
-     -d $&#39;{ &quot;uuid&quot;: &quot;fb06bcf3-bc10-471b-a309-b2f99e4f5a67&quot; }&#39;
-</code></pre></div>
+<p><code>curl -X POST 'http://localhost:3000/api/v1/stop' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d $'{ "uuid": "fb06bcf3-bc10-471b-a309-b2f99e4f5a67" }'</code></p>
 </div>
 </div>
 <h3 id="execute-workload">Execute Workload<a class="headerlink" href="#execute-workload" title="Permanent link">⚓︎</a></h3>
@@ -1195,45 +1188,44 @@ navigation.</p>
 <p>The response is the newly created and started <a href="#workload-response-format">workload object</a>
 with an assigned <code>uuid</code>.</p>
 <div class="tabbed-set" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><label for="__tabbed_10_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X &quot;POST&quot; &quot;http://localhost:3000/api/v1/exec&quot; \
-     -H &#39;Authorization: Bearer &#39;$(gcloud auth print-access-token) \
-     -H &#39;Content-Type: application/json&#39; \
-     -d &#39;{
-            &quot;watchers&quot;: [
-                [&quot;slack&quot;, &quot;C000XXX0XXX&quot;]
+<p><code>curl -X "POST" "http://localhost:3000/api/v1/exec" \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+            "watchers": [
+                ["slack", "C000XXX0XXX"]
             ],
-            &quot;labels&quot;: [
-                &quot;hornet:test&quot;
+            "labels": [
+                "hornet:test"
             ],
-            &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-            &quot;source&quot;: {
-                &quot;name&quot;: &quot;Terra DataRepo&quot;,
-                &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
-                &quot;table&quot;: &quot;flowcells&quot;,
-                &quot;snapshotReaders&quot;: [
-                    &quot;workflow-launcher-dev@firecloud.org&quot;
+            "project": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+            "source": {
+                "name": "Terra DataRepo",
+                "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
+                "table": "flowcells",
+                "snapshotReaders": [
+                    "workflow-launcher-dev@firecloud.org"
                 ]
             },
-            &quot;executor&quot;: {
-                &quot;name&quot;: &quot;Terra&quot;,
-                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-                &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
-                &quot;fromSource&quot;: &quot;importSnapshot&quot;
+            "executor": {
+                "name": "Terra",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+                "fromSource": "importSnapshot"
             },
-            &quot;sink&quot;: {
-                &quot;name&quot;: &quot;Terra Workspace&quot;,
-                &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy&quot;,
-                &quot;entityType&quot;: &quot;flowcell&quot;,
-                &quot;identifier&quot;: &quot;run_id&quot;,
-                &quot;fromOutputs&quot;: {
-                    &quot;submission_xml&quot; : &quot;submission_xml&quot;,
-                    &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
-                    &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+            "sink": {
+                "name": "Terra Workspace",
+                "workspace": "wfl-dev/CDC_Viral_Sequencing _ranthony_bashing_copy",
+                "entityType": "flowcell",
+                "identifier": "run_id",
+                "fromOutputs": {
+                    "submission_xml" : "submission_xml",
+                    "assembled_ids" : "assembled_ids",
+                    "num_failed_assembly" : "num_failed_assembly",
                     ...
                 }
             }
-        }&#39;
-</code></pre></div>
+        }'</code></p>
 </div>
 </div>
                 
@@ -1324,7 +1316,7 @@ with an assigned <code>uuid</code>.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>

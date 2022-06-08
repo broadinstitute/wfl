@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -916,37 +916,37 @@ when you have questions about permissions.</p>
 <p>Create a new workload. Ensure that <code>workflow-launcher</code> and <code>cromwell</code>'s service
 accounts have at least read access to the input files.</p>
 <div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
-  -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
-  -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-  -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
-<span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
-<span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
-<span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
-<span class="s1">        &quot;items&quot;: [{</span>
-<span class="s1">          &quot;inputs&quot;: {</span>
-<span class="s1">            &quot;input_cram&quot; : &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span>
-<span class="s1">          }</span>
-<span class="s1">        }]</span>
-<span class="s1">      }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+        "pipeline": "ExternalExomeReprocessing",
+        "project": "Example Project",
+        "items": [{
+          "inputs": {
+            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram"
+          }
+        }]
+      }'</code></p>
 </div>
 <input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
 </div>
 </div>
 <p>Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
@@ -956,143 +956,143 @@ accounts have at least read access to the input files.</p>
 <p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
 particular input cram, WFL will not re-submit that workflow.</p>
 <div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
--H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
--H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
--d <span class="s1">&#39;{&quot;uuid&quot;: &quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;}&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start' \
+-H "Authorization: Bearer $(gcloud auth print-access-token)" \
+-H 'Content-Type: application/json' \
+-d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'</code></p>
 </div>
 <input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
 </div>
 </div>
 <h3 id="stop-workload-post-apiv1stop">Stop Workload: <code>POST /api/v1/stop</code><a class="headerlink" href="#stop-workload-post-apiv1stop" title="Permanent link">⚓︎</a></h3>
 <p>Included for compatibility with continuous workloads. </p>
 <div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop&#39;</span> <span class="se">\</span>
-     -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">&#39;{ &quot;uuid&quot;: &quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot; }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -H 'Content-Type: application/json' \
+     -d '{ "uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c" }'</code></p>
 </div>
 <input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-ddTHH:mm:ssZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-ddTHH:mm:ssZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;stopped&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-ddTHH:mm:ssZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-ddTHH:mm:ssZ",
+  "started" : "YYYY-MM-ddTHH:mm:ssZ",
+  "stopped" : "YYYY-MM-ddTHH:mm:ssZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
 </div>
 </div>
 <h3 id="exec-workload-post-apiv1exec">Exec Workload: <code>POST /api/v1/exec</code><a class="headerlink" href="#exec-workload-post-apiv1exec" title="Permanent link">⚓︎</a></h3>
 <p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
 <div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
-  -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
-  -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-  -d <span class="s1">&#39;{</span>
-<span class="s1">        &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;,</span>
-<span class="s1">        &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;,</span>
-<span class="s1">        &quot;pipeline&quot;: &quot;ExternalExomeReprocessing&quot;,</span>
-<span class="s1">        &quot;project&quot;: &quot;Example Project&quot;,</span>
-<span class="s1">        &quot;items&quot;: [{</span>
-<span class="s1">          &quot;inputs&quot; : {</span>
-<span class="s1">            &quot;input_cram&quot; : &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
-<span class="s1">          }</span>
-<span class="s1">        }]</span>
-<span class="s1">      }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+        "pipeline": "ExternalExomeReprocessing",
+        "project": "Example Project",
+        "items": [{
+          "inputs" : {
+            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          }
+        }]
+      }'</code></p>
 </div>
 <input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
 </div>
 </div>
 <h3 id="query-workload-get-apiv1workloaduuiduuid">Query Workload: <code>GET /api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-get-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
 <div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c&#39;</span> <span class="se">\</span>
-  -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
 </div>
 <input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><label for="__tabbed_5_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+[{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}]</code></p>
 </div>
 </div>
 <h3 id="query-workload-with-project-get-apiv1workloadprojectproject">Query Workload with project: <code>GET /api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-get-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
 <div class="tabbed-set" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-1234&#39;</span> <span class="se">\</span>
-  -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-1234' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
 </div>
 <input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><label for="__tabbed_6_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;creator&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@domain&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;executor&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-prod.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;release&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalExomeReprocessing_vX.Y.Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;created&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;started&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;commit&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;commit-ish&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Example Project&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1337254e-f7d8-438d-a2b3-a74b199fee3c&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;wdl&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X.Y.Z&quot;</span><span class="w"></span>
-<span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+[{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}]</code></p>
 </div>
 </div>
 <div class="admonition warning">
@@ -1104,24 +1104,24 @@ together.</p>
 <h3 id="list-workflows-in-a-workload-get-apiv1workloaduuidworkflows">List Workflows in a Workload: <code>GET /api/v1/workload/{uuid}/workflows</code><a class="headerlink" href="#list-workflows-in-a-workload-get-apiv1workloaduuidworkflows" title="Permanent link">⚓︎</a></h3>
 <p>Returns the workflows created and managed by the workload with <code>uuid</code>.</p>
 <div class="tabbed-set" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload/1337254e-f7d8-438d-a2b3-a74b199fee3c/workflows&#39;</span> <span class="se">\</span>
-     -H <span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload/1337254e-f7d8-438d-a2b3-a74b199fee3c/workflows' \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
 </div>
 <input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><label for="__tabbed_7_2">Response</label><div class="tabbed-content">
-<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Submitted&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;updated&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DDTHH:MM:SSZ&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;uuid&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bb0d93e3-1a6a-4816-82d9-713fa58fb235&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;inputs&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;input_cram&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;destination_cloud_path&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;sample_name&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NA12878_PLUMBING&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;base_file_name&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;final_gvcf_base_name&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NA12878_PLUMBING.cram&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+[{
+    "status" : "Submitted",
+    "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+    "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+    "inputs" : {
+        "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+        "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+        "sample_name" : "NA12878_PLUMBING",
+        "base_file_name" : "NA12878_PLUMBING.cram",
+        "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+    }
+}]</code></p>
 </div>
 </div>
 <p>"workflows" lists out each workflow managed by this workload,
@@ -1129,109 +1129,111 @@ including their status. It is also possible to use the Job Manager
 to check workflow progress and easily see information about any workflow
 failures.</p>
 <h2 id="a1-external-exome-workload-request-json-spec">A1 External Exome Workload-Request JSON Spec<a class="headerlink" href="#a1-external-exome-workload-request-json-spec" title="Permanent link">⚓︎</a></h2>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;common&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">       </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="err">//</span><span class="w"> </span><span class="err">see</span><span class="w"> </span><span class="err">work</span><span class="kc">fl</span><span class="err">ow</span><span class="mi">-</span><span class="err">op</span><span class="kc">t</span><span class="err">io</span><span class="kc">ns</span><span class="w"></span>
-<span class="w">       </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;unmapped_bam_suffix&quot;</span><span class="p">:</span><span class="w">    </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span><span class="w">       </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;bait_set_name&quot;</span><span class="p">:</span><span class="w">        </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;bait_interval_list&quot;</span><span class="p">:</span><span class="w">   </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;references&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;calling_interval_list&quot;</span><span class="p">:</span><span class="w">      </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;contamination_sites_bed&quot;</span><span class="p">:</span><span class="w">    </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;contamination_sites_mu&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;contamination_sites_ud&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span><span class="w">                  </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span><span class="w">            </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;evaluation_interval_list&quot;</span><span class="p">:</span><span class="w">   </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;haplotype_database_file&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;known_indels_sites_vcfs&quot;</span><span class="p">:</span><span class="w">    </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;known_indels_sites_indices&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;reference_fasta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_pac&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_bwt&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_dict&quot;</span><span class="p">:</span><span class="w">        </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_ann&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_alt&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_fasta&quot;</span><span class="p">:</span><span class="w">       </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_sa&quot;</span><span class="p">:</span><span class="w">          </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;ref_amb&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="w"></span>
-<span class="w">           </span><span class="p">}</span><span class="w"></span>
-<span class="w">         </span><span class="p">},</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;scatter_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"></span>
-<span class="w">         </span><span class="p">},</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;papi_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">           </span><span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;integer&quot;</span><span class="w"></span>
-<span class="w">         </span><span class="p">},</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;fingerprint_genotypes_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;fingerprint_genotypes_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"></span>
-<span class="w">       </span><span class="p">}</span><span class="w"></span>
-<span class="w">     </span><span class="p">},</span><span class="w"></span>
-<span class="w">     </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="err">//</span><span class="w"> </span><span class="err">see</span><span class="w"> </span><span class="err">work</span><span class="kc">fl</span><span class="err">ow</span><span class="mi">-</span><span class="err">op</span><span class="kc">t</span><span class="err">io</span><span class="kc">ns</span><span class="w"></span>
-<span class="w">         </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">             </span><span class="err">//</span><span class="w"> </span><span class="err">required</span><span class="w"> </span><span class="mi">-</span><span class="w"> </span><span class="err">speci</span><span class="kc">f</span><span class="err">y</span><span class="w"> </span><span class="err">ei</span><span class="kc">t</span><span class="err">her</span><span class="w"> </span><span class="s2">&quot;input_bam&quot;</span><span class="w"> </span><span class="err">or</span><span class="w"> </span><span class="nt">&quot;input_cram&quot;</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;input_bam&quot;</span><span class="p">:</span><span class="w">  </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-
-<span class="w">             </span><span class="err">//</span><span class="w"> </span><span class="err">op</span><span class="kc">t</span><span class="err">io</span><span class="kc">nal</span><span class="w"> </span><span class="err">i</span><span class="kc">n</span><span class="err">pu</span><span class="kc">ts</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w">          </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;final_gvcf_base_name&quot;</span><span class="p">:</span><span class="w">  </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;unmapped_bam_suffix&quot;</span><span class="p">:</span><span class="w">    </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;cram_ref_fasta&quot;</span><span class="p">:</span><span class="w">       </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;cram_ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;bait_set_name&quot;</span><span class="p">:</span><span class="w">        </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;bait_interval_list&quot;</span><span class="p">:</span><span class="w">   </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;target_interval_list&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;references&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;calling_interval_list&quot;</span><span class="p">:</span><span class="w">      </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;contamination_sites_bed&quot;</span><span class="p">:</span><span class="w">    </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;contamination_sites_mu&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;contamination_sites_ud&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;dbsnp_vcf&quot;</span><span class="p">:</span><span class="w">                  </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;dbsnp_vcf_index&quot;</span><span class="p">:</span><span class="w">            </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;evaluation_interval_list&quot;</span><span class="p">:</span><span class="w">   </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;haplotype_database_file&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;known_indels_sites_vcfs&quot;</span><span class="p">:</span><span class="w">    </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;known_indels_sites_indices&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">],</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;reference_fasta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_pac&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_bwt&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_dict&quot;</span><span class="p">:</span><span class="w">        </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_ann&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_fasta_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_alt&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_fasta&quot;</span><span class="p">:</span><span class="w">       </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_sa&quot;</span><span class="p">:</span><span class="w">          </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                     </span><span class="nt">&quot;ref_amb&quot;</span><span class="p">:</span><span class="w">         </span><span class="s2">&quot;string&quot;</span><span class="w"></span>
-<span class="w">                 </span><span class="p">}</span><span class="w"></span>
-<span class="w">             </span><span class="p">},</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;scatter_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;haplotype_scatter_count&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;break_bands_at_multiples_of&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"></span>
-<span class="w">             </span><span class="p">},</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;papi_settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;agg_preemptible_tries&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">                 </span><span class="nt">&quot;preemptible_tries&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;integer&quot;</span><span class="w"></span>
-<span class="w">             </span><span class="p">},</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;fingerprint_genotypes_file&quot;</span><span class="p">:</span><span class="w">  </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;fingerprint_genotypes_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">             </span><span class="nt">&quot;destination_cloud_path&quot;</span><span class="p">:</span><span class="w">      </span><span class="s2">&quot;string&quot;</span><span class="w"></span>
-<span class="w">         </span><span class="p">}</span><span class="w"></span>
-<span class="w">     </span><span class="p">}]</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<p>```json
+{
+     "pipeline": "string",
+     "executor": "string",
+     "output": "string",
+     "project": "string",
+     "common": {
+       "options": {}, // see workflow-options
+       "inputs": {
+         "unmapped_bam_suffix":    "string",
+         "cram_ref_fasta":       "string",
+         "cram_ref_fasta_index": "string",
+         "bait_set_name":        "string",
+         "bait_interval_list":   "string",
+         "target_interval_list": "string",
+         "references": {
+           "calling_interval_list":      "string",
+           "contamination_sites_bed":    "string",
+           "contamination_sites_mu":     "string",
+           "contamination_sites_ud":     "string",
+           "dbsnp_vcf":                  "string",
+           "dbsnp_vcf_index":            "string",
+           "evaluation_interval_list":   "string",
+           "haplotype_database_file":     "string",
+           "known_indels_sites_vcfs":    ["string"],
+           "known_indels_sites_indices": ["string"],
+           "reference_fasta": {
+             "ref_pac":         "string",
+             "ref_bwt":         "string",
+             "ref_dict":        "string",
+             "ref_ann":         "string",
+             "ref_fasta_index": "string",
+             "ref_alt":         "string",
+             "ref_fasta":       "string",
+             "ref_sa":          "string",
+             "ref_amb":         "string"
+           }
+         },
+         "scatter_settings": {
+           "haplotype_scatter_count":     "integer",
+           "break_bands_at_multiples_of": "integer"
+         },
+         "papi_settings": {
+           "agg_preemptible_tries": "integer",
+           "preemptible_tries":     "integer"
+         },
+         "fingerprint_genotypes_file": "string",
+         "fingerprint_genotypes_index": "string"
+       }
+     },
+     "items": [{
+         "options": {}, // see workflow-options
+         "inputs": {
+             // required - specify either "input_bam" or "input_cram"
+             "input_bam":  "string",
+             "input_cram": "string",</p>
+<div class="codehilite"><pre><span></span><code>         // optional inputs
+         &quot;sample_name&quot;:          &quot;string&quot;,
+         &quot;final_gvcf_base_name&quot;:  &quot;string&quot;,
+         &quot;unmapped_bam_suffix&quot;:    &quot;string&quot;,
+         &quot;cram_ref_fasta&quot;:       &quot;string&quot;,
+         &quot;cram_ref_fasta_index&quot;: &quot;string&quot;,
+         &quot;bait_set_name&quot;:        &quot;string&quot;,
+         &quot;bait_interval_list&quot;:   &quot;string&quot;,
+         &quot;target_interval_list&quot;: &quot;string&quot;,
+         &quot;references&quot;: {
+             &quot;calling_interval_list&quot;:      &quot;string&quot;,
+             &quot;contamination_sites_bed&quot;:    &quot;string&quot;,
+             &quot;contamination_sites_mu&quot;:     &quot;string&quot;,
+             &quot;contamination_sites_ud&quot;:     &quot;string&quot;,
+             &quot;dbsnp_vcf&quot;:                  &quot;string&quot;,
+             &quot;dbsnp_vcf_index&quot;:            &quot;string&quot;,
+             &quot;evaluation_interval_list&quot;:   &quot;string&quot;,
+             &quot;haplotype_database_file&quot;:     &quot;string&quot;,
+             &quot;known_indels_sites_vcfs&quot;:    [&quot;string&quot;],
+             &quot;known_indels_sites_indices&quot;: [&quot;string&quot;],
+             &quot;reference_fasta&quot;: {
+                 &quot;ref_pac&quot;:         &quot;string&quot;,
+                 &quot;ref_bwt&quot;:         &quot;string&quot;,
+                 &quot;ref_dict&quot;:        &quot;string&quot;,
+                 &quot;ref_ann&quot;:         &quot;string&quot;,
+                 &quot;ref_fasta_index&quot;: &quot;string&quot;,
+                 &quot;ref_alt&quot;:         &quot;string&quot;,
+                 &quot;ref_fasta&quot;:       &quot;string&quot;,
+                 &quot;ref_sa&quot;:          &quot;string&quot;,
+                 &quot;ref_amb&quot;:         &quot;string&quot;
+             }
+         },
+         &quot;scatter_settings&quot;: {
+             &quot;haplotype_scatter_count&quot;:     &quot;integer&quot;,
+             &quot;break_bands_at_multiples_of&quot;: &quot;integer&quot;
+         },
+         &quot;papi_settings&quot;: {
+             &quot;agg_preemptible_tries&quot;: &quot;integer&quot;,
+             &quot;preemptible_tries&quot;:     &quot;integer&quot;
+         },
+         &quot;fingerprint_genotypes_file&quot;:  &quot;string&quot;,
+         &quot;fingerprint_genotypes_index&quot;: &quot;string&quot;,
+         &quot;destination_cloud_path&quot;:      &quot;string&quot;
+     }
+ }]
 </code></pre></div>
+
+<p>}
+```</p>
                 
               
               
@@ -1320,7 +1322,7 @@ failures.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>

@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -853,21 +853,22 @@ An <code>Executor</code> uses a supported service in the cloud to execute workfl
   downstream <code>Sink</code> to consume their outputs</li>
 </ul>
 <p>A typical <code>Terra</code> executor configuration in the workload request looks like:
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{workspace-namespace}/{workspace-name}&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{method-configuration-namespace}/{method-configuration-name}&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div></p>
+<code>json
+{
+  "name": "Terra",
+  "workspace": "{workspace-namespace}/{workspace-name}",
+  "methodConfiguration": "{method-configuration-namespace}/{method-configuration-name}",
+  "fromSource": "importSnapshot"
+}</code></p>
 <p>And a real-life example for a known method configuration:
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Terra&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;workspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/CDC_Viral_Sequencing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;methodConfiguration&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wfl-dev/sarscov2_illumina_full&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="nt">&quot;fromSource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;importSnapshot&quot;</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-</code></pre></div></p>
+<code>json
+{
+  "name": "Terra",
+  "workspace": "wfl-dev/CDC_Viral_Sequencing",
+  "memoryRetryMultiplier": 1.5
+  "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+  "fromSource": "importSnapshot"
+}</code></p>
 <p><img alt="" src="../assets/executor/terra-method-configuration.png" /></p>
 <p>The table below summarises the purpose of each attribute in the above request.</p>
 <table>
@@ -885,6 +886,10 @@ An <code>Executor</code> uses a supported service in the cloud to execute workfl
 <tr>
 <td><code>workspace</code></td>
 <td>Terra Workspace in which to execute workflows.</td>
+</tr>
+<tr>
+<td><code>memoryRetryMultiplier</code></td>
+<td>Retry OutOfMemory Cromwell tasks with memory increased by this factor.</td>
 </tr>
 <tr>
 <td><code>methodConfiguration</code></td>
@@ -928,41 +933,41 @@ into <code>workspace</code> as snapshot references,
 updating <code>methodConfiguration</code> with the reference as its root entity type.</p>
 <h2 id="developer-guide">Developer Guide<a class="headerlink" href="#developer-guide" title="Permanent link">⚓︎</a></h2>
 <p>An executor is a <code>Queue</code> that satisfies the <code>Executor</code> protocol below:
-<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defprotocol </span><span class="nv">Executor</span>
-  <span class="p">(</span><span class="nf">update-executor!</span>
-    <span class="o">^</span><span class="nv">Workload</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Workload</span> <span class="nv">workload</span>
-    <span class="p">]</span>
-    <span class="s">&quot;Consume items from the `workload`&#39;s source queue and enqueue to its executor</span>
-<span class="s">     queue for consumption by a later processing stage,</span>
-<span class="s">     performing any external effects as necessary.</span>
-<span class="s">     Implementations should avoid maintaining in-memory state and making long-</span>
-<span class="s">     running external calls, favouring internal queues to manage such tasks</span>
-<span class="s">     asynchronously between invocations.  Note that the `Workload`&#39;s Source queue and Executor</span>
-<span class="s">     are parameterised types and the Source queue&#39;s parameterisation must be</span>
-<span class="s">     convertible to the Executor&#39;s.&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">executor-workflows</span>
-    <span class="o">^</span><span class="nv">IPersistentVector</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>        <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
-     <span class="o">^</span><span class="nv">Executor</span>          <span class="nv">executor</span>     <span class="c1">;; This executor instance</span>
-     <span class="o">^</span><span class="nv">IPersistentVector</span> <span class="nv">filters</span>      <span class="c1">;; Optional workflow filters to match</span>
-                                     <span class="c1">;; (ex. status, submission)</span>
-    <span class="p">]</span>
-    <span class="s">&quot;Use database `transaction` to return workflows created by the `executor`</span>
-<span class="s">     matching the optional workflow `filters` (ex. status, submission).&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">executor-throw-if-invalid-retry-filters</span>
-    <span class="c1">;; Executed for side effects</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">IPersistentHashmap</span> <span class="nv">workload</span>  <span class="c1">;; Workload for which a retry is requested</span>
-     <span class="o">^</span><span class="nv">IPersistentVector</span>  <span class="nv">filters</span>   <span class="c1">;; Workflow filters</span>
-    <span class="p">]</span>
-    <span class="s">&quot;Throw if workflow `filters` are invalid for `workload`&#39;s retry request.&quot;</span><span class="p">)</span>
-  <span class="p">(</span><span class="nf">executor-retry-workflows!</span>
-    <span class="c1">;; Executed for side effects</span>
-    <span class="p">[</span><span class="o">^</span><span class="nv">Executor</span>          <span class="nv">executor</span>   <span class="c1">;; This executor instance</span>
-     <span class="o">^</span><span class="nv">IPersistentVector</span> <span class="nv">workflows</span>  <span class="c1">;; Workflows to retry</span>
-    <span class="p">]</span>
-    <span class="s">&quot;Retry/resubmit the `workflows` managed by the `executor`.&quot;</span><span class="p">))</span>
-</code></pre></div></p>
+<code>clojure
+(defprotocol Executor
+  (update-executor!
+    ^Workload
+    [^Workload workload
+    ]
+    "Consume items from the `workload`'s source queue and enqueue to its executor
+     queue for consumption by a later processing stage,
+     performing any external effects as necessary.
+     Implementations should avoid maintaining in-memory state and making long-
+     running external calls, favouring internal queues to manage such tasks
+     asynchronously between invocations.  Note that the `Workload`'s Source queue and Executor
+     are parameterised types and the Source queue's parameterisation must be
+     convertible to the Executor's.")
+  (executor-workflows
+    ^IPersistentVector
+    [^Connection        transaction  ;; JDBC Connection
+     ^Executor          executor     ;; This executor instance
+     ^IPersistentVector filters      ;; Optional workflow filters to match
+                                     ;; (ex. status, submission)
+    ]
+    "Use database `transaction` to return workflows created by the `executor`
+     matching the optional workflow `filters` (ex. status, submission).")
+  (executor-throw-if-invalid-retry-filters
+    ;; Executed for side effects
+    [^IPersistentHashmap workload  ;; Workload for which a retry is requested
+     ^IPersistentVector  filters   ;; Workflow filters
+    ]
+    "Throw if workflow `filters` are invalid for `workload`'s retry request.")
+  (executor-retry-workflows!
+    ;; Executed for side effects
+    [^Executor          executor   ;; This executor instance
+     ^IPersistentVector workflows  ;; Workflows to retry
+    ]
+    "Retry/resubmit the `workflows` managed by the `executor`."))</code></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <code>Executor</code> protocol is implemented by a set of multimethods of the same
@@ -975,35 +980,32 @@ should satisfy the processing <code>Stage</code> protocol
 and the <code>to-edn</code> multimethod
 in addition to the following multimethods
 specific to executors:</p>
-<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="kd">defmulti </span><span class="nv">create-executor</span>
-  <span class="s">&quot;Create an `Executor` instance using the database `transaction` and</span>
-<span class="s">   configuration in the executor `request` and return a</span>
-<span class="s">   `[type items]` pair to be written to a workload record as</span>
-<span class="s">   `executor_type` and `executor_items`.</span>
-<span class="s">   Notes:</span>
-<span class="s">   - This is a factory method registered for workload creation.</span>
-<span class="s">   - The `Executor` type string must match a value of the `executor` enum</span>
-<span class="s">     in the database schema.</span>
-<span class="s">   - This multimethod is type-dispatched on the `:name` association in the</span>
-<span class="s">     `request`.&quot;</span>
-  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="p">[</span><span class="o">^</span><span class="nv">String</span> <span class="o">^</span><span class="nv">String</span><span class="p">]</span>
-      <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>         <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
-       <span class="o">^</span><span class="nb">long </span>              <span class="nv">workload-id</span>  <span class="c1">;; ID of the workload being created</span>
-       <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">request</span>      <span class="c1">;; Data forwarded to the handler</span>
-      <span class="p">]</span>
-      <span class="p">(</span><span class="ss">:name</span> <span class="nv">request</span><span class="p">)))</span>
-
-<span class="p">(</span><span class="kd">defmulti </span><span class="nv">load-executor!</span>
-  <span class="s">&quot;Return the `Executor` implementation associated with the `executor_type` and</span>
-<span class="s">   `executor_items` fields of the `workload` row in the database.</span>
-<span class="s">   Note that this multimethod is type-dispatched on the `:executor_type`</span>
-<span class="s">   association in the `workload`.&quot;</span>
-  <span class="p">(</span><span class="k">fn </span><span class="o">^</span><span class="nv">Executor</span>
-      <span class="p">[</span><span class="o">^</span><span class="nv">Connection</span>         <span class="nv">transaction</span>  <span class="c1">;; JDBC Connection</span>
-       <span class="o">^</span><span class="nv">IPersistentHashMap</span> <span class="nv">workload</span>     <span class="c1">;; Row from workload table</span>
-      <span class="p">]</span>
-      <span class="p">(</span><span class="ss">:executor_type</span> <span class="nv">workload</span><span class="p">)))</span>
-</code></pre></div>
+<p><code>``clojure
+(defmulti create-executor
+  "Create an</code>Executor<code>instance using the database</code>transaction<code>and
+   configuration in the executor</code>request<code>and return a</code>[type items]<code>pair to be written to a workload record as</code>executor_type<code>and</code>executor_items<code>.
+   Notes:
+   - This is a factory method registered for workload creation.
+   - The</code>Executor<code>type string must match a value of the</code>executor<code>enum
+     in the database schema.
+   - This multimethod is type-dispatched on the</code>:name<code>association in the</code>request`."
+  (fn ^[^String ^String]
+      [^Connection         transaction  ;; JDBC Connection
+       ^long               workload-id  ;; ID of the workload being created
+       ^IPersistentHashMap request      ;; Data forwarded to the handler
+      ]
+      (:name request)))</p>
+<p>(defmulti load-executor!
+  "Return the <code>Executor</code> implementation associated with the <code>executor_type</code> and
+   <code>executor_items</code> fields of the <code>workload</code> row in the database.
+   Note that this multimethod is type-dispatched on the <code>:executor_type</code>
+   association in the <code>workload</code>."
+  (fn ^Executor
+      [^Connection         transaction  ;; JDBC Connection
+       ^IPersistentHashMap workload     ;; Row from workload table
+      ]
+      (:executor_type workload)))
+```</p>
                 
               
               
@@ -1092,7 +1094,7 @@ specific to executors:</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>

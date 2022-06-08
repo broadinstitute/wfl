@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -677,57 +677,52 @@ Cromwell. </p>
 Terra, it won't work.</p>
 </details>
 <p>Here's a script that can help with that:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Usage: bash abort.sh QUERY [WFL_URL] [THREADS]</span>
-<span class="c1">#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`</span>
-<span class="c1">#   WFL_URL is optionally the WFL to abort workflows from</span>
-<span class="c1">#       Default is the gotc-prod WFL</span>
-<span class="c1">#   THREADS is optionally the number of threads to use to talk to Cromwell</span>
-<span class="c1">#       Default is 2</span>
-
-<span class="c1"># Usage: bash abort.sh QUERY [WFL_URL]</span>
-<span class="c1">#   QUERY is either like `project=PO-123` or `uuid=1a2b3c4d`</span>
-<span class="c1">#   WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]</span>
-
-<span class="nv">WFL_URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">https</span><span class="p">://gotc-prod-wfl.gotc-prod.broadinstitute.org</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="nv">AUTH_HEADER</span><span class="o">=</span><span class="s2">&quot;Authorization: Bearer </span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span><span class="s2">&quot;</span>
-
-getWorkloads <span class="o">()</span> <span class="o">{</span>
-    <span class="c1"># Query -&gt; [Workload]</span>
-    curl -s -X GET <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/workload?</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="se">\</span>
-         -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
-         <span class="p">|</span> jq
-<span class="o">}</span>
-
-getWorkflows<span class="o">()</span> <span class="o">{</span>
-    <span class="c1"># Workload -&gt; [Workflow]</span>
-    <span class="nv">uuid</span><span class="o">=</span><span class="k">$(</span>jq -r .uuid <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span><span class="k">)</span>
-    curl -s -X GET <span class="s2">&quot;</span><span class="si">${</span><span class="nv">WFL_URL</span><span class="si">}</span><span class="s2">/api/v1/workload/</span><span class="si">${</span><span class="nv">uuid</span><span class="si">}</span><span class="s2">/workflows&quot;</span> <span class="se">\</span>
-         -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
-         <span class="p">|</span> jq
-<span class="o">}</span>
-
-mapjq <span class="o">()</span> <span class="o">{</span>
-    jq -c <span class="s1">&#39;.[]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
-    <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> elem<span class="p">;</span> <span class="k">do</span> <span class="si">${</span><span class="nv">1</span><span class="si">}</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">elem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span> <span class="k">done</span> <span class="se">\</span>
-    <span class="p">|</span> jq <span class="s1">&#39;[ .[] ]&#39;</span>
-<span class="o">}</span>
-
-main<span class="o">()</span> <span class="o">{</span>
-    <span class="c1"># Query -&gt; ()</span>
-    <span class="nv">workloads</span><span class="o">=</span><span class="k">$(</span>getWorkloads <span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span>
-    <span class="nv">cromwell</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;map(.executor) | .[0]&#39;</span> <span class="o">&lt;&lt;&lt;</span> <span class="s2">&quot;</span><span class="nv">$WORKLOAD</span><span class="s2">&quot;</span><span class="k">)</span>
-
-    mapjq getWorkflows <span class="s2">&quot;</span><span class="si">${</span><span class="nv">workloads</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">|</span> jq -s <span class="s1">&#39;flatten</span>
-<span class="s1">                | map(select(.status != &quot;Failed&quot; and .status != &quot;Succeeded&quot;) | .uuid)</span>
-<span class="s1">                | .[]&#39;</span> <span class="se">\</span>
-        <span class="p">|</span> xargs -I % -n <span class="m">1</span> -P <span class="si">${</span><span class="nv">3</span><span class="k">:-</span><span class="nv">2</span><span class="si">}</span> curl -w <span class="s2">&quot;\n&quot;</span> -s -X POST <span class="s2">&quot;</span><span class="nv">$CROMWELL</span><span class="s2">/api/workflows/v1/%/abort&quot;</span> <span class="se">\</span>
-                -H <span class="s2">&quot;</span><span class="si">${</span><span class="nv">AUTH_HEADER</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
-                -H <span class="s2">&quot;Content-Type: application/json&quot;</span>
-<span class="o">}</span>
-
-main <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
+<p>```bash</p>
+<h1 id="usage-bash-abortsh-query-wfl_url-threads">Usage: bash abort.sh QUERY [WFL_URL] [THREADS]<a class="headerlink" href="#usage-bash-abortsh-query-wfl_url-threads" title="Permanent link">⚓︎</a></h1>
+<h1 id="query-is-either-like-projectpo-123-or-uuid1a2b3c4d">QUERY is either like <code>project=PO-123</code> or <code>uuid=1a2b3c4d</code><a class="headerlink" href="#query-is-either-like-projectpo-123-or-uuid1a2b3c4d" title="Permanent link">⚓︎</a></h1>
+<h1 id="wfl_url-is-optionally-the-wfl-to-abort-workflows-from">WFL_URL is optionally the WFL to abort workflows from<a class="headerlink" href="#wfl_url-is-optionally-the-wfl-to-abort-workflows-from" title="Permanent link">⚓︎</a></h1>
+<h1 id="default-is-the-gotc-prod-wfl">Default is the gotc-prod WFL<a class="headerlink" href="#default-is-the-gotc-prod-wfl" title="Permanent link">⚓︎</a></h1>
+<h1 id="threads-is-optionally-the-number-of-threads-to-use-to-talk-to-cromwell">THREADS is optionally the number of threads to use to talk to Cromwell<a class="headerlink" href="#threads-is-optionally-the-number-of-threads-to-use-to-talk-to-cromwell" title="Permanent link">⚓︎</a></h1>
+<h1 id="default-is-2">Default is 2<a class="headerlink" href="#default-is-2" title="Permanent link">⚓︎</a></h1>
+<h1 id="usage-bash-abortsh-query-wfl_url">Usage: bash abort.sh QUERY [WFL_URL]<a class="headerlink" href="#usage-bash-abortsh-query-wfl_url" title="Permanent link">⚓︎</a></h1>
+<h1 id="query-is-either-like-projectpo-123-or-uuid1a2b3c4d_1">QUERY is either like <code>project=PO-123</code> or <code>uuid=1a2b3c4d</code><a class="headerlink" href="#query-is-either-like-projectpo-123-or-uuid1a2b3c4d_1" title="Permanent link">⚓︎</a></h1>
+<h1 id="wfl_url-is-the-wfl-instance-to-abort-workflows-from-default-gotc-prod">WFL_URL is the WFL instance to abort workflows from [default: gotc-prod]<a class="headerlink" href="#wfl_url-is-the-wfl-instance-to-abort-workflows-from-default-gotc-prod" title="Permanent link">⚓︎</a></h1>
+<p>WFL_URL="${2:-https://gotc-prod-wfl.gotc-prod.broadinstitute.org}"
+AUTH_HEADER="Authorization: Bearer $(gcloud auth print-access-token)"</p>
+<p>getWorkloads () {
+    # Query -&gt; [Workload]
+    curl -s -X GET "${WFL_URL}/api/v1/workload?$1" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}</p>
+<p>getWorkflows() {
+    # Workload -&gt; [Workflow]
+    uuid=$(jq -r .uuid &lt;&lt;&lt; "$1")
+    curl -s -X GET "${WFL_URL}/api/v1/workload/${uuid}/workflows" \
+         -H "${AUTH_HEADER}" \
+         | jq
+}</p>
+<p>mapjq () {
+    jq -c '.[]' &lt;&lt;&lt; "${2}" \
+    | while read elem; do ${1} "${elem}"; done \
+    | jq '[ .[] ]'
+}</p>
+<p>main() {
+    # Query -&gt; ()
+    workloads=$(getWorkloads "${1}")
+    cromwell=$(jq -r 'map(.executor) | .[0]' &lt;&lt;&lt; "$WORKLOAD")</p>
+<div class="codehilite"><pre><span></span><code><span class="s s-Atom">mapjq</span> <span class="s s-Atom">getWorkflows</span> <span class="s2">&quot;${workloads}&quot;</span>
+    <span class="p">|</span> <span class="s s-Atom">jq</span> <span class="o">-</span><span class="s s-Atom">s</span> <span class="s s-Atom">&#39;flatten</span>
+<span class="s s-Atom">            | map(select(.status != &quot;Failed&quot; and .status != &quot;Succeeded&quot;) | .uuid)</span>
+<span class="s s-Atom">            | .[]&#39;</span> <span class="s s-Atom">\</span>
+    <span class="p">|</span> <span class="s s-Atom">xargs</span> <span class="o">-</span><span class="nv">I</span> <span class="c1">% -n 1 -P ${3:-2} curl -w &quot;\n&quot; -s -X POST &quot;$CROMWELL/api/workflows/v1/%/abort&quot; \</span>
+            <span class="o">-</span><span class="nv">H</span> <span class="s2">&quot;${AUTH_HEADER}&quot;</span> <span class="s s-Atom">\</span>
+            <span class="o">-</span><span class="nv">H</span> <span class="s2">&quot;Content-Type: application/json&quot;</span>
 </code></pre></div>
+
+<p>}</p>
+<p>main "$1"
+```</p>
 <p>The 'QUERY' part is like you'd pass to <a href="./usage-retry">retry.sh</a>.</p>
 <p>You don't necessarily need to query WFL for the workload. As of this writing,
 the response from <code>/start</code> or <code>/exec</code> includes the workflow UUIDs, so if you
@@ -821,7 +816,7 @@ to query WFL (and trigger WFL's potentially lengthy update process).</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>

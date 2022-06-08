@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -954,8 +954,8 @@ prerequisites are needed:</p>
 <p>You could then invoke <code>make</code> at the project level to test and build all
 <code>workflow-launcher</code> modules:</p>
 </div>
-<p><div class="highlight"><pre><span></span><code>$ make -j8
-</code></pre></div>
+<p><code>bash
+$ make -j8</code>
 where <code>8</code> can be replaced by any number that represents the concurrent
 jobs you wish to run.</p>
 <div class="admonition info">
@@ -963,73 +963,72 @@ jobs you wish to run.</p>
 <p>If the version of your <code>make</code> is above GNU Make 4.0 (you could check
 by running <code>make --version</code>), it's <strong>highly recommended</strong> to use
 <code>--output-sync</code> along with <code>-j</code> so the standard outputs are sorted, i.e.
-<div class="highlight"><pre><span></span><code>$ make -j8 --output-sync
-</code></pre></div></p>
+<code>$ make -j8 --output-sync</code></p>
 </div>
 <p><code>make</code> will <strong>build</strong> each module in <code>workflow-launcher</code>, <strong>run tests</strong> and <strong>generate</strong>
 <code>Docker</code> images. All generated files go into a <code>derived</code> directory under the
 project root.</p>
 <p>You can also invoke <code>make</code> on a module from the top level directory by</p>
-<div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">={</span>prebuild<span class="p">|</span>build<span class="p">|</span>check<span class="p">|</span>images<span class="p">|</span>clean<span class="p">|</span>distclean<span class="o">}</span>
-</code></pre></div>
+<p><code>bash
+$ make [MODULE] TARGET={prebuild|build|check|images|clean|distclean}</code></p>
 <p>where currently available <code>MODULE</code>s are {api functions/aou docs helm ui}</p>
 <p>For most of the time, you would want to run something like:</p>
-<div class="highlight"><pre><span></span><code>$ make clean
-</code></pre></div>
+<p><code>bash
+$ make clean</code></p>
 <p>to clean up the built modules (<code>-j8</code> is also available for <code>make clean</code>).</p>
 <p>and then run:</p>
-<div class="highlight"><pre><span></span><code>$ make ui api <span class="nv">TARGET</span><span class="o">=</span>images -j8
-</code></pre></div>
+<p><code>bash
+$ make ui api TARGET=images -j8</code></p>
 <p>to <strong>only build</strong> the WFL and its docker images without running tests.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>Note if you updated the second party repositories such as
 <code>pipeline-config</code> or <code>gotc-deploy</code>, you might have to run:
-<div class="highlight"><pre><span></span><code>$ make distclean
-</code></pre></div>
+<code>bash
+$ make distclean</code>
 to remove them. This is not always needed but can help completely
 purge the local derived files.</p>
 </div>
 <h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">⚓︎</a></h3>
 <p>If you only want to run tests on specific modules, you could run:</p>
-<div class="highlight"><pre><span></span><code>$ make <span class="o">[</span>MODULE<span class="o">]</span> <span class="nv">TARGET</span><span class="o">=</span>check
-</code></pre></div>
+<p><code>bash
+$ make [MODULE] TARGET=check</code></p>
 <p>such as <code>make api TARGET=check</code> or <code>make functions/aou TARGET=check</code>.
 Note this automatically makes all of <code>check</code>'s prerequisites.</p>
 <h4 id="clojure-test">Clojure Test<a class="headerlink" href="#clojure-test" title="Permanent link">⚓︎</a></h4>
 <p>When it comes to clojure tests, sometimes it's useful to only run a subset
 of tests to save time and filter out noise. You can do this by directly
 invoke <code>clojure</code> cli from within the <code>api</code> directory, for example, <code>cd api</code> and:</p>
-<div class="highlight"><pre><span></span><code>$ clojure -M:test integration --focus wfl.integration.modules.copyfile-test
-</code></pre></div>
+<p><code>bash
+$ clojure -M:test integration --focus wfl.integration.modules.copyfile-test</code></p>
 <p>In general, we implement Clojure tests under the <code>test/</code> root directory and use the
 <a href="https://cljdoc.org/d/lambdaisland/kaocha/1.0.632/doc/readme">kaocha</a> test
 runner. Test suites use a <code>-test</code> namespace suffix. You can pass extra command
 line arguments to <code>kaocha</code>, such as the above <code>--focus</code> flag.
 You can see the full list of options with the following:</p>
-<div class="highlight"><pre><span></span><code>clojure -M:test --help
-</code></pre></div>
+<p><code>shell
+clojure -M:test --help</code></p>
 <p>At present, <code>wfl</code> api has three kinds of test, <code>unit</code>, <code>integration</code>, and <code>system</code>.
 These can be run via the <code>deps.edn</code>, optionally specifying the kind:</p>
-<div class="highlight"><pre><span></span><code>clojure -M:test <span class="o">[</span>unit<span class="p">|</span>integration<span class="p">|</span>system<span class="o">]</span>
-</code></pre></div>
+<p><code>shell
+clojure -M:test [unit|integration|system]</code></p>
 <p>Note that the integration tests currently require a little more configuration
 before they can be run, namely, they require a <code>wfl</code> server running locally:</p>
-<div class="highlight"><pre><span></span><code>./ops/server.sh
-</code></pre></div>
+<p><code>shell
+./ops/server.sh</code></p>
 <p>Additionally, there is a custom parallel test runner that can be invoked
 to help speed up the <code>system</code> tests. Rather than <code>clojure -M:test system</code> you'd
 just specify the namespace(s) to try to parallelize.</p>
-<div class="highlight"><pre><span></span><code>clojure -M:parallel-test wfl.system.v1-endpoint-test
-</code></pre></div>
+<p><code>shell
+clojure -M:parallel-test wfl.system.v1-endpoint-test</code></p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>Note for <code>system</code> tests, no matter it's kicked off through <code>clojure -M:test system</code> or
 <code>clojure -M:parallel-test wfl.system.v1-endpoint-test</code>, you can use an environment
 variable <code>WFL_CROMWELL_URL</code> to override the default Cromwell instance that's used in the test. For
 example:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">WFL_CROMWELL_URL</span><span class="o">=</span>https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test
-</code></pre></div>
+<p><code>bash
+WFL_CROMWELL_URL=https://cromwell-gotc-auth.gotc-prod.broadinstitute.org/ clojure -M:parallel-test wfl.system.v1-endpoint-test</code></p>
 <p>will tell the test to submit workflows to the "gotc-prod" Cromwell instance no matter what the
 default instance was defined in the test. However, you need to make sure the validity of the Cromwell
 URL you passed in; certain IAM permissions will also be required in order for Cromwell to execute the
@@ -1045,7 +1044,7 @@ to deploy applicable versions of WFL to various available cloud projects.</p>
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">⚓︎</a></h2>
 <h3 id="top-level-files">Top-level files<a class="headerlink" href="#top-level-files" title="Permanent link">⚓︎</a></h3>
 <p>After cloning a new WFL repo, the top-level files are:
-<div class="highlight"><pre><span></span><code>.
+<code>.
 ├── api/            - `workflow-launcher` backend
 ├── functions/      - cloud functions deployed separately
 ├── database/       - database scheme migration changelog and changeset
@@ -1057,8 +1056,7 @@ to deploy applicable versions of WFL to various available cloud projects.</p>
 ├── makerules/      - common `Makefile` functionality
 ├── ops/            - scripts to support Operations
 ├── README.md       - symbolic link to docs/md/README.md
-└── version         - holds the current semantic version
-</code></pre></div>
+└── version         - holds the current semantic version</code>
 Tip: Run <code>make</code> at least once after cloning the repo to make sure all the
 necessary files are in place.</p>
 <h3 id="api-module"><code>api</code> Module<a class="headerlink" href="#api-module" title="Permanent link">⚓︎</a></h3>
@@ -1235,7 +1233,7 @@ the services WFL talks to, and are named accordingly.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="assets/javascripts/bundle.febc23d1.min.js"></script>

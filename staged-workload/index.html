@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -889,43 +889,42 @@ A <code>Sink</code> writes workflow outputs to a desired location in the cloud.<
 for source, executor or sink.</p>
 <p>For guidance on how to interact with staged workloads
 via WFL API, see <a href="../staged-api-usage/">API Usage</a>.</p>
-<div class="highlight"><pre><span></span><code>{
-    &quot;watchers&quot;: [
-        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
-        [&quot;slack&quot;, &quot;C000YYY0YYY&quot;, &quot;#optional-channel-name-for-context&quot;]
+<p><code>{
+    "watchers": [
+        ["slack", "C000XXX0XXX"],
+        ["slack", "C000YYY0YYY", "#optional-channel-name-for-context"]
     ],
-    &quot;labels&quot;: [
-        &quot;hornet:test&quot;
+    "labels": [
+        "hornet:test"
     ],
-    &quot;project&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-    &quot;source&quot;: {
-        &quot;name&quot;: &quot;Terra DataRepo&quot;,
-        &quot;dataset&quot;: &quot;4bb51d98-b4aa-4c72-b76a-1a96a2ee3057&quot;,
-        &quot;table&quot;: &quot;flowcells&quot;,
-        &quot;snapshotReaders&quot;: [
-            &quot;workflow-launcher-dev@firecloud.org&quot;
+    "project": "wfl-dev/CDC_Viral_Sequencing",
+    "source": {
+        "name": "Terra DataRepo",
+        "dataset": "4bb51d98-b4aa-4c72-b76a-1a96a2ee3057",
+        "table": "flowcells",
+        "snapshotReaders": [
+            "workflow-launcher-dev@firecloud.org"
         ]
     },
-    &quot;executor&quot;: {
-        &quot;name&quot;: &quot;Terra&quot;,
-        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-        &quot;methodConfiguration&quot;: &quot;wfl-dev/sarscov2_illumina_full&quot;,
-        &quot;fromSource&quot;: &quot;importSnapshot&quot;
+    "executor": {
+        "name": "Terra",
+        "workspace": "wfl-dev/CDC_Viral_Sequencing",
+        "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
+        "fromSource": "importSnapshot"
     },
-    &quot;sink&quot;: {
-        &quot;name&quot;: &quot;Terra Workspace&quot;,
-        &quot;workspace&quot;: &quot;wfl-dev/CDC_Viral_Sequencing&quot;,
-        &quot;entityType&quot;: &quot;flowcell&quot;,
-        &quot;identifier&quot;: &quot;run_id&quot;,
-        &quot;fromOutputs&quot;: {
-            &quot;submission_xml&quot; : &quot;submission_xml&quot;,
-            &quot;assembled_ids&quot; : &quot;assembled_ids&quot;,
-            &quot;num_failed_assembly&quot; : &quot;num_failed_assembly&quot;,
+    "sink": {
+        "name": "Terra Workspace",
+        "workspace": "wfl-dev/CDC_Viral_Sequencing",
+        "entityType": "flowcell",
+        "identifier": "run_id",
+        "fromOutputs": {
+            "submission_xml" : "submission_xml",
+            "assembled_ids" : "assembled_ids",
+            "num_failed_assembly" : "num_failed_assembly",
             ...
         }
     }
-}
-</code></pre></div>
+}</code></p>
 <h2 id="staged-workload-anatomy-high-level">Staged Workload Anatomy (High Level)<a class="headerlink" href="#staged-workload-anatomy-high-level" title="Permanent link">⚓︎</a></h2>
 <table>
 <thead>
@@ -971,11 +970,10 @@ via WFL API, see <a href="../staged-api-usage/">API Usage</a>.</p>
 <h2 id="slack-notifications-for-watchers">Slack Notifications for Watchers<a class="headerlink" href="#slack-notifications-for-watchers" title="Permanent link">⚓︎</a></h2>
 <p>The optional <code>watchers</code> field in a workload request
 registers Slack channels as watchers of the workload.</p>
-<div class="highlight"><pre><span></span><code>&quot;watchers&quot;: [
-        [&quot;slack&quot;, &quot;C000XXX0XXX&quot;],
-        [&quot;slack&quot;, &quot;C000YYY0YYY&quot;, &quot;#optional-channel-name-for-context&quot;]
-    ]
-</code></pre></div>
+<p><code>"watchers": [
+        ["slack", "C000XXX0XXX"],
+        ["slack", "C000YYY0YYY", "#optional-channel-name-for-context"]
+    ]</code></p>
 <p>When specified, WFL expects a list of <strong>Slack channel IDs</strong>.
 You can also add the channel name as the watcher's third element,
 but because channel names can change this is for decoration
@@ -1102,7 +1100,7 @@ and start the new workload.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>

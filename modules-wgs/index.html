@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.2.4">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-7.2.4">
     
     
       
@@ -163,7 +163,7 @@
     
       <div class="md-header__source">
         
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -206,7 +206,7 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/broadinstitute/wfl/" title="Go to repository" class="md-source" data-md-component="source">
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
@@ -1031,39 +1031,39 @@ when you have questions about permissions.</p>
 at least read access to the input files.</p>
 <div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">&#39;{</span>
-<span class="s1">           &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">           &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
-<span class="s1">           &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
-<span class="s1">           &quot;project&quot;: &quot;PO-1234&quot;,</span>
-<span class="s1">           &quot;items&quot;: [{</span>
-<span class="s1">             &quot;inputs&quot;: {</span>
-<span class="s1">               &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
-<span class="s1">               &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
-<span class="s1">             }</span>
-<span class="s1">           }]</span>
-<span class="s1">         }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/create' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+           "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+           "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+           "pipeline": "ExternalWholeGenomeReprocessing",
+           "project": "PO-1234",
+           "items": [{
+             "inputs": {
+               "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+               "sample_name": "TestSample1234"
+             }
+           }]
+         }'</code></p>
 <div class="tabbed-set" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sehsan@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T15:50:01Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+    {
+      "creator": "sehsan@broadinstitute.org",
+      "pipeline": "ExternalWholeGenomeReprocessing",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release": "ExternalWholeGenomeReprocessing_v1.0",
+      "created": "2020-10-05T15:50:01Z",
+      "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+      "project": "PO-1234",
+      "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+      "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+      "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+      "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
+      "version": "0.7.0"
+    }</code></p>
 <p>Note that the ExternalWholeGenomeReprocessing pipeline supports specifying
 cromwell "workflowOptions" via the <code>options</code> map. See the
 <a href="./usage-workflow-options">reference page</a> for more information.</p>
@@ -1072,38 +1072,38 @@ cromwell "workflowOptions" via the <code>options</code> map. See the
 particular input cram, WFL will not re-submit that workflow.</p>
 <div class="tabbed-set" data-tabs="3:1"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
-      -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
-      -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-      -d <span class="s1">&#39;{ &quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot; }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
+      -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+      -H 'Content-Type: application/json' \
+      -d '{ "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e" }'</code></p>
 <div class="tabbed-set" data-tabs="4:1"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T15:50:51Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;username@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T15:50:01Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+    {
+      "started": "2020-10-05T15:50:51Z",
+      "creator": "username@broadinstitute.org",
+      "pipeline": "ExternalWholeGenomeReprocessing",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release": "ExternalWholeGenomeReprocessing_v1.0",
+      "created": "2020-10-05T15:50:01Z",
+      "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+      "project": "PO-1234",
+      "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+      "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+      "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+      "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e",
+      "version": "0.7.0"
+    }</code></p>
 <h3 id="stop-workload-post-apiv1stop">Stop Workload: <code>POST /api/v1/stop</code><a class="headerlink" href="#stop-workload-post-apiv1stop" title="Permanent link">⚓︎</a></h3>
 <p>Included for compatibility with continuous workloads.</p>
 <div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">&#39;{ &quot;uuid&quot;: &quot;74d96a04-fea7-4270-a02b-a319dae2dd5e&quot; }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/start' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{ "uuid": "74d96a04-fea7-4270-a02b-a319dae2dd5e" }'</code></p>
 <div class="tabbed-set" data-tabs="6:1"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Response</label><div class="tabbed-content"></div>
 </div>
 <p><code>json
@@ -1126,98 +1126,98 @@ particular input cram, WFL will not re-submit that workflow.</p>
 <p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
 <div class="tabbed-set" data-tabs="7:1"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X POST <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
-     -d <span class="s1">&#39;{</span>
-<span class="s1">           &quot;executor&quot;: &quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;,</span>
-<span class="s1">           &quot;output&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;,</span>
-<span class="s1">           &quot;pipeline&quot;: &quot;ExternalWholeGenomeReprocessing&quot;,</span>
-<span class="s1">           &quot;project&quot;: &quot;PO-1234&quot;,</span>
-<span class="s1">           &quot;items&quot;: [{</span>
-<span class="s1">             &quot;inputs&quot;: {</span>
-<span class="s1">               &quot;input_cram&quot;: &quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;,</span>
-<span class="s1">               &quot;sample_name&quot;: &quot;TestSample1234&quot;</span>
-<span class="s1">             }</span>
-<span class="s1">           }]</span>
-<span class="s1">         }&#39;</span>
-</code></pre></div>
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token) \
+     -H 'Content-Type: application/json' \
+     -d '{
+           "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+           "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+           "pipeline": "ExternalWholeGenomeReprocessing",
+           "project": "PO-1234",
+           "items": [{
+             "inputs": {
+               "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+               "sample_name": "TestSample1234"
+             }
+           }]
+         }'</code></p>
 <div class="tabbed-set" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><label for="__tabbed_8_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p">{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;started&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;username@broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PO-1234&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d65371ca983b4f0d4fa06868e2946a8e3cab291b&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3a13f732-9743-47a9-ab83-c467b3bf0ca4&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+    {
+      "started": "2020-10-05T16:15:32Z",
+      "creator": "username@broadinstitute.org",
+      "pipeline": "ExternalWholeGenomeReprocessing",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org",
+      "release": "ExternalWholeGenomeReprocessing_v1.0",
+      "created": "2020-10-05T16:15:32Z",
+      "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/wgs-test-output/",
+      "project": "PO-1234",
+      "commit": "d65371ca983b4f0d4fa06868e2946a8e3cab291b",
+      "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+      "input": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth",
+      "uuid": "3a13f732-9743-47a9-ab83-c467b3bf0ca4",
+      "version": "0.7.0"
+    }</code></p>
 <h3 id="query-workload-get-apiv1workloaduuiduuid">Query Workload: <code>GET /api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-get-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
 <div class="tabbed-set" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><label for="__tabbed_9_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?uuid=813e3c38-9c11-4410-9888-435569d91d1d' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token)</code></p>
 <div class="tabbed-set" data-tabs="10:1"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><label for="__tabbed_10_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p">[{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;username&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-08-27T16:26:59Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;workflows&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
-<span class="w">        </span><span class="p">{</span><span class="w"></span>
-<span class="w">          </span><span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">          </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">          </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">            </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample1234&quot;</span><span class="w"></span>
-<span class="w">          </span><span class="p">}</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
-<span class="w">      </span><span class="p">],</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wgs-dev&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-test-storage/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;813e3c38-9c11-4410-9888-435569d91d1d&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+    [{
+      "creator": "username",
+      "pipeline": "ExternalWholeGenomeReprocessing",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+      "release": "ExternalWholeGenomeReprocessing_v1.0",
+      "created": "2020-08-27T16:26:59Z",
+      "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
+      "workflows": [
+        {
+          "updated": "2020-10-05T16:15:32Z",
+          "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+          "inputs": {
+            "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+            "sample_name": "TestSample1234"
+          }
+        }
+      ],
+      "project": "wgs-dev",
+      "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
+      "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+      "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+      "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
+      "version": "0.7.0"
+    }]</code></p>
 <h3 id="query-workload-with-project-get-apiv1workloadprojectproject">Query Workload with project: <code>GET /api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-get-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
 <p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
 <div class="tabbed-set" data-tabs="11:1"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><label for="__tabbed_11_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=wgs-dev&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload?project=wgs-dev' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token)</code></p>
 <div class="tabbed-set" data-tabs="12:1"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><label for="__tabbed_12_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p">[{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;creator&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;username&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;executor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;release&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ExternalWholeGenomeReprocessing_v1.0&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;created&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-08-27T16:26:59Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-zero-test/wgs-test-output&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wgs-dev&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d2fc38c61c62c44f4fd4d24bdee3121138e6c09e&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;wdl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-test-storage/single_sample/plumbing/truth&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;813e3c38-9c11-4410-9888-435569d91d1d&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.7.0&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+    [{
+      "creator": "username",
+      "pipeline": "ExternalWholeGenomeReprocessing",
+      "executor": "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org/",
+      "release": "ExternalWholeGenomeReprocessing_v1.0",
+      "created": "2020-08-27T16:26:59Z",
+      "output": "gs://broad-gotc-dev-zero-test/wgs-test-output",
+      "project": "wgs-dev",
+      "commit": "d2fc38c61c62c44f4fd4d24bdee3121138e6c09e",
+      "wdl": "pipelines/reprocessing/external/wgs/ExternalWholeGenomeReprocessing.wdl",
+      "input": "gs://broad-gotc-test-storage/single_sample/plumbing/truth",
+      "uuid": "813e3c38-9c11-4410-9888-435569d91d1d",
+      "version": "0.7.0"
+    }]</code></p>
 <p>The "workflows" field lists out each Cromwell workflow that was started, and
 includes their status information. It is also possible to use the Job Manager
 to check workflow progress and easily see information about any workflow
@@ -1231,20 +1231,20 @@ together.</p>
 <h3 id="list-workflows-managed-by-a-workload-get-apiv1workloaduuidworkflows">List workflows managed by a workload <code>GET /api/v1/workload/{uuid}/workflows</code><a class="headerlink" href="#list-workflows-managed-by-a-workload-get-apiv1workloaduuidworkflows" title="Permanent link">⚓︎</a></h3>
 <div class="tabbed-set" data-tabs="13:1"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><label for="__tabbed_13_1">Request</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code>curl -X GET <span class="s1">&#39;https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload/813e3c38-9c11-4410-9888-435569d91d1d/workflows&#39;</span> <span class="se">\</span>
-     -H <span class="s1">&#39;Authorization: Bearer &#39;</span><span class="k">$(</span>gcloud auth print-access-token<span class="k">)</span>
-</code></pre></div>
+<p><code>bash
+curl -X GET 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/workload/813e3c38-9c11-4410-9888-435569d91d1d/workflows' \
+     -H 'Authorization: Bearer '$(gcloud auth print-access-token)</code></p>
 <div class="tabbed-set" data-tabs="14:1"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><label for="__tabbed_14_1">Response</label><div class="tabbed-content"></div>
 </div>
-<div class="highlight"><pre><span></span><code><span class="p">[{</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2020-10-05T16:15:32Z&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2c543b29-2db9-4643-b81b-b16a0654c5cc&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;input_cram&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">      </span><span class="nt">&quot;sample_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TestSample1234&quot;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}]</span><span class="w"></span>
-</code></pre></div>
+<p><code>json
+[{
+    "updated": "2020-10-05T16:15:32Z",
+    "uuid": "2c543b29-2db9-4643-b81b-b16a0654c5cc",
+    "inputs": {
+      "input_cram": "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+      "sample_name": "TestSample1234"
+    }
+}]</code></p>
 <p>The "workflows" endpoint lists out each Cromwell workflow that was started, and includes their
 status information. It is also possible to use the Job Manager to check workflow progress and
 easily see information about any workflow failures.</p>
@@ -1336,7 +1336,7 @@ easily see information about any workflow failures.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": 2.0}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
     
     
       <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>
