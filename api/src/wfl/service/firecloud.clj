@@ -86,21 +86,23 @@
    (create-submission workspace methodconfig entity {})))
 
 (defn submit-method
-  "Submit the`methodconfig` for processing in the Terra `workspace`."
-  ([workspace methodconfig]
-   (submit-method workspace methodconfig ""))
-  ([workspace methodconfig usercomment]
-   {:pre [(every? string? [workspace methodconfig usercomment])]}
-   (let [[mcns mcn] (str/split methodconfig #"/")]
+  "Submit the`methodConfiguration` for processing in the Terra `workspace`
+  with `memoryRetryMultiplier` when not nil."
+  ([memoryRetryMultiplier methodConfiguration workspace]
+   (submit-method memoryRetryMultiplier methodConfiguration workspace ""))
+  ([memoryRetryMultiplier methodConfiguration workspace userComment]
+   {:pre [(every? string? [methodConfiguration userComment workspace])]}
+   (let [[mcns mcn] (str/split methodConfiguration #"/")
+         body       (util/unnilify
+                     {:memoryRetryMultiplier memoryRetryMultiplier
+                      :methodConfigurationNamespace mcns
+                      :methodConfigurationName mcn
+                      :useCallCache true
+                      :userComment userComment})]
      (-> (workspace-api-url workspace "submissions")
          (http/post {:headers      (auth/get-auth-header)
                      :content-type :application/json
-                     :body         (json/write-str
-                                    {:methodConfigurationNamespace mcns
-                                     :methodConfigurationName mcn
-                                     :useCallCache true
-                                     :userComment usercomment}
-                                    :escape-slash false)})
+                     :body         (json/write-str body :escape-slash false)})
          util/response-body-json))))
 
 (defn create-workspace

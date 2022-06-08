@@ -80,6 +80,7 @@
 (def ^:private ^:const terra-executor-table "TerraExecutor")
 (def ^:private ^:const terra-executor-serialized-fields
   {:workspace                  :workspace
+   :memoryRetryMultiplier      :memory_retry_multiplier
    :methodConfiguration        :method_configuration
    :methodConfigurationVersion :method_configuration_version
    :fromSource                 :from_source})
@@ -87,6 +88,7 @@
 ;; Specs
 (s/def ::entity ::all/uuid)
 (s/def ::fromSource string?)
+(s/def ::memoryRetryMultiplier number?)
 (s/def ::methodConfiguration (s/and string? util/terra-namespaced-name?))
 (s/def ::methodConfigurationVersion integer?)
 (s/def ::reference ::all/uuid)
@@ -97,7 +99,8 @@
                                          ::fromSource
                                          ::methodConfiguration
                                          ::all/workspace]
-                                :opt-un [::methodConfigurationVersion]))
+                                :opt-un [::memoryRetryMultiplier
+                                         ::methodConfigurationVersion]))
 
 (s/def ::terra-executor-workflow (s/keys :req-un [::entity
                                                   ::methodConfiguration
@@ -248,16 +251,16 @@
     user-comment-note
     reference
     [_type snapshot   :as _source-object]]
-   (let [{:keys [workspace methodConfiguration]} executor]
+   (let [{:keys [memoryRetryMultiplier methodConfiguration workspace]} executor]
      (update-method-configuration! workload reference snapshot)
      (log/debug "Initiating Terra submission"
-                :workload            (workloads/to-log workload)
-                :methodConfiguration methodConfiguration
-                :workspace           workspace)
+                :workload (workloads/to-log workload)
+                :executor executor)
      (let [userComment
            (create-user-comment user-comment-note workload snapshot)
            submission
-           (firecloud/submit-method workspace methodConfiguration userComment)
+           (firecloud/submit-method memoryRetryMultiplier methodConfiguration
+                                    userComment workspace)
            message
            (submission-created-slack-msg executor submission snapshot)]
        (slack/notify-watchers workload message)
