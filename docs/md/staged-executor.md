@@ -35,6 +35,7 @@ And a real-life example for a known method configuration:
 {
   "name": "Terra",
   "workspace": "wfl-dev/CDC_Viral_Sequencing",
+  "memoryRetryMultiplier": 1.5
   "methodConfiguration": "wfl-dev/sarscov2_illumina_full",
   "fromSource": "importSnapshot"
 }
@@ -44,12 +45,13 @@ And a real-life example for a known method configuration:
 
 The table below summarises the purpose of each attribute in the above request.
 
-| Attribute             | Description                                                                                       |
-|-----------------------|---------------------------------------------------------------------------------------------------|
-| `name`                | Selects the `Terra` executor implementation.                                                      |
-| `workspace`           | Terra Workspace in which to execute workflows.                                                    |
-| `methodConfiguration` | Method configuration from which to generate submissions.                                          |
-| `fromSource`          | Instruction to coerce an output from an upstream `Source` to a type understood by this `executor`.|
+| Attribute               | Description                                                                                        |
+|-------------------------|----------------------------------------------------------------------------------------------------|
+| `name`                  | Selects the `Terra` executor implementation.                                                       |
+| `workspace`             | Terra Workspace in which to execute workflows.                                                     |
+| `memoryRetryMultiplier` | Retry OutOfMemory Cromwell tasks with memory increased by this factor.                             |
+| `methodConfiguration`   | Method configuration from which to generate submissions.                                           |
+| `fromSource`            | Instruction to coerce an output from an upstream `Source` to a type understood by this `executor`. |
 
 #### `workspace`
 A `{workspace-namespace}/{workspace-name}` string as it appears in the URL path
