@@ -1,3 +1,7 @@
+# Release 0.18.4
+- [GH-1666] Pick up GDCWholeGenomeSomaticSingleSample_v1.3.0 in sg module. ([#610](https://github.com/broadinstitute/wfl/pull/610))
+- [GH-1654] Admit memory retry multiplier. ([#608](https://github.com/broadinstitute/wfl/pull/608))
+
 # Release 0.18.3
 - [GH-1658] Shouldn't wfl.service.rawls/batch-upsert handle Boolean attributes? ([#607](https://github.com/broadinstitute/wfl/pull/607))
 - [GH-1653] TDR snapshot direct links have changed ([#606](https://github.com/broadinstitute/wfl/pull/606))
