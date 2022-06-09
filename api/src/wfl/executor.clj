@@ -260,7 +260,7 @@
            (create-user-comment user-comment-note workload snapshot)
            submission
            (firecloud/submit-method memoryRetryMultiplier methodConfiguration
-                                    userComment workspace)
+                                    workspace userComment)
            message
            (submission-created-slack-msg executor submission snapshot)]
        (slack/notify-watchers workload message)
