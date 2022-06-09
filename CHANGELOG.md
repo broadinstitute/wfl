@@ -1,3 +1,6 @@
+# Release 0.18.5
+- [GH-1671] create-submission! swaps arguments to submit-method. ([#612](https://github.com/broadinstitute/wfl/pull/612))
+
 # Release 0.18.4
 - [GH-1666] Pick up GDCWholeGenomeSomaticSingleSample_v1.3.0 in sg module. ([#610](https://github.com/broadinstitute/wfl/pull/610))
 - [GH-1654] Admit memory retry multiplier. ([#608](https://github.com/broadinstitute/wfl/pull/608))
