@@ -178,10 +178,9 @@
       (when (not= (-> ex ex-data :status) 404)
         (throw ex)))))
 
-;; Visible for testing
-(def entity-name-not-found-error-message
-  (str "Entity name not found: "
-       "sink.identifer not present in workflow outputs or inputs"))
+(def ^:private entity-name-not-found-error-message
+  (str/join \space ["Entity name not found:"
+                    "sink.identifer not in workflow outputs or inputs"]))
 
 (defn ^:private throw-or-entity-name-from-workflow
   "Return entity name from `identifier`'s match in `workflow`:

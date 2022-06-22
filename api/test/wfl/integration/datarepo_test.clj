@@ -59,7 +59,7 @@
         tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-cloud-storage-folder
-         fixtures/gcs-tdr-test-bucket)
+         (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET"))
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp-bucket dataset-id]]

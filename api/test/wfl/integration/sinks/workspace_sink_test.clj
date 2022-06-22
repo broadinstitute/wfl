@@ -114,13 +114,13 @@
                             :sink     sink-updates}]
       (testing "Sink identifier matches no workflow output or input"
         (with-redefs
-         [rawls/batch-upsert  (partial throw-if-called "rawls/batch-upsert")
-          sink/entity-exists? (partial throw-if-called "sink/entity-exists?")
-          firecloud/delete-entities
-          (partial throw-if-called "firecloud/delete-entities")]
+          [rawls/batch-upsert  (partial throw-if-called "rawls/batch-upsert")
+           sink/entity-exists? (partial throw-if-called "sink/entity-exists?")
+           firecloud/delete-entities
+           (partial throw-if-called "firecloud/delete-entities")]
           (is (thrown-with-msg?
                ExceptionInfo
-               (re-pattern sink/entity-name-not-found-error-message)
+               (re-pattern @#'sink/entity-name-not-found-error-message)
                (sink/update-sink! workload-throws))
               "Throw when identifier not in input or output"))
         (is (== 1 (stage/queue-length executor))

@@ -127,7 +127,8 @@
 (deftest ^:parallel test-start-sg-workload
   (test-start-workload (create-sg-workload)))
 (deftest ^:parallel test-start-copyfile-workload
-  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder
+    "broad-gotc-dev-wfl-ptc-test-outputs"
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
@@ -193,7 +194,8 @@
   (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
 
 (deftest ^:parallel test-exec-copyfile-workload
-  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder
+    "broad-gotc-dev-wfl-ptc-test-outputs"
     (fn [url]
       (let [src (str url "input.txt")
             dst (str url "output.txt")]
@@ -407,7 +409,7 @@
    illumina_genotyping_array `dataset`"
   [dataset-id load-tag]
   (fixtures/with-temporary-cloud-storage-folder
-    fixtures/gcs-tdr-test-bucket
+    (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET")
     (fn [cloud-folder]
       (let [file (str cloud-folder "inputs.json")]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
