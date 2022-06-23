@@ -63,15 +63,16 @@
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp-bucket dataset-id]]
-        (let [table-url   (str temp-bucket "table.json")
-              workflow-id (UUID/randomUUID)
-              dataset     (datarepo/datasets dataset-id)]
+        (let [table-url        (str temp-bucket "table.json")
+              workflow-id      (UUID/randomUUID)
+              dataset          (datarepo/datasets dataset-id)
+              [_bucket object] (gcs/parse-gs-url temp-bucket)]
           (-> (#'sink/rename-gather-bulk workflow-id
                                          dataset
                                          table-name
                                          outputs
                                          from-outputs
-                                         temp-bucket)
+                                         object)
               (assoc :ingested (workflows/tdr-now))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))

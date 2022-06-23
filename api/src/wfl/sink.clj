@@ -346,11 +346,11 @@
                                   :workflow workflow})))))))
 
 (defn ^:private rename-gather-bulk
-  "Transform the `values` using the transformation defined in
-  `mapping`, building bulk load file models instead of strings."
+  "Transform `values` according to `mapping` for `workflow-id`and `table` in `dataset`.
+   And HACK test outputs with `test-prefix` when specified."
   ([workflow-id dataset table values mapping]
-   (rename-gather-bulk workflow-id dataset table values mapping ""))
-  ([workflow-id {:keys [schema] :as dataset} table values mapping target-bucket]
+   (rename-gather-bulk workflow-id dataset table values mapping nil))
+  ([workflow-id {:keys [schema] :as dataset} table values mapping test-prefix]
    (letfn [(literal? [x] (str/starts-with? x "$"))
            (datatype [k] (let [columns (->> schema
                                             :tables
@@ -363,16 +363,14 @@
            (fileref? [k] (= (datatype (name k)) "fileref"))
            (boolean? [k] (= (datatype (name k)) "boolean"))
            (get-target [url]
-             (let [[bucket obj] (storage/parse-gs-url url)]
-               (if (= target-bucket "")
-                 (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))
-                 (str target-bucket workflow-id "/" (util/basename obj)))))
+             (let [[_ obj] (storage/parse-gs-url url)]
+               (str/join "/" [(or test-prefix "") workflow-id (util/basename obj)])))
            (go! [k v]
              (cond (fileref? k) (if-let [val (values (keyword v))]
                                   [k {:description (util/basename val)
-                                      :mimeType   (mime-type/ext-mime-type val)
-                                      :sourcePath val
-                                      :targetPath (get-target val)}]
+                                      :mimeType    (mime-type/ext-mime-type val)
+                                      :sourcePath  val
+                                      :targetPath  (get-target val)}]
                                   [k nil])
                    (literal? v) [k (subs v 1 (count v))]
                    (boolean? v) [k (values (keyword v))]
