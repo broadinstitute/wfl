@@ -72,7 +72,7 @@
                                          table-name
                                          outputs
                                          from-outputs
-                                         object)
+                                         (str "/" (util/de-slashify object)))
               (assoc :ingested (workflows/tdr-now))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
