@@ -396,26 +396,28 @@
             (is (empty? statuses))))))))
 
 (defn ^:private convert-to-bulk
-  "Convert fileref `value` to BulkLoadFileModel in `bucket` for TDR."
-  [value bucket]
+  "Convert fileref `value` to BulkLoadFileModel with `prefix` for TDR."
+  [value prefix]
   (let [basename (util/basename value)]
     {:description basename
      :mimeType (mime-type/ext-mime-type value)
      :sourcePath value
-     :targetPath (str bucket basename)}))
+     :targetPath (str prefix basename)}))
 
 (defn ^:private ingest-illumina-genotyping-array-inputs
-  "Ingest inputs for the illumina_genotyping_array pipeline into the
-   illumina_genotyping_array `dataset`"
+  "Ingest inputs with `load-tag` for the illumina_genotyping_array
+  pipeline into the `dataset-id` dataset."
   [dataset-id load-tag]
   (fixtures/with-temporary-cloud-storage-folder
     (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET")
     (fn [cloud-folder]
-      (let [file (str cloud-folder "inputs.json")]
+      (let [file             (str cloud-folder "inputs.json")
+            [_bucket object] (gcs/parse-gs-url cloud-folder)
+            prefix           (str "/" (util/de-slashify object))]
         (-> (resources/read-resource "illumina_genotyping_array/inputs.json")
             (assoc :ingested (workflows/tdr-now))
-            (update :green_idat_cloud_path convert-to-bulk cloud-folder)
-            (update :red_idat_cloud_path   convert-to-bulk cloud-folder)
+            (update :green_idat_cloud_path convert-to-bulk prefix)
+            (update :red_idat_cloud_path   convert-to-bulk prefix)
             (json/write-str :escape-slash false)
             (gcs/upload-content file))
         (datarepo/poll-job
@@ -440,33 +442,32 @@
                       :snapshotReaders        ["hornet@firecloud.org"]
                       :pollingIntervalMinutes 1
                       :loadTag                "loadTagToMonitor"}
-            executor {:name                "Terra"
-                      :workspace           workspace
-                      :methodConfiguration "warp-pipelines/IlluminaGenotypingArray"
-                      :fromSource          "importSnapshot"}
-            sink     {:name        "Terra DataRepo"
-                      :dataset     dataset-id
-                      :table       "outputs"
-                      :fromOutputs (resources/read-resource
-                                    "illumina_genotyping_array/fromOutputs.edn")}
+            executor {:name                   "Terra"
+                      :workspace              workspace
+                      :methodConfiguration    "warp-pipelines/IlluminaGenotypingArray"
+                      :fromSource             "importSnapshot"}
+            sink     {:name                   "Terra DataRepo"
+                      :dataset                dataset-id
+                      :table                  "outputs"
+                      :fromOutputs            (resources/read-resource
+                                               "illumina_genotyping_array/fromOutputs.edn")}
             workload (endpoints/exec-workload
                       (workloads/staged-workload-request source executor sink))]
         (try
           (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
           (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
+          (debug/trace dataset)
           (let [row-ids      (-> dataset
                                  (datarepo/query-metadata-table
                                   (:table source) {} [:datarepo_row_id])
-                                 :rows
-                                 flatten)
+                                 :rows flatten)
                 where-load   {:loadTag (:loadTag source)}
                 keep-row-ids (-> dataset
                                  (datarepo/query-metadata-table
                                   (:table source) where-load [:datarepo_row_id])
-                                 :rows
-                                 flatten)
+                                 :rows flatten)
                 [workflow & rest]
-                (util/poll #(seq (endpoints/get-workflows workload)) 20 100)]
+                (util/poll #(-> workload endpoints/get-workflows wfl.debug/trace seq) 20 100)]
             (is (== 2 (count row-ids))
                 "2 rows should have been ingested")
             (is (== 1 (count keep-row-ids))
@@ -474,7 +475,7 @@
             (is workflow
                 "One workflow should have been created")
             (is (= (first keep-row-ids) (:entity workflow))
-                "Row ingested with monitored load tag should have been submitted")
+                "Row ingested with load tag should have been submitted")
             (is (empty? rest)
                 "Only one workflow should have been created"))
           (finally
@@ -484,10 +485,10 @@
         ;; to be emitted to the Slack channels in
         ;; `wfl.tools.workloads/watchers`.
         (is (util/poll
-             #(-> workload :uuid endpoints/get-workload-status :finished)
+             #(-> workload :uuid endpoints/get-workload-status wfl.debug/trace :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (:rows (datarepo/query-table dataset "outputs")))
+        (is (seq (:rows (debug/trace (datarepo/query-table dataset "outputs"))))
             "outputs should have been written to the dataset")))))
 
 (deftest ^:parallel test-logging-level

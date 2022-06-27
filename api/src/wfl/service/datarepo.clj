@@ -5,6 +5,7 @@
             [clojure.spec.alpha          :as s]
             [clojure.string              :as str]
             [wfl.auth                    :as auth]
+            [wfl.debug]
             [wfl.environment             :as env]
             [wfl.mime-type               :as mime-type]
             [wfl.service.google.bigquery :as bigquery]
@@ -291,9 +292,11 @@
 
 (defn ^:private query-table-impl
   [{:keys [dataProject] :as dataset-or-snapshot} table col-spec]
+  (wfl.debug/trace [dataset-or-snapshot table col-spec])
   (-> "SELECT %s FROM `%s`"
       (format col-spec (bq-path dataset-or-snapshot table))
-      (->> (bigquery/query-sync dataProject))))
+      (->> (bigquery/query-sync dataProject)
+           wfl.debug/trace)))
 
 (defn query-table
   "Query everything or optionally the `columns` in `table` in the Terra DataRepo

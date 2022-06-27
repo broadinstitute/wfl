@@ -1,5 +1,6 @@
 (ns wfl.integration.google.bigquery-test
   (:require [clojure.test :refer [deftest is]]
+            [wfl.debug]
             [wfl.service.google.bigquery :as bigquery]))
 
 (def ^:private google-project "broad-jade-dev-data")
@@ -17,6 +18,8 @@
     (is (every? #(= (:kind %) "bigquery#table") tables))))
 
 (deftest test-query-table-sync
-  (let [query (format "SELECT * FROM `%s.%s.%s`" google-project dr-dataset dr-view)
-        query-result (bigquery/query-sync google-project query)]
-    (is (seq (:rows query-result)) "No results found!")))
+  (is (->> (format "SELECT * FROM `%s.%s.%s`" google-project dr-dataset dr-view)
+           (bigquery/query-sync google-project)
+           wfl.debug/trace
+           :rows seq)
+      "No results found!"))

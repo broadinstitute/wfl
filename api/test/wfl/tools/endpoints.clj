@@ -8,6 +8,7 @@
             [reitit.ring.coercion    :as coercion]
             [ring.util.http-response :refer [ok]]
             [wfl.auth                :as auth]
+            [wfl.debug]
             [wfl.environment         :as env]
             [wfl.util                :as util]))
 
@@ -75,6 +76,7 @@
 (defn stop-workload
   "Stop processing WORKLOAD. WORKLOAD must be known to the server."
   [workload]
+  (wfl.debug/trace [:stop workload])
   (let [payload (json/write-str (select-keys workload [:uuid]))]
     (-> (wfl-url "api/v1/stop")
         (http/post {:headers      (auth/get-auth-header)
