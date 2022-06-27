@@ -52,14 +52,6 @@
         "name": "outputs",
         "columns": [
           {
-            "name": "analysis_version_number",
-            "datatype": "integer"
-          },
-          {
-            "name": "chip_well_barcode",
-            "datatype": "string"
-          },
-          {
             "name": "arrays_variant_calling_control_metrics",
             "datatype": "fileref"
           },
@@ -125,8 +117,6 @@
           }
         ],
         "primaryKey": [
-          "analysis_version_number",
-          "chip_well_barcode",
           "genotype_concordance_failed"
         ],
         "partitionMode": "date",
