@@ -186,7 +186,7 @@
   [dataset-request f]
   (util/bracket
    #(datarepo/create-dataset dataset-request)
-   identity
+   datarepo/delete-snapshots-then-dataset
    f))
 
 (defn with-temporary-workspace
@@ -223,7 +223,7 @@
           (create-workspace [] (let [workspace (clone-workspace)]
                                  (share-workspace workspace)
                                  workspace))]
-    (util/bracket create-workspace identity use-workspace)))
+    (util/bracket create-workspace firecloud/delete-workspace use-workspace)))
 
 (defn with-temporary-environment
   "Temporarily override the environment with the key-value mapping in `env`.
