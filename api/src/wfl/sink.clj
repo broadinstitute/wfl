@@ -7,7 +7,6 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
-            [wfl.debug]
             [wfl.environment            :as env]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
@@ -361,16 +360,14 @@
            (fileref? [k] (= (datatype (name k)) "fileref"))
            (boolean? [k] (= (datatype (name k)) "boolean"))
            (get-target [url]
-             (wfl.debug/trace url)
              (let [[_ obj] (storage/parse-gs-url url)]
                (str/join "/" [(or test-prefix "") workflow-id (util/basename obj)])))
            (go! [k v]
-             (wfl.debug/trace [k v])
              (cond (fileref? k) (if-let [val (values (keyword v))]
                                   [k {:description (util/basename val)
                                       :mimeType    (mime-type/ext-mime-type val)
                                       :sourcePath  val
-                                      :targetPath  (wfl.debug/trace (get-target val))}]
+                                      :targetPath  (get-target val)}]
                                   [k nil])
                    (literal? v) [k (subs v 1 (count v))]
                    (boolean? v) [k (values (keyword v))]

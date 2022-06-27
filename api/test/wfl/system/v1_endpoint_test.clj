@@ -456,7 +456,6 @@
         (try
           (ingest-illumina-genotyping-array-inputs dataset-id "ignoreThisRow")
           (ingest-illumina-genotyping-array-inputs dataset-id (:loadTag source))
-          (debug/trace dataset)
           (let [row-ids      (-> dataset
                                  (datarepo/query-metadata-table
                                   (:table source) {} [:datarepo_row_id])
@@ -467,7 +466,7 @@
                                   (:table source) where-load [:datarepo_row_id])
                                  :rows flatten)
                 [workflow & rest]
-                (util/poll #(-> workload endpoints/get-workflows wfl.debug/trace seq) 20 100)]
+                (util/poll #(-> workload endpoints/get-workflows seq) 20 100)]
             (is (== 2 (count row-ids))
                 "2 rows should have been ingested")
             (is (== 1 (count keep-row-ids))
@@ -485,10 +484,10 @@
         ;; to be emitted to the Slack channels in
         ;; `wfl.tools.workloads/watchers`.
         (is (util/poll
-             #(-> workload :uuid endpoints/get-workload-status wfl.debug/trace :finished)
+             #(-> workload :uuid endpoints/get-workload-status :finished)
              20 100)
             "The workload should have finished")
-        (is (seq (:rows (debug/trace (datarepo/query-table dataset "outputs"))))
+        (is (-> dataset (datarepo/query-table "outputs") :rows seq)
             "outputs should have been written to the dataset")))))
 
 (deftest ^:parallel test-logging-level

@@ -5,7 +5,6 @@
             [clojure.data.json :as json]
             [clojure.string    :as str]
             [wfl.auth          :as auth]
-            [wfl.debug]
             [wfl.util          :as util])
   (:import [java.io StringWriter]))
 
@@ -69,16 +68,12 @@
    project  - Google Cloud Project to list the BigQuery datasets in.
    query    - BigQuery Standard SQL query string."
   [project query]
-  (wfl.debug/trace [project query])
   (-> (str/join "/" ["projects" project "queries"])
-      wfl.debug/trace
       bigquery-url
-      wfl.debug/trace
       (http/post {:headers (auth/get-auth-header)
                   :body    (json/write-str {:query          query
                                             :use_legacy_sql false})})
       util/response-body-json
-      wfl.debug/trace
       normalize-table))
 
 (defn dump-table->tsv
