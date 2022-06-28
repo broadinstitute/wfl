@@ -1,7 +1,7 @@
 (ns wfl.unit.mime-type-test
   "Test wfl.mime-type."
-  (:require [clojure.test        :refer [deftest is]]
-            [wfl.mime-type       :as mime-type]))
+  (:require [clojure.test  :refer [deftest is]]
+            [wfl.mime-type :as mime-type]))
 
 (deftest test-mime-types
   (let [cases [[".bam"   "application/octet-stream"]
