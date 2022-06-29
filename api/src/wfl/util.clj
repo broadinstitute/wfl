@@ -360,8 +360,9 @@
   (fn [x & xs] (apply partial f x xs)))
 
 (defn poll
-  "Poll `task!` every `seconds` [default: 1], attempting at most `max-attempts`
-   [default: 3]."
+  "Call `task!` every `seconds` [default: 1] while it returns `nil`, up
+  to `max-attempts` times [default: 3].  Return the non-nil result or
+  throw."
   ([task! seconds max-attempts]
    (loop [attempt 1]
      (if-some [result (task!)]

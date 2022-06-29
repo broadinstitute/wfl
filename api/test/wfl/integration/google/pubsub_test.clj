@@ -16,7 +16,7 @@
 
 (deftest test-cloud-storage-pubsub
   (let [project "broad-gotc-dev-storage"
-        bucket  fixtures/gcs-test-bucket]
+        bucket  "broad-gotc-dev-wfl-ptc-test-outputs"]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-topic project)
        (fixtures/with-temporary-cloud-storage-folder bucket)]

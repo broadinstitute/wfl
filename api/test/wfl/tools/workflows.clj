@@ -9,10 +9,12 @@
   [value bucket]
   (let [basename (util/basename value)]
     {:description basename
-     :mimeType (mime-type/ext-mime-type value)
-     :sourcePath value
-     :targetPath (str/join "/" [bucket basename])}))
+     :mimeType    (mime-type/ext-mime-type value)
+     :sourcePath  value
+     :targetPath  (str/join "/" [bucket basename])}))
 
-(def tdr-date-time-formatter
-  "The Data Repo's time format."
-  (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss"))
+(defn tdr-now
+  "Now in the Data Repository's date time format."
+  []
+  (.format (util/utc-now)
+           (DateTimeFormatter/ofPattern "YYYY-MM-dd'T'HH:mm:ss")))

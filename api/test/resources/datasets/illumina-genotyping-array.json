@@ -39,8 +39,6 @@
         "primaryKey": [
           "analysis_version_number",
           "chip_well_barcode",
-          "green_idat_cloud_path",
-          "red_idat_cloud_path",
           "sample_alias",
           "reported_gender",
           "ingested"
@@ -119,22 +117,7 @@
           }
         ],
         "primaryKey": [
-          "arrays_variant_calling_control_metrics",
-          "arrays_variant_calling_detail_metrics",
-          "arrays_variant_calling_summary_metrics",
-          "contamination_metrics",
-          "genotype_concordance_contingency_metrics",
-          "genotype_concordance_detail_metrics",
-          "genotype_concordance_failed",
-          "genotype_concordance_summary_metrics",
-          "green_idat_md5_cloud_path",
-          "gtc",
-          "output_fingerprint_vcf",
-          "output_fingerprint_vcf_index",
-          "output_vcf",
-          "output_vcf_index",
-          "output_vcf_md5_cloud_path",
-          "red_idat_md5_cloud_path"
+          "genotype_concordance_failed"
         ],
         "partitionMode": "date",
         "datePartitionOptions": {

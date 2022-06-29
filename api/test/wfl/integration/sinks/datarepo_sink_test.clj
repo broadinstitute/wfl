@@ -130,7 +130,7 @@
       (-> (jdbc/query tx (format query details)) first :count))))
 
 (defn ^:private poll-for-results
-  "Update sink until there is a truthy result or the max number of attempts is reached."
+  "Update sink every `seconds` up to `max` times until it is `done?`."
   [{:keys [sink] :as workload} seconds max-attempts]
   (letfn [(update-and-check []
             (sink/update-sink! workload)
@@ -143,15 +143,17 @@
           (do (.sleep TimeUnit/SECONDS seconds)
               (recur (inc attempt))))))))
 
-(deftest ^:kaocha/pending test-update-datarepo-sink
-  (let [description      (resources/read-resource "primitive.edn")
+(deftest test-update-datarepo-sink
+  (let [outfile          "gs://not-a-real-bucket/not-a-real.unmapped.bam"
+        description      (resources/read-resource "primitive.edn")
         workflow         {:uuid (UUID/randomUUID) :outputs outputs}
         upstream         (make-queue-from-list [[description workflow]])
-        failing-workflow {:uuid (UUID/randomUUID) :outputs {:outbool   true
-                                                            :outfile   "gs://not-a-real-bucket/external-reprocessing/exome/develop/not-a-real.unmapped.bam"
-                                                            :outfloat  (* 4 (Math/atan 1))
-                                                            :outint    27
-                                                            :outstring "Hello, World!"}}
+        failing-workflow {:uuid (UUID/randomUUID)
+                          :outputs {:outbool   true
+                                    :outfile   outfile
+                                    :outfloat  1.23
+                                    :outint    27
+                                    :outstring "Hello, World!"}}
         failing-upstream (make-queue-from-list [[description failing-workflow]])
         sink             (create-and-load-datarepo-sink)
         workload         {:executor upstream
@@ -165,4 +167,5 @@
     (eventually (throws? UserException) #(sink/update-sink! failing-workload)
                 :interval 5 :times 10)
     (is (stage/done? sink) "failed jobs are no longer considered")
-    (is (or (sink/update-sink! failing-workload) true) "subsequent updates do nothing")))
+    (is (or (sink/update-sink! failing-workload) true)
+        "subsequent updates do nothing")))
