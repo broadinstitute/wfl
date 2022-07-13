@@ -328,9 +328,8 @@
                             (format "load_tag = '%s'" loadTag))
         where-clauses     (util/remove-empty-and-join
                            [where-ingest-time where-load-tag] " AND ")
-        where             (if-not (empty? where-clauses)
-                            (format "WHERE %s" where-clauses)
-                            "")]
+        where             (if (empty? where-clauses) ""
+                              (format "WHERE %s" where-clauses))]
     (-> "SELECT %s FROM `%s` %s"
         (format col-spec (bq-path dataset-or-snapshot meta-table) where)
         (->> (bigquery/query-sync dataProject)))))
