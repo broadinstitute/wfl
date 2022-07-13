@@ -304,8 +304,7 @@
    (query-table-impl dataset table
                      (util/to-comma-separated-list (map name columns)))))
 
-;; Public for testing
-(def metadata-table-name-prefix "datarepo_row_metadata_")
+(def ^:private metadata-table-name-prefix "datarepo_row_metadata_")
 
 (defn metadata
   "Return TDR row metadata table name corresponding to `table-name`."
