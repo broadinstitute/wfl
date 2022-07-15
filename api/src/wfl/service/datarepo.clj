@@ -322,7 +322,7 @@
                             (format "ingest_time BETWEEN '%s' AND '%s'"
                                     start end))
         where-load-tag    (when loadTag
-                            (format "load_tag = '%s'" loadTag))
+                            (format "load_tag LIKE '%s%%'" loadTag))
         where-clauses     (util/remove-empty-and-join
                            [where-ingest-time where-load-tag] " AND ")
         where             (if (empty? where-clauses) ""
