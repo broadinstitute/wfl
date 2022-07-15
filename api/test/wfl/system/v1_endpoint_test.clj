@@ -337,11 +337,13 @@
                                     {:submission submission :status status-unretriable}]
                 filters-valid      [{:submission submission}
                                     {:submission submission :status status-retriable}]]
-            (run! (partial should-throw-400
-                           executor/terra-executor-retry-filters-invalid-error-message)
+            (run! (partial
+                   should-throw-400
+                   executor/terra-executor-retry-filters-invalid-error-message)
                   filters-invalid)
-            (run! (partial should-throw-400
-                           handlers/retry-no-workflows-error-message)
+            (run! (partial
+                   should-throw-400
+                   @#'handlers/retry-no-workflows-error-message)
                   filters-valid))))
       (testing "/start staged workload"
         (let [{:keys [created started] :as response}
