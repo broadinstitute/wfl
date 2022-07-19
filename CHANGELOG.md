@@ -1,3 +1,6 @@
+# Release 0.19.0
+- [GH-1678] When monitoring source load tags, match prefix instead of exact match. ([#614](https://github.com/broadinstitute/wfl/pull/614))
+
 # Release 0.18.5
 - [GH-1671] create-submission! swaps arguments to submit-method. ([#612](https://github.com/broadinstitute/wfl/pull/612))
 
