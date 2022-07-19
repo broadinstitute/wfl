@@ -9,7 +9,8 @@
   (:import [java.util UUID]))
 
 (deftest object-test
-  (fixtures/with-temporary-cloud-storage-folder fixtures/gcs-test-bucket
+  (fixtures/with-temporary-cloud-storage-folder
+    "broad-gotc-dev-wfl-ptc-test-outputs"
     (fn [url]
       (let [[bucket src-folder] (gcs/parse-gs-url url)
             dest-folder (str src-folder "destination/")

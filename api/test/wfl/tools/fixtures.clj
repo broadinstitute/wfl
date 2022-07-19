@@ -29,10 +29,6 @@
   [multifn dispatch-val overload]
   (partial with-temporary-overload multifn dispatch-val overload))
 
-(def gcs-test-bucket "broad-gotc-dev-wfl-ptc-test-outputs")
-(def gcs-tdr-test-bucket "broad-gotc-dev-wfl-datarepo-outputs")
-(def delete-test-object (partial gcs/delete-object gcs-test-bucket))
-
 (defn ^:private postgres-db-config []
   (-> (postgres/wfl-db-config)
       (merge {:connection-uri "jdbc:postgresql:postgres"

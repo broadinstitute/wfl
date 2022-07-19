@@ -120,7 +120,7 @@
           (partial throw-if-called "firecloud/delete-entities")]
           (is (thrown-with-msg?
                ExceptionInfo
-               (re-pattern sink/entity-name-not-found-error-message)
+               (re-pattern @#'sink/entity-name-not-found-error-message)
                (sink/update-sink! workload-throws))
               "Throw when identifier not in input or output"))
         (is (== 1 (stage/queue-length executor))

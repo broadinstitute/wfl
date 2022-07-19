@@ -60,7 +60,7 @@
   (let [inputs   {:a "aInput" :b "bInput"}
         outputs  {:b "bOutput" :c "cOutput"}
         workflow {:inputs inputs :outputs outputs}
-        msg      (re-pattern sink/entity-name-not-found-error-message)]
+        msg      (re-pattern @#'sink/entity-name-not-found-error-message)]
     (is (thrown-with-msg?
          ExceptionInfo msg
          (#'sink/throw-or-entity-name-from-workflow nil {:identifier "a"}))

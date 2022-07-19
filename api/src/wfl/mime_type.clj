@@ -1,6 +1,6 @@
 (ns wfl.mime-type
   (:require [ring.util.mime-type :as mime-type]
-            [wfl.util :as util]))
+            [wfl.util            :as util]))
 
 (def ^:private mime-types
   "mime-types for file extensions commonly used in computational biology."
@@ -16,13 +16,13 @@
 
 ;; visible for testing
 (defn ext-mime-type-no-default
-  "Look up the mime-type of the filename by file extension."
+  "Look up the mime-type of `filename` by file extension."
   [filename]
   (loop [filename (util/basename filename)]
     (when-let [ext (util/extension filename)]
       (or (mime-types ext) (recur (util/remove-extension filename))))))
 
 (defn ext-mime-type
-  "Look up the mime-type of the filename by file extension."
+  "Look up the mime-type of `filename` by file extension."
   [filename]
   (or (ext-mime-type-no-default filename) "application/octet-stream"))

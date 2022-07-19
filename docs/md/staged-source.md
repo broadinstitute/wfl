@@ -47,14 +47,14 @@ like:
 ```
 The table below summarises the purpose of each attribute in the above request.
 
-| Attribute                | Description                                              |
-|--------------------------|----------------------------------------------------------|
-| `name`                   | Selects the `Terra DataRepo` source implementation.      |
-| `dataset`                | The `UUID` of dataset to monitor and read from.          |
-| `table`                  | The name of the `dataset` table to monitor and read from.|
-| `snapshotReaders`        | A list of email addresses to set as `readers` of all snapshots created in this workload.|
-| `pollingIntervalMinutes` | Optional.  Rate at which WFL will poll TDR for new rows to snapshot.|
-| `loadTag`                | Optional.  Only snapshot new rows ingested to TDR with `loadTag`.|
+| Attribute                | Description                                                                              |
+|--------------------------|------------------------------------------------------------------------------------------|
+| `name`                   | Selects the `Terra DataRepo` source implementation.                                      |
+| `dataset`                | The `UUID` of dataset to monitor and read from.                                          |
+| `table`                  | The name of the `dataset` table to monitor and read from.                                |
+| `snapshotReaders`        | A list of email addresses to set as `readers` of all snapshots created in this workload. |
+| `pollingIntervalMinutes` | Optional.  Rate at which WFL will poll TDR for new rows to snapshot.                     |
+| `loadTag`                | Optional.  Snapshot only new rows ingested with `loadTag`.                               |
 
 #### `dataset`
 
@@ -84,8 +84,25 @@ If not provided, the default interval is 20 minutes.
 
 #### Optional `loadTag`
 
-WFL will only snapshot new rows ingested to TDR with `loadTag`.
-If not provided, all new rows will be eligible for snapshotting.
+Specifying a `loadTag`
+restricts the set of new rows
+that WFL will include in a snapshot.
+The `loadTag` specifies
+a prefix to be matched
+against the `loadTag` used
+to ingest data to TDR.
+Thus `my-ingest-tag` matches
+all of the following load tags.
+
+    - `my-ingest-tag`
+    - `my-ingest-tag-`
+    - `my-ingest-tag-0`
+    - `my-ingest-tag-a`
+    - `my-ingest-tag-2022-07-14
+
+When not provided,
+all new rows will be eligible
+for snapshotting.
 
 !!! note
     When initiating a TDR ingest, one can optionally set a load tag.
