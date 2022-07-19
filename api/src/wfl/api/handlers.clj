@@ -1,16 +1,17 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints."
-  (:require [clojure.set                    :refer [rename-keys]]
-            [wfl.wfl                        :as wfl]
-            [ring.util.http-response        :as response]
-            [wfl.api.workloads              :as workloads]
-            [wfl.configuration              :as config]
-            [wfl.jdbc                       :as jdbc]
-            [wfl.log                        :as log]
-            [wfl.module.aou                 :as aou]
-            [wfl.service.google.storage     :as gcs]
-            [wfl.service.postgres           :as postgres]
-            [wfl.util                       :as util])
+  (:require [clojure.set                :refer [rename-keys]]
+            [wfl.wfl                    :as wfl]
+            [ring.util.http-response    :as response]
+            [wfl.api.workloads          :as workloads]
+            [wfl.configuration          :as config]
+            [wfl.executor               :as executor]
+            [wfl.jdbc                   :as jdbc]
+            [wfl.log                    :as log]
+            [wfl.module.aou             :as aou]
+            [wfl.service.google.storage :as gcs]
+            [wfl.service.postgres       :as postgres]
+            [wfl.util                   :as util])
   (:import  [wfl.util UserException]))
 
 (defn succeed
@@ -95,7 +96,7 @@
   (let [uuid    (get-in request [:path-params :uuid])
         filters (-> request
                     (get-in [:parameters :query])
-                    (select-keys [:submission :status]))]
+                    (select-keys executor/workflow-filter-keys))]
     (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
       (->> (let [workload (workloads/load-workload-for-uuid tx uuid)]
              (if (empty? filters)
@@ -104,8 +105,7 @@
            (mapv util/to-edn)
            succeed))))
 
-;; Visible for testing
-(def retry-no-workflows-error-message
+(def ^:private retry-no-workflows-error-message
   "No workflows to retry for workload and requested workflow filters.")
 
 (defn post-retry

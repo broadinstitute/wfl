@@ -547,27 +547,30 @@
 ;; not already an active workflow at the `HEAD`.
 ;;
 ;; ** Admittedly, this is still a problem with this design.
-(defn ^:private terra-executor-workflows-sql-params
-  "Return sql and params that query `details` for non-retried workflows
-  matching `submission` and/or `status` if specified."
-  [{:keys [details] :as _executor} {:keys [submission status] :as _filters}]
-  (let [query (util/remove-empty-and-join
-               ["SELECT * FROM %s"
-                "WHERE workflow IS NOT NULL"
-                "AND retry IS NULL"
-                (when submission "AND submission = ?")
-                (when status "AND status = ?")
-                "ORDER BY id ASC"])]
-    (->> [submission status]
-         (concat [(format query details)])
-         (remove nil?))))
+
+(def workflow-filter-keys
+  "The workflow filter keys ordered for efficient queries."
+  [:submission :status])
+
+(defn ^:private filter-query-for-unretried-workflows
+  "A query for un-retried workflows in `executor` matching `filters`."
+  [executor filters]
+  (letfn [(where [m k] (conj m (str/join \space ["AND" (name k) "= ?"])))
+          (query [{:keys [q p]}] (into [(str/join \space q)] p))]
+    (-> (fn [m k] (if-let [v (k filters)]
+                    (-> m (update :q where k) (update :p conj v)) m))
+        (reduce {:q ["SELECT * FROM" (:details executor)
+                     "WHERE workflow IS NOT NULL AND retry IS NULL"]
+                 :p []} workflow-filter-keys)
+        (update :q conj "ORDER BY id ASC")
+        query)))
 
 (defn ^:private terra-executor-workflows
   "Return all the non-retried workflows executed by `executor`
   matching specified `filters`."
   [tx {:keys [details] :as executor} filters]
   (postgres/throw-unless-table-exists tx details)
-  (let [sql-params      (terra-executor-workflows-sql-params executor filters)
+  (let [sql-params      (filter-query-for-unretried-workflows executor filters)
         executor-subset (select-keys executor [:workspace :methodConfiguration])]
     (map #(merge executor-subset %) (jdbc/query tx sql-params))))
 
