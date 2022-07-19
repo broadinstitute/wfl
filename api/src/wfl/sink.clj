@@ -178,10 +178,9 @@
       (when (not= (-> ex ex-data :status) 404)
         (throw ex)))))
 
-;; Visible for testing
-(def entity-name-not-found-error-message
-  (str "Entity name not found: "
-       "sink.identifer not present in workflow outputs or inputs"))
+(def ^:private entity-name-not-found-error-message
+  (str/join \space ["Entity name not found:"
+                    "sink.identifer not in workflow outputs or inputs"]))
 
 (defn ^:private throw-or-entity-name-from-workflow
   "Return entity name from `identifier`'s match in `workflow`:
@@ -347,33 +346,28 @@
                                   :workflow workflow})))))))
 
 (defn ^:private rename-gather-bulk
-  "Transform the `values` using the transformation defined in
-  `mapping`, building bulk load file models instead of strings."
+  "Transform `values` according to `mapping` for `workflow-id`and `table` in `dataset`.
+   And HACK test outputs with `test-prefix` when specified."
   ([workflow-id dataset table values mapping]
-   (rename-gather-bulk workflow-id dataset table values mapping ""))
-  ([workflow-id {:keys [schema] :as dataset} table values mapping target-bucket]
+   (rename-gather-bulk workflow-id dataset table values mapping nil))
+  ([workflow-id {:keys [schema] :as dataset} table values mapping test-prefix]
    (letfn [(literal? [x] (str/starts-with? x "$"))
-           (datatype [k] (let [columns (->> schema
-                                            :tables
+           (datatype [k] (let [columns (->> schema :tables
                                             (filter #(= table (:name %)))
-                                            first
-                                            :columns)]
+                                            first :columns)]
                            (-> (filter #(= k (:name %)) columns)
-                               first
-                               :datatype)))
+                               first :datatype)))
            (fileref? [k] (= (datatype (name k)) "fileref"))
            (boolean? [k] (= (datatype (name k)) "boolean"))
            (get-target [url]
-             (let [[bucket obj] (storage/parse-gs-url url)]
-               (if (= target-bucket "")
-                 (storage/gs-url bucket (str/join "/" [workflow-id (util/basename obj)]))
-                 (str target-bucket workflow-id "/" (util/basename obj)))))
+             (let [[_ obj] (storage/parse-gs-url url)]
+               (str/join "/" [(or test-prefix "") workflow-id (util/basename obj)])))
            (go! [k v]
              (cond (fileref? k) (if-let [val (values (keyword v))]
                                   [k {:description (util/basename val)
-                                      :mimeType   (mime-type/ext-mime-type val)
-                                      :sourcePath val
-                                      :targetPath (get-target val)}]
+                                      :mimeType    (mime-type/ext-mime-type val)
+                                      :sourcePath  val
+                                      :targetPath  (get-target val)}]
                                   [k nil])
                    (literal? v) [k (subs v 1 (count v))]
                    (boolean? v) [k (values (keyword v))]

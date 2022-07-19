@@ -17,6 +17,7 @@
     (is (every? #(= (:kind %) "bigquery#table") tables))))
 
 (deftest test-query-table-sync
-  (let [query (format "SELECT * FROM `%s.%s.%s`" google-project dr-dataset dr-view)
-        query-result (bigquery/query-sync google-project query)]
-    (is (seq (:rows query-result)) "No results found!")))
+  (is (->> (format "SELECT * FROM `%s.%s.%s`" google-project dr-dataset dr-view)
+           (bigquery/query-sync google-project)
+           :rows seq)
+      "No results found!"))

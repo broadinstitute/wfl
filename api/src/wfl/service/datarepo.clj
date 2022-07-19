@@ -304,13 +304,10 @@
    (query-table-impl dataset table
                      (util/to-comma-separated-list (map name columns)))))
 
-;; Public for testing
-(def metadata-table-name-prefix "datarepo_row_metadata_")
-
-(defn metadata
+(defn ^:private metadata
   "Return TDR row metadata table name corresponding to `table-name`."
   [table-name]
-  (format "%s%s" metadata-table-name-prefix table-name))
+  (str "datarepo_row_metadata_" table-name))
 
 (defn ^:private query-metadata-table-impl
   "Return `col-spec` from rows from TDR `dataset`.`table` metadata
@@ -325,12 +322,11 @@
                             (format "ingest_time BETWEEN '%s' AND '%s'"
                                     start end))
         where-load-tag    (when loadTag
-                            (format "load_tag = '%s'" loadTag))
+                            (format "load_tag LIKE '%s%%'" loadTag))
         where-clauses     (util/remove-empty-and-join
                            [where-ingest-time where-load-tag] " AND ")
-        where             (if-not (empty? where-clauses)
-                            (format "WHERE %s" where-clauses)
-                            "")]
+        where             (if (empty? where-clauses) ""
+                              (format "WHERE %s" where-clauses))]
     (-> "SELECT %s FROM `%s` %s"
         (format col-spec (bq-path dataset-or-snapshot meta-table) where)
         (->> (bigquery/query-sync dataProject)))))

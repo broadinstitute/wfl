@@ -164,7 +164,7 @@
 
 (deftest test-create-tdr-source-with-invalid-dataset-metadata-table
   (with-redefs
-   [datarepo/metadata-table-name-prefix "wrong-metadata-table-name-"]
+   [datarepo/metadata (partial str "wrong-metadata-table-name-")]
     (is (thrown-with-msg?
          UserException #"TDR row metadata table not found in BigQuery"
          (source/datarepo-source-validate-request-or-throw

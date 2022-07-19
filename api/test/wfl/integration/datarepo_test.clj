@@ -53,27 +53,27 @@
    :integer "outint"
    :string  "outstring"})
 
-(deftest ^:kaocha/pending test-ingest-pipeline-outputs-and-snapshot
+(deftest test-ingest-pipeline-outputs-and-snapshot
   (let [dataset-json "testing-dataset.json"
         table-name   "parameters"
         tdr-profile  (env/getenv "WFL_TDR_DEFAULT_PROFILE")]
     (fixtures/with-fixtures
       [(fixtures/with-temporary-cloud-storage-folder
-         fixtures/gcs-tdr-test-bucket)
+         (env/getenv "WFL_TDR_TEMPORARY_STORAGE_BUCKET"))
        (fixtures/with-temporary-dataset
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp-bucket dataset-id]]
-        (let [table-url   (str temp-bucket "table.json")
-              workflow-id (UUID/randomUUID)
-              dataset     (datarepo/datasets dataset-id)]
+        (let [table-url        (str temp-bucket "table.json")
+              workflow-id      (UUID/randomUUID)
+              dataset          (datarepo/datasets dataset-id)
+              [_bucket object] (gcs/parse-gs-url temp-bucket)]
           (-> (#'sink/rename-gather-bulk workflow-id
                                          dataset
                                          table-name
                                          outputs
                                          from-outputs
-                                         temp-bucket)
-              (assoc :ingested (.format (util/utc-now)
-                                        workflows/tdr-date-time-formatter))
+                                         (str "/" (util/de-slashify object)))
+              (assoc :ingested (workflows/tdr-now))
               (json/write-str :escape-slash false)
               (gcs/upload-content table-url))
           (let [{:keys [bad_row_count row_count]}
