@@ -203,8 +203,6 @@
     (let [entityName (throw-or-entity-name-from-workflow workflow sink)
           entity     [entityType entityName]
           attributes (terra-workspace-sink-to-attributes workflow fromOutputs)]
-      (when (entity-exists? workspace entity)
-        (firecloud/delete-entities workspace [entity]))
       (rawls/batch-upsert workspace [(conj entity attributes)])
       (stage/pop-queue! executor)
       (log/info "Sunk workflow outputs to Terra workspace"
