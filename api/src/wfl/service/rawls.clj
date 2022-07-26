@@ -125,17 +125,20 @@
               :workspace workspace
               :entities  (map (fn [[type name _]] [type name]) entities)})
   (letfn [(add-scalar [k v]
-            [{:op                 "AddUpdateAttribute"
+            [{:op                 "RemoveAttribute"
+              :attributeName      (name k)}
+             {:op                 "AddUpdateAttribute"
               :attributeName      (name k)
               :addUpdateAttribute v}])
           (add-list [k v]
-            (let [list-name   (name k)
-                  init        {:op            "CreateAttributeValueList"
-                               :attributeName list-name}
+            (let [init        [{:op            "RemoveAttribute"
+                                :attributeName (name k)}
+                               {:op            "CreateAttributeValueList"
+                                :attributeName (name k)}]
                   template    {:op                "AddListMember"
-                               :attributeListName list-name}
+                               :attributeListName (name k)}
                   make-member (partial assoc template :newMember)]
-              (reduce #(conj %1 (make-member %2)) [init] v)))
+              (reduce #(conj %1 (make-member %2)) init v)))
           (to-operations [attributes]
             (flatten
              (for [[k v] (seq attributes)]
