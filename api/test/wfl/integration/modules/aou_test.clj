@@ -55,15 +55,6 @@
                                [workloads/aou-sample]
                                workload))))))
 
-(deftest test-append-to-stopped-aou-workload
-  (with-redefs-fn {#'aou/submit-aou-workflow mock-submit-workload}
-    #(as-> (workloads/create-workload! (make-aou-workload-request)) workload
-       (workloads/start-workload! workload)
-       (workloads/stop-workload! workload)
-       (is (thrown? Exception (workloads/append-to-workload!
-                               [workloads/aou-sample]
-                               workload))))))
-
 (deftest test-workload-state-transition
   (shared/run-workload-state-transition-test! (make-aou-workload-request)))
 
