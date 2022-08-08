@@ -277,10 +277,13 @@
   (when (:stopped workload)
     (throw (Exception. (format "Workload %s has been stopped" uuid))))
   (letfn [(submit! [url sample]
-            (let [output-path      (str output (str/join "/" (primary-values sample)))
-                  workflow-options (util/deep-merge default-options
-                                                    {:final_workflow_outputs_dir output-path})]
-              (->> (submit-aou-workflow url sample workflow-options {:workload uuid})
+            (let [output-path      (str output
+                                        (str/join "/" (primary-values sample)))
+                  workflow-options (util/deep-merge
+                                    default-options
+                                    {:final_workflow_outputs_dir output-path})]
+              (->> {:workload uuid}
+                   (submit-aou-workflow url sample workflow-options)
                    str ; coerce java.util.UUID -> string
                    (assoc (select-keys sample primary-keys)
                           :updated (Timestamp/from (.toInstant (OffsetDateTime/now)))
@@ -288,8 +291,10 @@
                           :uuid))))]
     (let [executor       (is-known-cromwell-url? executor)
           submitted-samples (map (partial submit! executor)
-                                 (remove-existing-samples notifications
-                                                          (get-existing-samples tx items notifications)))]
+                                 (remove-existing-samples
+                                  notifications
+                                  (get-existing-samples
+                                   tx items notifications)))]
       (jdbc/insert-multi! tx items submitted-samples)
       submitted-samples)))
 
