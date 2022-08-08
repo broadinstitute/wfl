@@ -177,7 +177,8 @@
         {:keys [commit version]} (wfl/get-the-version)
         query-string             (str/join \space
                                            ["SELECT * FROM workload"
-                                            "WHERE project = ?"
+                                            "WHERE stopped is null"
+                                            "AND project = ?"
                                             "AND pipeline = ?::pipeline"
                                             "AND release = ?"
                                             "AND output = ?"])
