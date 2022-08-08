@@ -5,8 +5,7 @@
             [wfl.source           :as source]
             [wfl.tools.workloads  :as workloads]
             [wfl.util             :as util])
-  (:import [java.time OffsetDateTime ZoneId]
-           [java.lang Math]))
+  (:import [java.lang Math]))
 
 (def ^:private readers-list ["hornet@firecloud.org"])
 
