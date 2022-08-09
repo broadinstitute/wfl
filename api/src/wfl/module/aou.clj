@@ -150,8 +150,7 @@
          (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
          other-labels))
 
-;; visible for testing
-(defn submit-aou-workflow
+(defn ^:private submit-aou-workflow
   "Submit one workflow to Cromwell URL given PER-SAMPLE-INPUTS,
    WORKFLOW-OPTIONS and OTHER-LABELS."
   [url per-sample-inputs workflow-options other-labels]
