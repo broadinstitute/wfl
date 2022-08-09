@@ -34,7 +34,8 @@
 
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-entity-type
   (is (thrown-with-msg?
-       UserException (re-pattern sink/unknown-entity-type-error-message)
+       UserException
+       (re-pattern @#'sink/unknown-entity-type-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   "wfl-dev/CDC_Viral_Sequencing"
@@ -44,7 +45,8 @@
 
 (deftest test-validate-terra-workspace-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
-       UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
+       UserException
+       (re-pattern @#'sink/terra-workspace-malformed-from-outputs-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   "wfl-dev/CDC_Viral_Sequencing"
@@ -54,7 +56,8 @@
 
 (deftest test-validate-terra-workspace-sink-throws-on-unknown-fromOutputs-attributes
   (is (thrown-with-msg?
-       UserException (re-pattern sink/unknown-attributes-error-message)
+       UserException
+       (re-pattern @#'sink/unknown-attributes-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
          :workspace   "wfl-dev/CDC_Viral_Sequencing"

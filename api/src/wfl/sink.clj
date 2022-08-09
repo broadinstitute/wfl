@@ -102,14 +102,14 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
 
-(def unknown-entity-type-error-message
+(def ^:private unknown-entity-type-error-message
   "The entityType was not found in workspace.")
 
-(def terra-workspace-malformed-from-outputs-message
+(def ^:private terra-workspace-malformed-from-outputs-message
   (str/join " " ["fromOutputs must define a mapping from workflow outputs"
                  "to the attributes of entityType."]))
 
-(def unknown-attributes-error-message
+(def ^:private unknown-attributes-error-message
   (str/join " " ["Found additional attributes in fromOutputs that are not"
                  "present in the entityType."]))
 
