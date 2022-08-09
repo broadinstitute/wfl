@@ -24,7 +24,7 @@
 
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "ExternalExomeReprocessing_v2.1.1"
+  {:release "ExternalExomeReprocessing_v3.1.7"
    :path     (str "pipelines/broad/reprocessing/external/exome/"
                   "ExternalExomeReprocessing.wdl")})
 
