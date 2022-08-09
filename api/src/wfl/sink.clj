@@ -169,15 +169,6 @@
                       {:fromOutputs fromOutputs :workflow workflow}
                       cause)))))
 
-(defn ^:private entity-exists?
-  "True when the `entity` exists in the `workspace`."
-  [workspace entity]
-  (try
-    (firecloud/get-entity workspace entity)
-    (catch ExceptionInfo ex
-      (when (not= (-> ex ex-data :status) 404)
-        (throw ex)))))
-
 (def ^:private entity-name-not-found-error-message
   (str/join \space ["Entity name not found:"
                     "sink.identifer not in workflow outputs or inputs"]))

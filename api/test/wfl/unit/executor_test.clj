@@ -134,12 +134,11 @@
                  {:status "Failed"}
                  {:status "Succeeded"}]
         workload {:executor {:workspace "workspaceNs/workspaceName"}}]
-    (letfn [(mock-workflow-finished-slack-msg
-              [_executor {:keys [status] :as _record}]
+    (letfn [(slack-finished [_executor {:keys [status] :as _record}]
               (is (cromwell/final? status)
                   "Should not notify for non-final workflows"))]
-      (with-redefs
-       [executor/workflow-finished-slack-msg mock-workflow-finished-slack-msg
-        slack/notify-watchers                (constantly nil)]
-        (is (= records (#'executor/notify-on-workflow-completion workload records))
+      (with-redefs [executor/workflow-finished-slack-msg slack-finished
+                    slack/notify-watchers                (constantly nil)]
+        (is (= records
+               (#'executor/notify-on-workflow-completion workload records))
             "Should return all passed-in records")))))

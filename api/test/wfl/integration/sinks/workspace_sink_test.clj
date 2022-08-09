@@ -115,7 +115,6 @@
       (testing "Sink identifier matches no workflow output or input"
         (with-redefs
          [rawls/batch-upsert  (partial throw-if-called "rawls/batch-upsert")
-          sink/entity-exists? (partial throw-if-called "sink/entity-exists?")
           firecloud/delete-entities
           (partial throw-if-called "firecloud/delete-entities")]
           (is (thrown-with-msg?
@@ -131,7 +130,6 @@
       (testing "Sink identifier matches workflow output"
         (with-redefs-fn
           {#'rawls/batch-upsert        verify-upsert-request
-           #'sink/entity-exists?       (constantly false)
            #'firecloud/delete-entities
            (partial throw-if-called "firecloud/delete-entities")}
           #(sink/update-sink! workload-updates))
