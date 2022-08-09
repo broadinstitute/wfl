@@ -13,26 +13,21 @@
   (:import [clojure.lang ExceptionInfo]
            [wfl.util     UserException]))
 
-;; Workspace
-(def ^:private testing-namespace "wfl-dev")
-(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
-
-;; Entity
 (def ^:private testing-entity-type "flowcell")
 (def ^:private testing-entity-name "test")
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"})
+  fixtures/temporary-postgresql-database)
 
 ;; Validation tests
 
 (deftest test-validate-terra-workspace-sink-with-valid-sink-request
   (is (sink/terra-workspace-sink-validate-request-or-throw
        {:name        @#'sink/terra-workspace-sink-name
-        :workspace   testing-workspace
+        :workspace   "wfl-dev/CDC_Viral_Sequencing"
         :entityType  "assemblies"
         :identity    "Who cares?"
         :fromOutputs {:assemblies_id "foo"}})))
@@ -42,7 +37,7 @@
        UserException (re-pattern sink/unknown-entity-type-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "does_not_exist"
          :identity    "Who cares?"
          :fromOutputs {}}))))
@@ -52,7 +47,7 @@
        UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "assemblies"
          :identity    "Who cares?"
          :fromOutputs "geoff"}))))
@@ -62,7 +57,7 @@
        UserException (re-pattern sink/unknown-attributes-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "assemblies"
          :identity    "Who cares?"
          :fromOutputs {:does_not_exist "genbank_source_table"}}))))
@@ -104,7 +99,8 @@
                             :status  "Succeeded"
                             :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                          resources/read-resource
-                                         (assoc :flowcell_id testing-entity-name))}
+                                         (assoc :flowcell_id
+                                                testing-entity-name))}
           executor         (make-queue-from-list [[nil workflow]])
           sink-throws      (sink "not-a-workflow-input-or-output")
           sink-updates     (sink "flowcell_id")
@@ -113,10 +109,10 @@
           workload-updates {:executor executor
                             :sink     sink-updates}]
       (testing "Sink identifier matches no workflow output or input"
-        (with-redefs
-         [rawls/batch-upsert  (partial throw-if-called "rawls/batch-upsert")
-          firecloud/delete-entities
-          (partial throw-if-called "firecloud/delete-entities")]
+        (with-redefs [rawls/batch-upsert
+                      (partial throw-if-called "rawls/batch-upsert")
+                      firecloud/delete-entities
+                      (partial throw-if-called "firecloud/delete-entities")]
           (is (thrown-with-msg?
                ExceptionInfo
                (re-pattern @#'sink/entity-name-not-found-error-message)
