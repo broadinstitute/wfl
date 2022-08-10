@@ -193,11 +193,13 @@
   "Create and use a temporary Terra Workspace."
   ([workspace-prefix group f]
    (util/bracket
-    #(doto (util/randomize workspace-prefix) (firecloud/create-workspace group))
+    #(doto (util/randomize workspace-prefix)
+       (firecloud/create-workspace group))
     firecloud/delete-workspace
     f))
   ([f]
-   (with-temporary-workspace "wfl-dev/test-workspace" "workflow-launcher-dev" f)))
+   (with-temporary-workspace
+     "wfl-dev/test-workspace" "workflow-launcher-dev" f)))
 
 (defn with-temporary-workspace-clone
   "Clone a temporary copy of `workspace-to-clone`, grant access to
