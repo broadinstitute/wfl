@@ -1,3 +1,7 @@
+# Release 0.19.1
+- [GH-1686] Deploy WFL to point at ExternalExomeReprocessing_v3.1.7 and pick up picard-cloud:2.26.10. ([#618](https://github.com/broadinstitute/wfl/pull/618))
+- [GH-1667] Don't delete a Firecloud entity before a Rawls batchUpsert. ([#616](https://github.com/broadinstitute/wfl/pull/616))
+
 # Release 0.19.0
 - [GH-1678] When monitoring source load tags, match prefix instead of exact match. ([#614](https://github.com/broadinstitute/wfl/pull/614))
 - [GH-1652] Finish fixing TDR problems. ([#605](https://github.com/broadinstitute/wfl/pull/605))
