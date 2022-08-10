@@ -59,12 +59,14 @@
   (testing "a 1MB entities file can be uploaded"
     (let [entity-type "outputs"
           entity-name "test"
-          outputs     (resources/read-resource "sarscov2_illumina_full/outputs.edn")]
+          outputs     (resources/read-resource
+                       "sarscov2_illumina_full/outputs.edn")]
       (fixtures/with-temporary-workspace
         "general-dev-billing-account/test-workspace"
         "hornet-eng"
         (fn [workspace]
-          (rawls/batch-upsert workspace [[entity-type entity-name outputs]])
+          (rawls/batch-upsert workspace
+                              [[entity-type entity-name outputs]])
           (let [value-not-nil? (comp (complement nil?) second)
                 [{:keys [name attributes]} & _]
                 (util/poll
