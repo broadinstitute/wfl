@@ -1,0 +1,1332 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-7.2.4">
+    
+    
+      
+        <title>External Exome - Workflow Launcher</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.f7f47774.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal">
+  
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+      <script>var palette=__get("__palette");if(null!==palette&&"object"==typeof palette.color)for(var key in palette.color)document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#external-exome-reprocessing-workload" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Workflow Launcher" class="md-header__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Workflow Launcher
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              External Exome
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Workflow Launcher" class="md-nav__button md-logo" aria-label="Workflow Launcher" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Workflow Launcher
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/broadinstitute/wfl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Get Started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Development Guide
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Development Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Development Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-process/" class="md-nav__link">
+        Development Process and Tips
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-release/" class="md-nav__link">
+        Release Process
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-monitoring/" class="md-nav__link">
+        Monitoring
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        Staged Workloads
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Staged Workloads" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Staged Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-workload/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-api-usage/" class="md-nav__link">
+        API Usage
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-source/" class="md-nav__link">
+        Source
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-executor/" class="md-nav__link">
+        Executor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../staged-sink/" class="md-nav__link">
+        Sink
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      <label class="md-nav__link" for="__nav_4">
+        Module-Specific Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Module-Specific Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Module-Specific Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-general/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-aou-arrays/" class="md-nav__link">
+        Arrays
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          External Exome
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        External Exome
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-post-apiv1create" class="md-nav__link">
+    Create Workload: POST /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-post-apiv1start" class="md-nav__link">
+    Start Workload: POST /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload-post-apiv1stop" class="md-nav__link">
+    Stop Workload: POST /api/v1/stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-post-apiv1exec" class="md-nav__link">
+    Exec Workload: POST /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-get-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: GET /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-get-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: GET /api/v1/workload?project=&lt;project&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-workflows-in-a-workload-get-apiv1workloaduuidworkflows" class="md-nav__link">
+    List Workflows in a Workload: GET /api/v1/workload/{uuid}/workflows
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a1-external-exome-workload-request-json-spec" class="md-nav__link">
+    A1 External Exome Workload-Request JSON Spec
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-sg/" class="md-nav__link">
+        Somatic Genomes
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules-wgs/" class="md-nav__link">
+        Whole Genome
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      <label class="md-nav__link" for="__nav_5">
+        General Usage
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="General Usage" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          General Usage
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-workflow-options/" class="md-nav__link">
+        Workflow Options
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-across-directory/" class="md-nav__link">
+        Usage Across a Directory
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-retry/" class="md-nav__link">
+        Retrying Workflows
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage-abort/" class="md-nav__link">
+        Aborting a Workload
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      <label class="md-nav__link" for="__nav_6">
+        Readings
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Readings" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Readings
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terra/" class="md-nav__link">
+        WorkFlow Launcher's Role in Terra
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    Inputs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-workload-post-apiv1create" class="md-nav__link">
+    Create Workload: POST /api/v1/create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-workload-post-apiv1start" class="md-nav__link">
+    Start Workload: POST /api/v1/start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-workload-post-apiv1stop" class="md-nav__link">
+    Stop Workload: POST /api/v1/stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-workload-post-apiv1exec" class="md-nav__link">
+    Exec Workload: POST /api/v1/exec
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-get-apiv1workloaduuiduuid" class="md-nav__link">
+    Query Workload: GET /api/v1/workload?uuid=&lt;uuid&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-workload-with-project-get-apiv1workloadprojectproject" class="md-nav__link">
+    Query Workload with project: GET /api/v1/workload?project=&lt;project&gt;
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-workflows-in-a-workload-get-apiv1workloaduuidworkflows" class="md-nav__link">
+    List Workflows in a Workload: GET /api/v1/workload/{uuid}/workflows
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a1-external-exome-workload-request-json-spec" class="md-nav__link">
+    A1 External Exome Workload-Request JSON Spec
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/broadinstitute/wfl/edit/master/docs/modules-external-exome-reprocessing.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="external-exome-reprocessing-workload">External Exome Reprocessing workload<a class="headerlink" href="#external-exome-reprocessing-workload" title="Permanent link">⚓︎</a></h1>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">⚓︎</a></h2>
+<p>An <code>ExternalExomeReprocessing</code> workload requires the specification of exactly
+one the following inputs for each workflow:</p>
+<ul>
+<li><code>input_bam</code>, OR</li>
+<li><code>input_cram</code></li>
+</ul>
+<p>Where <code>input_bam</code> and <code>input_cram</code> are GS URLs of the file to reprocess. Note
+that the <code>input_bam</code> and <code>input_cram</code> inputs should only be used with CRAM and
+BAM files, respectively. All other WDL inputs are optional - see the output
+below for all options.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">⚓︎</a></h2>
+<p>External Exome Reprocessing workload supports the following API endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Verb</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload</code></td>
+<td>List all workloads, optionally filtering by uuid or project</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/workload/{uuid}/workflows</code></td>
+<td>List all workflows for a specified workload uuid</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/create</code></td>
+<td>Create a new workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/start</code></td>
+<td>Start a workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/stop</code></td>
+<td>Stop a running workload</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/exec</code></td>
+<td>Create and start (execute) a workload</td>
+</tr>
+</tbody>
+</table>
+<details class="warning" open="open">
+<summary>Permissions in production</summary>
+<p>External Exome Reprocessing in <code>gotc-prod</code> uses a set of execution projects, please refer to 
+<a href="https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md">this page</a>
+when you have questions about permissions.</p>
+</details>
+<h3 id="create-workload-post-apiv1create">Create Workload: <code>POST /api/v1/create</code><a class="headerlink" href="#create-workload-post-apiv1create" title="Permanent link">⚓︎</a></h3>
+<p>Create a new workload. Ensure that <code>workflow-launcher</code> and <code>cromwell</code>'s service
+accounts have at least read access to the input files.</p>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+        "pipeline": "ExternalExomeReprocessing",
+        "project": "Example Project",
+        "items": [{
+          "inputs": {
+            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram"
+          }
+        }]
+      }'</code></p>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Response</label><div class="tabbed-content">
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
+</div>
+</div>
+<p>Note that the ExternalExomeReprocessing pipeline supports specifying cromwell
+"workflowOptions" via the <code>options</code> map. See the
+<a href="./usage-workflow-options">reference page</a> for more information.</p>
+<h3 id="start-workload-post-apiv1start">Start Workload: <code>POST /api/v1/start</code><a class="headerlink" href="#start-workload-post-apiv1start" title="Permanent link">⚓︎</a></h3>
+<p>Starts a Cromwell workflow for each item in the workload. If an output already exists in the output bucket for a
+particular input cram, WFL will not re-submit that workflow.</p>
+<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start' \
+-H "Authorization: Bearer $(gcloud auth print-access-token)" \
+-H 'Content-Type: application/json' \
+-d '{"uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c"}'</code></p>
+</div>
+<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Response</label><div class="tabbed-content">
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
+</div>
+</div>
+<h3 id="stop-workload-post-apiv1stop">Stop Workload: <code>POST /api/v1/stop</code><a class="headerlink" href="#stop-workload-post-apiv1stop" title="Permanent link">⚓︎</a></h3>
+<p>Included for compatibility with continuous workloads. </p>
+<div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -H 'Content-Type: application/json' \
+     -d '{ "uuid": "1337254e-f7d8-438d-a2b3-a74b199fee3c" }'</code></p>
+</div>
+<input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Response</label><div class="tabbed-content">
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-ddTHH:mm:ssZ",
+  "started" : "YYYY-MM-ddTHH:mm:ssZ",
+  "stopped" : "YYYY-MM-ddTHH:mm:ssZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
+</div>
+</div>
+<h3 id="exec-workload-post-apiv1exec">Exec Workload: <code>POST /api/v1/exec</code><a class="headerlink" href="#exec-workload-post-apiv1exec" title="Permanent link">⚓︎</a></h3>
+<p>Creates and then starts a Cromwell workflow for each item in the workload.</p>
+<div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X POST 'https://dev-wfl.gotc-dev.broadinstitute.org/api/v1/exec' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+        "output": "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+        "pipeline": "ExternalExomeReprocessing",
+        "project": "Example Project",
+        "items": [{
+          "inputs" : {
+            "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+          }
+        }]
+      }'</code></p>
+</div>
+<input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Response</label><div class="tabbed-content">
+<p><code>json
+{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}</code></p>
+</div>
+</div>
+<h3 id="query-workload-get-apiv1workloaduuiduuid">Query Workload: <code>GET /api/v1/workload?uuid=&lt;uuid&gt;</code><a class="headerlink" href="#query-workload-get-apiv1workloaduuiduuid" title="Permanent link">⚓︎</a></h3>
+<p>Queries the WFL database for workloads. Specify the uuid to query for a specific workload.</p>
+<div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=1337254e-f7d8-438d-a2b3-a74b199fee3c' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
+</div>
+<input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><label for="__tabbed_5_2">Response</label><div class="tabbed-content">
+<p><code>json
+[{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}]</code></p>
+</div>
+</div>
+<h3 id="query-workload-with-project-get-apiv1workloadprojectproject">Query Workload with project: <code>GET /api/v1/workload?project=&lt;project&gt;</code><a class="headerlink" href="#query-workload-with-project-get-apiv1workloadprojectproject" title="Permanent link">⚓︎</a></h3>
+<p>Queries the WFL database for workloads. Specify the project name to query for a list of specific workload(s).</p>
+<div class="tabbed-set" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-1234' \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
+</div>
+<input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><label for="__tabbed_6_2">Response</label><div class="tabbed-content">
+<p><code>json
+[{
+  "creator" : "user@domain",
+  "pipeline" : "ExternalExomeReprocessing",
+  "executor" : "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+  "release" : "ExternalExomeReprocessing_vX.Y.Z",
+  "created" : "YYYY-MM-DDTHH:MM:SSZ",
+  "started" : "YYYY-MM-DDTHH:MM:SSZ",
+  "output" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/",
+  "commit" : "commit-ish",
+  "project" : "Example Project",
+  "uuid" : "1337254e-f7d8-438d-a2b3-a74b199fee3c",
+  "wdl" : "pipelines/broad/reprocessing/external/exome/ExternalExomeReprocessing.wdl",
+  "version" : "X.Y.Z"
+}]</code></p>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Note</p>
+<p><code>project</code> and <code>uuid</code> are optional query parameters to the <code>/api/v1/workload</code> endpoint,
+hitting this endpoint without them will return all workloads. However, they cannot be specified
+together.</p>
+</div>
+<h3 id="list-workflows-in-a-workload-get-apiv1workloaduuidworkflows">List Workflows in a Workload: <code>GET /api/v1/workload/{uuid}/workflows</code><a class="headerlink" href="#list-workflows-in-a-workload-get-apiv1workloaduuidworkflows" title="Permanent link">⚓︎</a></h3>
+<p>Returns the workflows created and managed by the workload with <code>uuid</code>.</p>
+<div class="tabbed-set" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Request</label><div class="tabbed-content">
+<p><code>bash
+curl -X GET 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload/1337254e-f7d8-438d-a2b3-a74b199fee3c/workflows' \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)"</code></p>
+</div>
+<input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><label for="__tabbed_7_2">Response</label><div class="tabbed-content">
+<p><code>json
+[{
+    "status" : "Submitted",
+    "updated" : "YYYY-MM-DDTHH:MM:SSZ",
+    "uuid" : "bb0d93e3-1a6a-4816-82d9-713fa58fb235",
+    "inputs" : {
+        "input_cram" : "gs://broad-gotc-dev-wfl-ptc-test-inputs/single_sample/plumbing/truth/develop/20k/NA12878_PLUMBING.cram",
+        "destination_cloud_path" : "gs://broad-gotc-dev-wfl-ptc-test-outputs/xx-test-output/8600be1a-48df-4a51-bdba-0044e0af8d33/single_sample/plumbing/truth/develop/20k",
+        "sample_name" : "NA12878_PLUMBING",
+        "base_file_name" : "NA12878_PLUMBING.cram",
+        "final_gvcf_base_name" : "NA12878_PLUMBING.cram"
+    }
+}]</code></p>
+</div>
+</div>
+<p>"workflows" lists out each workflow managed by this workload,
+including their status. It is also possible to use the Job Manager
+to check workflow progress and easily see information about any workflow
+failures.</p>
+<h2 id="a1-external-exome-workload-request-json-spec">A1 External Exome Workload-Request JSON Spec<a class="headerlink" href="#a1-external-exome-workload-request-json-spec" title="Permanent link">⚓︎</a></h2>
+<p>```json
+{
+     "pipeline": "string",
+     "executor": "string",
+     "output": "string",
+     "project": "string",
+     "common": {
+       "options": {}, // see workflow-options
+       "inputs": {
+         "unmapped_bam_suffix":    "string",
+         "cram_ref_fasta":       "string",
+         "cram_ref_fasta_index": "string",
+         "bait_set_name":        "string",
+         "bait_interval_list":   "string",
+         "target_interval_list": "string",
+         "references": {
+           "calling_interval_list":      "string",
+           "contamination_sites_bed":    "string",
+           "contamination_sites_mu":     "string",
+           "contamination_sites_ud":     "string",
+           "dbsnp_vcf":                  "string",
+           "dbsnp_vcf_index":            "string",
+           "evaluation_interval_list":   "string",
+           "haplotype_database_file":     "string",
+           "known_indels_sites_vcfs":    ["string"],
+           "known_indels_sites_indices": ["string"],
+           "reference_fasta": {
+             "ref_pac":         "string",
+             "ref_bwt":         "string",
+             "ref_dict":        "string",
+             "ref_ann":         "string",
+             "ref_fasta_index": "string",
+             "ref_alt":         "string",
+             "ref_fasta":       "string",
+             "ref_sa":          "string",
+             "ref_amb":         "string"
+           }
+         },
+         "scatter_settings": {
+           "haplotype_scatter_count":     "integer",
+           "break_bands_at_multiples_of": "integer"
+         },
+         "papi_settings": {
+           "agg_preemptible_tries": "integer",
+           "preemptible_tries":     "integer"
+         },
+         "fingerprint_genotypes_file": "string",
+         "fingerprint_genotypes_index": "string"
+       }
+     },
+     "items": [{
+         "options": {}, // see workflow-options
+         "inputs": {
+             // required - specify either "input_bam" or "input_cram"
+             "input_bam":  "string",
+             "input_cram": "string",</p>
+<div class="codehilite"><pre><span></span><code>         // optional inputs
+         &quot;sample_name&quot;:          &quot;string&quot;,
+         &quot;final_gvcf_base_name&quot;:  &quot;string&quot;,
+         &quot;unmapped_bam_suffix&quot;:    &quot;string&quot;,
+         &quot;cram_ref_fasta&quot;:       &quot;string&quot;,
+         &quot;cram_ref_fasta_index&quot;: &quot;string&quot;,
+         &quot;bait_set_name&quot;:        &quot;string&quot;,
+         &quot;bait_interval_list&quot;:   &quot;string&quot;,
+         &quot;target_interval_list&quot;: &quot;string&quot;,
+         &quot;references&quot;: {
+             &quot;calling_interval_list&quot;:      &quot;string&quot;,
+             &quot;contamination_sites_bed&quot;:    &quot;string&quot;,
+             &quot;contamination_sites_mu&quot;:     &quot;string&quot;,
+             &quot;contamination_sites_ud&quot;:     &quot;string&quot;,
+             &quot;dbsnp_vcf&quot;:                  &quot;string&quot;,
+             &quot;dbsnp_vcf_index&quot;:            &quot;string&quot;,
+             &quot;evaluation_interval_list&quot;:   &quot;string&quot;,
+             &quot;haplotype_database_file&quot;:     &quot;string&quot;,
+             &quot;known_indels_sites_vcfs&quot;:    [&quot;string&quot;],
+             &quot;known_indels_sites_indices&quot;: [&quot;string&quot;],
+             &quot;reference_fasta&quot;: {
+                 &quot;ref_pac&quot;:         &quot;string&quot;,
+                 &quot;ref_bwt&quot;:         &quot;string&quot;,
+                 &quot;ref_dict&quot;:        &quot;string&quot;,
+                 &quot;ref_ann&quot;:         &quot;string&quot;,
+                 &quot;ref_fasta_index&quot;: &quot;string&quot;,
+                 &quot;ref_alt&quot;:         &quot;string&quot;,
+                 &quot;ref_fasta&quot;:       &quot;string&quot;,
+                 &quot;ref_sa&quot;:          &quot;string&quot;,
+                 &quot;ref_amb&quot;:         &quot;string&quot;
+             }
+         },
+         &quot;scatter_settings&quot;: {
+             &quot;haplotype_scatter_count&quot;:     &quot;integer&quot;,
+             &quot;break_bands_at_multiples_of&quot;: &quot;integer&quot;
+         },
+         &quot;papi_settings&quot;: {
+             &quot;agg_preemptible_tries&quot;: &quot;integer&quot;,
+             &quot;preemptible_tries&quot;:     &quot;integer&quot;
+         },
+         &quot;fingerprint_genotypes_file&quot;:  &quot;string&quot;,
+         &quot;fingerprint_genotypes_index&quot;: &quot;string&quot;,
+         &quot;destination_cloud_path&quot;:      &quot;string&quot;
+     }
+ }]
+</code></pre></div>
+
+<p>}
+```</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../modules-aou-arrays/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Arrays" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Arrays
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../modules-sg/" class="md-footer__link md-footer__link--next" aria-label="Next: Somatic Genomes" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Somatic Genomes
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/broadinstitute/wfl" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top", "navigation.sections", "navigation.instant"], "search": "../assets/javascripts/workers/search.709b4209.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": 2.0}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.febc23d1.min.js"></script>
+      
+    
+  </body>
+</html>
