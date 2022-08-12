@@ -135,19 +135,20 @@
       (update :environment str/lower-case)
       (util/prefix-keys :Arrays.)))
 
-;; visible for testing
-(def default-options
+(def ^:private default-options
   {:use_relative_output_paths  true
    :read_from_cache            true
    :write_to_cache             true
-   :default_runtime_attributes {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
-                                :maxRetries 1}})
+   :default_runtime_attributes
+   {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
+    :maxRetries 1}})
 
 (defn make-labels
   "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
   [per-sample-inputs other-labels]
   (merge cromwell-label-map
-         (select-keys per-sample-inputs [:analysis_version_number :chip_well_barcode])
+         (select-keys per-sample-inputs
+                      [:analysis_version_number :chip_well_barcode])
          other-labels))
 
 (defn ^:private submit-aou-workflow
