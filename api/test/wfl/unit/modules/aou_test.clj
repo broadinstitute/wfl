@@ -11,27 +11,29 @@
     (is (= (:environment (aou/cromwell->inputs+options cromwell-url)) "dev"))))
 
 (deftest test-make-cromwell-labels
-  (let [sample          {:analysis_version_number     1
-                         :bead_pool_manifest_file     "foo"
-                         :chip_well_barcode           "chip"
-                         :cluster_file                "foo"
-                         :extended_chip_manifest_file "foo"
-                         :gender_cluster_file         "foo"
-                         :green_idat_cloud_path       "foo"
-                         :minor_allele_frequency_file "foo"
-                         :params_file                 "foo"
-                         :red_idat_cloud_path         "foo"
-                         :reported_gender             "foo"
-                         :sample_alias                "foo"
-                         :sample_lsid                 "foo"
-                         :zcall_thresholds_file       "foo"}
-        workload->label {:workload "bogus-workload"}
-        expected        (merge {:wfl "AllOfUsArrays"
-                                :analysis_version_number 1
-                                :chip_well_barcode "chip"}
-                               workload->label)]
+  (let [inputs   [:analysis_version_number
+                  :bead_pool_manifest_file
+                  :chip_well_barcode
+                  :cluster_file
+                  :extended_chip_manifest_file
+                  :gender_cluster_file
+                  :green_idat_cloud_path
+                  :minor_allele_frequency_file
+                  :params_file
+                  :red_idat_cloud_path
+                  :reported_gender
+                  :sample_alias
+                  :sample_lsid
+                  :zcall_thresholds_file]
+        sample   (-> inputs
+                     (zipmap (map name inputs))
+                     (assoc :analysis_version_number 23))
+        labels   {:workload "bogus-workload"}
+        expected (merge {:analysis_version_number 23
+                         :chip_well_barcode "chip_well_barcode"
+                         :wfl "AllOfUsArrays"} labels)]
     (testing "make-labels can return correct workflow labels"
-      (is (= (aou/make-labels sample workload->label) expected)
+      (is (= expected (aou/make-labels sample labels))
           "label map is not made as expected"))))
 
 (deftest test-aou-inputs-preparation
