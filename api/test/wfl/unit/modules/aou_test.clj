@@ -2,7 +2,7 @@
   (:require [clojure.test   :refer [deftest is testing]]
             [wfl.module.aou :as aou]))
 
-(def per-sample
+(def ^:private per-sample
   "Per-sample input keys for AoU workflows."
   [:analysis_version_number
    :bead_pool_manifest_file
@@ -21,7 +21,7 @@
    :sample_lsid
    :zcall_thresholds_file])
 
-(def other-keys
+(def ^:private other-keys
   "Input keys that are not per-sample."
   [:contamination_controls_vcf
    :dbSNP_vcf
@@ -38,14 +38,14 @@
    :variant_rsids_file
    :vault_token_path])
 
-(def control-keys
+(def ^:private control-keys
   "Keys that mark control samples."
   [:control_sample_vcf_index_file
    :control_sample_intervals_file
    :control_sample_vcf_file
    :control_sample_name])
 
-(def per-sample-inputs
+(def ^:private per-sample-inputs
   "Bogus per-sample input for AoU workflows."
   (-> per-sample
       (zipmap (map name per-sample))
@@ -60,7 +60,7 @@
                  (merge {:wfl "AllOfUsArrays"} labels)))
           "label map is not made as expected"))))
 
-(defn arrayify
+(defn ^:private arraysify
   "The keywords in KWS prefixed with `Arrays.`."
   [kws]
   (map (fn [k] (keyword (str "Arrays." (name k)))) kws))
@@ -69,8 +69,8 @@
   (let [cromwell-url   "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
         extra-inputs   (merge per-sample-inputs {:extra "extra"})
         inputs-missing (dissoc per-sample-inputs :analysis_version_number)
-        no-controls    (-> other-keys (concat per-sample) arrayify set)
-        all-keys       (-> control-keys arrayify (concat no-controls) set)]
+        no-controls    (-> other-keys (concat per-sample) arraysify set)
+        all-keys       (-> control-keys arraysify (concat no-controls) set)]
     (testing "aou filters out non-necessary keys for per-sample-inputs"
       (is (= per-sample-inputs (aou/get-per-sample-inputs extra-inputs))))
     (testing "aou throws for missing keys for per-sample-inputs"
@@ -97,3 +97,7 @@
                            (merge per-sample-inputs)
                            (aou/make-inputs cromwell-url)
                            keys set))))))
+
+(deftest test-no-workflow-on-stopped-workload
+  (testing "Cannot add a workflow to a stopped workload"
+    (is false)))

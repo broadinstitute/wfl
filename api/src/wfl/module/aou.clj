@@ -165,7 +165,7 @@
 ;; so update the workload table after creating the AllOfUsArrays table.
 ;; https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
 ;;
-(defn add-aou-workload!
+(defn ^:private add-aou-workload!
   "Use transaction `tx` to record the workflow described in `_request`.
   Add the workflow to an old workload matching the `_request` parameters.
   Otherwise create a new workload to match those parameters. "
