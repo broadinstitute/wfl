@@ -143,12 +143,15 @@
    {:zones "us-central1-a us-central1-b us-central1-c us-central1-f"
     :maxRetries 1}})
 
+(def ^:private primary-keys
+  "These uniquely identify a sample so use them as a primary key."
+  [:chip_well_barcode :analysis_version_number])
+
 (defn make-labels
   "Return labels for aou arrays pipeline from PER-SAMPLE-INPUTS and OTHER-LABELS."
   [per-sample-inputs other-labels]
   (merge cromwell-label-map
-         (select-keys per-sample-inputs
-                      [:analysis_version_number :chip_well_barcode])
+         (select-keys per-sample-inputs primary-keys)
          other-labels))
 
 (defn ^:private submit-aou-workflow
@@ -188,9 +191,8 @@
     id))
 
 (defn ^:private add-aou-workload!
-  "Use transaction `tx` to record a new workflow. Find a workload
-  matching `request`, or make a new workload, then add the workflow
-  described by `request` to it.  Return the workload's `id`. "
+  "Use transaction `tx` to find a workload matching `request`, or make a
+  new one, and return the workload's `id`. "
   [tx request]
   (let [{:keys [creator executor pipeline project output watchers]} request
         slashified             (util/slashify output)
@@ -220,7 +222,7 @@
                                     :watchers (pr-str watchers)
                                     :wdl      path})))))
 
-(defn start-aou-workload!
+(defn ^:private start-aou-workload!
   "Use transaction `tx` to start `workload` so it becomes append-able."
   [tx {:keys [id] :as workload}]
   (if (:started workload)
@@ -228,10 +230,6 @@
     (let [now {:started (Timestamp/from (Instant/now))}]
       (jdbc/update! tx :workload now ["id = ?" id])
       (merge workload now))))
-
-(def primary-keys
-  "These uniquely identify a sample so use them as a primary key."
-  [:chip_well_barcode :analysis_version_number])
 
 (defn ^:private primary-values [sample]
   (mapv sample primary-keys))
@@ -264,10 +262,9 @@
     (second (reduce go [known-keys []] samples))))
 
 (defn append-to-workload!
-  "Use transaction `tx` to append `notifications` (or samples) to `workload`.
-  Note:
-  - The `workload` must be `started` in order to be append-able.
-  - All samples being appended will be submitted immediately."
+  "Use transaction `tx` to add `notifications` (samples) to `workload`.
+  Note: - The `workload` must be `started` in order to be append-able.
+        - All samples being appended will be submitted immediately."
   [tx notifications {:keys [uuid items output executor] :as workload}]
   (when-not (:started workload)
     (throw (Exception. (format "Workload %s is not started" uuid))))
@@ -286,7 +283,7 @@
                           :updated (Timestamp/from (Instant/now))
                           :status "Submitted"
                           :uuid))))]
-    (let [executor       (is-known-cromwell-url? executor)
+    (let [executor          (is-known-cromwell-url? executor)
           submitted-samples (map (partial submit! executor)
                                  (remove-existing-samples
                                   notifications
