@@ -70,8 +70,7 @@
    {:environment "prod"
     :vault_token_path "gs://broad-dsp-gotc-arrays-prod-tokens/arrayswdl.token"}])
 
-;; visible for testing
-(defn cromwell->inputs+options
+(defn ^:private cromwell->inputs+options
   "Map cromwell URL to workflow inputs and options for submitting an AllOfUs Arrays workflow.
   The returned environment string here is just a default, input file may specify override."
   [url]

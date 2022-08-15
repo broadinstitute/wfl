@@ -2,13 +2,6 @@
   (:require [clojure.test   :refer [deftest is testing]]
             [wfl.module.aou :as aou]))
 
-(def ^:private cromwell-url
-  "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
-
-(deftest test-cromwell->inputs+options
-  (testing "Map cromwell URL to inputs+options correctly"
-    (is (= (:environment (aou/cromwell->inputs+options cromwell-url)) "dev"))))
-
 (def per-sample
   "Per-sample input keys for AoU workflows."
   [:analysis_version_number
@@ -77,7 +70,8 @@
   (map (fn [k] (keyword (str "Arrays." (name k)))) kws))
 
 (deftest test-aou-inputs-preparation
-  (let [extra-inputs   (merge per-sample-inputs {:extra "extra"})
+  (let [cromwell-url   "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"
+        extra-inputs   (merge per-sample-inputs {:extra "extra"})
         inputs-missing (dissoc per-sample-inputs :analysis_version_number)
         no-controls    (-> other-keys (concat per-sample) arrayify set)
         all-keys       (-> control-keys arrayify (concat no-controls) set)]
