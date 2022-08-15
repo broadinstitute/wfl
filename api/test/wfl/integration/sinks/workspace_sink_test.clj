@@ -95,7 +95,7 @@
             (is (= "workspace-ns/workspace-name" workspace))
             (is (= entity-type type))
             (is (= entity-name name)))
-          (throw-if-called [fname & args]
+          (throw-when [fname & args]
             (throw (ex-info (str fname " should not have been called")
                             {:called-with args})))]
     (let [workflow         {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
@@ -106,15 +106,13 @@
           executor         (make-queue-from-list [[nil workflow]])
           sink-throws      (sink "not-a-workflow-input-or-output")
           sink-updates     (sink "flowcell_id")
-          workload-throws  {:executor executor
-                            :sink     sink-throws}
-          workload-updates {:executor executor
-                            :sink     sink-updates}]
+          workload-throws  {:executor executor :sink sink-throws}
+          workload-updates {:executor executor :sink sink-updates}
+          batch-upsert     (partial throw-when "rawls/batch-upsert")
+          delete-entities  (partial throw-when "firecloud/delete-entities")]
       (testing "Sink identifier matches no workflow output or input"
-        (with-redefs [rawls/batch-upsert
-                      (partial throw-if-called "rawls/batch-upsert")
-                      firecloud/delete-entities
-                      (partial throw-if-called "firecloud/delete-entities")]
+        (with-redefs [rawls/batch-upsert        batch-upsert
+                      firecloud/delete-entities delete-entities]
           (is (thrown-with-msg?
                ExceptionInfo
                (re-pattern @#'sink/entity-name-not-found-error-message)
@@ -126,11 +124,9 @@
           (let [records (->> sink-throws :details (postgres/get-table tx))]
             (is (empty? records) "No sink records should have been written"))))
       (testing "Sink identifier matches workflow output"
-        (with-redefs-fn
-          {#'rawls/batch-upsert        verify-upsert-request
-           #'firecloud/delete-entities
-           (partial throw-if-called "firecloud/delete-entities")}
-          #(sink/update-sink! workload-updates))
+        (with-redefs [rawls/batch-upsert        verify-upsert-request
+                      firecloud/delete-entities delete-entities]
+          (sink/update-sink! workload-updates))
         (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
           (let [[record & rest] (->> sink-updates
