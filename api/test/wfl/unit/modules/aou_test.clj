@@ -97,8 +97,3 @@
                            (merge per-sample-inputs)
                            (aou/make-inputs cromwell-url)
                            keys set))))))
-
-#_(deftest test-no-workflow-on-stopped-workload
-    (testing "Cannot add a workflow to a stopped workload"
-      (with-redefs []
-        (is false))))
