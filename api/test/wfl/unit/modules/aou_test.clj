@@ -1,6 +1,5 @@
 (ns wfl.unit.modules.aou-test
   (:require [clojure.test   :refer [deftest is testing]]
-            [clojure.set    :as set]
             [wfl.module.aou :as aou]))
 
 (def ^:private cromwell-url
@@ -54,11 +53,9 @@
    :control_sample_name])
 
 (defn arrayify
-  "The keywords in KWS prefixed with Array."
+  "The keywords in KWS prefixed with `Arrays.`."
   [kws]
-  (map (fn [k] (keyword (str "Array." (name k)))) kws))
-
-(arrayify (concat per-sample other-keys))
+  (map (fn [k] (keyword (str "Arrays." (name k)))) kws))
 
 (defn mapify
   "Return a map from the keywords KWS to their names."
@@ -82,44 +79,9 @@
 
 (deftest test-aou-inputs-preparation
   (let [extra-inputs   (merge per-sample-inputs {:extra "extra"})
-        inputs-missing (dissoc per-sample-inputs
-                               :analysis_version_number)
-        no-controls    #{:Arrays.analysis_version_number
-                         :Arrays.bead_pool_manifest_file
-                         :Arrays.call_rate_threshold
-                         :Arrays.chip_well_barcode
-                         :Arrays.cluster_file
-                         :Arrays.contamination_controls_vcf
-                         :Arrays.dbSNP_vcf
-                         :Arrays.dbSNP_vcf_index
-                         :Arrays.disk_size
-                         :Arrays.environment
-                         :Arrays.extended_chip_manifest_file
-                         :Arrays.fingerprint_genotypes_vcf_file
-                         :Arrays.fingerprint_genotypes_vcf_index_file
-                         :Arrays.gender_cluster_file
-                         :Arrays.green_idat_cloud_path
-                         :Arrays.haplotype_database_file
-                         :Arrays.minor_allele_frequency_file
-                         :Arrays.params_file
-                         :Arrays.preemptible_tries
-                         :Arrays.red_idat_cloud_path
-                         :Arrays.ref_dict
-                         :Arrays.ref_fasta
-                         :Arrays.ref_fasta_index
-                         :Arrays.reported_gender
-                         :Arrays.sample_alias
-                         :Arrays.sample_lsid
-                         :Arrays.subsampled_metrics_interval_list
-                         :Arrays.variant_rsids_file
-                         :Arrays.vault_token_path
-                         :Arrays.zcall_thresholds_file}
-        all-keys       (set/union
-                        no-controls
-                        #{:Arrays.control_sample_intervals_file
-                          :Arrays.control_sample_name
-                          :Arrays.control_sample_vcf_file
-                          :Arrays.control_sample_vcf_index_file})]
+        inputs-missing (dissoc per-sample-inputs :analysis_version_number)
+        no-controls    (-> other-keys (concat per-sample) arrayify set)
+        all-keys       (-> control-keys arrayify (concat no-controls) set)]
     (testing "aou filters out non-necessary keys for per-sample-inputs"
       (is (= per-sample-inputs (aou/get-per-sample-inputs extra-inputs))))
     (testing "aou throws for missing keys for per-sample-inputs"
@@ -128,7 +90,7 @@
       (is (= no-controls (-> cromwell-url
                              (aou/make-inputs per-sample-inputs)
                              keys set))))
-    (testing "aou supplies merges environment from inputs with default"
+    (testing "aou suppolies merges environment from inputs with default"
       (let [no-environment (dissoc per-sample-inputs :environment)]
         (is (= "dev"         (-> cromwell-url
                                  (aou/make-inputs no-environment)
