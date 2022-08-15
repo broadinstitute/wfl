@@ -52,11 +52,6 @@
    :control_sample_vcf_file
    :control_sample_name])
 
-(defn arrayify
-  "The keywords in KWS prefixed with `Arrays.`."
-  [kws]
-  (map (fn [k] (keyword (str "Arrays." (name k)))) kws))
-
 (defn mapify
   "Return a map from the keywords KWS to their names."
   [kws]
@@ -72,10 +67,14 @@
     (let [labels {:workload "bogus-workload"}]
       (is (= (aou/make-labels per-sample-inputs labels)
              (-> per-sample-inputs
-                 (select-keys [:analysis_version_number 23
-                               :chip_well_barcode "chip_well_barcode"])
+                 (select-keys [:analysis_version_number :chip_well_barcode])
                  (merge {:wfl "AllOfUsArrays"} labels)))
           "label map is not made as expected"))))
+
+(defn arrayify
+  "The keywords in KWS prefixed with `Arrays.`."
+  [kws]
+  (map (fn [k] (keyword (str "Arrays." (name k)))) kws))
 
 (deftest test-aou-inputs-preparation
   (let [extra-inputs   (merge per-sample-inputs {:extra "extra"})
@@ -92,22 +91,17 @@
                              keys set))))
     (testing "aou suppolies merges environment from inputs with default"
       (let [no-environment (dissoc per-sample-inputs :environment)]
-        (is (= "dev"         (-> cromwell-url
-                                 (aou/make-inputs no-environment)
-                                 :Arrays.environment)))
-        (is (= "environment" (-> cromwell-url
-                                 (aou/make-inputs per-sample-inputs)
-                                 :Arrays.environment)))
-        (is (= no-controls   (-> cromwell-url
-                                 (aou/make-inputs no-environment)
-                                 keys set)))))
+        (is (= "dev"         (->> no-environment
+                                  (aou/make-inputs cromwell-url)
+                                  :Arrays.environment)))
+        (is (= "environment" (->> per-sample-inputs
+                                  (aou/make-inputs cromwell-url)
+                                  :Arrays.environment)))
+        (is (= no-controls   (->> no-environment
+                                  (aou/make-inputs cromwell-url)
+                                  keys set)))))
     (testing "aou prepares all necessary keys plus optional keys"
-      (is (= all-keys (->> {:control_sample_vcf_index_file "foo"
-                            :control_sample_intervals_file "foo"
-                            :control_sample_vcf_file       "foo"
-                            :control_sample_name           "foo"}
+      (is (= all-keys (->> control-keys mapify
                            (merge per-sample-inputs)
                            (aou/make-inputs cromwell-url)
                            keys set))))))
-
-(clojure.test/test-ns 'wfl.unit.modules.aou-test)
