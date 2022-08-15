@@ -45,14 +45,10 @@
    :control_sample_vcf_file
    :control_sample_name])
 
-(defn mapify
-  "Return a map from the keywords KWS to their names."
-  [kws]
-  (zipmap kws (map name kws)))
-
 (def per-sample-inputs
   "Bogus per-sample input for AoU workflows."
-  (-> per-sample mapify
+  (-> per-sample
+      (zipmap (map name per-sample))
       (assoc :analysis_version_number 23)))
 
 (deftest test-make-cromwell-labels
@@ -95,7 +91,9 @@
                                   (aou/make-inputs cromwell-url)
                                   keys set)))))
     (testing "aou prepares all necessary keys plus optional keys"
-      (is (= all-keys (->> control-keys mapify
+      (is (= all-keys (->> control-keys
+                           (map name)
+                           (zipmap control-keys)
                            (merge per-sample-inputs)
                            (aou/make-inputs cromwell-url)
                            keys set))))))
