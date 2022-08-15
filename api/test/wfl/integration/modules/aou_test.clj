@@ -1,16 +1,16 @@
 (ns wfl.integration.modules.aou-test
-  (:require [clojure.spec.alpha             :as s]
-            [clojure.test                   :refer [testing is deftest use-fixtures]]
+  (:require [clojure.test                   :refer [testing is deftest]]
+            [clojure.spec.alpha             :as s]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.aou                 :as aou]
+            [wfl.module.batch               :as batch]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
-            [wfl.util                       :as util]
-            [wfl.module.batch               :as batch])
+            [wfl.util                       :as util])
   (:import [java.util UUID]))
 
-(use-fixtures :once fixtures/temporary-postgresql-database)
+(clojure.test/use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn mock-submit-workload [& _] (UUID/randomUUID))
 (defn mock-update-statuses! [tx {:keys [items] :as workload}]
@@ -27,7 +27,8 @@
 
 (deftest test-append-to-aou
   (with-redefs [aou/submit-aou-workflow mock-submit-workload]
-    (let [workload (workloads/execute-workload! (make-aou-workload-request))
+    (let [request  (make-aou-workload-request)
+          workload (workloads/execute-workload! request)
           append!  (fn [xs] (workloads/append-to-workload! xs workload))]
       (testing "appending a sample to the workload"
         (let [response (append! [workloads/aou-sample])]
@@ -45,7 +46,18 @@
       (testing "appending empty workload"
         (let [response (append! [])]
           (is (s/valid? ::aou/append-to-aou-response response))
-          (is (empty? response)))))))
+          (is (empty? response))))
+      (testing "/exec does not return a stopped workload"
+        (let [matched (workloads/execute-workload! request)
+              stopped (workloads/stop-workload!    matched)
+              another (workloads/execute-workload! request)]
+          (is (= (:uuid workload) (:uuid matched) (:uuid stopped)))
+          (is (:stopped stopped))
+          (is (:started another))
+          (is (not (:stopped another)))
+          (is (not= (:id    stopped) (:id    another)))
+          (is (not= (:items stopped) (:items another)))
+          (is (not= (:uuid  stopped) (:uuid  another))))))))
 
 (deftest test-append-to-aou-not-started
   (with-redefs [aou/submit-aou-workflow mock-submit-workload]
