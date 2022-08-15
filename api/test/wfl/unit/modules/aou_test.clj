@@ -100,4 +100,5 @@
 
 #_(deftest test-no-workflow-on-stopped-workload
     (testing "Cannot add a workflow to a stopped workload"
-      (is false)))
+      (with-redefs []
+        (is false))))

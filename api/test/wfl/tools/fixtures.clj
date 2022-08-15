@@ -86,15 +86,6 @@
          (finally
            (reset! @#'postgres/testing-db-overrides prev)))))))
 
-(defn create-local-database-for-testing
-  "Create and run liquibase on a PostgreSQL database named `dbname`. Assumes
-   that `dbname` does not already exist.
-   Notes:
-   - This is intended for interactive development in a REPL.
-   - The new database will NOT be cleaned up automatically."
-  [dbname]
-  (-> dbname create-local-database setup-local-database))
-
 (defmacro with-fixtures
   "Use 0 or more `fixtures` in `use-fixtures`.
    Parameters

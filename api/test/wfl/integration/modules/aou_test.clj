@@ -94,7 +94,7 @@
              (workloads/execute-workload! request))))))
 
 (deftest test-exec-on-similar-workload-request
-  (testing "output bucket slashes should be standardized to not create new workloads unnecessarily"
+  (testing "standardize output to not create new workloads unnecessarily"
     (let [request (make-aou-workload-request)
           slashified (update request :output util/slashify)
           deslashified (update request :output util/de-slashify)]
