@@ -13,8 +13,8 @@
   (:import [clojure.lang ExceptionInfo]
            [wfl.util     UserException]))
 
-(def ^:private testing-entity-type "flowcell")
-(def ^:private testing-entity-name "test")
+(def ^:private entity-type "flowcell")
+(def ^:private entity-name "test")
 
 (use-fixtures :once
   (fixtures/temporary-environment
@@ -82,7 +82,7 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> {:name           "Terra Workspace"
                     :workspace      "workspace-ns/workspace-name"
-                    :entityType     testing-entity-type
+                    :entityType     entity-type
                     :fromOutputs    (resources/read-resource
                                      "sarscov2_illumina_full/entity-from-outputs.edn")
                     :identifier     identifier
@@ -93,8 +93,8 @@
           (verify-upsert-request
             [workspace [[type name _attributes] :as _entities]]
             (is (= "workspace-ns/workspace-name" workspace))
-            (is (= testing-entity-type type))
-            (is (= testing-entity-name name)))
+            (is (= entity-type type))
+            (is (= entity-name name)))
           (throw-if-called [fname & args]
             (throw (ex-info (str fname " should not have been called")
                             {:called-with args})))]
@@ -102,8 +102,7 @@
                             :status  "Succeeded"
                             :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                          resources/read-resource
-                                         (assoc :flowcell_id
-                                                testing-entity-name))}
+                                         (assoc :flowcell_id entity-name))}
           executor         (make-queue-from-list [[nil workflow]])
           sink-throws      (sink "not-a-workflow-input-or-output")
           sink-updates     (sink "flowcell_id")
@@ -141,7 +140,7 @@
             (is (empty? rest) "More than one record was written")
             (is (= (:uuid workflow) (:workflow record))
                 "The workflow UUID was not written")
-            (is (= testing-entity-name (:entity record))
+            (is (= entity-name (:entity record))
                 "The entity was not correct")))))))
 
 (deftest test-sinking-resubmitted-workflow
@@ -149,17 +148,17 @@
     (fn [workspace]
       (let [workflow1 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
                        :status  "Succeeded"
-                       :outputs {:run_id  testing-entity-name
+                       :outputs {:run_id  entity-name
                                  :results ["aligned-thing.cram"]}}
             workflow2 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67ab"
                        :status  "Succeeded"
-                       :outputs {:run_id  testing-entity-name
+                       :outputs {:run_id  entity-name
                                  :results ["another-aligned-thing.cram"]}}
             executor  (make-queue-from-list [[nil workflow1] [nil workflow2]])
             sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                         (->> {:name           "Terra Workspace"
                               :workspace      workspace
-                              :entityType     testing-entity-type
+                              :entityType     entity-type
                               :fromOutputs    {:aligned_crams "results"}
                               :identifier     "run_id"
                               :skipValidation true}
@@ -172,10 +171,9 @@
         (is (== 1 (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity
-               workspace [testing-entity-type testing-entity-name])]
-          (is (= testing-entity-type entityType))
-          (is (= testing-entity-name name))
+              (firecloud/get-entity workspace [entity-type entity-name])]
+          (is (= entity-type entityType))
+          (is (= entity-name name))
           (is (== 1 (count attributes)))
           (is (= [:aligned_crams {:itemsType "AttributeValue"
                                   :items ["aligned-thing.cram"]}]
@@ -183,14 +181,13 @@
         (sink/update-sink! workload)
         (is (zero? (stage/queue-length executor))
             "one workflow should have been consumed")
-        (let [entites (firecloud/list-entities workspace testing-entity-type)]
+        (let [entites (firecloud/list-entities workspace entity-type)]
           (is (== 1 (count entites))
               "No new entities should have been added"))
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity
-               workspace [testing-entity-type testing-entity-name])]
-          (is (= testing-entity-type entityType))
-          (is (= testing-entity-name name))
+              (firecloud/get-entity workspace [entity-type entity-name])]
+          (is (= entity-type entityType))
+          (is (= entity-name name))
           (is (== 1 (count attributes)))
           (is (= [:aligned_crams {:itemsType "AttributeValue"
                                   :items ["another-aligned-thing.cram"]}]
