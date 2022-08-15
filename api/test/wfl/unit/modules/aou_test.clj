@@ -10,7 +10,7 @@
   (testing "Map cromwell URL to inputs+options correctly"
     (is (= (:environment (aou/cromwell->inputs+options cromwell-url)) "dev"))))
 
-(def input-keys
+(def per-sample
   "Per-sample input keys for AoU workflows."
   [:analysis_version_number
    :bead_pool_manifest_file
@@ -29,25 +29,60 @@
    :sample_lsid
    :zcall_thresholds_file])
 
-(def sample-inputs
+(def other-keys
+  "Input keys that are not per-sample."
+  [:contamination_controls_vcf
+   :dbSNP_vcf
+   :dbSNP_vcf_index
+   :disk_size
+   :fingerprint_genotypes_vcf_file
+   :fingerprint_genotypes_vcf_index_file
+   :haplotype_database_file
+   :preemptible_tries
+   :ref_dict
+   :ref_fasta
+   :ref_fasta_index
+   :subsampled_metrics_interval_list
+   :variant_rsids_file
+   :vault_token_path])
+
+(def control-keys
+  "Keys that mark control samples."
+  [:control_sample_vcf_index_file
+   :control_sample_intervals_file
+   :control_sample_vcf_file
+   :control_sample_name])
+
+(defn arrayify
+  "The keywords in KWS prefixed with Array."
+  [kws]
+  (map (fn [k] (keyword (str "Array." (name k)))) kws))
+
+(arrayify (concat per-sample other-keys))
+
+(defn mapify
+  "Return a map from the keywords KWS to their names."
+  [kws]
+  (zipmap kws (map name kws)))
+
+(def per-sample-inputs
   "Bogus per-sample input for AoU workflows."
-  (-> input-keys
-      (zipmap (map name input-keys))
+  (-> per-sample mapify
       (assoc :analysis_version_number 23)))
 
 (deftest test-make-cromwell-labels
   (testing "make-labels can return correct workflow labels"
     (let [labels {:workload "bogus-workload"}]
-      (is (= (aou/make-labels sample-inputs labels)
-             (-> sample-inputs
+      (is (= (aou/make-labels per-sample-inputs labels)
+             (-> per-sample-inputs
                  (select-keys [:analysis_version_number 23
                                :chip_well_barcode "chip_well_barcode"])
                  (merge {:wfl "AllOfUsArrays"} labels)))
           "label map is not made as expected"))))
 
 (deftest test-aou-inputs-preparation
-  (let [extra-inputs   (merge sample-inputs {:extra "extra"})
-        inputs-missing (dissoc sample-inputs
+  (let [extra-inputs   (merge per-sample-inputs {:extra "extra"})
+        inputs-missing (dissoc per-sample-inputs
                                :analysis_version_number)
         no-controls    #{:Arrays.analysis_version_number
                          :Arrays.bead_pool_manifest_file
@@ -86,20 +121,20 @@
                           :Arrays.control_sample_vcf_file
                           :Arrays.control_sample_vcf_index_file})]
     (testing "aou filters out non-necessary keys for per-sample-inputs"
-      (is (= sample-inputs (aou/get-per-sample-inputs extra-inputs))))
+      (is (= per-sample-inputs (aou/get-per-sample-inputs extra-inputs))))
     (testing "aou throws for missing keys for per-sample-inputs"
       (is (thrown? Exception (aou/get-per-sample-inputs inputs-missing))))
     (testing "aou prepares all necessary keys"
       (is (= no-controls (-> cromwell-url
-                             (aou/make-inputs sample-inputs)
+                             (aou/make-inputs per-sample-inputs)
                              keys set))))
     (testing "aou supplies merges environment from inputs with default"
-      (let [no-environment (dissoc sample-inputs :environment)]
+      (let [no-environment (dissoc per-sample-inputs :environment)]
         (is (= "dev"         (-> cromwell-url
                                  (aou/make-inputs no-environment)
                                  :Arrays.environment)))
         (is (= "environment" (-> cromwell-url
-                                 (aou/make-inputs sample-inputs)
+                                 (aou/make-inputs per-sample-inputs)
                                  :Arrays.environment)))
         (is (= no-controls   (-> cromwell-url
                                  (aou/make-inputs no-environment)
@@ -109,6 +144,8 @@
                             :control_sample_intervals_file "foo"
                             :control_sample_vcf_file       "foo"
                             :control_sample_name           "foo"}
-                           (merge sample-inputs)
+                           (merge per-sample-inputs)
                            (aou/make-inputs cromwell-url)
                            keys set))))))
+
+(clojure.test/test-ns 'wfl.unit.modules.aou-test)
