@@ -79,7 +79,7 @@
       (is (= no-controls (-> cromwell-url
                              (aou/make-inputs per-sample-inputs)
                              keys set))))
-    (testing "aou supplies merges environment from inputs with default"
+    (testing "aou merges environment from inputs with default"
       (let [no-environment (dissoc per-sample-inputs :environment)]
         (is (= "dev"         (->> no-environment
                                   (aou/make-inputs cromwell-url)
