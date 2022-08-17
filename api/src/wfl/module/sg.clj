@@ -153,14 +153,48 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
+
+
+(comment
+  (clio-cram-record
+   "https://clio.gotc-dev.broadinstitute.org"
+   "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v456/NA12878.cram"
+   )
+  (clio-bam-record
+   "https://clio.gotc-dev.broadinstitute.org"
+   {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3"})
+  {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3",
+   :location "GCP",
+   :project "testProject0e0dd873bcc24090bf7ca4810692453b",
+   :document_status "Normal",
+   :version 3,
+   :data_type "WGS",
+   :sample_alias "sample688.68d420c669f64a12bf071612b5c56c3e"}
+  (clio-bam-record
+   "https://clio.gotc-dev.broadinstitute.org"
+   {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3"})
+  (clio-add-bam
+   "https://clio.gotc-dev.broadinstitute.org"
+   {:bam_path  "gs://bam/blame.tbl.bam",
+    :data_type "WGS"
+    :document_status "Normal"
+    :insert_size_metrics_path "gs://broad-gotc-prod-storage/tbl.insert_size_metrics"
+    :location "GCP"
+    :project "testProject0e0dd873bcc24090bf7ca4810692453b"
+    :sample_alias "sample688.68d420c669f64a12bf071612b5c56c3e"
+    :version 3})
+  )
+
 (defn ^:private clio-add-bam
   "Add `bam` record to `clio` Retry when Clio recommends force=true."
   [clio bam]
-  (try (clio/add-bam clio bam)
+  (wfl.debug/trace bam)
+  (try (wfl.debug/trace (clio/add-bam clio bam))
        (catch Throwable x
+         (wfl.debug/trace x)
          (log/error {:bam bam :x x}))))
 
-(defn maybe-update-clio-and-write-final-files
+(defn ^:private maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."
   [clio-url final {:keys [inputs] :as metadata}]
   #_(log-missing-final-files-for-debugging final)
