@@ -154,7 +154,7 @@
         (log/error {:need need}))))
 
 (defn ^:private clio-add-bam
-  "Add `bam` record to `clio`."
+  "Add `bam` record to `clio` Retry when Clio recommends force=true."
   [clio bam]
   (try (clio/add-bam clio bam)
        (catch Throwable x
