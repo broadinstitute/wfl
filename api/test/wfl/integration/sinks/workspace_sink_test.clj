@@ -13,56 +13,54 @@
   (:import [clojure.lang ExceptionInfo]
            [wfl.util     UserException]))
 
-;; Workspace
-(def ^:private testing-namespace "wfl-dev")
-(def ^:private testing-workspace (str testing-namespace "/" "CDC_Viral_Sequencing"))
+(def ^:private entity-type "flowcell")
+(def ^:private entity-name "test")
 
-;; Entity
-(def ^:private testing-entity-type "flowcell")
-(def ^:private testing-entity-name "test")
-
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"})
+  fixtures/temporary-postgresql-database)
 
 ;; Validation tests
 
 (deftest test-validate-terra-workspace-sink-with-valid-sink-request
   (is (sink/terra-workspace-sink-validate-request-or-throw
        {:name        @#'sink/terra-workspace-sink-name
-        :workspace   testing-workspace
+        :workspace   "wfl-dev/CDC_Viral_Sequencing"
         :entityType  "assemblies"
         :identity    "Who cares?"
         :fromOutputs {:assemblies_id "foo"}})))
 
 (deftest test-validate-terra-workspace-sink-throws-on-invalid-sink-entity-type
   (is (thrown-with-msg?
-       UserException (re-pattern sink/unknown-entity-type-error-message)
+       UserException
+       (re-pattern @#'sink/unknown-entity-type-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "does_not_exist"
          :identity    "Who cares?"
          :fromOutputs {}}))))
 
 (deftest test-validate-terra-workspace-sink-throws-on-malformed-fromOutputs
   (is (thrown-with-msg?
-       UserException (re-pattern sink/terra-workspace-malformed-from-outputs-message)
+       UserException
+       (re-pattern @#'sink/terra-workspace-malformed-from-outputs-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "assemblies"
          :identity    "Who cares?"
          :fromOutputs "geoff"}))))
 
 (deftest test-validate-terra-workspace-sink-throws-on-unknown-fromOutputs-attributes
   (is (thrown-with-msg?
-       UserException (re-pattern sink/unknown-attributes-error-message)
+       UserException
+       (re-pattern @#'sink/unknown-attributes-error-message)
        (sink/terra-workspace-sink-validate-request-or-throw
         {:name        @#'sink/terra-workspace-sink-name
-         :workspace   testing-workspace
+         :workspace   "wfl-dev/CDC_Viral_Sequencing"
          :entityType  "assemblies"
          :identity    "Who cares?"
          :fromOutputs {:does_not_exist "genbank_source_table"}}))))
@@ -84,7 +82,7 @@
             (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
               (->> {:name           "Terra Workspace"
                     :workspace      "workspace-ns/workspace-name"
-                    :entityType     testing-entity-type
+                    :entityType     entity-type
                     :fromOutputs    (resources/read-resource
                                      "sarscov2_illumina_full/entity-from-outputs.edn")
                     :identifier     identifier
@@ -95,29 +93,26 @@
           (verify-upsert-request
             [workspace [[type name _attributes] :as _entities]]
             (is (= "workspace-ns/workspace-name" workspace))
-            (is (= testing-entity-type type))
-            (is (= testing-entity-name name)))
-          (throw-if-called [fname & args]
+            (is (= entity-type type))
+            (is (= entity-name name)))
+          (throw-when [fname & args]
             (throw (ex-info (str fname " should not have been called")
                             {:called-with args})))]
     (let [workflow         {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
                             :status  "Succeeded"
                             :outputs (-> "sarscov2_illumina_full/outputs.edn"
                                          resources/read-resource
-                                         (assoc :flowcell_id testing-entity-name))}
+                                         (assoc :flowcell_id entity-name))}
           executor         (make-queue-from-list [[nil workflow]])
           sink-throws      (sink "not-a-workflow-input-or-output")
           sink-updates     (sink "flowcell_id")
-          workload-throws  {:executor executor
-                            :sink     sink-throws}
-          workload-updates {:executor executor
-                            :sink     sink-updates}]
+          workload-throws  {:executor executor :sink sink-throws}
+          workload-updates {:executor executor :sink sink-updates}
+          batch-upsert     (partial throw-when "rawls/batch-upsert")
+          delete-entities  (partial throw-when "firecloud/delete-entities")]
       (testing "Sink identifier matches no workflow output or input"
-        (with-redefs
-         [rawls/batch-upsert  (partial throw-if-called "rawls/batch-upsert")
-          sink/entity-exists? (partial throw-if-called "sink/entity-exists?")
-          firecloud/delete-entities
-          (partial throw-if-called "firecloud/delete-entities")]
+        (with-redefs [rawls/batch-upsert        batch-upsert
+                      firecloud/delete-entities delete-entities]
           (is (thrown-with-msg?
                ExceptionInfo
                (re-pattern @#'sink/entity-name-not-found-error-message)
@@ -129,12 +124,9 @@
           (let [records (->> sink-throws :details (postgres/get-table tx))]
             (is (empty? records) "No sink records should have been written"))))
       (testing "Sink identifier matches workflow output"
-        (with-redefs-fn
-          {#'rawls/batch-upsert        verify-upsert-request
-           #'sink/entity-exists?       (constantly false)
-           #'firecloud/delete-entities
-           (partial throw-if-called "firecloud/delete-entities")}
-          #(sink/update-sink! workload-updates))
+        (with-redefs [rawls/batch-upsert        verify-upsert-request
+                      firecloud/delete-entities delete-entities]
+          (sink/update-sink! workload-updates))
         (is (zero? (stage/queue-length executor)) "The workflow was not consumed")
         (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
           (let [[record & rest] (->> sink-updates
@@ -144,7 +136,7 @@
             (is (empty? rest) "More than one record was written")
             (is (= (:uuid workflow) (:workflow record))
                 "The workflow UUID was not written")
-            (is (= testing-entity-name (:entity record))
+            (is (= entity-name (:entity record))
                 "The entity was not correct")))))))
 
 (deftest test-sinking-resubmitted-workflow
@@ -152,17 +144,17 @@
     (fn [workspace]
       (let [workflow1 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67aa"
                        :status  "Succeeded"
-                       :outputs {:run_id  testing-entity-name
+                       :outputs {:run_id  entity-name
                                  :results ["aligned-thing.cram"]}}
             workflow2 {:uuid    "2768b29e-c808-4bd6-a46b-6c94fd2a67ab"
                        :status  "Succeeded"
-                       :outputs {:run_id  testing-entity-name
+                       :outputs {:run_id  entity-name
                                  :results ["another-aligned-thing.cram"]}}
             executor  (make-queue-from-list [[nil workflow1] [nil workflow2]])
             sink      (jdbc/with-db-transaction [tx (postgres/wfl-db-config)]
                         (->> {:name           "Terra Workspace"
                               :workspace      workspace
-                              :entityType     testing-entity-type
+                              :entityType     entity-type
                               :fromOutputs    {:aligned_crams "results"}
                               :identifier     "run_id"
                               :skipValidation true}
@@ -175,10 +167,9 @@
         (is (== 1 (stage/queue-length executor))
             "one workflow should have been consumed")
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity
-               workspace [testing-entity-type testing-entity-name])]
-          (is (= testing-entity-type entityType))
-          (is (= testing-entity-name name))
+              (firecloud/get-entity workspace [entity-type entity-name])]
+          (is (= entity-type entityType))
+          (is (= entity-name name))
           (is (== 1 (count attributes)))
           (is (= [:aligned_crams {:itemsType "AttributeValue"
                                   :items ["aligned-thing.cram"]}]
@@ -186,14 +177,13 @@
         (sink/update-sink! workload)
         (is (zero? (stage/queue-length executor))
             "one workflow should have been consumed")
-        (let [entites (firecloud/list-entities workspace testing-entity-type)]
+        (let [entites (firecloud/list-entities workspace entity-type)]
           (is (== 1 (count entites))
               "No new entities should have been added"))
         (let [{:keys [entityType name attributes]}
-              (firecloud/get-entity
-               workspace [testing-entity-type testing-entity-name])]
-          (is (= testing-entity-type entityType))
-          (is (= testing-entity-name name))
+              (firecloud/get-entity workspace [entity-type entity-name])]
+          (is (= entity-type entityType))
+          (is (= entity-name name))
           (is (== 1 (count attributes)))
           (is (= [:aligned_crams {:itemsType "AttributeValue"
                                   :items ["another-aligned-thing.cram"]}]

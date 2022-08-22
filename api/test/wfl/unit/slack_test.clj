@@ -17,13 +17,13 @@
       (is (= message-count (count (seq @notifier)))))))
 
 (deftest test-dispatch-does-not-throw
-  (let [queue (conj (PersistentQueue/EMPTY)
-                    (make-notification 'test-dispatch-does-not-throw))]
-    (with-redefs
-     [slack/post-message (constantly {:ok false :error "something_bad"})]
+  (let [queue      (conj (PersistentQueue/EMPTY)
+                         (make-notification 'test-dispatch-does-not-throw))
+        post-error (constantly {:ok false :error "something_bad"})
+        post-throw #(throw (ex-info "Unexpected throwable" {}))]
+    (with-redefs [slack/post-message post-error]
       (is (= (seq queue) (seq (slack/dispatch-notification queue)))
           "Queue should remain when posting Slack message returns error"))
-    (with-redefs
-     [slack/post-message #(throw (ex-info "Unexpected throwable" {}))]
+    (with-redefs [slack/post-message post-throw]
       (is (= (seq queue) (seq (slack/dispatch-notification queue)))
           "Queue should remain when posting Slack message throws"))))

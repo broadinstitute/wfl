@@ -57,12 +57,13 @@
   (fn [_transaction source] (:type source)))
 
 (defmulti update-source!
-  "Enqueue items onto the `workload`'s source queue to be consumed by a later processing
-   stage unless stopped, performing any external effects as necessary.
-   Implementations should avoid maintaining in-memory state and making long-
-   running external calls, favouring internal queues to manage such tasks
-   asynchronously between invocations. This function is called one or more
-   times after `start-source!` and may be called after `stop-source!`"
+  "Enqueue items onto the `workload`'s source queue to be consumed by a
+  later processing stage unless stopped, performing any external
+  effects as necessary. Implementations should avoid maintaining
+  in-memory state and making long- running external calls, favouring
+  internal queues to manage such tasks asynchronously between
+  invocations. This function is called one or more times after
+  `start-source!` and may be called after `stop-source!`"
   (fn [{:keys [source] :as _workload}] (:type source)))
 
 ;; source load/save operations
