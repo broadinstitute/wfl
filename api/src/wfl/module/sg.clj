@@ -5,6 +5,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
+            [wfl.debug]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
             [wfl.module.all             :as all]
@@ -134,8 +135,8 @@
                                     :sample_alias
                                     :version]))))
 
-(defn final_workflow_outputs_dir_hack   ; for testing
-  "Do to `file` what `{:final_workflow_outputs_dir output}` does."
+(defn ^:private final_workflow_outputs_dir_hack
+  "Do to `file` what Cromwell's `{:final_workflow_outputs_dir output}` does."
   [output file]
   (->> (str/split file #"/")
        (drop 3)
@@ -163,6 +164,9 @@
   (clio-bam-record
    "https://clio.gotc-dev.broadinstitute.org"
    {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3"})
+  (clio-bam-record
+   "https://clio.gotc-dev.broadinstitute.org"
+   {:bam_path "gs://bam/blame.tbl.bam"})
   {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3",
    :location "GCP",
    :project "testProject0e0dd873bcc24090bf7ca4810692453b",
@@ -183,16 +187,85 @@
     :project "testProject0e0dd873bcc24090bf7ca4810692453b"
     :sample_alias "sample688.68d420c669f64a12bf071612b5c56c3e"
     :version 3})
+  (clio-add-bam
+   "https://clio.gotc-dev.broadinstitute.org"
+   {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3",
+    :location "GCP",
+    :project "testProject0e0dd873bcc24090bf7ca4810692453b",
+    :document_status "Normal",
+    :version 3,
+    :data_type "WGS",
+    :sample_alias "sample688.68d420c669f64a12bf071612b5c56c3e",
+    :insert_size_metrics_path
+    "gs://broad-gotc-prod-storage/tbl.insert_size_metrics"})
+  (def data
+    {:cached nil,
+     :request-time 1169,
+     :repeatable? false,
+     :protocol-version {:name "HTTP", :major 1, :minor 1},
+     :streaming? true,
+     :http-client :object
+     :chunked? false,
+     :type :clj-http.client/unexceptional-status,
+     :reason-phrase "Bad Request",
+     :headers
+     {"Access-Control-Expose-Headers" "Link",
+      "Access-Control-Max-Age" "1728000",
+      "Access-Control-Allow-Headers"
+      "authorization,content-type,accept,origin",
+      "Server" "akka-http/10.1.10",
+      "Content-Type" "application/json",
+      "Access-Control-Allow-Origin" "*",
+      "Content-Length" "259",
+      "X-Frame-Options" "SAMEORIGIN",
+      "Connection" "close",
+      "Access-Control-Allow-Methods"
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD",
+      "Date" "Mon, 22 Aug 2022 21:17:25 GMT"},
+     :orig-content-encoding nil,
+     :status 400,
+     :length 259,
+     :body
+     "\"Adding this document will overwrite the following existing metadata:\\nField: Chain(Left(bam_path)), Old value: \\\"gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3\\\", New value: \\\"gs://bam/blame.tbl.bam\\\". Use 'force=true' to overwrite the existing data.\"",
+     :trace-redirects []})
   )
 
-(defn ^:private clio-add-bam
-  "Add `bam` record to `clio` Retry when Clio recommends force=true."
-  [clio bam]
-  (wfl.debug/trace bam)
-  (try (wfl.debug/trace (clio/add-bam clio bam))
+;; This hack depends on how Clio spells error messages.
+;;
+(defn ^:private hack-try-increment-version-in-clio-add-bam?
+  "True when `exception` suggests that `clio-add-bam` might succeed
+  with the version incremented."
+  [exception]
+  (let [{:keys [body reason-phrase status]} (ex-data exception)]
+    (wfl.debug/trace [body reason-phrase status])
+    (wfl.debug/trace
+     (and
+      (== 400 status)
+      (= "Bad Request" reason-phrase)
+      (str/starts-with?
+       body
+       "\"Adding this document will overwrite the following existing metadata:")
+      (str/ends-with?
+       body "Use 'force=true' to overwrite the existing data.\"")))))
+
+(defn ^:private hack-clio-add-bam-with-version-incremented
+  "Attempt to add `bam` record to `clio` with version `increment`ed."
+  [clio bam increment]
+  (wfl.debug/trace [clio bam increment])
+  (when (> increment 2)
+    (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
+  (try (clio/add-bam clio (update bam :version + increment))
        (catch Throwable x
-         (wfl.debug/trace x)
-         (log/error {:bam bam :x x}))))
+         (log/error {:bam bam :x x})
+         (if (hack-try-increment-version-in-clio-add-bam? x)
+           (hack-clio-add-bam-with-version-incremented clio bam (inc increment))
+           (throw x)))))
+
+(defn ^:private clio-add-bam
+  "Attempt to add `bam` record to `clio` up to 3 times. "
+  [clio bam]
+  (wfl.debug/trace [clio bam])
+  (hack-clio-add-bam-with-version-incremented clio bam 0))
 
 (defn ^:private maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."
@@ -231,6 +304,7 @@
                     (set/rename-keys cromwell->clio)
                     (select-keys (vals cromwell->clio)))
             final (zipmap (keys bam) (map finalize (vals bam)))]
+        (wfl.debug/trace final)
         (when (some empty? (vals final))
           (log/error "Bad metadata from executor"
                      :executor executor
