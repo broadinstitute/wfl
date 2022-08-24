@@ -85,12 +85,12 @@
             (is (:uuid workflow))
             (is (:status workflow))
             (is (:updated workflow)))]
-    (with-redefs-fn {#'batch/submit-workload! mock-submit-workload}
-      #(let [workload (-> (the-sg-workload-request)
-                          workloads/create-workload!
-                          workloads/start-workload!)]
-         (is (:started workload))
-         (run! go! (workloads/workflows workload))))))
+    (with-redefs [batch/submit-workload! mock-submit-workload]
+      (let [workload (-> (the-sg-workload-request)
+                         workloads/create-workload!
+                         workloads/start-workload!)]
+        (is (:started workload))
+        (run! go! (workloads/workflows workload))))))
 
 (deftest test-hidden-inputs
   (testing "google_account_vault_path and vault_token_path are not in inputs"
@@ -117,12 +117,12 @@
                 (is (:supports_inputs        in))
                 (UUID/randomUUID)))
             (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
-      (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
-        #(-> (the-sg-workload-request)
-             (assoc-in [:common :inputs] {:overwritten            false
-                                          :supports_common_inputs true})
-             (update :items (partial map overmap))
-             workloads/execute-workload!)))))
+      (with-redefs [cromwell/submit-workflows verify-submitted-inputs]
+        (-> (the-sg-workload-request)
+            (assoc-in [:common :inputs] {:overwritten            false
+                                         :supports_common_inputs true})
+            (update :items (partial map overmap))
+            workloads/execute-workload!)))))
 
 (deftest test-workflow-options
   (let [{:keys [output] :as request} (the-sg-workload-request)]
@@ -138,14 +138,14 @@
               (let [defaults (sg/make-workflow-options url output)]
                 (is (= defaults (select-keys options (keys defaults))))
                 (map (fn [_] (UUID/randomUUID)) inputs)))]
-      (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
-        #(-> request
-             (assoc-in [:common :options] {:overwritten             false
-                                           :supports_common_options true})
-             (update :items (partial map overmap))
-             workloads/execute-workload!
-             workloads/workflows
-             (->> (map (comp verify-workflow-options :options))))))))
+      (with-redefs [cromwell/submit-workflows verify-submitted-options]
+        (-> request
+            (assoc-in [:common :options] {:overwritten             false
+                                          :supports_common_options true})
+            (update :items (partial map overmap))
+            workloads/execute-workload!
+            workloads/workflows
+            (->> (map (comp verify-workflow-options :options))))))))
 
 (deftest test-empty-workflow-options
   (letfn [(go! [workflow] (is (absent? workflow :options)))
@@ -307,59 +307,57 @@
                 :else false)))))
 
 (defn ^:private test-clio-updates
+  "Assert that Clio is updated correctly."
   []
   (let [{:keys [items] :as request} (the-sg-workload-request)]
     (-> request
         workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline]} workload]
-                (is finished)
-                (is (= sg/pipeline pipeline))
-                (is (= (count items)
-                       (-> workload workloads/workflows count))))))))
+            (let [{:keys [finished pipeline]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items)
+                     (-> workload workloads/workflows count))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-add-bam-found
-       #'clio/query-bam            mock-clio-query-bam-found
-       #'clio/query-cram           mock-clio-query-cram-found
-       #'cromwell/metadata         mock-cromwell-metadata-succeeded
-       #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows
-       #'gcs/upload-content        mock-gcs-upload-content-fail}
-      test-clio-updates)))
+    (with-redefs [clio/add-bam              mock-clio-add-bam-found
+                  clio/query-bam            mock-clio-query-bam-found
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content-fail]
+      (test-clio-updates))))
 
 (deftest test-clio-updates-bam-missing
   (testing "Clio updated after workflows finish."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-add-bam-missing
-       #'clio/query-bam            mock-clio-query-bam-missing
-       #'clio/query-cram           mock-clio-query-cram-found
-       #'cromwell/metadata         mock-cromwell-metadata-succeeded
-       #'cromwell/query            mock-cromwell-query-succeeded
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows
-       #'gcs/upload-content        mock-gcs-upload-content}
-      test-clio-updates)))
+    (with-redefs [clio/add-bam              mock-clio-add-bam-missing
+                  clio/query-bam            mock-clio-query-bam-missing
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content]
+      (test-clio-updates))))
 
 (deftest test-clio-updates-cromwell-failed
   (testing "Clio not updated after workflows fail."
-    (with-redefs-fn
-      {#'clio/add-bam              mock-clio-failed
-       #'clio/query-bam            mock-clio-failed
-       #'clio/query-cram           mock-clio-failed
-       #'cromwell/metadata         mock-cromwell-metadata-failed
-       #'cromwell/query            mock-cromwell-query-failed
-       #'cromwell/submit-workflows mock-cromwell-submit-workflows
-       #'gcs/upload-content        mock-gcs-upload-content-fail}
-      test-clio-updates)))
+    (with-redefs [clio/add-bam              mock-clio-failed
+                  clio/query-bam            mock-clio-failed
+                  clio/query-cram           mock-clio-failed
+                  cromwell/metadata         mock-cromwell-metadata-failed
+                  cromwell/query            mock-cromwell-query-failed
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content-fail]
+      (test-clio-updates))))
 
 (defn workflow-postcheck
   [output {:keys [uuid] :as _workflow}]
   (let [md (cromwell/metadata @workloads/cromwell-url uuid)
         bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
-        bam_path (sg/final_workflow_outputs_dir_hack output bam)]
+        bam_path (#'sg/final_workflow_outputs_dir_hack output bam)]
     (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
 
 (defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
@@ -377,18 +375,23 @@
 (deftest test-workload-state-transition
   (let [count           (atom 0)
         increment-count (fn [& _] (swap! count inc))]
-    (with-redefs-fn
-      {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
-       #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")
-       #'sg/register-workload-in-clio          increment-count}
-      #(shared/run-workload-state-transition-test! (the-sg-workload-request)))
+    (with-redefs [cromwell/submit-workflows
+                  mock-cromwell-submit-workflows
+                  batch/batch-update-workflow-statuses!
+                  (partial mock-batch-update-workflow-statuses! "Succeeded")
+                  sg/register-workload-in-clio
+                  increment-count]
+      (shared/run-workload-state-transition-test! (the-sg-workload-request)))
     (is (== 1 @count) "Clio was updated more than once")))
 
 (deftest test-stop-workload-state-transition
   (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))
 
 (deftest test-retry-workflows-supported
-  (with-redefs-fn
-    {#'cromwell/submit-workflows             mock-cromwell-submit-workflows
-     #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
-    #(shared/run-workload-state-transition-test! (the-sg-workload-request))))
+  (with-redefs [cromwell/submit-workflows
+                mock-cromwell-submit-workflows
+                batch/batch-update-workflow-statuses!
+                (partial mock-batch-update-workflow-statuses! "Failed")]
+    (shared/run-workload-state-transition-test! (the-sg-workload-request))))
+
+(clojure.test/test-ns *ns*)
