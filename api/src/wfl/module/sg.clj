@@ -249,7 +249,7 @@
     (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
   (try (clio/add-bam clio (update bam :version + increment))
        (catch Throwable x
-         (log/error {:bam bam :x x})
+         (log/warning {:bam bam :x x})
          (if (hack-try-increment-version-in-clio-add-bam? x)
            (hack-clio-add-bam-with-version-incremented clio bam (inc increment))
            (throw x)))))
