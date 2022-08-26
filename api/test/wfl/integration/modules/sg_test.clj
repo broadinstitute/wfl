@@ -314,11 +314,11 @@
         workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
-            (let [{:keys [finished pipeline]} workload]
-              (is finished)
-              (is (= sg/pipeline pipeline))
-              (is (= (count items)
-                     (-> workload workloads/workflows count))))))))
+              (let [{:keys [finished pipeline]} workload]
+                (is finished)
+                (is (= sg/pipeline pipeline))
+                (is (= (count items)
+                       (-> workload workloads/workflows count))))))))
 
 (defn ^:private mock-add-bam-suggest-force=true
   "Throw rejecting the `_md` update to `_clio` and suggesting force=true."
@@ -421,9 +421,9 @@
         increment (fn [& _] (swap! count inc))
         succeed   (partial mock-batch-update-workflow-statuses! "Succeeded")]
     (with-redefs
-      [cromwell/submit-workflows             mock-cromwell-submit-workflows
-       batch/batch-update-workflow-statuses! succeed
-       sg/register-workload-in-clio          increment]
+     [cromwell/submit-workflows             mock-cromwell-submit-workflows
+      batch/batch-update-workflow-statuses! succeed
+      sg/register-workload-in-clio          increment]
       (shared/run-workload-state-transition-test! (the-sg-workload-request)))
     (is (== 1 @count) "Clio was updated more than once")))
 
@@ -433,6 +433,6 @@
 (deftest test-retry-workflows-supported
   (let [fail (partial mock-batch-update-workflow-statuses! "Failed")]
     (with-redefs
-      [cromwell/submit-workflows             mock-cromwell-submit-workflows
-       batch/batch-update-workflow-statuses! fail]
+     [cromwell/submit-workflows             mock-cromwell-submit-workflows
+      batch/batch-update-workflow-statuses! fail]
       (shared/run-workload-state-transition-test! (the-sg-workload-request)))))
