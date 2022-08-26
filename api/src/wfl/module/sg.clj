@@ -109,7 +109,7 @@
 (defn ^:private clio-bam-record
   "Return `nil` or the single `clio` record with `bam`."
   [clio bam]
-  (let [records (sort-by :version (clio/query-bam clio bam))
+  (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
       (log/error "More than 1 Clio BAM record"
