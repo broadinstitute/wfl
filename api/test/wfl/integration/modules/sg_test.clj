@@ -362,7 +362,7 @@
                   cromwell/query            mock-cromwell-query-succeeded
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content]
-      (is (thrown-with-msg? Exception #"You goofed!" (test-clio-updates))))))
+      (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
@@ -436,5 +436,3 @@
       [cromwell/submit-workflows             mock-cromwell-submit-workflows
        batch/batch-update-workflow-statuses! fail]
       (shared/run-workload-state-transition-test! (the-sg-workload-request)))))
-
-(clojure.test/test-ns *ns*)
