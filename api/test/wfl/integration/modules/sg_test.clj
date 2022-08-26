@@ -3,7 +3,6 @@
                                                     use-fixtures]]
             [clojure.string                 :as str]
             [wfl.api.workloads]             ; for mocking
-            [wfl.debug]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -64,7 +63,6 @@
 (defn ^:private mock-clio-add-bam-missing
   "Add a missing `_clio` BAM record with metadata `md`."
   [_clio md]
-  (wfl.debug/trace [_clio md])
   (is md)
   (letfn [(ok? [v] (or (integer? v) (and (string? v) (seq v))))]
     (is (every? ok? ((apply juxt clio/add-keys) md))))
@@ -99,7 +97,6 @@
 (defn ^:private mock-clio-query-cram-found
   "Return a `_clio` CRAM record with metadata `_md`."
   [_clio {:keys [cram_path] :as _md}]
-  (wfl.debug/trace cram_path)
   [{:billing_project "hornet-nest"
     :crai_path (str cram_path ".crai")
     :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -213,20 +210,18 @@
   []
   (let [{:keys [items] :as request} (the-sg-workload-request)]
     (-> request
-        wfl.debug/trace
         workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline]} workload]
-                (is finished)
-                (is (= sg/pipeline pipeline))
-                (is (= (count items)
-                       (-> workload workloads/workflows count))))))))
+            (let [{:keys [finished pipeline]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items)
+                     (-> workload workloads/workflows count))))))))
 
 (defn ^:private mock-add-bam-suggest-force=true
   "Throw rejecting the `_md` update to `_clio` and suggesting force=true."
   [_clio {:keys [bam_path version] :as _md}]
-  (wfl.debug/trace ["force=true" version _clio _md])
   (if (= 23 version)
     (let [adding  (str/join \space   ["Adding this document will overwrite"
                                       "the following existing metadata:"])
@@ -236,15 +231,17 @@
           force   "Use 'force=true' to overwrite the existing data."
           message (str/join \space   [field oldval newval force])
           body    (str/join \newline [adding message])]
-      (wfl.debug/trace body)
       (throw (ex-info "clj-http: status 400" {:body          body
                                               :reason-phrase "Bad Request"
                                               :status        400})))
     (is (= 24 version) "-Is-A-Clio-Record-Id")))
 
-(comment
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true])
-  )
+(defn ^:private mock-add-bam-throw-something-else
+  "Throw on the `_md` update to `_clio` without suggesting force=true."
+  [_clio {:keys [bam_path version] :as _md}]
+  (throw (ex-info "clj-http: status 500" {:body          "You goofed!"
+                                          :reason-phrase "Blame tbl."
+                                          :status        500})))
 
 (deftest test-handle-add-bam-force=true
   (testing "Retry add-bam when Clio suggests force=true."
@@ -255,4 +252,13 @@
                   cromwell/query            mock-cromwell-query-succeeded
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content]
-      (test-clio-updates))))
+      (test-clio-updates)))
+  (testing "Do not retry when Clio rejects add-bam for another reason."
+    (with-redefs [clio/add-bam              mock-add-bam-throw-something-else
+                  clio/query-bam            mock-clio-query-bam-missing
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content]
+      (is (thrown-with-msg? Exception #"You goofed!" (test-clio-updates))))))

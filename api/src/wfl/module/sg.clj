@@ -5,7 +5,6 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
-            [wfl.debug]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
             [wfl.module.all             :as all]
@@ -110,7 +109,7 @@
 (defn ^:private clio-bam-record
   "Return `nil` or the single `clio` record with `bam`."
   [clio bam]
-  (let [records (clio/query-bam clio bam)
+  (let [records (sort-by :version (clio/query-bam clio bam))
         n       (count records)]
     (when (> n 1)
       (log/error "More than 1 Clio BAM record"
@@ -154,13 +153,10 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
-
-
 (comment
   (clio-cram-record
    "https://clio.gotc-dev.broadinstitute.org"
-   "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v456/NA12878.cram"
-   )
+   "gs://broad-gotc-prod-storage/pipeline/G96830/NA12878/v456/NA12878.cram")
   (clio-bam-record
    "https://clio.gotc-dev.broadinstitute.org"
    {:bam_path "gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3"})
@@ -227,8 +223,7 @@
      :length 259,
      :body
      "\"Adding this document will overwrite the following existing metadata:\\nField: Chain(Left(bam_path)), Old value: \\\"gs://bam/sample688.68d420c669f64a12bf071612b5c56c3e.3\\\", New value: \\\"gs://bam/blame.tbl.bam\\\". Use 'force=true' to overwrite the existing data.\"",
-     :trace-redirects []})
-  )
+     :trace-redirects []}))
 
 ;; This hack depends on how Clio spells error messages.
 ;;
@@ -237,21 +232,19 @@
   with the version incremented."
   [exception]
   (let [{:keys [body reason-phrase status]} (ex-data exception)]
-    (wfl.debug/trace [body reason-phrase status])
-    (wfl.debug/trace
-     (and
-      (== 400 status)
-      (= "Bad Request" reason-phrase)
-      (str/starts-with?
-       body
-       "\"Adding this document will overwrite the following existing metadata:")
-      (str/ends-with?
-       body "Use 'force=true' to overwrite the existing data.\"")))))
+    (and
+     (== 400 status)
+     (= "Bad Request" reason-phrase)
+     (str/starts-with?
+      body
+      "Adding this document will overwrite the following existing metadata:")
+     (str/ends-with?
+      body
+      "Use 'force=true' to overwrite the existing data."))))
 
 (defn ^:private hack-clio-add-bam-with-version-incremented
   "Attempt to add `bam` record to `clio` with version `increment`ed."
   [clio bam increment]
-  (wfl.debug/trace [clio bam increment])
   (when (> increment 2)
     (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
   (try (clio/add-bam clio (update bam :version + increment))
@@ -262,9 +255,8 @@
            (throw x)))))
 
 (defn ^:private clio-add-bam
-  "Attempt to add `bam` record to `clio` up to 3 times. "
+  "Add `bam` record to `clio`, and maybe retry after incrementing :version."
   [clio bam]
-  (wfl.debug/trace [clio bam])
   (hack-clio-add-bam-with-version-incremented clio bam 0))
 
 (defn ^:private maybe-update-clio-and-write-final-files
@@ -304,7 +296,6 @@
                     (set/rename-keys cromwell->clio)
                     (select-keys (vals cromwell->clio)))
             final (zipmap (keys bam) (map finalize (vals bam)))]
-        (wfl.debug/trace final)
         (when (some empty? (vals final))
           (log/error "Bad metadata from executor"
                      :executor executor
