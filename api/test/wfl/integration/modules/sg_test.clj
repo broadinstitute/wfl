@@ -55,6 +55,107 @@
                                            :uuid    uuid))]
       (map submit workflows the-uuids))))
 
+(deftest test-create-workload!
+  (letfn [(verify-workflow [workflow]
+            (is (absent? workflow :uuid))
+            (is (absent? workflow :status))
+            (is (absent? workflow :updated)))
+          (go! [workload-request]
+            (let [workload (workloads/create-workload! workload-request)]
+              (is (:created workload))
+              (is (absent? workload :started))
+              (is (absent? workload :finished))
+              (run! verify-workflow (workloads/workflows workload))))]
+    (testing "single-sample workload-request"
+      (go! (the-sg-workload-request)))))
+
+(deftest test-create-workload-with-common-inputs
+  (let [expected {:biobambam_bamtofastq.max_retries 2
+                  :ref_pac  "gs://fake-location/GRCh38.d1.vd1.fa.pac"}]
+    (letfn [(ok [inputs]
+              (is (= expected (select-keys inputs (keys expected)))))]
+      (run! ok (-> (the-sg-workload-request)
+                   (assoc-in [:common :inputs] expected)
+                   workloads/create-workload!
+                   workloads/workflows
+                   (->> (map :inputs)))))))
+
+(deftest test-start-workload!
+  (letfn [(go! [workflow]
+            (is (:uuid workflow))
+            (is (:status workflow))
+            (is (:updated workflow)))]
+    (with-redefs [batch/submit-workload! mock-submit-workload]
+      (let [workload (-> (the-sg-workload-request)
+                         workloads/create-workload!
+                         workloads/start-workload!)]
+        (is (:started workload))
+        (run! go! (workloads/workflows workload))))))
+
+(deftest test-hidden-inputs
+  (testing "google_account_vault_path and vault_token_path are not in inputs"
+    (letfn [(go! [inputs]
+              (is (absent? inputs :vault_token_path))
+              (is (absent? inputs :google_account_vault_path)))]
+      (->> (the-sg-workload-request)
+           workloads/create-workload!
+           workloads/workflows
+           (run! (comp go! :inputs))))))
+
+(deftest test-submitted-workflow-inputs
+  (let [prefix (str sg/pipeline ".")]
+    (letfn [(overmap   [m] (-> m
+                               (assoc-in [:inputs :overwritten]     true)
+                               (assoc-in [:inputs :supports_inputs] true)))
+            (unprefix  [k] (keyword (util/unprefix (name k) prefix)))
+            (prefixed? [k] (str/starts-with? (name k) prefix))
+            (submit [inputs]
+              (is (every? prefixed? (keys inputs)))
+              (let [in (zipmap (map unprefix (keys inputs)) (vals inputs))]
+                (is (:overwritten            in))
+                (is (:supports_common_inputs in))
+                (is (:supports_inputs        in))
+                (UUID/randomUUID)))
+            (verify-submitted-inputs [_ _ inputs _ _] (map submit inputs))]
+      (with-redefs [cromwell/submit-workflows verify-submitted-inputs]
+        (-> (the-sg-workload-request)
+            (assoc-in [:common :inputs] {:overwritten            false
+                                         :supports_common_inputs true})
+            (update :items (partial map overmap))
+            workloads/execute-workload!)))))
+
+(deftest test-workflow-options
+  (let [{:keys [output] :as request} (the-sg-workload-request)]
+    (letfn [(overmap [m] (-> m
+                             (assoc-in [:options :overwritten]      true)
+                             (assoc-in [:options :supports_options] true)))
+            (verify-workflow-options [options]
+              (is (:overwritten             options))
+              (is (:supports_common_options options))
+              (is (:supports_options options)))
+            (verify-submitted-options [url _ inputs options _]
+              (verify-workflow-options options)
+              (let [defaults (sg/make-workflow-options url output)]
+                (is (= defaults (select-keys options (keys defaults))))
+                (map (fn [_] (UUID/randomUUID)) inputs)))]
+      (with-redefs [cromwell/submit-workflows verify-submitted-options]
+        (-> request
+            (assoc-in [:common :options] {:overwritten             false
+                                          :supports_common_options true})
+            (update :items (partial map overmap))
+            workloads/execute-workload!
+            workloads/workflows
+            (->> (map (comp verify-workflow-options :options))))))))
+
+(deftest test-empty-workflow-options
+  (letfn [(go! [workflow] (is (absent? workflow :options)))
+          (empty-options [m] (assoc m :options {}))]
+    (run! go! (-> (the-sg-workload-request)
+                  (assoc-in [:common :options] {})
+                  (update :items (partial map empty-options))
+                  workloads/create-workload!
+                  workloads/workflows))))
+
 (defn ^:private mock-clio-add-bam-found
   "Fail because a `_clio` BAM record already exists for `_md`"
   [_clio _md]
@@ -262,3 +363,78 @@
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content]
       (is (thrown-with-msg? Exception #"You goofed!" (test-clio-updates))))))
+
+(deftest test-clio-updates-bam-found
+  (testing "Clio not updated if outputs already known."
+    (with-redefs [clio/add-bam              mock-clio-add-bam-found
+                  clio/query-bam            mock-clio-query-bam-found
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content-fail]
+      (test-clio-updates))))
+
+(deftest test-clio-updates-bam-missing
+  (testing "Clio updated after workflows finish."
+    (with-redefs [clio/add-bam              mock-clio-add-bam-missing
+                  clio/query-bam            mock-clio-query-bam-missing
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content]
+      (test-clio-updates))))
+
+(deftest test-clio-updates-cromwell-failed
+  (testing "Clio not updated after workflows fail."
+    (with-redefs [clio/add-bam              mock-clio-failed
+                  clio/query-bam            mock-clio-failed
+                  clio/query-cram           mock-clio-failed
+                  cromwell/metadata         mock-cromwell-metadata-failed
+                  cromwell/query            mock-cromwell-query-failed
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content-fail]
+      (test-clio-updates))))
+
+(defn workflow-postcheck
+  [output {:keys [uuid] :as _workflow}]
+  (let [md (cromwell/metadata @workloads/cromwell-url uuid)
+        bam (get-in md [:outputs :GDCWholeGenomeSomaticSingleSample.bam])
+        bam_path (#'sg/final_workflow_outputs_dir_hack output bam)]
+    (is (seq (clio/query-bam @workloads/clio-url {:bam_path bam_path})))))
+
+(defmethod workloads/postcheck sg/pipeline postcheck-sg-workload
+  [{:keys [output] :as workload}]
+  (run! (partial workflow-postcheck output) (workloads/workflows workload)))
+
+(defn ^:private mock-batch-update-workflow-statuses!
+  [status tx {:keys [items] :as workload}]
+  (letfn [(update! [{:keys [id]}]
+            (jdbc/update! tx items
+                          {:status status :updated (OffsetDateTime/now)}
+                          ["id = ?" id]))]
+    (run! update! (wfl.api.workloads/workflows tx workload))))
+
+(deftest test-workload-state-transition
+  (let [count     (atom 0)
+        increment (fn [& _] (swap! count inc))
+        succeed   (partial mock-batch-update-workflow-statuses! "Succeeded")]
+    (with-redefs
+      [cromwell/submit-workflows             mock-cromwell-submit-workflows
+       batch/batch-update-workflow-statuses! succeed
+       sg/register-workload-in-clio          increment]
+      (shared/run-workload-state-transition-test! (the-sg-workload-request)))
+    (is (== 1 @count) "Clio was updated more than once")))
+
+(deftest test-stop-workload-state-transition
+  (shared/run-stop-workload-state-transition-test! (the-sg-workload-request)))
+
+(deftest test-retry-workflows-supported
+  (let [fail (partial mock-batch-update-workflow-statuses! "Failed")]
+    (with-redefs
+      [cromwell/submit-workflows             mock-cromwell-submit-workflows
+       batch/batch-update-workflow-statuses! fail]
+      (shared/run-workload-state-transition-test! (the-sg-workload-request)))))
+
+(clojure.test/test-ns *ns*)
