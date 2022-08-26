@@ -339,7 +339,7 @@
 
 (defn ^:private mock-add-bam-throw-something-else
   "Throw on the `_md` update to `_clio` without suggesting force=true."
-  [_clio {:keys [bam_path version] :as _md}]
+  [_clio _md]
   (throw (ex-info "clj-http: status 500" {:body          "You goofed!"
                                           :reason-phrase "Blame tbl."
                                           :status        500})))
