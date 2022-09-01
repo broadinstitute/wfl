@@ -19,8 +19,7 @@
             [wfl.service.rawls          :as rawls]
             [wfl.stage                  :as stage]
             [wfl.util                   :as util :refer [utc-now]])
-  (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 (defmulti create-sink!
   "Create a `Sink` instance using the database `transaction` and configuration
@@ -102,14 +101,14 @@
         (assoc :type terra-workspace-sink-type))
     (throw (ex-info "Invalid sink_items" {:workload workload}))))
 
-(def unknown-entity-type-error-message
+(def ^:private unknown-entity-type-error-message
   "The entityType was not found in workspace.")
 
-(def terra-workspace-malformed-from-outputs-message
+(def ^:private terra-workspace-malformed-from-outputs-message
   (str/join " " ["fromOutputs must define a mapping from workflow outputs"
                  "to the attributes of entityType."]))
 
-(def unknown-attributes-error-message
+(def ^:private unknown-attributes-error-message
   (str/join " " ["Found additional attributes in fromOutputs that are not"
                  "present in the entityType."]))
 
@@ -168,15 +167,6 @@
       (throw (ex-info "Failed to coerce workflow outputs to attribute values"
                       {:fromOutputs fromOutputs :workflow workflow}
                       cause)))))
-
-(defn ^:private entity-exists?
-  "True when the `entity` exists in the `workspace`."
-  [workspace entity]
-  (try
-    (firecloud/get-entity workspace entity)
-    (catch ExceptionInfo ex
-      (when (not= (-> ex ex-data :status) 404)
-        (throw ex)))))
 
 (def ^:private entity-name-not-found-error-message
   (str/join \space ["Entity name not found:"
