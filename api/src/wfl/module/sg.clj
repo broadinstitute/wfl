@@ -134,8 +134,8 @@
                                     :sample_alias
                                     :version]))))
 
-(defn final_workflow_outputs_dir_hack   ; for testing
-  "Do to `file` what `{:final_workflow_outputs_dir output}` does."
+(defn ^:private final_workflow_outputs_dir_hack
+  "Do to `file` what Cromwell's `{:final_workflow_outputs_dir output}` does."
   [output file]
   (->> (str/split file #"/")
        (drop 3)
@@ -153,14 +153,41 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
-(defn ^:private clio-add-bam
-  "Add `bam` record to `clio`."
-  [clio bam]
-  (try (clio/add-bam clio bam)
-       (catch Throwable x
-         (log/error {:bam bam :x x}))))
+;; This hack depends on how Clio spells error messages.
+;;
+(defn ^:private hack-try-increment-version-in-clio-add-bam?
+  "True when `exception` suggests that `clio-add-bam` might succeed
+  with the version incremented."
+  [exception]
+  (let [{:keys [body reason-phrase status]} (ex-data exception)]
+    (and
+     (== 400 status)
+     (= "Bad Request" reason-phrase)
+     (str/starts-with?
+      body
+      "Adding this document will overwrite the following existing metadata:")
+     (str/ends-with?
+      body
+      "Use 'force=true' to overwrite the existing data."))))
 
-(defn maybe-update-clio-and-write-final-files
+(defn ^:private hack-clio-add-bam-with-version-incremented
+  "Attempt to add `bam` record to `clio` with version `increment`ed."
+  [clio bam increment]
+  (when (> increment 2)
+    (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
+  (try (clio/add-bam clio (update bam :version + increment))
+       (catch Throwable x
+         (log/warning {:bam bam :x x})
+         (if (hack-try-increment-version-in-clio-add-bam? x)
+           (hack-clio-add-bam-with-version-incremented clio bam (inc increment))
+           (throw x)))))
+
+(defn ^:private clio-add-bam
+  "Add `bam` record to `clio`, and maybe retry after incrementing :version."
+  [clio bam]
+  (hack-clio-add-bam-with-version-incremented clio bam 0))
+
+(defn ^:private maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."
   [clio-url final {:keys [inputs] :as metadata}]
   #_(log-missing-final-files-for-debugging final)

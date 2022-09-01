@@ -3,9 +3,9 @@
             [clojure.test         :refer [deftest is testing]]
             [wfl.service.datarepo :as datarepo]
             [wfl.source           :as source]
-            [wfl.tools.workloads  :as workloads])
-  (:import [java.time OffsetDateTime ZoneId]
-           [java.lang Math]))
+            [wfl.tools.workloads  :as workloads]
+            [wfl.util             :as util])
+  (:import [java.lang Math]))
 
 (def ^:private readers-list ["hornet@firecloud.org"])
 
@@ -25,7 +25,7 @@
                                       :table           "flowcell"
                                       :snapshotReaders readers-list}}
         row-ids             (take mock-new-rows-size (range))
-        now-obj             (OffsetDateTime/now (ZoneId/of "UTC"))
+        now-obj             (util/utc-now)
         shards->snapshot-requests
         (with-redefs-fn
           {#'datarepo/create-snapshot-job mock-create-snapshot-job}

@@ -130,10 +130,11 @@
                                    (util/deep-merge default-options options)
                                    {:workload uuid})])
             (update! [tx [id uuid]]
-              (jdbc/update! tx items
-                            {:updated (OffsetDateTime/now) :uuid uuid :status "Submitted"}
-                            ["id = ?" id]))]
-      (run! (comp (partial update! tx) submit!) (workloads/workflows tx workload))
+              (jdbc/update! tx items {:status  "Submitted"
+                                      :updated (OffsetDateTime/now)
+                                      :uuid    uuid} ["id = ?" id]))]
+      (run! (comp (partial update! tx) submit!)
+            (workloads/workflows tx workload))
       (jdbc/update! tx :workload
                     {:started (OffsetDateTime/now)} ["uuid = ?" uuid]))))
 
