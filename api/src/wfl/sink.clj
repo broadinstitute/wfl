@@ -19,8 +19,7 @@
             [wfl.service.rawls          :as rawls]
             [wfl.stage                  :as stage]
             [wfl.util                   :as util :refer [utc-now]])
-  (:import [clojure.lang ExceptionInfo]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 (defmulti create-sink!
   "Create a `Sink` instance using the database `transaction` and configuration
