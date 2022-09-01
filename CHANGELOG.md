@@ -1,3 +1,7 @@
+# Release 0.20.0
+- [GH-1681] SG/GDC is reprocessing CRAMs and running into Clio update conflicts. ([#620](https://github.com/broadinstitute/wfl/pull/620))
+- [GH-1674] wfl.module.aou/add-aou-workload! should not add to a stopped workload. ([#617](https://github.com/broadinstitute/wfl/pull/617))
+
 # Release 0.19.1
 - [GH-1686] Deploy WFL to point at ExternalExomeReprocessing_v3.1.7 and pick up picard-cloud:2.26.10. ([#618](https://github.com/broadinstitute/wfl/pull/618))
 - [GH-1667] Don't delete a Firecloud entity before a Rawls batchUpsert. ([#616](https://github.com/broadinstitute/wfl/pull/616))
