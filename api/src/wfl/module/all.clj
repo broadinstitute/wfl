@@ -1,13 +1,12 @@
 (ns wfl.module.all
   "Some utilities shared across module namespaces."
-  (:require [clojure.spec.alpha         :as s]
-            [clojure.string             :as str]
-            [wfl.jdbc                   :as jdbc]
-            [wfl.service.cromwell       :as cromwell]
-            [wfl.service.google.storage :as gcs]
-            [wfl.service.slack          :as slack]
-            [wfl.util                   :as util]
-            [wfl.wfl                    :as wfl])
+  (:require [clojure.spec.alpha   :as s]
+            [clojure.string       :as str]
+            [wfl.jdbc             :as jdbc]
+            [wfl.service.cromwell :as cromwell]
+            [wfl.service.slack    :as slack]
+            [wfl.util             :as util]
+            [wfl.wfl              :as wfl])
   (:import [java.util UUID]))
 
 (defn add-workload-table!
