@@ -1,7 +1,6 @@
 (ns wfl.api.handlers
   "Define handlers for API endpoints."
   (:require [clojure.set                :refer [rename-keys]]
-            [wfl.wfl                    :as wfl]
             [ring.util.http-response    :as response]
             [wfl.api.workloads          :as workloads]
             [wfl.configuration          :as config]
@@ -11,7 +10,8 @@
             [wfl.module.aou             :as aou]
             [wfl.service.google.storage :as gcs]
             [wfl.service.postgres       :as postgres]
-            [wfl.util                   :as util])
+            [wfl.util                   :as util]
+            [wfl.wfl                    :as wfl])
   (:import  [wfl.util UserException]))
 
 (defn succeed

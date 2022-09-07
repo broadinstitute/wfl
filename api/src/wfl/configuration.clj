@@ -1,8 +1,7 @@
 (ns wfl.configuration
-  "Configuration for WFL. A configuration table exists as a simple key
-   value store for simple configuration."
-  (:require [clojure.string                 :as str]
-            [wfl.jdbc                       :as jdbc]))
+  "A simple key value store to configure WFL."
+  (:require [clojure.string :as str]
+            [wfl.jdbc       :as jdbc]))
 
 (def ^:private configuration-table "configuration")
 
