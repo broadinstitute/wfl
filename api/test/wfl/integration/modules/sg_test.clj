@@ -320,22 +320,23 @@
                 (is (= (count items)
                        (-> workload workloads/workflows count))))))))
 
+;; The `body` below is only an approximation of what Scala generates
+;; for Clio's error message.
+;;
 (defn ^:private mock-add-bam-suggest-force=true
-  "Throw rejecting the `_md` update to `_clio` and suggesting force=true."
+  "Reject the `_md` update to `_clio` and suggest force=true."
   [_clio {:keys [bam_path version] :as _md}]
   (if (= 23 version)
-    (let [adding  (str/join \space   ["Adding this document will overwrite"
-                                      "the following existing metadata:"])
-          field   "Field: Chain(Left(bam_path)),"
+    (let [field   "Field: Chain(Left(bam_path)),"
           oldval  "Old value: \"gs://bam/oldval.bam\","
           newval  (format "New value: \"%s\"." bam_path)
-          force   "Use 'force=true' to overwrite the existing data."
-          message (str/join \space   [field oldval newval force])
-          stuff   (str/join \newline [adding message])
-          body    (str \" stuff \")]
-      (throw (ex-info "clj-http: status 400" {:body          body
-                                              :reason-phrase "Bad Request"
-                                              :status        400})))
+          body    (str @#'sg/clio-force=true-error-message-starts
+                       \newline field \space oldval \space newval \space
+                       @#'sg/clio-force=true-error-message-ends)]
+      (throw (ex-info "clj-http: status 400"
+                      {:body          body
+                       :reason-phrase "Bad Request"
+                       :status        400})))
     (is (= 24 version) "-Is-A-Clio-Record-Id")))
 
 (defn ^:private mock-add-bam-throw-something-else

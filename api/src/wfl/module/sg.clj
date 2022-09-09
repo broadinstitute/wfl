@@ -153,6 +153,13 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
+(def ^:private clio-force=true-error-message-starts
+  "How a Clio force=true error message starts."
+  "\"Adding this document will overwrite the following existing metadata:")
+(def ^:private clio-force=true-error-message-ends
+  "How a Clio force=true error message ends."
+  "Use 'force=true' to overwrite the existing data.\"")
+
 ;; This hack depends on how Clio spells error messages.
 ;;
 (defn ^:private hack-try-increment-version-in-clio-add-bam?
@@ -163,12 +170,8 @@
     (and
      (== 400 status)
      (= "Bad Request" reason-phrase)
-     (str/starts-with?
-      body
-      "Adding this document will overwrite the following existing metadata:")
-     (str/ends-with?
-      body
-      "Use 'force=true' to overwrite the existing data."))))
+     (str/starts-with? body clio-force=true-error-message-starts)
+     (str/ends-with?   body clio-force=true-error-message-ends))))
 
 (defn ^:private hack-clio-add-bam-with-version-incremented
   "Attempt to add `bam` record to `clio` with version `increment`ed."
