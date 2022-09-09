@@ -331,7 +331,8 @@
           newval  (format "New value: \"%s\"." bam_path)
           force   "Use 'force=true' to overwrite the existing data."
           message (str/join \space   [field oldval newval force])
-          body    (str/join \newline [adding message])]
+          stuff   (str/join \newline [adding message])
+          body    (str \" stuff \")]
       (throw (ex-info "clj-http: status 400" {:body          body
                                               :reason-phrase "Bad Request"
                                               :status        400})))
