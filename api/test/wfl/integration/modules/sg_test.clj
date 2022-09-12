@@ -3,6 +3,7 @@
                                                     use-fixtures]]
             [clojure.string                 :as str]
             [wfl.api.workloads]             ; for mocking
+            [wfl.debug]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -16,7 +17,11 @@
   (:import [java.time OffsetDateTime]
            [java.util UUID]))
 
-(use-fixtures :once fixtures/temporary-postgresql-database)
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_CLIO_URL"     "https://clio.gotc-dev.broadinstitute.org"
+    "WFL_CROMWELL_URL" "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org"})
+  fixtures/temporary-postgresql-database)
 
 (def ^:private the-uuids (repeatedly #(str (UUID/randomUUID))))
 
@@ -279,12 +284,14 @@
 (defn ^:private mock-cromwell-query-succeeded
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
+  (wfl.debug/trace [_environment _params])
   (let [{:keys [items]} (the-sg-workload-request)]
     (map (fn [id] {:id id :status "Succeeded"})
          (take (count items) the-uuids))))
 
 (defn ^:private mock-cromwell-submit-workflows
   [_environment _wdl inputs _options _labels]
+  (wfl.debug/trace [_environment _wdl inputs _options _labels])
   (take (count inputs) the-uuids))
 
 (defn mock-gcs-upload-content-fail
@@ -295,6 +302,7 @@
 (defn mock-gcs-upload-content
   "Mock uploading `content` to `url`."
   [content url]
+  (wfl.debug/trace [content url])
   (letfn [(parse [url] (drop-last (str/split url #"/")))
           (tail? [end] (str/ends-with? url end))]
     (let [md  [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
@@ -314,11 +322,11 @@
         workloads/execute-workload!
         workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline]} workload]
-                (is finished)
-                (is (= sg/pipeline pipeline))
-                (is (= (count items)
-                       (-> workload workloads/workflows count))))))))
+            (let [{:keys [finished pipeline]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items)
+                     (-> workload workloads/workflows count))))))))
 
 ;; The `body` below is only an approximation of what Scala generates
 ;; for Clio's error message.
@@ -346,8 +354,8 @@
                                           :reason-phrase "Blame tbl."
                                           :status        500})))
 
-(deftest test-handle-add-bam-force=true
-  (testing "Retry add-bam when Clio suggests force=true."
+(deftest test-handle-add-bam-force=true-mocked
+  (testing "Retry add-bam when a mock Clio suggests force=true."
     (with-redefs [clio/add-bam              mock-add-bam-suggest-force=true
                   clio/query-bam            mock-clio-query-bam-missing
                   clio/query-cram           mock-clio-query-cram-found
@@ -356,7 +364,7 @@
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content]
       (test-clio-updates)))
-  (testing "Do not retry when Clio rejects add-bam for another reason."
+  (testing "Do not retry when a mock Clio rejects add-bam for another reason."
     (with-redefs [clio/add-bam              mock-add-bam-throw-something-else
                   clio/query-bam            mock-clio-query-bam-missing
                   clio/query-cram           mock-clio-query-cram-found
@@ -365,6 +373,47 @@
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content]
       (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
+
+(comment
+  (clojure.test/test-vars [#'test-handle-add-bam-force=true-for-real])
+  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked])
+  )
+
+(deftest test-handle-add-bam-force=true-for-real
+  (testing "That the fix for GH-1691 works against a real Clio."
+    (let [bug     "GH-1691"
+          prefix  (str "gs://path/" bug ".")
+          clio    "https://clio.gotc-dev.broadinstitute.org"
+          cram    {:crai_path    (str prefix "crai")
+                   :cram_path    (str prefix "cram")
+                   :data_type    "WGS"
+                   :location     "GCP"
+                   :project      bug
+                   :sample_alias bug
+                   :version      1}
+          outputs {:GDCWholeGenomeSomaticSingleSample.bai (str prefix "bai")
+                   :GDCWholeGenomeSomaticSingleSample.bam (str prefix "bam")
+                   :GDCWholeGenomeSomaticSingleSample.contamination
+                   (str prefix "contam.txt")
+                   :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
+                   (str prefix "insert_size_histogram.pdf")
+                   :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
+                   (str prefix "insert_size_metrics")}]
+      (wfl.debug/trace (clio/add-cram clio cram))
+      (let [version (->> [:cram_path]
+                         (select-keys cram)
+                         (clio/query-cram clio)
+                         (sort-by :version)
+                         last :version)]
+        (wfl.debug/trace version)
+        (with-redefs [cromwell/metadata         (constantly {:outputs outputs})
+                      cromwell/query            mock-cromwell-query-succeeded
+                      cromwell/submit-workflows mock-cromwell-submit-workflows
+                      gcs/upload-content        mock-gcs-upload-content]
+          (test-clio-updates)
+          (let [path (:GDCWholeGenomeSomaticSingleSample.bam outputs)
+                bam  (clio/query-bam {:bam_path path})]
+            (wfl.debug/trace bam)))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."

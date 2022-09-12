@@ -42,13 +42,12 @@
 (def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
 (def ^:private testing-table-name "flowcells")
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_TDR_URL"       "https://data.terra.bio"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"
+    "WFL_TDR_URL"       "https://data.terra.bio"})
+  fixtures/temporary-postgresql-database)
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]

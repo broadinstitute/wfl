@@ -166,7 +166,11 @@
   "True when `exception` suggests that `clio-add-bam` might succeed
   with the version incremented."
   [exception]
+  (wfl.debug/trace exception)
   (let [{:keys [body reason-phrase status]} (ex-data exception)]
+    (wfl.debug/trace status)
+    (wfl.debug/trace reason-phrase)
+    (wfl.debug/trace body)
     (and
      (== 400 status)
      (= "Bad Request" reason-phrase)
