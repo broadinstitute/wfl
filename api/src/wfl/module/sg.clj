@@ -107,13 +107,12 @@
     (workloads/load-workload-for-id tx id)))
 
 (defn ^:private clio-bam-record
-  "Return `nil` or the single `clio` record with `bam`."
+  "Return `nil` or the most recent `clio` record with `bam`."
   [clio bam]
   (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
-      (log/error "More than 1 Clio BAM record"
-                 :bam bam :count n :records records))
+      (log/error "More than 1 Clio BAM record" :bam bam :count n))
     (first records)))
 
 (defn ^:private clio-cram-record
@@ -123,7 +122,7 @@
         n       (count records)]
     (when (not= 1 n)
       (log/error "Expected 1 Clio record with cram_path"
-                 :count n :cram_path input_cram :records records))
+                 :count n :cram_path input_cram))
     (-> records first (select-keys [:billing_project
                                     :data_type
                                     :document_status
@@ -153,15 +152,14 @@
         (log/warn "Need output files for Clio.")
         (log/error {:need need}))))
 
+;; This hack depends on how Clio spells error messages.
+;;
 (def ^:private clio-force=true-error-message-starts
   "How a Clio force=true error message starts."
   "\"Adding this document will overwrite the following existing metadata:")
 (def ^:private clio-force=true-error-message-ends
   "How a Clio force=true error message ends."
   "Use 'force=true' to overwrite the existing data.\"")
-
-;; This hack depends on how Clio spells error messages.
-;;
 (defn ^:private hack-try-increment-version-in-clio-add-bam?
   "True when `exception` suggests that `clio-add-bam` might succeed
   with the version incremented."
@@ -180,6 +178,8 @@
 (defn ^:private hack-clio-add-bam-with-version-incremented
   "Attempt to add `bam` record to `clio` with version `increment`ed."
   [clio bam increment]
+  (wfl.debug/trace increment)
+  (wfl.debug/trace bam)
   (when (> increment 2)
     (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
   (try (clio/add-bam clio (update bam :version + increment))
@@ -198,13 +198,16 @@
   "Maybe update `clio-url` with `final` and write files and `metadata`."
   [clio-url final {:keys [inputs] :as metadata}]
   #_(log-missing-final-files-for-debugging final)
-  (or (clio-bam-record clio-url (select-keys final [:bam_path]))
+  (wfl.debug/trace final)
+  (or (wfl.debug/trace
+       (clio-bam-record clio-url (select-keys final [:bam_path])))
       (let [cram   (clio-cram-record clio-url (:input_cram inputs))
             bam    (-> cram (merge final) (dissoc :contamination))
             contam (:contamination final)
             suffix (last (str/split contam #"/"))
             folder (str (util/unsuffix contam suffix))]
-        (clio-add-bam clio-url bam)
+        (wfl.debug/trace bam)
+        (wfl.debug/trace (clio-add-bam clio-url bam))
         (-> bam
             (json/write-str :escape-slash false)
             (gcs/upload-content (str folder "clio-bam-record.json")))

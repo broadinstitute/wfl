@@ -14,7 +14,6 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
-           [java.util UUID]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
@@ -30,7 +29,7 @@
 
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id _workload]
-  {:snapshot_id (str (UUID/randomUUID))
+  {:snapshot_id (str (random-uuid))
    :job_status "succeeded"
    :id job-id})
 
@@ -146,9 +145,9 @@
 (def ^:private fake-method-name "method-name")
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
-  {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
+  {:name "test-snapshot-name" :id (str (random-uuid))})
 
-(def ^:private snapshot-reference-id (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-id (str (random-uuid)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-snapshot-reference [& _]
   {:referenceId snapshot-reference-id
@@ -167,18 +166,18 @@
       "Incremented version should be passed to method config update")
   nil)
 
-(def ^:private submission-id-mock (str (UUID/randomUUID)))
+(def ^:private submission-id-mock (str (random-uuid)))
 
 (def ^:private running-workflow-mock
   {:entityName   "entity"
-   :id           (str (UUID/randomUUID))
+   :id           (str (random-uuid))
    :inputs       {:input "value"}
    :status       "Running"
    :workflowName fake-method-name})
 
 (def ^:private succeeded-workflow-mock
   {:entityName   "entity"
-   :id           (str (UUID/randomUUID))
+   :id           (str (random-uuid))
    :inputs       {:input "value"}
    :status       "Succeeded"
    :workflowName fake-method-name})

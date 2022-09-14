@@ -3,9 +3,8 @@
             [wfl.sink             :as sink]
             [wfl.tools.endpoints  :as endpoints]
             [wfl.tools.resources  :as resources]
-            [wfl.util             :refer [uuid-nil]])
-  (:import [java.util UUID]
-           [clojure.lang ExceptionInfo]))
+            [wfl.util             :as util])
+  (:import [clojure.lang ExceptionInfo]))
 
 (deftest test-rename-gather
   (let [inputs (resources/read-resource "sarscov2_illumina_full/inputs.edn")]
@@ -25,7 +24,7 @@
   (let [inputs  (resources/read-resource "sarscov2_illumina_full/inputs.edn")
         dataset (resources/read-resource "sarscov2-illumina-full-inputs.json")
         result  (#'sink/rename-gather-bulk
-                 (UUID/randomUUID) dataset "flowcell"
+                 (random-uuid) dataset "flowcell"
                  inputs {:flowcell_tgz      "flowcell_tgz"
                          :flowcell_id       "flowcell_id"
                          :sample_rename_map "sample_rename_map"})]
@@ -44,7 +43,7 @@
 
 (def ^:private datarepo-sink-request
   {:name        @#'sink/datarepo-sink-name
-   :dataset     (str uuid-nil)
+   :dataset     (str util/uuid-nil)
    :table       "tablename"
    :fromOutputs {}})
 

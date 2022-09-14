@@ -6,8 +6,7 @@
             [wfl.service.cromwell :as cromwell]
             [wfl.service.slack    :as slack]
             [wfl.util             :as util]
-            [wfl.wfl              :as wfl])
-  (:import [java.util UUID]))
+            [wfl.wfl              :as wfl]))
 
 (defn add-workload-table!
   "Return ID and TABLE for _WORKFLOW-WDL in BODY under transaction TX."
@@ -22,7 +21,7 @@
                                     :output   output
                                     :project  project
                                     :release  release
-                                    :uuid     (UUID/randomUUID)
+                                    :uuid     (random-uuid)
                                     :version  version
                                     :watchers (pr-str watchers)
                                     :wdl      path})

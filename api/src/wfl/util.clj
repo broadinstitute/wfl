@@ -350,7 +350,7 @@
 (defn randomize
   "Append a random suffix to `string`."
   [string]
-  (str string (str/replace (UUID/randomUUID) "-" "")))
+  (str string (str/replace (random-uuid) "-" "")))
 
 (defn curry
   "Curry the function `f` such that its arguments may be supplied across two

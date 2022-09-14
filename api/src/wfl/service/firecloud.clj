@@ -8,7 +8,6 @@
             [wfl.log           :as log]
             [wfl.util          :as util])
   (:import [clojure.lang ExceptionInfo]
-           [java.util UUID]
            [wfl.util UserException]))
 
 (defn terra-ui-url
@@ -273,7 +272,7 @@
           (array-map :expression)
           (create-submission workspace methodconfig [entity-set-type entity-set-name]))))
   ([workspace methodconfig entities]
-   (create-submission-for-entity-set workspace methodconfig entities (str (UUID/randomUUID)))))
+   (create-submission-for-entity-set workspace methodconfig entities (str (random-uuid)))))
 
 (defn list-method-configurations
   "List all method configurations in the `workspace`."

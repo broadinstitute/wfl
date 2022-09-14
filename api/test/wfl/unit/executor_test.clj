@@ -3,12 +3,11 @@
             [wfl.executor         :as executor]
             [wfl.service.cromwell :as cromwell]
             [wfl.service.slack    :as slack])
-  (:import [java.util UUID]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 (deftest test-filter-query-for-unretried-workflows
   (let [executor {:details "TerraExecutor_00000001"}
-        submission (str (UUID/randomUUID))
+        submission (str (random-uuid))
         status "Failed"
         filters {:submission submission :status status}]
     (letfn [(arg-count [sql] (-> sql frequencies (get \? 0)))]
@@ -50,7 +49,7 @@
                     "Submission ID is a required argument")
     (matches-error? (#'executor/retry-submission-validation-error "not-a-uuid")
                     "Submission ID must be a valid UUID")
-    (is (nil? (#'executor/retry-submission-validation-error (str (UUID/randomUUID))))
+    (is (nil? (#'executor/retry-submission-validation-error (str (random-uuid))))
         "No error expected when submission ID is a valid UUID")))
 
 (deftest test-retry-status-validation-error
@@ -68,9 +67,9 @@
         "No error expected for retriable Cromwell status")))
 
 (deftest test-terra-executor-throw-if-invalid-retry-filters
-  (let [workload-uuid (str (UUID/randomUUID))
+  (let [workload-uuid (str (random-uuid))
         workload {:uuid workload-uuid}
-        submission-valid (str (UUID/randomUUID))
+        submission-valid (str (random-uuid))
         submission-invalid nil
         status-valid "Failed"
         status-invalid "Running"]
