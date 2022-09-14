@@ -158,10 +158,6 @@
 
 ;; This hack depends on how Clio spells error messages.
 ;;
-(defn ^:private hack-clio-add-bam-again
-  "Add `bam` record to `clio` without retries."
-  [clio bam]
-  (clio/add-bam clio bam))
 (def ^:private clio-force=true-error-message-starts
   "How a Clio force=true error message starts."
   "\"Adding this document will overwrite the following existing metadata:")
@@ -184,8 +180,8 @@
   [clio bam]
   (try (clio/add-bam clio bam)
        (catch Throwable x
-         (log/warning {:bam bam :x x})
-         (hack-clio-add-bam-again
+         (log/error {:bam bam :x x})
+         (clio/add-bam
           clio (if (hack-try-increment-version-in-clio-add-bam? x)
                  (-> bam (select-keys clio-key-no-version)
                      (->> (clio/query-bam clio)
