@@ -115,6 +115,18 @@
       (log/error "More than 1 Clio BAM record" :bam bam :count n))
     (first records)))
 
+(def ^:private clio-key-no-version
+  "The Clio metadata fields in a BAM or CRAM record key without `:version`."
+  [:data_type :location :project :sample_alias])
+
+(def ^:private clio-cram-keys
+  "The Clio CRAM fields to promote to new BAM records."
+  (concat clio-key-no-version [:billing_project
+                               :document_status
+                               :insert_size_metrics_path
+                               :notes
+                               :version]))
+
 (defn ^:private clio-cram-record
   "Return the useful part of the `clio` record for `input_cram` or throw."
   [clio input_cram]
@@ -123,15 +135,7 @@
     (when (not= 1 n)
       (log/error "Expected 1 Clio record with cram_path"
                  :count n :cram_path input_cram))
-    (-> records first (select-keys [:billing_project
-                                    :data_type
-                                    :document_status
-                                    :insert_size_metrics_path
-                                    :location
-                                    :notes
-                                    :project
-                                    :sample_alias
-                                    :version]))))
+    (-> records first (select-keys clio-cram-keys))))
 
 (defn ^:private final_workflow_outputs_dir_hack
   "Do to `file` what Cromwell's `{:final_workflow_outputs_dir output}` does."
@@ -154,6 +158,11 @@
 
 ;; This hack depends on how Clio spells error messages.
 ;;
+(defn ^:private hack-clio-add-bam-again
+  "Add `bam` record to `clio` without retries."
+  [clio bam]
+  (wfl.debug/trace ['hack-clio-add-bam-again bam])
+  (clio/add-bam clio bam))
 (def ^:private clio-force=true-error-message-starts
   "How a Clio force=true error message starts."
   "\"Adding this document will overwrite the following existing metadata:")
@@ -175,24 +184,22 @@
      (str/starts-with? body clio-force=true-error-message-starts)
      (str/ends-with?   body clio-force=true-error-message-ends))))
 
-(defn ^:private hack-clio-add-bam-with-version-incremented
-  "Attempt to add `bam` record to `clio` with version `increment`ed."
-  [clio bam increment]
-  (wfl.debug/trace increment)
-  (wfl.debug/trace bam)
-  (when (> increment 2)
-    (throw (ex-info "Cannot update Clio" {:bam bam :clio clio})))
-  (try (clio/add-bam clio (update bam :version + increment))
+(defn ^:private clio-add-bam
+  "Add `bam` to `clio`, and maybe retry once with a new :version."
+  [clio bam]
+  (wfl.debug/trace ['clio-add-bam bam])
+  (try (clio/add-bam clio bam)
        (catch Throwable x
          (log/warning {:bam bam :x x})
-         (if (hack-try-increment-version-in-clio-add-bam? x)
-           (hack-clio-add-bam-with-version-incremented clio bam (inc increment))
-           (throw x)))))
-
-(defn ^:private clio-add-bam
-  "Add `bam` record to `clio`, and maybe retry after incrementing :version."
-  [clio bam]
-  (hack-clio-add-bam-with-version-incremented clio bam 0))
+         (hack-clio-add-bam-again
+          clio (if (hack-try-increment-version-in-clio-add-bam? x)
+                 (-> bam (select-keys clio-key-no-version)
+                     (->> (clio/query-bam clio)
+                          (sort-by :version)
+                          wfl.debug/trace
+                          last :version inc
+                          (assoc bam :version)))
+                 bam)))))
 
 (defn ^:private maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."

@@ -181,6 +181,7 @@
 (defn ^:private mock-clio-query-bam-found
   "Return a `_clio` BAM record with metadata `_md`."
   [_clio {:keys [bam_path] :as _md}]
+  (wfl.debug/trace ['mock-clio-query-bam-found bam_path])
   [{:bai_path (str/replace bam_path ".bam" ".bai")
     :bam_path bam_path
     :billing_project "hornet-nest"
@@ -197,6 +198,7 @@
 (defn ^:private mock-clio-query-bam-missing
   "Return an empty `_clio` response for query metadata `_md`."
   [_clio _md]
+  (wfl.debug/trace _md)
   [])
 
 (defn ^:private mock-clio-query-cram-found
@@ -358,7 +360,7 @@
 (deftest test-handle-add-bam-force=true-mocked
   (testing "Retry add-bam when a mock Clio suggests force=true."
     (with-redefs [clio/add-bam              mock-add-bam-suggest-force=true
-                  clio/query-bam            mock-clio-query-bam-missing
+                  clio/query-bam            mock-clio-query-bam-found
                   clio/query-cram           mock-clio-query-cram-found
                   cromwell/metadata         mock-cromwell-metadata-succeeded
                   cromwell/query            mock-cromwell-query-succeeded
@@ -377,54 +379,56 @@
 
 (comment
   (clojure.test/test-vars [#'test-handle-add-bam-force=true-for-real])
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked]))
+  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked])
+  )
 
 (deftest test-handle-add-bam-force=true-for-real
-  (testing "That the fix for GH-1691 works against a real Clio."
-    (let [bug       "GH-1691"
-          clio      "https://clio.gotc-dev.broadinstitute.org"
-          common    {:data_type    "WGS"
-                     :location     "GCP"
-                     :project      bug
-                     :sample_alias bug}
-          inpath    (str "gs://path/" bug ".")
-          cram      (merge common {:crai_path (str inpath "crai")
-                                   :cram_path (str inpath "cram")
-                                   :version   1})
-          inputs    {:base_file_name bug :input_cram (:cram_path cram)}
-          request   {:creator  @workloads/email
-                     :executor @workloads/cromwell-url
-                     :output   "gs://output"
-                     :pipeline "GDCWholeGenomeSomaticSingleSample"
-                     :project  @workloads/project
-                     :items    [{:inputs inputs}]}]
-      (letfn [(make-bam-path [id]
-                (let [path (partial str (:output request) \/ id \/ bug \.)]
-                  (merge common
-                         {:bai_path                 (path "bai")
-                          :bam_path                 (path "bam")
-                          :insert_size_metrics_path (path "insert_size_metrics")
-                          :version 3})))
-              (make-metadata-path [id]
-                (let [bam  (make-bam-path id)
-                      path (partial str (:output request) \/ id \/ bug \.)]
-                  {:inputs inputs
-                   :outputs
-                   {:GDCWholeGenomeSomaticSingleSample.bai (:bai_path bam)
-                    :GDCWholeGenomeSomaticSingleSample.bam (:bam_path bam)
-                    :GDCWholeGenomeSomaticSingleSample.contamination
-                    (path "contam.txt")
-                    :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
-                    (path "insert_size_histogram.pdf")
-                    :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
-                    (:insert_size_metrics_path bam)}}))]
-        (wfl.debug/trace (clio/add-cram clio cram))
-        (wfl.debug/trace (clio/add-bam  clio (make-bam-path 1)))
-        (let [uuid      (random-uuid)
-              old-bams  (clio/query-bam clio common)
-              old-count (count old-bams)
-              metadata (make-metadata-path uuid)]
-          (wfl.debug/trace old-bams)
+  (let [bug     "GH-1691"
+        clio    "https://clio.gotc-dev.broadinstitute.org"
+        common  {:data_type    "WGS"
+                 :location     "GCP"
+                 :project      bug
+                 :sample_alias bug}
+        prefix  (str "gs://path/" bug ".")
+        cram    (merge common {:crai_path (str prefix "crai")
+                               :cram_path (str prefix "cram")
+                               :version   1})
+        inputs  {:base_file_name bug :input_cram (:cram_path cram)}
+        request {:creator  @workloads/email
+                 :executor @workloads/cromwell-url
+                 :output   "gs://output"
+                 :pipeline "GDCWholeGenomeSomaticSingleSample"
+                 :project  @workloads/project
+                 :items    [{:inputs inputs}]}]
+    (testing "That the `common` keys agree with `sg/clio-key-no-version`"
+      (is (= (set (keys common)) (set @#'sg/clio-key-no-version))))
+    (letfn [(path [id suffix] (str (:output request) \/ id \/ bug \. suffix))
+            (make-bam-path [id]
+              (merge
+               common
+               {:bai_path                 (path id "bai")
+                :bam_path                 (path id "bam")
+                :insert_size_metrics_path (path id "insert_size_metrics")
+                :version 9}))
+            (make-metadata-path [id]
+              (let [{:keys [bai_path bam_path] :as bam} (make-bam-path id)]
+                {:inputs inputs
+                 :outputs
+                 {:GDCWholeGenomeSomaticSingleSample.bai bai_path
+                  :GDCWholeGenomeSomaticSingleSample.bam bam_path
+                  :GDCWholeGenomeSomaticSingleSample.contamination
+                  (path id "contam.txt")
+                  :GDCWholeGenomeSomaticSingleSample.insert_size_histogram_pdf
+                  (path id "insert_size_histogram.pdf")
+                  :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
+                  (:insert_size_metrics_path bam)}}))]
+      (wfl.debug/trace (clio/add-cram clio cram))
+      (wfl.debug/trace (clio/add-bam  clio (make-bam-path "uuid")))
+      (let [metadata (make-metadata-path (random-uuid))
+            before   (clio/query-bam clio common)]
+        (wfl.debug/trace path)
+        (wfl.debug/trace before)
+        (testing "That the fix for GH-1691 works against a real Clio."
           (with-redefs [cromwell/metadata         (constantly metadata)
                         cromwell/query            mock-cromwell-query-succeeded
                         cromwell/submit-workflows mock-cromwell-submit-workflows
@@ -433,7 +437,12 @@
                 workloads/execute-workload!
                 workloads/update-workload!
                 wfl.debug/trace)
-            (wfl.debug/trace (clio/query-bam clio common))))))))
+            (let [after (remove (set before) (clio/query-bam clio common))]
+              (is (== 1 (count after)))
+              (is (= (-> metadata
+                         :outputs :GDCWholeGenomeSomaticSingleSample.bam)
+                     (-> after first :bam_path)))
+              (wfl.debug/trace after))))))))
 
 (defn ^:private test-clio-updates
   "Assert that Clio is updated correctly."
