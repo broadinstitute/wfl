@@ -161,7 +161,6 @@
 (defn ^:private hack-clio-add-bam-again
   "Add `bam` record to `clio` without retries."
   [clio bam]
-  (wfl.debug/trace ['hack-clio-add-bam-again bam])
   (clio/add-bam clio bam))
 (def ^:private clio-force=true-error-message-starts
   "How a Clio force=true error message starts."
@@ -173,11 +172,7 @@
   "True when `exception` suggests that `clio-add-bam` might succeed
   with the version incremented."
   [exception]
-  (wfl.debug/trace exception)
   (let [{:keys [body reason-phrase status]} (ex-data exception)]
-    (wfl.debug/trace status)
-    (wfl.debug/trace reason-phrase)
-    (wfl.debug/trace body)
     (and
      (== 400 status)
      (= "Bad Request" reason-phrase)
@@ -187,7 +182,6 @@
 (defn ^:private clio-add-bam
   "Add `bam` to `clio`, and maybe retry once with a new :version."
   [clio bam]
-  (wfl.debug/trace ['clio-add-bam bam])
   (try (clio/add-bam clio bam)
        (catch Throwable x
          (log/warning {:bam bam :x x})
@@ -196,7 +190,6 @@
                  (-> bam (select-keys clio-key-no-version)
                      (->> (clio/query-bam clio)
                           (sort-by :version)
-                          wfl.debug/trace
                           last :version inc
                           (assoc bam :version)))
                  bam)))))
@@ -205,16 +198,13 @@
   "Maybe update `clio-url` with `final` and write files and `metadata`."
   [clio-url final {:keys [inputs] :as metadata}]
   #_(log-missing-final-files-for-debugging final)
-  (wfl.debug/trace final)
-  (or (wfl.debug/trace
-       (clio-bam-record clio-url (select-keys final [:bam_path])))
+  (or (clio-bam-record clio-url (select-keys final [:bam_path]))
       (let [cram   (clio-cram-record clio-url (:input_cram inputs))
             bam    (-> cram (merge final) (dissoc :contamination))
             contam (:contamination final)
             suffix (last (str/split contam #"/"))
             folder (str (util/unsuffix contam suffix))]
-        (wfl.debug/trace bam)
-        (wfl.debug/trace (clio-add-bam clio-url bam))
+        (clio-add-bam clio-url bam)
         (-> bam
             (json/write-str :escape-slash false)
             (gcs/upload-content (str folder "clio-bam-record.json")))
