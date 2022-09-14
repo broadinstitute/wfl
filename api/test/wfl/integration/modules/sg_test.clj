@@ -315,11 +315,11 @@
   (let [{:keys [items] :as request} (make-sg-workload-request)]
     (-> request workloads/execute-workload! workloads/update-workload!
         (as-> workload
-            (let [{:keys [finished pipeline]} workload]
-              (is finished)
-              (is (= sg/pipeline pipeline))
-              (is (= (count items)
-                     (-> workload workloads/workflows count))))))))
+              (let [{:keys [finished pipeline]} workload]
+                (is finished)
+                (is (= sg/pipeline pipeline))
+                (is (= (count items)
+                       (-> workload workloads/workflows count))))))))
 
 ;; The `body` below is only an approximation of what Scala generates
 ;; for Clio's error message.
@@ -369,8 +369,7 @@
 
 (comment
   (clojure.test/test-vars [#'test-handle-add-bam-force=true-for-real])
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked])
-  )
+  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked]))
 
 (deftest test-handle-add-bam-force=true-for-real
   (let [bug     "GH-1691"
@@ -497,6 +496,6 @@
 (deftest test-retry-workflows-supported
   (let [fail (partial mock-batch-update-workflow-statuses! "Failed")]
     (with-redefs
-      [cromwell/submit-workflows             mock-cromwell-submit-workflows
-       batch/batch-update-workflow-statuses! fail]
+     [cromwell/submit-workflows             mock-cromwell-submit-workflows
+      batch/batch-update-workflow-statuses! fail]
       (shared/run-workload-state-transition-test! (make-sg-workload-request)))))
