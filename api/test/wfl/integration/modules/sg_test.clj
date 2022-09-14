@@ -385,7 +385,7 @@
                  :pipeline "GDCWholeGenomeSomaticSingleSample"
                  :project  @workloads/project
                  :items    [{:inputs inputs}]}]
-    (testing "That the `common` keys agree with `sg/clio-key-no-version`"
+    (testing "That the `common` keys agree with `sg/clio-key-no-version`."
       (is (= (set (keys common)) (set @#'sg/clio-key-no-version))))
     (letfn [(path [id suffix] (str (:output request) \/ id \/ bug \. suffix))
             (make-bam-path [id]
