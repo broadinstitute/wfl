@@ -3,7 +3,6 @@
                                                     use-fixtures]]
             [clojure.string                 :as str]
             [wfl.api.workloads]             ; for mocking
-            [wfl.debug]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -181,7 +180,6 @@
 (defn ^:private mock-clio-query-bam-found
   "Return a `_clio` BAM record with metadata `_md`."
   [_clio {:keys [bam_path] :as _md}]
-  (wfl.debug/trace ['mock-clio-query-bam-found bam_path])
   [{:bai_path (str/replace bam_path ".bam" ".bai")
     :bam_path bam_path
     :billing_project "hornet-nest"
@@ -198,7 +196,6 @@
 (defn ^:private mock-clio-query-bam-missing
   "Return an empty `_clio` response for query metadata `_md`."
   [_clio _md]
-  (wfl.debug/trace _md)
   [])
 
 (defn ^:private mock-clio-query-cram-found
@@ -285,14 +282,12 @@
 (defn ^:private mock-cromwell-query-succeeded
   "Update `status` of all workflows to `Succeeded`."
   [_environment _params]
-  (wfl.debug/trace [_environment _params])
   (let [{:keys [items]} (make-sg-workload-request)]
     (map (fn [id] {:id id :status "Succeeded"})
          (take (count items) the-uuids))))
 
 (defn ^:private mock-cromwell-submit-workflows
   [_environment _wdl inputs _options _labels]
-  (wfl.debug/trace [_environment _wdl inputs _options _labels])
   (take (count inputs) the-uuids))
 
 (defn mock-gcs-upload-content-fail
@@ -303,7 +298,6 @@
 (defn mock-gcs-upload-content
   "Mock uploading `content` to `url`."
   [content url]
-  (wfl.debug/trace [content url])
   (letfn [(parse [url] (drop-last (str/split url #"/")))
           (tail? [end] (str/ends-with? url end))]
     (let [md  [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
@@ -319,17 +313,13 @@
   "Assert that Clio is updated correctly."
   []
   (let [{:keys [items] :as request} (make-sg-workload-request)]
-    (-> request
-        wfl.debug/trace
-        workloads/execute-workload!
-        workloads/update-workload!
+    (-> request workloads/execute-workload! workloads/update-workload!
         (as-> workload
-              (let [{:keys [finished pipeline]} workload]
-                (wfl.debug/trace workload)
-                (is finished)
-                (is (= sg/pipeline pipeline))
-                (is (= (count items)
-                       (-> workload workloads/workflows count))))))))
+            (let [{:keys [finished pipeline]} workload]
+              (is finished)
+              (is (= sg/pipeline pipeline))
+              (is (= (count items)
+                     (-> workload workloads/workflows count))))))))
 
 ;; The `body` below is only an approximation of what Scala generates
 ;; for Clio's error message.
@@ -422,43 +412,21 @@
                   (path id "insert_size_histogram.pdf")
                   :GDCWholeGenomeSomaticSingleSample.insert_size_metrics
                   (:insert_size_metrics_path bam)}}))]
-      (wfl.debug/trace (clio/add-cram clio cram))
-      (wfl.debug/trace (clio/add-bam  clio (make-bam-path "uuid")))
+      (clio/add-cram clio cram)
+      (clio/add-bam  clio (make-bam-path "uuid"))
       (let [metadata (make-metadata-path (random-uuid))
             before   (clio/query-bam clio common)]
-        (wfl.debug/trace path)
-        (wfl.debug/trace before)
         (testing "That the fix for GH-1691 works against a real Clio."
           (with-redefs [cromwell/metadata         (constantly metadata)
                         cromwell/query            mock-cromwell-query-succeeded
                         cromwell/submit-workflows mock-cromwell-submit-workflows
                         gcs/upload-content        mock-gcs-upload-content]
-            (-> request
-                workloads/execute-workload!
-                workloads/update-workload!
-                wfl.debug/trace)
+            (-> request workloads/execute-workload! workloads/update-workload!)
             (let [after (remove (set before) (clio/query-bam clio common))]
               (is (== 1 (count after)))
               (is (= (-> metadata
                          :outputs :GDCWholeGenomeSomaticSingleSample.bam)
-                     (-> after first :bam_path)))
-              (wfl.debug/trace after))))))))
-
-(defn ^:private test-clio-updates
-  "Assert that Clio is updated correctly."
-  []
-  (let [{:keys [items] :as request} (make-sg-workload-request)]
-    (-> request
-        wfl.debug/trace
-        workloads/execute-workload!
-        workloads/update-workload!
-        (as-> workload
-            (let [{:keys [finished pipeline]} workload]
-              (wfl.debug/trace workload)
-              (is finished)
-              (is (= sg/pipeline pipeline))
-              (is (= (count items)
-                     (-> workload workloads/workflows count))))))))
+                     (-> after first :bam_path))))))))))
 
 (deftest test-clio-updates-bam-found
   (testing "Clio not updated if outputs already known."
@@ -529,6 +497,6 @@
 (deftest test-retry-workflows-supported
   (let [fail (partial mock-batch-update-workflow-statuses! "Failed")]
     (with-redefs
-     [cromwell/submit-workflows             mock-cromwell-submit-workflows
-      batch/batch-update-workflow-statuses! fail]
+      [cromwell/submit-workflows             mock-cromwell-submit-workflows
+       batch/batch-update-workflow-statuses! fail]
       (shared/run-workload-state-transition-test! (make-sg-workload-request)))))
