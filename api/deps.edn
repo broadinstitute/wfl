@@ -11,7 +11,6 @@
   org.clojure/data.xml                      {:mvn/version "0.2.0-alpha6"}
   org.clojure/data.zip                      {:mvn/version "1.0.0"}
   org.clojure/java.jdbc                     {:mvn/version "0.7.12"}
-  org.clojure/tools.logging                 {:mvn/version "1.1.0"}
   amperity/vault-clj                        {:mvn/version "1.0.3"}
   clj-http/clj-http                         {:mvn/version "3.9.1"}
   clj-time/clj-time                         {:mvn/version "0.15.2"}
