@@ -367,10 +367,6 @@
                   gcs/upload-content        mock-gcs-upload-content]
       (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
 
-(comment
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true-for-real])
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked]))
-
 (deftest test-handle-add-bam-force=true-for-real
   (let [bug     "GH-1691"
         clio    "https://clio.gotc-dev.broadinstitute.org"
