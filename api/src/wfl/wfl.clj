@@ -1,8 +1,8 @@
 (ns wfl.wfl
   "Stuff specific to WFL."
-  (:require [clojure.edn :as edn]
+  (:require [clojure.edn     :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string  :as str]))
 
 (def the-name
   "Use this name to refer to this program."
@@ -34,7 +34,7 @@
        :commit "aaaaabbbbbcccccdddddeeeeefffffggggghhhhh"}))
 
 (defn get-wfl-resource
-  "Return a wfl resource."
+  "Return the wfl resource at `path`."
   [path]
   (or (some-> (str/join "/" ["wfl" path])
               io/resource

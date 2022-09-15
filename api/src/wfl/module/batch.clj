@@ -15,7 +15,6 @@
             [wfl.util             :as util]
             [wfl.wfl              :as wfl])
   (:import [java.time OffsetDateTime]
-           [java.util UUID]
            [wfl.util UserException]))
 
 ;;specs
@@ -136,7 +135,7 @@
             (update :executor util/de-slashify)
             (update :watchers pr-str)
             (merge (select-keys (wfl/get-the-version) [:commit :version]))
-            (assoc :release release :wdl path :uuid (UUID/randomUUID))
+            (assoc :release release :wdl path :uuid (random-uuid))
             (->> (jdbc/insert! tx :workload)))
         table (format "%s_%09d" pipeline id)]
     (jdbc/execute!       tx [setter pipeline id])

@@ -23,11 +23,10 @@
             [wfl.tools.workflows        :as workflows]
             [wfl.tools.workloads        :as workloads]
             [wfl.util                   :as util])
-  (:import [clojure.lang ExceptionInfo]
-           [java.util UUID]))
+  (:import [clojure.lang ExceptionInfo]))
 
 (defn make-create-workload [make-request]
-  (fn [] (endpoints/create-workload (make-request (UUID/randomUUID)))))
+  (fn [] (endpoints/create-workload (make-request (random-uuid)))))
 
 (def create-aou-workload (make-create-workload workloads/aou-workload-request))
 (def create-sg-workload  (make-create-workload workloads/sg-workload-request))
@@ -90,14 +89,14 @@
       (test! (set/rename-keys request {:executor :cromwell})))))
 
 (deftest test-create-wgs-workload
-  (test-create-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+  (test-create-workload (workloads/wgs-workload-request (random-uuid))))
 (deftest test-create-aou-workload
-  (test-create-workload (workloads/aou-workload-request (UUID/randomUUID))))
+  (test-create-workload (workloads/aou-workload-request (random-uuid))))
 
 (deftest test-create-xx-workload
-  (test-create-workload (workloads/xx-workload-request (UUID/randomUUID))))
+  (test-create-workload (workloads/xx-workload-request (random-uuid))))
 (deftest test-create-sg-workload
-  (test-create-workload (workloads/sg-workload-request (UUID/randomUUID))))
+  (test-create-workload (workloads/sg-workload-request (random-uuid))))
 (deftest test-create-copyfile-workload
   (test-create-workload (workloads/copyfile-workload-request
                          "gs://fake-inputs/lolcats.txt"
@@ -181,17 +180,17 @@
           (endpoints/stop-workload workload))))))
 
 (deftest ^:parallel test-exec-wgs-workload
-  (test-exec-workload (workloads/wgs-workload-request (UUID/randomUUID))))
+  (test-exec-workload (workloads/wgs-workload-request (random-uuid))))
 (deftest ^:parallel test-exec-wgs-workload-specifying-cromwell
   ;; All modules make use of the same code/behavior here, no need to spam Cromwell
-  (test-exec-workload (-> (workloads/wgs-workload-request (UUID/randomUUID))
+  (test-exec-workload (-> (workloads/wgs-workload-request (random-uuid))
                           (set/rename-keys {:executor :cromwell}))))
 (deftest ^:parallel test-exec-aou-workload
-  (test-exec-workload (workloads/aou-workload-request (UUID/randomUUID))))
+  (test-exec-workload (workloads/aou-workload-request (random-uuid))))
 (deftest ^:parallel test-exec-xx-workload
-  (test-exec-workload (workloads/xx-workload-request (UUID/randomUUID))))
+  (test-exec-workload (workloads/xx-workload-request (random-uuid))))
 (deftest ^:parallel test-exec-sg-workload
-  (test-exec-workload (workloads/sg-workload-request (UUID/randomUUID))))
+  (test-exec-workload (workloads/sg-workload-request (random-uuid))))
 
 (deftest ^:parallel test-exec-copyfile-workload
   (fixtures/with-temporary-cloud-storage-folder
@@ -231,19 +230,19 @@
             cromwell/status?))))
 
 (deftest ^:parallel test-retry-wgs-workload
-  (test-retry-legacy-workload-fails (workloads/wgs-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/wgs-workload-request (random-uuid))))
 (deftest ^:parallel test-retry-aou-workload
-  (test-retry-legacy-workload-fails (workloads/aou-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/aou-workload-request (random-uuid))))
 (deftest ^:parallel test-retry-xx-workload
-  (test-retry-legacy-workload-fails (workloads/xx-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/xx-workload-request (random-uuid))))
 (deftest ^:parallel test-retry-sg-workload
-  (test-retry-legacy-workload-fails (workloads/sg-workload-request (UUID/randomUUID))))
+  (test-retry-legacy-workload-fails (workloads/sg-workload-request (random-uuid))))
 
 (deftest ^:parallel test-append-to-aou-workload
   (let [await    (partial cromwell/wait-for-workflow-complete
                           @workloads/cromwell-url)
         workload (endpoints/exec-workload
-                  (workloads/aou-workload-request (UUID/randomUUID)))]
+                  (workloads/aou-workload-request (random-uuid)))]
     (try
       (testing "appending sample successfully launches an aou workflow"
         (is (->> workload
@@ -330,7 +329,7 @@
                       (str "Expecting 400 error for retry with filters " filters)))]
           (let [status-unretriable "Running"
                 status-retriable   "Failed"
-                submission         (str (UUID/randomUUID))
+                submission         (str (random-uuid))
                 filters-invalid    [{}
                                     {:status status-unretriable}
                                     {:status status-retriable}

@@ -1,3 +1,6 @@
+# Release 0.20.1
+- [GH-1691] Fix the SG/GDC increment the add_bam version in Clio hack. ([#623](https://github.com/broadinstitute/wfl/pull/623))
+
 # Release 0.20.0
 - [GH-1681] SG/GDC is reprocessing CRAMs and running into Clio update conflicts. ([#620](https://github.com/broadinstitute/wfl/pull/620))
 - [GH-1674] wfl.module.aou/add-aou-workload! should not add to a stopped workload. ([#617](https://github.com/broadinstitute/wfl/pull/617))

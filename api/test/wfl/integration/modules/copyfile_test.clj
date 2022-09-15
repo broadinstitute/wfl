@@ -11,8 +11,7 @@
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
-  (:import [java.util UUID]
-           [java.time OffsetDateTime]))
+  (:import [java.time OffsetDateTime]))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
@@ -45,7 +44,7 @@
             (let [defaults (copyfile/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
-              (UUID/randomUUID)))]
+              (random-uuid)))]
     (with-redefs-fn {#'cromwell/submit-workflow verify-submitted-options}
       (fn []
         (->
@@ -71,7 +70,7 @@
           (verify-submitted-inputs [_ _ inputs _ _]
             (is (every? #(prefixed? :copyfile %) (keys inputs)))
             (verify-workflow-inputs (into {} (map strip-prefix inputs)))
-            (UUID/randomUUID))]
+            (random-uuid))]
     (with-redefs-fn {#'cromwell/submit-workflow verify-submitted-inputs}
       (fn []
         (->
@@ -102,7 +101,7 @@
 
 (deftest test-workload-state-transition
   (with-redefs-fn
-    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+    {#'cromwell/submit-workflow              (fn [& _] (random-uuid))
      #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Succeeded")}
     #(shared/run-workload-state-transition-test!
       (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))
@@ -113,7 +112,7 @@
 
 (deftest test-retry-failed-workflows
   (with-redefs-fn
-    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+    {#'cromwell/submit-workflow              (fn [& _] (random-uuid))
      #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
     #(shared/run-retry-is-not-supported-test!
       (make-copyfile-workload-request "gs://b/in" "gs://b/out"))))

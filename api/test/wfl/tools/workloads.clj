@@ -15,8 +15,7 @@
             [wfl.service.postgres           :as postgres]
             [wfl.tools.endpoints            :as endpoints]
             [wfl.util                       :as util])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:import [java.time OffsetDateTime]))
 
 (def clio-url (delay (env/getenv "WFL_CLIO_URL")))
 
@@ -188,7 +187,7 @@
     (clio/add-cram
      @clio-url
      (merge query tos
-            {:cromwell_id         (str (UUID/randomUUID))
+            {:cromwell_id         (str (random-uuid))
              :workflow_start_date (str (OffsetDateTime/now))}))
     (dorun (map (fn [k] (gcs/copy-object (k froms) (k tos))) (keys suffix))))
   (first (clio/query-cram @clio-url query)))

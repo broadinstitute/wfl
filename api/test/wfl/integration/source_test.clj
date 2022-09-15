@@ -11,8 +11,7 @@
             [wfl.tools.fixtures   :as fixtures]
             [wfl.util             :as util])
   (:import [java.time Instant LocalDateTime]
-           [java.util UUID]
-           [wfl.util  UserException]))
+           [wfl.util UserException]))
 
 (def ^:private testing-dataset "cd25d59e-1451-44d0-8a24-7669edb9a8f8")
 (def ^:private testing-snapshot "e8f1675e-1e7c-48b4-92ab-3598425c149d")
@@ -39,7 +38,7 @@
 
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id _workload]
-  {:snapshot_id (str (UUID/randomUUID))
+  {:snapshot_id (str (random-uuid))
    :job_status  "succeeded"
    :id          job-id})
 
@@ -64,7 +63,7 @@
 ;; A stable vector of TDR row IDs.
 ;;
 (defonce all-rows
-  (delay (vec (repeatedly mock-new-rows-size #(str (UUID/randomUUID))))))
+  (delay (vec (repeatedly mock-new-rows-size #(str (random-uuid))))))
 
 (defn ^:private mock-query-metadata-table-all
   "Mock datarepo/query-metadata-table to find all rows."
@@ -107,7 +106,7 @@
                          [:datarepo_row_id]]
           record-count  (int (Math/ceil (/ mock-new-rows-size 500)))
           source        (create-tdr-source)
-          workload-uuid (UUID/randomUUID)]
+          workload-uuid (random-uuid)]
       (testing "update-source! loads snapshots"
         (with-redefs
          [source/tdr-source-should-poll?             (constantly true)
@@ -183,7 +182,7 @@
 (deftest test-update-tdr-source
   (let [source               (create-tdr-source)
         expected-num-records (int (Math/ceil (/ mock-new-rows-size 500)))
-        workload-uuid        (UUID/randomUUID)]
+        workload-uuid        (random-uuid)]
     (with-redefs
      [source/tdr-source-should-poll?             (constantly true)
       source/create-snapshots                    mock-create-snapshots
@@ -222,7 +221,7 @@
         ex-message      (str "source/find-and-snapshot-new-rows "
                              "should not be called when ineligible "
                              "to poll TDR for new rows.")
-        workload-uuid   (UUID/randomUUID)
+        workload-uuid   (random-uuid)
         throw-if-called (fn [& args] (throw (ex-info ex-message
                                                      {:called-with args})))]
     (with-redefs
@@ -261,7 +260,7 @@
          (source/load-source! tx))))
 
 (deftest test-tdr-snapshot-list-to-edn
-  (let [snapshot {:name "test-snapshot-name" :id (str (UUID/randomUUID))}
+  (let [snapshot {:name "test-snapshot-name" :id (str (random-uuid))}
         source   (util/to-edn (create-tdr-snapshot-list [snapshot]))]
     (is (not-any? source [:id :type]))
     (is (= (:snapshots source) [(:id snapshot)]))

@@ -12,7 +12,6 @@
             [wfl.util                   :as util])
   (:import [java.nio.file.attribute FileAttribute]
            [java.nio.file Files]
-           [java.util UUID]
            [org.apache.commons.io FileUtils]))
 
 (defn with-temporary-overload
@@ -144,7 +143,7 @@
         (fn [url] #_(use temporary folder at url)))"
   [bucket use-folder]
   (util/bracket
-   #(gcs/gs-url bucket (str "wfl-test-" (UUID/randomUUID) "/"))
+   #(gcs/gs-url bucket (str "wfl-test-" (random-uuid) "/"))
    #(run! (comp (partial gcs/delete-object bucket) :name) (gcs/list-objects %))
    use-folder))
 
@@ -152,7 +151,7 @@
   "Create a temporary Google Cloud Storage Pub/Sub topic."
   [project f]
   (util/bracket
-   #(pubsub/create-topic project (str "wfl-test-" (UUID/randomUUID)))
+   #(pubsub/create-topic project (str "wfl-test-" (random-uuid)))
    pubsub/delete-topic
    f))
 
@@ -168,7 +167,8 @@
   "Create a temporary Google Cloud Storage Pub/Sub subscription"
   [topic f]
   (util/bracket
-   #(pubsub/create-subscription topic (str "wfl-test-subscription-" (UUID/randomUUID)))
+   #(pubsub/create-subscription
+     topic (str "wfl-test-subscription-" (random-uuid)))
    pubsub/delete-subscription
    f))
 

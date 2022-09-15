@@ -3,8 +3,7 @@
             [clojure.test          :refer [deftest is testing]]
             [wfl.service.cromwell  :as cromwell]
             [wfl.service.firecloud :as firecloud]
-            [wfl.util              :as util])
-  (:import [java.util UUID]))
+            [wfl.util              :as util]))
 
 ;; Of the form NAMESPACE/NAME
 (def workspace "wfl-dev/Illumina-Genotyping-Array")
@@ -46,7 +45,7 @@
                                                              []))))
   (doseq [entity-count (range 1 4)]
     (testing (str "Submission with " entity-count " matching entit(ies) yields 1 workflow")
-      (let [entity-set-name (str (UUID/randomUUID))]
+      (let [entity-set-name (str (random-uuid))]
         (util/bracket
          (comp :submissionId
                #(firecloud/create-submission-for-entity-set
@@ -74,7 +73,7 @@
 (deftest test-import-entity-set
   (doseq [entity-count (range 1 4)]
     (testing (str "Import entity set with " entity-count " matching entit(ies)")
-      (let [entity-set-name (str (UUID/randomUUID))]
+      (let [entity-set-name (str (random-uuid))]
         (util/bracket
          #(-> (firecloud/import-entity-set workspace entity-set-name (repeat entity-count entity))
               :body)

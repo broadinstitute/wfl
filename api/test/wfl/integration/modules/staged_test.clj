@@ -14,7 +14,6 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util])
   (:import [java.time LocalDateTime]
-           [java.util UUID]
            [wfl.util UserException]))
 
 ;; Snapshot creation mock
@@ -30,7 +29,7 @@
 
 ;; Note this mock only covers happy paths of TDR jobs
 (defn ^:private mock-check-tdr-job [job-id _workload]
-  {:snapshot_id (str (UUID/randomUUID))
+  {:snapshot_id (str (random-uuid))
    :job_status "succeeded"
    :id job-id})
 
@@ -42,13 +41,12 @@
 (def ^:private testing-method-configuration (str testing-namespace "/" testing-method-name))
 (def ^:private testing-table-name "flowcells")
 
-(let [new-env {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
-               "WFL_TDR_URL"       "https://data.terra.bio"
-               "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"}]
-
-  (use-fixtures :once
-    (fixtures/temporary-environment new-env)
-    fixtures/temporary-postgresql-database))
+(use-fixtures :once
+  (fixtures/temporary-environment
+   {"WFL_FIRECLOUD_URL" "https://api.firecloud.org"
+    "WFL_RAWLS_URL"     "https://rawls.dsde-prod.broadinstitute.org"
+    "WFL_TDR_URL"       "https://data.terra.bio"})
+  fixtures/temporary-postgresql-database)
 
 (deftest test-create-workload
   (letfn [(verify-source [{:keys [type last_checked details]}]
@@ -147,9 +145,9 @@
 (def ^:private fake-method-name "method-name")
 ;; Snapshot and snapshot reference mocks
 (def ^:private snapshot
-  {:name "test-snapshot-name" :id (str (UUID/randomUUID))})
+  {:name "test-snapshot-name" :id (str (random-uuid))})
 
-(def ^:private snapshot-reference-id (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-id (str (random-uuid)))
 (def ^:private snapshot-reference-name (str (:name snapshot) "-ref"))
 (defn ^:private mock-rawls-snapshot-reference [& _]
   {:referenceId snapshot-reference-id
@@ -168,18 +166,18 @@
       "Incremented version should be passed to method config update")
   nil)
 
-(def ^:private submission-id-mock (str (UUID/randomUUID)))
+(def ^:private submission-id-mock (str (random-uuid)))
 
 (def ^:private running-workflow-mock
   {:entityName   "entity"
-   :id           (str (UUID/randomUUID))
+   :id           (str (random-uuid))
    :inputs       {:input "value"}
    :status       "Running"
    :workflowName fake-method-name})
 
 (def ^:private succeeded-workflow-mock
   {:entityName   "entity"
-   :id           (str (UUID/randomUUID))
+   :id           (str (random-uuid))
    :inputs       {:input "value"}
    :status       "Succeeded"
    :workflowName fake-method-name})

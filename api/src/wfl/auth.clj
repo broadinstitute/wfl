@@ -1,9 +1,9 @@
 (ns wfl.auth
   "Manage credentials and configurations."
-  (:require [clojure.java.io   :as io]
-            [clojure.string    :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string  :as str]
             [wfl.environment :as env]
-            [wfl.util         :as util])
+            [wfl.util        :as util])
   (:import [com.google.auth.oauth2 GoogleCredentials]))
 
 (defn ^:private authorization-header-with-bearer-token

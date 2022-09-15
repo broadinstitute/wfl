@@ -1,4 +1,5 @@
 (ns wfl.executor
+  "Execute a workflow somehow."
   (:require [clojure.edn           :as edn]
             [clojure.set           :as set :refer [rename-keys]]
             [clojure.spec.alpha    :as s]

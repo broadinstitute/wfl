@@ -5,13 +5,12 @@
   "clojars" {:url "https://clojars.org/repo"}}
 
  :deps
- {org.clojure/clojure                       {:mvn/version "1.10.3"}
+ {org.clojure/clojure                       {:mvn/version "1.11.1"}
   org.clojure/data.csv                      {:mvn/version "1.0.0"}
   org.clojure/data.json                     {:mvn/version "2.3.0"}
   org.clojure/data.xml                      {:mvn/version "0.2.0-alpha6"}
   org.clojure/data.zip                      {:mvn/version "1.0.0"}
   org.clojure/java.jdbc                     {:mvn/version "0.7.12"}
-  org.clojure/tools.logging                 {:mvn/version "1.1.0"}
   amperity/vault-clj                        {:mvn/version "1.0.3"}
   clj-http/clj-http                         {:mvn/version "3.9.1"}
   clj-time/clj-time                         {:mvn/version "0.15.2"}
@@ -54,7 +53,7 @@
    :main-opts  ["-m" "cljfmt.main" "fix"]}
 
   :kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.06.01"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.09.08"}}
    :main-opts ["-m" "clj-kondo.main"]}
 
   :kibit
@@ -62,16 +61,17 @@
    :main-opts   ["-e" "(use,'kibit.driver),(external-run,[\"src\"],nil)"]}
 
   :eastwood
-  {:extra-deps {jonase/eastwood {:mvn/version "0.4.3"}
+  {:extra-deps {jonase/eastwood {:mvn/version "1.3.0"}
                 org.liquibase/liquibase-core
                 {:mvn/version "4.3.5"
                  :exclusions  [ch.qos.logback/logback-classic]}}
    :extra-paths ["test"]
    :main-opts ["-m" "eastwood.lint"
-               {:add-linters    #{#_:keyword-typos :unused-fn-args}
-                :config-files   #{"resources/eastwood.clj"}
-                :source-paths   ["src" "test"]
-                :ignored-faults {:keyword-typos {wfl.api.routes [true]}}}]}
+               {:add-linters     #{#_:keyword-typos :unused-fn-args}
+                :config-files    #{"resources/eastwood.clj"}
+                :exclude-linters #{:reflection}
+                :source-paths    ["src" "test"]
+                :ignored-faults  {:keyword-typos {wfl.api.routes [true]}}}]}
 
   :liquibase
   {:extra-deps  {org.liquibase/liquibase-core  {:mvn/version "4.3.5"
@@ -96,7 +96,7 @@
    :extra-paths ["test"]
    :main-opts   ["-m" "wfl.tools.parallel-runner"]}
 
-  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.4"}}}
+  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.1.4"}}}
 
   :prebuild {:extra-paths ["./build"] :exec-fn build/prebuild}
 

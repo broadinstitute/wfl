@@ -1,7 +1,7 @@
 (ns wfl.server
   "An HTTP API server."
-  (:require [clojure.string                 :as str]
-            [clj-time.coerce                :as tc]
+  (:require [clj-time.coerce                :as tc]
+            [clojure.string                 :as str]
             [ring.adapter.jetty             :as jetty]
             [ring.middleware.defaults       :as defaults]
             [ring.middleware.json           :refer [wrap-json-response]]

@@ -1,10 +1,10 @@
 (ns wfl.environment
   "Map environment to various values here."
-  (:require [clojure.data.json :as json]
-            [clojure.string    :as str]
-            [wfl.log           :as log]
+  (:require [clojure.data.json  :as json]
+            [clojure.string     :as str]
             [vault.client.http] ; vault.core needs this
-            [vault.core        :as vault]))
+            [vault.core         :as vault]
+            [wfl.log            :as log]))
 
 (declare getenv)
 
@@ -20,7 +20,7 @@
        (vault/authenticate! :token token))
      path {})))
 
-;; Keep this map pure - defer any IO to the thunk returned by this map.
+;; Keep this map pure. Defer any IO to the thunk returned by this map.
 (def ^:private defaults
   "Default actions (thunks) for computing environment variables, mainly for
    development, testing and documentation purposes."
@@ -55,8 +55,9 @@
    (fn [] "https://dockstore.org")
    "WFL_SLACK_TOKEN"
    #(-> "secret/dsde/gotc/dev/wfl/slack" vault-secrets :bot-user-token)
-
+   ;;
    ;; -- variables used in test code below this line --
+   ;;
    "WFL_CROMWELL_URL"
    (fn [] "https://cromwell-gotc-auth.gotc-dev.broadinstitute.org")
    "WFL_TDR_DEFAULT_PROFILE"
