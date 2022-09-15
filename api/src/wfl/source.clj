@@ -1,8 +1,9 @@
 (ns wfl.source
+  "Workload source interface and its implementations."
   (:require [clojure.edn          :as edn]
             [clojure.instant      :as instant]
-            [clojure.spec.alpha   :as s]
             [clojure.set          :as set]
+            [clojure.spec.alpha   :as s]
             [clojure.string       :as str]
             [wfl.api.workloads    :refer [defoverload] :as workloads]
             [wfl.jdbc             :as jdbc]

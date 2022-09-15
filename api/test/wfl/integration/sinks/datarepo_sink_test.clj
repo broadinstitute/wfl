@@ -12,9 +12,8 @@
             [wfl.tools.resources  :as resources]
             [wfl.tools.workloads  :refer [evalT]]
             [wfl.util             :as util])
-  (:import [java.util UUID]
-           [wfl.util UserException]
-           [java.util.concurrent TimeUnit]))
+  (:import [java.util.concurrent TimeUnit]
+           [wfl.util UserException]))
 
 (def ^:private ^:dynamic *dataset*)
 
@@ -146,9 +145,9 @@
 (deftest test-update-datarepo-sink
   (let [outfile          "gs://not-a-real-bucket/not-a-real.unmapped.bam"
         description      (resources/read-resource "primitive.edn")
-        workflow         {:uuid (UUID/randomUUID) :outputs outputs}
+        workflow         {:uuid (random-uuid) :outputs outputs}
         upstream         (make-queue-from-list [[description workflow]])
-        failing-workflow {:uuid (UUID/randomUUID)
+        failing-workflow {:uuid (random-uuid)
                           :outputs {:outbool   true
                                     :outfile   outfile
                                     :outfloat  1.23

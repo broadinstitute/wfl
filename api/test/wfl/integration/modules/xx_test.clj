@@ -9,18 +9,17 @@
             [wfl.tools.workloads            :as workloads]
             [wfl.util                       :as util :refer [absent?]]
             [wfl.jdbc                       :as jdbc])
-  (:import [java.time OffsetDateTime]
-           [java.util UUID]))
+  (:import [java.time OffsetDateTime]))
 
 (use-fixtures :once fixtures/temporary-postgresql-database)
 
 (defn ^:private make-xx-workload-request []
-  (-> (UUID/randomUUID)
+  (-> (random-uuid)
       workloads/xx-workload-request
       (assoc :creator @workloads/email)))
 
 (defn ^:private mock-submit-workflows [_ _ inputs _ _]
-  (map (fn [_] (UUID/randomUUID)) inputs))
+  (map (fn [_] (random-uuid)) inputs))
 
 (deftest test-create-workload!
   (letfn [(verify-workflow [workflow]
@@ -101,7 +100,7 @@
              (fn [in]
                (is (every? #(prefixed? :ExternalExomeReprocessing %) (keys in)))
                (verify-workflow-inputs (into {} (map strip-prefix in)))
-               (UUID/randomUUID))
+               (random-uuid))
              inputs))]
     (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-inputs}
       (fn []
@@ -124,7 +123,7 @@
             (let [defaults (xx/make-workflow-options url)]
               (verify-workflow-options options)
               (is (= defaults (select-keys options (keys defaults))))
-              (map (fn [_] (UUID/randomUUID)) inputs)))]
+              (map (fn [_] (random-uuid)) inputs)))]
     (with-redefs-fn {#'cromwell/submit-workflows verify-submitted-options}
       (fn []
         (->
@@ -165,6 +164,6 @@
 
 (deftest test-retry-failed-workflows
   (with-redefs-fn
-    {#'cromwell/submit-workflow              (fn [& _] (UUID/randomUUID))
+    {#'cromwell/submit-workflow              (fn [& _] (random-uuid))
      #'batch/batch-update-workflow-statuses! (partial mock-batch-update-workflow-statuses! "Failed")}
     #(shared/run-retry-is-not-supported-test! (make-xx-workload-request))))

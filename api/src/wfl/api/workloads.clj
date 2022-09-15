@@ -1,7 +1,8 @@
 (ns wfl.api.workloads
+  "An interface to workloads."
   (:require [clojure.string :as str]
-            [wfl.log        :as log]
             [wfl.jdbc       :as jdbc]
+            [wfl.log        :as log]
             [wfl.util       :as util])
   (:import [wfl.util UserException]))
 

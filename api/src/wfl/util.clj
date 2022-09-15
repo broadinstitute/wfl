@@ -4,7 +4,6 @@
             [clojure.data.json  :as json]
             [clojure.java.io    :as io]
             [clojure.java.shell :as shell]
-            [clojure.spec.alpha :as s]
             [clojure.string     :as str]
             [wfl.log            :as log]
             [wfl.wfl            :as wfl])
@@ -351,7 +350,7 @@
 (defn randomize
   "Append a random suffix to `string`."
   [string]
-  (str string (str/replace (UUID/randomUUID) "-" "")))
+  (str string (str/replace (random-uuid) "-" "")))
 
 (defn curry
   "Curry the function `f` such that its arguments may be supplied across two
@@ -360,26 +359,26 @@
   (fn [x & xs] (apply partial f x xs)))
 
 (defn poll
-  "Call `task!` every `seconds` [default: 1] while it returns `nil`, up
-  to `max-attempts` times [default: 3].  Return the non-nil result or
-  throw."
+  "Call `task!` every `seconds` [default: 30] while it returns `nil`.
+  Throw after `max-attempts` [default: 30] or return the result."
   ([task! seconds max-attempts]
    (loop [attempt 1]
      (if-some [result (task!)]
        result
        (do (when (<= max-attempts attempt)
-             (throw (TimeoutException. "Max number of attempts exceeded")))
+             (throw (TimeoutException. (format "Tried %s times" max-attempts))))
            (log/debug
             (format "Sleeping - attempt #%s of %s" attempt max-attempts))
            (.sleep TimeUnit/SECONDS seconds)
            (recur (inc attempt))))))
   ([task seconds]
-   (poll task seconds 3))
+   (poll task seconds 30))
   ([task]
-   (poll task 1)))
+   (poll task 30)))
 
-"A set of all mutually supported TSV file types (by FireCloud and WFL)"
-(s/def ::tsv-type #{:entity :membership})
+(def ^:private tsv-type?
+  "The TSV file types supported by FireCloud and WFL."
+  #{:entity :membership})
 
 (defn terra-id
   "
@@ -405,7 +404,7 @@
 
   Parameters
   ----------
-    tsv-type - A member of ::tsv-type
+    tsv-type - One of tsv-type?
     col      - Entity name or primary key column base
 
   Examples
@@ -414,7 +413,7 @@
     (terra_id :membership \"flowcell\")
   "
   [tsv-type col]
-  {:pre [(s/valid? ::tsv-type tsv-type)]}
+  {:pre [(tsv-type? tsv-type)]}
   (str/join [(name tsv-type)
              ":"
              (-> col (unsuffix "_id") (unsuffix "_set"))
@@ -445,7 +444,7 @@
 
   Parameters
   ----------
-    tsv-type - A member of ::tsv-type
+    tsv-type - One of tsv-type?
     columns  - Column names (first will be formatted as primary key identifier)
     rows     - Rows with element counts matching the column count
     file     - [optional] TSV file name to dump
@@ -456,7 +455,7 @@
     (columns-rows->terra-tsv :membership [c1 c2 c3] [[x1 x2 x3] [y1 y2 y3] ...] \"dest.tsv\")
   "
   ([tsv-type columns rows file]
-   {:pre [(s/valid? ::tsv-type tsv-type)]}
+   {:pre [(tsv-type? tsv-type)]}
    (letfn [(format-entity-type [[head & rest]]
              (cons (terra-id tsv-type head) rest))]
      (columns-rows->tsv [(format-entity-type columns)] rows file)))

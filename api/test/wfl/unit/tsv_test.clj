@@ -5,8 +5,7 @@
             [clojure.set         :as set]
             [clojure.walk        :as walk]
             [wfl.tools.resources :as resources]
-            [wfl.tsv             :as tsv])
-  (:import [java.util UUID]))
+            [wfl.tsv             :as tsv]))
 
 (def ^:private the-edn
   "More EDN than can be represented in a Terra (.tsv) file."
@@ -82,7 +81,7 @@
 
 (deftest round-trip-file
   (testing "Round-trip THE-EDN to file.tsv and back."
-    (let [file (io/file (str (UUID/randomUUID) ".tsv"))]
+    (let [file (io/file (str (random-uuid) ".tsv"))]
       (try (is (= (-> the-edn hack-terrafy hack-unterrafy)
                   (do (-> the-edn tsv/tabulate (tsv/write-file file))
                       (-> file tsv/read-file tsv/mapulate hack-unterrafy))))

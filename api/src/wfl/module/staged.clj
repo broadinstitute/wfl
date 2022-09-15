@@ -12,8 +12,7 @@
             [wfl.stage            :as stage]
             [wfl.util             :as util :refer [utc-now]]
             [wfl.wfl              :as wfl])
-  (:import [java.util UUID]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 (def pipeline nil)
 
@@ -79,7 +78,7 @@
                :output   ""
                :release  ""
                :wdl      ""
-               :uuid     (UUID/randomUUID))
+               :uuid     (random-uuid))
         (->> (jdbc/insert! tx :workload) first :id))))
 
 (def ^:private update-workload-query

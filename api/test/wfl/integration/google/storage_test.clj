@@ -5,8 +5,7 @@
             [clojure.test :refer [deftest is testing]]
             [wfl.auth :as auth]
             [wfl.service.google.storage :as gcs]
-            [wfl.tools.fixtures :as fixtures])
-  (:import [java.util UUID]))
+            [wfl.tools.fixtures :as fixtures]))
 
 (deftest object-test
   (fixtures/with-temporary-cloud-storage-folder
@@ -29,7 +28,7 @@
           (is (gcs/copy-object bucket (str src-folder  "test")
                                bucket (str dest-folder "test"))))
         (testing "download"
-          (let [local-file-name (str/join "-" ["wfl" "test" (UUID/randomUUID)])]
+          (let [local-file-name (str/join "-" ["wfl" "test" (random-uuid)])]
             (gcs/download-file local-file-name bucket (str dest-folder "test"))
             (try
               (is (= (slurp dockerfile) (slurp local-file-name)))

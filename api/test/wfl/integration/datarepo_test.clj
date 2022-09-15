@@ -13,8 +13,7 @@
             [wfl.tools.resources         :as resources]
             [wfl.tools.snapshots         :as snapshots]
             [wfl.tools.workflows         :as workflows]
-            [wfl.util                    :as util])
-  (:import [java.util UUID]))
+            [wfl.util                    :as util]))
 
 (def ^:private testing-dataset {:id   "4a5d30fe-1f99-42cd-998b-a979885dea00"
                                 :name "workflow_launcher_testing_dataset"})
@@ -64,7 +63,7 @@
          (datasets/unique-dataset-request tdr-profile dataset-json))]
       (fn [[temp-bucket dataset-id]]
         (let [table-url        (str temp-bucket "table.json")
-              workflow-id      (UUID/randomUUID)
+              workflow-id      (random-uuid)
               dataset          (datarepo/datasets dataset-id)
               [_bucket object] (gcs/parse-gs-url temp-bucket)]
           (-> (#'sink/rename-gather-bulk workflow-id
