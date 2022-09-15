@@ -7,19 +7,18 @@
             [wfl.module.batch               :as batch]
             [wfl.tools.fixtures             :as fixtures]
             [wfl.tools.workloads            :as workloads]
-            [wfl.util                       :as util])
-  (:import [java.util UUID]))
+            [wfl.util                       :as util]))
 
 (clojure.test/use-fixtures :once fixtures/temporary-postgresql-database)
 
-(defn mock-submit-workload [& _] (UUID/randomUUID))
+(defn mock-submit-workload [& _] (random-uuid))
 (defn mock-update-statuses! [tx {:keys [items] :as workload}]
   (letfn [(f [{:keys [id]}]
             (jdbc/update! tx items {:status "Succeeded"} ["id = ?" id]))]
     (run! f (workloads/workflows workload))))
 
 (defn ^:private make-aou-workload-request []
-  (-> (workloads/aou-workload-request (UUID/randomUUID))
+  (-> (workloads/aou-workload-request (random-uuid))
       (assoc :creator @workloads/email)))
 
 (defn ^:private inc-version [sample]

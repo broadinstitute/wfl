@@ -1,17 +1,17 @@
 (ns wfl.api.spec
-  "Define specs used in routes"
-  (:require [clojure.spec.alpha   :as s]
-            [clojure.string       :as str]
-            [wfl.executor         :as executor]
-            [wfl.module.all       :as all]
-            [wfl.module.aou       :as aou]
-            [wfl.module.batch     :as batch]
-            [wfl.module.copyfile  :as copyfile]
-            [wfl.module.sg        :as sg]
-            [wfl.module.staged    :as staged]
-            [wfl.module.wgs       :as wgs]
-            [wfl.module.xx        :as xx]
-            [wfl.util             :as util]))
+  "Define the specs used in routes."
+  (:require [clojure.spec.alpha  :as s]
+            [clojure.string      :as str]
+            [wfl.executor        :as executor]
+            [wfl.module.all      :as all]
+            [wfl.module.aou      :as aou]
+            [wfl.module.batch    :as batch]
+            [wfl.module.copyfile :as copyfile]
+            [wfl.module.sg       :as sg]
+            [wfl.module.staged   :as staged]
+            [wfl.module.wgs      :as wgs]
+            [wfl.module.xx       :as xx]
+            [wfl.util            :as util]))
 
 (s/def ::workload-query (s/and (s/keys :opt-un [::all/uuid ::all/project])
                                #(not (and (:uuid %) (:project %)))))

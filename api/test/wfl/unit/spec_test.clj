@@ -3,21 +3,19 @@
             [clojure.test        :refer [deftest testing is]]
             [wfl.api.spec        :as spec]
             [wfl.tools.workloads :as workloads]
-            [wfl.module.all      :as all])
-  (:import [java.util UUID]))
+            [wfl.module.all      :as all]))
 
 (deftest request-spec-test
   (testing "Requests are valid"
     (letfn [(valid? [req] (is (s/valid? ::spec/workload-request req)))]
-      (run! valid? (map #(% (UUID/randomUUID))
-                        [workloads/wgs-workload-request
-                         workloads/aou-workload-request
-                         workloads/xx-workload-request])))))
+      (run! valid? (map #(% (random-uuid)) [workloads/aou-workload-request
+                                            workloads/wgs-workload-request
+                                            workloads/xx-workload-request])))))
 
 (deftest workload-query-spec-test
   (letfn [(invalid? [req] (is (not (s/valid? ::spec/workload-query req))))
           (valid? [req] (is (s/valid? ::spec/workload-query req)))]
-    (let [uuid (str (UUID/randomUUID))
+    (let [uuid    (str (random-uuid))
           project "bogus-project"]
       (testing "Workload UUID and project cannot be specified together"
         (let [request {:uuid uuid :project project}]

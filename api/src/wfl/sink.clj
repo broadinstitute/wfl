@@ -75,7 +75,7 @@
 
 ;; reitit coercion spec
 (s/def ::terra-workspace-sink
-  (s/and (all/has? :name #(= terra-workspace-sink-name %))
+  (s/and #(= terra-workspace-sink-name (:name %))
          (s/keys :req-un [::all/workspace
                           ::all/entityType
                           ::identifier
@@ -234,7 +234,7 @@
 
 ;; reitit coercion spec
 (s/def ::terra-datarepo-sink
-  (s/and (all/has? :name #(= datarepo-sink-name %))
+  (s/and #(= datarepo-sink-name (:name %))
          (s/keys :req-un [::all/dataset ::all/table ::fromOutputs])))
 
 (defn ^:private write-datarepo-sink [tx id request]

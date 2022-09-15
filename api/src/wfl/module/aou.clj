@@ -13,8 +13,7 @@
             [wfl.util             :as util]
             [wfl.wfl              :as wfl])
   (:import [java.sql Timestamp]
-           [java.time Instant]
-           [java.util UUID]))
+           [java.time Instant]))
 
 ;; This must agree with the AoU cloud function.
 ;;
@@ -217,7 +216,7 @@
                                     :output   slashified
                                     :project  project
                                     :release  release
-                                    :uuid     (UUID/randomUUID)
+                                    :uuid     (random-uuid)
                                     :version  version
                                     :watchers (pr-str watchers)
                                     :wdl      path})))))

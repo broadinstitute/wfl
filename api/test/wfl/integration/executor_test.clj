@@ -12,8 +12,7 @@
             [wfl.tools.fixtures    :as fixtures]
             [wfl.tools.queues      :refer [make-queue-from-list]]
             [wfl.util              :as util])
-  (:import [java.util UUID]
-           [wfl.util UserException]))
+  (:import [wfl.util UserException]))
 
 (def ^:private testing-namespace
   "wfl-dev")
@@ -80,10 +79,10 @@
 (def ^:private snapshot-table-name "snapshot-table")
 (defn ^:private mock-datarepo-snapshot [& _]
   {:name   snapshot-name
-   :id     (str (UUID/randomUUID))
+   :id     (str (random-uuid))
    :tables [{:name snapshot-table-name}]})
 
-(def ^:private snapshot-reference-id (str (UUID/randomUUID)))
+(def ^:private snapshot-reference-id (str (random-uuid)))
 (defn ^:private mock-rawls-snapshot-reference [& _]
   {:metadata {:name            snapshot-name
               :resourceId      snapshot-reference-id
@@ -122,7 +121,7 @@
 
 (defn ^:private workflow-base [entity status]
   {:entity      entity
-   :workflow-id (str (UUID/randomUUID))
+   :workflow-id (str (random-uuid))
    :status      status})
 
 (def ^:private init-submission-id  "init-submission-id")
@@ -235,7 +234,7 @@
 (deftest test-update-terra-executor
   (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
-        workload-uuid (UUID/randomUUID)
+        workload-uuid (random-uuid)
         workload      {:uuid workload-uuid :source source :executor executor}]
     (letfn [(verify-record-against-workflow [record workflow idx]
               (is (= idx (:id record))
@@ -282,7 +281,7 @@
   (let [succeeded?    #{"Succeeded"}
         source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
-        workload-uuid (UUID/randomUUID)
+        workload-uuid (random-uuid)
         workload      {:uuid workload-uuid :source source :executor executor}]
     (with-redefs
      [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
@@ -313,7 +312,7 @@
 (deftest test-terra-executor-retry-workflows
   (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
         executor      (create-terra-executor (rand-int 1000000))
-        workload-uuid (UUID/randomUUID)
+        workload-uuid (random-uuid)
         workload      {:uuid workload-uuid :source source :executor executor}]
     (with-redefs
      [rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference
@@ -329,7 +328,7 @@
       (is (== 2 (stage/queue-length executor))
           "Two workflows should be enqueued prior to retry.")
       (let [executor      (reload-terra-executor executor)
-            workload-uuid (UUID/randomUUID)
+            workload-uuid (random-uuid)
             workload      {:uuid workload-uuid :source source :executor executor}]
         (is (== 2 (:methodConfigurationVersion executor))
             "Reloaded executor's method config should have version 2 post-update.")
@@ -397,7 +396,7 @@
     firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs]
     (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
           executor      (create-terra-executor (rand-int 1000000))
-          workload-uuid (UUID/randomUUID)
+          workload-uuid (random-uuid)
           workload      {:uuid workload-uuid :source source :executor executor}]
       (with-redefs
        [workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)]
@@ -423,7 +422,7 @@
     firecloud/get-workflow-outputs         mock-firecloud-get-workflow-outputs]
     (let [source        (make-queue-from-list [[:datarepo/snapshot (mock-datarepo-snapshot)]])
           executor      (create-terra-executor (rand-int 1000000))
-          workload-uuid (UUID/randomUUID)
+          workload-uuid (random-uuid)
           workload      {:uuid workload-uuid :source source :executor executor}]
       (with-redefs
        [workloads/load-workload-for-uuid (mock-load-workload-for-uuid source executor)]
@@ -461,7 +460,7 @@
      [rawls/create-snapshot-reference        throw-if-called
       rawls/create-or-get-snapshot-reference mock-rawls-snapshot-reference]
       (let [executor  (create-terra-executor (rand-int 1000000))
-            workload  {:uuid (UUID/randomUUID) :executor executor}
+            workload  {:uuid (random-uuid) :executor executor}
             reference (#'executor/entity-from-snapshot workload (mock-datarepo-snapshot))]
         (is (= snapshot-reference-id (get-in reference [:metadata :resourceId])))
         (is (= snapshot-name (get-in reference [:metadata :name])))))))
@@ -469,7 +468,7 @@
 (deftest test-update-method-configuration-with-version-mismatch
   (let [id                    (rand-int 1000000)
         executor              (create-terra-executor id)
-        workload              {:uuid (UUID/randomUUID) :executor executor}
+        workload              {:uuid (random-uuid) :executor executor}
         dataReferenceNamePre  "snapshotReferenceNamePreUpdate"
         dataReferenceNamePost "snapshotReferenceNamePostUpdate"
         reference             {:metadata {:name dataReferenceNamePost}}
