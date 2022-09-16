@@ -96,7 +96,7 @@
    :extra-paths ["test"]
    :main-opts   ["-m" "wfl.tools.parallel-runner"]}
 
-  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.1.4"}}}
+  :uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "1.0.4"}}}
 
   :prebuild {:extra-paths ["./build"] :exec-fn build/prebuild}
 

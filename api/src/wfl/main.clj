@@ -4,7 +4,8 @@
             [clojure.pprint    :refer [pprint]]
             [clojure.string    :as str]
             [wfl.util          :as util]
-            [wfl.wfl           :as wfl]))
+            [wfl.wfl           :as wfl])
+  (:gen-class))
 
 (defn describe
   "Describe the purpose of this program."
