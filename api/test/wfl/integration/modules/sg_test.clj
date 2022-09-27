@@ -3,7 +3,6 @@
                                                     use-fixtures]]
             [clojure.string                 :as str]
             [wfl.api.workloads]             ; for mocking
-            [wfl.debug]
             [wfl.integration.modules.shared :as shared]
             [wfl.jdbc                       :as jdbc]
             [wfl.module.batch               :as batch]
@@ -198,7 +197,6 @@
   "Return an empty `_clio` response for a `bam_path` `query`.
   Return a key matching `mock-clio-query-bam-found`."
   [_clio {:keys [bam_path] :as query}]
-  (wfl.debug/trace query)
   (if bam_path [] [{:data_type "WGS"
                     :location "GCP"
                     :project "G96830"
@@ -321,10 +319,9 @@
   "Mock uploading `content` to `url` and test that `version` is 24 in JSON."
   [content url]
   (let [{:keys [id version]} (mock-gcs-upload-content content url)]
-    (wfl.debug/trace [id version])
     (is (cond version (== 24 version)
               id      true
-              :else false))))
+              :else   false))))
 
 (defn ^:private test-clio-updates
   "Assert that Clio is updated correctly."
@@ -363,10 +360,6 @@
   (throw (ex-info "clj-http: status 500" {:body          "You goofed!"
                                           :reason-phrase "Blame tbl."
                                           :status        500})))
-
-(comment
-  (clojure.test/test-vars [#'test-handle-add-bam-force=true-mocked])
-  )
 
 (deftest test-handle-add-bam-force=true-mocked
   (testing "Retry add-bam when a mock Clio suggests force=true."
