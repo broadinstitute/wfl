@@ -176,19 +176,22 @@
      (str/ends-with?   body clio-force=true-error-message-ends))))
 
 (defn ^:private clio-add-bam
-  "Add `bam` to `clio`, and maybe retry once with a new :version."
+  "Add `bam` to `clio`, and try `again` with maybe a new `:version`.
+  Always return the BAM record inserted to Clio (`bam` or `again`)."
   [clio bam]
   (try (clio/add-bam clio bam)
+       bam
        (catch Throwable x
          (log/error {:bam bam :x x})
-         (clio/add-bam
-          clio (if (hack-try-increment-version-in-clio-add-bam? x)
-                 (-> bam (select-keys clio-key-no-version)
-                     (->> (clio/query-bam clio)
-                          (sort-by :version)
-                          last :version inc
-                          (assoc bam :version)))
-                 bam)))))
+         (let [again (if (hack-try-increment-version-in-clio-add-bam? x)
+                       (-> bam (select-keys clio-key-no-version)
+                           (->> (clio/query-bam clio)
+                                (sort-by :version)
+                                last :version inc
+                                (assoc bam :version)))
+                       bam)]
+           (clio/add-bam clio again)
+           again))))
 
 (defn ^:private maybe-update-clio-and-write-final-files
   "Maybe update `clio-url` with `final` and write files and `metadata`."
