@@ -196,7 +196,7 @@
 (defn ^:private mock-clio-query-bam-missing
   "Return an empty `_clio` response for a `bam_path` `query`.
   Return a key matching `mock-clio-query-bam-found`."
-  [_clio {:keys [bam_path] :as query}]
+  [_clio {:keys [bam_path] :as _query}]
   (if bam_path [] [{:data_type "WGS"
                     :location "GCP"
                     :project "G96830"
@@ -204,8 +204,8 @@
                     :version 23}]))
 
 (defn ^:private mock-clio-query-cram-found
-  "Return a `_clio` CRAM record with metadata `_md`."
-  [_clio {:keys [cram_path] :as _md}]
+  "Return a `_clio` CRAM record with metadata `_query`."
+  [_clio {:keys [cram_path] :as _query}]
   [{:billing_project "hornet-nest"
     :crai_path (str cram_path ".crai")
     :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
