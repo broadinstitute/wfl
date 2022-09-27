@@ -5,6 +5,7 @@
             [clojure.spec.alpha         :as s]
             [clojure.string             :as str]
             [wfl.api.workloads          :as workloads :refer [defoverload]]
+            [wfl.debug]
             [wfl.jdbc                   :as jdbc]
             [wfl.log                    :as log]
             [wfl.module.all             :as all]
@@ -109,6 +110,7 @@
 (defn ^:private clio-bam-record
   "Return `nil` or the most recent `clio` record with `bam`."
   [clio bam]
+  (wfl.debug/trace ['clio-bam-record clio bam])
   (let [records (clio/query-bam clio bam)
         n       (count records)]
     (when (> n 1)
@@ -179,6 +181,7 @@
   "Add `bam` to `clio`, and try `again` with maybe a new `:version`.
   Always return the BAM record inserted to Clio (`bam` or `again`)."
   [clio bam]
+  (wfl.debug/trace ['clio-add-bam clio bam])
   (try (clio/add-bam clio bam)
        bam
        (catch Throwable x
