@@ -329,11 +329,11 @@
   (let [{:keys [items] :as request} (make-sg-workload-request)]
     (-> request workloads/execute-workload! workloads/update-workload!
         (as-> workload
-            (let [{:keys [finished pipeline]} workload]
-              (is finished)
-              (is (= sg/pipeline pipeline))
-              (is (= (count items)
-                     (-> workload workloads/workflows count))))))))
+              (let [{:keys [finished pipeline]} workload]
+                (is finished)
+                (is (= sg/pipeline pipeline))
+                (is (= (count items)
+                       (-> workload workloads/workflows count))))))))
 
 ;; The `body` below is only an approximation of what Scala generates
 ;; for Clio's error message.
