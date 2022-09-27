@@ -202,9 +202,9 @@
             bam    (-> cram (merge final) (dissoc :contamination))
             contam (:contamination final)
             suffix (last (str/split contam #"/"))
-            folder (str (util/unsuffix contam suffix))]
-        (clio-add-bam clio-url bam)
-        (-> bam
+            folder (str (util/unsuffix contam suffix))
+            record (clio-add-bam clio-url bam)]
+        (-> record
             (json/write-str :escape-slash false)
             (gcs/upload-content (str folder "clio-bam-record.json")))
         (-> metadata
