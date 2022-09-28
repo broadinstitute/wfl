@@ -371,15 +371,15 @@
                   cromwell/submit-workflows mock-cromwell-submit-workflows
                   gcs/upload-content        mock-gcs-upload-content-force=true]
       (test-clio-updates)))
-  #_(testing "Do not retry when a mock Clio rejects add-bam for another reason."
-      (with-redefs [clio/add-bam              mock-add-bam-throw-something-else
-                    clio/query-bam            mock-clio-query-bam-missing
-                    clio/query-cram           mock-clio-query-cram-found
-                    cromwell/metadata         mock-cromwell-metadata-succeeded
-                    cromwell/query            mock-cromwell-query-succeeded
-                    cromwell/submit-workflows mock-cromwell-submit-workflows
-                    gcs/upload-content        mock-gcs-upload-content-force=true]
-        (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
+  (testing "Do not retry when a mock Clio rejects add-bam for another reason."
+    (with-redefs [clio/add-bam              mock-add-bam-throw-something-else
+                  clio/query-bam            mock-clio-query-bam-missing
+                  clio/query-cram           mock-clio-query-cram-found
+                  cromwell/metadata         mock-cromwell-metadata-succeeded
+                  cromwell/query            mock-cromwell-query-succeeded
+                  cromwell/submit-workflows mock-cromwell-submit-workflows
+                  gcs/upload-content        mock-gcs-upload-content-force=true]
+      (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
 
 (deftest test-handle-add-bam-force=true-for-real
   (let [bug     "GH-1691"
