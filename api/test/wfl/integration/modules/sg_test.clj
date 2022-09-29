@@ -178,8 +178,8 @@
   (is false))
 
 (defn ^:private mock-clio-query-bam-found
-  "Return a `_clio` BAM record with metadata `_md`."
-  [_clio {:keys [bam_path] :as _md}]
+  "Return a `_clio` BAM record with metadata `_query`."
+  [_clio {:keys [bam_path] :as _query}]
   [{:bai_path (str/replace bam_path ".bam" ".bai")
     :bam_path bam_path
     :billing_project "hornet-nest"
@@ -194,13 +194,18 @@
     :version 23}])
 
 (defn ^:private mock-clio-query-bam-missing
-  "Return an empty `_clio` response for query metadata `_md`."
-  [_clio _md]
-  [])
+  "Return an empty `_clio` response for a `bam_path` `query`.
+  Return a key matching `mock-clio-query-bam-found`."
+  [_clio {:keys [bam_path] :as _query}]
+  (if bam_path [] [{:data_type "WGS"
+                    :location "GCP"
+                    :project "G96830"
+                    :sample_alias "NA12878"
+                    :version 23}]))
 
 (defn ^:private mock-clio-query-cram-found
-  "Return a `_clio` CRAM record with metadata `_md`."
-  [_clio {:keys [cram_path] :as _md}]
+  "Return a `_clio` CRAM record with metadata `_query`."
+  [_clio {:keys [cram_path] :as _query}]
   [{:billing_project "hornet-nest"
     :crai_path (str cram_path ".crai")
     :cram_md5 "0cfd2e0890f45e5f836b7a82edb3776b"
@@ -296,18 +301,27 @@
   (is false))
 
 (defn mock-gcs-upload-content
-  "Mock uploading `content` to `url`."
+  "Mock uploading `content` to `url`.  Return `content` as EDN."
   [content url]
   (letfn [(parse [url] (drop-last (str/split url #"/")))
           (tail? [end] (str/ends-with? url end))]
-    (let [md  [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
-          ok? (partial = (parse url))
-          edn (util/parse-json content)]
+    (let [md     [:outputs :GDCWholeGenomeSomaticSingleSample.contamination]
+          ok?    (partial = (parse url))
+          result (util/parse-json content)]
       (is (cond (tail? "/clio-bam-record.json")
-                (ok? (parse (:bai_path edn)))
+                (ok? (parse (:bai_path result)))
                 (tail? "/cromwell-metadata.json")
-                (ok? (parse (get-in edn md)))
-                :else false)))))
+                (ok? (parse (get-in result md)))
+                :else false))
+      result)))
+
+(defn mock-gcs-upload-content-force=true
+  "Mock uploading `content` to `url` and test that `version` is 24 in JSON."
+  [content url]
+  (let [{:keys [id version]} (mock-gcs-upload-content content url)]
+    (is (cond version (== 24 version)
+              id      true
+              :else   false))))
 
 (defn ^:private test-clio-updates
   "Assert that Clio is updated correctly."
@@ -350,12 +364,12 @@
 (deftest test-handle-add-bam-force=true-mocked
   (testing "Retry add-bam when a mock Clio suggests force=true."
     (with-redefs [clio/add-bam              mock-add-bam-suggest-force=true
-                  clio/query-bam            mock-clio-query-bam-found
+                  clio/query-bam            mock-clio-query-bam-missing
                   clio/query-cram           mock-clio-query-cram-found
                   cromwell/metadata         mock-cromwell-metadata-succeeded
                   cromwell/query            mock-cromwell-query-succeeded
                   cromwell/submit-workflows mock-cromwell-submit-workflows
-                  gcs/upload-content        mock-gcs-upload-content]
+                  gcs/upload-content        mock-gcs-upload-content-force=true]
       (test-clio-updates)))
   (testing "Do not retry when a mock Clio rejects add-bam for another reason."
     (with-redefs [clio/add-bam              mock-add-bam-throw-something-else
@@ -364,7 +378,7 @@
                   cromwell/metadata         mock-cromwell-metadata-succeeded
                   cromwell/query            mock-cromwell-query-succeeded
                   cromwell/submit-workflows mock-cromwell-submit-workflows
-                  gcs/upload-content        mock-gcs-upload-content]
+                  gcs/upload-content        mock-gcs-upload-content-force=true]
       (is (thrown-with-msg? Exception #"clj-http: status 500" (test-clio-updates))))))
 
 (deftest test-handle-add-bam-force=true-for-real
