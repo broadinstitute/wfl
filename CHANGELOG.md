@@ -1,3 +1,6 @@
+# Release 0.20.2
+- [GH-1695] Fix the "increment BAM version in Clio" again. ([#626](https://github.com/broadinstitute/wfl/pull/626))
+
 # Release 0.20.1
 - [GH-1691] Fix the SG/GDC increment the add_bam version in Clio hack. ([#623](https://github.com/broadinstitute/wfl/pull/623))
 
