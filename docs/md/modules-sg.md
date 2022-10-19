@@ -91,18 +91,19 @@ GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
 | POST | `/api/v1/stop`                      | Stop a running workload                                        |
 | POST | `/api/v1/exec`                      | Create and start (execute) a workload                          |
 
-???+ warning "Permissions in production"
-    External Whole Genome Reprocessing in `gotc-prod`
-    uses a set of execution projects.
-    Please refer to
-    [this page](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
-    when you have questions about permissions.
+### Permissions in production
+
+External Whole Genome Reprocessing in `gotc-prod`
+uses a set of execution projects.
+Please refer to
+[this page](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
+when you have questions about permissions.
 
 ### Create Workload: `/api/v1/create`
 
 Create a WFL workload running in production.
 
-=== "Request"
+Here is a `/create` request using `curl`.
 
 ```json
 curl --location --request POST \
@@ -135,7 +136,7 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
 }'
 ```
 
-=== "Response"
+And here is a successful response to a `/create` request.
 
 ```json
 {
@@ -162,9 +163,11 @@ for more information.
 
 ### Start Workload: `/api/v1/start`
 
-Start all the workflows in the workload.
+Start the workload
+by submitting all of its workflows
+to Cromwell.
 
-=== "Request"
+Here is a `/start` request using `curl`.
 
 ```bash
 curl --location --request POST \
@@ -174,7 +177,7 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start \
 --data-raw '{"uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2"}'
 ```
 
-=== "Response"
+A successful `/start` response looks like this.
 
 ```json
 {
@@ -193,11 +196,9 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/start \
 }
 ```
 
-### Start Workload: `/api/v1/start`
+### Stop Workload: `/api/v1/stop`
 
-Included for compatibility with continuous workloads.
-
-=== "Request"
+Request a workload to stop with a request like this.
 
 ```bash
 curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
@@ -206,7 +207,7 @@ curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
      -d '{ "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2" }'
 ```
 
-=== "Response"
+A successful `/stop` request looks something like this.
 
 ```json
 {
@@ -228,6 +229,9 @@ curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
 
 ### Exec Workload: `/api/v1/exec`
 
+The `/exec` request combines the functions
+of `/create` and `/start`.
+
 Create a workload,
 then start every workflow
 in the workload.
@@ -246,15 +250,13 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec \
 
 Query WFL for a workload by its UUID.
 
-=== "Request"
+Here is a query request.
 
 ```bash
 curl --location --request GET \
 https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?uuid=efb00901-378e-4365-86e7-edd0fbdaaab2 \
 --header 'Authorization: Bearer '$(gcloud auth print-access-token)
 ```
-
-=== "Response"
 
 A successful response from `/api/v1/workload`
 is always an array of workload objects,
@@ -281,7 +283,7 @@ but specifying a UUID returns only one.
 
 ### Query Workload with project: `/api/v1/workload?project=<project>`
 
-Query WFL for all workloads
+This asks WFL for all workloads
 with a specified `project` label.
 
 ```bash
@@ -295,7 +297,7 @@ The response is the same as when specifying a UUID,
 except the array may contain multiple workload objects
 that share the same `project` value.
 
-!!! warning "Note"
+
     A request to the `/api/v1/workload` endpoint
     without a `project` or `uuid` parameter
     returns all of the workloads
