@@ -298,13 +298,12 @@ except the array may contain multiple workload objects
 that share the same `project` value.
 
 
-    A request to the `/api/v1/workload` endpoint
-    without a `project` or `uuid` parameter
-    returns all of the workloads
-    that WFL knows about.
-    That response might be large
-    and take a while to process.
-
+> A request to the `/api/v1/workload` endpoint
+> without a `project` or `uuid` parameter
+> returns all of the workloads
+> that WFL knows about.
+> That response might be large
+> and take a while to process.
 
 ### List workflows managed by the workload `GET /api/v1/workload/{uuid}/workflows`
 
