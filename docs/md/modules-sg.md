@@ -92,8 +92,10 @@ GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
 | POST | `/api/v1/exec`                      | Create and start (execute) a workload                          |
 
 ???+ warning "Permissions in production"
-    External Whole Genome Reprocessing in `gotc-prod` uses a set of execution projects, please refer to
-    [this page](https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
+    External Whole Genome Reprocessing in `gotc-prod`
+    uses a set of execution projects.
+    Please refer to [this page]
+    (https://github.com/broadinstitute/gotc-deploy/blob/master/deploy/gotc-prod/helm/WFL_README.md)
     when you have questions about permissions.
 
 ### Create Workload: `/api/v1/create`
