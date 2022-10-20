@@ -123,10 +123,10 @@ curl --location --request POST \
 https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
 --header "Authorization: Bearer $(gcloud auth print-access-token)" \
 --header 'Content-Type: application/json' \
---data-raw
+--data-raw `
 ```
 ```json
-'{
+{
   "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
   "output": "gs://broad-prod-somatic-genomes-output",
   "pipeline": "GDCWholeGenomeSomaticSingleSample",
@@ -148,7 +148,10 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
       }
     }
   ]
-}'
+}
+```
+``` shell
+'
 ```
 
 Each JSON object in `"items"`
