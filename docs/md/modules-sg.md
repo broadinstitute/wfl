@@ -1,15 +1,28 @@
 # GDCWholeGenomeSomaticSingleSample
 
+WFL manages a Somatic Genome (SG) pipeline
+to support Whole Genome Shotgun (WGS) analysis
+of somatic samples
+for the Genomic Data Commons (GDC).
+
+The pipeline workflows are specified
+in the Workflow Definition Language (WDL).
+WFL reads the WDL file from the
+[WARP](https://github.com/broadinstitute/warp#wdl-analysis-research-pipelines)
+repository.
+The version is coded in WFL's SG module
+[here](https://github.com/broadinstitute/wfl/blob/develop/api/src/wfl/module/sg.clj#L34).
+
 ## Inputs
 
-In addition to the standard workload request inputs:
+In addition to these standard workload request inputs:
 
 - `executor` : URL of the Cromwell service
 - `output`   : GCS URL prefix for output files
 - `pipeline` : literally `"GDCWholeGenomeSomaticSingleSample"`
 - `project`  : some tracking label you can choose
 
-a `GDCWholeGenomeSomaticSingleSample` workload
+A `GDCWholeGenomeSomaticSingleSample` workload
 requires the following inputs
 for each workflow.
 
@@ -82,14 +95,14 @@ specified as an `input_cram`.
 
 GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
 
-| Verb | Endpoint                            | Description                                                    |
-|------|-------------------------------------|----------------------------------------------------------------|
-| GET  | `/api/v1/workload`                  | List all workloads, optionally filtering by uuid or project    |
-| GET  | `/api/v1/workload/{uuid}/workflows` | List all workflows for a specified workload uuid               |
-| POST | `/api/v1/create`                    | Create a new workload                                          |
-| POST | `/api/v1/start`                     | Start a workload                                               |
-| POST | `/api/v1/stop`                      | Stop a running workload                                        |
-| POST | `/api/v1/exec`                      | Create and start (execute) a workload                          |
+| Verb | Endpoint                           | Description                                                 |
+|------|------------------------------------|-------------------------------------------------------------|
+| GET  | `/api/v1/workload`                 | List all workloads, optionally filtering by uuid or project |
+| GET  | `/api/v1/workload/$UUID/workflows` | List all workflows for workload with `$UUID`                |
+| POST | `/api/v1/create`                   | Create a new workload                                       |
+| POST | `/api/v1/start`                    | Start a workload                                            |
+| POST | `/api/v1/stop`                     | Stop a running workload                                     |
+| POST | `/api/v1/exec`                     | Create and start (execute) a workload                       |
 
 ### Permissions in production
 
@@ -135,6 +148,11 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
   ]
 }'
 ```
+
+Each JSON object in `"items"`
+defines a Cromwell workflow
+to be launched
+when the workload is started.
 
 And here is a successful response to a `/create` request.
 
@@ -305,19 +323,21 @@ that share the same `project` value.
 > That response might be large
 > and take a while to process.
 
-### List workflows managed by the workload `GET /api/v1/workload/{uuid}/workflows`
+### List workflows managed by the workload `GET /api/v1/workload/$UUID/workflows`
 
-=== "Request"
+This request returns the workflows
+in the workload with UUID
+`efb00901-378e-4365-86e7-edd0fbdaaab2/workflows`.
 
 ```bash
 curl -X GET '/api/v1/workload/efb00901-378e-4365-86e7-edd0fbdaaab2/workflows' \
      -H 'Authorization: Bearer '$(gcloud auth print-access-token)
 ```
 
-=== "Response"
-
-A successful response from `/api/v1/workload/{uuid}/workload`
-is always an array of Cromwell workflows with their statuses.
+A successful response
+from `/api/v1/workload/$UUID/workload`
+is always an array of Cromwell workflows
+with their statuses.
 
 ```json
 [{
@@ -339,3 +359,73 @@ is always an array of Cromwell workflows with their statuses.
       }
 }]
 ```
+
+## Outputs
+
+The principle outputs
+from a `GDCWholeGenomeSomaticSingleSample` workflow in WDL
+are a BAM file and index,
+and the associated metrics files.
+Cromwell writes those files to a well-known "folder"
+in Google Cloud Storage.
+That place is
+`gs://broad-prod-somatic-genomes-output/GDCWholeGenomeSomaticSingleSample/`
+in production.
+However,
+WFL adds some extra outputs
+to support the Broad Genomics Platform (GP),
+and to preserve analysis provenence
+and support data discovery.
+
+### use of Clio
+
+[Clio](https://github.com/broadinstitute/clio#clio)
+is a metadata manager for GP.
+It tracks the location of sample and analysis data,
+and answers location queries by common key fields
+such as data type,
+project,
+sample alias,
+version,
+and so on.
+
+WFL adds a BAM record to Clio
+for each `GDCWholeGenomeSomaticSingleSample` workflow
+that succeeds in Cromwell.
+That record,
+when retrieved from Clio,
+typically looks like this.
+The record records the outputs of the workflow,
+and adds enough metadata to support later
+location and aggregation of project results.
+
+``` json
+{
+  "bai_path": "gs://broad-prod-somatic-genomes-output/GDCWholeGenomeSomaticSingleSample/510aa24c-b1a4-4478-aeab-b43c075cb034/call-gatk_applybqsr/EOMI-B21D-NB1-A-1-0-D-A82T-36.aln.mrkdp.bai",
+  "bam_path": "gs://broad-prod-somatic-genomes-output/GDCWholeGenomeSomaticSingleSample/510aa24c-b1a4-4478-aeab-b43c075cb034/call-gatk_applybqsr/EOMI-B21D-NB1-A-1-0-D-A82T-36.aln.mrkdp.bam",
+  "data_type": "WGS",
+  "document_status": "Normal",
+  "insert_size_metrics_path": "gs://broad-prod-somatic-genomes-output/GDCWholeGenomeSomaticSingleSample/510aa24c-b1a4-4478-aeab-b43c075cb034/call-collect_insert_size_metrics/EOMI-B21D-NB1-A-1-0-D-A82T-36.aln.mrkdp.insert_size_metrics",
+  "location": "GCP",
+  "project": "RP-2359",
+  "sample_alias": "EOMI-B21D-NB1-A-1-0-D-A82T-36",
+  "version": 1
+}
+
+```
+
+The content of the Clio BAM record
+has three sources:
+
+- the workload inputs specified to WFL
+- the workflow outpus produced by Cromwell
+- the Clio CRAM record for the workflow's `input_cram` file
+
+WFL supplements the workload inputs and workflow outputs,
+as necessary,
+with the result of a query for the Clio CRAM record
+when the workload completes.
+
+There are a couple of more details
+that grew out of requirements discovered
+late in the
