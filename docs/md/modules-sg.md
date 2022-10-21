@@ -91,6 +91,23 @@ expects to find a `base_file_name.cram.crai` file
 for every `base_file_name.cram` file
 specified as an `input_cram`.
 
+#### other inputs
+
+The Cromwell workflows that WFL creates
+for a `GDCWholeGenomeSomaticSingleSample` workload
+have other inputs that WFL's `wfl.module.sg`
+adds to Cromwell submission.
+WFL exports the inputs above
+because they are the ones most likely
+to vary across workloads.
+
+WFL also submits a default set
+of Cromwell workflow options
+that a `/create` or `/exec` request
+can override.
+See [this section](./usage-workflow-options)
+for more guidance on workflow options.
+
 ## Usage
 
 GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
@@ -423,7 +440,7 @@ The content of the Clio BAM record
 has three sources:
 
 - the workload inputs specified to WFL
-- the workflow outpus produced by Cromwell
+- the workflow outputs produced by Cromwell
 - the Clio CRAM record for the workflow's `input_cram` file
 
 WFL supplements the workload inputs and workflow outputs,
@@ -433,4 +450,4 @@ when the workload completes.
 
 There are a couple of more details
 that grew out of requirements discovered
-late in the
+later in operation of the pipeline.
