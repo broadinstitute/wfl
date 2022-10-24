@@ -114,7 +114,7 @@ GDCWholeGenomeSomaticSingleSample workload supports the following API endpoints:
 
 | Verb | Endpoint                           | Description                                                 |
 |------|------------------------------------|-------------------------------------------------------------|
-| GET  | `/api/v1/workload`                 | List all workloads, optionally filtering by uuid or project |
+| GET  | `/api/v1/workload`                 | List all workloads, optionally filtering by UUID or project |
 | GET  | `/api/v1/workload/$UUID/workflows` | List all workflows for workload with `$UUID`                |
 | POST | `/api/v1/create`                   | Create a new workload                                       |
 | POST | `/api/v1/start`                    | Start a workload                                            |
@@ -180,7 +180,7 @@ And here is a successful response to a `/create` request.
 
 ```json
 {
-  "commit": "477bb195c40cc5f5afb81ca1b57e97c9cc18fa2c",
+  "commit": "477bx195c40cc5f5afb81ca1b57e97c9cc18fa2c",
   "created": "2021-04-05T16:02:31Z",
   "creator": "tbl@broadinstitute.org",
   "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
@@ -286,7 +286,7 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/exec \
 ... and so on ...
 ```
 
-### Query Workload: `/api/v1/workload?uuid=<uuid>`
+### Query Workload: `/api/v1/workload?uuid=$UUID`
 
 Query WFL for a workload by its UUID.
 
@@ -396,7 +396,7 @@ in production.
 However,
 WFL adds some extra outputs
 to support the Broad Genomics Platform (GP),
-and to preserve analysis provenence
+and to preserve analysis provenance
 and support data discovery.
 
 ### use of Clio
@@ -486,7 +486,7 @@ That label information,
 together with the Docker image tags
 that Cromwell records in the workflow metadata,
 should be enough to answer questions
-about the toolchain used
+about the tool chain used
 to create the output files.
 
 ## Reprocessing
