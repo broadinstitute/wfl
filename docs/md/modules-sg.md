@@ -18,7 +18,7 @@ The version is coded in WFL's SG module
 In addition to these standard workload request inputs:
 
 - `executor` : URL of the Cromwell service
-- `output`   : GCS URL prefix for output files
+- `output`   : URL prefix for output files in Google Cloud Storage
 - `pipeline` : literally `"GDCWholeGenomeSomaticSingleSample"`
 - `project`  : some tracking label you can choose
 
@@ -49,7 +49,7 @@ and differs in every workflow.
 
 #### `contamination_vcf_index` and `contamination_vcf`
 
-These are GCS pathnames
+These are Google Cloud Storage (GCS) URLs
 of the contamination detection data
 for the input samples.
 This commonly depends
@@ -433,7 +433,6 @@ location and aggregation of project results.
   "sample_alias": "EOMI-B21D-NB1-A-1-0-D-A82T-36",
   "version": 1
 }
-
 ```
 
 The content of the Clio BAM record
@@ -443,11 +442,67 @@ has three sources:
 - the workflow outputs produced by Cromwell
 - the Clio CRAM record for the workflow's `input_cram` file
 
-WFL supplements the workload inputs and workflow outputs,
+WFL supplements the workflow output,
 as necessary,
-with the result of a query for the Clio CRAM record
+with the result of a query
+for the Clio CRAM record
 when the workload completes.
 
 There are a couple of more details
+about what goes into the Clio BAM record
 that grew out of requirements discovered
 later in operation of the pipeline.
+
+### other outputs
+
+In addition to the Cromwell workflow outputs
+as recorded in the final Clio BAM record,
+WFL produces two extra output files
+for each successful Cromwell workflow.
+WFL writes those extra output files
+alongside the files created by the workflow.
+Those files are named:
+
+- `clio-bam-record.json`
+- `cromwell-metadata.json`
+
+`clio-bam-record.json` is just a JSON file
+containing the BAM record
+submitted to Clio
+for the workflow output files.
+The file is a convenience
+for GP's project tracking
+and quality assurance processes.
+
+Similarly,
+`cromwell-metadata.json` is a JSON file
+containing the Cromwell metadata
+for the workflow that generated the output.
+WFL writes that file to preserve analysis provenance
+to support pipeline debugging and compliance.
+WFL records its own version information
+in Cromwell workflow labels
+That label information,
+together with the Docker image tags
+that Cromwell records in the workflow metadata,
+should be enough to answer questions
+about the toolchain used
+to create the output files.
+
+## Reprocessing
+
+A `GDCWholeGenomeSomaticSingleSample` workflow
+takes a while to run,
+so early in the pipeline design,
+the need to avoid redundant processing
+was heavily emphasized.
+WFL implemented some guards
+in the pipeline to detect when a sample
+was submitted more than once
+and to prevent _reprocessing_ samples.
+
+Of course,
+as with most data processing pipelines,
+samples are often intentionally submitted multiple times
+to fix problems detected in analysis
+or to debug problems with the pipeline.
