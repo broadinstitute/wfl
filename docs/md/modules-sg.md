@@ -135,39 +135,35 @@ Create a WFL workload running in production.
 
 Here is a `/create` request using `curl`.
 
-``` shell
+```shell
 curl --location --request POST \
 https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/create \
 --header "Authorization: Bearer $(gcloud auth print-access-token)" \
 --header 'Content-Type: application/json' \
 --data-raw `
-```
-```json
-{
-  "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
-  "output": "gs://broad-prod-somatic-genomes-output",
-  "pipeline": "GDCWholeGenomeSomaticSingleSample",
-  "project": "PO-1234",
-  "items": [
-    {
-      "inputs": {
-        "base_file_name": "27B-6",
-        "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
-        "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
-        "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
-        "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
-        "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
-        "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
-        "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
-      },
-      "options": {
-        "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
+  {
+    "executor": "https://cromwell-gotc-auth.gotc-prod.broadinstitute.org",
+    "output": "gs://broad-prod-somatic-genomes-output",
+    "pipeline": "GDCWholeGenomeSomaticSingleSample",
+    "project": "PO-1234",
+    "items": [
+      {
+        "inputs": {
+          "base_file_name": "27B-6",
+          "contamination_vcf": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz",
+          "contamination_vcf_index": "gs://gatk-best-practices/somatic-hg38/small_exac_common_3.hg38.vcf.gz.tbi",
+          "cram_ref_fasta": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta",
+          "cram_ref_fasta_index": "gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta.fai",
+          "dbsnp_vcf": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz",
+          "dbsnp_vcf_index": "gs://gcp-public-data--broad-references/hg38/v0/gdc/dbsnp_144.hg38.vcf.gz.tbi",
+          "input_cram": "gs://broad-gotc-prod-storage/pipeline/PO-1234/27B-6/v1/27B-6.cram"
+        },
+        "options": {
+          "monitoring_script": "gs://broad-gotc-prod-storage/scripts/monitoring_script.sh"
+        }
       }
-    }
-  ]
-}
-```
-``` shell
+    ]
+  }
 '
 ```
 
