@@ -267,10 +267,10 @@ A successful `/stop` response looks something like this.
 
 The `/exec` request combines the functions
 of `/create` and `/start`.
-
 Create a workload,
 then start every workflow
-in the workload.
+in the workload,
+in other words.
 
 Except for the different WFL URI,
 the request and response are the same
@@ -317,7 +317,7 @@ but specifying a UUID returns only one.
 ]
 ```
 
-### Query Workload with project: `/api/v1/workload?project=<project>`
+### Query Workload with project: `/api/v1/workload?project=$PROJECT`
 
 This asks WFL for all workloads
 with a specified `project` label.
@@ -332,7 +332,6 @@ https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/workload?project=PO-12
 The response is the same as when specifying a UUID,
 except the array may contain multiple workload objects
 that share the same `project` value.
-
 
 > A request to the `/api/v1/workload` endpoint
 > without a `project` or `uuid` parameter
@@ -413,9 +412,6 @@ that succeeds in Cromwell.
 That record,
 when retrieved from Clio,
 typically looks like this.
-The record records the outputs of the workflow,
-and adds enough metadata to support later
-location and aggregation of project results.
 
 ``` json
 {
@@ -431,8 +427,13 @@ location and aggregation of project results.
 }
 ```
 
-The content of the Clio BAM record
-has three sources:
+The BAM record includes the useful outputs
+of the workflow,
+and adds enough metadata to support later
+location and aggregation of project results.
+
+WFL uses three sources
+for the content of the Clio BAM record.
 
 - the workload inputs specified to WFL
 - the workflow outputs produced by Cromwell
