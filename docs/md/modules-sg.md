@@ -479,7 +479,7 @@ Similarly,
 containing the Cromwell metadata
 for the workflow that generated the output.
 WFL writes that file to preserve analysis provenance
-to support pipeline debugging and compliance.
+and support pipeline debugging and compliance.
 WFL records its own version information
 in Cromwell workflow labels
 That label information,
@@ -506,3 +506,38 @@ as with most data processing pipelines,
 samples are often intentionally submitted multiple times
 to fix problems detected in analysis
 or to debug problems with the pipeline.
+As a consequence,
+WFL added some late features
+to support reprocessing better.
+
+As described above,
+WFL uses Clio to discover
+some attributes of the input CRAMs
+to propagate to the output BAM records
+that it writes to Clio
+when a workload finishes.
+
+Clio has a data safety features
+that make it difficult to accidently
+overwrite the file location data it manages.
+Overwriting a record could
+cause Clio to lose track
+of an important
+or expensive storage resource.
+For example,
+every record type that Clio implements
+includes a set of metadata values
+that constitute a key for that record.
+The key for a BAM record is this tuple.
+
+- location (always `"GCP"`)
+- project
+- data type
+- sample alias
+- version
+
+Clio requires each BAM record submission
+to provide values for all of those key fields,
+but rejects attempts
+to write a second BAM record
+with the same key.
