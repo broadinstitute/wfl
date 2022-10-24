@@ -506,7 +506,6 @@ as with most data processing pipelines,
 samples are often intentionally submitted multiple times
 to fix problems detected in analysis
 or to debug problems with the pipeline.
-As a consequence,
 WFL added some late features
 to support reprocessing better.
 
@@ -541,3 +540,32 @@ to provide values for all of those key fields,
 but rejects attempts
 to write a second BAM record
 with the same key.
+Also notice that the inputs
+to a `GDCWholeGenomeSomaticSingleSample` workflow
+do not admit a version.
+Thus WFL used to copy the version of the input CRAM
+as the version for the new BAM record it wrote to Clio.
+As a consequence,
+processing the same input CRAM
+through the pipeline a second time
+caused Clio to reject the second output BAM.
+
+WFL works around that problem
+by detecting the rejection response
+from Clio,
+and using it to trigger a remediation.
+When WFL detects a Clio _overwrite_ rejection,
+it queries Clio for all BAM records matching
+the key it has composed for a new BAM record.
+The query WFL makes omits the version specified
+in the input CRAM record
+such that Clio returns all records
+that match the new BAM key
+up to but omitting the version number.
+Then WFL looks for the latest version of BAM
+that Clio has seen matching the project,
+data type,
+and sample alias,
+and increments that number
+to arrive at a version
+that Clio will accept.
