@@ -243,7 +243,7 @@ curl -X POST 'https://gotc-prod-wfl.gotc-prod.broadinstitute.org/api/v1/stop' \
      -d '{ "uuid": "efb00901-378e-4365-86e7-edd0fbdaaab2" }'
 ```
 
-A successful `/stop` request looks something like this.
+A successful `/stop` response looks something like this.
 
 ```json
 {
