@@ -463,7 +463,7 @@ Those files are named:
 - `clio-bam-record.json`
 - `cromwell-metadata.json`
 
-`clio-bam-record.json` is just a JSON file
+`clio-bam-record.json` is a JSON file
 containing the BAM record
 submitted to Clio
 for the workflow output files.
@@ -508,12 +508,12 @@ to support reprocessing better.
 
 As described above,
 WFL uses Clio to discover
-some attributes of the input CRAMs
-to propagate to the output BAM records
+some attributes of the input CRAMs,
+which it propagates to the output BAM records
 that it writes to Clio
 when a workload finishes.
 
-Clio has a data safety features
+Clio has data safety features
 that make it difficult to accidently
 overwrite the file location data it manages.
 Overwriting a record could
@@ -554,7 +554,7 @@ and using it to trigger a remediation.
 When WFL detects a Clio _overwrite_ rejection,
 it queries Clio for all BAM records matching
 the key it has composed for a new BAM record.
-The query WFL makes omits the version specified
+The query that WFL makes omits the version specified
 in the input CRAM record
 such that Clio returns all records
 that match the new BAM key
