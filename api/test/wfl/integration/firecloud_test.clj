@@ -17,8 +17,10 @@
 (def entity-set-type (str (first entity) "_set"))
 
 ;; A manually-triggered submission and its workflow
-(def submission-id "454df415-e349-4929-b8e2-4f56661f0446")
-(def workflow-id   "1e7eb23c-88e9-44a4-878f-b08b75112384")
+;; (If this gets archived, a new copy can be resubmitted at
+;; https://app.terra.bio/#workspaces/wfl-dev/Illumina-Genotyping-Array/workflows/warp-pipelines/IlluminaGenotypingArray)
+(def submission-id "ffdf72b0-6014-4f18-9c35-18eab21ac049")
+(def workflow-id   "1a1c8089-9d84-4d85-b104-2be5092a3604")
 
 (deftest test-get-submission
   (let [submission (firecloud/get-submission workspace submission-id)]
