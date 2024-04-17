@@ -31,7 +31,7 @@
                                           ::all/input_cram]))
 (def workflow-wdl
   "The top-level WDL file and its version."
-  {:release "GDCWholeGenomeSomaticSingleSample_v1.3.0"
+  {:release "GDCWholeGenomeSomaticSingleSample_v1.3.1"
    :path    "pipelines/broad/dna_seq/somatic/single_sample/wgs/gdc_genome/GDCWholeGenomeSomaticSingleSample.wdl"})
 
 (defn ^:private cromwell->strings
