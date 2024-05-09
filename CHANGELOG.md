@@ -1,3 +1,6 @@
+# Release 0.20.3
+- [WM-2560] Update WDL version of GDCWholeGenomeSomaticSingleSample to 1.3.1 ([#632](https://github.com/broadinstitute/wfl/pull/632))
+
 # Release 0.20.2
 - [GH-1695] Fix the "increment BAM version in Clio" again. ([#626](https://github.com/broadinstitute/wfl/pull/626))
 
