@@ -9,6 +9,10 @@
 
 **For a complete introduction to WorkFlow Launcher, please visit its [documentation website](https://broadinstitute.github.io/wfl)!**
 
+## Deprecation Notice
+
+As of November 2024 WFL has no active deployments and is no longer supported.
+
 ## Overview
 
 [WorkFlow Launcher (WFL)](https://github.com/broadinstitute/wfl.git)
